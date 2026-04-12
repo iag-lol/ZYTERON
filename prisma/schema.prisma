@@ -1,0 +1,231 @@
+// Prisma schema for Zyteron platform
+// Stage 1: base models to unblock seeds and future stages
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  role          Role     @default(CLIENT)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  company       String?
+  phone         String?
+  address       String?
+  city          String?
+  country       String?  @default("Chile")
+
+  leads         Lead[]
+  quotes        Quote[]
+  sessions      Session[]
+}
+
+enum Role {
+  CLIENT
+  ADMIN
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ServiceCategory {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  name      String
+  order     Int       @default(0)
+  services  Service[]
+}
+
+model Service {
+  id           String          @id @default(cuid())
+  slug         String          @unique
+  name         String
+  description  String
+  shortCopy    String
+  features     String[]
+  priceFrom    Int?
+  categoryId   String
+  category     ServiceCategory @relation(fields: [categoryId], references: [id])
+  faqs         FAQ[]
+  seo          SeoMetadata?
+  createdAt    DateTime @default(now())
+}
+
+model ProductCategory {
+  id       String    @id @default(cuid())
+  slug     String    @unique
+  name     String
+  order    Int       @default(0)
+  products Product[]
+}
+
+model Product {
+  id            String           @id @default(cuid())
+  slug          String           @unique
+  name          String
+  description   String
+  price         Int
+  discountPct   Int      @default(0)
+  stock         Int      @default(10)
+  featured      Boolean  @default(false)
+  categoryId    String
+  category      ProductCategory @relation(fields: [categoryId], references: [id])
+  badges        String[]
+  seo           SeoMetadata?
+  createdAt     DateTime @default(now())
+}
+
+model Plan {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String
+  price       Int
+  tier        PlanTier
+  freeGifts   String[]
+  features    String[]
+  popular     Boolean  @default(false)
+  seo         SeoMetadata?
+}
+
+enum PlanTier {
+  BASIC
+  INTERMEDIATE
+  PRO
+}
+
+model Extra {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  category    ExtraCategory
+  description String
+  options     String[]
+  price       Int?
+}
+
+enum ExtraCategory {
+  DOMAIN
+  EMAIL
+  SUPPORT
+  EQUIPMENT
+  SEO
+  DESIGN
+  TRAINING
+  TECH
+}
+
+model Quote {
+  id           String    @id @default(cuid())
+  userId       String?
+  user         User?     @relation(fields: [userId], references: [id])
+  planId       String?
+  plan         Plan?     @relation(fields: [planId], references: [id])
+  extras       QuoteExtra[]
+  name         String
+  email        String
+  phone        String?
+  company      String?
+  message      String?
+  subtotal     Int
+  discount     Int @default(0)
+  total        Int
+  status       QuoteStatus @default(PENDING)
+  createdAt    DateTime @default(now())
+}
+
+model QuoteExtra {
+  id       String @id @default(cuid())
+  quoteId  String
+  extraId  String
+  quantity Int     @default(1)
+  quote    Quote   @relation(fields: [quoteId], references: [id])
+  extra    Extra   @relation(fields: [extraId], references: [id])
+}
+
+enum QuoteStatus {
+  PENDING
+  SENT
+  WON
+  LOST
+}
+
+model Lead {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  name        String
+  email       String
+  phone       String?
+  source      String?
+  message     String?
+  type        LeadType
+  createdAt   DateTime @default(now())
+}
+
+enum LeadType {
+  CONTACT
+  QUOTE
+  PACKAGE_BUILDER
+}
+
+model FAQ {
+  id       String   @id @default(cuid())
+  question String
+  answer   String
+  service  Service? @relation(fields: [serviceId], references: [id])
+  serviceId String?
+  product  Product? @relation(fields: [productId], references: [id])
+  productId String?
+  category String?
+  createdAt DateTime @default(now())
+}
+
+model SeoMetadata {
+  id             String   @id @default(cuid())
+  metaTitle      String
+  metaDescription String
+  slug           String   @unique
+  canonicalUrl   String?
+  ogTitle        String?
+  ogDescription  String?
+  ogImage        String?
+  keywords       String[]
+  jsonLd         Json?
+  noindex        Boolean @default(false)
+}
+
+model Banner {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  ctaLabel  String?
+  ctaHref   String?
+  active    Boolean @default(true)
+}
+
+model Setting {
+  id        String  @id @default(cuid())
+  key       String  @unique
+  value     String
+  type      SettingType @default(TEXT)
+}
+
+enum SettingType {
+  TEXT
+  JSON
+  BOOLEAN
+}
