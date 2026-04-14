@@ -87,9 +87,9 @@ export function SiteFooter() {
               <WspIcon />
               +56 9 8475 2936
             </a>
-            <a href="mailto:contacto@zyteron.cl" className="flex items-center gap-2 text-slate-400 transition-colors hover:text-white">
+            <a href="mailto:eduardo.avila@zyteron.cly" className="flex items-center gap-2 text-slate-400 transition-colors hover:text-white">
               <Mail className="h-4 w-4" />
-              contacto@zyteron.cl
+              eduardo.avila@zyteron.cly
             </a>
             <div className="flex items-start gap-2 text-slate-400">
               <MapPin className="h-4 w-4 mt-0.5 shrink-0" />

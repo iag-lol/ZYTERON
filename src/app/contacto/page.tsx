@@ -27,9 +27,9 @@ const contactInfo = [
   {
     icon: <Mail className="h-5 w-5" />,
     label: "Correo electrónico",
-    value: "contacto@zyteron.cl",
+    value: "eduardo.avila@zyteron.cly",
     sub: "Respondemos en 24h",
-    href: "mailto:contacto@zyteron.cl",
+    href: "mailto:eduardo.avila@zyteron.cly",
     classes: "border-blue-200 bg-blue-50 hover:bg-blue-100/70",
     iconClasses: "bg-blue-100 text-blue-700",
     labelColor: "text-slate-500",

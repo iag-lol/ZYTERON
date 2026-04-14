@@ -91,7 +91,7 @@ export function AdminSidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold text-white truncate">Admin Zyteron</p>
-            <p className="text-[10px] text-slate-400 truncate">contacto@zyteron.cl</p>
+            <p className="text-[10px] text-slate-400 truncate">eduardo.avila@zyteron.cly</p>
           </div>
         </div>
         <Link

@@ -32,7 +32,7 @@ export const siteConfig = {
   },
   contact: {
     phone: "+56 2 1234 5678",
-    email: "contacto@zyteron.com",
+    email: "eduardo.avila@zyteron.cly",
     whatsapp: "+56 9 9876 5432",
   },
   social: {
