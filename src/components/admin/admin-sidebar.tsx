@@ -6,21 +6,22 @@ import {
   LayoutDashboard,
   Users,
   ShoppingCart,
-  Package,
-  MessageSquare,
+  FileText,
   ChevronRight,
   Zap,
   LogOut,
   BarChart3,
   Settings,
+  CalendarClock,
 } from "lucide-react";
 
 const nav = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/clientes", label: "Clientes", icon: Users },
-  { href: "/admin/pedidos", label: "Pedidos", icon: ShoppingCart },
-  { href: "/admin/productos", label: "Productos & Precios", icon: Package },
-  { href: "/admin/comentarios", label: "Comentarios", icon: MessageSquare, badge: "Nuevo" },
+  { href: "/admin/cotizaciones", label: "Cotizaciones", icon: FileText },
+  { href: "/admin/visitas", label: "Visitas técnicas", icon: CalendarClock },
+  { href: "/admin/ventas", label: "Ventas", icon: ShoppingCart },
+  { href: "/admin/reportes", label: "Reportes", icon: BarChart3 },
 ];
 
 export function AdminSidebar() {
@@ -32,7 +33,7 @@ export function AdminSidebar() {
   }
 
   return (
-    <aside className="flex h-full w-64 flex-col bg-slate-900 text-white">
+    <aside className="fixed left-0 top-0 z-30 flex h-screen w-64 flex-col overflow-y-auto bg-slate-900 text-white shadow-xl shadow-slate-900/40">
       {/* Logo */}
       <div className="flex items-center gap-3 border-b border-slate-700/60 px-5 py-5">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600">
@@ -46,7 +47,7 @@ export function AdminSidebar() {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
-        <p className="px-3 pt-1 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">Gestión</p>
+        <p className="px-3 pt-1 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">Operación</p>
         {nav.map((item) => {
           const active = isActive(item.href, item.exact);
           return (
@@ -70,18 +71,10 @@ export function AdminSidebar() {
             </Link>
           );
         })}
-
         <div className="pt-4">
-          <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">Otros</p>
+          <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">Sistema</p>
           <Link
-            href="/admin/reportes"
-            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all"
-          >
-            <BarChart3 className="h-4 w-4 text-slate-400" />
-            Reportes
-          </Link>
-          <Link
-            href="/admin/configuracion"
+            href="/admin/config"
             className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all"
           >
             <Settings className="h-4 w-4 text-slate-400" />
