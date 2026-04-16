@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +9,6 @@ export default function AdminLoginPage() {
   const [pwd, setPwd] = useState("");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
-  const router = useRouter();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -18,10 +16,14 @@ export default function AdminLoginPage() {
     startTransition(async () => {
       const res = await fetch("/admin/login/submit", {
         method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ pwd }),
       });
       if (res.ok) {
-        router.push("/admin");
+        window.location.assign("/admin");
       } else {
         setError("Contraseña incorrecta");
       }

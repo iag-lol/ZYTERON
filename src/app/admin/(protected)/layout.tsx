@@ -27,19 +27,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-                  <Link href="/admin/config" className="gap-2">
+                  <Link href="/admin/config" prefetch={false} className="gap-2">
                     <Settings className="h-4 w-4" />
                     Config
                   </Link>
                 </Button>
                 <Button variant="outline" size="sm" className="gap-2" asChild>
-                  <Link href="/admin/cotizaciones/nueva">
+                  <Link href="/admin/cotizaciones/nueva" prefetch={false}>
                     <Bell className="h-4 w-4" />
                     Nueva cotización
                   </Link>
                 </Button>
                 <Button variant="default" size="sm" className="gap-2" asChild>
-                  <Link href="/admin/logout">
+                  <Link href="/admin/logout" prefetch={false}>
                     <Power className="h-4 w-4" />
                     Salir
                   </Link>

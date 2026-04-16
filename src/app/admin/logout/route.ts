@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { COOKIE_KEY } from "@/lib/auth/admin";
+import { COOKIE_KEY } from "@/lib/auth/admin-constants";
 
 export function GET(req: Request) {
   const url = new URL("/admin/login", req.url);

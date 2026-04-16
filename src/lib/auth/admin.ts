@@ -1,8 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-
-const COOKIE_KEY = "zyteron_admin_token";
-const ADMIN_FALLBACK = "Zyteron!2026";
+import { ADMIN_SESSION_VALUE, COOKIE_KEY } from "@/lib/auth/admin-constants";
 
 function parseCookieString(raw: string) {
   return raw.split(";").reduce<Record<string, string>>((acc, part) => {
@@ -18,10 +16,7 @@ export async function assertAdmin() {
   const raw = hdrs.get("cookie") ?? "";
   const parsed = parseCookieString(raw);
   const token = parsed[COOKIE_KEY];
-  const pass = process.env.ADMIN_PASSWORD || ADMIN_FALLBACK;
-  if (!token || token !== pass) {
+  if (!token || token !== ADMIN_SESSION_VALUE) {
     redirect("/admin/login");
   }
 }
-
-export { COOKIE_KEY, ADMIN_FALLBACK };

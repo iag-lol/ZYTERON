@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { COOKIE_KEY, ADMIN_FALLBACK } from "@/lib/auth/admin";
+import { ADMIN_FALLBACK, ADMIN_SESSION_VALUE, COOKIE_KEY } from "@/lib/auth/admin-constants";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   const res = NextResponse.json({ ok: true });
   res.cookies.set({
     name: COOKIE_KEY,
-    value: pass,
+    value: ADMIN_SESSION_VALUE,
     path: "/",
     httpOnly: true,
     sameSite: "lax",

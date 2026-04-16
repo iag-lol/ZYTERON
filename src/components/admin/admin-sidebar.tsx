@@ -54,6 +54,7 @@ export function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={false}
               className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                 active
                   ? "bg-blue-600 text-white shadow-lg shadow-blue-900/40"
@@ -75,6 +76,7 @@ export function AdminSidebar() {
           <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">Sistema</p>
           <Link
             href="/admin/config"
+            prefetch={false}
             className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all"
           >
             <Settings className="h-4 w-4 text-slate-400" />
