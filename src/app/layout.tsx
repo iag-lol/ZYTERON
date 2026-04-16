@@ -5,9 +5,7 @@ import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { siteConfig } from "@/config/site";
 import { RootProviders } from "@/components/root-providers";
-import { SiteHeader } from "@/components/layout/site-header";
-import { SiteFooter } from "@/components/layout/site-footer";
-import { WhatsAppButton } from "@/components/ui/whatsapp-button";
+import { AppShell } from "@/components/layout/app-shell";
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -66,12 +64,7 @@ export default function RootLayout({
       <body className="min-h-full bg-white text-slate-900">
         <TooltipProvider>
           <RootProviders>
-            <div className="min-h-screen flex flex-col">
-              <SiteHeader />
-              <div className="flex-1">{children}</div>
-              <SiteFooter />
-              <WhatsAppButton />
-            </div>
+            <AppShell>{children}</AppShell>
           </RootProviders>
         </TooltipProvider>
       </body>
