@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 
 export function createSupabaseServerClient() {
@@ -11,5 +10,5 @@ export function createSupabaseServerClient() {
   const supabase = createClient(url, key, {
     global: { headers: { "X-Client-Info": "zyteron-admin" } },
   });
-  return { supabase, cookiesStore: cookies() };
+  return { supabase };
 }

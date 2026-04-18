@@ -4,8 +4,9 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { siteConfig } from "@/config/site";
-import { RootProviders } from "@/components/root-providers";
 import { AppShell } from "@/components/layout/app-shell";
+import { JsonLd } from "@/components/seo/json-ld";
+import { buildOrganizationGraph } from "@/lib/seo";
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -24,25 +25,22 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: "Zyteron | Soluciones web y tecnología para empresas",
+    default: "Diseño y Desarrollo Web en Chile para Empresas | Zyteron",
     template: "%s | Zyteron",
   },
   description: siteConfig.description,
   keywords: siteConfig.keywords,
-  alternates: {
-    canonical: siteConfig.url,
-  },
   openGraph: {
     type: "website",
     locale: siteConfig.locale,
     url: siteConfig.url,
-    title: "Zyteron | Soluciones web y tecnología para empresas",
+    title: "Diseño y Desarrollo Web en Chile para Empresas | Zyteron",
     description: siteConfig.description,
     siteName: siteConfig.name,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Zyteron | Soluciones web y tecnología para empresas",
+    title: "Diseño y Desarrollo Web en Chile para Empresas | Zyteron",
     description: siteConfig.description,
   },
   robots: {
@@ -63,9 +61,8 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-white text-slate-900">
         <TooltipProvider>
-          <RootProviders>
-            <AppShell>{children}</AppShell>
-          </RootProviders>
+          <JsonLd id="zyteron-organization-schema" data={buildOrganizationGraph()} />
+          <AppShell>{children}</AppShell>
         </TooltipProvider>
       </body>
     </html>

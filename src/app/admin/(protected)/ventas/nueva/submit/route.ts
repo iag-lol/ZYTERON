@@ -1,26 +1,34 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { insertRow } from "@/lib/admin/repository";
+
+type Body = {
+  clientId?: string;
+  total?: number;
+  description?: string;
+  paymentMethod?: string;
+  invoiceRef?: string;
+  date?: string;
+};
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { clientId, total } = body || {};
-
-    if (typeof total !== "number" || total <= 0) {
+    const body = (await req.json()) as Body;
+    if (typeof body.total !== "number" || body.total <= 0) {
       return NextResponse.json({ error: "Total inválido" }, { status: 400 });
     }
 
-    const { supabase } = createSupabaseServerClient();
-    const { error } = await supabase.from("Sale").insert({
-      clientId: clientId || null,
-      total,
-      createdAt: new Date().toISOString(),
+    await insertRow("Sale", {
+      clientId: body.clientId || null,
+      total: body.total,
+      description: body.description || null,
+      paymentMethod: body.paymentMethod || null,
+      invoiceRef: body.invoiceRef || null,
+      createdAt: body.date ? new Date(body.date).toISOString() : new Date().toISOString(),
     });
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    return NextResponse.json({ error: "Error inesperado" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Error inesperado";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

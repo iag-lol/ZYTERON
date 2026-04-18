@@ -1,27 +1,31 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { insertRow } from "@/lib/admin/repository";
+
+type Body = {
+  clientId?: string;
+  date?: string;
+  notes?: string;
+  status?: string;
+};
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { clientId, date, notes, status } = body || {};
-
-    if (!date) {
+    const body = (await req.json()) as Body;
+    if (!body.date) {
       return NextResponse.json({ error: "Fecha requerida" }, { status: 400 });
     }
 
-    const { supabase } = createSupabaseServerClient();
-    const { error } = await supabase.from("Visit").insert({
-      clientId: clientId || null,
-      date,
-      notes,
-      status: status || "Programada",
+    await insertRow("Visit", {
+      clientId: body.clientId || null,
+      date: new Date(body.date).toISOString(),
+      notes: body.notes || null,
+      status: body.status || "Programada",
+      createdAt: new Date().toISOString(),
     });
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    return NextResponse.json({ error: "Error inesperado" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Error inesperado";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

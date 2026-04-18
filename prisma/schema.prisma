@@ -7,6 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -22,10 +23,20 @@ model User {
   address      String?
   city         String?
   country      String?  @default("Chile")
+  rut          String?
+  contactName  String?
+  industry     String?
+  tier         String?
+  notes        String?
 
-  leads    Lead[]
-  quotes   Quote[]
-  sessions Session[]
+  leads       Lead[]
+  quotes      Quote[]
+  sales       Sale[]
+  visits      Visit[]
+  sessions    Session[]
+  projects    Project[]
+  requests    ClientRequest[]
+  taxDocuments TaxDocument[]
 }
 
 enum Role {
@@ -151,6 +162,8 @@ model Quote {
   total     Int
   status    QuoteStatus  @default(PENDING)
   createdAt DateTime     @default(now())
+  taxDocuments TaxDocument[]
+  projects   Project[]
 }
 
 model QuoteExtra {
@@ -180,6 +193,99 @@ model Lead {
   message   String?
   type      LeadType
   createdAt DateTime @default(now())
+}
+
+model Visit {
+  id        String   @id @default(cuid())
+  clientId  String?
+  client    User?    @relation(fields: [clientId], references: [id])
+  date      DateTime?
+  notes     String?
+  status    String?
+  createdAt DateTime @default(now())
+}
+
+model Sale {
+  id            String         @id @default(cuid())
+  clientId      String?
+  client        User?          @relation(fields: [clientId], references: [id])
+  total         Int
+  description   String?
+  paymentMethod String?
+  invoiceRef    String?
+  createdAt     DateTime       @default(now())
+  projects      Project[]
+  taxDocuments  TaxDocument[]
+}
+
+model Project {
+  id             String          @id @default(cuid())
+  clientId       String?
+  client         User?           @relation(fields: [clientId], references: [id])
+  quoteId        String?
+  quote          Quote?          @relation(fields: [quoteId], references: [id])
+  saleId         String?
+  sale           Sale?           @relation(fields: [saleId], references: [id])
+  title          String
+  serviceArea    String?
+  status         String?
+  priority       String?
+  startDate      DateTime?
+  startTime      String?
+  endDate        DateTime?
+  endTime        String?
+  description    String?
+  scope          String?
+  hourlyRate     Int?
+  estimatedHours Int?
+  actualHours    Int?
+  totalCharge    Int?
+  owner          String?
+  createdAt      DateTime        @default(now())
+  requests       ClientRequest[]
+  taxDocuments   TaxDocument[]
+}
+
+model ClientRequest {
+  id          String   @id @default(cuid())
+  clientId    String?
+  client      User?    @relation(fields: [clientId], references: [id])
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id])
+  subject     String
+  channel     String?
+  priority    String?
+  status      String?
+  description String?
+  dueDate     DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model TaxDocument {
+  id             String   @id @default(cuid())
+  clientId       String?
+  client         User?    @relation(fields: [clientId], references: [id])
+  projectId      String?
+  project        Project? @relation(fields: [projectId], references: [id])
+  quoteId        String?
+  quote          Quote?   @relation(fields: [quoteId], references: [id])
+  saleId         String?
+  sale           Sale?    @relation(fields: [saleId], references: [id])
+  type           String
+  documentNumber String?
+  siiFolio       String?
+  issueDate      DateTime?
+  dueDate        DateTime?
+  netAmount      Int?
+  taxAmount      Int?
+  totalAmount    Int?
+  status         String?
+  paymentStatus  String?
+  emissionMethod String?
+  pdfUrl         String?
+  xmlUrl         String?
+  notes          String?
+  createdAt      DateTime @default(now())
 }
 
 enum LeadType {

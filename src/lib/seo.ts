@@ -1,53 +1,226 @@
+import type { Metadata } from "next";
+import { defaultJsonLdOrganization, defaultOpenGraph, defaultTwitter } from "@/config/seo";
 import { siteConfig } from "@/config/site";
-import { defaultJsonLdOrganization } from "@/config/seo";
 
-export function buildJsonLd(page: {
-  type?: string;
+type SeoMetadataInput = {
   title: string;
   description: string;
-  url?: string;
-  breadcrumbs?: { name: string; url: string }[];
-  faq?: { question: string; answer: string }[];
-}) {
-  const base = page.url ?? siteConfig.url;
+  path: string;
+  keywords?: string[];
+  noIndex?: boolean;
+};
 
-  const graph: Record<string, unknown>[] = [defaultJsonLdOrganization as Record<string, unknown>];
+type BreadcrumbItem = {
+  name: string;
+  path: string;
+};
 
-  graph.push({
-    "@context": "https://schema.org",
-    "@type": page.type ?? "WebPage",
-    name: page.title,
-    description: page.description,
-    url: base,
-  });
+type WebPageJsonLdInput = {
+  path: string;
+  title: string;
+  description: string;
+  breadcrumbs?: BreadcrumbItem[];
+};
 
-  if (page.breadcrumbs?.length) {
-    graph.push({
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: page.breadcrumbs.map((crumb, index) => ({
-        "@type": "ListItem",
-        position: index + 1,
-        name: crumb.name,
-        item: crumb.url,
-      })),
-    });
+type ServiceJsonLdInput = {
+  path: string;
+  name: string;
+  description: string;
+  serviceType: string;
+};
+
+type FaqItem = {
+  question: string;
+  answer: string;
+};
+
+function normalizePath(path: string) {
+  if (!path) return "/";
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  if (path === "/") return "/";
+  return path.startsWith("/") ? path : `/${path}`;
+}
+
+export function buildAbsoluteUrl(path: string) {
+  const normalized = normalizePath(path);
+  if (normalized.startsWith("http://") || normalized.startsWith("https://")) {
+    return normalized;
   }
+  return normalized === "/" ? siteConfig.url : `${siteConfig.url}${normalized}`;
+}
 
-  if (page.faq?.length) {
-    graph.push({
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      mainEntity: page.faq.map((f) => ({
-        "@type": "Question",
-        name: f.question,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: f.answer,
+export function createPageMetadata({
+  title,
+  description,
+  path,
+  keywords = [],
+  noIndex = false,
+}: SeoMetadataInput): Metadata {
+  const url = buildAbsoluteUrl(path);
+  const socialImage = buildAbsoluteUrl("/logo.svg");
+  const mergedKeywords = [...new Set([...siteConfig.keywords, ...keywords])];
+
+  return {
+    title,
+    description,
+    keywords: mergedKeywords,
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      ...defaultOpenGraph,
+      url,
+      title,
+      description,
+      images: [
+        {
+          url: socialImage,
+          width: 512,
+          height: 512,
+          alt: `${siteConfig.name} logo`,
         },
-      })),
-    });
+      ],
+    },
+    twitter: {
+      ...defaultTwitter,
+      title,
+      description,
+      images: [socialImage],
+    },
+    robots: noIndex
+      ? {
+          index: false,
+          follow: false,
+          nocache: true,
+        }
+      : {
+          index: true,
+          follow: true,
+          googleBot: {
+            index: true,
+            follow: true,
+            "max-snippet": -1,
+            "max-image-preview": "large",
+            "max-video-preview": -1,
+          },
+        },
+  };
+}
+
+export function buildOrganizationGraph() {
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      defaultJsonLdOrganization,
+      {
+        "@type": "WebSite",
+        "@id": `${siteConfig.url}/#website`,
+        url: siteConfig.url,
+        name: siteConfig.name,
+        inLanguage: siteConfig.locale,
+      },
+      {
+        "@type": "ProfessionalService",
+        "@id": `${siteConfig.url}/#localbusiness`,
+        name: `${siteConfig.name} Agencia Web`,
+        url: siteConfig.url,
+        image: `${siteConfig.url}/logo.svg`,
+        telephone: siteConfig.contact.phone,
+        email: siteConfig.contact.email,
+        areaServed: "Chile",
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: siteConfig.address.city,
+          addressRegion: siteConfig.address.region,
+          addressCountry: "CL",
+        },
+        sameAs: [siteConfig.social.linkedin].filter(Boolean),
+      },
+    ],
+  };
+}
+
+export function buildWebPageJsonLd({
+  path,
+  title,
+  description,
+  breadcrumbs = [],
+}: WebPageJsonLdInput) {
+  const pageUrl = buildAbsoluteUrl(path);
+
+  const graph: Record<string, unknown>[] = [
+    {
+      "@type": "WebPage",
+      "@id": `${pageUrl}#webpage`,
+      url: pageUrl,
+      name: title,
+      description,
+      inLanguage: siteConfig.locale,
+      isPartOf: {
+        "@id": `${siteConfig.url}/#website`,
+      },
+      about: {
+        "@id": `${siteConfig.url}/#organization`,
+      },
+    },
+  ];
+
+  if (breadcrumbs.length) {
+    graph.push(buildBreadcrumbJsonLd(breadcrumbs));
   }
 
-  return graph;
+  return {
+    "@context": "https://schema.org",
+    "@graph": graph,
+  };
+}
+
+export function buildServiceJsonLd({
+  path,
+  name,
+  description,
+  serviceType,
+}: ServiceJsonLdInput) {
+  const pageUrl = buildAbsoluteUrl(path);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": `${pageUrl}#service`,
+    serviceType,
+    name,
+    description,
+    url: pageUrl,
+    areaServed: "Chile",
+    provider: {
+      "@id": `${siteConfig.url}/#organization`,
+    },
+  };
+}
+
+export function buildBreadcrumbJsonLd(items: BreadcrumbItem[]) {
+  return {
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: buildAbsoluteUrl(item.path),
+    })),
+  };
+}
+
+export function buildFaqJsonLd(faqs: FaqItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
 }

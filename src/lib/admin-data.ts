@@ -1,60 +1,43 @@
-import { createSupabaseServerClient } from "./supabase/server";
-
-type Lead = {
-  id: string;
-  name?: string;
-  email?: string;
-  phone?: string;
-  source?: string;
-  message?: string;
-  type?: string;
-  status?: string;
-  createdAt?: string;
-};
-
-type Quote = {
-  id: string;
-  name?: string;
-  email?: string;
-  total?: number;
-  status?: string;
-  createdAt?: string;
-};
-
-type Visit = {
-  id: string;
-  clientId?: string;
-  date?: string;
-  notes?: string;
-  status?: string;
-};
-
-type Sale = {
-  id: string;
-  clientId?: string;
-  total?: number;
-  createdAt?: string;
-};
-
-type Client = {
-  id: string;
-  name: string;
-  email?: string;
-  company?: string;
-  industry?: string;
-  tier?: "Basic" | "Pro" | "Enterprise" | string;
-};
+import {
+  getClients,
+  getProjects,
+  getQuotes,
+  getRequests,
+  getSales,
+  getTaxDocuments,
+  getVisits,
+  type Client,
+  type ClientRequest,
+  type EnrichedQuote,
+  type Lead,
+  type Project,
+  type Sale,
+  type TaxDocument,
+  type Visit,
+} from "@/lib/admin/repository";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type ChartPoint = { label: string; value: number };
 
 export type AdminSnapshot = {
   leads: Lead[];
-  quotes: Quote[];
+  quotes: EnrichedQuote[];
   visits: Visit[];
   sales: Sale[];
   clients: Client[];
+  projects: Project[];
+  requests: ClientRequest[];
+  taxDocuments: TaxDocument[];
   metrics: {
-    totals: { leads: number; quotes: number; visits: number; sales: number };
+    totals: {
+      leads: number;
+      quotes: number;
+      visits: number;
+      sales: number;
+      projects: number;
+      requests: number;
+      taxDocuments: number;
+    };
     money: { pipelineValue: number; revenue: number; avgTicket: number };
     conversion: { winRate: number; quoteRate: number; visitRate: number };
     lastUpdated: string;
@@ -65,61 +48,32 @@ export type AdminSnapshot = {
   };
 };
 
-async function fetchTable<T>(table: string, select: string): Promise<T[]> {
-  const { supabase } = createSupabaseServerClient();
-  const { data, error } = await supabase.from(table).select(select);
-  if (error) throw error;
-  return data ?? [];
-}
-
 function round(value: number) {
   return Math.round(value * 100) / 100;
 }
 
-function buildSnapshot(base: { leads: Lead[]; quotes: Quote[]; visits: Visit[]; sales: Sale[]; clients: Client[] }): AdminSnapshot {
-  const leads = base.leads ?? [];
-  const quotes = base.quotes ?? [];
-  const visits = base.visits ?? [];
-  const sales = base.sales ?? [];
-  const clients = base.clients ?? [];
+async function fetchLeads(): Promise<Lead[]> {
+  try {
+    const { supabase } = createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("Lead")
+      .select("id, name, email, phone, source, message, type, createdAt")
+      .order("createdAt", { ascending: false });
 
-  const totals = {
-    leads: leads.length,
-    quotes: quotes.length,
-    visits: visits.length,
-    sales: sales.length,
-  };
+    if (error) {
+      const relationMissing =
+        error.message.includes("Could not find the table") ||
+        error.message.includes("relation");
+      if (relationMissing) {
+        return [];
+      }
+      throw error;
+    }
 
-  const pipelineValue = quotes.reduce((acc, q) => acc + (typeof q.total === "number" ? q.total : 0), 0);
-  const revenue = sales.reduce((acc, s) => acc + (typeof s.total === "number" ? s.total : 0), 0);
-  const avgTicket = sales.length ? revenue / sales.length : 0;
-
-  const winRate = totals.quotes ? round(((totals.sales || 0) / totals.quotes) * 100) : 0;
-  const quoteRate = totals.leads ? round(((totals.quotes || 0) / totals.leads) * 100) : 0;
-  const visitRate = totals.quotes ? round(((totals.visits || 0) / totals.quotes) * 100) : 0;
-
-  const money = { pipelineValue, revenue, avgTicket: round(avgTicket) };
-  const conversion = { winRate, quoteRate, visitRate };
-
-  const lastUpdated = new Date().toISOString();
-
-  const revenueByMonth = buildRevenueSeries(sales);
-  const pipelineConversion: ChartPoint[] = [
-    { label: "Leads", value: 100 },
-    { label: "Cotizaciones", value: quoteRate || 1 },
-    { label: "Visitas", value: visitRate || 1 },
-    { label: "Ventas", value: winRate || 1 },
-  ];
-
-  return {
-    leads,
-    quotes,
-    visits,
-    sales,
-    clients,
-    metrics: { totals, money, conversion, lastUpdated },
-    charts: { revenueByMonth, pipelineConversion },
-  };
+    return (data ?? []) as Lead[];
+  } catch {
+    return [];
+  }
 }
 
 function buildRevenueSeries(sales: Sale[]): ChartPoint[] {
@@ -127,7 +81,7 @@ function buildRevenueSeries(sales: Sale[]): ChartPoint[] {
   const now = new Date();
   const buckets: Bucket[] = [];
 
-  for (let i = 5; i >= 0; i--) {
+  for (let i = 5; i >= 0; i -= 1) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     buckets.push({
       key: `${d.getFullYear()}-${d.getMonth()}`,
@@ -140,42 +94,122 @@ function buildRevenueSeries(sales: Sale[]): ChartPoint[] {
     if (!sale.createdAt || typeof sale.total !== "number") continue;
     const d = new Date(sale.createdAt);
     const key = `${d.getFullYear()}-${d.getMonth()}`;
-    const slot = buckets.find((b) => b.key === key);
-    if (slot) slot.value += sale.total;
+    const slot = buckets.find((bucket) => bucket.key === key);
+    if (slot) {
+      slot.value += sale.total;
+    }
   }
 
   return buckets.map(({ label, value }) => ({ label, value }));
 }
 
+function buildSnapshot(base: {
+  leads: Lead[];
+  quotes: EnrichedQuote[];
+  visits: Visit[];
+  sales: Sale[];
+  clients: Client[];
+  projects: Project[];
+  requests: ClientRequest[];
+  taxDocuments: TaxDocument[];
+}): AdminSnapshot {
+  const leads = base.leads ?? [];
+  const quotes = base.quotes ?? [];
+  const visits = base.visits ?? [];
+  const sales = base.sales ?? [];
+  const clients = base.clients ?? [];
+  const projects = base.projects ?? [];
+  const requests = base.requests ?? [];
+  const taxDocuments = base.taxDocuments ?? [];
+
+  const totals = {
+    leads: leads.length,
+    quotes: quotes.length,
+    visits: visits.length,
+    sales: sales.length,
+    projects: projects.length,
+    requests: requests.length,
+    taxDocuments: taxDocuments.length,
+  };
+
+  const pipelineValue = quotes.reduce((acc, quote) => acc + (quote.totalAmount || 0), 0);
+  const revenue = sales.reduce((acc, sale) => acc + (typeof sale.total === "number" ? sale.total : 0), 0);
+  const avgTicket = sales.length ? revenue / sales.length : 0;
+  const winRate = totals.quotes ? round((totals.sales / totals.quotes) * 100) : 0;
+  const quoteRate = totals.leads ? round((totals.quotes / totals.leads) * 100) : 0;
+  const visitRate = totals.quotes ? round((totals.visits / totals.quotes) * 100) : 0;
+
+  return {
+    leads,
+    quotes,
+    visits,
+    sales,
+    clients,
+    projects,
+    requests,
+    taxDocuments,
+    metrics: {
+      totals,
+      money: {
+        pipelineValue,
+        revenue,
+        avgTicket: round(avgTicket),
+      },
+      conversion: {
+        winRate,
+        quoteRate,
+        visitRate,
+      },
+      lastUpdated: new Date().toISOString(),
+    },
+    charts: {
+      revenueByMonth: buildRevenueSeries(sales),
+      pipelineConversion: [
+        { label: "Leads", value: 100 },
+        { label: "Cotizaciones", value: quoteRate || 1 },
+        { label: "Visitas", value: visitRate || 1 },
+        { label: "Ventas", value: winRate || 1 },
+      ],
+    },
+  };
+}
+
 export async function getAdminSnapshot(): Promise<AdminSnapshot> {
   try {
-    const [leads, quotes, visits, sales, clients] = await Promise.all([
-      fetchTable<Lead>("Lead", "id, name, email, phone, source, message, type, createdAt"),
-      fetchTable<Quote>("Quote", "id, name, email, total, status, createdAt"),
-      fetchTable<Visit>("Visit", "id, clientId, date, notes, status"),
-      fetchTable<Sale>("Sale", "id, clientId, total, createdAt"),
-      fetchTable<Client>("User", "id, name, email, company"),
-    ]);
+    const [leads, quotes, visits, sales, clients, projects, requests, taxDocuments] =
+      await Promise.all([
+        fetchLeads(),
+        getQuotes(),
+        getVisits(),
+        getSales(),
+        getClients(),
+        getProjects(),
+        getRequests(),
+        getTaxDocuments(),
+      ]);
 
-    return buildSnapshot({ leads, quotes, visits, sales, clients });
-  } catch (error) {
-    // No datos si Supabase falla: devolver estructuras vacías sin datos ficticios
-    const empty: AdminSnapshot = {
+    return buildSnapshot({
+      leads,
+      quotes,
+      visits,
+      sales,
+      clients,
+      projects,
+      requests,
+      taxDocuments,
+    });
+  } catch {
+    return buildSnapshot({
       leads: [],
       quotes: [],
       visits: [],
       sales: [],
       clients: [],
-      metrics: {
-        totals: { leads: 0, quotes: 0, visits: 0, sales: 0 },
-        money: { pipelineValue: 0, revenue: 0, avgTicket: 0 },
-        conversion: { winRate: 0, quoteRate: 0, visitRate: 0 },
-        lastUpdated: new Date().toISOString(),
-      },
-      charts: { revenueByMonth: buildRevenueSeries([]), pipelineConversion: [] },
-    };
-    return empty;
+      projects: [],
+      requests: [],
+      taxDocuments: [],
+    });
   }
 }
 
-export { Lead, Quote, Visit, Sale, Client };
+export type { Client, ClientRequest, EnrichedQuote as Quote, Lead, Project, Sale, TaxDocument, Visit };

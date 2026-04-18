@@ -1,9 +1,20 @@
+import type { Metadata } from "next";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Mail, MapPin, Clock, ArrowRight, MessageSquare } from "lucide-react";
+import { JsonLd } from "@/components/seo/json-ld";
+import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Contacto Agencia Diseno Web Chile | Zyteron",
+  description:
+    "Contacta a Zyteron para diseno web Chile, desarrollo web Chile y creacion de sitios web para empresas. Respuesta en menos de 24 horas.",
+  path: "/contacto",
+  keywords: ["contacto diseno web chile", "cotizar desarrollo web chile", "agencia web santiago contacto"],
+});
 
 const WspIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5" aria-hidden="true">
@@ -27,9 +38,9 @@ const contactInfo = [
   {
     icon: <Mail className="h-5 w-5" />,
     label: "Correo electrónico",
-    value: "eduardo.avila@zyteron.cly",
+    value: "contacto@zyteron.cl",
     sub: "Respondemos en 24h",
-    href: "mailto:eduardo.avila@zyteron.cly",
+    href: "mailto:contacto@zyteron.cl",
     classes: "border-blue-200 bg-blue-50 hover:bg-blue-100/70",
     iconClasses: "bg-blue-100 text-blue-700",
     labelColor: "text-slate-500",
@@ -65,6 +76,19 @@ const contactInfo = [
 export default function ContactoPage() {
   return (
     <main className="bg-white">
+      <JsonLd
+        id="contacto-webpage-schema"
+        data={buildWebPageJsonLd({
+          path: "/contacto",
+          title: "Contacto Agencia Diseno Web Chile | Zyteron",
+          description:
+            "Pagina de contacto para cotizar diseno web, desarrollo web y SEO tecnico para empresas en Chile.",
+          breadcrumbs: [
+            { name: "Inicio", path: "/" },
+            { name: "Contacto", path: "/contacto" },
+          ],
+        })}
+      />
       {/* Hero */}
       <section className="relative overflow-hidden bg-hero-pattern border-b border-slate-200 py-20">
         <Container className="relative z-10 space-y-5 text-center">

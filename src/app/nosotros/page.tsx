@@ -1,7 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Target, Code2, TrendingUp, Shield, Zap, Globe, Users, Award, ArrowRight } from "lucide-react";
+import { JsonLd } from "@/components/seo/json-ld";
+import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Agencia de Diseno Web en Chile | Nosotros | Zyteron",
+  description:
+    "Conoce a Zyteron, agencia chilena de diseno web y desarrollo web para empresas con foco en SEO tecnico y conversion.",
+  path: "/nosotros",
+  keywords: ["agencia diseno web chile", "equipo desarrollo web chile", "empresa web santiago"],
+});
 
 const values = [
   { icon: <Target className="h-6 w-6" />, title: "Claridad comercial", body: "Traducimos lo técnico al lenguaje de negocio. Cada decisión tiene un impacto claro en tu ROI.", iconBg: "bg-blue-50", iconColor: "text-blue-700" },
@@ -24,6 +35,19 @@ const cities = ["Santiago", "Valparaíso", "Concepción", "Antofagasta", "La Ser
 export default function NosotrosPage() {
   return (
     <main className="bg-white">
+      <JsonLd
+        id="nosotros-webpage-schema"
+        data={buildWebPageJsonLd({
+          path: "/nosotros",
+          title: "Agencia de Diseno Web en Chile | Nosotros | Zyteron",
+          description:
+            "Equipo de diseno y desarrollo web para empresas chilenas con enfoque en resultados.",
+          breadcrumbs: [
+            { name: "Inicio", path: "/" },
+            { name: "Nosotros", path: "/nosotros" },
+          ],
+        })}
+      />
       {/* Hero */}
       <section className="relative overflow-hidden bg-hero-pattern border-b border-slate-200 py-20">
         <Container className="relative z-10 grid gap-10 lg:grid-cols-2 lg:items-center">

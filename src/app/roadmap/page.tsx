@@ -1,6 +1,15 @@
+import type { Metadata } from "next";
 import { Container } from "@/components/layout/container";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Roadmap interno",
+  description: "Roadmap interno de etapas.",
+  path: "/roadmap",
+  noIndex: true,
+});
 
 const phases = [
   { title: "Etapa 1 · Arquitectura base", status: "Listo", detail: "Stack, schema, seeds, SEO base, layout." },

@@ -1,7 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Check, Star, ArrowRight, Plus, Globe, Mail, Headphones, BarChart3, Laptop, Code2, BookOpen, ShoppingCart, MessageSquare } from "lucide-react";
+import { JsonLd } from "@/components/seo/json-ld";
+import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Cotizador de Sitios Web Para Empresas | Zyteron",
+  description:
+    "Arma tu paquete de diseno web y desarrollo web en Chile. Cotiza servicios, SEO, soporte e integraciones para tu empresa.",
+  path: "/paquetes",
+  keywords: ["cotizador pagina web chile", "cotizar diseno web chile", "paquete web para empresas"],
+});
 
 const WspIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5" aria-hidden="true">
@@ -111,6 +122,19 @@ const steps = [
 export default function PaquetesPage() {
   return (
     <main className="bg-white">
+      <JsonLd
+        id="paquetes-webpage-schema"
+        data={buildWebPageJsonLd({
+          path: "/paquetes",
+          title: "Cotizador de Sitios Web Para Empresas | Zyteron",
+          description:
+            "Cotizador para crear paquetes de paginas web para empresas con servicios adicionales en Chile.",
+          breadcrumbs: [
+            { name: "Inicio", path: "/" },
+            { name: "Paquetes", path: "/paquetes" },
+          ],
+        })}
+      />
       {/* Hero */}
       <section className="relative overflow-hidden bg-hero-pattern border-b border-slate-200 py-20">
         <Container className="relative z-10 space-y-5 text-center">

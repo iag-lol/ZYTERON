@@ -6,10 +6,10 @@ const footerLinks = [
   {
     title: "Servicios",
     items: [
-      { label: "Desarrollo web", href: "/servicios" },
-      { label: "SEO avanzado", href: "/servicios" },
-      { label: "Ecommerce", href: "/servicios" },
-      { label: "Soporte TI", href: "/servicios" },
+      { label: "Paginas web para empresas", href: "/servicios/paginas-web-para-empresas" },
+      { label: "Diseno web Chile", href: "/servicios/diseno-web-chile" },
+      { label: "Desarrollo web Chile", href: "/servicios/desarrollo-web-chile" },
+      { label: "Diseno web Santiago", href: "/servicios/diseno-web-santiago" },
     ],
   },
   {
@@ -87,9 +87,9 @@ export function SiteFooter() {
               <WspIcon />
               +56 9 8475 2936
             </a>
-            <a href="mailto:eduardo.avila@zyteron.cly" className="flex items-center gap-2 text-slate-400 transition-colors hover:text-white">
+            <a href="mailto:contacto@zyteron.cl" className="flex items-center gap-2 text-slate-400 transition-colors hover:text-white">
               <Mail className="h-4 w-4" />
-              eduardo.avila@zyteron.cly
+              contacto@zyteron.cl
             </a>
             <div className="flex items-start gap-2 text-slate-400">
               <MapPin className="h-4 w-4 mt-0.5 shrink-0" />

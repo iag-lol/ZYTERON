@@ -1,7 +1,19 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Check } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
+import { JsonLd } from "@/components/seo/json-ld";
+import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Productos TI y Hardware Para Empresas | Zyteron",
+  description:
+    "Catalogo de productos TI para empresas en Chile: notebooks, PCs y kits POS con soporte y envio nacional.",
+  path: "/productos",
+  keywords: ["productos ti empresas chile", "notebooks empresas chile", "kit pos chile"],
+});
 
 const whatsappNumber = "56984752936";
 const getWaLink = (name: string, price: string) =>
@@ -132,6 +144,19 @@ const sections = [
 export default function ProductosPage() {
   return (
     <main className="bg-white">
+      <JsonLd
+        id="productos-webpage-schema"
+        data={buildWebPageJsonLd({
+          path: "/productos",
+          title: "Productos TI y Hardware Para Empresas | Zyteron",
+          description:
+            "Catalogo de hardware empresarial y kits POS para empresas en Chile.",
+          breadcrumbs: [
+            { name: "Inicio", path: "/" },
+            { name: "Productos", path: "/productos" },
+          ],
+        })}
+      />
       <section className="relative overflow-hidden bg-hero-pattern border-b border-slate-200 py-16">
         <Container className="relative z-10 space-y-4">
           <div className="badge-blue w-fit">
@@ -177,7 +202,15 @@ export default function ProductosPage() {
                     <div key={p.slug} className="card-premium flex flex-col p-5">
                       {img && (
                         <div className="mb-4 overflow-hidden rounded-xl border border-slate-100 bg-white">
-                          <img src={img} alt={p.title} className="h-44 w-full object-cover" loading="lazy" />
+                          <Image
+                            src={img}
+                            alt={p.title}
+                            className="h-44 w-full object-cover"
+                            width={1079}
+                            height={1079}
+                            sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                            loading="lazy"
+                          />
                         </div>
                       )}
                       <div className="flex items-start justify-between gap-2 mb-3">

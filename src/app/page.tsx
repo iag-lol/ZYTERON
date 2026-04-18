@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -16,6 +17,23 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
+import { JsonLd } from "@/components/seo/json-ld";
+import { buildFaqJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Paginas Web Para Empresas en Chile | Zyteron",
+  description:
+    "Diseno web Chile y desarrollo web Chile para empresas que buscan leads reales. Creamos sitios orientados a conversion, SEO y velocidad.",
+  path: "/",
+  keywords: [
+    "paginas web para empresas",
+    "diseno web chile",
+    "desarrollo web chile",
+    "agencia diseno web chile",
+    "diseno web santiago",
+    "creacion de sitios web para empresas",
+  ],
+});
 
 /* ── DATA ── */
 const stats = [
@@ -28,39 +46,39 @@ const stats = [
 const services = [
   {
     icon: <Rocket className="h-6 w-6" />,
-    title: "Desarrollo Web",
-    desc: "Landing pages, sitios corporativos, portales y ecommerce con performance máximo y arquitectura escalable.",
+    title: "Paginas web para empresas",
+    desc: "Sitios corporativos y landing pages para captar leads con foco en conversion comercial en Chile.",
     iconBg: "bg-blue-50",
     iconColor: "text-blue-700",
     hoverBorder: "hover:border-blue-200",
-    link: "/servicios",
+    link: "/servicios/paginas-web-para-empresas",
   },
   {
     icon: <BarChart3 className="h-6 w-6" />,
-    title: "SEO Avanzado",
-    desc: "SEO técnico nivel enterprise: on-page, schema JSON-LD, Core Web Vitals, contenidos y SEO local en Chile.",
+    title: "Diseno web Chile",
+    desc: "Diseno UX/UI orientado a ventas para empresas que necesitan una web clara, confiable y profesional.",
     iconBg: "bg-violet-50",
     iconColor: "text-violet-700",
     hoverBorder: "hover:border-violet-200",
-    link: "/servicios",
+    link: "/servicios/diseno-web-chile",
   },
   {
     icon: <CloudCog className="h-6 w-6" />,
-    title: "Infra & Soporte TI",
-    desc: "Dominios, correos corporativos, hosting, monitoreo y soporte técnico remoto y presencial.",
+    title: "Desarrollo web Chile",
+    desc: "Desarrollo tecnico con performance, arquitectura escalable e integraciones para procesos de negocio.",
     iconBg: "bg-emerald-50",
     iconColor: "text-emerald-700",
     hoverBorder: "hover:border-emerald-200",
-    link: "/servicios",
+    link: "/servicios/desarrollo-web-chile",
   },
   {
     icon: <MonitorSmartphone className="h-6 w-6" />,
-    title: "Hardware Empresarial",
-    desc: "Notebooks, PCs de escritorio, combos digitales y equipos configurados para tu oficina.",
+    title: "Diseno web Santiago",
+    desc: "Servicio local para empresas en Santiago con estrategia SEO local y mensajes orientados a cierre comercial.",
     iconBg: "bg-amber-50",
     iconColor: "text-amber-700",
     hoverBorder: "hover:border-amber-200",
-    link: "/productos",
+    link: "/servicios/diseno-web-santiago",
   },
 ];
 
@@ -122,28 +140,28 @@ const plans = [
 
 const faqs = [
   {
-    q: "¿Cuánto demora un proyecto web?",
-    a: "Landing: 1–2 semanas. Sitio corporativo: 3–5 semanas. Ecommerce: 5–7 semanas según alcance y contenidos provistos.",
+    q: "Cuanto demora una pagina web para empresas en Chile?",
+    a: "Landing: 1-2 semanas. Sitio corporativo: 3-5 semanas. Ecommerce: 5-7 semanas segun alcance, integraciones y aprobaciones.",
   },
   {
-    q: "¿Incluyen dominio y correos corporativos?",
-    a: "El Plan Pro incluye dominio + 1 correo por 1 año. En otros planes se agregan como extra o combo según necesidad.",
+    q: "Incluyen dominio y correos corporativos?",
+    a: "Si. Podemos incluir dominio .cl/.com, correos corporativos y configuracion tecnica como parte del plan o extras.",
   },
   {
-    q: "¿Puedo personalizar un paquete a medida?",
-    a: "Sí. El cotizador permite elegir plan base y sumar extras: dominio, correos, SEO, soporte, equipos, paneles y más.",
+    q: "Puedo personalizar un paquete a medida?",
+    a: "Si. El cotizador permite elegir plan base y sumar extras: SEO, soporte, contenidos, integraciones y funcionalidades.",
   },
   {
-    q: "¿Cómo garantizan el posicionamiento SEO?",
-    a: "Arquitectura semántica, metadatos por página, schema JSON-LD, velocidad Core Web Vitals y contenidos alineados a intención de búsqueda.",
+    q: "Como trabajan el SEO para diseno web chile y desarrollo web chile?",
+    a: "Definimos arquitectura por intencion de busqueda, metadatos por URL, schema JSON-LD, enlazado interno y mejoras Core Web Vitals.",
   },
   {
-    q: "¿Tienen soporte post-entrega?",
-    a: "Todos los planes incluyen al menos 1 mes de atención básica. Planes de mantención mensual disponibles como extra.",
+    q: "Tienen soporte post-entrega?",
+    a: "Si. Todos los proyectos incluyen soporte inicial y opcion de plan de mantencion mensual segun necesidad.",
   },
   {
-    q: "¿Trabajan con empresas fuera de Santiago?",
-    a: "Soporte remoto a todo Chile. Visitas técnicas en RM y regiones principales con agenda previa.",
+    q: "Trabajan con empresas fuera de Santiago?",
+    a: "Si. Atendemos remoto a todo Chile y coordinamos reuniones comerciales en Santiago cuando el proyecto lo requiere.",
   },
 ];
 
@@ -168,6 +186,38 @@ const getWaLink = (name: string, price: string, intent: ChatIntent = "plan") => 
 export default function Home() {
   return (
     <main className="overflow-hidden">
+      <JsonLd
+        id="home-webpage-schema"
+        data={buildWebPageJsonLd({
+          path: "/",
+          title: "Paginas Web Para Empresas en Chile | Zyteron",
+          description:
+            "Servicio de diseno web Chile y desarrollo web Chile para empresas que necesitan atraer clientes con SEO y conversion.",
+          breadcrumbs: [{ name: "Inicio", path: "/" }],
+        })}
+      />
+      <JsonLd
+        id="home-faq-schema"
+        data={buildFaqJsonLd(
+          faqs.map((faq) => ({
+            question: faq.q,
+            answer: faq.a,
+          }))
+        )}
+      />
+      <JsonLd
+        id="home-service-itemlist-schema"
+        data={{
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          itemListElement: services.map((service, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: service.title,
+            url: `https://www.zyteron.cl${service.link}`,
+          })),
+        }}
+      />
 
       {/* ═══════════════════════ HERO ═══════════════════════ */}
       <section className="relative overflow-hidden bg-hero-pattern">
@@ -177,27 +227,27 @@ export default function Home() {
             {/* Badge */}
             <div className="badge-blue">
               <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
-              Plataforma digital empresarial · Chile
+              Agencia de diseno web y desarrollo web · Chile
             </div>
 
             {/* Headline */}
             <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl xl:text-[3.5rem]">
-              <span className="text-slate-900">Tecnología que</span>{" "}
-              <span className="text-gradient-hero">impulsa ventas</span>{" "}
-              <span className="text-slate-900">y posiciona tu empresa</span>
+              <span className="text-slate-900">Paginas web para empresas</span>{" "}
+              <span className="text-gradient-hero">en Chile</span>{" "}
+              <span className="text-slate-900">que convierten visitas en clientes</span>
             </h1>
 
             {/* Subtext */}
             <p className="max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
-              Sitios web de alto rendimiento, SEO técnico nivel enterprise, soporte TI y hardware corporativo.
-              Diseñado para Core Web Vitals, conversión y escalabilidad en Chile.
+              Diseno web Chile y desarrollo web Chile para empresas que necesitan captar leads reales.
+              Arquitectura SEO, Core Web Vitals y mensajes comerciales claros para vender mas.
             </p>
 
             {/* CTAs */}
             <div className="flex flex-wrap items-center gap-3">
               <Button asChild size="lg" className="gap-2 bg-blue-700 hover:bg-blue-800 text-white font-bold px-6 shadow-blue-700/30 shadow-md btn-primary-glow">
-                <Link href="/paquetes">
-                  Armar mi paquete <ArrowRight className="h-4 w-4" />
+                <Link href="/contacto">
+                  Solicitar diagnostico SEO <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Link
@@ -207,8 +257,24 @@ export default function Home() {
                 className="flex items-center gap-2 rounded-xl border border-[#25d366]/40 bg-[#25d366]/10 px-5 py-2.5 text-sm font-bold text-[#18a34d] transition-all hover:bg-[#25d366]/20"
               >
                 <WspIcon />
-                Escribir por WhatsApp
+                Cotizar por WhatsApp
               </Link>
+            </div>
+
+            <div className="flex flex-wrap gap-2 pt-1">
+              {[
+                { href: "/servicios/paginas-web-para-empresas", label: "Paginas web para empresas" },
+                { href: "/servicios/diseno-web-chile", label: "Diseno web Chile" },
+                { href: "/servicios/desarrollo-web-chile", label: "Desarrollo web Chile" },
+              ].map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 transition-colors hover:border-blue-200 hover:text-blue-700"
+                >
+                  {item.label}
+                </Link>
+              ))}
             </div>
 
             {/* Trust tags */}
@@ -244,10 +310,10 @@ export default function Home() {
 
               <div className="space-y-2">
                 {[
-                  { icon: <Rocket className="h-4 w-4" />, label: "Desarrollo web", val: "Landing · Corporativo · Ecommerce", iconBg: "bg-blue-50", iconC: "text-blue-700" },
-                  { icon: <BarChart3 className="h-4 w-4" />, label: "SEO Técnico", val: "On-page · Schema · Core Web Vitals", iconBg: "bg-violet-50", iconC: "text-violet-700" },
-                  { icon: <CloudCog className="h-4 w-4" />, label: "Infra & TI", val: "Hosting · Correos · Soporte", iconBg: "bg-emerald-50", iconC: "text-emerald-700" },
-                  { icon: <MonitorSmartphone className="h-4 w-4" />, label: "Hardware", val: "Notebooks · PCs · Combos", iconBg: "bg-amber-50", iconC: "text-amber-700" },
+                  { icon: <Rocket className="h-4 w-4" />, label: "Paginas web para empresas", val: "Sitios corporativos + landing pages", iconBg: "bg-blue-50", iconC: "text-blue-700" },
+                  { icon: <BarChart3 className="h-4 w-4" />, label: "Diseno web Chile", val: "UX comercial + propuesta de valor", iconBg: "bg-violet-50", iconC: "text-violet-700" },
+                  { icon: <CloudCog className="h-4 w-4" />, label: "Desarrollo web Chile", val: "Performance + SEO tecnico + escalabilidad", iconBg: "bg-emerald-50", iconC: "text-emerald-700" },
+                  { icon: <MonitorSmartphone className="h-4 w-4" />, label: "Agencia diseno web Chile", val: "Estrategia + ejecucion + soporte", iconBg: "bg-amber-50", iconC: "text-amber-700" },
                 ].map((row) => (
                   <div key={row.label} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 transition-colors hover:bg-slate-50">
                     <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${row.iconBg} ${row.iconC}`}>{row.icon}</div>
@@ -295,11 +361,11 @@ export default function Home() {
           <div className="space-y-3 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Servicios</p>
             <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Cobertura digital{" "}
-              <span className="text-gradient-blue">integral para tu empresa</span>
+              Servicios SEO por keyword{" "}
+              <span className="text-gradient-blue">para empresas en Chile</span>
             </h2>
             <p className="mx-auto max-w-xl text-slate-600 text-base">
-              Desde la estrategia hasta la ejecución — diseñamos, desarrollamos y mantenemos tu presencia digital.
+              Cada URL responde una busqueda comercial especifica para posicionar mejor y convertir mas.
             </p>
           </div>
 
@@ -322,7 +388,7 @@ export default function Home() {
 
           <div className="text-center">
             <Link href="/servicios" className="inline-flex items-center gap-2 text-sm font-bold text-blue-700 transition-colors hover:text-blue-900">
-              Ver todos los servicios <ArrowRight className="h-4 w-4" />
+              Ver arquitectura completa de servicios <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </Container>

@@ -1,7 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Check, Star, ArrowRight, Zap, Shield, Globe, TrendingUp } from "lucide-react";
+import { JsonLd } from "@/components/seo/json-ld";
+import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Planes de Diseno y Desarrollo Web Chile | Zyteron",
+  description:
+    "Revisa planes y precios de diseno web y desarrollo web para empresas en Chile. Opciones claras, escalables y orientadas a conversion.",
+  path: "/planes",
+  keywords: ["precios diseno web chile", "planes desarrollo web chile", "cotizacion pagina web empresa"],
+});
 
 const plans = [
   {
@@ -56,6 +67,19 @@ const comparisons = [
 export default function PlanesPage() {
   return (
     <main className="bg-white">
+      <JsonLd
+        id="planes-webpage-schema"
+        data={buildWebPageJsonLd({
+          path: "/planes",
+          title: "Planes de Diseno y Desarrollo Web Chile | Zyteron",
+          description:
+            "Pagina de planes de paginas web para empresas en Chile con comparativa y CTA de cotizacion.",
+          breadcrumbs: [
+            { name: "Inicio", path: "/" },
+            { name: "Planes", path: "/planes" },
+          ],
+        })}
+      />
       {/* Hero */}
       <section className="relative overflow-hidden bg-hero-pattern border-b border-slate-200 py-20">
         <Container className="relative z-10 space-y-5">
