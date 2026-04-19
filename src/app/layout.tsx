@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { siteConfig } from "@/config/site";
 import { AppShell } from "@/components/layout/app-shell";
 import { JsonLd } from "@/components/seo/json-ld";
+import { IconSprite } from "@/components/ui/icon-sprite";
 import { buildOrganizationGraph } from "@/lib/seo";
 
 const geistSans = Geist({
@@ -61,6 +62,7 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-white text-slate-900">
         <TooltipProvider>
+          <IconSprite />
           <JsonLd id="zyteron-organization-schema" data={buildOrganizationGraph()} />
           <AppShell>{children}</AppShell>
         </TooltipProvider>

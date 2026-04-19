@@ -14,23 +14,24 @@ import {
 } from "@/lib/seo";
 
 type ServicePageProps = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 export function generateStaticParams() {
   return servicePages.map((service) => ({ slug: service.slug }));
 }
 
-export function generateMetadata({ params }: ServicePageProps): Metadata {
-  const service = getServicePageBySlug(params.slug);
+export async function generateMetadata({ params }: ServicePageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const service = getServicePageBySlug(slug);
 
   if (!service) {
     return createPageMetadata({
       title: "Servicio no encontrado",
       description: "La pagina solicitada no existe.",
-      path: `/servicios/${params.slug}`,
+      path: `/servicios/${slug}`,
       noIndex: true,
     });
   }
@@ -43,8 +44,9 @@ export function generateMetadata({ params }: ServicePageProps): Metadata {
   });
 }
 
-export default function ServicioDetallePage({ params }: ServicePageProps) {
-  const service = getServicePageBySlug(params.slug);
+export default async function ServicioDetallePage({ params }: ServicePageProps) {
+  const { slug } = await params;
+  const service = getServicePageBySlug(slug);
 
   if (!service) {
     notFound();
@@ -105,7 +107,7 @@ export default function ServicioDetallePage({ params }: ServicePageProps) {
         </Container>
       </section>
 
-      <section className="border-b border-slate-200 py-16">
+      <section className="cv-auto border-b border-slate-200 py-16">
         <Container className="grid gap-8 lg:grid-cols-2">
           <div className="space-y-4">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">
@@ -139,7 +141,7 @@ export default function ServicioDetallePage({ params }: ServicePageProps) {
         </Container>
       </section>
 
-      <section className="section-alt py-16">
+      <section className="cv-auto section-alt py-16">
         <Container className="grid gap-8 lg:grid-cols-2">
           <div className="card-premium p-6">
             <h2 className="mb-4 text-xl font-extrabold text-slate-900">Que incluye este servicio</h2>
@@ -168,7 +170,7 @@ export default function ServicioDetallePage({ params }: ServicePageProps) {
         </Container>
       </section>
 
-      <section className="border-t border-slate-200 py-16">
+      <section className="cv-auto border-t border-slate-200 py-16">
         <Container className="space-y-8">
           <div className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">FAQ</p>
@@ -187,7 +189,7 @@ export default function ServicioDetallePage({ params }: ServicePageProps) {
         </Container>
       </section>
 
-      <section className="section-alt border-t border-slate-200 py-16">
+      <section className="cv-auto section-alt border-t border-slate-200 py-16">
         <Container className="space-y-6">
           <h2 className="text-2xl font-extrabold text-slate-900">Servicios relacionados</h2>
           <div className="grid gap-4 md:grid-cols-2">
@@ -199,6 +201,34 @@ export default function ServicioDetallePage({ params }: ServicePageProps) {
               >
                 <h3 className="mb-2 text-base font-bold text-slate-900">{related.navLabel}</h3>
                 <p className="text-sm text-slate-600">{related.summary}</p>
+              </Link>
+            ))}
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                title: "Casos de éxito",
+                description: "Revisa implementaciones modelo y enfoque aplicado.",
+                href: "/casos-exito",
+              },
+              {
+                title: "Blog comercial",
+                description: "Guías para ejecutar esta estrategia con menos riesgo.",
+                href: "/blog",
+              },
+              {
+                title: "FAQ de servicio",
+                description: "Respuestas clave antes de definir alcance y presupuesto.",
+                href: "/faq",
+              },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="card-premium p-5 transition-colors hover:border-blue-200"
+              >
+                <h3 className="mb-2 text-base font-bold text-slate-900">{item.title}</h3>
+                <p className="text-sm text-slate-600">{item.description}</p>
               </Link>
             ))}
           </div>

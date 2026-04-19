@@ -100,7 +100,7 @@ export default function ServiciosPage() {
         </Container>
       </section>
 
-      <section className="py-16">
+      <section className="cv-auto py-16">
         <Container className="space-y-8">
           <div className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">
@@ -142,7 +142,7 @@ export default function ServiciosPage() {
         </Container>
       </section>
 
-      <section className="section-alt border-y border-slate-200 py-16">
+      <section className="cv-auto section-alt border-y border-slate-200 py-16">
         <Container className="grid gap-6 md:grid-cols-3">
           {[
             {
@@ -166,7 +166,47 @@ export default function ServiciosPage() {
         </Container>
       </section>
 
-      <section className="py-16">
+      <section className="cv-auto py-16">
+        <Container className="space-y-6">
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Prueba y contexto</p>
+            <h2 className="text-2xl font-extrabold text-slate-900">
+              Complementa tu decisión con casos, guías y FAQs
+            </h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              {
+                title: "Casos de éxito",
+                description: "Implementaciones reales y enfoque aplicado para empresas B2B.",
+                href: "/casos-exito",
+              },
+              {
+                title: "Blog comercial",
+                description: "Guías para diseño web, SEO y conversión en Chile.",
+                href: "/blog",
+              },
+              {
+                title: "SEO local",
+                description: "Estrategia por ciudad para demanda comercial regional.",
+                href: "/ciudades",
+              },
+              {
+                title: "FAQ estratégica",
+                description: "Respuestas útiles para cotizar y priorizar correctamente.",
+                href: "/faq",
+              },
+            ].map((resource) => (
+              <Link key={resource.href} href={resource.href} className="card-premium p-5 hover:border-blue-200">
+                <h3 className="mb-2 text-base font-bold text-slate-900">{resource.title}</h3>
+                <p className="text-sm text-slate-600">{resource.description}</p>
+              </Link>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      <section className="cv-auto py-16">
         <Container className="space-y-8">
           <div className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">FAQ</p>

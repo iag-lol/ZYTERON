@@ -149,6 +149,24 @@
   animation: wsp-pulse 2.5s ease-in-out infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 800px;
+}
+
 /* ── Text gradients ── */
 .text-gradient-blue {
   background: linear-gradient(135deg, #1e40af 0%, #0ea5e9 100%);

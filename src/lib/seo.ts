@@ -34,11 +34,25 @@ type FaqItem = {
   answer: string;
 };
 
+type ArticleJsonLdInput = {
+  path: string;
+  title: string;
+  description: string;
+  datePublished: string;
+  dateModified?: string;
+};
+
 function normalizePath(path: string) {
   if (!path) return "/";
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
   if (path === "/") return "/";
   return path.startsWith("/") ? path : `/${path}`;
+}
+
+function normalizeMetadataTitle(rawTitle: string) {
+  const escapedBrand = siteConfig.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const brandSuffix = new RegExp(`\\s*[|\\-–—]\\s*${escapedBrand}\\s*$`, "i");
+  return rawTitle.replace(brandSuffix, "").trim();
 }
 
 export function buildAbsoluteUrl(path: string) {
@@ -50,7 +64,7 @@ export function buildAbsoluteUrl(path: string) {
 }
 
 export function createPageMetadata({
-  title,
+  title: rawTitle,
   description,
   path,
   keywords = [],
@@ -59,6 +73,7 @@ export function createPageMetadata({
   const url = buildAbsoluteUrl(path);
   const socialImage = buildAbsoluteUrl("/logo.svg");
   const mergedKeywords = [...new Set([...siteConfig.keywords, ...keywords])];
+  const title = normalizeMetadataTitle(rawTitle);
 
   return {
     title,
@@ -121,7 +136,7 @@ export function buildOrganizationGraph() {
       },
       {
         "@type": "ProfessionalService",
-        "@id": `${siteConfig.url}/#localbusiness`,
+        "@id": `${siteConfig.url}/#professionalservice`,
         name: `${siteConfig.name} Agencia Web`,
         url: siteConfig.url,
         image: `${siteConfig.url}/logo.svg`,
@@ -135,6 +150,25 @@ export function buildOrganizationGraph() {
           addressCountry: "CL",
         },
         sameAs: [siteConfig.social.linkedin].filter(Boolean),
+      },
+      {
+        "@type": "LocalBusiness",
+        "@id": `${siteConfig.url}/#localbusiness`,
+        name: siteConfig.name,
+        url: siteConfig.url,
+        image: `${siteConfig.url}/logo.svg`,
+        telephone: siteConfig.contact.phone,
+        email: siteConfig.contact.email,
+        areaServed: "Chile",
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: siteConfig.address.city,
+          addressRegion: siteConfig.address.region,
+          addressCountry: "CL",
+        },
+        parentOrganization: {
+          "@id": `${siteConfig.url}/#organization`,
+        },
       },
     ],
   };
@@ -222,5 +256,55 @@ export function buildFaqJsonLd(faqs: FaqItem[]) {
         text: faq.answer,
       },
     })),
+  };
+}
+
+export function buildContactPageJsonLd(path: string, description: string) {
+  const pageUrl = buildAbsoluteUrl(path);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "@id": `${pageUrl}#contactpage`,
+    url: pageUrl,
+    name: "Contacto Zyteron",
+    description,
+    isPartOf: {
+      "@id": `${siteConfig.url}/#website`,
+    },
+    about: {
+      "@id": `${siteConfig.url}/#organization`,
+    },
+  };
+}
+
+export function buildArticleJsonLd({
+  path,
+  title,
+  description,
+  datePublished,
+  dateModified,
+}: ArticleJsonLdInput) {
+  const pageUrl = buildAbsoluteUrl(path);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "@id": `${pageUrl}#article`,
+    headline: title,
+    description,
+    inLanguage: siteConfig.locale,
+    url: pageUrl,
+    datePublished,
+    dateModified: dateModified ?? datePublished,
+    author: {
+      "@id": `${siteConfig.url}/#organization`,
+    },
+    publisher: {
+      "@id": `${siteConfig.url}/#organization`,
+    },
+    mainEntityOfPage: {
+      "@id": `${pageUrl}#webpage`,
+    },
   };
 }
