@@ -29,7 +29,7 @@ export default function PrivacidadPage() {
         </p>
         <h2 className="text-xl font-bold text-slate-900">Contacto</h2>
         <p className="text-sm leading-relaxed text-slate-600">
-          Para consultas sobre privacidad, escribenos a contacto@zyteron.cl.
+          Para consultas sobre privacidad, escribenos a eduardo.avila@zyteron.cl.
         </p>
       </Container>
     </main>

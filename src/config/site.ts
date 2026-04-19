@@ -28,7 +28,7 @@ export const siteConfig = {
   },
   contact: {
     phone: "+56 9 8475 2936",
-    email: "contacto@zyteron.cl",
+    email: "eduardo.avila@zyteron.cl",
     whatsapp: "+56 9 8475 2936",
   },
   social: {
