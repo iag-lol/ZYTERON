@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { Container } from "@/components/layout/container";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Mail, MapPin, Clock, ArrowRight, MessageSquare } from "lucide-react";
+import { ContactLeadForm } from "@/components/forms/contact-lead-form";
+import { Mail, MapPin, Clock } from "lucide-react";
 import { JsonLd } from "@/components/seo/json-ld";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { buildContactPageJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
@@ -191,50 +188,7 @@ export default function ContactoPage() {
           </div>
 
           {/* Right — Form */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-lg shadow-slate-100/80">
-            <div className="mb-6 space-y-1">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-blue-700" />
-                <h2 className="text-lg font-bold text-slate-900">Envíanos tu consulta</h2>
-              </div>
-              <p className="text-xs text-slate-500">Completa el formulario y te contactamos a la brevedad.</p>
-            </div>
-
-            <form className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="name" className="text-xs font-bold text-slate-500 uppercase tracking-wide">Nombre y apellido</Label>
-                  <Input id="name" placeholder="Tu nombre" required className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="email" className="text-xs font-bold text-slate-500 uppercase tracking-wide">Email empresarial</Label>
-                  <Input id="email" type="email" placeholder="correo@empresa.cl" required className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="phone" className="text-xs font-bold text-slate-500 uppercase tracking-wide">WhatsApp / Teléfono</Label>
-                  <Input id="phone" placeholder="+56 9 xxxx xxxx" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="company" className="text-xs font-bold text-slate-500 uppercase tracking-wide">Empresa</Label>
-                  <Input id="company" placeholder="Nombre de tu empresa" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="service" className="text-xs font-bold text-slate-500 uppercase tracking-wide">Servicio de interés</Label>
-                <Input id="service" placeholder="Ej: Sitio corporativo + SEO avanzado" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="message" className="text-xs font-bold text-slate-500 uppercase tracking-wide">Cuéntanos tu proyecto</Label>
-                <Textarea id="message" rows={4} placeholder="Describe tus objetivos, plazos y presupuesto estimado..." className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white resize-none" />
-              </div>
-              <Button type="submit" className="w-full gap-2 bg-blue-700 hover:bg-blue-800 text-white font-bold btn-primary-glow">
-                Enviar solicitud <ArrowRight className="h-4 w-4" />
-              </Button>
-              <p className="text-center text-xs text-slate-400">
-                Al enviar, aceptas que procesemos tus datos para gestionar la cotización. Sin spam.
-              </p>
-            </form>
-          </div>
+          <ContactLeadForm />
         </Container>
       </section>
     </main>

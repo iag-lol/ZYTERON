@@ -475,10 +475,10 @@ export default async function AdminDashboard() {
             <p className="text-xs text-slate-400">{leads.length} leads en Supabase · tabla Lead</p>
           </div>
           <Link
-            href="/admin/clientes"
+            href="/admin/contactos"
             className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700"
           >
-            Ver clientes
+            Ver contactos
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </div>

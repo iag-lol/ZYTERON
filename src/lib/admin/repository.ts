@@ -319,6 +319,17 @@ export async function getTaxDocuments() {
   );
 }
 
+export async function getContactLeads() {
+  return safeSelect<Lead>(
+    "Lead",
+    "id, name, email, phone, source, message, type, createdAt",
+    {
+      filters: { type: "CONTACT", source: "CONTACTO_WEB" },
+      orderBy: "createdAt",
+    },
+  );
+}
+
 export async function getClientWorkspace(clientId: string) {
   const [client, quotes, visits, sales, projects, requests, documents] = await Promise.all([
     getClientById(clientId),

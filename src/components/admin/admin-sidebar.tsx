@@ -17,6 +17,7 @@ import {
   BriefcaseBusiness,
   MessagesSquare,
   Landmark,
+  Mail,
 } from "lucide-react";
 
 const navItems = [
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/admin/cotizaciones", label: "Cotizaciones", icon: FileText },
   { href: "/admin/proyectos", label: "Proyectos", icon: BriefcaseBusiness },
   { href: "/admin/solicitudes", label: "Solicitudes", icon: MessagesSquare },
+  { href: "/admin/contactos", label: "Contactos", icon: Mail },
   { href: "/admin/visitas", label: "Visitas técnicas", icon: CalendarClock },
   { href: "/admin/ventas", label: "Ventas", icon: ShoppingCart },
   { href: "/admin/sii", label: "SII", icon: Landmark },
