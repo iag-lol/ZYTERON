@@ -120,6 +120,11 @@ type SelectOptions = {
   filters?: Record<string, string | number | null | undefined>;
 };
 
+function logReadError(table: string, error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(`[admin/read] ${table}: ${message}`);
+}
+
 function isMissingRelationError(message?: string) {
   const normalized = message?.toLowerCase();
   return Boolean(
@@ -132,37 +137,44 @@ function isMissingRelationError(message?: string) {
 }
 
 export async function safeSelect<T>(table: string, select: string, options: SelectOptions = {}) {
-  const { supabase } = createSupabaseServerClient();
-  let query = supabase.from(table).select(select);
+  try {
+    const { supabase } = createSupabaseServerClient();
+    let query = supabase.from(table).select(select);
 
-  if (options.filters) {
-    for (const [key, value] of Object.entries(options.filters)) {
-      if (value === undefined) continue;
-      if (value === null) {
-        query = query.is(key, null);
-      } else {
-        query = query.eq(key, value);
+    if (options.filters) {
+      for (const [key, value] of Object.entries(options.filters)) {
+        if (value === undefined) continue;
+        if (value === null) {
+          query = query.is(key, null);
+        } else {
+          query = query.eq(key, value);
+        }
       }
     }
-  }
 
-  if (options.orderBy) {
-    query = query.order(options.orderBy, { ascending: options.ascending ?? false });
-  }
+    if (options.orderBy) {
+      query = query.order(options.orderBy, { ascending: options.ascending ?? false });
+    }
 
-  if (options.limit) {
-    query = query.limit(options.limit);
-  }
+    if (options.limit) {
+      query = query.limit(options.limit);
+    }
 
-  const { data, error } = await query;
-  if (error) {
-    if (isMissingRelationError(error.message)) {
+    const { data, error } = await query;
+    if (error) {
+      // Lecturas del panel no deben romper render de páginas administrativas.
+      if (!isMissingRelationError(error.message)) {
+        logReadError(table, error.message);
+      }
       return [] as T[];
     }
-    throw error;
-  }
 
-  return (data ?? []) as T[];
+    return (data ?? []) as T[];
+  } catch (error) {
+    // Fallo de entorno/red/permisos: fallback seguro para evitar 500 en navegación.
+    logReadError(table, error);
+    return [] as T[];
+  }
 }
 
 export async function safeSelectSingle<T>(table: string, select: string, filters: Record<string, string | number>) {
