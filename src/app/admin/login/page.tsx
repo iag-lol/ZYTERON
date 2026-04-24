@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,12 @@ export default function AdminLoginPage() {
   const [pwd, setPwd] = useState("");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    const search = typeof window !== "undefined" ? window.location.search : "";
+    const hasError = new URLSearchParams(search).get("error");
+    if (hasError) setError("Contraseña incorrecta");
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,11 +44,12 @@ export default function AdminLoginPage() {
           <h1 className="text-2xl font-semibold text-slate-900">Acceso seguro</h1>
           <p className="text-sm text-slate-600">Protegido con contraseña administrada por ambiente.</p>
         </div>
-        <form className="space-y-4" onSubmit={submit}>
+        <form className="space-y-4" onSubmit={submit} method="post" action="/admin/login/submit">
           <div className="space-y-2">
             <Label htmlFor="password">Contraseña</Label>
             <Input
               id="password"
+              name="pwd"
               type="password"
               value={pwd}
               onChange={(e) => setPwd(e.target.value)}

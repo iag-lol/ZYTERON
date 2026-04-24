@@ -6,6 +6,13 @@ const ADMIN_COOKIE = "zyteron_admin_token";
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  if (pathname === "/admin/login" && req.method === "POST") {
+    const submitUrl = req.nextUrl.clone();
+    submitUrl.pathname = "/admin/login/submit";
+    submitUrl.search = "";
+    return NextResponse.redirect(submitUrl, 307);
+  }
+
   const isAdminArea = pathname.startsWith("/admin");
   const isLogin = pathname.startsWith("/admin/login");
   const isLogout = pathname.startsWith("/admin/logout");
