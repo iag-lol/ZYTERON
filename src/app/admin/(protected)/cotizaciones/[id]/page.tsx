@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, Download, Mail, MapPin, Phone, ReceiptText } from "lucide-react";
+import { ArrowLeft, CalendarDays, Download, FileEdit, Mail, MapPin, Phone, ReceiptText } from "lucide-react";
 import { currencyCLP } from "@/lib/admin/quote";
 import { getQuoteById } from "@/lib/admin/repository";
 
@@ -47,6 +47,13 @@ export default async function CotizacionDetallePage({ params }: Params) {
         </div>
 
         <div className="flex gap-2">
+          <Link
+            href={`/admin/cotizaciones/${quote.id}/editar`}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            <FileEdit className="h-4 w-4" />
+            Editar
+          </Link>
           <a
             href={quote.pdfUrl}
             target="_blank"

@@ -3,6 +3,7 @@ import {
   ArrowUpRight,
   BarChart2,
   Download,
+  FileEdit,
   FileText,
   Mail,
   Plus,
@@ -265,6 +266,13 @@ export default async function CotizacionesPage() {
                         title="Enviar email"
                       >
                         <Mail className="h-3.5 w-3.5" />
+                      </Link>
+                      <Link
+                        href={`/admin/cotizaciones/${q.id}/editar`}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
+                        title="Editar cotización"
+                      >
+                        <FileEdit className="h-3.5 w-3.5" />
                       </Link>
                       <Link
                         href={`/admin/cotizaciones/${q.id}`}

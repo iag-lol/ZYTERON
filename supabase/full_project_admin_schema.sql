@@ -382,4 +382,84 @@ begin
 end
 $$;
 
+-- RLS compatibility for User inserts/updates from contact/quote admin flows
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.tables
+    where table_schema = 'public'
+      and table_name = 'User'
+  ) then
+    alter table public."User" enable row level security;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'User'
+        and policyname = 'user_public_insert_client_from_admin_flows'
+    ) then
+      create policy user_public_insert_client_from_admin_flows
+      on public."User"
+      for insert
+      to anon, authenticated
+      with check (
+        role = 'CLIENT'
+        and length(trim(coalesce(email, ''))) > 0
+        and length(trim(coalesce(name, ''))) > 0
+        and length(trim(coalesce("passwordHash", ''))) > 0
+      );
+    end if;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'User'
+        and policyname = 'user_public_update_client_records'
+    ) then
+      create policy user_public_update_client_records
+      on public."User"
+      for update
+      to anon, authenticated
+      using (role = 'CLIENT')
+      with check (
+        role = 'CLIENT'
+        and length(trim(coalesce(email, ''))) > 0
+        and length(trim(coalesce(name, ''))) > 0
+      );
+    end if;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'User'
+        and policyname = 'user_admin_select_all'
+    ) then
+      create policy user_admin_select_all
+      on public."User"
+      for select
+      to anon, authenticated
+      using (true);
+    end if;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'User'
+        and policyname = 'user_admin_delete_client_records'
+    ) then
+      create policy user_admin_delete_client_records
+      on public."User"
+      for delete
+      to anon, authenticated
+      using (role = 'CLIENT');
+    end if;
+  end if;
+end
+$$;
+
 commit;

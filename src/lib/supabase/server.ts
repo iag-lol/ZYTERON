@@ -16,9 +16,9 @@ function normalizeSupabaseUrl(rawUrl: string) {
 
 export function createSupabaseServerClient() {
   const rawUrl = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!rawUrl || !key) {
-    throw new Error("Supabase URL o service role key no configurados");
+    throw new Error("SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY no configurados en el servidor");
   }
   const url = normalizeSupabaseUrl(rawUrl);
   // We don't use auth helpers; for admin metrics we rely on service role.
