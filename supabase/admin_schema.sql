@@ -217,6 +217,81 @@ create index if not exists idx_product_category on public."Product" ("categoryId
 create index if not exists idx_discount_active on public."WebDiscount" (active);
 create index if not exists idx_clientreview_status_created on public."ClientReview" (status, "createdAt" desc);
 
+-- RLS compatibility for public web forms (CONTACTO / COTIZADOR / COMENTARIOS)
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.tables
+    where table_schema = 'public'
+      and table_name = 'Lead'
+  ) then
+    alter table public."Lead" enable row level security;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'Lead'
+        and policyname = 'lead_public_insert_contact_package'
+    ) then
+      create policy lead_public_insert_contact_package
+      on public."Lead"
+      for insert
+      to anon, authenticated
+      with check (
+        source in ('CONTACTO_WEB', 'COTIZADOR_WEB')
+        and type in ('CONTACT', 'PACKAGE_BUILDER')
+      );
+    end if;
+  end if;
+end
+$$;
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.tables
+    where table_schema = 'public'
+      and table_name = 'ClientReview'
+  ) then
+    alter table public."ClientReview" enable row level security;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'ClientReview'
+        and policyname = 'clientreview_public_insert_pending'
+    ) then
+      create policy clientreview_public_insert_pending
+      on public."ClientReview"
+      for insert
+      to anon, authenticated
+      with check (
+        status = 'PENDING'
+        and rating between 1 and 5
+      );
+    end if;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'ClientReview'
+        and policyname = 'clientreview_public_select_approved'
+    ) then
+      create policy clientreview_public_select_approved
+      on public."ClientReview"
+      for select
+      to anon, authenticated
+      using (status = 'APPROVED');
+    end if;
+  end if;
+end
+$$;
+
 insert into storage.buckets (id, name, public)
 select 'quote-documents', 'quote-documents', true
 where not exists (
