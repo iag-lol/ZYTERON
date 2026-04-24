@@ -142,6 +142,69 @@ function applyDiscounts(
   return applied;
 }
 
+function buildCartSummaryText(input: {
+  selectedPlan: PublicPlan | null;
+  selectedExtras: Array<{ extra: PublicExtra; quantity: number }>;
+  appliedDiscounts: CartDiscount[];
+  subtotal: number;
+  discountTotal: number;
+  iva: number;
+  total: number;
+  includeIva: boolean;
+  form: {
+    name: string;
+    email: string;
+    phone: string;
+    company: string;
+    service: string;
+    message: string;
+  };
+}) {
+  const {
+    selectedPlan,
+    selectedExtras,
+    appliedDiscounts,
+    subtotal,
+    discountTotal,
+    iva,
+    total,
+    includeIva,
+    form,
+  } = input;
+
+  const extrasLines = selectedExtras.map(
+    (item) => `- ${item.extra.name} x${item.quantity}: ${currencyCLP(item.extra.price * item.quantity)}`,
+  );
+  const discountLines = appliedDiscounts.map(
+    (discount) => `- ${discount.name}: -${currencyCLP(discount.amount)}`,
+  );
+
+  const lines = [
+    "Hola Zyteron, quiero cotizar con este detalle:",
+    "",
+    `Plan base: ${selectedPlan?.name || "Sin plan"} (${currencyCLP(selectedPlan?.price || 0)})`,
+    `Extras (${selectedExtras.length}):`,
+    ...(extrasLines.length > 0 ? extrasLines : ["- Sin extras"]),
+    "",
+    "Resumen financiero:",
+    `- Subtotal: ${currencyCLP(subtotal)}`,
+    ...(discountLines.length > 0 ? discountLines : []),
+    `- Descuento total: ${currencyCLP(discountTotal)}`,
+    `- IVA${includeIva ? " (19%)" : ""}: ${currencyCLP(iva)}`,
+    `- Total final: ${currencyCLP(total)}`,
+    "",
+    "Datos de contacto:",
+    `- Nombre: ${form.name.trim() || "No informado"}`,
+    `- Empresa: ${form.company.trim() || "No informada"}`,
+    `- Email: ${form.email.trim() || "No informado"}`,
+    `- Teléfono: ${form.phone.trim() || "No informado"}`,
+    `- Servicio: ${form.service.trim() || "No especificado"}`,
+    form.message.trim() ? `- Necesidad: ${form.message.trim()}` : "",
+  ].filter(Boolean);
+
+  return lines.join("\n");
+}
+
 export function PackageBuilder({ plans, extras, discounts, reviews }: BuilderProps) {
   const [selectedPlanId, setSelectedPlanId] = useState<string>(plans[1]?.id || plans[0]?.id || "");
   const [extraQtyById, setExtraQtyById] = useState<Record<string, number>>({});
@@ -208,6 +271,22 @@ export function PackageBuilder({ plans, extras, discounts, reviews }: BuilderPro
   const canSubmit = Boolean(selectedPlan) && Boolean(form.name.trim()) && Boolean(form.email.trim());
 
   const extrasByCategory = useMemo(() => groupedExtras(extras), [extras]);
+  const whatsappMessage = useMemo(
+    () =>
+      buildCartSummaryText({
+        selectedPlan,
+        selectedExtras,
+        appliedDiscounts,
+        subtotal,
+        discountTotal,
+        iva,
+        total,
+        includeIva,
+        form,
+      }),
+    [appliedDiscounts, discountTotal, form, includeIva, iva, selectedExtras, selectedPlan, subtotal, total],
+  );
+  const whatsappHref = `https://wa.me/56984752936?text=${encodeURIComponent(whatsappMessage)}`;
 
   const updateQty = (extraId: string, next: number) => {
     setExtraQtyById((prev) => {
@@ -643,16 +722,24 @@ export function PackageBuilder({ plans, extras, discounts, reviews }: BuilderPro
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Canal rápido</p>
-            <p className="mt-1 text-sm text-slate-600">Si prefieres atención inmediata, también puedes enviar por WhatsApp.</p>
+            <p className="mt-1 text-sm text-slate-600">
+              Envía por WhatsApp exactamente el carrito que armaste, con plan, extras y totales.
+            </p>
             <Button asChild className="mt-4 w-full gap-2 bg-emerald-600 font-bold text-white hover:bg-emerald-700">
               <Link
-                href={`https://wa.me/56984752936?text=${encodeURIComponent("Hola Zyteron, necesito ayuda para cotizar un paquete web.")}`}
+                href={whatsappHref}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Escribir por WhatsApp <ArrowRight className="h-4 w-4" />
+                Enviar detalle por WhatsApp <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
+            <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-2">
+              <p className="text-[11px] font-semibold text-slate-500">Vista previa del mensaje:</p>
+              <pre className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap text-[10px] leading-relaxed text-slate-600">
+                {whatsappMessage}
+              </pre>
+            </div>
           </div>
         </aside>
       </section>

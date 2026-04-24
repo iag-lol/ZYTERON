@@ -156,7 +156,19 @@ export default async function AdminContactosPage() {
                       </div>
                     </div>
                     {lead.details.brief ? (
-                      <p className="mt-2 text-[12px] leading-5 text-slate-500">{lead.details.brief}</p>
+                      <p className="mt-2 whitespace-pre-line text-[12px] leading-5 text-slate-500">{lead.details.brief}</p>
+                    ) : null}
+                    {lead.details.cartLines && lead.details.cartLines.length > 0 ? (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {lead.details.cartLines.map((line) => (
+                          <span
+                            key={`${lead.id}-${line}`}
+                            className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] text-slate-600"
+                          >
+                            {line}
+                          </span>
+                        ))}
+                      </div>
                     ) : null}
                   </div>
 
@@ -174,6 +186,11 @@ export default async function AdminContactosPage() {
                     </p>
                     {lead.details.selectedPlan ? (
                       <p className="mt-1 text-[11px] text-slate-500">Plan: {lead.details.selectedPlan}</p>
+                    ) : null}
+                    {lead.details.selectedExtras && lead.details.selectedExtras.length > 0 ? (
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        Extras: {lead.details.selectedExtras.join(", ")}
+                      </p>
                     ) : null}
                   </div>
 

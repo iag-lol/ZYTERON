@@ -5,6 +5,7 @@ export type ContactLeadDetails = {
   submittedFrom?: string;
   selectedPlan?: string;
   selectedExtras?: string[];
+  cartLines?: string[];
   cartTotal?: number;
 };
 
@@ -28,6 +29,9 @@ export function serializeContactLeadDetails(details: ContactLeadDetails) {
     selectedPlan: cleanText(details.selectedPlan) || undefined,
     selectedExtras: Array.isArray(details.selectedExtras)
       ? details.selectedExtras.map((item) => cleanText(item)).filter(Boolean)
+      : undefined,
+    cartLines: Array.isArray(details.cartLines)
+      ? details.cartLines.map((item) => cleanText(item)).filter(Boolean)
       : undefined,
     cartTotal:
       typeof details.cartTotal === "number" && Number.isFinite(details.cartTotal)
@@ -62,6 +66,9 @@ export function parseContactLeadDetails(message?: string | null): ParsedContactL
       selectedPlan: cleanText(parsed.selectedPlan) || undefined,
       selectedExtras: Array.isArray(parsed.selectedExtras)
         ? parsed.selectedExtras.map((item) => cleanText(item)).filter(Boolean)
+        : undefined,
+      cartLines: Array.isArray(parsed.cartLines)
+        ? parsed.cartLines.map((item) => cleanText(item)).filter(Boolean)
         : undefined,
       cartTotal:
         typeof parsed.cartTotal === "number" && Number.isFinite(parsed.cartTotal)

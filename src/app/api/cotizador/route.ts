@@ -70,12 +70,22 @@ export async function POST(req: Request) {
       .filter(Boolean)
       .join("\n");
 
+    const cartLines = [
+      `Plan: ${data.planName} (${formatCurrency(data.planPrice)})`,
+      ...data.extras.map((item) => `${item.name} x${item.quantity} (${formatCurrency(item.price * item.quantity)})`),
+      `Subtotal: ${formatCurrency(data.subtotal)}`,
+      `Descuentos: ${formatCurrency(data.discountTotal)}`,
+      `IVA: ${formatCurrency(data.iva)}`,
+      `Total: ${formatCurrency(data.total)}`,
+    ];
+
     const leadMessage = serializeContactLeadDetails({
       company: data.company,
       service: serviceSummary,
       brief: detailLines,
       selectedPlan: data.planName,
       selectedExtras: data.extras.map((item) => item.name),
+      cartLines,
       cartTotal: data.total,
       submittedFrom: req.headers.get("referer") || undefined,
     });
