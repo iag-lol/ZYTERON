@@ -6,6 +6,7 @@ import { Check, Star, ArrowRight, Zap, Shield, Globe, TrendingUp } from "lucide-
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 import { getWebPricingSnapshot } from "@/lib/web-control";
+import { getSettingsByPrefix } from "@/lib/admin/repository";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,32 @@ function currency(value: number) {
 }
 
 export default async function PlanesPage() {
-  const { plans: dbPlans } = await getWebPricingSnapshot();
+  const [{ plans: dbPlans }, planExclusions] = await Promise.all([
+    getWebPricingSnapshot(),
+    getSettingsByPrefix("plan_not_included_"),
+  ]);
+
+  const planNotIncludedBySlug = Object.fromEntries(
+    planExclusions.map((setting) => {
+      const slug = setting.key.replace("plan_not_included_", "");
+      try {
+        const parsed = JSON.parse(setting.value);
+        if (Array.isArray(parsed)) {
+          return [slug, parsed.map((item) => String(item).trim()).filter(Boolean)];
+        }
+      } catch {
+        // fallback below
+      }
+      return [
+        slug,
+        setting.value
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean),
+      ];
+    }),
+  ) as Record<string, string[]>;
+
   const plans = dbPlans.map((plan) => ({
     name: plan.name,
     price: currency(plan.price),
@@ -47,11 +73,12 @@ export default async function PlanesPage() {
     gifts: plan.freeGifts,
     features: plan.features,
     notIncluded:
-      plan.tier === "BASIC"
+      planNotIncludedBySlug[plan.slug] ??
+      (plan.tier === "BASIC"
         ? ["Panel de administración", "Blog integrado", "SEO avanzado"]
         : plan.tier === "INTERMEDIATE"
           ? ["Panel admin autónomo", "Dominio .cl (agrégalo como extra)"]
-          : [],
+          : []),
     cta:
       plan.tier === "BASIC"
         ? "Comenzar con Básico"
@@ -159,6 +186,20 @@ export default async function PlanesPage() {
                     </div>
                   ))}
                 </div>
+
+                {plan.notIncluded.length > 0 ? (
+                  <div className="mb-6 space-y-2">
+                    <p className={`text-xs font-bold uppercase tracking-widest mb-2.5 ${plan.featured ? "text-rose-200" : "text-rose-500"}`}>
+                      No incluye
+                    </p>
+                    {plan.notIncluded.map((item) => (
+                      <div key={item} className={`flex items-start gap-2 text-sm ${plan.featured ? "text-rose-100" : "text-slate-500"}`}>
+                        <span className={`mt-1.5 inline-block h-1.5 w-1.5 rounded-full ${plan.featured ? "bg-rose-200" : "bg-rose-400"}`} />
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
 
                 <Button
                   asChild

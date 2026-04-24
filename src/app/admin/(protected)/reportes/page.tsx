@@ -29,6 +29,8 @@ function pct(value: number) {
 export default async function ReportesPage() {
   const data = await getAdminSnapshot();
   const { metrics, charts } = data;
+  const leadBaseCount = metrics.conversion.leadBase;
+  const leadBaseEstimated = metrics.conversion.leadBaseEstimated;
 
   const maxRevenue = Math.max(1, ...charts.revenueByMonth.map((m) => m.value));
   const totalRevenue = charts.revenueByMonth.reduce((acc, m) => acc + m.value, 0);
@@ -203,9 +205,9 @@ export default async function ReportesPage() {
           <div className="space-y-5">
             {[
               {
-                label: "Leads",
-                count: metrics.totals.leads,
-                pct: 100,
+                label: leadBaseEstimated ? "Base embudo" : "Leads",
+                count: leadBaseCount,
+                pct: leadBaseCount > 0 ? 100 : 0,
                 color: "bg-blue-500",
                 bgLight: "bg-blue-50",
                 textColor: "text-blue-700",
@@ -373,7 +375,7 @@ export default async function ReportesPage() {
           {
             label: "Leads → Cotizaciones",
             value: pct(metrics.conversion.quoteRate),
-            sub: `${metrics.totals.quotes} de ${metrics.totals.leads} leads`,
+            sub: `${metrics.totals.quotes} de ${leadBaseCount} ${leadBaseEstimated ? "base estimada" : "leads"}`,
             good: metrics.conversion.quoteRate >= 30,
           },
           {

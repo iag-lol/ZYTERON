@@ -4,8 +4,10 @@ import {
   getQuotes,
   getRequests,
   getSales,
+  syncWonQuotesCrossModules,
   getTaxDocuments,
   getVisits,
+  getWebVisits,
   type Client,
   type ClientRequest,
   type EnrichedQuote,
@@ -14,6 +16,7 @@ import {
   type Sale,
   type TaxDocument,
   type Visit,
+  type WebVisit,
 } from "@/lib/admin/repository";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -28,6 +31,7 @@ export type AdminSnapshot = {
   projects: Project[];
   requests: ClientRequest[];
   taxDocuments: TaxDocument[];
+  webVisits: WebVisit[];
   metrics: {
     totals: {
       leads: number;
@@ -39,7 +43,28 @@ export type AdminSnapshot = {
       taxDocuments: number;
     };
     money: { pipelineValue: number; revenue: number; avgTicket: number };
-    conversion: { winRate: number; quoteRate: number; visitRate: number };
+    conversion: {
+      winRate: number;
+      quoteRate: number;
+      visitRate: number;
+      leadBase: number;
+      leadBaseEstimated: boolean;
+    };
+    web: {
+      totalVisits: number;
+      todayVisits: number;
+      uniqueIps: number;
+      uniqueSessions: number;
+      revenuePerVisit: number;
+      topPaths: { path: string; visits: number; uniqueIps: number }[];
+      recentNavigations: {
+        path: string;
+        createdAt: string | null;
+        ip: string | null;
+        ipHash: string | null;
+        sessionId: string | null;
+      }[];
+    };
     lastUpdated: string;
   };
   charts: {
@@ -112,6 +137,7 @@ function buildSnapshot(base: {
   projects: Project[];
   requests: ClientRequest[];
   taxDocuments: TaxDocument[];
+  webVisits: WebVisit[];
 }): AdminSnapshot {
   const leads = base.leads ?? [];
   const quotes = base.quotes ?? [];
@@ -121,6 +147,7 @@ function buildSnapshot(base: {
   const projects = base.projects ?? [];
   const requests = base.requests ?? [];
   const taxDocuments = base.taxDocuments ?? [];
+  const webVisits = base.webVisits ?? [];
 
   const totals = {
     leads: leads.length,
@@ -135,9 +162,64 @@ function buildSnapshot(base: {
   const pipelineValue = quotes.reduce((acc, quote) => acc + (quote.totalAmount || 0), 0);
   const revenue = sales.reduce((acc, sale) => acc + (typeof sale.total === "number" ? sale.total : 0), 0);
   const avgTicket = sales.length ? revenue / sales.length : 0;
+  const leadBase =
+    totals.leads > 0
+      ? totals.leads
+      : totals.quotes > 0
+        ? totals.quotes
+        : totals.visits > 0
+          ? totals.visits
+          : totals.sales;
+  const leadBaseEstimated = totals.leads === 0 && leadBase > 0;
   const winRate = totals.quotes ? round((totals.sales / totals.quotes) * 100) : 0;
-  const quoteRate = totals.leads ? round((totals.quotes / totals.leads) * 100) : 0;
+  const quoteRate = leadBase ? round((totals.quotes / leadBase) * 100) : 0;
   const visitRate = totals.quotes ? round((totals.visits / totals.quotes) * 100) : 0;
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const todayVisits = webVisits.filter((visit) => {
+    if (!visit.createdAt) return false;
+    const ts = new Date(visit.createdAt).getTime();
+    return !Number.isNaN(ts) && ts >= todayStart;
+  }).length;
+
+  const uniqueIps = new Set(
+    webVisits
+      .map((visit) => String(visit.ipHash || visit.ip || "").trim())
+      .filter(Boolean),
+  ).size;
+  const uniqueSessions = new Set(
+    webVisits
+      .map((visit) => String(visit.sessionId || "").trim())
+      .filter(Boolean),
+  ).size;
+
+  const pathMap = new Map<string, { visits: number; ips: Set<string> }>();
+  for (const visit of webVisits) {
+    const key = String(visit.path || "").trim() || "/";
+    const current = pathMap.get(key) || { visits: 0, ips: new Set<string>() };
+    current.visits += 1;
+    const ipKey = String(visit.ipHash || visit.ip || "").trim();
+    if (ipKey) current.ips.add(ipKey);
+    pathMap.set(key, current);
+  }
+  const topPaths = Array.from(pathMap.entries())
+    .map(([path, value]) => ({
+      path,
+      visits: value.visits,
+      uniqueIps: value.ips.size,
+    }))
+    .sort((a, b) => b.visits - a.visits)
+    .slice(0, 6);
+
+  const revenuePerVisit = webVisits.length > 0 ? revenue / webVisits.length : 0;
+  const recentNavigations = webVisits.slice(0, 8).map((visit) => ({
+    path: visit.path || "/",
+    createdAt: visit.createdAt || null,
+    ip: visit.ip || null,
+    ipHash: visit.ipHash || null,
+    sessionId: visit.sessionId || null,
+  }));
 
   return {
     leads,
@@ -148,6 +230,7 @@ function buildSnapshot(base: {
     projects,
     requests,
     taxDocuments,
+    webVisits,
     metrics: {
       totals,
       money: {
@@ -159,6 +242,17 @@ function buildSnapshot(base: {
         winRate,
         quoteRate,
         visitRate,
+        leadBase,
+        leadBaseEstimated,
+      },
+      web: {
+        totalVisits: webVisits.length,
+        todayVisits,
+        uniqueIps,
+        uniqueSessions,
+        revenuePerVisit: round(revenuePerVisit),
+        topPaths,
+        recentNavigations,
       },
       lastUpdated: new Date().toISOString(),
     },
@@ -176,7 +270,10 @@ function buildSnapshot(base: {
 
 export async function getAdminSnapshot(): Promise<AdminSnapshot> {
   try {
-    const [leads, quotes, visits, sales, clients, projects, requests, taxDocuments] =
+    // Reconciliación defensiva: asegura que toda cotización WON tenga cliente, venta y documento SII.
+    await syncWonQuotesCrossModules();
+
+    const [leads, quotes, visits, sales, clients, projects, requests, taxDocuments, webVisits] =
       await Promise.all([
         fetchLeads(),
         getQuotes(),
@@ -186,6 +283,7 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
         getProjects(),
         getRequests(),
         getTaxDocuments(),
+        getWebVisits(),
       ]);
 
     return buildSnapshot({
@@ -197,6 +295,7 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
       projects,
       requests,
       taxDocuments,
+      webVisits,
     });
   } catch {
     return buildSnapshot({
@@ -208,8 +307,9 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
       projects: [],
       requests: [],
       taxDocuments: [],
+      webVisits: [],
     });
   }
 }
 
-export type { Client, ClientRequest, EnrichedQuote as Quote, Lead, Project, Sale, TaxDocument, Visit };
+export type { Client, ClientRequest, EnrichedQuote as Quote, Lead, Project, Sale, TaxDocument, Visit, WebVisit };

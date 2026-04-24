@@ -160,6 +160,13 @@ export type ClientReview = {
   approvedAt?: string | null;
 };
 
+export type SettingRecord = {
+  id: string;
+  key: string;
+  value: string;
+  type?: "TEXT" | "JSON" | "BOOLEAN" | string | null;
+};
+
 export type TaxDocument = {
   id: string;
   clientId?: string | null;
@@ -180,6 +187,18 @@ export type TaxDocument = {
   pdfUrl?: string | null;
   xmlUrl?: string | null;
   notes?: string | null;
+  createdAt?: string | null;
+};
+
+export type WebVisit = {
+  id: string;
+  path: string;
+  pageTitle?: string | null;
+  referrer?: string | null;
+  userAgent?: string | null;
+  ip?: string | null;
+  ipHash?: string | null;
+  sessionId?: string | null;
   createdAt?: string | null;
 };
 
@@ -431,6 +450,14 @@ export async function getTaxDocuments() {
   );
 }
 
+export async function getWebVisits(limit = 5000) {
+  return safeSelect<WebVisit>(
+    "WebVisit",
+    "id, path, pageTitle, referrer, userAgent, ip, ipHash, sessionId, createdAt",
+    { orderBy: "createdAt", limit },
+  );
+}
+
 export async function getContactLeads() {
   const rows = await safeSelect<Lead>(
     "Lead",
@@ -448,6 +475,117 @@ export async function getContactLeads() {
       (source === "COTIZADOR_WEB" && type === "PACKAGE_BUILDER")
     );
   });
+}
+
+type WonQuoteRow = {
+  id: string;
+  userId?: string | null;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  company?: string | null;
+  subtotal?: number | null;
+  total?: number | null;
+  status?: string | null;
+  createdAt?: string | null;
+};
+
+function toDateOnly(value?: string | null) {
+  if (!value) return new Date().toISOString().slice(0, 10);
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return new Date().toISOString().slice(0, 10);
+  return parsed.toISOString().slice(0, 10);
+}
+
+export async function syncWonQuotesCrossModules(limit = 1000) {
+  const wonQuotes = await safeSelect<WonQuoteRow>(
+    "Quote",
+    "id, userId, name, email, phone, company, subtotal, total, status, createdAt",
+    { filters: { status: "WON" }, orderBy: "createdAt", limit },
+  );
+
+  for (const quote of wonQuotes) {
+    try {
+      let clientId = quote.userId || null;
+      if (!clientId && quote.email) {
+        clientId = await findOrCreateClientByEmail({
+          name: quote.name || quote.company || quote.email,
+          email: quote.email,
+          company: quote.company || null,
+          phone: quote.phone || null,
+        });
+      }
+
+      if (clientId && quote.userId !== clientId) {
+        await updateRows("Quote", { userId: clientId }, { id: quote.id });
+      }
+
+      const invoiceRef = `COT:${quote.id}`;
+      const existingSale = await safeSelectSingle<{ id: string; clientId?: string | null }>(
+        "Sale",
+        "id, clientId",
+        { invoiceRef },
+      );
+
+      let saleId = existingSale?.id ?? null;
+      if (!saleId) {
+        const createdSale = await insertRow<{ id: string }>(
+          "Sale",
+          {
+            clientId: clientId || null,
+            total: Math.max(0, Math.round(typeof quote.total === "number" ? quote.total : 0)),
+            description: `Venta sincronizada desde cotización WON ${quote.id}`,
+            paymentMethod: null,
+            invoiceRef,
+            createdAt: quote.createdAt || new Date().toISOString(),
+          },
+          "id",
+        );
+        saleId = createdSale.id;
+      } else if (clientId && !existingSale?.clientId) {
+        await updateRows("Sale", { clientId }, { id: saleId });
+      }
+
+      const existingTaxDoc = await safeSelectSingle<{ id: string }>("TaxDocument", "id", {
+        quoteId: quote.id,
+      });
+
+      if (!existingTaxDoc) {
+        const subtotalAmount = Math.max(
+          0,
+          Math.round(typeof quote.subtotal === "number" ? quote.subtotal : 0),
+        );
+        const totalAmount = Math.max(
+          0,
+          Math.round(typeof quote.total === "number" ? quote.total : 0),
+        );
+        const taxAmount = Math.max(0, totalAmount - subtotalAmount);
+
+        await insertRow(
+          "TaxDocument",
+          {
+            clientId: clientId || null,
+            quoteId: quote.id,
+            saleId: saleId || null,
+            type: "Factura",
+            issueDate: toDateOnly(quote.createdAt),
+            dueDate: null,
+            netAmount: subtotalAmount,
+            taxAmount,
+            totalAmount,
+            status: "Pendiente",
+            paymentStatus: "Pendiente",
+            emissionMethod: "Sincronización automática desde cotización WON",
+            notes: `Auto-sync quote ${quote.id}`,
+            createdAt: quote.createdAt || new Date().toISOString(),
+          },
+          "id",
+        );
+      }
+    } catch (error) {
+      console.error(`[won-sync] quote ${quote.id}:`, toErrorMessage(error));
+    }
+  }
 }
 
 export async function getPublicPlans() {
@@ -509,6 +647,46 @@ export async function getClientReviews(status?: "PENDING" | "APPROVED" | "REJECT
 
   if (!status) return rows;
   return rows.filter((review) => String(review.status || "").toUpperCase() === status);
+}
+
+export async function getSettingsByPrefix(prefix: string) {
+  const rows = await safeSelect<SettingRecord>("Setting", "id, key, value, type", {
+    orderBy: "key",
+    ascending: true,
+  });
+
+  return rows.filter((row) => row.key?.startsWith(prefix));
+}
+
+export async function upsertSetting(input: { key: string; value: string; type?: "TEXT" | "JSON" | "BOOLEAN" }) {
+  const key = input.key.trim();
+  if (!key) {
+    throw new Error("Setting key inválida.");
+  }
+
+  const existing = await safeSelectSingle<SettingRecord>("Setting", "id, key", { key });
+  if (existing?.id) {
+    await updateRows(
+      "Setting",
+      {
+        value: input.value,
+        type: input.type || "TEXT",
+      },
+      { id: existing.id },
+    );
+    return existing.id;
+  }
+
+  const created = await insertRow<SettingRecord>(
+    "Setting",
+    {
+      key,
+      value: input.value,
+      type: input.type || "TEXT",
+    },
+    "id",
+  );
+  return created.id;
 }
 
 export async function getClientWorkspace(clientId: string) {

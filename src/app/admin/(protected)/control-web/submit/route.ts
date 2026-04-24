@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { deleteRows, insertRow, updateRows } from "@/lib/admin/repository";
+import { deleteRows, insertRow, upsertSetting, updateRows } from "@/lib/admin/repository";
 
 const bodySchema = z.object({
   section: z.enum(["plan", "extra", "product", "discount", "review"]),
@@ -68,7 +68,11 @@ export async function POST(request: Request) {
     if (section === "plan") {
       if (action === "delete") {
         if (!id) return NextResponse.json({ error: "ID requerido" }, { status: 400 });
+        const slug = text(data.slug);
         await deleteRows("Plan", { id });
+        if (slug) {
+          await deleteRows("Setting", { key: `plan_not_included_${slug}` });
+        }
         return NextResponse.json({ ok: true });
       }
 
@@ -90,8 +94,15 @@ export async function POST(request: Request) {
 
       if (action === "create") {
         await insertRow("Plan", row, "id");
+        const notIncluded = stringList(data.notIncluded);
+        await upsertSetting({
+          key: `plan_not_included_${row.slug}`,
+          value: JSON.stringify(notIncluded),
+          type: "JSON",
+        });
       } else {
         if (!id) return NextResponse.json({ error: "ID requerido" }, { status: 400 });
+        const previousSlug = text(data.previousSlug);
         await updateRows(
           "Plan",
           {
@@ -106,6 +117,15 @@ export async function POST(request: Request) {
           },
           { id },
         );
+        if (previousSlug && previousSlug !== row.slug) {
+          await deleteRows("Setting", { key: `plan_not_included_${previousSlug}` });
+        }
+        const notIncluded = stringList(data.notIncluded);
+        await upsertSetting({
+          key: `plan_not_included_${row.slug}`,
+          value: JSON.stringify(notIncluded),
+          type: "JSON",
+        });
       }
 
       return NextResponse.json({ ok: true });

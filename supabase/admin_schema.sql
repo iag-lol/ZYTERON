@@ -174,6 +174,18 @@ create table if not exists public."TaxDocument" (
   "createdAt" timestamptz default now()
 );
 
+create table if not exists public."WebVisit" (
+  id text primary key,
+  path text not null,
+  "pageTitle" text,
+  referrer text,
+  "userAgent" text,
+  ip text,
+  "ipHash" text,
+  "sessionId" text,
+  "createdAt" timestamptz not null default now()
+);
+
 create table if not exists public."WebDiscount" (
   id text primary key,
   name text not null,
@@ -213,11 +225,253 @@ create index if not exists idx_taxdocument_client on public."TaxDocument" ("clie
 create index if not exists idx_taxdocument_project on public."TaxDocument" ("projectId");
 create index if not exists idx_taxdocument_quote on public."TaxDocument" ("quoteId");
 create index if not exists idx_taxdocument_sale on public."TaxDocument" ("saleId");
+create index if not exists idx_webvisit_createdat on public."WebVisit" ("createdAt" desc);
+create index if not exists idx_webvisit_path on public."WebVisit" (path);
+create index if not exists idx_webvisit_iphash on public."WebVisit" ("ipHash");
+create index if not exists idx_webvisit_session on public."WebVisit" ("sessionId");
 create index if not exists idx_product_category on public."Product" ("categoryId");
 create index if not exists idx_discount_active on public."WebDiscount" (active);
 create index if not exists idx_clientreview_status_created on public."ClientReview" (status, "createdAt" desc);
 
 -- RLS compatibility for public web forms (CONTACTO / COTIZADOR / COMENTARIOS)
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.tables
+    where table_schema = 'public'
+      and table_name = 'Quote'
+  ) then
+    alter table public."Quote" enable row level security;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'Quote'
+        and policyname = 'quote_public_insert_from_forms'
+    ) then
+      create policy quote_public_insert_from_forms
+      on public."Quote"
+      for insert
+      to anon, authenticated
+      with check (
+        length(trim(coalesce(name, ''))) > 0
+        and length(trim(coalesce(email, ''))) > 0
+        and coalesce(subtotal, 0) >= 0
+        and coalesce(discount, 0) >= 0
+        and coalesce(total, 0) >= 0
+        and status in ('PENDING', 'SENT', 'WON', 'LOST')
+      );
+    end if;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'Quote'
+        and policyname = 'quote_admin_select_all'
+    ) then
+      create policy quote_admin_select_all
+      on public."Quote"
+      for select
+      to anon, authenticated
+      using (true);
+    end if;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'Quote'
+        and policyname = 'quote_admin_update_all'
+    ) then
+      create policy quote_admin_update_all
+      on public."Quote"
+      for update
+      to anon, authenticated
+      using (true)
+      with check (
+        length(trim(coalesce(name, ''))) > 0
+        and length(trim(coalesce(email, ''))) > 0
+        and coalesce(subtotal, 0) >= 0
+        and coalesce(discount, 0) >= 0
+        and coalesce(total, 0) >= 0
+        and status in ('PENDING', 'SENT', 'WON', 'LOST')
+      );
+    end if;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'Quote'
+        and policyname = 'quote_admin_delete_all'
+    ) then
+      create policy quote_admin_delete_all
+      on public."Quote"
+      for delete
+      to anon, authenticated
+      using (true);
+    end if;
+  end if;
+end
+$$;
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.tables
+    where table_schema = 'public'
+      and table_name = 'Sale'
+  ) then
+    alter table public."Sale" enable row level security;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'Sale'
+        and policyname = 'sale_public_insert_from_won_quotes'
+    ) then
+      create policy sale_public_insert_from_won_quotes
+      on public."Sale"
+      for insert
+      to anon, authenticated
+      with check (
+        coalesce(total, 0) >= 0
+      );
+    end if;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'Sale'
+        and policyname = 'sale_admin_select_all'
+    ) then
+      create policy sale_admin_select_all
+      on public."Sale"
+      for select
+      to anon, authenticated
+      using (true);
+    end if;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'Sale'
+        and policyname = 'sale_admin_update_all'
+    ) then
+      create policy sale_admin_update_all
+      on public."Sale"
+      for update
+      to anon, authenticated
+      using (true)
+      with check (
+        coalesce(total, 0) >= 0
+      );
+    end if;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'Sale'
+        and policyname = 'sale_admin_delete_all'
+    ) then
+      create policy sale_admin_delete_all
+      on public."Sale"
+      for delete
+      to anon, authenticated
+      using (true);
+    end if;
+  end if;
+end
+$$;
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.tables
+    where table_schema = 'public'
+      and table_name = 'TaxDocument'
+  ) then
+    alter table public."TaxDocument" enable row level security;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'TaxDocument'
+        and policyname = 'taxdocument_public_insert_from_won_quotes'
+    ) then
+      create policy taxdocument_public_insert_from_won_quotes
+      on public."TaxDocument"
+      for insert
+      to anon, authenticated
+      with check (
+        length(trim(coalesce(type, ''))) > 0
+        and coalesce("netAmount", 0) >= 0
+        and coalesce("taxAmount", 0) >= 0
+        and coalesce("totalAmount", 0) >= 0
+      );
+    end if;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'TaxDocument'
+        and policyname = 'taxdocument_admin_select_all'
+    ) then
+      create policy taxdocument_admin_select_all
+      on public."TaxDocument"
+      for select
+      to anon, authenticated
+      using (true);
+    end if;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'TaxDocument'
+        and policyname = 'taxdocument_admin_update_all'
+    ) then
+      create policy taxdocument_admin_update_all
+      on public."TaxDocument"
+      for update
+      to anon, authenticated
+      using (true)
+      with check (
+        length(trim(coalesce(type, ''))) > 0
+        and coalesce("netAmount", 0) >= 0
+        and coalesce("taxAmount", 0) >= 0
+        and coalesce("totalAmount", 0) >= 0
+      );
+    end if;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'TaxDocument'
+        and policyname = 'taxdocument_admin_delete_all'
+    ) then
+      create policy taxdocument_admin_delete_all
+      on public."TaxDocument"
+      for delete
+      to anon, authenticated
+      using (true);
+    end if;
+  end if;
+end
+$$;
+
 do $$
 begin
   if exists (
@@ -243,6 +497,63 @@ begin
         source in ('CONTACTO_WEB', 'COTIZADOR_WEB')
         and type in ('CONTACT', 'PACKAGE_BUILDER')
       );
+    end if;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'Lead'
+        and policyname = 'lead_admin_select_all'
+    ) then
+      create policy lead_admin_select_all
+      on public."Lead"
+      for select
+      to anon, authenticated
+      using (true);
+    end if;
+  end if;
+end
+$$;
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.tables
+    where table_schema = 'public'
+      and table_name = 'WebVisit'
+  ) then
+    alter table public."WebVisit" enable row level security;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'WebVisit'
+        and policyname = 'webvisit_public_insert'
+    ) then
+      create policy webvisit_public_insert
+      on public."WebVisit"
+      for insert
+      to anon, authenticated
+      with check (
+        length(trim(coalesce(path, ''))) > 0
+      );
+    end if;
+
+    if not exists (
+      select 1
+      from pg_policies
+      where schemaname = 'public'
+        and tablename = 'WebVisit'
+        and policyname = 'webvisit_admin_select_all'
+    ) then
+      create policy webvisit_admin_select_all
+      on public."WebVisit"
+      for select
+      to anon, authenticated
+      using (true);
     end if;
   end if;
 end

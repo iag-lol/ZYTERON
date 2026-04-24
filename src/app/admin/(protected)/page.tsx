@@ -49,9 +49,17 @@ function initials(name?: string) {
   return name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 }
 
+function shortId(value?: string | null, size = 10) {
+  const safe = String(value || "").trim();
+  if (!safe) return "—";
+  return safe.length > size ? `${safe.slice(0, size)}...` : safe;
+}
+
 export default async function AdminDashboard() {
   const data = await getAdminSnapshot();
   const { metrics, charts, quotes, visits, leads } = data;
+  const leadBaseCount = metrics.conversion.leadBase;
+  const leadBaseEstimated = metrics.conversion.leadBaseEstimated;
 
   const now = new Date();
   const nextVisit = visits.find((v) => v.date && new Date(v.date) >= now);
@@ -61,9 +69,9 @@ export default async function AdminDashboard() {
 
   const kpis = [
     {
-      label: "Leads totales",
-      value: metrics.totals.leads,
-      sub: `${pct(metrics.conversion.quoteRate)} pasan a cotización`,
+      label: leadBaseEstimated ? "Base embudo (estimada)" : "Leads totales",
+      value: leadBaseCount,
+      sub: `${pct(metrics.conversion.quoteRate)} pasan a cotización${leadBaseEstimated ? " (sin leads históricos)" : ""}`,
       icon: Users,
       iconBg: "bg-blue-500",
       iconShadow: "shadow-blue-500/30",
@@ -196,6 +204,88 @@ export default async function AdminDashboard() {
         ))}
       </div>
 
+      <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Navegación web</h2>
+              <p className="text-xs text-slate-400">Contador de visitas, IPs y rutas visitadas</p>
+            </div>
+            <span className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-700">
+              Hoy: {metrics.web.todayVisits}
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {[
+              { label: "Visitas web", value: metrics.web.totalVisits },
+              { label: "IPs únicas", value: metrics.web.uniqueIps },
+              { label: "Sesiones", value: metrics.web.uniqueSessions },
+              { label: "Ingreso / visita", value: currency(metrics.web.revenuePerVisit) },
+            ].map((item) => (
+              <div key={item.label} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-lg font-extrabold text-slate-900">{item.value}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">{item.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 grid gap-4 xl:grid-cols-2">
+            <div className="rounded-xl border border-slate-200">
+              <div className="border-b border-slate-100 px-4 py-2.5">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Rutas más visitadas</p>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {metrics.web.topPaths.length === 0 ? (
+                  <p className="px-4 py-4 text-xs text-slate-500">Aún sin datos de navegación.</p>
+                ) : (
+                  metrics.web.topPaths.map((item) => (
+                    <div key={item.path} className="flex items-center justify-between px-4 py-2.5 text-xs">
+                      <p className="truncate font-semibold text-slate-700">{item.path}</p>
+                      <p className="shrink-0 text-slate-500">{item.visits} visitas · {item.uniqueIps} IP</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200">
+              <div className="border-b border-slate-100 px-4 py-2.5">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Última navegación por IP</p>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {metrics.web.recentNavigations.length === 0 ? (
+                  <p className="px-4 py-4 text-xs text-slate-500">Aún sin registros.</p>
+                ) : (
+                  metrics.web.recentNavigations.map((nav, idx) => (
+                    <div key={`${nav.path}-${nav.createdAt}-${idx}`} className="px-4 py-2.5 text-xs">
+                      <p className="truncate font-semibold text-slate-700">{nav.path}</p>
+                      <p className="mt-0.5 text-slate-500">
+                        IP: {shortId(nav.ip, 18)} · Equipo: {shortId(nav.ipHash, 12)} · Sesión: {shortId(nav.sessionId, 10)}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Salud de datos</p>
+          <div className="mt-3 space-y-2 text-xs text-slate-600">
+            <p>Leads reales: <span className="font-bold text-slate-900">{metrics.totals.leads}</span></p>
+            <p>Base de embudo usada: <span className="font-bold text-slate-900">{leadBaseCount}</span></p>
+            <p>Modo estimado: <span className="font-bold text-slate-900">{leadBaseEstimated ? "Sí" : "No"}</span></p>
+          </div>
+          {leadBaseEstimated ? (
+            <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              No hay leads históricos legibles, por eso el embudo usa cotizaciones como base temporal.
+            </p>
+          ) : null}
+        </div>
+      </div>
+
       {/* Revenue + Pipeline row */}
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Revenue chart */}
@@ -266,9 +356,9 @@ export default async function AdminDashboard() {
           <div className="space-y-4">
             {[
               {
-                label: "Leads",
-                value: metrics.totals.leads,
-                pct: 100,
+                label: leadBaseEstimated ? "Base embudo" : "Leads",
+                value: leadBaseCount,
+                pct: leadBaseCount > 0 ? 100 : 0,
                 color: "bg-blue-500",
                 text: "text-blue-700",
                 bg: "bg-blue-50",

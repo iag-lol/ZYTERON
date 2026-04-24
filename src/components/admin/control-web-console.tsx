@@ -12,6 +12,7 @@ type Props = {
   productCategories: ProductCategoryRecord[];
   discounts: WebDiscount[];
   reviews: ClientReview[];
+  planNotIncludedBySlug: Record<string, string[]>;
 };
 
 type AlertState =
@@ -26,6 +27,9 @@ type NewPlan = {
   price: string;
   tier: "BASIC" | "INTERMEDIATE" | "PRO";
   popular: boolean;
+  features: string;
+  gifts: string;
+  notIncluded: string;
 };
 
 type NewExtra = {
@@ -75,6 +79,23 @@ function parseTextRows(text?: string[] | null) {
   return Array.isArray(text) ? text.join("\n") : "";
 }
 
+function toMoneyValue(value: string | number | null | undefined) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value.replace(/[^\d.-]/g, ""));
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
+}
+
+function formatMoney(value: number) {
+  return new Intl.NumberFormat("es-CL", {
+    style: "currency",
+    currency: "CLP",
+    maximumFractionDigits: 0,
+  }).format(Math.max(0, Math.round(value)));
+}
+
 function formatDate(value?: string | null) {
   if (!value) return "—";
   const parsed = new Date(value);
@@ -101,6 +122,7 @@ export function ControlWebConsole({
   productCategories,
   discounts,
   reviews,
+  planNotIncludedBySlug,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -109,9 +131,11 @@ export function ControlWebConsole({
   const [planRows, setPlanRows] = useState(
     plans.map((plan) => ({
       ...plan,
+      originalSlug: plan.slug,
       price: String(plan.price ?? 0),
       featuresText: parseTextRows(plan.features),
       giftsText: parseTextRows(plan.freeGifts),
+      notIncludedText: (planNotIncludedBySlug[plan.slug] || []).join("\n"),
     })),
   );
   const [extraRows, setExtraRows] = useState(
@@ -148,6 +172,9 @@ export function ControlWebConsole({
     price: "",
     tier: "BASIC",
     popular: false,
+    features: "",
+    gifts: "",
+    notIncluded: "",
   });
   const [newExtra, setNewExtra] = useState<NewExtra>({
     slug: "",
@@ -180,6 +207,7 @@ export function ControlWebConsole({
     startsAt: "",
     endsAt: "",
   });
+  const [productSearch, setProductSearch] = useState("");
 
   const targets = useMemo(() => {
     const allTargets = [
@@ -189,6 +217,19 @@ export function ControlWebConsole({
     ];
     return allTargets;
   }, [extraRows, planRows, productRows]);
+
+  const filteredProducts = useMemo(() => {
+    const query = productSearch.trim().toLowerCase();
+    if (!query) return productRows;
+    return productRows.filter((product) => {
+      const haystack = `${product.slug} ${product.name} ${product.description || ""}`.toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [productRows, productSearch]);
+
+  function updateProductRow(id: string, patch: Record<string, unknown>) {
+    setProductRows((rows) => rows.map((row) => (row.id === id ? { ...row, ...patch } : row)));
+  }
 
   async function submitControl(body: Record<string, unknown>) {
     const response = await fetch("/admin/control-web/submit", {
@@ -267,7 +308,10 @@ export function ControlWebConsole({
                   submitControl({
                     section: "plan",
                     action: "create",
-                    data: newPlan,
+                    data: {
+                      ...newPlan,
+                      freeGifts: newPlan.gifts,
+                    },
                   }),
                 "Plan creado.",
               )
@@ -276,6 +320,27 @@ export function ControlWebConsole({
           >
             {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Crear plan"}
           </button>
+          <textarea
+            className={`${textareaClass} lg:col-span-2`}
+            rows={3}
+            value={newPlan.features}
+            placeholder="Qué incluye (una línea por item)"
+            onChange={(e) => setNewPlan((p) => ({ ...p, features: e.target.value }))}
+          />
+          <textarea
+            className={`${textareaClass} lg:col-span-2`}
+            rows={3}
+            value={newPlan.gifts}
+            placeholder="Beneficios/regalos (una línea por item)"
+            onChange={(e) => setNewPlan((p) => ({ ...p, gifts: e.target.value }))}
+          />
+          <textarea
+            className={`${textareaClass} lg:col-span-2`}
+            rows={3}
+            value={newPlan.notIncluded}
+            placeholder="No incluye (una línea por item)"
+            onChange={(e) => setNewPlan((p) => ({ ...p, notIncluded: e.target.value }))}
+          />
         </div>
 
         <div className="mt-4 space-y-3">
@@ -313,6 +378,8 @@ export function ControlWebConsole({
                             ...plan,
                             features: plan.featuresText,
                             freeGifts: plan.giftsText,
+                            notIncluded: plan.notIncludedText,
+                            previousSlug: plan.originalSlug,
                           },
                         }),
                       "Plan actualizado.",
@@ -333,6 +400,7 @@ export function ControlWebConsole({
                           section: "plan",
                           action: "delete",
                           id: plan.id,
+                          data: { slug: plan.slug },
                         }),
                       "Plan eliminado.",
                     )
@@ -357,6 +425,19 @@ export function ControlWebConsole({
                 value={plan.giftsText}
                 placeholder="Regalos/beneficios (una línea por item)"
                 onChange={(e) => setPlanRows((rows) => rows.map((row, i) => (i === index ? { ...row, giftsText: e.target.value } : row)))}
+              />
+              <textarea
+                className={`${textareaClass} xl:col-span-6`}
+                rows={2}
+                value={plan.notIncludedText}
+                placeholder="No incluye (una línea por item)"
+                onChange={(e) =>
+                  setPlanRows((rows) =>
+                    rows.map((row, i) =>
+                      i === index ? { ...row, notIncludedText: e.target.value } : row,
+                    ),
+                  )
+                }
               />
             </div>
           ))}
@@ -470,7 +551,7 @@ export function ControlWebConsole({
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-base font-bold text-slate-900">Productos</h2>
-        <p className="mt-1 text-xs text-slate-500">Controla catálogo, descuento por producto y stock visible.</p>
+        <p className="mt-1 text-xs text-slate-500">Edita los productos ya creados en la web: nombre, precio, observaciones, stock y descuentos.</p>
 
         <div className="mt-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 lg:grid-cols-8">
           <input className={inputClass} placeholder="slug" value={newProduct.slug} onChange={(e) => setNewProduct((p) => ({ ...p, slug: e.target.value }))} />
@@ -508,16 +589,27 @@ export function ControlWebConsole({
           <textarea className={`${textareaClass} lg:col-span-8`} rows={2} placeholder="Badges (una línea por item)" value={newProduct.badges} onChange={(e) => setNewProduct((p) => ({ ...p, badges: e.target.value }))} />
         </div>
 
+        <div className="mt-4 flex flex-col gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+          <input
+            className={`${inputClass} sm:max-w-sm`}
+            placeholder="Buscar producto por nombre, slug u observación"
+            value={productSearch}
+            onChange={(e) => setProductSearch(e.target.value)}
+          />
+          <p className="text-xs font-semibold text-slate-500">
+            Mostrando {filteredProducts.length} de {productRows.length} productos
+          </p>
+        </div>
+
         <div className="mt-4 space-y-3">
-          {productRows.map((product, index) => (
+          {filteredProducts.map((product) => (
             <div key={product.id} className="grid gap-3 rounded-xl border border-slate-200 p-3 xl:grid-cols-[repeat(8,minmax(0,1fr))_auto]">
-              <input className={inputClass} value={product.slug} onChange={(e) => setProductRows((rows) => rows.map((row, i) => (i === index ? { ...row, slug: e.target.value } : row)))} />
-              <input className={inputClass} value={product.name} onChange={(e) => setProductRows((rows) => rows.map((row, i) => (i === index ? { ...row, name: e.target.value } : row)))} />
-              <input className={inputClass} value={product.description || ""} onChange={(e) => setProductRows((rows) => rows.map((row, i) => (i === index ? { ...row, description: e.target.value } : row)))} />
-              <input className={inputClass} value={product.price} onChange={(e) => setProductRows((rows) => rows.map((row, i) => (i === index ? { ...row, price: e.target.value } : row)))} />
-              <input className={inputClass} value={product.discountPct} onChange={(e) => setProductRows((rows) => rows.map((row, i) => (i === index ? { ...row, discountPct: e.target.value } : row)))} />
-              <input className={inputClass} value={product.stock} onChange={(e) => setProductRows((rows) => rows.map((row, i) => (i === index ? { ...row, stock: e.target.value } : row)))} />
-              <select className={inputClass} value={String(product.categoryId || "")} onChange={(e) => setProductRows((rows) => rows.map((row, i) => (i === index ? { ...row, categoryId: e.target.value } : row)))}>
+              <input className={inputClass} value={product.slug} onChange={(e) => updateProductRow(product.id, { slug: e.target.value })} />
+              <input className={inputClass} value={product.name} onChange={(e) => updateProductRow(product.id, { name: e.target.value })} />
+              <input className={inputClass} value={product.price} onChange={(e) => updateProductRow(product.id, { price: e.target.value })} />
+              <input className={inputClass} value={product.discountPct} onChange={(e) => updateProductRow(product.id, { discountPct: e.target.value })} />
+              <input className={inputClass} value={product.stock} onChange={(e) => updateProductRow(product.id, { stock: e.target.value })} />
+              <select className={inputClass} value={String(product.categoryId || "")} onChange={(e) => updateProductRow(product.id, { categoryId: e.target.value })}>
                 {productCategories.map((category) => (
                   <option key={category.id} value={category.id}>{category.name}</option>
                 ))}
@@ -526,16 +618,32 @@ export function ControlWebConsole({
                 <input
                   type="checkbox"
                   checked={Boolean(product.featured)}
-                  onChange={(e) => setProductRows((rows) => rows.map((row, i) => (i === index ? { ...row, featured: e.target.checked } : row)))}
+                  onChange={(e) => updateProductRow(product.id, { featured: e.target.checked })}
                 />
                 Destacado
               </label>
+              <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+                <p className="font-semibold">Precio final web</p>
+                <p>
+                  {formatMoney(
+                    toMoneyValue(product.price) *
+                      (1 - Math.min(100, Math.max(0, toMoneyValue(product.discountPct))) / 100),
+                  )}
+                </p>
+              </div>
+              <textarea
+                className={`${textareaClass} xl:col-span-8`}
+                rows={2}
+                value={product.description || ""}
+                placeholder="Observaciones / descripción pública"
+                onChange={(e) => updateProductRow(product.id, { description: e.target.value })}
+              />
               <textarea
                 className={`${textareaClass} xl:col-span-8`}
                 rows={2}
                 value={product.badgesText}
                 placeholder="Badges (una línea por item)"
-                onChange={(e) => setProductRows((rows) => rows.map((row, i) => (i === index ? { ...row, badgesText: e.target.value } : row)))}
+                onChange={(e) => updateProductRow(product.id, { badgesText: e.target.value })}
               />
               <div className="flex items-start gap-2">
                 <button

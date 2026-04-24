@@ -7,6 +7,7 @@ import { siteConfig } from "@/config/site";
 import { AppShell } from "@/components/layout/app-shell";
 import { JsonLd } from "@/components/seo/json-ld";
 import { IconSprite } from "@/components/ui/icon-sprite";
+import { WebVisitTracker } from "@/components/analytics/web-visit-tracker";
 import { buildOrganizationGraph } from "@/lib/seo";
 
 const geistSans = Geist({
@@ -64,6 +65,7 @@ export default function RootLayout({
         <TooltipProvider>
           <IconSprite />
           <JsonLd id="zyteron-organization-schema" data={buildOrganizationGraph()} />
+          <WebVisitTracker />
           <AppShell>{children}</AppShell>
         </TooltipProvider>
       </body>
