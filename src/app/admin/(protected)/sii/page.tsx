@@ -8,6 +8,12 @@ export default async function SiiPage() {
   const documents = (await getTaxDocuments()).slice().sort((a, b) => (b.issueDate || "").localeCompare(a.issueDate || ""));
   const totalBilled = documents.reduce((acc, document) => acc + (document.totalAmount || 0), 0);
   const pendingDocuments = documents.filter((document) => !document.status || document.status === "Pendiente").length;
+  const pendingTaxToPay = documents
+    .filter((document) => {
+      const paymentState = (document.paymentStatus || "").toLowerCase();
+      return paymentState !== "pagado" && paymentState !== "paid";
+    })
+    .reduce((acc, document) => acc + (document.taxAmount || 0), 0);
 
   return (
     <div className="space-y-8">
@@ -60,6 +66,7 @@ export default async function SiiPage() {
           {[
             { label: "Documentos", value: documents.length, helper: "Boletas y facturas", icon: FileBadge2 },
             { label: "Pendientes", value: pendingDocuments, helper: "Sin cierre tributario", icon: ReceiptText },
+            { label: "IVA por pagar", value: currencyCLP(pendingTaxToPay), helper: "Impuesto acumulado pendiente", icon: ShieldCheck },
             { label: "Documentado", value: currencyCLP(totalBilled), helper: "Monto total", icon: ShieldCheck },
           ].map((card) => (
             <div key={card.label} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -75,10 +82,11 @@ export default async function SiiPage() {
       </div>
 
       <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_1fr] gap-4 border-b border-slate-100 bg-slate-50 px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-slate-400">
+        <div className="grid grid-cols-[1.3fr_1fr_0.9fr_0.95fr_1fr_1fr] gap-4 border-b border-slate-100 bg-slate-50 px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-slate-400">
           <span>Documento</span>
           <span>Tipo / folio</span>
           <span>Fechas</span>
+          <span>IVA</span>
           <span>Estado</span>
           <span>Total</span>
         </div>
@@ -87,7 +95,7 @@ export default async function SiiPage() {
             <div className="px-6 py-14 text-center text-sm text-slate-500">Sin documentos tributarios registrados.</div>
           ) : (
             documents.map((document) => (
-              <div key={document.id} className="grid grid-cols-[1.4fr_1fr_1fr_1fr_1fr] gap-4 px-6 py-4 text-sm">
+              <div key={document.id} className="grid grid-cols-[1.3fr_1fr_0.9fr_0.95fr_1fr_1fr] gap-4 px-6 py-4 text-sm">
                 <div>
                   <p className="font-semibold text-slate-900">{document.notes || "Documento tributario"}</p>
                   <p className="mt-1 text-xs text-slate-500">{document.paymentStatus || "Sin estado de pago"}</p>
@@ -100,6 +108,7 @@ export default async function SiiPage() {
                   <p>{document.issueDate || "Sin emisión"}</p>
                   <p className="text-xs text-slate-400">Vence {document.dueDate || "—"}</p>
                 </div>
+                <div className="font-semibold text-slate-900">{currencyCLP(document.taxAmount || 0)}</div>
                 <div><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{document.status || "Pendiente"}</span></div>
                 <div className="font-semibold text-slate-900">{currencyCLP(document.totalAmount || 0)}</div>
               </div>

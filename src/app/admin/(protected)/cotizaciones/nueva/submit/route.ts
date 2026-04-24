@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { buildQuoteMeta, parseQuoteMessage, serializeQuoteMessage } from "@/lib/admin/quote";
 import { generateQuotePdf } from "@/lib/admin/quote-pdf";
-import { findOrCreateClientByEmail, updateRows } from "@/lib/admin/repository";
+import { findOrCreateClientByEmail, insertRow, safeSelectSingle, updateRows } from "@/lib/admin/repository";
 import { ZYTERON_QUOTE_BUCKET } from "@/lib/company";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -28,6 +28,22 @@ function getErrorMessage(error: unknown) {
     if (parts.length) return parts.join(" | ");
   }
   return "Error inesperado al guardar la cotizacion";
+}
+
+function normalizeStatus(status?: string | null) {
+  return String(status ?? "")
+    .trim()
+    .toUpperCase();
+}
+
+function toDateOnly(value?: string | null) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    const fallback = String(value).trim();
+    return fallback.length >= 10 ? fallback.slice(0, 10) : null;
+  }
+  return parsed.toISOString().slice(0, 10);
 }
 
 export async function POST(req: Request) {
@@ -143,6 +159,65 @@ export async function POST(req: Request) {
     } catch (error) {
       // La cotización ya fue insertada; no responder 500 por metadata posterior.
       console.error("[quote-submit] quote metadata update failed:", getErrorMessage(error));
+    }
+
+    const quoteStatus = normalizeStatus(data.status);
+    if (quoteStatus === "WON") {
+      try {
+        const quoteCode = meta.quoteNumber || `COT-${data.id.slice(0, 8).toUpperCase()}`;
+        const invoiceRef = `COT:${data.id}`;
+        const existingSale = await safeSelectSingle<{ id: string }>("Sale", "id", { invoiceRef });
+
+        let saleId = existingSale?.id ?? null;
+        if (!saleId) {
+          const createdSale = await insertRow<{ id: string }>(
+            "Sale",
+            {
+              clientId: clientId || null,
+              total: Math.max(0, Math.round(typeof data.total === "number" ? data.total : meta.grandTotal || 0)),
+              description: `Venta generada automáticamente desde cotización ${quoteCode}`,
+              paymentMethod: meta.paymentMethod || null,
+              invoiceRef,
+              createdAt: createdAt,
+            },
+            "id",
+          );
+          saleId = createdSale.id;
+        }
+
+        const existingTaxDoc = await safeSelectSingle<{ id: string }>("TaxDocument", "id", { quoteId: data.id });
+        if (!existingTaxDoc) {
+          const subtotalAmount = Math.max(0, Math.round(typeof data.subtotal === "number" ? data.subtotal : meta.subtotal || 0));
+          const taxAmount = Math.max(0, Math.round(meta.iva || 0));
+          const totalAmount = Math.max(0, Math.round(typeof data.total === "number" ? data.total : meta.grandTotal || 0));
+          // En esta app, subtotal ya viene con descuentos aplicados.
+          const netAmount = subtotalAmount;
+
+          await insertRow(
+            "TaxDocument",
+            {
+              clientId: clientId || null,
+              quoteId: data.id,
+              saleId: saleId || null,
+              type: "Factura",
+              issueDate: toDateOnly(meta.quoteDate || data.createdAt) || createdAt.slice(0, 10),
+              dueDate: toDateOnly(meta.validUntil),
+              netAmount,
+              taxAmount,
+              totalAmount,
+              status: "Pendiente",
+              paymentStatus: "Pendiente",
+              emissionMethod: "Generado automático desde cotización ganada",
+              notes: `Documento tributario automático para ${quoteCode}`,
+              createdAt: createdAt,
+            },
+            "id",
+          );
+        }
+      } catch (error) {
+        // Si falla la sincronización comercial/tributaria, la cotización sigue creada.
+        console.error("[quote-submit] won-automation failed:", getErrorMessage(error));
+      }
     }
 
     return NextResponse.json({

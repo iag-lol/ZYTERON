@@ -48,6 +48,21 @@ interface LineItem {
   discountPct: number;
 }
 
+type ClientLookupResult = {
+  found: boolean;
+  client?: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    company?: string | null;
+    rut?: string | null;
+    address?: string | null;
+    city?: string | null;
+    contactName?: string | null;
+  };
+};
+
 function generateId() {
   return Math.random().toString(36).slice(2, 9);
 }
@@ -157,6 +172,9 @@ export default function NuevaCotizacion() {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [clientLookupPending, setClientLookupPending] = useState(false);
+  const [clientLookupMessage, setClientLookupMessage] = useState<string | null>(null);
+  const [lastLookupEmail, setLastLookupEmail] = useState("");
   const [success, setSuccess] = useState(false);
   const [savedQuote, setSavedQuote] = useState<{ id: string; pdfUrl: string } | null>(null);
 
@@ -219,6 +237,59 @@ export default function NuevaCotizacion() {
 
   const removeItem = (id: string) =>
     setItems((prev) => (prev.length > 1 ? prev.filter((i) => i.id !== id) : prev));
+
+  const autofillClientByEmail = useCallback(
+    async (force = false) => {
+      const email = client.email.trim().toLowerCase();
+      if (!email) {
+        setClientLookupMessage(null);
+        return;
+      }
+
+      if (!force && email === lastLookupEmail) {
+        return;
+      }
+
+      setClientLookupPending(true);
+      setClientLookupMessage(null);
+      setLastLookupEmail(email);
+
+      try {
+        const res = await fetch(`/admin/cotizaciones/nueva/client?email=${encodeURIComponent(email)}`, {
+          method: "GET",
+          cache: "no-store",
+        });
+        const data = (await res.json().catch(() => null)) as ClientLookupResult | null;
+
+        if (!res.ok) {
+          setClientLookupMessage("No se pudo consultar el cliente en este momento.");
+          return;
+        }
+
+        if (!data?.found || !data.client) {
+          setClientLookupMessage("No hay datos previos para este email.");
+          return;
+        }
+
+        setClient((prev) => ({
+          ...prev,
+          name: prev.name || data.client?.name || "",
+          phone: prev.phone || data.client?.phone || "",
+          company: prev.company || data.client?.company || "",
+          rut: prev.rut || data.client?.rut || "",
+          address: prev.address || data.client?.address || "",
+          city: prev.city || data.client?.city || "",
+          contact: prev.contact || data.client?.contactName || data.client?.name || "",
+        }));
+        setClientLookupMessage("Cliente encontrado. Campos completados automáticamente.");
+      } catch {
+        setClientLookupMessage("No se pudo consultar el cliente en este momento.");
+      } finally {
+        setClientLookupPending(false);
+      }
+    },
+    [client.email, lastLookupEmail],
+  );
 
   /* ─── Submit ─── */
   const onSubmit = (e: React.FormEvent) => {
@@ -474,13 +545,36 @@ export default function NuevaCotizacion() {
               />
             </Field>
             <Field label="Email" icon={Mail} required>
-              <Input
-                type="email"
-                required
-                value={client.email}
-                onChange={(e) => setClient((p) => ({ ...p, email: e.target.value }))}
-                placeholder="juan@empresa.cl"
-              />
+              <div className="space-y-2">
+                <Input
+                  type="email"
+                  required
+                  value={client.email}
+                  onChange={(e) => {
+                    setClient((p) => ({ ...p, email: e.target.value }));
+                    setClientLookupMessage(null);
+                  }}
+                  onBlur={() => {
+                    void autofillClientByEmail(false);
+                  }}
+                  placeholder="juan@empresa.cl"
+                />
+                <div className="flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void autofillClientByEmail(true);
+                    }}
+                    disabled={clientLookupPending || !client.email.trim()}
+                    className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {clientLookupPending ? "Buscando..." : "Autorrellenar cliente"}
+                  </button>
+                  {clientLookupMessage ? (
+                    <p className="text-[11px] text-slate-500">{clientLookupMessage}</p>
+                  ) : null}
+                </div>
+              </div>
             </Field>
             <Field label="Teléfono" icon={Phone}>
               <Input
