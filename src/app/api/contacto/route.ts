@@ -24,8 +24,8 @@ const contactSchema = z.object({
   email: z.string().trim().email("Email inválido").max(160, "Email demasiado largo"),
   phone: z.string().trim().max(32, "Teléfono demasiado largo").optional().or(z.literal("")),
   company: z.string().trim().max(140, "Empresa demasiado larga").optional().or(z.literal("")),
-  service: z.string().trim().max(140, "Servicio demasiado largo").optional().or(z.literal("")),
-  message: z.string().trim().max(3000, "Mensaje demasiado largo").optional().or(z.literal("")),
+  service: z.string().trim().max(500, "Servicio demasiado largo").optional().or(z.literal("")),
+  message: z.string().trim().max(4000, "Mensaje demasiado largo").optional().or(z.literal("")),
   website: z.string().max(200).optional().or(z.literal("")),
 });
 

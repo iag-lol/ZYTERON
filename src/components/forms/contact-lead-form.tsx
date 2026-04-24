@@ -15,8 +15,8 @@ const contactLeadSchema = z.object({
   email: z.string().trim().email("Ingresa un email válido"),
   phone: z.string().trim().max(32, "Teléfono demasiado largo").optional(),
   company: z.string().trim().max(140, "Nombre de empresa demasiado largo").optional(),
-  service: z.string().trim().max(140, "Servicio demasiado largo").optional(),
-  message: z.string().trim().max(3000, "Mensaje demasiado largo").optional(),
+  service: z.string().trim().max(500, "Servicio demasiado largo").optional(),
+  message: z.string().trim().max(4000, "Mensaje demasiado largo").optional(),
   website: z.string().max(0).optional(),
 });
 

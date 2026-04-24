@@ -38,6 +38,8 @@ export default async function AdminContactosPage() {
     }));
 
   const now = new Date().getTime();
+  const packageLeads = contacts.filter((lead) => String(lead.type || "").toUpperCase() === "PACKAGE_BUILDER").length;
+  const contactLeads = contacts.filter((lead) => String(lead.type || "").toUpperCase() === "CONTACT").length;
   const last24h = contacts.filter((lead) => {
     if (!lead.createdAt) return false;
     const created = new Date(lead.createdAt).getTime();
@@ -57,7 +59,7 @@ export default async function AdminContactosPage() {
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">CRM</p>
           <h1 className="mt-1 text-2xl font-extrabold text-slate-900">Contactos web</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Solicitudes enviadas desde el formulario público de contacto
+            Solicitudes enviadas desde contacto público y cotizador web
           </p>
         </div>
         <Link
@@ -74,7 +76,7 @@ export default async function AdminContactosPage() {
           {
             label: "Solicitudes totales",
             value: contacts.length,
-            helper: "Registros tipo CONTACTO_WEB",
+            helper: `${contactLeads} contacto web · ${packageLeads} cotizador`,
             icon: MessageSquare,
           },
           {
@@ -135,6 +137,22 @@ export default async function AdminContactosPage() {
                       <div className="min-w-0">
                         <p className="truncate text-sm font-bold text-slate-900">{lead.name || "Sin nombre"}</p>
                         <p className="truncate text-[11px] text-slate-500">{lead.email || "Sin email"}</p>
+                        <div className="mt-1 flex items-center gap-1.5">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                              String(lead.type || "").toUpperCase() === "PACKAGE_BUILDER"
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-slate-100 text-slate-600"
+                            }`}
+                          >
+                            {String(lead.type || "").toUpperCase() === "PACKAGE_BUILDER" ? "Cotizador" : "Contacto"}
+                          </span>
+                          {lead.details.cartTotal ? (
+                            <span className="text-[11px] font-semibold text-blue-700">
+                              Total: {new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(lead.details.cartTotal)}
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
                     {lead.details.brief ? (
@@ -154,6 +172,9 @@ export default async function AdminContactosPage() {
                       <BriefcaseBusiness className="h-3.5 w-3.5" />
                       {lead.details.service || "No especificado"}
                     </p>
+                    {lead.details.selectedPlan ? (
+                      <p className="mt-1 text-[11px] text-slate-500">Plan: {lead.details.selectedPlan}</p>
+                    ) : null}
                   </div>
 
                   <div className="text-[12px] text-slate-600">{formatDate(lead.createdAt)}</div>

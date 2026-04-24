@@ -71,6 +71,30 @@ begin
 end
 $$;
 
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'DiscountTargetType') then
+    create type public."DiscountTargetType" as enum ('PLAN', 'EXTRA', 'PRODUCT', 'ORDER');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'DiscountMode') then
+    create type public."DiscountMode" as enum ('PERCENT', 'FIXED');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'ReviewStatus') then
+    create type public."ReviewStatus" as enum ('PENDING', 'APPROVED', 'REJECTED');
+  end if;
+end
+$$;
+
 -- Core
 create table if not exists public."User" (
   id text primary key,
@@ -218,6 +242,36 @@ create table if not exists public."Lead" (
   "createdAt" timestamptz not null default now()
 );
 
+create table if not exists public."WebDiscount" (
+  id text primary key,
+  name text not null,
+  description text,
+  "targetType" public."DiscountTargetType" not null default 'ORDER',
+  "targetId" text,
+  mode public."DiscountMode" not null default 'PERCENT',
+  value integer not null,
+  "minSubtotal" integer default 0,
+  active boolean not null default true,
+  "startsAt" timestamptz,
+  "endsAt" timestamptz,
+  "createdAt" timestamptz not null default now(),
+  "updatedAt" timestamptz not null default now()
+);
+
+create table if not exists public."ClientReview" (
+  id text primary key,
+  name text not null,
+  email text,
+  company text,
+  rating integer not null check (rating between 1 and 5),
+  comment text not null,
+  service text,
+  status public."ReviewStatus" not null default 'PENDING',
+  source text,
+  "createdAt" timestamptz not null default now(),
+  "approvedAt" timestamptz
+);
+
 create table if not exists public."Quote" (
   id text primary key,
   "userId" text references public."User"(id) on delete set null,
@@ -333,6 +387,9 @@ create index if not exists idx_user_createdat on public."User"("createdAt");
 
 create index if not exists idx_lead_createdat on public."Lead"("createdAt" desc);
 create index if not exists idx_lead_user on public."Lead"("userId");
+create index if not exists idx_discount_active on public."WebDiscount"(active);
+create index if not exists idx_discount_target on public."WebDiscount"("targetType", "targetId");
+create index if not exists idx_clientreview_status_created on public."ClientReview"(status, "createdAt" desc);
 create index if not exists idx_quote_createdat on public."Quote"("createdAt" desc);
 create index if not exists idx_quote_user on public."Quote"("userId");
 create index if not exists idx_quote_status on public."Quote"(status);
@@ -363,6 +420,296 @@ create index if not exists idx_service_category on public."Service"("categoryId"
 create index if not exists idx_product_category on public."Product"("categoryId");
 create index if not exists idx_faq_service on public."FAQ"("serviceId");
 create index if not exists idx_faq_product on public."FAQ"("productId");
+
+-- Seed comercial base (web pública + cotizador + control web)
+insert into public."ProductCategory" (id, slug, name, "order")
+values
+  ('cat-notebooks', 'notebooks', 'Notebooks', 1),
+  ('cat-pc-escritorio', 'pc-escritorio', 'PC de escritorio', 2),
+  ('cat-packs', 'packs', 'Combos y packs', 3)
+on conflict (slug) do update
+set
+  name = excluded.name,
+  "order" = excluded."order";
+
+insert into public."Plan" (id, slug, name, description, price, tier, "freeGifts", features, popular)
+values
+  (
+    'plan-basico',
+    'basico',
+    'Básico',
+    'Landing profesional + hosting + soporte básico',
+    390000,
+    'BASIC',
+    array['1 mes de atención básica post-entrega'],
+    array[
+      'Landing page extendida (hasta 6 secciones)',
+      'Formulario de contacto + WhatsApp',
+      'Hosting SSD + SSL (3 meses)',
+      'Diseño responsive mobile/tablet/desktop',
+      'SEO básico (metadatos y títulos)'
+    ],
+    false
+  ),
+  (
+    'plan-intermedio',
+    'intermedio',
+    'Intermedio',
+    'Sitio 5 secciones + SEO + analítica + CRM',
+    790000,
+    'INTERMEDIATE',
+    array['1 mes de atención incluida'],
+    array[
+      'Sitio web completo (hasta 8 secciones)',
+      'Formularios avanzados + analítica',
+      'Optimización SEO intermedia on-page',
+      'Integración CRM / email marketing',
+      'Diseño premium con animaciones'
+    ],
+    true
+  ),
+  (
+    'plan-pro',
+    'pro',
+    'Pro',
+    'Corporativo + blog + SEO avanzado + paneles',
+    1490000,
+    'PRO',
+    array['Dominio .cl por 1 año', '1 correo corporativo por 1 año', 'Capacitación inicial (2h)'],
+    array[
+      'Sitio corporativo completo + blog',
+      'SEO avanzado + schema JSON-LD',
+      'Panel de cliente + administración base',
+      'Seguridad avanzada y hardening',
+      'Performance enterprise (99+ Lighthouse)'
+    ],
+    false
+  )
+on conflict (slug) do update
+set
+  name = excluded.name,
+  description = excluded.description,
+  price = excluded.price,
+  tier = excluded.tier,
+  "freeGifts" = excluded."freeGifts",
+  features = excluded.features,
+  popular = excluded.popular;
+
+insert into public."Extra" (id, slug, name, category, description, options, price)
+values
+  ('extra-dominio-cl', 'dominio-cl-1-anio', 'Dominio .cl — 1 año', 'DOMAIN', 'Registro anual de dominio nacional.', array['1 año'], 29000),
+  ('extra-dominio-com', 'dominio-com-1-anio', 'Dominio .com — 1 año', 'DOMAIN', 'Registro anual de dominio internacional.', array['1 año'], 35000),
+  ('extra-hosting', 'hosting-extra-12m', 'Hosting extra (12 meses)', 'DOMAIN', 'Hosting adicional anual para proyectos con mayor demanda.', array['12 meses'], 89000),
+  ('extra-ssl', 'ssl-wildcard-premium', 'SSL wildcard premium', 'DOMAIN', 'Certificado wildcard para subdominios.', array['Wildcard'], 59000),
+  ('extra-email-1', 'correo-1-anio', '1 correo corporativo — 1 año', 'EMAIL', 'Cuenta corporativa con dominio propio.', array['1 cuenta'], 29000),
+  ('extra-email-5', 'pack-5-correos', 'Pack 5 correos — 1 año', 'EMAIL', 'Cinco cuentas de correo empresarial.', array['5 cuentas'], 119000),
+  ('extra-email-10', 'pack-10-correos', 'Pack 10 correos — 1 año', 'EMAIL', 'Diez cuentas de correo empresarial.', array['10 cuentas'], 199000),
+  ('extra-seo-basico', 'seo-basico-on-page', 'SEO básico on-page', 'SEO', 'Optimización técnica esencial.', array['Setup'], 99000),
+  ('extra-seo-intermedio', 'seo-intermedio-schema', 'SEO intermedio + schema', 'SEO', 'Optimización intermedia con esquema estructurado.', array['Mensual'], 199000),
+  ('extra-seo-avanzado', 'seo-avanzado-contenido', 'SEO avanzado + contenido', 'SEO', 'Plan de crecimiento con contenidos.', array['Mensual'], 349000),
+  ('extra-seo-local', 'seo-local-ciudad', 'SEO local (por ciudad)', 'SEO', 'Optimización geolocalizada para ciudades objetivo.', array['Por ciudad'], 149000),
+  ('extra-soporte-1m', 'soporte-remoto-1m', 'Soporte remoto — 1 mes', 'SUPPORT', 'Mesa de ayuda remota mensual.', array['1 mes'], 59000),
+  ('extra-soporte-3m', 'soporte-remoto-3m', 'Soporte remoto — 3 meses', 'SUPPORT', 'Mesa de ayuda remota trimestral.', array['3 meses'], 149000),
+  ('extra-visita', 'visita-tecnica', 'Visita técnica presencial', 'SUPPORT', 'Soporte técnico en terreno.', array['Por visita'], 89000),
+  ('extra-mantencion', 'mantencion-web', 'Mantención web mensual', 'SUPPORT', 'Mantención y actualizaciones mensuales.', array['Mensual'], 79000),
+  ('extra-blog', 'blog-integrado', 'Blog integrado', 'TECH', 'Módulo de blog administrable.', array['Módulo'], 149000),
+  ('extra-panel-cliente', 'panel-cliente', 'Panel de cliente', 'TECH', 'Portal de gestión para clientes finales.', array['Módulo'], 249000),
+  ('extra-panel-admin', 'panel-admin', 'Panel de administrador', 'TECH', 'Panel administrativo para gestión interna.', array['Módulo'], 299000),
+  ('extra-reservas', 'modulo-reservas', 'Módulo de reservas online', 'TECH', 'Sistema de agenda y reservas.', array['Módulo'], 199000),
+  ('extra-tienda', 'tienda-online', 'Tienda online básica', 'DESIGN', 'Catálogo y carrito de compra inicial.', array['Módulo'], 299000),
+  ('extra-webpay', 'pasarela-webpay-plus', 'Pasarela Webpay Plus', 'DESIGN', 'Integración de pago con Webpay.', array['Integración'], 199000),
+  ('extra-catalogo', 'catalogo-productos', 'Catálogo de productos', 'DESIGN', 'Módulo de catálogo administrable.', array['Módulo'], 149000),
+  ('extra-notebook', 'notebook-oficina-pro', 'Notebook Oficina Pro', 'EQUIPMENT', 'Equipo portátil empresarial.', array['Unidad'], 520000),
+  ('extra-pc', 'pc-escritorio-empresa', 'PC Escritorio Empresa', 'EQUIPMENT', 'Equipo de escritorio para oficina.', array['Unidad'], 680000),
+  ('extra-perifericos', 'pack-perifericos', 'Pack periféricos oficina', 'EQUIPMENT', 'Pack teclado, mouse y accesorios.', array['Pack'], 149000),
+  ('extra-cap-2h', 'capacitacion-2h', 'Capacitación inicial (2h)', 'TRAINING', 'Inducción al uso de plataforma.', array['2h'], 79000),
+  ('extra-cap-4h', 'capacitacion-4h', 'Capacitación avanzada (4h)', 'TRAINING', 'Formación avanzada para operación.', array['4h'], 149000),
+  ('extra-manual', 'manual-personalizado', 'Manual de uso personalizado', 'TRAINING', 'Documento operativo adaptado a tu negocio.', array['Documento'], 59000)
+on conflict (slug) do update
+set
+  name = excluded.name,
+  category = excluded.category,
+  description = excluded.description,
+  options = excluded.options,
+  price = excluded.price;
+
+insert into public."Product" (id, slug, name, description, price, "discountPct", stock, featured, "categoryId", badges)
+values
+  (
+    'product-notebook-oficina',
+    'notebook-oficina-pro',
+    'Notebook Oficina Pro',
+    'Equipo ligero, 16GB RAM, SSD 512GB, ideal para productividad.',
+    520000,
+    5,
+    20,
+    true,
+    (select id from public."ProductCategory" where slug = 'notebooks' limit 1),
+    array['Entrega 48h', 'Garantía 1 año']
+  ),
+  (
+    'product-pc-escritorio',
+    'pc-escritorio-empresa',
+    'PC Escritorio Empresa',
+    'Desktop confiable, 32GB RAM, SSD 1TB, para oficinas exigentes.',
+    680000,
+    8,
+    20,
+    false,
+    (select id from public."ProductCategory" where slug = 'pc-escritorio' limit 1),
+    array['Configuración incluida']
+  ),
+  (
+    'product-combo-pyme',
+    'combo-pyme-digital',
+    'Combo Pyme Digital',
+    'Landing + dominio + 3 correos + soporte remoto por 1 mes.',
+    690000,
+    10,
+    15,
+    true,
+    (select id from public."ProductCategory" where slug = 'packs' limit 1),
+    array['Más vendido']
+  ),
+  (
+    'product-combo-pro',
+    'combo-empresa-pro',
+    'Combo Empresa Pro',
+    'Sitio corporativo + dominio + 5 correos + SEO intermedio + 1 visita.',
+    1290000,
+    12,
+    10,
+    true,
+    (select id from public."ProductCategory" where slug = 'packs' limit 1),
+    array['Incluye visita']
+  )
+on conflict (slug) do update
+set
+  name = excluded.name,
+  description = excluded.description,
+  price = excluded.price,
+  "discountPct" = excluded."discountPct",
+  stock = excluded.stock,
+  featured = excluded.featured,
+  "categoryId" = excluded."categoryId",
+  badges = excluded.badges;
+
+insert into public."WebDiscount" (
+  id,
+  name,
+  description,
+  "targetType",
+  "targetId",
+  mode,
+  value,
+  "minSubtotal",
+  active,
+  "createdAt",
+  "updatedAt"
+)
+values
+  (
+    'discount-plan-intermedio',
+    'Promo Plan Intermedio',
+    'Descuento temporal para impulsar conversiones del plan intermedio.',
+    'PLAN',
+    (select id from public."Plan" where slug = 'intermedio' limit 1),
+    'PERCENT',
+    10,
+    0,
+    true,
+    now(),
+    now()
+  ),
+  (
+    'discount-setup-order',
+    'Descuento de setup',
+    'Descuento fijo en compras sobre $900.000.',
+    'ORDER',
+    null,
+    'FIXED',
+    50000,
+    900000,
+    true,
+    now(),
+    now()
+  )
+on conflict (id) do update
+set
+  name = excluded.name,
+  description = excluded.description,
+  "targetType" = excluded."targetType",
+  "targetId" = excluded."targetId",
+  mode = excluded.mode,
+  value = excluded.value,
+  "minSubtotal" = excluded."minSubtotal",
+  active = excluded.active,
+  "updatedAt" = now();
+
+insert into public."ClientReview" (
+  id,
+  name,
+  email,
+  company,
+  rating,
+  comment,
+  service,
+  status,
+  source,
+  "createdAt",
+  "approvedAt"
+)
+values
+  (
+    'review-001',
+    'María G.',
+    'maria@empresa.cl',
+    'Comercial San Pedro',
+    5,
+    'El equipo respondió rápido y el cotizador nos permitió definir todo sin reuniones eternas.',
+    'Sitio corporativo + SEO',
+    'APPROVED',
+    'WEB',
+    now() - interval '20 days',
+    now() - interval '19 days'
+  ),
+  (
+    'review-002',
+    'Carlos P.',
+    'carlos@industria.cl',
+    'Industrias del Norte',
+    5,
+    'El panel admin quedó muy ordenado y ahora controlamos precios y servicios sin depender de terceros.',
+    'Panel administrativo',
+    'APPROVED',
+    'WEB',
+    now() - interval '12 days',
+    now() - interval '11 days'
+  ),
+  (
+    'review-003',
+    'Valentina R.',
+    'valentina@retail.cl',
+    'Retail Sur',
+    4,
+    'Buen proceso comercial, cumplieron fechas y mejoró mucho la presentación de nuestras cotizaciones.',
+    'Cotizaciones + Soporte',
+    'APPROVED',
+    'WEB',
+    now() - interval '8 days',
+    now() - interval '7 days'
+  )
+on conflict (id) do update
+set
+  name = excluded.name,
+  email = excluded.email,
+  company = excluded.company,
+  rating = excluded.rating,
+  comment = excluded.comment,
+  service = excluded.service,
+  status = excluded.status,
+  source = excluded.source,
+  "approvedAt" = excluded."approvedAt";
 
 -- Storage bucket para PDFs de cotizaciones (solo Supabase)
 do $$

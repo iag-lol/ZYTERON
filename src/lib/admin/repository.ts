@@ -88,6 +88,78 @@ export type ClientRequest = {
   createdAt?: string | null;
 };
 
+export type PlanRecord = {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  price?: number | null;
+  tier?: "BASIC" | "INTERMEDIATE" | "PRO" | string | null;
+  popular?: boolean | null;
+  features?: string[] | null;
+  freeGifts?: string[] | null;
+};
+
+export type ExtraRecord = {
+  id: string;
+  slug: string;
+  name: string;
+  category?: string | null;
+  description?: string | null;
+  options?: string[] | null;
+  price?: number | null;
+};
+
+export type ProductRecord = {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  price?: number | null;
+  discountPct?: number | null;
+  stock?: number | null;
+  featured?: boolean | null;
+  badges?: string[] | null;
+  categoryId?: string | null;
+};
+
+export type ProductCategoryRecord = {
+  id: string;
+  slug: string;
+  name: string;
+  order?: number | null;
+};
+
+export type WebDiscount = {
+  id: string;
+  name: string;
+  description?: string | null;
+  targetType?: "PLAN" | "EXTRA" | "PRODUCT" | "ORDER" | string | null;
+  targetId?: string | null;
+  mode?: "PERCENT" | "FIXED" | string | null;
+  value?: number | null;
+  minSubtotal?: number | null;
+  active?: boolean | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type ClientReview = {
+  id: string;
+  name: string;
+  email?: string | null;
+  company?: string | null;
+  rating?: number | null;
+  comment?: string | null;
+  service?: string | null;
+  status?: "PENDING" | "APPROVED" | "REJECTED" | string | null;
+  source?: string | null;
+  createdAt?: string | null;
+  approvedAt?: string | null;
+};
+
 export type TaxDocument = {
   id: string;
   clientId?: string | null;
@@ -209,6 +281,20 @@ export async function insertRow<T>(table: string, payload: Record<string, unknow
 export async function updateRows(table: string, payload: Record<string, unknown>, filters: Record<string, string | number>) {
   const { supabase } = createSupabaseServerClient();
   let query = supabase.from(table).update(payload);
+
+  for (const [key, value] of Object.entries(filters)) {
+    query = query.eq(key, value);
+  }
+
+  const { error } = await query;
+  if (error) {
+    throw new Error(toErrorMessage(error));
+  }
+}
+
+export async function deleteRows(table: string, filters: Record<string, string | number>) {
+  const { supabase } = createSupabaseServerClient();
+  let query = supabase.from(table).delete();
 
   for (const [key, value] of Object.entries(filters)) {
     query = query.eq(key, value);
@@ -346,14 +432,83 @@ export async function getTaxDocuments() {
 }
 
 export async function getContactLeads() {
-  return safeSelect<Lead>(
+  const rows = await safeSelect<Lead>(
     "Lead",
     "id, name, email, phone, source, message, type, createdAt",
     {
-      filters: { type: "CONTACT", source: "CONTACTO_WEB" },
       orderBy: "createdAt",
     },
   );
+
+  return rows.filter((lead) => {
+    const source = String(lead.source || "").toUpperCase();
+    const type = String(lead.type || "").toUpperCase();
+    return (
+      (source === "CONTACTO_WEB" && type === "CONTACT") ||
+      (source === "COTIZADOR_WEB" && type === "PACKAGE_BUILDER")
+    );
+  });
+}
+
+export async function getPublicPlans() {
+  return safeSelect<PlanRecord>(
+    "Plan",
+    "id, slug, name, description, price, tier, popular, features, freeGifts",
+    { orderBy: "price", ascending: true },
+  );
+}
+
+export async function getPublicExtras() {
+  return safeSelect<ExtraRecord>(
+    "Extra",
+    "id, slug, name, category, description, options, price",
+    { orderBy: "name", ascending: true },
+  );
+}
+
+export async function getPublicProducts() {
+  return safeSelect<ProductRecord>(
+    "Product",
+    "id, slug, name, description, price, discountPct, stock, featured, badges, categoryId",
+    { orderBy: "createdAt", ascending: true },
+  );
+}
+
+export async function getProductCategories() {
+  return safeSelect<ProductCategoryRecord>("ProductCategory", "id, slug, name, order", {
+    orderBy: "order",
+    ascending: true,
+  });
+}
+
+export async function getWebDiscounts(activeOnly = false) {
+  const rows = await safeSelect<WebDiscount>(
+    "WebDiscount",
+    "id, name, description, targetType, targetId, mode, value, minSubtotal, active, startsAt, endsAt, createdAt, updatedAt",
+    { orderBy: "createdAt" },
+  );
+
+  if (!activeOnly) return rows;
+  const now = Date.now();
+  return rows.filter((discount) => {
+    if (!discount.active) return false;
+    const startsAt = discount.startsAt ? new Date(discount.startsAt).getTime() : null;
+    const endsAt = discount.endsAt ? new Date(discount.endsAt).getTime() : null;
+    if (startsAt && !Number.isNaN(startsAt) && startsAt > now) return false;
+    if (endsAt && !Number.isNaN(endsAt) && endsAt < now) return false;
+    return true;
+  });
+}
+
+export async function getClientReviews(status?: "PENDING" | "APPROVED" | "REJECTED") {
+  const rows = await safeSelect<ClientReview>(
+    "ClientReview",
+    "id, name, email, company, rating, comment, service, status, source, createdAt, approvedAt",
+    { orderBy: "createdAt" },
+  );
+
+  if (!status) return rows;
+  return rows.filter((review) => String(review.status || "").toUpperCase() === status);
 }
 
 export async function getClientWorkspace(clientId: string) {

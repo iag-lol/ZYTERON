@@ -194,6 +194,36 @@ model Lead {
   createdAt DateTime @default(now())
 }
 
+model WebDiscount {
+  id          String             @id @default(cuid())
+  name        String
+  description String?
+  targetType  DiscountTargetType @default(ORDER)
+  targetId    String?
+  mode        DiscountMode       @default(PERCENT)
+  value       Int
+  minSubtotal Int?               @default(0)
+  active      Boolean            @default(true)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+model ClientReview {
+  id         String       @id @default(cuid())
+  name       String
+  email      String?
+  company    String?
+  rating     Int
+  comment    String
+  service    String?
+  status     ReviewStatus @default(PENDING)
+  source     String?
+  createdAt  DateTime     @default(now())
+  approvedAt DateTime?
+}
+
 model Visit {
   id        String   @id @default(cuid())
   clientId  String?
@@ -291,6 +321,24 @@ enum LeadType {
   CONTACT
   QUOTE
   PACKAGE_BUILDER
+}
+
+enum DiscountTargetType {
+  PLAN
+  EXTRA
+  PRODUCT
+  ORDER
+}
+
+enum DiscountMode {
+  PERCENT
+  FIXED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model FAQ {

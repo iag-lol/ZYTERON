@@ -1,6 +1,93 @@
 -- Zyteron admin / CRM / SII bootstrap for Supabase PostgreSQL
 -- Ejecuta este archivo en SQL Editor de Supabase antes de usar
 -- los módulos de clientes, proyectos, solicitudes, SII y PDF storage.
+-- Si quieres bootstrap completo con catálogo + seeds web, usa:
+-- supabase/full_project_admin_schema.sql
+
+create extension if not exists pgcrypto;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'PlanTier') then
+    create type public."PlanTier" as enum ('BASIC', 'INTERMEDIATE', 'PRO');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'ExtraCategory') then
+    create type public."ExtraCategory" as enum ('DOMAIN', 'EMAIL', 'SUPPORT', 'EQUIPMENT', 'SEO', 'DESIGN', 'TRAINING', 'TECH');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'DiscountTargetType') then
+    create type public."DiscountTargetType" as enum ('PLAN', 'EXTRA', 'PRODUCT', 'ORDER');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'DiscountMode') then
+    create type public."DiscountMode" as enum ('PERCENT', 'FIXED');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'ReviewStatus') then
+    create type public."ReviewStatus" as enum ('PENDING', 'APPROVED', 'REJECTED');
+  end if;
+end
+$$;
+
+create table if not exists public."ProductCategory" (
+  id text primary key,
+  slug text not null unique,
+  name text not null,
+  "order" integer not null default 0
+);
+
+create table if not exists public."Product" (
+  id text primary key,
+  slug text not null unique,
+  name text not null,
+  description text not null,
+  price integer not null,
+  "discountPct" integer not null default 0,
+  stock integer not null default 10,
+  featured boolean not null default false,
+  "categoryId" text not null references public."ProductCategory"(id) on delete restrict,
+  badges text[] not null default '{}'::text[],
+  "createdAt" timestamptz not null default now()
+);
+
+create table if not exists public."Plan" (
+  id text primary key,
+  slug text not null unique,
+  name text not null,
+  description text not null,
+  price integer not null,
+  tier public."PlanTier" not null,
+  "freeGifts" text[] not null default '{}'::text[],
+  features text[] not null default '{}'::text[],
+  popular boolean not null default false
+);
+
+create table if not exists public."Extra" (
+  id text primary key,
+  slug text not null unique,
+  name text not null,
+  category public."ExtraCategory" not null,
+  description text not null,
+  options text[] not null default '{}'::text[],
+  price integer
+);
 
 alter table if exists public."User"
   add column if not exists "rut" text,
@@ -87,6 +174,36 @@ create table if not exists public."TaxDocument" (
   "createdAt" timestamptz default now()
 );
 
+create table if not exists public."WebDiscount" (
+  id text primary key,
+  name text not null,
+  description text,
+  "targetType" public."DiscountTargetType" not null default 'ORDER',
+  "targetId" text,
+  mode public."DiscountMode" not null default 'PERCENT',
+  value integer not null,
+  "minSubtotal" integer default 0,
+  active boolean not null default true,
+  "startsAt" timestamptz,
+  "endsAt" timestamptz,
+  "createdAt" timestamptz not null default now(),
+  "updatedAt" timestamptz not null default now()
+);
+
+create table if not exists public."ClientReview" (
+  id text primary key,
+  name text not null,
+  email text,
+  company text,
+  rating integer not null check (rating between 1 and 5),
+  comment text not null,
+  service text,
+  status public."ReviewStatus" not null default 'PENDING',
+  source text,
+  "createdAt" timestamptz not null default now(),
+  "approvedAt" timestamptz
+);
+
 create index if not exists idx_visit_client on public."Visit" ("clientId");
 create index if not exists idx_sale_client on public."Sale" ("clientId");
 create index if not exists idx_project_client on public."Project" ("clientId");
@@ -96,6 +213,9 @@ create index if not exists idx_taxdocument_client on public."TaxDocument" ("clie
 create index if not exists idx_taxdocument_project on public."TaxDocument" ("projectId");
 create index if not exists idx_taxdocument_quote on public."TaxDocument" ("quoteId");
 create index if not exists idx_taxdocument_sale on public."TaxDocument" ("saleId");
+create index if not exists idx_product_category on public."Product" ("categoryId");
+create index if not exists idx_discount_active on public."WebDiscount" (active);
+create index if not exists idx_clientreview_status_created on public."ClientReview" (status, "createdAt" desc);
 
 insert into storage.buckets (id, name, public)
 select 'quote-documents', 'quote-documents', true

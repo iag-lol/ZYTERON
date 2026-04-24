@@ -3,6 +3,9 @@ export type ContactLeadDetails = {
   service?: string;
   brief?: string;
   submittedFrom?: string;
+  selectedPlan?: string;
+  selectedExtras?: string[];
+  cartTotal?: number;
 };
 
 type ParsedContactLead = ContactLeadDetails & {
@@ -22,6 +25,14 @@ export function serializeContactLeadDetails(details: ContactLeadDetails) {
     service: cleanText(details.service) || undefined,
     brief: cleanText(details.brief) || undefined,
     submittedFrom: cleanText(details.submittedFrom) || undefined,
+    selectedPlan: cleanText(details.selectedPlan) || undefined,
+    selectedExtras: Array.isArray(details.selectedExtras)
+      ? details.selectedExtras.map((item) => cleanText(item)).filter(Boolean)
+      : undefined,
+    cartTotal:
+      typeof details.cartTotal === "number" && Number.isFinite(details.cartTotal)
+        ? Math.max(0, Math.round(details.cartTotal))
+        : undefined,
   };
 
   return `${CONTACT_LEAD_PREFIX}${JSON.stringify(payload)}`;
@@ -48,6 +59,14 @@ export function parseContactLeadDetails(message?: string | null): ParsedContactL
       service: cleanText(parsed.service) || undefined,
       brief: cleanText(parsed.brief) || undefined,
       submittedFrom: cleanText(parsed.submittedFrom) || undefined,
+      selectedPlan: cleanText(parsed.selectedPlan) || undefined,
+      selectedExtras: Array.isArray(parsed.selectedExtras)
+        ? parsed.selectedExtras.map((item) => cleanText(item)).filter(Boolean)
+        : undefined,
+      cartTotal:
+        typeof parsed.cartTotal === "number" && Number.isFinite(parsed.cartTotal)
+          ? Math.max(0, Math.round(parsed.cartTotal))
+          : undefined,
       rawMessage: raw,
     };
   } catch {

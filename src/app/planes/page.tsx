@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Check, Star, ArrowRight, Zap, Shield, Globe, TrendingUp } from "lucide-react";
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import { getWebPricingSnapshot } from "@/lib/web-control";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Planes de Diseno y Desarrollo Web Chile | Zyteron",
@@ -13,44 +16,6 @@ export const metadata: Metadata = createPageMetadata({
   path: "/planes",
   keywords: ["precios diseno web chile", "planes desarrollo web chile", "cotizacion pagina web empresa"],
 });
-
-const plans = [
-  {
-    name: "Básico",
-    price: "$390.000",
-    period: "pago único",
-    desc: "El punto de partida perfecto para empresas que necesitan presencia digital profesional.",
-    gifts: ["1 mes de atención básica post-entrega"],
-    features: ["Landing page extendida (hasta 6 secciones)", "Formulario de contacto + WhatsApp", "Hosting SSD + SSL (3 meses)", "Diseño responsive mobile/tablet/desktop", "Performance y velocidad optimizados", "SEO básico (metadatos y títulos)", "Entrega: 1–2 semanas"],
-    notIncluded: ["Panel de administración", "Blog integrado", "SEO avanzado"],
-    cta: "Comenzar con Básico",
-    featured: false,
-  },
-  {
-    name: "Intermedio",
-    price: "$790.000",
-    period: "pago único",
-    desc: "La opción más elegida por PYMES que quieren resultados concretos.",
-    gifts: ["1 mes de atención incluida"],
-    features: ["Sitio web completo (hasta 8 secciones)", "Formularios avanzados + analítica", "Optimización SEO intermedia on-page", "Integración CRM / email marketing", "Diseño premium con animaciones", "Performance Core Web Vitals", "Entrega: 3–5 semanas"],
-    notIncluded: ["Panel admin autónomo", "Dominio .cl (agrégalo como extra)"],
-    cta: "Elegir Plan Intermedio",
-    featured: true,
-    badge: "Más popular",
-  },
-  {
-    name: "Pro",
-    price: "$1.490.000",
-    period: "pago único",
-    desc: "Solución enterprise completa para empresas que exigen lo mejor.",
-    gifts: ["Dominio .cl por 1 año", "1 correo corporativo por 1 año", "1 mes de atención prioritaria", "Capacitación inicial (2h)"],
-    features: ["Sitio corporativo completo + blog", "SEO avanzado + schema JSON-LD", "Panel de cliente + administración base", "Seguridad avanzada y hardening", "Performance enterprise (99+ Lighthouse)", "Entrega: 5–7 semanas"],
-    notIncluded: [],
-    cta: "Elegir Plan Pro",
-    featured: false,
-    badge: "Más completo",
-  },
-];
 
 const comparisons = [
   { feature: "Landing / Sitio web", basic: "Landing extendida", mid: "Sitio 8 secciones", pro: "Corporativo + Blog" },
@@ -64,7 +29,40 @@ const comparisons = [
   { feature: "Capacitación", basic: false, mid: false, pro: "2h incluidas" },
 ];
 
-export default function PlanesPage() {
+function currency(value: number) {
+  return new Intl.NumberFormat("es-CL", {
+    style: "currency",
+    currency: "CLP",
+    maximumFractionDigits: 0,
+  }).format(Math.max(0, Math.round(value)));
+}
+
+export default async function PlanesPage() {
+  const { plans: dbPlans } = await getWebPricingSnapshot();
+  const plans = dbPlans.map((plan) => ({
+    name: plan.name,
+    price: currency(plan.price),
+    period: "pago único",
+    desc: plan.description,
+    gifts: plan.freeGifts,
+    features: plan.features,
+    notIncluded:
+      plan.tier === "BASIC"
+        ? ["Panel de administración", "Blog integrado", "SEO avanzado"]
+        : plan.tier === "INTERMEDIATE"
+          ? ["Panel admin autónomo", "Dominio .cl (agrégalo como extra)"]
+          : [],
+    cta:
+      plan.tier === "BASIC"
+        ? "Comenzar con Básico"
+        : plan.tier === "INTERMEDIATE"
+          ? "Elegir Plan Intermedio"
+          : "Elegir Plan Pro",
+    featured: plan.popular || plan.tier === "INTERMEDIATE",
+    badge: plan.popular ? "Más popular" : plan.tier === "PRO" ? "Más completo" : undefined,
+    tier: plan.tier,
+  }));
+
   return (
     <main className="bg-white">
       <JsonLd

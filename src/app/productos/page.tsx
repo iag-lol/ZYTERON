@@ -6,6 +6,9 @@ import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import { getWebPricingSnapshot } from "@/lib/web-control";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Productos TI y Hardware Para Empresas | Zyteron",
@@ -16,132 +19,47 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 const whatsappNumber = "56984752936";
-const getWaLink = (name: string, price: string) =>
-  `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    `Hola, quiero comprar ${name} (${price}, IVA incluido). ¿Disponibilidad y envío a mi dirección?`
+
+function currencyCLP(value: number) {
+  return new Intl.NumberFormat("es-CL", {
+    style: "currency",
+    currency: "CLP",
+    maximumFractionDigits: 0,
+  }).format(Math.max(0, Math.round(value)));
+}
+
+function getWaLink(name: string, price: string) {
+  return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+    `Hola, quiero comprar ${name} (${price}, IVA incluido). ¿Disponibilidad y envío a mi dirección?`,
   )}`;
-
-type Product = {
-  slug: string;
-  title: string;
-  desc: string;
-  price: string;
-  badge?: string;
-  badgeClass?: string;
-  specs: string[];
-};
-
-const products: Record<string, Product> = {
-  "pc-m72e-i3": {
-    slug: "pc-m72e-i3",
-    title: "Kit PC Lenovo ThinkCentre M72e i3 · 8GB · 240GB SSD · 14\"",
-    desc: "Equipo SFF confiable para oficina y cajas, incluye monitor.",
-    price: "$309.990 IVA inc.",
-    badge: "Entrega rápida",
-    badgeClass: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    specs: [
-      "Pantalla 14\"",
-      "Intel Core i3 3.3GHz · 8GB DDR3 · 240GB SSD",
-      "Windows 10 Pro licenciado",
-      "Tipo: Computador de escritorio",
-    ],
-  },
-  "pc-m72e-i5": {
-    slug: "pc-m72e-i5",
-    title: "Kit PC Lenovo ThinkCentre M72e i5 SFF · Quad core · 8GB · 240GB SSD · 19\"",
-    desc: "SFF con más potencia y monitor 19\" para turnos exigentes.",
-    price: "$379.990 IVA inc.",
-    badge: "Quad core",
-    badgeClass: "bg-blue-100 text-blue-700 border-blue-200",
-    specs: [
-      "Pantalla 19\"",
-      "Intel Core i5 3.8GHz · 8GB DDR3 · 240GB SSD",
-      "Windows 10 Pro",
-      "Núcleos: Quad core",
-    ],
-  },
-  "notebook-n100": {
-    slug: "notebook-n100",
-    title: "Notebook Lenovo IdeaPad Slim 3i 15.6\" N100 · 4GB · 128GB SSD",
-    desc: "Portátil liviano para ventas terreno y oficina móvil.",
-    price: "$369.990 IVA inc.",
-    badge: "Stock PYME",
-    badgeClass: "bg-amber-100 text-amber-700 border-amber-200",
-    specs: [
-      "Pantalla 15.6\"",
-      "Intel Processor N100 · 4GB RAM · 128GB SSD",
-      "GPU integrada",
-      "Núcleos: Quad core",
-    ],
-  },
-  "pos-base": {
-    slug: "pos-base",
-    title: "Kit POS Cafetería / Restaurante",
-    desc: "Punto de venta completo listo para operar en barra o caja.",
-    price: "$459.996 IVA inc.",
-    badge: "Lista entrega",
-    badgeClass: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    specs: [
-      "All-in-One 20\" Intel i5 · 4GB RAM · HDD",
-      "Teclado + mouse inalámbrico",
-      "Impresora térmica 58mm",
-      "Gaveta de dinero electrónica RJ11",
-      "Lector de códigos 1D",
-      "Envíos a todo Chile",
-    ],
-  },
-  "pos-web": {
-    slug: "pos-web",
-    title: "Kit POS + Página Web Lista para Vender",
-    desc: "Incluye POS completo + web operativa para pedidos y catálogo.",
-    price: "$699.990 IVA inc.",
-    badge: "Incluye web",
-    badgeClass: "bg-purple-100 text-purple-700 border-purple-200",
-    specs: [
-      "All-in-One 20\" Intel i5 · 4GB RAM · HDD",
-      "Sitio web operando (productos, pedidos, contacto)",
-      "Impresora térmica + gaveta + lector",
-      "Capacitación corta de uso",
-      "Envíos a todo Chile",
-    ],
-  },
-};
+}
 
 const productImages: Record<string, string> = {
-  "Kit PC Lenovo ThinkCentre M72e i3 · 8GB · 240GB SSD · 14\"":
-    "https://media.falabella.com/falabellaCL/145028643_01/w=1200,h=1200,fit=pad",
-  "Kit PC Lenovo ThinkCentre M72e i5 SFF · Quad core · 8GB · 240GB SSD · 19\"":
-    "https://media.falabella.com/falabellaCL/145028643_01/w=1200,h=1200,fit=pad",
-  "Notebook Lenovo IdeaPad Slim 3i 15.6\" N100 · 4GB · 128GB SSD":
-    "https://media.falabella.com/falabellaCL/152349797_01/w=1200,h=1200,fit=pad",
-  "Kit POS Cafetería / Restaurante":
-    "https://cdnx.jumpseller.com/opentecno/image/72034358/thumb/1079/1079?1768854032",
-  "Kit POS + Página Web Lista para Vender":
-    "https://cdnx.jumpseller.com/opentecno/image/72034358/thumb/1079/1079?1768854032",
+  "notebook-oficina-pro": "https://media.falabella.com/falabellaCL/152349797_01/w=1200,h=1200,fit=pad",
+  "pc-escritorio-empresa": "https://media.falabella.com/falabellaCL/145028643_01/w=1200,h=1200,fit=pad",
+  "combo-pyme-digital": "https://cdnx.jumpseller.com/opentecno/image/72034358/thumb/1079/1079?1768854032",
+  "combo-empresa-pro": "https://cdnx.jumpseller.com/opentecno/image/72034358/thumb/1079/1079?1768854032",
 };
 
-const sections = [
-  {
-    id: "pymes",
-    title: "Productos para PYMES",
-    subtitle: "Costo-efectivos para vender rápido y sin dolores de cabeza.",
-    items: ["pc-m72e-i3", "notebook-n100", "pos-base"],
-  },
-  {
-    id: "empresas",
-    title: "Productos para empresas",
-    subtitle: "Más potencia y POS con web incluida para sucursales.",
-    items: ["pc-m72e-i5", "pos-web"],
-  },
-  {
-    id: "venta",
-    title: "Catálogo completo PC & POS",
-    subtitle: "Todo con IVA incluido y envío a todo Chile.",
-    items: ["pc-m72e-i3", "pc-m72e-i5", "notebook-n100", "pos-base", "pos-web"],
-  },
-];
+export default async function ProductosPage() {
+  const { products } = await getWebPricingSnapshot();
+  const featured = products.filter((item) => item.featured);
+  const standard = products.filter((item) => !item.featured);
+  const sections = [
+    {
+      id: "destacados",
+      title: "Productos destacados",
+      subtitle: "Configuraciones más solicitadas para operación empresarial.",
+      items: featured.length > 0 ? featured : products,
+    },
+    {
+      id: "catalogo",
+      title: "Catálogo general",
+      subtitle: "Todo el stock administrable desde el panel de Control Web.",
+      items: standard.length > 0 ? standard : products,
+    },
+  ];
 
-export default function ProductosPage() {
   return (
     <main className="bg-white">
       <JsonLd
@@ -167,7 +85,7 @@ export default function ProductosPage() {
             Productos para pymes y empresas
           </h1>
           <p className="max-w-2xl text-lg text-slate-600">
-            Equipos y POS listos para operar, IVA incluido y envío a todo Chile. Pregunta por stock y te respondemos en menos de 24h.
+            Equipos y soluciones listos para operar, IVA incluido y envío a todo Chile.
           </p>
           <div className="flex flex-wrap gap-3 pt-2">
             <Button asChild size="lg" className="gap-2 bg-blue-700 hover:bg-blue-800 text-white font-bold btn-primary-glow">
@@ -194,17 +112,19 @@ export default function ProductosPage() {
                 <p className="text-sm text-slate-600">{section.subtitle}</p>
               </div>
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                {section.items.map((slug) => {
-                  const p = products[slug];
-                  const img = productImages[p.title];
-                  const wa = getWaLink(p.title, p.price);
+                {section.items.map((product) => {
+                  const discountValue = Math.max(0, Math.round(product.price * (product.discountPct / 100)));
+                  const finalPrice = product.price - discountValue;
+                  const wa = getWaLink(product.name, currencyCLP(finalPrice));
+                  const image = productImages[product.slug];
+
                   return (
-                    <div key={p.slug} className="card-premium flex flex-col p-5">
-                      {img && (
+                    <article key={`${section.id}-${product.id}`} className="card-premium flex flex-col p-5">
+                      {image ? (
                         <div className="mb-4 overflow-hidden rounded-xl border border-slate-100 bg-white">
                           <Image
-                            src={img}
-                            alt={p.title}
+                            src={image}
+                            alt={product.name}
                             className="h-44 w-full object-cover"
                             width={1079}
                             height={1079}
@@ -212,26 +132,38 @@ export default function ProductosPage() {
                             loading="lazy"
                           />
                         </div>
-                      )}
+                      ) : null}
+
                       <div className="flex items-start justify-between gap-2 mb-3">
-                        <h3 className="text-sm font-bold text-slate-900 leading-snug">{p.title}</h3>
-                        {p.badge && (
-                          <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${p.badgeClass}`}>
-                            {p.badge}
+                        <h3 className="text-sm font-bold text-slate-900 leading-snug">{product.name}</h3>
+                        {product.featured ? (
+                          <span className="shrink-0 rounded-full border border-blue-200 bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-700">
+                            Destacado
                           </span>
-                        )}
+                        ) : null}
                       </div>
-                      <p className="text-xs text-slate-500 leading-relaxed">{p.desc}</p>
+
+                      <p className="text-xs text-slate-500 leading-relaxed">{product.description}</p>
                       <ul className="mt-3 space-y-1 text-xs text-slate-600">
-                        {p.specs.map((s) => (
-                          <li key={s} className="flex items-start gap-2">
+                        {product.badges.map((badge) => (
+                          <li key={`${product.id}-${badge}`} className="flex items-start gap-2">
                             <Check className="h-3.5 w-3.5 text-blue-600 mt-0.5 shrink-0" />
-                            <span>{s}</span>
+                            <span>{badge}</span>
                           </li>
                         ))}
+                        <li className="flex items-start gap-2">
+                          <Check className="h-3.5 w-3.5 text-blue-600 mt-0.5 shrink-0" />
+                          <span>Stock actual: {product.stock}</span>
+                        </li>
                       </ul>
-                      <div className="mt-4 flex items-center justify-between">
-                        <span className="text-xl font-extrabold text-slate-900">{p.price}</span>
+
+                      <div className="mt-4 flex items-center justify-between gap-2">
+                        <div>
+                          {product.discountPct > 0 ? (
+                            <p className="text-xs text-slate-400 line-through">{currencyCLP(product.price)}</p>
+                          ) : null}
+                          <span className="text-xl font-extrabold text-slate-900">{currencyCLP(finalPrice)}</span>
+                        </div>
                         <a
                           href={wa}
                           target="_blank"
@@ -241,10 +173,7 @@ export default function ProductosPage() {
                           Comprar por WhatsApp <ArrowRight className="h-3.5 w-3.5" />
                         </a>
                       </div>
-                      <p className="mt-2 text-[11px] text-slate-500">
-                        Respuesta en &lt;24h. Sin extras obligatorios. Envíos a todo Chile.
-                      </p>
-                    </div>
+                    </article>
                   );
                 })}
               </div>

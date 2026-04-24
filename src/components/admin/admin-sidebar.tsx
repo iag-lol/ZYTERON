@@ -18,6 +18,7 @@ import {
   MessagesSquare,
   Landmark,
   Mail,
+  SlidersHorizontal,
 } from "lucide-react";
 
 const navItems = [
@@ -30,6 +31,7 @@ const navItems = [
   { href: "/admin/visitas", label: "Visitas técnicas", icon: CalendarClock },
   { href: "/admin/ventas", label: "Ventas", icon: ShoppingCart },
   { href: "/admin/sii", label: "SII", icon: Landmark },
+  { href: "/admin/control-web", label: "Control Web", icon: SlidersHorizontal },
   { href: "/admin/reportes", label: "Reportes", icon: BarChart3 },
 ];
 
