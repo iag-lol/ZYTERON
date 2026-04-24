@@ -44,6 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <div className="flex items-center gap-1.5">
                 <Link
                   href="/admin/cotizaciones/nueva"
+                  prefetch={false}
                   className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[12px] font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -51,6 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </Link>
                 <Link
                   href="/admin/config"
+                  prefetch={false}
                   className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                   title="Configuración"
                 >
@@ -58,6 +60,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </Link>
                 <Link
                   href="/admin/sii"
+                  prefetch={false}
                   className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                   title="Centro SII"
                 >
@@ -65,6 +68,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </Link>
                 <Link
                   href="/admin/logout"
+                  prefetch={false}
                   className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
                   title="Cerrar sesión"
                 >

@@ -121,11 +121,13 @@ type SelectOptions = {
 };
 
 function isMissingRelationError(message?: string) {
+  const normalized = message?.toLowerCase();
   return Boolean(
-    message &&
-      (message.includes("Could not find the table") ||
-        message.includes("relation") ||
-        message.includes("does not exist")),
+    normalized &&
+      (normalized.includes("could not find the table") ||
+        (normalized.includes("relation") && normalized.includes("does not exist")) ||
+        (normalized.includes("column") && normalized.includes("does not exist")) ||
+        normalized.includes("schema cache")),
   );
 }
 
