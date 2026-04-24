@@ -85,7 +85,7 @@ export async function POST(req: Request) {
       .single();
 
     if (error || !data) {
-      return NextResponse.json({ error: error?.message || "No se pudo guardar la cotizacion" }, { status: 500 });
+      return NextResponse.json({ error: getErrorMessage(error) || "No se pudo guardar la cotizacion" }, { status: 500 });
     }
 
     let pdfUrl = `/admin/cotizaciones/${data.id}/pdf`;
