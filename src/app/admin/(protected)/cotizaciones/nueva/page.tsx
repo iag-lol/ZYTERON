@@ -42,8 +42,11 @@ interface LineItem {
   id: string;
   description: string;
   detail: string;
+  billingMode: "UNIT" | "HOUR";
   qty: number;
   unit: string;
+  startTime: string;
+  endTime: string;
   unitPrice: number;
   discountPct: number;
 }
@@ -89,6 +92,30 @@ function addDays(date: Date, days: number) {
   return d;
 }
 
+function normalizeTimeInput(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 4);
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+}
+
+function isValidTime(value: string) {
+  if (!/^\d{2}:\d{2}$/.test(value)) return false;
+  const [hours, minutes] = value.split(":").map(Number);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return false;
+  return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+}
+
+function getHoursBetween(startTime: string, endTime: string) {
+  if (!isValidTime(startTime) || !isValidTime(endTime)) return 0;
+  const [startH, startM] = startTime.split(":").map(Number);
+  const [endH, endM] = endTime.split(":").map(Number);
+  const startMinutes = startH * 60 + startM;
+  const endMinutes = endH * 60 + endM;
+  const diff = endMinutes - startMinutes;
+  if (diff <= 0) return 0;
+  return Math.round((diff / 60) * 100) / 100;
+}
+
 const today = new Date();
 const quoteNumber = `COT-${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}${String(Math.floor(Math.random() * 900) + 100)}`;
 
@@ -96,8 +123,11 @@ const emptyItem = (): LineItem => ({
   id: generateId(),
   description: "",
   detail: "",
+  billingMode: "UNIT",
   qty: 1,
   unit: "unidad",
+  startTime: "",
+  endTime: "",
   unitPrice: 0,
   discountPct: 0,
 });
@@ -211,9 +241,11 @@ export default function NuevaCotizacion() {
 
   /* ─── Computed totals ─── */
   const itemTotals = items.map((item) => {
-    const bruto = item.qty * item.unitPrice;
+    const hours = item.billingMode === "HOUR" ? getHoursBetween(item.startTime, item.endTime) : 0;
+    const effectiveQty = item.billingMode === "HOUR" ? hours : item.qty;
+    const bruto = effectiveQty * item.unitPrice;
     const descuento = bruto * (item.discountPct / 100);
-    return { bruto, descuento, subtotal: bruto - descuento };
+    return { bruto, descuento, subtotal: bruto - descuento, hours, effectiveQty };
   });
 
   const subtotal = itemTotals.reduce((acc, t) => acc + t.subtotal, 0);
@@ -298,12 +330,40 @@ export default function NuevaCotizacion() {
       setError("Nombre y email del cliente son obligatorios.");
       return;
     }
-    if (items.some((i) => !i.description || i.unitPrice <= 0)) {
-      setError("Cada ítem debe tener descripción y precio mayor a 0.");
+    const hasInvalidItems = items.some((item) => {
+      if (!item.description || item.unitPrice <= 0) return true;
+      if (item.billingMode === "HOUR") {
+        return getHoursBetween(item.startTime, item.endTime) <= 0;
+      }
+      return item.qty <= 0;
+    });
+    if (hasInvalidItems) {
+      setError("Cada ítem debe tener descripción, precio válido y horas/cantidad mayor a 0.");
       return;
     }
 
     setError(null);
+
+    const normalizedItems = items.map((item, idx) => {
+      const totals = itemTotals[idx];
+      const effectiveQty = totals?.effectiveQty || item.qty;
+      const baseDetail = item.detail?.trim() || "";
+
+      if (item.billingMode === "HOUR") {
+        const hourLabel = `${item.startTime} a ${item.endTime} (${effectiveQty.toFixed(2)} h)`;
+        return {
+          ...item,
+          qty: effectiveQty,
+          unit: "hora",
+          detail: baseDetail ? `${baseDetail} · Horario ${hourLabel}` : `Horario ${hourLabel}`,
+        };
+      }
+
+      return {
+        ...item,
+        qty: effectiveQty,
+      };
+    });
 
     const payload = {
       name: client.name,
@@ -327,7 +387,7 @@ export default function NuevaCotizacion() {
         paymentTerms: meta.paymentTerms,
         includeIva,
         ivaRate: IVA_RATE,
-        items,
+        items: normalizedItems,
         subtotal,
         totalDescuento,
         iva,
@@ -630,6 +690,9 @@ export default function NuevaCotizacion() {
                 Detalle de servicios / productos
               </h3>
             </div>
+            <p className="mr-auto ml-3 text-[11px] text-slate-500">
+              Modo <strong>Por horas</strong>: define inicio y fin, el sistema calcula horas y total automáticamente.
+            </p>
             <button
               type="button"
               onClick={addItem}
@@ -641,11 +704,11 @@ export default function NuevaCotizacion() {
           </div>
 
           {/* Table header */}
-          <div className="mb-2 grid grid-cols-[3fr_1fr_0.8fr_1.2fr_1fr_1fr_auto] items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+          <div className="mb-2 grid grid-cols-[3fr_1.6fr_0.8fr_1.2fr_1fr_1fr_auto] items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
             <span>Descripción</span>
-            <span>Detalle/Unidad</span>
-            <span className="text-center">Cant.</span>
-            <span className="text-right">Precio unit.</span>
+            <span>Modo / Horario</span>
+            <span className="text-center">Cant./hrs</span>
+            <span className="text-right">Precio unit./hora</span>
             <span className="text-right">Descuento</span>
             <span className="text-right">Subtotal</span>
             <span />
@@ -653,11 +716,15 @@ export default function NuevaCotizacion() {
 
           <div className="space-y-2">
             {items.map((item, idx) => {
-              const { subtotal: st } = itemTotals[idx] ?? { subtotal: 0 };
+              const {
+                subtotal: st,
+                effectiveQty = item.qty,
+                hours = 0,
+              } = itemTotals[idx] ?? { subtotal: 0, effectiveQty: item.qty, hours: 0 };
               return (
                 <div
                   key={item.id}
-                  className="grid grid-cols-[3fr_1fr_0.8fr_1.2fr_1fr_1fr_auto] items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition-colors hover:border-slate-300"
+                  className="grid grid-cols-[3fr_1.6fr_0.8fr_1.2fr_1fr_1fr_auto] items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition-colors hover:border-slate-300"
                 >
                   {/* Description */}
                   <div className="space-y-1.5">
@@ -676,25 +743,80 @@ export default function NuevaCotizacion() {
                     />
                   </div>
 
-                  {/* Unit */}
-                  <div>
-                    <Input
-                      value={item.unit}
-                      onChange={(e) => setItem(item.id, "unit", e.target.value)}
-                      placeholder="unidad"
+                  {/* Billing mode / time */}
+                  <div className="space-y-1.5">
+                    <Select
+                      value={item.billingMode}
+                      onChange={(e) => {
+                        const nextMode = e.target.value as LineItem["billingMode"];
+                        setItems((prev) =>
+                          prev.map((row) =>
+                            row.id === item.id
+                              ? {
+                                  ...row,
+                                  billingMode: nextMode,
+                                  unit: nextMode === "HOUR" ? "hora" : row.unit || "unidad",
+                                  qty: nextMode === "HOUR" ? row.qty : Math.max(1, row.qty),
+                                }
+                              : row,
+                          ),
+                        );
+                      }}
                       className="text-[12px]"
-                    />
+                    >
+                      <option value="UNIT">Por unidad</option>
+                      <option value="HOUR">Por horas</option>
+                    </Select>
+                    {item.billingMode === "HOUR" ? (
+                      <div className="space-y-1">
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <Input
+                            value={item.startTime}
+                            onChange={(e) => setItem(item.id, "startTime", normalizeTimeInput(e.target.value))}
+                            placeholder="Inicio 09:00"
+                            maxLength={5}
+                            inputMode="numeric"
+                            className="text-[11px]"
+                          />
+                          <Input
+                            value={item.endTime}
+                            onChange={(e) => setItem(item.id, "endTime", normalizeTimeInput(e.target.value))}
+                            placeholder="Fin 13:30"
+                            maxLength={5}
+                            inputMode="numeric"
+                            className="text-[11px]"
+                          />
+                        </div>
+                        {hours <= 0 ? (
+                          <p className="text-[10px] text-rose-500">Ingresa rango válido (fin mayor a inicio)</p>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <Input
+                        value={item.unit}
+                        onChange={(e) => setItem(item.id, "unit", e.target.value)}
+                        placeholder="unidad"
+                        className="text-[11px]"
+                      />
+                    )}
                   </div>
 
                   {/* Qty */}
                   <div>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={item.qty}
-                      onChange={(e) => setItem(item.id, "qty", parseFloat(e.target.value) || 1)}
-                      className="text-center text-[13px] font-semibold"
-                    />
+                    {item.billingMode === "HOUR" ? (
+                      <div className="rounded-lg border border-blue-100 bg-blue-50 px-2 py-2 text-center">
+                        <p className="text-[13px] font-bold text-blue-700">{hours > 0 ? hours.toFixed(2) : "0.00"} h</p>
+                        <p className="text-[10px] text-blue-500">auto</p>
+                      </div>
+                    ) : (
+                      <Input
+                        type="number"
+                        min={1}
+                        value={item.qty}
+                        onChange={(e) => setItem(item.id, "qty", parseFloat(e.target.value) || 1)}
+                        className="text-center text-[13px] font-semibold"
+                      />
+                    )}
                   </div>
 
                   {/* Unit price */}
@@ -704,7 +826,7 @@ export default function NuevaCotizacion() {
                       min={0}
                       value={item.unitPrice || ""}
                       onChange={(e) => setItem(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
-                      placeholder="0"
+                      placeholder={item.billingMode === "HOUR" ? "Valor por hora" : "0"}
                       className="text-right text-[13px] font-semibold"
                     />
                   </div>
@@ -728,9 +850,12 @@ export default function NuevaCotizacion() {
                   {/* Subtotal */}
                   <div className="text-right">
                     <p className="text-[13px] font-bold text-slate-900">{currency(st)}</p>
+                    {item.billingMode === "HOUR" ? (
+                      <p className="text-[10px] text-slate-500">{effectiveQty.toFixed(2)} h × {currency(item.unitPrice)}</p>
+                    ) : null}
                     {item.discountPct > 0 && (
                       <p className="text-[10px] text-rose-500 line-through">
-                        {currency(item.qty * item.unitPrice)}
+                        {currency(effectiveQty * item.unitPrice)}
                       </p>
                     )}
                   </div>
@@ -824,11 +949,18 @@ export default function NuevaCotizacion() {
             <div className="space-y-2">
               {/* Items */}
               {items.map((item, idx) => {
-                const { subtotal: st } = itemTotals[idx] ?? { subtotal: 0 };
+                const { subtotal: st, effectiveQty = item.qty } = itemTotals[idx] ?? { subtotal: 0, effectiveQty: item.qty };
                 if (!item.description) return null;
                 return (
                   <div key={item.id} className="flex items-start justify-between gap-2 text-[12px]">
-                    <span className="flex-1 text-slate-600 leading-tight">{item.description}</span>
+                    <span className="flex-1 text-slate-600 leading-tight">
+                      <span className="block">{item.description}</span>
+                      {item.billingMode === "HOUR" ? (
+                        <span className="block text-[10px] text-slate-400">
+                          {item.startTime || "--:--"} a {item.endTime || "--:--"} · {effectiveQty.toFixed(2)} h
+                        </span>
+                      ) : null}
+                    </span>
                     <span className="font-semibold text-slate-900 whitespace-nowrap">{currency(st)}</span>
                   </div>
                 );
