@@ -120,8 +120,20 @@ type SelectOptions = {
   filters?: Record<string, string | number | null | undefined>;
 };
 
+function toErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  if (error && typeof error === "object") {
+    const candidate = error as { message?: unknown; details?: unknown; hint?: unknown; code?: unknown };
+    const parts = [candidate.message, candidate.details, candidate.hint, candidate.code]
+      .filter((value) => typeof value === "string" && value.trim().length > 0)
+      .map((value) => String(value).trim());
+    if (parts.length > 0) return parts.join(" | ");
+  }
+  return String(error ?? "unknown error");
+}
+
 function logReadError(table: string, error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = toErrorMessage(error);
   console.error(`[admin/read] ${table}: ${message}`);
 }
 
@@ -189,7 +201,7 @@ export async function insertRow<T>(table: string, payload: Record<string, unknow
     : { id: randomUUID(), ...payload };
   const { data, error } = await supabase.from(table).insert(rowPayload).select(select).single();
   if (error) {
-    throw error;
+    throw new Error(toErrorMessage(error));
   }
   return data as T;
 }
@@ -204,7 +216,7 @@ export async function updateRows(table: string, payload: Record<string, unknown>
 
   const { error } = await query;
   if (error) {
-    throw error;
+    throw new Error(toErrorMessage(error));
   }
 }
 

@@ -18,6 +18,18 @@ type QuoteBody = {
   status?: string;
 };
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  if (error && typeof error === "object") {
+    const candidate = error as { message?: unknown; details?: unknown; hint?: unknown; code?: unknown };
+    const parts = [candidate.message, candidate.details, candidate.hint, candidate.code]
+      .filter((value) => typeof value === "string" && value.trim().length > 0)
+      .map((value) => String(value).trim());
+    if (parts.length) return parts.join(" | ");
+  }
+  return "Error inesperado al guardar la cotizacion";
+}
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as QuoteBody;
@@ -32,16 +44,22 @@ export async function POST(req: Request) {
     }
 
     const meta = buildQuoteMeta(parseQuoteMessage(message));
-    const clientId = await findOrCreateClientByEmail({
-      name,
-      email,
-      company: company || null,
-      phone: phone || null,
-      address: meta.clientAddress || null,
-      city: meta.clientCity || null,
-      rut: meta.clientRut || null,
-      contactName: meta.clientContact || name,
-    });
+    let clientId: string | null = null;
+    try {
+      clientId = await findOrCreateClientByEmail({
+        name,
+        email,
+        company: company || null,
+        phone: phone || null,
+        address: meta.clientAddress || null,
+        city: meta.clientCity || null,
+        rut: meta.clientRut || null,
+        contactName: meta.clientContact || name,
+      });
+    } catch (error) {
+      // No bloquear guardado de cotización por fallas en sincronización de cliente.
+      console.error("[quote-submit] client sync failed:", getErrorMessage(error));
+    }
 
     const { supabase } = createSupabaseServerClient();
     const createdAt = new Date().toISOString();
@@ -51,7 +69,7 @@ export async function POST(req: Request) {
       .from("Quote")
       .insert({
         id: randomUUID(),
-        userId: clientId,
+        userId: clientId || null,
         name,
         email,
         phone: phone || null,
@@ -70,36 +88,41 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error?.message || "No se pudo guardar la cotizacion" }, { status: 500 });
     }
 
-    const pdfBytes = await generateQuotePdf({
-      quoteId: data.id,
-      clientName: name,
-      clientEmail: email,
-      clientPhone: phone || null,
-      clientCompany: company || null,
-      status: data.status,
-      createdAt: data.createdAt,
-      meta,
-    });
-
     let pdfUrl = `/admin/cotizaciones/${data.id}/pdf`;
     let pdfStoragePath: string | undefined;
 
     try {
-      const storagePath = `quotes/${new Date().getFullYear()}/${data.id}.pdf`;
-      const upload = await supabase.storage
-        .from(ZYTERON_QUOTE_BUCKET)
-        .upload(storagePath, pdfBytes, {
-          contentType: "application/pdf",
-          upsert: true,
-        });
+      const pdfBytes = await generateQuotePdf({
+        quoteId: data.id,
+        clientName: name,
+        clientEmail: email,
+        clientPhone: phone || null,
+        clientCompany: company || null,
+        status: data.status,
+        createdAt: data.createdAt,
+        meta,
+      });
 
-      if (!upload.error) {
-        pdfStoragePath = storagePath;
-        const publicUrl = supabase.storage.from(ZYTERON_QUOTE_BUCKET).getPublicUrl(storagePath);
-        pdfUrl = publicUrl.data.publicUrl || pdfUrl;
+      try {
+        const storagePath = `quotes/${new Date().getFullYear()}/${data.id}.pdf`;
+        const upload = await supabase.storage
+          .from(ZYTERON_QUOTE_BUCKET)
+          .upload(storagePath, pdfBytes, {
+            contentType: "application/pdf",
+            upsert: true,
+          });
+
+        if (!upload.error) {
+          pdfStoragePath = storagePath;
+          const publicUrl = supabase.storage.from(ZYTERON_QUOTE_BUCKET).getPublicUrl(storagePath);
+          pdfUrl = publicUrl.data.publicUrl || pdfUrl;
+        }
+      } catch {
+        // Si el bucket no existe, el PDF queda disponible por la ruta dinámica del panel.
       }
     } catch {
-      // Si el bucket no existe, el PDF queda disponible por la ruta dinámica del panel.
+      // Falla de generación PDF no debe bloquear persistencia de la cotización.
+      console.error("[quote-submit] pdf generation failed for quote", data.id);
     }
 
     const nextMeta = buildQuoteMeta({
@@ -109,13 +132,18 @@ export async function POST(req: Request) {
       pdfGeneratedAt: new Date().toISOString(),
     });
 
-    await updateRows(
-      "Quote",
-      {
-        message: serializeQuoteMessage(nextMeta),
-      },
-      { id: data.id },
-    );
+    try {
+      await updateRows(
+        "Quote",
+        {
+          message: serializeQuoteMessage(nextMeta),
+        },
+        { id: data.id },
+      );
+    } catch (error) {
+      // La cotización ya fue insertada; no responder 500 por metadata posterior.
+      console.error("[quote-submit] quote metadata update failed:", getErrorMessage(error));
+    }
 
     return NextResponse.json({
       ok: true,
@@ -124,7 +152,7 @@ export async function POST(req: Request) {
       storageUrl: pdfUrl,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Error inesperado al guardar la cotizacion";
+    const message = getErrorMessage(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
