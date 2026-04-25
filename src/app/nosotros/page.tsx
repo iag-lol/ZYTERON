@@ -37,7 +37,7 @@ const teamMembers = [
   {
     name: "Eduardo Ávila",
     role: "Fundador y líder de proyectos",
-    photo: "/equipo/eduardo-avila/perfil.jpg",
+    photo: "/equipo/eduardo-avila/perfil.png",
     bio: "Trabajo ayudando a negocios, emprendedores y pymes con soluciones tecnológicas claras, prácticas y profesionales.",
     focus:
       "Desde desarrollo web hasta soporte TI, redes y soluciones digitales, mi enfoque es entregar un servicio cercano, ordenado y útil para cada cliente.",
@@ -46,7 +46,7 @@ const teamMembers = [
   {
     name: "Víctor",
     role: "Desarrollo y soporte TI",
-    photo: "/equipo/victor/perfil.jpg",
+    photo: "/equipo/victor/perfil.png",
     bio: "Profesional enfocado en entregar soluciones web y TI claras, funcionales y orientadas a resultados.",
     focus:
       "Lidera áreas de desarrollo, soporte técnico, mantenimiento de sistemas e implementación de herramientas TI para empresas.",
@@ -54,7 +54,7 @@ const teamMembers = [
   {
     name: "Leonel",
     role: "Análisis, desarrollo y calidad",
-    photo: "/equipo/leonel/perfil.jpg",
+    photo: "/equipo/leonel/perfil.png",
     bio: "Profesional enfocado en entregar soluciones web y TI claras, funcionales y orientadas a resultados.",
     focus:
       "Trabaja en análisis, desarrollo de aplicaciones, gestión de bases de datos, integración de sistemas, automatización y control de calidad.",
@@ -172,6 +172,7 @@ export default function NosotrosPage() {
                     src={member.photo}
                     alt={`Foto de ${member.name}`}
                     fill
+                    unoptimized
                     sizes="(max-width: 768px) 100vw, 33vw"
                     className="object-cover object-center"
                     priority={member.name === "Eduardo Ávila"}

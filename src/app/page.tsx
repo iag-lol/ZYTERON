@@ -171,21 +171,21 @@ const teamPreview = [
   {
     name: "Eduardo Ávila",
     role: "Fundador y líder de proyectos",
-    photo: "/equipo/eduardo-avila/perfil.jpg",
+    photo: "/equipo/eduardo-avila/perfil.png",
     summary:
       "Acompaña a negocios, emprendedores y pymes con soluciones tecnológicas claras, prácticas y profesionales.",
   },
   {
     name: "Víctor",
     role: "Desarrollo y soporte TI",
-    photo: "/equipo/victor/perfil.jpg",
+    photo: "/equipo/victor/perfil.png",
     summary:
       "Lidera desarrollo web, soporte técnico, mantenimiento de sistemas e implementación de herramientas TI.",
   },
   {
     name: "Leonel",
     role: "Análisis y automatización",
-    photo: "/equipo/leonel/perfil.jpg",
+    photo: "/equipo/leonel/perfil.png",
     summary:
       "Se enfoca en aplicaciones, bases de datos, integración de sistemas, automatización y control de calidad.",
   },
@@ -403,6 +403,7 @@ export default function Home() {
                     src={member.photo}
                     alt={`Foto de ${member.name}`}
                     fill
+                    unoptimized
                     sizes="(max-width: 768px) 100vw, 33vw"
                     className="object-cover object-center"
                     priority={member.name === "Eduardo Ávila"}
