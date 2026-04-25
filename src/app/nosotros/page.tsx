@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Target, Code2, TrendingUp, Shield, Zap, Globe, Users, Award, ArrowRight } from "lucide-react";
@@ -36,6 +37,7 @@ const teamMembers = [
   {
     name: "Eduardo Ávila",
     role: "Fundador y líder de proyectos",
+    photo: "/equipo/eduardo-avila/perfil.jpg",
     bio: "Trabajo ayudando a negocios, emprendedores y pymes con soluciones tecnológicas claras, prácticas y profesionales.",
     focus:
       "Desde desarrollo web hasta soporte TI, redes y soluciones digitales, mi enfoque es entregar un servicio cercano, ordenado y útil para cada cliente.",
@@ -44,6 +46,7 @@ const teamMembers = [
   {
     name: "Víctor",
     role: "Desarrollo y soporte TI",
+    photo: "/equipo/victor/perfil.jpg",
     bio: "Profesional enfocado en entregar soluciones web y TI claras, funcionales y orientadas a resultados.",
     focus:
       "Lidera áreas de desarrollo, soporte técnico, mantenimiento de sistemas e implementación de herramientas TI para empresas.",
@@ -51,6 +54,7 @@ const teamMembers = [
   {
     name: "Leonel",
     role: "Análisis, desarrollo y calidad",
+    photo: "/equipo/leonel/perfil.jpg",
     bio: "Profesional enfocado en entregar soluciones web y TI claras, funcionales y orientadas a resultados.",
     focus:
       "Trabaja en análisis, desarrollo de aplicaciones, gestión de bases de datos, integración de sistemas, automatización y control de calidad.",
@@ -163,6 +167,16 @@ export default function NosotrosPage() {
           <div className="grid gap-4 md:grid-cols-3">
             {teamMembers.map((member) => (
               <article key={member.name} className="card-premium p-6 space-y-3">
+                <div className="relative mb-2 aspect-[4/3] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                  <Image
+                    src={member.photo}
+                    alt={`Foto de ${member.name}`}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover object-center"
+                    priority={member.name === "Eduardo Ávila"}
+                  />
+                </div>
                 <p className="text-xs font-bold uppercase tracking-widest text-blue-600">{member.role}</p>
                 <h3 className="text-xl font-extrabold text-slate-900">{member.name}</h3>
                 <p className="text-sm leading-relaxed text-slate-600">{member.bio}</p>

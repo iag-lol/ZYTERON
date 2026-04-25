@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   Rocket,
@@ -170,18 +171,21 @@ const teamPreview = [
   {
     name: "Eduardo Ávila",
     role: "Fundador y líder de proyectos",
+    photo: "/equipo/eduardo-avila/perfil.jpg",
     summary:
       "Acompaña a negocios, emprendedores y pymes con soluciones tecnológicas claras, prácticas y profesionales.",
   },
   {
     name: "Víctor",
     role: "Desarrollo y soporte TI",
+    photo: "/equipo/victor/perfil.jpg",
     summary:
       "Lidera desarrollo web, soporte técnico, mantenimiento de sistemas e implementación de herramientas TI.",
   },
   {
     name: "Leonel",
     role: "Análisis y automatización",
+    photo: "/equipo/leonel/perfil.jpg",
     summary:
       "Se enfoca en aplicaciones, bases de datos, integración de sistemas, automatización y control de calidad.",
   },
@@ -394,6 +398,16 @@ export default function Home() {
           <div className="grid gap-4 md:grid-cols-3">
             {teamPreview.map((member) => (
               <article key={member.name} className="card-premium p-6">
+                <div className="relative mb-4 aspect-[4/3] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                  <Image
+                    src={member.photo}
+                    alt={`Foto de ${member.name}`}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover object-center"
+                    priority={member.name === "Eduardo Ávila"}
+                  />
+                </div>
                 <p className="text-xs font-bold uppercase tracking-widest text-blue-600">{member.role}</p>
                 <h3 className="mt-2 text-xl font-extrabold text-slate-900">{member.name}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">{member.summary}</p>
