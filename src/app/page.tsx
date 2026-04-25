@@ -398,14 +398,14 @@ export default function Home() {
           <div className="grid gap-4 md:grid-cols-3">
             {teamPreview.map((member) => (
               <article key={member.name} className="card-premium p-6">
-                <div className="relative mb-4 aspect-[4/3] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                <div className="relative mb-4 aspect-[4/5] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
                   <Image
                     src={member.photo}
                     alt={`Foto de ${member.name}`}
                     fill
                     unoptimized
                     sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover object-center"
+                    className="object-cover object-[center_20%]"
                     priority={member.name === "Eduardo Ávila"}
                   />
                 </div>
