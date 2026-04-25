@@ -166,6 +166,27 @@ const faqs = [
   },
 ];
 
+const teamPreview = [
+  {
+    name: "Eduardo Ávila",
+    role: "Fundador y líder de proyectos",
+    summary:
+      "Acompaña a negocios, emprendedores y pymes con soluciones tecnológicas claras, prácticas y profesionales.",
+  },
+  {
+    name: "Víctor",
+    role: "Desarrollo y soporte TI",
+    summary:
+      "Lidera desarrollo web, soporte técnico, mantenimiento de sistemas e implementación de herramientas TI.",
+  },
+  {
+    name: "Leonel",
+    role: "Análisis y automatización",
+    summary:
+      "Se enfoca en aplicaciones, bases de datos, integración de sistemas, automatización y control de calidad.",
+  },
+];
+
 /* WhatsApp helper */
 const whatsappNumber = "56984752936";
 type ChatIntent = "plan" | "producto";
@@ -349,6 +370,47 @@ export default function Home() {
                 <span className="text-xs text-slate-500 font-medium">{stat.label}</span>
               </div>
             ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* ═══════════════════════ QUIÉNES SOMOS ═══════════════════════ */}
+      <section className="cv-auto py-16 bg-white">
+        <Container className="space-y-8">
+          <div className="space-y-3 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Quiénes somos</p>
+            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              Tecnología simple, confiable y cercana para tu negocio
+            </h2>
+            <p className="mx-auto max-w-3xl text-slate-600">
+              En Zyteron combinamos desarrollo web, soporte TI y soluciones digitales para que avances con orden y
+              resultados reales.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {teamPreview.map((member) => (
+              <article key={member.name} className="card-premium p-6">
+                <p className="text-xs font-bold uppercase tracking-widest text-blue-600">{member.role}</p>
+                <h3 className="mt-2 text-xl font-extrabold text-slate-900">{member.name}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">{member.summary}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6 text-center">
+            <p className="text-sm leading-relaxed text-slate-700">
+              Escríbenos a{" "}
+              <a className="font-semibold text-blue-700 hover:text-blue-900" href="mailto:eduardo.avila@zyteron.cl">
+                eduardo.avila@zyteron.cl
+              </a>{" "}
+              y conversemos cómo podemos apoyar a tu empresa.
+            </p>
+            <div className="mt-4">
+              <Link href="/nosotros" className="inline-flex items-center gap-2 text-sm font-bold text-blue-700 hover:text-blue-900">
+                Conocer más del equipo <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </Container>
       </section>

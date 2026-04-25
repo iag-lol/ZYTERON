@@ -32,6 +32,31 @@ const stats = [
 
 const cities = ["Santiago", "Valparaíso", "Concepción", "Antofagasta", "La Serena", "Temuco", "Iquique", "Rancagua", "Puerto Montt", "Arica"];
 
+const teamMembers = [
+  {
+    name: "Eduardo Ávila",
+    role: "Fundador y líder de proyectos",
+    bio: "Trabajo ayudando a negocios, emprendedores y pymes con soluciones tecnológicas claras, prácticas y profesionales.",
+    focus:
+      "Desde desarrollo web hasta soporte TI, redes y soluciones digitales, mi enfoque es entregar un servicio cercano, ordenado y útil para cada cliente.",
+    contact: "eduardo.avila@zyteron.cl",
+  },
+  {
+    name: "Víctor",
+    role: "Desarrollo y soporte TI",
+    bio: "Profesional enfocado en entregar soluciones web y TI claras, funcionales y orientadas a resultados.",
+    focus:
+      "Lidera áreas de desarrollo, soporte técnico, mantenimiento de sistemas e implementación de herramientas TI para empresas.",
+  },
+  {
+    name: "Leonel",
+    role: "Análisis, desarrollo y calidad",
+    bio: "Profesional enfocado en entregar soluciones web y TI claras, funcionales y orientadas a resultados.",
+    focus:
+      "Trabaja en análisis, desarrollo de aplicaciones, gestión de bases de datos, integración de sistemas, automatización y control de calidad.",
+  },
+];
+
 export default function NosotrosPage() {
   return (
     <main className="bg-white">
@@ -116,6 +141,48 @@ export default function NosotrosPage() {
             <h2 className="text-2xl font-extrabold text-slate-900">La plataforma digital de referencia en Chile</h2>
             <p className="text-slate-600 leading-relaxed text-sm">
               Ser el socio tecnológico de largo plazo de las empresas chilenas más ambiciosas: desde su primera landing hasta su ecosistema digital completo.
+            </p>
+          </div>
+        </Container>
+      </section>
+
+      {/* Team */}
+      <section className="py-20 bg-white border-b border-slate-200">
+        <Container className="space-y-10">
+          <div className="text-center space-y-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Quiénes somos</p>
+            <h2 className="text-3xl font-extrabold text-slate-900">
+              Equipo Zyteron: cercano, técnico y orientado a resultados
+            </h2>
+            <p className="mx-auto max-w-3xl text-sm leading-relaxed text-slate-600">
+              En Zyteron creemos en la tecnología bien aplicada: simple, segura y útil para que cada negocio pueda
+              avanzar con confianza.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {teamMembers.map((member) => (
+              <article key={member.name} className="card-premium p-6 space-y-3">
+                <p className="text-xs font-bold uppercase tracking-widest text-blue-600">{member.role}</p>
+                <h3 className="text-xl font-extrabold text-slate-900">{member.name}</h3>
+                <p className="text-sm leading-relaxed text-slate-600">{member.bio}</p>
+                <p className="text-sm leading-relaxed text-slate-600">{member.focus}</p>
+                {member.contact && (
+                  <p className="text-sm text-slate-700">
+                    Contacto:{" "}
+                    <a href={`mailto:${member.contact}`} className="font-semibold text-blue-700 hover:text-blue-900">
+                      {member.contact}
+                    </a>
+                  </p>
+                )}
+              </article>
+            ))}
+          </div>
+
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6 text-center">
+            <p className="text-sm leading-relaxed text-slate-700">
+              Contáctanos y conversemos sobre cómo podemos apoyar a tu empresa en{" "}
+              <span className="font-semibold text-slate-900">zyteron.cl</span>.
             </p>
           </div>
         </Container>
