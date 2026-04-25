@@ -266,6 +266,9 @@ export default function Home() {
                   Solicitar diagnostico SEO <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
+              <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50 font-semibold">
+                <Link href="/#quienes-somos">Conocer al equipo</Link>
+              </Button>
               <Link
                 href="https://wa.me/56984752936?text=Hola%20Zyteron%2C%20me%20interesa%20conocer%20m%C3%A1s%20sobre%20sus%20servicios"
                 target="_blank"
@@ -375,7 +378,7 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════ QUIÉNES SOMOS ═══════════════════════ */}
-      <section className="cv-auto py-16 bg-white">
+      <section id="quienes-somos" className="cv-auto scroll-mt-28 py-16 bg-white">
         <Container className="space-y-8">
           <div className="space-y-3 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Quiénes somos</p>

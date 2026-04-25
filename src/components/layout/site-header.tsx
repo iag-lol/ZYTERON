@@ -10,6 +10,7 @@ import { Container } from "./container";
 
 const navItems = [
   { href: "/", label: "Inicio" },
+  { href: "/nosotros", label: "Nosotros" },
   { href: "/servicios", label: "Servicios" },
   { href: "/casos-exito", label: "Casos" },
   { href: "/blog", label: "Blog" },
