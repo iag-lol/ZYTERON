@@ -12,6 +12,9 @@ type ResendResponse = {
   error?: { message?: string };
 };
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const FROM_WITH_NAME_REGEX = /^[^<>]+<[^<>@\s]+@[^<>@\s]+\.[^<>@\s]+>$/;
+
 function safeRedirectPath(value: unknown) {
   const path = typeof value === "string" ? value.trim() : "";
   if (!path.startsWith("/admin/cotizaciones")) return "/admin/cotizaciones";
@@ -30,6 +33,40 @@ function errorRedirect(requestUrl: string, redirectTo: string, message: string) 
   const url = new URL(redirectTo, requestUrl);
   url.searchParams.set("email_error", message);
   return NextResponse.redirect(url, { status: 303 });
+}
+
+function normalizeFromAddress(rawValue: string | undefined, fallbackName: string) {
+  const fallback = `${fallbackName} <onboarding@resend.dev>`;
+  const value = String(rawValue || "").trim();
+  if (!value) return fallback;
+
+  if (EMAIL_REGEX.test(value)) {
+    return value;
+  }
+
+  if (FROM_WITH_NAME_REGEX.test(value)) {
+    return value.replace(/\s+/g, " ").trim();
+  }
+
+  // Intenta rescatar un email dentro de un string inválido.
+  const emailMatch = value.match(/[^\s<>,;:()]+@[^\s<>,;:()]+\.[^\s<>,;:()]+/);
+  if (!emailMatch) {
+    return fallback;
+  }
+
+  const email = emailMatch[0];
+  if (!EMAIL_REGEX.test(email)) {
+    return fallback;
+  }
+
+  const nameCandidate = value
+    .replace(email, "")
+    .replace(/[<>\"']/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!nameCandidate) return email;
+
+  return `${nameCandidate} <${email}>`;
 }
 
 function extractResendErrorMessage(body: ResendResponse | null) {
@@ -65,7 +102,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     return errorRedirect(request.url, redirectTo, "Falta RESEND_API_KEY en variables de entorno.");
   }
 
-  const from = process.env.RESEND_FROM_EMAIL || "Zyteron <onboarding@resend.dev>";
+  const from = normalizeFromAddress(process.env.RESEND_FROM_EMAIL, ZYTERON_COMPANY.brandName);
   const replyTo = process.env.RESEND_REPLY_TO || ZYTERON_COMPANY.salesEmail;
   const bcc = process.env.RESEND_BCC_EMAIL || undefined;
 
