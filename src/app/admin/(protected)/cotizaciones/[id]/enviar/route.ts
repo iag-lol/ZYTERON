@@ -98,24 +98,39 @@ function isDeliveryFailureEvent(event?: string | null) {
   );
 }
 
+function jsonError(message: string, status = 400) {
+  return NextResponse.json({ ok: false, error: message }, { status });
+}
+
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
-  const formData = await request.formData();
-  const redirectTo = safeRedirectPath(formData.get("redirectTo"));
+  const contentType = (request.headers.get("content-type") || "").toLowerCase();
+  const isJsonRequest = contentType.includes("application/json");
+  let redirectTo = "/admin/cotizaciones";
+  if (!isJsonRequest) {
+    const formData = await request.formData();
+    redirectTo = safeRedirectPath(formData.get("redirectTo"));
+  }
 
   const quote = await getQuoteById(id);
   if (!quote) {
-    return errorRedirect(request.url, redirectTo, "No se encontró la cotización.");
+    return isJsonRequest
+      ? jsonError("No se encontró la cotización.", 404)
+      : errorRedirect(request.url, redirectTo, "No se encontró la cotización.");
   }
 
   const toEmail = String(quote.email || "").trim();
   if (!toEmail) {
-    return errorRedirect(request.url, redirectTo, "La cotización no tiene email del cliente.");
+    return isJsonRequest
+      ? jsonError("La cotización no tiene email del cliente.")
+      : errorRedirect(request.url, redirectTo, "La cotización no tiene email del cliente.");
   }
 
   const resendApiKey = process.env.RESEND_API_KEY;
   if (!resendApiKey) {
-    return errorRedirect(request.url, redirectTo, "Falta RESEND_API_KEY en variables de entorno.");
+    return isJsonRequest
+      ? jsonError("Falta RESEND_API_KEY en variables de entorno.", 500)
+      : errorRedirect(request.url, redirectTo, "Falta RESEND_API_KEY en variables de entorno.");
   }
 
   const from = normalizeFromAddress(process.env.RESEND_FROM_EMAIL, ZYTERON_COMPANY.brandName);
@@ -182,7 +197,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         quoteId: quote.id,
         toEmail,
       });
-      return errorRedirect(request.url, redirectTo, message);
+      return isJsonRequest
+        ? jsonError(message, response.status || 400)
+        : errorRedirect(request.url, redirectTo, message);
     }
 
     let lastEvent: string | undefined;
@@ -204,16 +221,24 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     }
 
     if (isDeliveryFailureEvent(lastEvent)) {
-      return errorRedirect(
-        request.url,
-        redirectTo,
-        `Resend reportó estado de entrega fallido: ${lastEvent}.`,
-      );
+      const message = `Resend reportó estado de entrega fallido: ${lastEvent}.`;
+      return isJsonRequest
+        ? jsonError(message, 400)
+        : errorRedirect(request.url, redirectTo, message);
     }
 
     const status = normalizeStatus(quote.status);
     if (status === "PENDING") {
       await updateRows("Quote", { status: "SENT" }, { id: quote.id });
+    }
+
+    if (isJsonRequest) {
+      return NextResponse.json({
+        ok: true,
+        message: "MENSAJE ENVIADO",
+        emailId: body.id,
+        emailEvent: lastEvent || null,
+      });
     }
 
     const url = new URL(redirectTo, request.url);
@@ -225,6 +250,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     return NextResponse.redirect(url, { status: 303 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo enviar la cotización por correo.";
-    return errorRedirect(request.url, redirectTo, message);
+    return isJsonRequest
+      ? jsonError(message, 500)
+      : errorRedirect(request.url, redirectTo, message);
   }
 }

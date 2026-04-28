@@ -23,6 +23,8 @@ import { buildFaqJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/se
 import { getApprovedReviewsSnapshot } from "@/lib/web-control";
 import { ClientReviewsSection } from "@/components/home/client-reviews-section";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = createPageMetadata({
   title: "Paginas Web Para Empresas en Chile | Zyteron",
   description:

@@ -3,22 +3,10 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Download, FileEdit, Mail, MapPin, Phone, ReceiptText } from "lucide-react";
 import { currencyCLP } from "@/lib/admin/quote";
 import { getQuoteById } from "@/lib/admin/repository";
+import { QuoteSendEmailButton } from "@/components/admin/quote-send-email-button";
 
 type Params = {
   params: Promise<{ id: string }>;
-  searchParams?:
-    | {
-        email_sent?: string;
-        email_error?: string;
-        email_id?: string;
-        email_event?: string;
-      }
-    | Promise<{
-        email_sent?: string;
-        email_error?: string;
-        email_id?: string;
-        email_event?: string;
-      }>;
 };
 
 function infoRow(label: string, value?: string | null) {
@@ -30,13 +18,8 @@ function infoRow(label: string, value?: string | null) {
   );
 }
 
-export default async function CotizacionDetallePage({ params, searchParams }: Params) {
+export default async function CotizacionDetallePage({ params }: Params) {
   const { id } = await params;
-  const query = await Promise.resolve(searchParams);
-  const emailSent = query?.email_sent === "1";
-  const emailError = query?.email_error ? decodeURIComponent(query.email_error) : "";
-  const emailId = query?.email_id ? String(query.email_id) : "";
-  const emailEvent = query?.email_event ? String(query.email_event) : "";
   const quote = await getQuoteById(id);
 
   if (!quote) {
@@ -45,22 +28,6 @@ export default async function CotizacionDetallePage({ params, searchParams }: Pa
 
   return (
     <div className="space-y-8">
-      {emailSent ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          Cotización enviada correctamente por correo con PDF adjunto.
-          {emailId ? (
-            <span className="ml-1 text-emerald-800">
-              ID: <strong>{emailId}</strong>
-              {emailEvent ? ` · estado inicial: ${emailEvent}` : ""}
-            </span>
-          ) : null}
-        </div>
-      ) : null}
-      {emailError ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          {emailError}
-        </div>
-      ) : null}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-3">
           <Link
@@ -97,17 +64,7 @@ export default async function CotizacionDetallePage({ params, searchParams }: Pa
             <Download className="h-4 w-4" />
             Descargar PDF
           </a>
-          <form action={`/admin/cotizaciones/${quote.id}/enviar`} method="post">
-            <input type="hidden" name="redirectTo" value={`/admin/cotizaciones/${quote.id}`} />
-            <button
-              type="submit"
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-              disabled={!quote.email}
-            >
-              <Mail className="h-4 w-4" />
-              Enviar
-            </button>
-          </form>
+          <QuoteSendEmailButton quoteId={quote.id} hasEmail={Boolean(quote.email)} />
         </div>
       </div>
 

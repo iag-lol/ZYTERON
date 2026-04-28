@@ -5,13 +5,13 @@ import {
   Download,
   FileEdit,
   FileText,
-  Mail,
   Plus,
   TrendingUp,
   Target,
   DollarSign,
 } from "lucide-react";
 import Link from "next/link";
+import { QuoteSendEmailButton } from "@/components/admin/quote-send-email-button";
 
 type QuoteStatus = "PENDING" | "SENT" | "WON" | "LOST";
 type QuoteStatusFilter = "ALL" | QuoteStatus;
@@ -384,17 +384,7 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
                       >
                         <Download className="h-3.5 w-3.5" />
                       </a>
-                      <form action={`/admin/cotizaciones/${q.id}/enviar`} method="post">
-                        <input type="hidden" name="redirectTo" value={returnTo} />
-                        <button
-                          type="submit"
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
-                          title="Enviar email con cotización adjunta"
-                          disabled={!q.email}
-                        >
-                          <Mail className="h-3.5 w-3.5" />
-                        </button>
-                      </form>
+                      <QuoteSendEmailButton quoteId={q.id} hasEmail={Boolean(q.email)} compact />
                       <Link
                         href={`/admin/cotizaciones/${q.id}/editar`}
                         className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"

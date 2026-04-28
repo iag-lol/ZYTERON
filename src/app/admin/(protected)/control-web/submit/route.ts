@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 import {
   deleteClientReviewById,
   deleteRows,
@@ -301,18 +302,22 @@ export async function POST(request: Request) {
       if (!id) return NextResponse.json({ error: "ID requerido" }, { status: 400 });
       if (action === "delete") {
         await deleteClientReviewById(id);
+        revalidatePath("/");
         return NextResponse.json({ ok: true });
       }
       if (action === "approve") {
         await setClientReviewStatus(id, "APPROVED");
+        revalidatePath("/");
         return NextResponse.json({ ok: true });
       }
       if (action === "reject") {
         await setClientReviewStatus(id, "REJECTED");
+        revalidatePath("/");
         return NextResponse.json({ ok: true });
       }
       if (action === "pending") {
         await setClientReviewStatus(id, "PENDING");
+        revalidatePath("/");
         return NextResponse.json({ ok: true });
       }
     }
