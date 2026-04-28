@@ -17,6 +17,12 @@ function normalizeOptional(value?: string) {
   return clean ? clean : null;
 }
 
+function isMissingClientReviewTableError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  const normalized = message.toLowerCase();
+  return normalized.includes("pgrst205") || normalized.includes("clientreview");
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -47,6 +53,16 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, reference: reviewId.slice(0, 8).toUpperCase() });
   } catch (error) {
+    if (isMissingClientReviewTableError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            "La tabla de comentarios (ClientReview) no está disponible en Supabase. Ejecuta el SQL de bootstrap de comentarios y vuelve a intentar.",
+        },
+        { status: 500 },
+      );
+    }
+
     const message = error instanceof Error ? error.message : "No se pudo enviar tu comentario.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
