@@ -12,6 +12,11 @@ type ResendResponse = {
   error?: { message?: string };
 };
 
+type ResendEmailDetail = {
+  id?: string;
+  last_event?: string;
+};
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FROM_WITH_NAME_REGEX = /^[^<>]+<[^<>@\s]+@[^<>@\s]+\.[^<>@\s]+>$/;
 
@@ -80,6 +85,17 @@ function extractResendErrorMessage(body: ResendResponse | null) {
 
   if (candidates.length > 0) return candidates[0];
   return "Resend rechazó el envío.";
+}
+
+function isDeliveryFailureEvent(event?: string | null) {
+  const normalized = String(event || "").trim().toLowerCase();
+  if (!normalized) return false;
+  return (
+    normalized.includes("bounce") ||
+    normalized.includes("fail") ||
+    normalized.includes("reject") ||
+    normalized.includes("complain")
+  );
 }
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -169,6 +185,32 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       return errorRedirect(request.url, redirectTo, message);
     }
 
+    let lastEvent: string | undefined;
+    try {
+      const detailResponse = await fetch(`https://api.resend.com/emails/${body.id}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          "User-Agent": "zyteron-admin/1.0",
+        },
+        cache: "no-store",
+      });
+      if (detailResponse.ok) {
+        const detail = (await detailResponse.json().catch(() => null)) as ResendEmailDetail | null;
+        lastEvent = detail?.last_event;
+      }
+    } catch {
+      // Si la consulta de estado falla, no bloqueamos el envío ya aceptado por Resend.
+    }
+
+    if (isDeliveryFailureEvent(lastEvent)) {
+      return errorRedirect(
+        request.url,
+        redirectTo,
+        `Resend reportó estado de entrega fallido: ${lastEvent}.`,
+      );
+    }
+
     const status = normalizeStatus(quote.status);
     if (status === "PENDING") {
       await updateRows("Quote", { status: "SENT" }, { id: quote.id });
@@ -176,6 +218,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
     const url = new URL(redirectTo, request.url);
     url.searchParams.set("email_sent", "1");
+    url.searchParams.set("email_id", body.id);
+    if (lastEvent) {
+      url.searchParams.set("email_event", lastEvent);
+    }
     return NextResponse.redirect(url, { status: 303 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo enviar la cotización por correo.";

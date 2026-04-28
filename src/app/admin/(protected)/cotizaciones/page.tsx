@@ -65,12 +65,16 @@ type PageProps = {
         status_error?: string;
         email_sent?: string;
         email_error?: string;
+        email_id?: string;
+        email_event?: string;
       }
     | Promise<{
         status?: string;
         status_error?: string;
         email_sent?: string;
         email_error?: string;
+        email_id?: string;
+        email_event?: string;
       }>;
 };
 
@@ -80,6 +84,8 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
   const statusError = query?.status_error === "1";
   const emailSent = query?.email_sent === "1";
   const emailError = query?.email_error ? decodeURIComponent(query.email_error) : "";
+  const emailId = query?.email_id ? String(query.email_id) : "";
+  const emailEvent = query?.email_event ? String(query.email_event) : "";
   const data = await getAdminSnapshot();
   const allQuotes = data.quotes
     .slice()
@@ -149,6 +155,12 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
       {emailSent ? (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           Cotización enviada correctamente por correo con PDF adjunto.
+          {emailId ? (
+            <span className="ml-1 text-emerald-800">
+              ID: <strong>{emailId}</strong>
+              {emailEvent ? ` · estado inicial: ${emailEvent}` : ""}
+            </span>
+          ) : null}
         </div>
       ) : null}
       {emailError ? (
