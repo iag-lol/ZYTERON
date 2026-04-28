@@ -121,6 +121,9 @@ export type ProductRecord = {
   featured?: boolean | null;
   badges?: string[] | null;
   categoryId?: string | null;
+  imageUrl?: string | null;
+  publicDescription?: string | null;
+  published?: boolean | null;
 };
 
 export type ProductCategoryRecord = {
@@ -165,6 +168,13 @@ export type SettingRecord = {
   key: string;
   value: string;
   type?: "TEXT" | "JSON" | "BOOLEAN" | string | null;
+};
+
+export type ProductPublicMeta = {
+  slug: string;
+  imageUrl?: string | null;
+  publicDescription?: string | null;
+  published?: boolean | null;
 };
 
 export type TaxDocument = {
@@ -855,6 +865,59 @@ export async function getSettingsByPrefix(prefix: string) {
   });
 
   return rows.filter((row) => row.key?.startsWith(prefix));
+}
+
+function toProductPublicSettingKey(slug: string) {
+  return `product_public_${slug.trim().toLowerCase()}`;
+}
+
+export async function getProductPublicMetaMap() {
+  const rows = await getSettingsByPrefix("product_public_");
+  const map: Record<string, ProductPublicMeta> = {};
+
+  for (const row of rows) {
+    const slug = row.key.replace("product_public_", "").trim();
+    if (!slug) continue;
+
+    try {
+      const parsed = JSON.parse(row.value) as ProductPublicMeta;
+      map[slug] = {
+        slug,
+        imageUrl: typeof parsed?.imageUrl === "string" ? parsed.imageUrl.trim() || null : null,
+        publicDescription:
+          typeof parsed?.publicDescription === "string" ? parsed.publicDescription.trim() || null : null,
+        published: typeof parsed?.published === "boolean" ? parsed.published : true,
+      };
+    } catch {
+      map[slug] = { slug, published: true };
+    }
+  }
+
+  return map;
+}
+
+export async function upsertProductPublicMetaBySlug(slug: string, meta: ProductPublicMeta) {
+  const cleanSlug = slug.trim().toLowerCase();
+  if (!cleanSlug) {
+    throw new Error("Slug de producto inválido para metadata pública.");
+  }
+
+  await upsertSetting({
+    key: toProductPublicSettingKey(cleanSlug),
+    type: "JSON",
+    value: JSON.stringify({
+      slug: cleanSlug,
+      imageUrl: meta.imageUrl?.trim() || null,
+      publicDescription: meta.publicDescription?.trim() || null,
+      published: typeof meta.published === "boolean" ? meta.published : true,
+    }),
+  });
+}
+
+export async function deleteProductPublicMetaBySlug(slug: string) {
+  const cleanSlug = slug.trim().toLowerCase();
+  if (!cleanSlug) return;
+  await deleteRows("Setting", { key: toProductPublicSettingKey(cleanSlug) });
 }
 
 export async function upsertSetting(input: { key: string; value: string; type?: "TEXT" | "JSON" | "BOOLEAN" }) {

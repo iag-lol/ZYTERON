@@ -29,6 +29,9 @@ export type PublicProduct = {
   featured: boolean;
   stock: number;
   badges: string[];
+  imageUrl?: string | null;
+  publicDescription?: string | null;
+  published?: boolean | null;
 };
 
 export type PublicReview = {

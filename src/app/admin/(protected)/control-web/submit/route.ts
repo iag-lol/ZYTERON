@@ -3,8 +3,10 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import {
+  deleteProductPublicMetaBySlug,
   deleteClientReviewById,
   deleteRows,
+  upsertProductPublicMetaBySlug,
   insertRow,
   setClientReviewStatus,
   upsertSetting,
@@ -81,6 +83,9 @@ export async function POST(request: Request) {
         if (slug) {
           await deleteRows("Setting", { key: `plan_not_included_${slug}` });
         }
+        revalidatePath("/planes");
+        revalidatePath("/paquetes");
+        revalidatePath("/");
         return NextResponse.json({ ok: true });
       }
 
@@ -136,6 +141,9 @@ export async function POST(request: Request) {
         });
       }
 
+      revalidatePath("/planes");
+      revalidatePath("/paquetes");
+      revalidatePath("/");
       return NextResponse.json({ ok: true });
     }
 
@@ -143,6 +151,7 @@ export async function POST(request: Request) {
       if (action === "delete") {
         if (!id) return NextResponse.json({ error: "ID requerido" }, { status: 400 });
         await deleteRows("Extra", { id });
+        revalidatePath("/paquetes");
         return NextResponse.json({ ok: true });
       }
 
@@ -178,13 +187,21 @@ export async function POST(request: Request) {
         );
       }
 
+      revalidatePath("/paquetes");
       return NextResponse.json({ ok: true });
     }
 
     if (section === "product") {
       if (action === "delete") {
         if (!id) return NextResponse.json({ error: "ID requerido" }, { status: 400 });
+        const slug = text(data.slug);
         await deleteRows("Product", { id });
+        if (slug) {
+          await deleteProductPublicMetaBySlug(slug);
+        }
+        revalidatePath("/productos");
+        revalidatePath("/paquetes");
+        revalidatePath("/planes");
         return NextResponse.json({ ok: true });
       }
 
@@ -199,6 +216,9 @@ export async function POST(request: Request) {
         featured: bool(data.featured, false),
         badges: stringList(data.badges),
         categoryId: text(data.categoryId),
+        imageUrl: text(data.imageUrl) || null,
+        publicDescription: text(data.publicDescription) || null,
+        published: bool(data.published, true),
       };
 
       if (!row.slug || !row.name || !row.description || row.price <= 0 || !row.categoryId) {
@@ -217,8 +237,15 @@ export async function POST(request: Request) {
           },
           "id",
         );
+        await upsertProductPublicMetaBySlug(row.slug, {
+          slug: row.slug,
+          imageUrl: row.imageUrl,
+          publicDescription: row.publicDescription,
+          published: row.published,
+        });
       } else {
         if (!id) return NextResponse.json({ error: "ID requerido" }, { status: 400 });
+        const previousSlug = text(data.previousSlug);
         await updateRows(
           "Product",
           {
@@ -234,8 +261,21 @@ export async function POST(request: Request) {
           },
           { id },
         );
+        if (previousSlug && previousSlug !== row.slug) {
+          await deleteProductPublicMetaBySlug(previousSlug);
+        }
+        await upsertProductPublicMetaBySlug(row.slug, {
+          slug: row.slug,
+          imageUrl: row.imageUrl,
+          publicDescription: row.publicDescription,
+          published: row.published,
+        });
       }
 
+      revalidatePath("/productos");
+      revalidatePath("/paquetes");
+      revalidatePath("/planes");
+      revalidatePath("/");
       return NextResponse.json({ ok: true });
     }
 
@@ -243,6 +283,7 @@ export async function POST(request: Request) {
       if (action === "delete") {
         if (!id) return NextResponse.json({ error: "ID requerido" }, { status: 400 });
         await deleteRows("WebDiscount", { id });
+        revalidatePath("/paquetes");
         return NextResponse.json({ ok: true });
       }
 
@@ -295,6 +336,7 @@ export async function POST(request: Request) {
         );
       }
 
+      revalidatePath("/paquetes");
       return NextResponse.json({ ok: true });
     }
 

@@ -1,16 +1,19 @@
 import {
   getClientReviews,
   getPublicExtras,
+  getPublicPlans,
   getPublicProducts,
+  getProductPublicMetaMap,
   getWebDiscounts,
   type ClientReview,
   type ExtraRecord,
+  type PlanRecord,
   type ProductRecord,
   type WebDiscount,
 } from "@/lib/admin/repository";
 import type { PublicDiscount, PublicExtra, PublicPlan, PublicProduct, PublicReview } from "@/lib/web-control-types";
 
-const CANONICAL_PYME_PLANS: PublicPlan[] = [
+const FALLBACK_PYME_PLANS: PublicPlan[] = [
   {
     id: "plan-pyme-basico-canonical",
     slug: "pyme-basico",
@@ -144,6 +147,25 @@ const FALLBACK_PRODUCTS: PublicProduct[] = [
   },
 ];
 
+function normalizePlan(plan: PlanRecord): PublicPlan | null {
+  const price = typeof plan.price === "number" && Number.isFinite(plan.price) ? plan.price : null;
+  if (!price || price <= 0) return null;
+  const tier = String(plan.tier || "").toUpperCase();
+  const normalizedTier = tier === "BASIC" || tier === "INTERMEDIATE" || tier === "PRO" ? tier : "BASIC";
+
+  return {
+    id: plan.id,
+    slug: plan.slug || plan.id,
+    name: plan.name || "Plan",
+    description: plan.description || "Plan comercial",
+    price,
+    popular: Boolean(plan.popular),
+    tier: normalizedTier,
+    features: Array.isArray(plan.features) ? plan.features.filter(Boolean) : [],
+    freeGifts: Array.isArray(plan.freeGifts) ? plan.freeGifts.filter(Boolean) : [],
+  };
+}
+
 function normalizeExtra(extra: ExtraRecord): PublicExtra | null {
   const price = typeof extra.price === "number" && Number.isFinite(extra.price) ? extra.price : null;
   if (!price || price <= 0) return null;
@@ -215,20 +237,34 @@ function normalizeDiscount(discount: WebDiscount): PublicDiscount | null {
 }
 
 export async function getWebPricingSnapshot() {
-  const [extrasRaw, productsRaw, discountsRaw, reviewsRaw] = await Promise.all([
+  const [plansRaw, extrasRaw, productsRaw, discountsRaw, reviewsRaw, productPublicMeta] = await Promise.all([
+    getPublicPlans(),
     getPublicExtras(),
     getPublicProducts(),
     getWebDiscounts(true),
     getClientReviews("APPROVED"),
+    getProductPublicMetaMap(),
   ]);
 
+  const plans = plansRaw.map(normalizePlan).filter((item): item is PublicPlan => Boolean(item));
   const extras = extrasRaw.map(normalizeExtra).filter((item): item is PublicExtra => Boolean(item));
-  const products = productsRaw.map(normalizeProduct).filter((item): item is PublicProduct => Boolean(item));
+  const products = productsRaw
+    .map(normalizeProduct)
+    .filter((item): item is PublicProduct => Boolean(item))
+    .map((product) => {
+      const meta = productPublicMeta[String(product.slug || "").toLowerCase()];
+      return {
+        ...product,
+        imageUrl: meta?.imageUrl || null,
+        publicDescription: meta?.publicDescription || null,
+        published: typeof meta?.published === "boolean" ? meta.published : true,
+      };
+    });
   const discounts = discountsRaw.map(normalizeDiscount).filter((item): item is PublicDiscount => Boolean(item));
   const reviews = reviewsRaw.map(normalizeReview).filter((item): item is PublicReview => Boolean(item));
 
   return {
-    plans: CANONICAL_PYME_PLANS,
+    plans: plans.length > 0 ? plans : FALLBACK_PYME_PLANS,
     extras: extras.length > 0 ? extras : FALLBACK_EXTRAS,
     products: products.length > 0 ? products : FALLBACK_PRODUCTS,
     discounts,
@@ -242,7 +278,7 @@ export async function getApprovedReviewsSnapshot() {
 }
 
 export const WEB_CONTROL_FALLBACK = {
-  plans: CANONICAL_PYME_PLANS,
+  plans: FALLBACK_PYME_PLANS,
   extras: FALLBACK_EXTRAS,
   products: FALLBACK_PRODUCTS,
 };

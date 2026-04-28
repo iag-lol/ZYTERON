@@ -1,8 +1,8 @@
 import { ControlWebConsole } from "@/components/admin/control-web-console";
 import {
   getClientReviews,
-  getProductPublicMetaMap,
   getProductCategories,
+  getProductPublicMetaMap,
   getPublicExtras,
   getPublicPlans,
   getPublicProducts,
@@ -12,7 +12,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminControlWebPage() {
+export default async function AdminProductosPage() {
   const [plans, extras, products, productCategories, discounts, reviews, planExclusions, productPublicMeta] = await Promise.all([
     getPublicPlans(),
     getPublicExtras(),
@@ -54,14 +54,23 @@ export default async function AdminControlWebPage() {
   });
 
   return (
-    <ControlWebConsole
-      plans={plans}
-      extras={extras}
-      products={mergedProducts}
-      productCategories={productCategories}
-      discounts={discounts}
-      reviews={reviews}
-      planNotIncludedBySlug={planNotIncludedBySlug}
-    />
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm text-blue-800">
+        <p className="font-semibold">Gestión integral de Productos y Cotizador</p>
+        <p className="mt-1 text-blue-700">
+          Aquí controlas planes, extras y todo el catálogo público de productos (imagen, visibilidad, descripción, precio y descuentos).
+        </p>
+      </div>
+
+      <ControlWebConsole
+        plans={plans}
+        extras={extras}
+        products={mergedProducts}
+        productCategories={productCategories}
+        discounts={discounts}
+        reviews={reviews}
+        planNotIncludedBySlug={planNotIncludedBySlug}
+      />
+    </div>
   );
 }

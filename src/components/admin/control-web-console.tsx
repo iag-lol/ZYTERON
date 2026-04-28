@@ -45,10 +45,13 @@ type NewProduct = {
   slug: string;
   name: string;
   description: string;
+  publicDescription: string;
+  imageUrl: string;
   price: string;
   discountPct: string;
   stock: string;
   featured: boolean;
+  published: boolean;
   badges: string;
   categoryId: string;
 };
@@ -148,10 +151,14 @@ export function ControlWebConsole({
   const [productRows, setProductRows] = useState(
     products.map((product) => ({
       ...product,
+      originalSlug: product.slug,
       price: String(product.price ?? 0),
       discountPct: String(product.discountPct ?? 0),
       stock: String(product.stock ?? 0),
       badgesText: parseTextRows(product.badges),
+      imageUrl: product.imageUrl || "",
+      publicDescription: product.publicDescription || product.description || "",
+      published: typeof product.published === "boolean" ? product.published : true,
     })),
   );
   const [discountRows, setDiscountRows] = useState(
@@ -188,10 +195,13 @@ export function ControlWebConsole({
     slug: "",
     name: "",
     description: "",
+    publicDescription: "",
+    imageUrl: "",
     price: "",
     discountPct: "0",
     stock: "10",
     featured: false,
+    published: true,
     badges: "",
     categoryId: productCategories[0]?.id || "",
   });
@@ -550,13 +560,14 @@ export function ControlWebConsole({
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-base font-bold text-slate-900">Productos</h2>
-        <p className="mt-1 text-xs text-slate-500">Edita los productos ya creados en la web: nombre, precio, observaciones, stock y descuentos.</p>
+        <h2 className="text-base font-bold text-slate-900">Productos públicos (sección Productos)</h2>
+        <p className="mt-1 text-xs text-slate-500">Control total de catálogo público y carrito WhatsApp: imagen, visibilidad, descripción, precio, stock y descuentos.</p>
 
-        <div className="mt-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 lg:grid-cols-8">
+        <div className="mt-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 lg:grid-cols-10">
           <input className={inputClass} placeholder="slug" value={newProduct.slug} onChange={(e) => setNewProduct((p) => ({ ...p, slug: e.target.value }))} />
           <input className={inputClass} placeholder="nombre" value={newProduct.name} onChange={(e) => setNewProduct((p) => ({ ...p, name: e.target.value }))} />
-          <input className={inputClass} placeholder="descripción" value={newProduct.description} onChange={(e) => setNewProduct((p) => ({ ...p, description: e.target.value }))} />
+          <input className={inputClass} placeholder="descripción interna" value={newProduct.description} onChange={(e) => setNewProduct((p) => ({ ...p, description: e.target.value }))} />
+          <input className={inputClass} placeholder="imagen URL pública" value={newProduct.imageUrl} onChange={(e) => setNewProduct((p) => ({ ...p, imageUrl: e.target.value }))} />
           <input className={inputClass} placeholder="precio" value={newProduct.price} onChange={(e) => setNewProduct((p) => ({ ...p, price: e.target.value }))} />
           <input className={inputClass} placeholder="desc. %" value={newProduct.discountPct} onChange={(e) => setNewProduct((p) => ({ ...p, discountPct: e.target.value }))} />
           <input className={inputClass} placeholder="stock" value={newProduct.stock} onChange={(e) => setNewProduct((p) => ({ ...p, stock: e.target.value }))} />
@@ -565,6 +576,22 @@ export function ControlWebConsole({
               <option key={category.id} value={category.id}>{category.name}</option>
             ))}
           </select>
+          <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700">
+            <input
+              type="checkbox"
+              checked={newProduct.published}
+              onChange={(e) => setNewProduct((p) => ({ ...p, published: e.target.checked }))}
+            />
+            Publicado
+          </label>
+          <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700">
+            <input
+              type="checkbox"
+              checked={newProduct.featured}
+              onChange={(e) => setNewProduct((p) => ({ ...p, featured: e.target.checked }))}
+            />
+            Destacado
+          </label>
           <button
             className={`${buttonClass} bg-blue-600 text-white hover:bg-blue-700`}
             disabled={isPending}
@@ -586,7 +613,8 @@ export function ControlWebConsole({
           >
             {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Crear"}
           </button>
-          <textarea className={`${textareaClass} lg:col-span-8`} rows={2} placeholder="Badges (una línea por item)" value={newProduct.badges} onChange={(e) => setNewProduct((p) => ({ ...p, badges: e.target.value }))} />
+          <textarea className={`${textareaClass} lg:col-span-10`} rows={2} placeholder="Descripción pública" value={newProduct.publicDescription} onChange={(e) => setNewProduct((p) => ({ ...p, publicDescription: e.target.value }))} />
+          <textarea className={`${textareaClass} lg:col-span-10`} rows={2} placeholder="Badges (una línea por item)" value={newProduct.badges} onChange={(e) => setNewProduct((p) => ({ ...p, badges: e.target.value }))} />
         </div>
 
         <div className="mt-4 flex flex-col gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:flex-row sm:items-center sm:justify-between">
@@ -603,9 +631,10 @@ export function ControlWebConsole({
 
         <div className="mt-4 space-y-3">
           {filteredProducts.map((product) => (
-            <div key={product.id} className="grid gap-3 rounded-xl border border-slate-200 p-3 xl:grid-cols-[repeat(8,minmax(0,1fr))_auto]">
+            <div key={product.id} className="grid gap-3 rounded-xl border border-slate-200 p-3 xl:grid-cols-[repeat(10,minmax(0,1fr))_auto]">
               <input className={inputClass} value={product.slug} onChange={(e) => updateProductRow(product.id, { slug: e.target.value })} />
               <input className={inputClass} value={product.name} onChange={(e) => updateProductRow(product.id, { name: e.target.value })} />
+              <input className={inputClass} value={product.imageUrl} placeholder="imagen URL" onChange={(e) => updateProductRow(product.id, { imageUrl: e.target.value })} />
               <input className={inputClass} value={product.price} onChange={(e) => updateProductRow(product.id, { price: e.target.value })} />
               <input className={inputClass} value={product.discountPct} onChange={(e) => updateProductRow(product.id, { discountPct: e.target.value })} />
               <input className={inputClass} value={product.stock} onChange={(e) => updateProductRow(product.id, { stock: e.target.value })} />
@@ -622,6 +651,14 @@ export function ControlWebConsole({
                 />
                 Destacado
               </label>
+              <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={Boolean(product.published)}
+                  onChange={(e) => updateProductRow(product.id, { published: e.target.checked })}
+                />
+                Publicado
+              </label>
               <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
                 <p className="font-semibold">Precio final web</p>
                 <p>
@@ -632,14 +669,21 @@ export function ControlWebConsole({
                 </p>
               </div>
               <textarea
-                className={`${textareaClass} xl:col-span-8`}
+                className={`${textareaClass} xl:col-span-10`}
                 rows={2}
                 value={product.description || ""}
-                placeholder="Observaciones / descripción pública"
+                placeholder="Descripción interna del producto"
                 onChange={(e) => updateProductRow(product.id, { description: e.target.value })}
               />
               <textarea
-                className={`${textareaClass} xl:col-span-8`}
+                className={`${textareaClass} xl:col-span-10`}
+                rows={2}
+                value={product.publicDescription || ""}
+                placeholder="Descripción pública para la sección Productos"
+                onChange={(e) => updateProductRow(product.id, { publicDescription: e.target.value })}
+              />
+              <textarea
+                className={`${textareaClass} xl:col-span-10`}
                 rows={2}
                 value={product.badgesText}
                 placeholder="Badges (una línea por item)"
@@ -658,6 +702,7 @@ export function ControlWebConsole({
                           id: product.id,
                           data: {
                             ...product,
+                            previousSlug: product.originalSlug || product.slug,
                             badges: product.badgesText,
                           },
                         }),
@@ -679,6 +724,9 @@ export function ControlWebConsole({
                           section: "product",
                           action: "delete",
                           id: product.id,
+                          data: {
+                            slug: product.slug,
+                          },
                         }),
                       "Producto eliminado.",
                     )
