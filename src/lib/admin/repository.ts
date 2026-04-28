@@ -124,6 +124,12 @@ export type ProductRecord = {
   imageUrl?: string | null;
   publicDescription?: string | null;
   published?: boolean | null;
+  status?: "DRAFT" | "ACTIVE" | "PAUSED" | "SOLD_OUT" | string | null;
+  soldUnits?: number | null;
+  onOffer?: boolean | null;
+  isCombo?: boolean | null;
+  comboLabel?: string | null;
+  notes?: string | null;
 };
 
 export type ProductCategoryRecord = {
@@ -175,6 +181,16 @@ export type ProductPublicMeta = {
   imageUrl?: string | null;
   publicDescription?: string | null;
   published?: boolean | null;
+};
+
+export type ProductAdminMeta = {
+  slug: string;
+  status?: "DRAFT" | "ACTIVE" | "PAUSED" | "SOLD_OUT" | string | null;
+  soldUnits?: number | null;
+  onOffer?: boolean | null;
+  isCombo?: boolean | null;
+  comboLabel?: string | null;
+  notes?: string | null;
 };
 
 export type TaxDocument = {
@@ -891,6 +907,10 @@ function toProductPublicSettingKey(slug: string) {
   return `product_public_${slug.trim().toLowerCase()}`;
 }
 
+function toProductAdminSettingKey(slug: string) {
+  return `product_admin_${slug.trim().toLowerCase()}`;
+}
+
 export async function getProductPublicMetaMap() {
   const rows = await getSettingsByPrefix("product_public_");
   const map: Record<string, ProductPublicMeta> = {};
@@ -938,6 +958,77 @@ export async function deleteProductPublicMetaBySlug(slug: string) {
   const cleanSlug = slug.trim().toLowerCase();
   if (!cleanSlug) return;
   await deleteRows("Setting", { key: toProductPublicSettingKey(cleanSlug) });
+}
+
+export async function getProductAdminMetaMap() {
+  const rows = await getSettingsByPrefix("product_admin_");
+  const map: Record<string, ProductAdminMeta> = {};
+
+  for (const row of rows) {
+    const slug = row.key.replace("product_admin_", "").trim();
+    if (!slug) continue;
+
+    try {
+      const parsed = JSON.parse(row.value) as ProductAdminMeta;
+      map[slug] = {
+        slug,
+        status: typeof parsed?.status === "string" ? parsed.status.trim().toUpperCase() : "ACTIVE",
+        soldUnits:
+          typeof parsed?.soldUnits === "number" && Number.isFinite(parsed.soldUnits)
+            ? Math.max(0, Math.round(parsed.soldUnits))
+            : 0,
+        onOffer: typeof parsed?.onOffer === "boolean" ? parsed.onOffer : false,
+        isCombo: typeof parsed?.isCombo === "boolean" ? parsed.isCombo : false,
+        comboLabel: typeof parsed?.comboLabel === "string" ? parsed.comboLabel.trim() || null : null,
+        notes: typeof parsed?.notes === "string" ? parsed.notes.trim() || null : null,
+      };
+    } catch {
+      map[slug] = {
+        slug,
+        status: "ACTIVE",
+        soldUnits: 0,
+        onOffer: false,
+        isCombo: false,
+      };
+    }
+  }
+
+  return map;
+}
+
+export async function upsertProductAdminMetaBySlug(slug: string, meta: ProductAdminMeta) {
+  const cleanSlug = slug.trim().toLowerCase();
+  if (!cleanSlug) {
+    throw new Error("Slug de producto inválido para metadata administrativa.");
+  }
+
+  const statusCandidate = String(meta.status || "ACTIVE").trim().toUpperCase();
+  const status = ["DRAFT", "ACTIVE", "PAUSED", "SOLD_OUT"].includes(statusCandidate)
+    ? statusCandidate
+    : "ACTIVE";
+
+  await upsertSetting({
+    key: toProductAdminSettingKey(cleanSlug),
+    type: "JSON",
+    value: JSON.stringify({
+      slug: cleanSlug,
+      status,
+      soldUnits:
+        typeof meta.soldUnits === "number" && Number.isFinite(meta.soldUnits)
+          ? Math.max(0, Math.round(meta.soldUnits))
+          : 0,
+      onOffer: Boolean(meta.onOffer),
+      isCombo: Boolean(meta.isCombo),
+      comboLabel: meta.comboLabel?.trim() || null,
+      notes: meta.notes?.trim() || null,
+    }),
+  });
+}
+
+export async function deleteProductAdminMetaBySlug(slug: string) {
+  const cleanSlug = slug.trim().toLowerCase();
+  if (!cleanSlug) return;
+  await deleteRows("Setting", { key: toProductAdminSettingKey(cleanSlug) });
 }
 
 export async function upsertSetting(input: { key: string; value: string; type?: "TEXT" | "JSON" | "BOOLEAN" }) {
