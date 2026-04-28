@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
+import { createClient } from "@supabase/supabase-js";
 import { insertRow } from "@/lib/admin/repository";
 import { serializeContactLeadDetails } from "@/lib/admin/contact-lead";
 
@@ -66,6 +67,72 @@ function checkRateLimit(ip: string) {
   return { allowed: true };
 }
 
+function normalizeSupabaseUrl(rawUrl: string) {
+  const trimmed = rawUrl.trim().replace(/\/+$/, "");
+  const suffixes = ["/rest/v1", "/auth/v1", "/storage/v1"];
+  const lowered = trimmed.toLowerCase();
+
+  for (const suffix of suffixes) {
+    if (lowered.endsWith(suffix)) {
+      return trimmed.slice(0, -suffix.length);
+    }
+  }
+
+  return trimmed;
+}
+
+function isRlsInsertError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  const normalized = message.toLowerCase();
+  return normalized.includes("row-level security") || normalized.includes("42501");
+}
+
+function createSupabaseAnonServerClient() {
+  const rawUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!rawUrl || !anonKey) {
+    throw new Error("SUPABASE_URL o SUPABASE_ANON_KEY no configurados para fallback de formularios.");
+  }
+
+  const url = normalizeSupabaseUrl(rawUrl);
+  return createClient(url, anonKey, {
+    global: { headers: { "X-Client-Info": "zyteron-public-form-fallback" } },
+  });
+}
+
+async function insertContactLeadWithFallback(payload: {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  source: string;
+  message: string;
+  type: "CONTACT";
+  createdAt: string;
+}) {
+  try {
+    await insertRow("Lead", payload, "id");
+    return payload.id;
+  } catch (error) {
+    if (!isRlsInsertError(error)) {
+      throw error;
+    }
+
+    const supabase = createSupabaseAnonServerClient();
+    const { data, error: insertError } = await supabase
+      .from("Lead")
+      .insert(payload)
+      .select("id")
+      .single();
+
+    if (insertError) {
+      throw new Error(insertError.message || "No se pudo registrar el lead en fallback anon.");
+    }
+
+    return String(data?.id || payload.id);
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -110,20 +177,16 @@ export async function POST(req: Request) {
     });
 
     const leadId = randomUUID();
-    await insertRow(
-      "Lead",
-      {
-        id: leadId,
-        name: data.name,
-        email: data.email,
-        phone: normalizeOptional(data.phone),
-        source: "CONTACTO_WEB",
-        message: leadMessage,
-        type: "CONTACT",
-        createdAt: new Date().toISOString(),
-      },
-      "id"
-    );
+    await insertContactLeadWithFallback({
+      id: leadId,
+      name: data.name,
+      email: data.email,
+      phone: normalizeOptional(data.phone),
+      source: "CONTACTO_WEB",
+      message: leadMessage,
+      type: "CONTACT",
+      createdAt: new Date().toISOString(),
+    });
 
     return NextResponse.json({ ok: true, reference: leadId.slice(0, 8).toUpperCase() });
   } catch (error) {
