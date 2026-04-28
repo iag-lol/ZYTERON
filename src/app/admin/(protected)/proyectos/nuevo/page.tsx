@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, BriefcaseBusiness, Clock3, Save, ShieldCheck } from "lucide-react";
 
 function Label({ children }: { children: React.ReactNode }) {
@@ -19,9 +20,10 @@ function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
 
 export default function NuevoProyectoPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState({
+  const baseForm = {
     clientId: "",
     quoteId: "",
     saleId: "",
@@ -40,6 +42,25 @@ export default function NuevoProyectoPage() {
     totalCharge: "0",
     description: "",
     scope: "",
+  };
+
+  const prefillForm = useMemo(() => {
+    const rawPrefill = searchParams.get("prefill");
+    if (!rawPrefill) return {};
+
+    try {
+      const parsed = JSON.parse(decodeURIComponent(rawPrefill)) as Partial<typeof baseForm>;
+      return Object.fromEntries(
+        Object.entries(parsed).filter(([, value]) => typeof value === "string"),
+      ) as Partial<typeof baseForm>;
+    } catch {
+      return {};
+    }
+  }, [searchParams]);
+
+  const [form, setForm] = useState({
+    ...baseForm,
+    ...prefillForm,
   });
 
   const set = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));

@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Mail, MessageSquare, Phone, Building2, BriefcaseBusiness, Clock3, ExternalLink } from "lucide-react";
+import { Mail, MessageSquare, Building2, BriefcaseBusiness, Clock3, ExternalLink } from "lucide-react";
 import { getContactLeads } from "@/lib/admin/repository";
 import { parseContactLeadDetails } from "@/lib/admin/contact-lead";
+import { ContactLeadActions } from "@/components/admin/contact-lead-actions";
 
 function formatDate(value?: string) {
   if (!value) return "—";
@@ -104,7 +105,7 @@ export default async function AdminContactosPage() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="grid grid-cols-[2fr_1.3fr_1.3fr_1fr_1.5fr] gap-4 border-b border-slate-100 bg-slate-50 px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-slate-400">
+        <div className="grid grid-cols-[2fr_1.2fr_1.2fr_1fr_2.4fr] gap-4 border-b border-slate-100 bg-slate-50 px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-slate-400">
           <span>Contacto</span>
           <span>Empresa</span>
           <span>Servicio</span>
@@ -128,7 +129,7 @@ export default async function AdminContactosPage() {
               ];
 
               return (
-                <div key={lead.id} className="grid grid-cols-[2fr_1.3fr_1.3fr_1fr_1.5fr] gap-4 px-6 py-4 text-sm">
+                <div key={lead.id} className="grid grid-cols-[2fr_1.2fr_1.2fr_1fr_2.4fr] gap-4 px-6 py-4 text-sm">
                   <div className="min-w-0">
                     <div className="flex items-center gap-3">
                       <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ${palette[index % palette.length]}`}>
@@ -196,26 +197,7 @@ export default async function AdminContactosPage() {
 
                   <div className="text-[12px] text-slate-600">{formatDate(lead.createdAt)}</div>
 
-                  <div className="flex items-center gap-2">
-                    {lead.phone ? (
-                      <a
-                        href={`tel:${lead.phone}`}
-                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50"
-                      >
-                        <Phone className="h-3.5 w-3.5" />
-                        Llamar
-                      </a>
-                    ) : null}
-                    {lead.email ? (
-                      <a
-                        href={`mailto:${lead.email}`}
-                        className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[11px] font-semibold text-blue-700 transition-colors hover:bg-blue-100"
-                      >
-                        <Mail className="h-3.5 w-3.5" />
-                        Escribir
-                      </a>
-                    ) : null}
-                  </div>
+                  <ContactLeadActions leadId={lead.id} email={lead.email} phone={lead.phone} />
                 </div>
               );
             })
