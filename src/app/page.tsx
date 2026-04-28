@@ -20,6 +20,8 @@ import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { buildFaqJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import { getApprovedReviewsSnapshot } from "@/lib/web-control";
+import { ClientReviewsSection } from "@/components/home/client-reviews-section";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Paginas Web Para Empresas en Chile | Zyteron",
@@ -178,7 +180,9 @@ const getWaLink = (name: string, price: string, intent: ChatIntent = "plan") => 
 };
 
 /* ── PAGE ── */
-export default function Home() {
+export default async function Home() {
+  const reviews = await getApprovedReviewsSnapshot();
+
   return (
     <main className="overflow-hidden">
       <JsonLd
@@ -573,6 +577,8 @@ export default function Home() {
           </div>
         </Container>
       </section>
+
+      <ClientReviewsSection reviews={reviews} />
 
       {/* ═══════════════════════ FAQ ═══════════════════════ */}
       <section className="cv-auto py-20 section-alt">

@@ -4,6 +4,7 @@ import { generateQuotePdf } from "@/lib/admin/quote-pdf";
 import {
   findOrCreateClientByEmail,
   getQuoteById,
+  syncWonQuoteById,
   syncWonQuotesCrossModules,
   updateRows,
 } from "@/lib/admin/repository";
@@ -224,8 +225,13 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       { id },
     );
 
-    // Reconciliación transversal para mantener módulos sincronizados.
-    await syncWonQuotesCrossModules();
+    // Cuando queda ganada, forzar sincronización inmediata a Ventas para este ID.
+    if (status === "WON") {
+      await syncWonQuoteById(id);
+    } else {
+      // Mantener reconciliación global como defensa para otros flujos.
+      await syncWonQuotesCrossModules();
+    }
 
     return NextResponse.json({
       ok: true,

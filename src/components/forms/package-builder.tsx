@@ -24,6 +24,7 @@ type BuilderProps = {
   extras: PublicExtra[];
   discounts: PublicDiscount[];
   reviews: PublicReview[];
+  showReviewsSection?: boolean;
 };
 
 type CartDiscount = {
@@ -205,7 +206,7 @@ function buildCartSummaryText(input: {
   return lines.join("\n");
 }
 
-export function PackageBuilder({ plans, extras, discounts, reviews }: BuilderProps) {
+export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsSection = true }: BuilderProps) {
   const [selectedPlanId, setSelectedPlanId] = useState<string>(plans[1]?.id || plans[0]?.id || "");
   const [extraQtyById, setExtraQtyById] = useState<Record<string, number>>({});
   const [includeIva, setIncludeIva] = useState(true);
@@ -744,150 +745,152 @@ export function PackageBuilder({ plans, extras, discounts, reviews }: BuilderPro
         </aside>
       </section>
 
-      <section className="space-y-6 border-t border-slate-200 pt-10">
-        <div className="space-y-2">
-          <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Comentarios de clientes</p>
-          <h3 className="text-2xl font-extrabold text-slate-900">Opiniones verificadas</h3>
-          <p className="text-sm text-slate-600">Las reseñas nuevas quedan pendientes hasta que las apruebes desde admin.</p>
-        </div>
-
-        <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="grid gap-4 sm:grid-cols-2">
-            {reviews.length === 0 ? (
-              <div className="sm:col-span-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
-                Aún no hay comentarios aprobados.
-              </div>
-            ) : (
-              reviews.slice(0, 6).map((review) => (
-                <article key={review.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-bold text-slate-900">{review.name}</p>
-                    <div className="flex items-center gap-0.5 text-amber-500">
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <Star
-                          key={`${review.id}-star-${index + 1}`}
-                          className={`h-3.5 w-3.5 ${index < review.rating ? "fill-current" : "text-slate-300"}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{review.comment}</p>
-                  <p className="mt-3 text-xs text-slate-400">
-                    {review.company || "Cliente Zyteron"} · {formatDate(review.createdAt)}
-                  </p>
-                </article>
-              ))
-            )}
+      {showReviewsSection ? (
+        <section className="space-y-6 border-t border-slate-200 pt-10">
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Comentarios de clientes</p>
+            <h3 className="text-2xl font-extrabold text-slate-900">Opiniones verificadas</h3>
+            <p className="text-sm text-slate-600">Las reseñas nuevas quedan pendientes hasta que las apruebes desde admin.</p>
           </div>
 
-          <form onSubmit={handleReviewSubmit} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-blue-700" />
-              <h4 className="text-base font-bold text-slate-900">Deja tu comentario</h4>
-            </div>
-            <p className="mt-1 text-xs text-slate-500">Se registrará con estado pendiente para moderación.</p>
-
-            <div className="mt-4 space-y-3">
-              <div className="space-y-1.5">
-                <Label>Calificación</Label>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: 5 }).map((_, index) => {
-                    const value = index + 1;
-                    return (
-                      <button
-                        key={`set-rating-${value}`}
-                        type="button"
-                        onClick={() => setRating(value)}
-                        className="text-amber-500 transition-opacity hover:opacity-80"
-                      >
-                        <Star className={`h-5 w-5 ${value <= rating ? "fill-current" : "text-slate-300"}`} />
-                      </button>
-                    );
-                  })}
+          <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {reviews.length === 0 ? (
+                <div className="sm:col-span-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+                  Aún no hay comentarios aprobados.
                 </div>
-              </div>
+              ) : (
+                reviews.slice(0, 6).map((review) => (
+                  <article key={review.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-bold text-slate-900">{review.name}</p>
+                      <div className="flex items-center gap-0.5 text-amber-500">
+                        {Array.from({ length: 5 }).map((_, index) => (
+                          <Star
+                            key={`${review.id}-star-${index + 1}`}
+                            className={`h-3.5 w-3.5 ${index < review.rating ? "fill-current" : "text-slate-300"}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{review.comment}</p>
+                    <p className="mt-3 text-xs text-slate-400">
+                      {review.company || "Cliente Zyteron"} · {formatDate(review.createdAt)}
+                    </p>
+                  </article>
+                ))
+              )}
+            </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+            <form onSubmit={handleReviewSubmit} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-blue-700" />
+                <h4 className="text-base font-bold text-slate-900">Deja tu comentario</h4>
+              </div>
+              <p className="mt-1 text-xs text-slate-500">Se registrará con estado pendiente para moderación.</p>
+
+              <div className="mt-4 space-y-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="review-name">Nombre</Label>
-                  <Input
-                    id="review-name"
-                    value={reviewForm.name}
-                    onChange={(event) => setReviewForm((prev) => ({ ...prev, name: event.target.value }))}
+                  <Label>Calificación</Label>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: 5 }).map((_, index) => {
+                      const value = index + 1;
+                      return (
+                        <button
+                          key={`set-rating-${value}`}
+                          type="button"
+                          onClick={() => setRating(value)}
+                          className="text-amber-500 transition-opacity hover:opacity-80"
+                        >
+                          <Star className={`h-5 w-5 ${value <= rating ? "fill-current" : "text-slate-300"}`} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="review-name">Nombre</Label>
+                    <Input
+                      id="review-name"
+                      value={reviewForm.name}
+                      onChange={(event) => setReviewForm((prev) => ({ ...prev, name: event.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="review-company">Empresa</Label>
+                    <Input
+                      id="review-company"
+                      value={reviewForm.company}
+                      onChange={(event) => setReviewForm((prev) => ({ ...prev, company: event.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="review-email">Email</Label>
+                    <Input
+                      id="review-email"
+                      type="email"
+                      value={reviewForm.email}
+                      onChange={(event) => setReviewForm((prev) => ({ ...prev, email: event.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="review-service">Servicio</Label>
+                    <Input
+                      id="review-service"
+                      value={reviewForm.service}
+                      onChange={(event) => setReviewForm((prev) => ({ ...prev, service: event.target.value }))}
+                      placeholder="Ej: Desarrollo web + SEO"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="review-comment">Comentario</Label>
+                  <Textarea
+                    id="review-comment"
+                    rows={4}
+                    value={reviewForm.comment}
+                    onChange={(event) => setReviewForm((prev) => ({ ...prev, comment: event.target.value }))}
+                    placeholder="¿Cómo fue tu experiencia con Zyteron?"
                     required
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="review-company">Empresa</Label>
-                  <Input
-                    id="review-company"
-                    value={reviewForm.company}
-                    onChange={(event) => setReviewForm((prev) => ({ ...prev, company: event.target.value }))}
-                  />
-                </div>
+
+                <Button type="submit" disabled={submittingReview} className="w-full gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800">
+                  {submittingReview ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      Enviar comentario <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+
+                {reviewState.status === "success" ? (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                    Comentario enviado. Código: <strong>{reviewState.reference}</strong>.
+                  </div>
+                ) : null}
+
+                {reviewState.status === "error" ? (
+                  <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                    {reviewState.message}
+                  </div>
+                ) : null}
               </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="review-email">Email</Label>
-                  <Input
-                    id="review-email"
-                    type="email"
-                    value={reviewForm.email}
-                    onChange={(event) => setReviewForm((prev) => ({ ...prev, email: event.target.value }))}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="review-service">Servicio</Label>
-                  <Input
-                    id="review-service"
-                    value={reviewForm.service}
-                    onChange={(event) => setReviewForm((prev) => ({ ...prev, service: event.target.value }))}
-                    placeholder="Ej: Desarrollo web + SEO"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="review-comment">Comentario</Label>
-                <Textarea
-                  id="review-comment"
-                  rows={4}
-                  value={reviewForm.comment}
-                  onChange={(event) => setReviewForm((prev) => ({ ...prev, comment: event.target.value }))}
-                  placeholder="¿Cómo fue tu experiencia con Zyteron?"
-                  required
-                />
-              </div>
-
-              <Button type="submit" disabled={submittingReview} className="w-full gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800">
-                {submittingReview ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Enviando...
-                  </>
-                ) : (
-                  <>
-                    Enviar comentario <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
-              </Button>
-
-              {reviewState.status === "success" ? (
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                  Comentario enviado. Código: <strong>{reviewState.reference}</strong>.
-                </div>
-              ) : null}
-
-              {reviewState.status === "error" ? (
-                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                  {reviewState.message}
-                </div>
-              ) : null}
-            </div>
-          </form>
-        </div>
-      </section>
+            </form>
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

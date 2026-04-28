@@ -497,6 +497,141 @@ function toDateOnly(value?: string | null) {
   return parsed.toISOString().slice(0, 10);
 }
 
+async function syncOneWonQuote(quote: WonQuoteRow) {
+  let clientId = quote.userId || null;
+  if (!clientId && quote.email) {
+    clientId = await findOrCreateClientByEmail({
+      name: quote.name || quote.company || quote.email,
+      email: quote.email,
+      company: quote.company || null,
+      phone: quote.phone || null,
+    });
+  }
+
+  if (clientId && quote.userId !== clientId) {
+    await updateRows("Quote", { userId: clientId }, { id: quote.id });
+  }
+
+  const quoteTotal = Math.max(0, Math.round(typeof quote.total === "number" ? quote.total : 0));
+  const invoiceRef = `COT:${quote.id}`;
+  const existingSale = await safeSelectSingle<{
+    id: string;
+    clientId?: string | null;
+    total?: number | null;
+    description?: string | null;
+  }>(
+    "Sale",
+    "id, clientId, total, description",
+    { invoiceRef },
+  );
+
+  let saleId = existingSale?.id ?? null;
+  if (!saleId) {
+    const createdSale = await insertRow<{ id: string }>(
+      "Sale",
+      {
+        clientId: clientId || null,
+        total: quoteTotal,
+        description: `Venta sincronizada desde cotización WON ${quote.id}`,
+        paymentMethod: null,
+        invoiceRef,
+        createdAt: quote.createdAt || new Date().toISOString(),
+      },
+      "id",
+    );
+    saleId = createdSale.id;
+  } else {
+    const salePatch: Record<string, unknown> = {};
+    if (clientId && !existingSale?.clientId) {
+      salePatch.clientId = clientId;
+    }
+    if (typeof existingSale?.total !== "number" || Math.round(existingSale.total) !== quoteTotal) {
+      salePatch.total = quoteTotal;
+    }
+    if (!existingSale?.description?.includes("cotización WON")) {
+      salePatch.description = `Venta sincronizada desde cotización WON ${quote.id}`;
+    }
+    if (Object.keys(salePatch).length > 0) {
+      await updateRows("Sale", salePatch, { id: saleId });
+    }
+  }
+
+  const subtotalAmount = Math.max(
+    0,
+    Math.round(typeof quote.subtotal === "number" ? quote.subtotal : 0),
+  );
+  const taxAmount = Math.max(0, quoteTotal - subtotalAmount);
+  const existingTaxDoc = await safeSelectSingle<{
+    id: string;
+    saleId?: string | null;
+    netAmount?: number | null;
+    taxAmount?: number | null;
+    totalAmount?: number | null;
+  }>("TaxDocument", "id, saleId, netAmount, taxAmount, totalAmount", {
+    quoteId: quote.id,
+  });
+
+  if (!existingTaxDoc) {
+    await insertRow(
+      "TaxDocument",
+      {
+        clientId: clientId || null,
+        quoteId: quote.id,
+        saleId: saleId || null,
+        type: "Factura",
+        issueDate: toDateOnly(quote.createdAt),
+        dueDate: null,
+        netAmount: subtotalAmount,
+        taxAmount,
+        totalAmount: quoteTotal,
+        status: "Pendiente",
+        paymentStatus: "Pendiente",
+        emissionMethod: "Sincronización automática desde cotización WON",
+        notes: `Auto-sync quote ${quote.id}`,
+        createdAt: quote.createdAt || new Date().toISOString(),
+      },
+      "id",
+    );
+  } else {
+    const taxPatch: Record<string, unknown> = {};
+    if (saleId && !existingTaxDoc.saleId) {
+      taxPatch.saleId = saleId;
+    }
+    if (Math.round(existingTaxDoc.netAmount || 0) !== subtotalAmount) {
+      taxPatch.netAmount = subtotalAmount;
+    }
+    if (Math.round(existingTaxDoc.taxAmount || 0) !== taxAmount) {
+      taxPatch.taxAmount = taxAmount;
+    }
+    if (Math.round(existingTaxDoc.totalAmount || 0) !== quoteTotal) {
+      taxPatch.totalAmount = quoteTotal;
+    }
+    if (Object.keys(taxPatch).length > 0) {
+      await updateRows("TaxDocument", taxPatch, { id: existingTaxDoc.id });
+    }
+  }
+}
+
+export async function syncWonQuoteById(quoteId: string) {
+  const quote = await safeSelectSingle<WonQuoteRow>(
+    "Quote",
+    "id, userId, name, email, phone, company, subtotal, total, status, createdAt",
+    { id: quoteId },
+  );
+
+  if (!quote) {
+    throw new Error(`No se encontró la cotización ${quoteId} para sincronizar.`);
+  }
+
+  const isWon = String(quote.status || "").toUpperCase() === "WON";
+  if (!isWon) {
+    return { synced: false, reason: "NOT_WON" as const };
+  }
+
+  await syncOneWonQuote(quote);
+  return { synced: true, reason: "OK" as const };
+}
+
 export async function syncWonQuotesCrossModules(limit = 1000) {
   const wonQuotes = await safeSelect<WonQuoteRow>(
     "Quote",
@@ -506,82 +641,7 @@ export async function syncWonQuotesCrossModules(limit = 1000) {
 
   for (const quote of wonQuotes) {
     try {
-      let clientId = quote.userId || null;
-      if (!clientId && quote.email) {
-        clientId = await findOrCreateClientByEmail({
-          name: quote.name || quote.company || quote.email,
-          email: quote.email,
-          company: quote.company || null,
-          phone: quote.phone || null,
-        });
-      }
-
-      if (clientId && quote.userId !== clientId) {
-        await updateRows("Quote", { userId: clientId }, { id: quote.id });
-      }
-
-      const invoiceRef = `COT:${quote.id}`;
-      const existingSale = await safeSelectSingle<{ id: string; clientId?: string | null }>(
-        "Sale",
-        "id, clientId",
-        { invoiceRef },
-      );
-
-      let saleId = existingSale?.id ?? null;
-      if (!saleId) {
-        const createdSale = await insertRow<{ id: string }>(
-          "Sale",
-          {
-            clientId: clientId || null,
-            total: Math.max(0, Math.round(typeof quote.total === "number" ? quote.total : 0)),
-            description: `Venta sincronizada desde cotización WON ${quote.id}`,
-            paymentMethod: null,
-            invoiceRef,
-            createdAt: quote.createdAt || new Date().toISOString(),
-          },
-          "id",
-        );
-        saleId = createdSale.id;
-      } else if (clientId && !existingSale?.clientId) {
-        await updateRows("Sale", { clientId }, { id: saleId });
-      }
-
-      const existingTaxDoc = await safeSelectSingle<{ id: string }>("TaxDocument", "id", {
-        quoteId: quote.id,
-      });
-
-      if (!existingTaxDoc) {
-        const subtotalAmount = Math.max(
-          0,
-          Math.round(typeof quote.subtotal === "number" ? quote.subtotal : 0),
-        );
-        const totalAmount = Math.max(
-          0,
-          Math.round(typeof quote.total === "number" ? quote.total : 0),
-        );
-        const taxAmount = Math.max(0, totalAmount - subtotalAmount);
-
-        await insertRow(
-          "TaxDocument",
-          {
-            clientId: clientId || null,
-            quoteId: quote.id,
-            saleId: saleId || null,
-            type: "Factura",
-            issueDate: toDateOnly(quote.createdAt),
-            dueDate: null,
-            netAmount: subtotalAmount,
-            taxAmount,
-            totalAmount,
-            status: "Pendiente",
-            paymentStatus: "Pendiente",
-            emissionMethod: "Sincronización automática desde cotización WON",
-            notes: `Auto-sync quote ${quote.id}`,
-            createdAt: quote.createdAt || new Date().toISOString(),
-          },
-          "id",
-        );
-      }
+      await syncOneWonQuote(quote);
     } catch (error) {
       console.error(`[won-sync] quote ${quote.id}:`, toErrorMessage(error));
     }

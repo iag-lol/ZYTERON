@@ -257,6 +257,11 @@ export async function getWebPricingSnapshot() {
   };
 }
 
+export async function getApprovedReviewsSnapshot() {
+  const reviewsRaw = await getClientReviews("APPROVED");
+  return reviewsRaw.map(normalizeReview).filter((item): item is PublicReview => Boolean(item));
+}
+
 export const WEB_CONTROL_FALLBACK = {
   plans: FALLBACK_PLANS,
   extras: FALLBACK_EXTRAS,

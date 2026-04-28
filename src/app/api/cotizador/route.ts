@@ -62,10 +62,19 @@ function isRlsInsertError(error: unknown) {
 }
 
 function createSupabaseAnonServerClient() {
-  const rawUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const rawUrl =
+    process.env.SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.SUPABASE_PROJECT_URL;
+  const anonKey =
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!rawUrl || !anonKey) {
-    throw new Error("SUPABASE_URL o SUPABASE_ANON_KEY no configurados para fallback de formularios.");
+    throw new Error(
+      "Faltan variables de Supabase para fallback de formularios. Define SUPABASE_URL (o NEXT_PUBLIC_SUPABASE_URL) y SUPABASE_ANON_KEY/NEXT_PUBLIC_SUPABASE_ANON_KEY (o SUPABASE_PUBLISHABLE_KEY).",
+    );
   }
 
   const url = normalizeSupabaseUrl(rawUrl);

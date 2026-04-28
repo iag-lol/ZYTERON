@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { syncWonQuotesCrossModules, updateRows } from "@/lib/admin/repository";
+import { syncWonQuoteById, updateRows } from "@/lib/admin/repository";
 
 type AllowedStatus = "PENDING" | "SENT" | "WON" | "LOST";
 
@@ -33,7 +33,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     await updateRows("Quote", { status: nextStatus }, { id });
 
     if (nextStatus === "WON") {
-      await syncWonQuotesCrossModules();
+      await syncWonQuoteById(id);
     }
   } catch {
     redirectUrl.searchParams.set("status_error", "1");

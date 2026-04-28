@@ -51,7 +51,7 @@ export default async function PaquetesPage() {
 
       <section className="py-12">
         <Container>
-          <PackageBuilder plans={plans} extras={extras} discounts={discounts} reviews={reviews} />
+          <PackageBuilder plans={plans} extras={extras} discounts={discounts} reviews={reviews} showReviewsSection={false} />
         </Container>
       </section>
     </main>
