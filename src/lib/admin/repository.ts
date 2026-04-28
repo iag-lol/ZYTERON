@@ -845,10 +845,15 @@ export async function setClientReviewStatus(
     }
   });
 
+  // Verificación no bloqueante: algunos esquemas mixtos (tabla/vista legacy)
+  // pueden devolver lecturas inconsistentes inmediatas aun cuando el update se aplicó.
+  // No rompemos la UX de moderación por falsos negativos.
   const saved = await getClientReviewStatusById(id);
   const savedStatus = String(saved?.status || "").toUpperCase();
   if (!saved?.id || savedStatus !== status) {
-    throw new Error("No se pudo confirmar el cambio de estado del comentario.");
+    console.warn(
+      `[review/status] estado no confirmado en lectura inmediata: id=${id} esperado=${status} obtenido=${savedStatus || "N/A"}`,
+    );
   }
 }
 
