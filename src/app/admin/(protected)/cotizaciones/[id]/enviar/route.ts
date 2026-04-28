@@ -5,6 +5,10 @@ import { ZYTERON_COMPANY } from "@/lib/company";
 
 type ResendResponse = {
   id?: string;
+  message?: string;
+  name?: string;
+  statusCode?: number;
+  code?: string | number;
   error?: { message?: string };
 };
 
@@ -24,8 +28,21 @@ function normalizeStatus(value?: string | null) {
 
 function errorRedirect(requestUrl: string, redirectTo: string, message: string) {
   const url = new URL(redirectTo, requestUrl);
-  url.searchParams.set("email_error", encodeURIComponent(message));
+  url.searchParams.set("email_error", message);
   return NextResponse.redirect(url, { status: 303 });
+}
+
+function extractResendErrorMessage(body: ResendResponse | null) {
+  const candidates = [
+    body?.error?.message,
+    body?.message,
+    typeof body?.code === "string" ? body.code : null,
+  ]
+    .map((value) => (typeof value === "string" ? value.trim() : ""))
+    .filter(Boolean);
+
+  if (candidates.length > 0) return candidates[0];
+  return "Resend rechazó el envío.";
 }
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -97,6 +114,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${resendApiKey}`,
+        "User-Agent": "zyteron-admin/1.0",
       },
       body: JSON.stringify(payload),
       cache: "no-store",
@@ -104,7 +122,13 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
     const body = (await response.json().catch(() => null)) as ResendResponse | null;
     if (!response.ok || !body?.id) {
-      const message = body?.error?.message || "Resend rechazó el envío.";
+      const message = extractResendErrorMessage(body);
+      console.error("[resend/send-quote] send failed", {
+        status: response.status,
+        body,
+        quoteId: quote.id,
+        toEmail,
+      });
       return errorRedirect(request.url, redirectTo, message);
     }
 
