@@ -37,7 +37,7 @@ const teamMembers = [
   {
     name: "Eduardo Ávila",
     role: "Fundador y líder de proyectos",
-    photo: "/public/equipo/eduardo-avila/perfil.jpg",
+    photo: "/equipo/eduardo-avila/perfil.png",
     bio: "Trabajo ayudando a negocios, emprendedores y pymes con soluciones tecnológicas claras, prácticas y profesionales.",
     focus:
       "Desde desarrollo web hasta soporte TI, redes y soluciones digitales, mi enfoque es entregar un servicio cercano, ordenado y útil para cada cliente.",
@@ -46,7 +46,7 @@ const teamMembers = [
   {
     name: "Víctor",
     role: "Desarrollo y soporte TI",
-    photo: "/equipo/victor/perfil.jpgpublic",
+    photo: "/equipo/victor/perfil.png",
     bio: "Profesional enfocado en entregar soluciones web y TI claras, funcionales y orientadas a resultados.",
     focus:
       "Lidera áreas de desarrollo, soporte técnico, mantenimiento de sistemas e implementación de herramientas TI para empresas.",
@@ -54,7 +54,7 @@ const teamMembers = [
   {
     name: "Leonel",
     role: "Análisis, desarrollo y calidad",
-    photo: "/equipo/leonel/perfil.jpgpublic",
+    photo: "/equipo/leonel/perfil.png",
     bio: "Profesional enfocado en entregar soluciones web y TI claras, funcionales y orientadas a resultados.",
     focus:
       "Trabaja en análisis, desarrollo de aplicaciones, gestión de bases de datos, integración de sistemas, automatización y control de calidad.",
@@ -62,6 +62,8 @@ const teamMembers = [
 ];
 
 export default function NosotrosPage() {
+  const [leader, ...team] = teamMembers;
+
   return (
     <main className="bg-white">
       <JsonLd
@@ -164,33 +166,62 @@ export default function NosotrosPage() {
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            {teamMembers.map((member) => (
-              <article key={member.name} className="card-premium p-6 space-y-3">
-                <div className="relative mb-2 aspect-[4/3] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+          <div className="space-y-4">
+            <article className="card-premium mx-auto max-w-3xl p-6 md:p-8">
+              <div className="grid gap-6 md:grid-cols-[0.9fr_1.1fr] md:items-start">
+                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
                   <Image
-                    src={member.photo}
-                    alt={`Foto de ${member.name}`}
+                    src={leader.photo}
+                    alt={`Foto de ${leader.name}`}
                     fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover object-center"
-                    priority={member.name === "Eduardo Ávila"}
+                    sizes="(max-width: 768px) 100vw, 55vw"
+                    className="object-cover object-[center_20%]"
+                    priority
                   />
                 </div>
-                <p className="text-xs font-bold uppercase tracking-widest text-blue-600">{member.role}</p>
-                <h3 className="text-xl font-extrabold text-slate-900">{member.name}</h3>
-                <p className="text-sm leading-relaxed text-slate-600">{member.bio}</p>
-                <p className="text-sm leading-relaxed text-slate-600">{member.focus}</p>
-                {member.contact && (
-                  <p className="text-sm text-slate-700">
-                    Contacto:{" "}
-                    <a href={`mailto:${member.contact}`} className="font-semibold text-blue-700 hover:text-blue-900">
-                      {member.contact}
-                    </a>
-                  </p>
-                )}
-              </article>
-            ))}
+                <div className="space-y-3">
+                  <span className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-blue-700">
+                    Liderazgo
+                  </span>
+                  <p className="text-xs font-bold uppercase tracking-widest text-blue-600">{leader.role}</p>
+                  <h3 className="text-2xl font-extrabold text-slate-900">{leader.name}</h3>
+                  <p className="text-sm leading-relaxed text-slate-600">{leader.bio}</p>
+                  <p className="text-sm leading-relaxed text-slate-600">{leader.focus}</p>
+                  {leader.contact && (
+                    <p className="text-sm text-slate-700">
+                      Contacto:{" "}
+                      <a href={`mailto:${leader.contact}`} className="font-semibold text-blue-700 hover:text-blue-900">
+                        {leader.contact}
+                      </a>
+                    </p>
+                  )}
+                </div>
+              </div>
+            </article>
+
+            <div className="mx-auto grid max-w-3xl gap-4 md:grid-cols-2">
+              {team.map((member) => (
+                <article key={member.name} className="card-premium p-4 md:p-5">
+                  <div className="grid gap-4 sm:grid-cols-[120px_1fr] sm:items-start">
+                    <div className="relative mx-auto aspect-[4/5] w-full max-w-[120px] overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:mx-0">
+                      <Image
+                        src={member.photo}
+                        alt={`Foto de ${member.name}`}
+                        fill
+                        sizes="120px"
+                        className="object-cover object-[center_20%]"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-blue-600">{member.role}</p>
+                      <h3 className="text-xl font-extrabold text-slate-900">{member.name}</h3>
+                      <p className="text-sm leading-relaxed text-slate-600">{member.bio}</p>
+                      <p className="text-sm leading-relaxed text-slate-600">{member.focus}</p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
 
           <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6 text-center">
