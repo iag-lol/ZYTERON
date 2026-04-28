@@ -3,6 +3,8 @@ import Link from "next/link";
 import { getClientReviews } from "@/lib/admin/repository";
 import { ReviewModerationActions } from "@/components/admin/review-moderation-actions";
 
+export const dynamic = "force-dynamic";
+
 type ReviewStatus = "ALL" | "PENDING" | "APPROVED" | "REJECTED";
 
 type PageProps = {

@@ -802,15 +802,20 @@ async function runClientReviewWrite(operation: (table: string) => Promise<void>)
   await operation("client_review");
 }
 
-async function getClientReviewStatusById(id: string) {
-  const primary = await safeSelectSingle<{ id: string; status?: string | null }>(
-    "ClientReview",
-    "id, status",
-    { id },
-  );
-  if (primary?.id) return primary;
+async function updateClientReviewStatus(table: string, id: string, status: "PENDING" | "APPROVED" | "REJECTED") {
+  const { supabase } = createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from(table)
+    .update({ status })
+    .eq("id", id)
+    .select("id, status")
+    .maybeSingle();
 
-  return safeSelectSingle<{ id: string; status?: string | null }>("client_review", "id, status", { id });
+  if (error) {
+    throw new Error(toErrorMessage(error));
+  }
+
+  return data as { id?: string; status?: string | null } | null;
 }
 
 export async function setClientReviewStatus(
@@ -818,42 +823,52 @@ export async function setClientReviewStatus(
   status: "PENDING" | "APPROVED" | "REJECTED",
 ) {
   const now = new Date().toISOString();
-  await runClientReviewWrite(async (table) => {
-    await updateRows(table, { status }, { id });
+  const candidateTables = ["ClientReview", "client_review"];
+  let updated = false;
+  let lastFallbackError: Error | null = null;
 
-    if (status === "APPROVED") {
-      try {
-        await updateRows(table, { approvedAt: now }, { id });
-      } catch {
+  for (const table of candidateTables) {
+    try {
+      const result = await updateClientReviewStatus(table, id, status);
+      if (!result?.id) {
+        continue;
+      }
+
+      updated = true;
+      if (status === "APPROVED") {
         try {
-          await updateRows(table, { approved_at: now }, { id });
+          await updateRows(table, { approvedAt: now }, { id });
         } catch {
-          // Campo opcional según esquema; no bloquea el cambio de estado.
+          try {
+            await updateRows(table, { approved_at: now }, { id });
+          } catch {
+            // Campo opcional según esquema; no bloquea el cambio de estado.
+          }
+        }
+      } else {
+        try {
+          await updateRows(table, { approvedAt: null }, { id });
+        } catch {
+          try {
+            await updateRows(table, { approved_at: null }, { id });
+          } catch {
+            // Campo opcional según esquema; no bloquea el cambio de estado.
+          }
         }
       }
-      return;
-    }
-
-    try {
-      await updateRows(table, { approvedAt: null }, { id });
-    } catch {
-      try {
-        await updateRows(table, { approved_at: null }, { id });
-      } catch {
-        // Campo opcional según esquema; no bloquea el cambio de estado.
+      break;
+    } catch (error) {
+      if (isClientReviewWriteFallbackError(error)) {
+        lastFallbackError = error instanceof Error ? error : new Error(toErrorMessage(error));
+        continue;
       }
+      throw error;
     }
-  });
+  }
 
-  // Verificación no bloqueante: algunos esquemas mixtos (tabla/vista legacy)
-  // pueden devolver lecturas inconsistentes inmediatas aun cuando el update se aplicó.
-  // No rompemos la UX de moderación por falsos negativos.
-  const saved = await getClientReviewStatusById(id);
-  const savedStatus = String(saved?.status || "").toUpperCase();
-  if (!saved?.id || savedStatus !== status) {
-    console.warn(
-      `[review/status] estado no confirmado en lectura inmediata: id=${id} esperado=${status} obtenido=${savedStatus || "N/A"}`,
-    );
+  if (!updated) {
+    if (lastFallbackError) throw lastFallbackError;
+    throw new Error("No se encontró el comentario a actualizar.");
   }
 }
 

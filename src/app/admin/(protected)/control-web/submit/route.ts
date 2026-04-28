@@ -344,21 +344,25 @@ export async function POST(request: Request) {
       if (!id) return NextResponse.json({ error: "ID requerido" }, { status: 400 });
       if (action === "delete") {
         await deleteClientReviewById(id);
+        revalidatePath("/admin/comentarios");
         revalidatePath("/");
         return NextResponse.json({ ok: true });
       }
       if (action === "approve") {
         await setClientReviewStatus(id, "APPROVED");
+        revalidatePath("/admin/comentarios");
         revalidatePath("/");
         return NextResponse.json({ ok: true });
       }
       if (action === "reject") {
         await setClientReviewStatus(id, "REJECTED");
+        revalidatePath("/admin/comentarios");
         revalidatePath("/");
         return NextResponse.json({ ok: true });
       }
       if (action === "pending") {
         await setClientReviewStatus(id, "PENDING");
+        revalidatePath("/admin/comentarios");
         revalidatePath("/");
         return NextResponse.json({ ok: true });
       }

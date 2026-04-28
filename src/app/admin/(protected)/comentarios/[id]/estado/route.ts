@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { setClientReviewStatus } from "@/lib/admin/repository";
 
 type ReviewStatus = "PENDING" | "APPROVED" | "REJECTED";
@@ -45,6 +46,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
   try {
     await setClientReviewStatus(id, status);
+    revalidatePath("/admin/comentarios");
+    revalidatePath("/");
     if (isJsonRequest) {
       return NextResponse.json({ ok: true, status });
     }
