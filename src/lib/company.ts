@@ -26,3 +26,4 @@ export const ZYTERON_SII = {
 } as const;
 
 export const ZYTERON_QUOTE_BUCKET = process.env.SUPABASE_QUOTE_BUCKET || "quote-documents";
+export const ZYTERON_EXPENSE_BUCKET = process.env.SUPABASE_EXPENSE_BUCKET || "expense-documents";

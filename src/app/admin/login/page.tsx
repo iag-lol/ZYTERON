@@ -1,20 +1,19 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function AdminLoginPage() {
   const [pwd, setPwd] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("error")
+      ? "Contraseña incorrecta"
+      : "";
+  });
   const [pending, startTransition] = useTransition();
-
-  useEffect(() => {
-    const search = typeof window !== "undefined" ? window.location.search : "";
-    const hasError = new URLSearchParams(search).get("error");
-    if (hasError) setError("Contraseña incorrecta");
-  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();

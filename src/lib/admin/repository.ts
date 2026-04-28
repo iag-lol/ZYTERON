@@ -190,6 +190,24 @@ export type TaxDocument = {
   createdAt?: string | null;
 };
 
+export type Expense = {
+  id: string;
+  name: string;
+  description?: string | null;
+  category?: string | null;
+  status?: "PLANNED" | "PURCHASED" | "CANCELLED" | string | null;
+  amount?: number | null;
+  store?: string | null;
+  invoiceNumber?: string | null;
+  purchaseDate?: string | null;
+  arrivalDate?: string | null;
+  invoiceFileUrl?: string | null;
+  invoiceFilePath?: string | null;
+  invoiceFileName?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
 export type WebVisit = {
   id: string;
   path: string;
@@ -426,6 +444,22 @@ export async function getSales() {
   );
 }
 
+export async function getExpenses() {
+  return safeSelect<Expense>(
+    "Expense",
+    'id, name, description, category, status, amount, store, "invoiceNumber", "purchaseDate", "arrivalDate", "invoiceFileUrl", "invoiceFilePath", "invoiceFileName", "createdAt", "updatedAt"',
+    { orderBy: "createdAt" },
+  );
+}
+
+export async function getExpenseById(id: string) {
+  return safeSelectSingle<Expense>(
+    "Expense",
+    'id, name, description, category, status, amount, store, "invoiceNumber", "purchaseDate", "arrivalDate", "invoiceFileUrl", "invoiceFilePath", "invoiceFileName", "createdAt", "updatedAt"',
+    { id },
+  );
+}
+
 export async function getProjects() {
   return safeSelect<Project>(
     "Project",
@@ -489,6 +523,14 @@ type WonQuoteRow = {
   status?: string | null;
   createdAt?: string | null;
 };
+
+function isWonQuoteStatus(value?: string | null) {
+  const normalized = String(value || "").trim().toUpperCase();
+  if (!normalized) return false;
+  if (normalized === "WON") return true;
+  if (normalized === "GANADA" || normalized === "GANADO") return true;
+  return normalized.includes("WON") || normalized.includes("GANAD");
+}
 
 function toDateOnly(value?: string | null) {
   if (!value) return new Date().toISOString().slice(0, 10);
@@ -623,7 +665,7 @@ export async function syncWonQuoteById(quoteId: string) {
     throw new Error(`No se encontró la cotización ${quoteId} para sincronizar.`);
   }
 
-  const isWon = String(quote.status || "").toUpperCase() === "WON";
+  const isWon = isWonQuoteStatus(quote.status);
   if (!isWon) {
     return { synced: false, reason: "NOT_WON" as const };
   }
@@ -633,11 +675,12 @@ export async function syncWonQuoteById(quoteId: string) {
 }
 
 export async function syncWonQuotesCrossModules(limit = 1000) {
-  const wonQuotes = await safeSelect<WonQuoteRow>(
+  const candidateQuotes = await safeSelect<WonQuoteRow>(
     "Quote",
     "id, userId, name, email, phone, company, subtotal, total, status, createdAt",
-    { filters: { status: "WON" }, orderBy: "createdAt", limit },
+    { orderBy: "createdAt", limit },
   );
+  const wonQuotes = candidateQuotes.filter((quote) => isWonQuoteStatus(quote.status));
 
   for (const quote of wonQuotes) {
     try {
@@ -699,11 +742,20 @@ export async function getWebDiscounts(activeOnly = false) {
 }
 
 export async function getClientReviews(status?: "PENDING" | "APPROVED" | "REJECTED") {
-  const rows = await safeSelect<ClientReview>(
+  const primaryRows = await safeSelect<ClientReview>(
     "ClientReview",
     "id, name, email, company, rating, comment, service, status, source, createdAt, approvedAt",
     { orderBy: "createdAt" },
   );
+  const fallbackRows =
+    primaryRows.length > 0
+      ? []
+      : await safeSelect<ClientReview>(
+          "client_review",
+          "id, name, email, company, rating, comment, service, status, source, createdAt, approvedAt",
+          { orderBy: "createdAt" },
+        );
+  const rows = primaryRows.length > 0 ? primaryRows : fallbackRows;
 
   if (!status) return rows;
   return rows.filter((review) => String(review.status || "").toUpperCase() === status);

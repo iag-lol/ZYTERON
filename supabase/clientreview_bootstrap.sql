@@ -28,8 +28,25 @@ create table if not exists public."ClientReview" (
 create index if not exists idx_clientreview_status_created
   on public."ClientReview" (status, "createdAt" desc);
 
+-- Compatibilidad con entornos que consultan client_review en snake_case.
+create or replace view public.client_review as
+select
+  id,
+  name,
+  email,
+  company,
+  rating,
+  comment,
+  service,
+  status,
+  source,
+  "createdAt",
+  "approvedAt"
+from public."ClientReview";
+
 grant usage on schema public to anon, authenticated;
 grant select, insert on table public."ClientReview" to anon, authenticated;
+grant select, insert on public.client_review to anon, authenticated;
 
 alter table public."ClientReview" enable row level security;
 
@@ -52,4 +69,3 @@ using (status = 'APPROVED');
 
 -- Fuerza recarga de schema cache de PostgREST.
 notify pgrst, 'reload schema';
-

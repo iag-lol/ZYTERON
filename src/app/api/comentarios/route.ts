@@ -20,7 +20,25 @@ function normalizeOptional(value?: string) {
 function isMissingClientReviewTableError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error ?? "");
   const normalized = message.toLowerCase();
-  return normalized.includes("pgrst205") || normalized.includes("clientreview");
+  return (
+    normalized.includes("pgrst205") ||
+    normalized.includes("clientreview") ||
+    normalized.includes("client_review") ||
+    normalized.includes("could not find the table")
+  );
+}
+
+async function insertClientReview(payload: Record<string, unknown>) {
+  try {
+    await insertRow("ClientReview", payload, "id");
+    return;
+  } catch (primaryError) {
+    if (!isMissingClientReviewTableError(primaryError)) {
+      throw primaryError;
+    }
+  }
+
+  await insertRow("client_review", payload, "id");
 }
 
 export async function POST(req: Request) {
@@ -34,22 +52,18 @@ export async function POST(req: Request) {
 
     const data = parsed.data;
     const reviewId = randomUUID();
-    await insertRow(
-      "ClientReview",
-      {
-        id: reviewId,
-        name: data.name,
-        email: normalizeOptional(data.email),
-        company: normalizeOptional(data.company),
-        service: normalizeOptional(data.service),
-        rating: data.rating,
-        comment: data.comment,
-        status: "PENDING",
-        source: "WEB",
-        createdAt: new Date().toISOString(),
-      },
-      "id",
-    );
+    await insertClientReview({
+      id: reviewId,
+      name: data.name,
+      email: normalizeOptional(data.email),
+      company: normalizeOptional(data.company),
+      service: normalizeOptional(data.service),
+      rating: data.rating,
+      comment: data.comment,
+      status: "PENDING",
+      source: "WEB",
+      createdAt: new Date().toISOString(),
+    });
 
     return NextResponse.json({ ok: true, reference: reviewId.slice(0, 8).toUpperCase() });
   } catch (error) {

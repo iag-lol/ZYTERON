@@ -63,10 +63,14 @@ type PageProps = {
     | {
         status?: string;
         status_error?: string;
+        email_sent?: string;
+        email_error?: string;
       }
     | Promise<{
         status?: string;
         status_error?: string;
+        email_sent?: string;
+        email_error?: string;
       }>;
 };
 
@@ -74,6 +78,8 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
   const query = await Promise.resolve(searchParams);
   const activeFilter = normalizeQuoteStatusFilter(query?.status);
   const statusError = query?.status_error === "1";
+  const emailSent = query?.email_sent === "1";
+  const emailError = query?.email_error ? decodeURIComponent(query.email_error) : "";
   const data = await getAdminSnapshot();
   const allQuotes = data.quotes
     .slice()
@@ -138,6 +144,16 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
       {statusError ? (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           No se pudo actualizar el estado de la cotización. Inténtalo nuevamente.
+        </div>
+      ) : null}
+      {emailSent ? (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          Cotización enviada correctamente por correo con PDF adjunto.
+        </div>
+      ) : null}
+      {emailError ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {emailError}
         </div>
       ) : null}
       {/* Header */}
@@ -356,13 +372,17 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
                       >
                         <Download className="h-3.5 w-3.5" />
                       </a>
-                      <Link
-                        href={`mailto:${q.email ?? ""}`}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
-                        title="Enviar email"
-                      >
-                        <Mail className="h-3.5 w-3.5" />
-                      </Link>
+                      <form action={`/admin/cotizaciones/${q.id}/enviar`} method="post">
+                        <input type="hidden" name="redirectTo" value={returnTo} />
+                        <button
+                          type="submit"
+                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
+                          title="Enviar email con cotización adjunta"
+                          disabled={!q.email}
+                        >
+                          <Mail className="h-3.5 w-3.5" />
+                        </button>
+                      </form>
                       <Link
                         href={`/admin/cotizaciones/${q.id}/editar`}
                         className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
