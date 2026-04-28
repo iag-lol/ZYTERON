@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { insertRow } from "@/lib/admin/repository";
 import { serializeContactLeadDetails } from "@/lib/admin/contact-lead";
+import { sendLeadAlertEmail } from "@/lib/notifications/lead-alert";
 
 type RateLimitEntry = {
   hits: number;
@@ -186,6 +187,7 @@ export async function POST(req: Request) {
     });
 
     const leadId = randomUUID();
+    const createdAt = new Date().toISOString();
     await insertContactLeadWithFallback({
       id: leadId,
       name: data.name,
@@ -194,8 +196,25 @@ export async function POST(req: Request) {
       source: "CONTACTO_WEB",
       message: leadMessage,
       type: "CONTACT",
-      createdAt: new Date().toISOString(),
+      createdAt,
     });
+
+    try {
+      await sendLeadAlertEmail({
+        leadId,
+        source: "CONTACTO_WEB",
+        submittedAtIso: createdAt,
+        name: data.name,
+        email: data.email,
+        phone: normalizeOptional(data.phone),
+        company: normalizeOptional(data.company),
+        service: normalizeOptional(data.service),
+        message: normalizeOptional(data.message),
+        submittedFrom: referer || null,
+      });
+    } catch (emailError) {
+      console.error("[contact-form] lead alert email failed:", emailError);
+    }
 
     return NextResponse.json({ ok: true, reference: leadId.slice(0, 8).toUpperCase() });
   } catch (error) {

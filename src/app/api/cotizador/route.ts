@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { serializeContactLeadDetails } from "@/lib/admin/contact-lead";
 import { insertRow } from "@/lib/admin/repository";
+import { sendLeadAlertEmail } from "@/lib/notifications/lead-alert";
 
 const lineItemSchema = z.object({
   id: z.string().trim().max(120).optional(),
@@ -167,6 +168,7 @@ export async function POST(req: Request) {
     });
 
     const leadId = randomUUID();
+    const createdAt = new Date().toISOString();
     await insertPackageLeadWithFallback({
       id: leadId,
       name: data.name,
@@ -175,8 +177,37 @@ export async function POST(req: Request) {
       source: "COTIZADOR_WEB",
       message: leadMessage,
       type: "PACKAGE_BUILDER",
-      createdAt: new Date().toISOString(),
+      createdAt,
     });
+
+    try {
+      await sendLeadAlertEmail({
+        leadId,
+        source: "COTIZADOR_WEB",
+        submittedAtIso: createdAt,
+        name: data.name,
+        email: data.email,
+        phone: normalizeOptional(data.phone),
+        company: normalizeOptional(data.company),
+        service: serviceSummary,
+        message: detailLines,
+        submittedFrom: req.headers.get("referer") || null,
+        planName: data.planName,
+        planPrice: data.planPrice,
+        subtotal: data.subtotal,
+        discountTotal: data.discountTotal,
+        iva: data.iva,
+        total: data.total,
+        extras: data.extras.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          total: item.price * item.quantity,
+        })),
+      });
+    } catch (emailError) {
+      console.error("[package-builder] lead alert email failed:", emailError);
+    }
 
     return NextResponse.json({ ok: true, reference: leadId.slice(0, 8).toUpperCase() });
   } catch (error) {
