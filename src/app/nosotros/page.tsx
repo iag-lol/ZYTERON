@@ -8,11 +8,11 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Agencia de Diseno Web en Chile | Nosotros | Zyteron",
+  title: "Agencia de Diseño Web en Chile | Nosotros | Zyteron",
   description:
-    "Conoce a Zyteron, agencia chilena de diseno web y desarrollo web para empresas con foco en SEO tecnico y conversion.",
+    "Conoce a Zyteron, agencia chilena de diseño web y desarrollo web para empresas con foco en SEO técnico y conversión.",
   path: "/nosotros",
-  keywords: ["agencia diseno web chile", "equipo desarrollo web chile", "empresa web santiago"],
+  keywords: ["agencia diseño web chile", "equipo desarrollo web chile", "empresa web santiago"],
 });
 
 const values = [
@@ -37,7 +37,7 @@ const teamMembers = [
   {
     name: "Eduardo Ávila",
     role: "Fundador y líder de proyectos",
-    photo: "/equipo/eduardo-avila/perfil.png",
+    photo: "/public/equipo/eduardo-avila/perfil.jpg",
     bio: "Trabajo ayudando a negocios, emprendedores y pymes con soluciones tecnológicas claras, prácticas y profesionales.",
     focus:
       "Desde desarrollo web hasta soporte TI, redes y soluciones digitales, mi enfoque es entregar un servicio cercano, ordenado y útil para cada cliente.",
@@ -46,7 +46,7 @@ const teamMembers = [
   {
     name: "Víctor",
     role: "Desarrollo y soporte TI",
-    photo: "/equipo/victor/perfil.png",
+    photo: "/equipo/victor/perfil.jpgpublic",
     bio: "Profesional enfocado en entregar soluciones web y TI claras, funcionales y orientadas a resultados.",
     focus:
       "Lidera áreas de desarrollo, soporte técnico, mantenimiento de sistemas e implementación de herramientas TI para empresas.",
@@ -54,7 +54,7 @@ const teamMembers = [
   {
     name: "Leonel",
     role: "Análisis, desarrollo y calidad",
-    photo: "/equipo/leonel/perfil.png",
+    photo: "/equipo/leonel/perfil.jpgpublic",
     bio: "Profesional enfocado en entregar soluciones web y TI claras, funcionales y orientadas a resultados.",
     focus:
       "Trabaja en análisis, desarrollo de aplicaciones, gestión de bases de datos, integración de sistemas, automatización y control de calidad.",
@@ -62,17 +62,15 @@ const teamMembers = [
 ];
 
 export default function NosotrosPage() {
-  const [leader, ...team] = teamMembers;
-
   return (
     <main className="bg-white">
       <JsonLd
         id="nosotros-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/nosotros",
-          title: "Agencia de Diseno Web en Chile | Nosotros | Zyteron",
+          title: "Agencia de Diseño Web en Chile | Nosotros | Zyteron",
           description:
-            "Equipo de diseno y desarrollo web para empresas chilenas con enfoque en resultados.",
+            "Equipo de diseño y desarrollo web para empresas chilenas con enfoque en resultados.",
           breadcrumbs: [
             { name: "Inicio", path: "/" },
             { name: "Nosotros", path: "/nosotros" },
@@ -166,64 +164,33 @@ export default function NosotrosPage() {
             </p>
           </div>
 
-          <div className="space-y-4">
-            <article className="card-premium mx-auto max-w-3xl p-6 md:p-8">
-              <div className="grid gap-6 md:grid-cols-[0.9fr_1.1fr] md:items-start">
-                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+          <div className="grid gap-4 md:grid-cols-3">
+            {teamMembers.map((member) => (
+              <article key={member.name} className="card-premium p-6 space-y-3">
+                <div className="relative mb-2 aspect-[4/3] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
                   <Image
-                    src={leader.photo}
-                    alt={`Foto de ${leader.name}`}
+                    src={member.photo}
+                    alt={`Foto de ${member.name}`}
                     fill
-                    unoptimized
-                    sizes="(max-width: 768px) 100vw, 55vw"
-                    className="object-cover object-[center_20%]"
-                    priority
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover object-center"
+                    priority={member.name === "Eduardo Ávila"}
                   />
                 </div>
-                <div className="space-y-3">
-                  <span className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-blue-700">
-                    Liderazgo
-                  </span>
-                  <p className="text-xs font-bold uppercase tracking-widest text-blue-600">{leader.role}</p>
-                  <h3 className="text-2xl font-extrabold text-slate-900">{leader.name}</h3>
-                  <p className="text-sm leading-relaxed text-slate-600">{leader.bio}</p>
-                  <p className="text-sm leading-relaxed text-slate-600">{leader.focus}</p>
-                  {leader.contact && (
-                    <p className="text-sm text-slate-700">
-                      Contacto:{" "}
-                      <a href={`mailto:${leader.contact}`} className="font-semibold text-blue-700 hover:text-blue-900">
-                        {leader.contact}
-                      </a>
-                    </p>
-                  )}
-                </div>
-              </div>
-            </article>
-
-            <div className="mx-auto grid max-w-3xl gap-4 md:grid-cols-2">
-              {team.map((member) => (
-                <article key={member.name} className="card-premium p-4 md:p-5">
-                  <div className="grid gap-4 sm:grid-cols-[120px_1fr] sm:items-start">
-                    <div className="relative mx-auto aspect-[4/5] w-full max-w-[120px] overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:mx-0">
-                      <Image
-                        src={member.photo}
-                        alt={`Foto de ${member.name}`}
-                        fill
-                        unoptimized
-                        sizes="120px"
-                        className="object-cover object-[center_20%]"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-blue-600">{member.role}</p>
-                      <h3 className="text-xl font-extrabold text-slate-900">{member.name}</h3>
-                      <p className="text-sm leading-relaxed text-slate-600">{member.bio}</p>
-                      <p className="text-sm leading-relaxed text-slate-600">{member.focus}</p>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+                <p className="text-xs font-bold uppercase tracking-widest text-blue-600">{member.role}</p>
+                <h3 className="text-xl font-extrabold text-slate-900">{member.name}</h3>
+                <p className="text-sm leading-relaxed text-slate-600">{member.bio}</p>
+                <p className="text-sm leading-relaxed text-slate-600">{member.focus}</p>
+                {member.contact && (
+                  <p className="text-sm text-slate-700">
+                    Contacto:{" "}
+                    <a href={`mailto:${member.contact}`} className="font-semibold text-blue-700 hover:text-blue-900">
+                      {member.contact}
+                    </a>
+                  </p>
+                )}
+              </article>
+            ))}
           </div>
 
           <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6 text-center">

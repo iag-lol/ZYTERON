@@ -9,34 +9,34 @@ import { buildFaqJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/se
 
 const faqs = [
   {
-    question: "Que servicio debo elegir primero para mejorar resultados?",
+    question: "¿Qué servicio debo elegir primero para mejorar resultados?",
     answer:
-      "Si hoy no tienes un sitio comercial claro, recomendamos partir por paginas web para empresas. Si ya tienes sitio, priorizamos SEO tecnico y optimizacion de conversion.",
+      "Si hoy no tienes un sitio comercial claro, recomendamos partir por páginas web para empresas. Si ya tienes sitio, priorizamos SEO técnico y optimización de conversión.",
   },
   {
-    question: "Trabajan solo proyectos en Santiago?",
+    question: "¿Trabajan solo proyectos en Santiago?",
     answer:
-      "No. Atendemos empresas en todo Chile de forma remota y coordinamos reuniones comerciales segun necesidad.",
+      "No. Atendemos empresas en todo Chile de forma remota y coordinamos reuniones comerciales según necesidad.",
   },
   {
-    question: "Puedo contratar diseno, desarrollo y SEO en un solo proyecto?",
+    question: "¿Puedo contratar diseño, desarrollo y SEO en un solo proyecto?",
     answer:
-      "Si. Nuestra propuesta integra estrategia, diseno UX, desarrollo y base SEO para lanzar con una estructura lista para posicionar.",
+      "Sí. Nuestra propuesta integra estrategia, diseño UX, desarrollo y base SEO para lanzar con una estructura lista para posicionar.",
   },
   {
-    question: "Cuanto tarda un proyecto promedio?",
+    question: "¿Cuánto tarda un proyecto promedio?",
     answer:
       "Entre 3 y 7 semanas dependiendo del alcance, cantidad de secciones, integraciones y disponibilidad de contenidos.",
   },
 ];
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Servicios de Diseno y Desarrollo Web en Chile | Zyteron",
+  title: "Servicios de Diseño y Desarrollo Web en Chile | Zyteron",
   description:
-    "Servicios de diseno web Chile, desarrollo web Chile y SEO tecnico para empresas. Estructura pensada para captar leads y escalar posicionamiento.",
+    "Servicios de diseño web Chile, desarrollo web Chile y SEO técnico para empresas. Estructura pensada para captar leads y escalar posicionamiento.",
   path: "/servicios",
   keywords: [
-    "servicios diseno web chile",
+    "servicios diseño web chile",
     "servicios desarrollo web chile",
     "agencia web para empresas chile",
   ],
@@ -49,9 +49,9 @@ export default function ServiciosPage() {
         id="servicios-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/servicios",
-          title: "Servicios de Diseno y Desarrollo Web en Chile | Zyteron",
+          title: "Servicios de Diseño y Desarrollo Web en Chile | Zyteron",
           description:
-            "Hub de servicios de diseno web, desarrollo web y creacion de sitios para empresas en Chile.",
+            "Hub de servicios de diseño web, desarrollo web y creación de sitios para empresas en Chile.",
           breadcrumbs: [
             { name: "Inicio", path: "/" },
             { name: "Servicios", path: "/servicios" },
@@ -80,17 +80,17 @@ export default function ServiciosPage() {
             Hub de servicios SEO
           </div>
           <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
-            Servicios de diseno web Chile y desarrollo web Chile para empresas
+            Servicios de diseño web Chile y desarrollo web Chile para empresas
           </h1>
           <p className="max-w-3xl text-lg leading-relaxed text-slate-600">
-            Esta pagina concentra nuestras soluciones principales para posicionar y convertir:
-            paginas web para empresas, diseno web en Santiago, creacion de sitios web y
-            desarrollo tecnico orientado a resultados.
+            Esta página concentra nuestras soluciones principales para posicionar y convertir:
+            páginas web para empresas, diseño web en Santiago, creación de sitios web y
+            desarrollo técnico orientado a resultados.
           </p>
           <div className="flex flex-wrap gap-3">
             <Button asChild size="lg" className="gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800">
               <Link href="/contacto">
-                Solicitar diagnostico <ArrowRight className="h-4 w-4" />
+                Solicitar diagnóstico <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-slate-300 font-semibold text-slate-800 hover:bg-slate-50">
@@ -107,10 +107,10 @@ export default function ServiciosPage() {
               Arquitectura de servicios
             </p>
             <h2 className="text-3xl font-extrabold text-slate-900">
-              Cada URL responde a una busqueda comercial especifica
+              Cada URL responde a una búsqueda comercial específica
             </h2>
             <p className="max-w-3xl text-sm leading-relaxed text-slate-600">
-              Para evitar canibalizacion y mejorar relevancia, cada servicio tiene una pagina
+              Para evitar canibalización y mejorar relevancia, cada servicio tiene una página
               dedicada con propuesta de valor, FAQs y enlazado interno contextual.
             </p>
           </div>
@@ -142,19 +142,55 @@ export default function ServiciosPage() {
         </Container>
       </section>
 
+      <section className="cv-auto border-y border-slate-200 bg-slate-50 py-16">
+        <Container className="space-y-6">
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Soluciones reales</p>
+            <h2 className="text-2xl font-extrabold text-slate-900">
+              Creaciones web y estaciones de trabajo listas para operar
+            </h2>
+            <p className="max-w-3xl text-sm leading-relaxed text-slate-600">
+              Combinamos ejecución digital y soporte TI físico: desde tu web comercial hasta puestos de trabajo completos
+              con escritorio, silla, computador y configuración técnica según carga real del equipo.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                title: "Creaciones Webs",
+                body: "Sitios corporativos, landing pages y catálogos con estructura SEO, formularios de conversión y analítica activa desde el lanzamiento.",
+              },
+              {
+                title: "Estaciones de trabajo",
+                body: "Diseño e implementación de puestos por rol: escritorio, asiento ergonómico, monitor y disposición física para operación continua.",
+              },
+              {
+                title: "Computador y requisitos técnicos",
+                body: "Selección e instalación de hardware y software según uso real: RAM, almacenamiento, respaldo, seguridad y conectividad estable.",
+              },
+            ].map((item) => (
+              <article key={item.title} className="card-premium p-5">
+                <h3 className="mb-2 text-base font-bold text-slate-900">{item.title}</h3>
+                <p className="text-sm leading-relaxed text-slate-600">{item.body}</p>
+              </article>
+            ))}
+          </div>
+        </Container>
+      </section>
+
       <section className="cv-auto section-alt border-y border-slate-200 py-16">
         <Container className="grid gap-6 md:grid-cols-3">
           {[
             {
               title: "Contenido orientado a personas",
-              body: "Cada pagina de servicio responde problemas reales de compra y decision de empresas chilenas.",
+              body: "Cada página de servicio responde problemas reales de compra y decisión de empresas chilenas.",
             },
             {
-              title: "Indexacion limpia",
-              body: "URLs canonicas correctas, sitemap actualizado, schema consistente y enlazado interno crawlable.",
+              title: "Indexación limpia",
+              body: "URLs canónicas correctas, sitemap actualizado, schema consistente y enlazado interno crawlable.",
             },
             {
-              title: "Conversion primero",
+              title: "Conversión primero",
               body: "CTAs directos a contacto, cotizador y WhatsApp con seguimiento de eventos y foco comercial.",
             },
           ].map((item) => (
