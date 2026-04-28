@@ -257,6 +257,17 @@ function isMissingRelationError(message?: string) {
   );
 }
 
+function isMissingClientReviewRelationError(error: unknown) {
+  const message = toErrorMessage(error).toLowerCase();
+  return (
+    message.includes("clientreview") ||
+    message.includes("client_review") ||
+    message.includes("could not find the table") ||
+    message.includes("schema cache") ||
+    (message.includes("relation") && message.includes("does not exist"))
+  );
+}
+
 export async function safeSelect<T>(table: string, select: string, options: SelectOptions = {}) {
   try {
     const { supabase } = createSupabaseServerClient();
@@ -759,6 +770,52 @@ export async function getClientReviews(status?: "PENDING" | "APPROVED" | "REJECT
 
   if (!status) return rows;
   return rows.filter((review) => String(review.status || "").toUpperCase() === status);
+}
+
+async function runClientReviewWrite(operation: (table: string) => Promise<void>) {
+  try {
+    await operation("ClientReview");
+    return;
+  } catch (error) {
+    if (!isMissingClientReviewRelationError(error)) throw error;
+  }
+
+  await operation("client_review");
+}
+
+export async function setClientReviewStatus(
+  id: string,
+  status: "PENDING" | "APPROVED" | "REJECTED",
+) {
+  const now = new Date().toISOString();
+  await runClientReviewWrite(async (table) => {
+    if (status === "APPROVED") {
+      await updateRows(
+        table,
+        {
+          status: "APPROVED",
+          approvedAt: now,
+        },
+        { id },
+      );
+      return;
+    }
+
+    await updateRows(
+      table,
+      {
+        status,
+        approvedAt: null,
+      },
+      { id },
+    );
+  });
+}
+
+export async function deleteClientReviewById(id: string) {
+  await runClientReviewWrite(async (table) => {
+    await deleteRows(table, { id });
+  });
 }
 
 export async function getSettingsByPrefix(prefix: string) {

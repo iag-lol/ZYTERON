@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { deleteRows, insertRow, upsertSetting, updateRows } from "@/lib/admin/repository";
+import {
+  deleteClientReviewById,
+  deleteRows,
+  insertRow,
+  setClientReviewStatus,
+  upsertSetting,
+  updateRows,
+} from "@/lib/admin/repository";
 
 const bodySchema = z.object({
   section: z.enum(["plan", "extra", "product", "discount", "review"]),
@@ -293,28 +300,15 @@ export async function POST(request: Request) {
     if (section === "review") {
       if (!id) return NextResponse.json({ error: "ID requerido" }, { status: 400 });
       if (action === "delete") {
-        await deleteRows("ClientReview", { id });
+        await deleteClientReviewById(id);
         return NextResponse.json({ ok: true });
       }
       if (action === "approve") {
-        await updateRows(
-          "ClientReview",
-          {
-            status: "APPROVED",
-            approvedAt: now,
-          },
-          { id },
-        );
+        await setClientReviewStatus(id, "APPROVED");
         return NextResponse.json({ ok: true });
       }
       if (action === "reject") {
-        await updateRows(
-          "ClientReview",
-          {
-            status: "REJECTED",
-          },
-          { id },
-        );
+        await setClientReviewStatus(id, "REJECTED");
         return NextResponse.json({ ok: true });
       }
     }
