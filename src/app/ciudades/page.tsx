@@ -10,7 +10,7 @@ import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 export const metadata: Metadata = createPageMetadata({
   title: "Diseño web por ciudad en Chile",
   description:
-    "Páginas locales de diseño y desarrollo web para empresas en Chile. Cobertura inicial: Santiago, Viña del Mar y Concepción.",
+    "Páginas locales de diseño y desarrollo web para empresas en Chile, con foco en Región Metropolitana y principales ciudades del país.",
   path: "/ciudades",
   keywords: ["diseño web chile ciudades", "agencia web regional", "seo local chile"],
 });
@@ -42,7 +42,8 @@ export default function CiudadesPage() {
           </h1>
           <p className="max-w-3xl text-lg text-slate-600">
             No creamos landings masivas sin diferenciación. Priorizamos ciudades con demanda real y
-            contenido local útil para evitar páginas doorway y canibalización.
+            contenido local útil para evitar páginas doorway y canibalización. Incluimos una página
+            específica para Región Metropolitana y cobertura de ciudades estratégicas en todo Chile.
           </p>
         </Container>
       </section>

@@ -14,55 +14,100 @@ import type { PublicDiscount, PublicExtra, PublicPlan, PublicProduct, PublicRevi
 
 const FALLBACK_PLANS: PublicPlan[] = [
   {
-    id: "plan-basic-fallback",
-    slug: "basico",
-    name: "Básico",
-    description: "Landing profesional + hosting + soporte básico",
-    price: 390000,
+    id: "plan-pyme-base-fallback",
+    slug: "pyme-base",
+    name: "PyME Base",
+    description: "Formalización para emprendedores que necesitan operar y facturar.",
+    price: 99990,
     popular: false,
     tier: "BASIC",
     features: [
-      "Landing page extendida (hasta 6 secciones)",
-      "Formulario de contacto + WhatsApp",
-      "Hosting SSD + SSL (3 meses)",
-      "Diseño responsive mobile/tablet/desktop",
-      "SEO básico (metadatos y títulos)",
+      "Creación de empresa",
+      "Constitución e inicio de actividades",
+      "Asesoría en el proceso administrativo",
+      "Apoyo para quedar listo para facturar",
     ],
-    freeGifts: ["1 mes de atención básica post-entrega"],
+    freeGifts: ["Checklist inicial de documentos"],
   },
   {
-    id: "plan-intermediate-fallback",
-    slug: "intermedio",
-    name: "Intermedio",
-    description: "Sitio 5 secciones + SEO + analítica + CRM",
-    price: 790000,
+    id: "plan-pyme-plus-fallback",
+    slug: "pyme-plus",
+    name: "PyME Plus",
+    description: "Formalización + identidad digital inicial para comenzar con presencia online.",
+    price: 149990,
     popular: true,
     tier: "INTERMEDIATE",
     features: [
-      "Sitio web completo (hasta 8 secciones)",
-      "Formularios avanzados + analítica",
-      "Optimización SEO intermedia on-page",
-      "Integración CRM / email marketing",
-      "Diseño premium con animaciones",
+      "Todo lo del plan PyME Base",
+      "Dominio .cl por 1 año",
+      "2 correos corporativos por 1 año",
+      "Acompañamiento de configuración inicial",
     ],
-    freeGifts: ["1 mes de atención incluida"],
+    freeGifts: ["Plantilla de firma corporativa"],
   },
   {
-    id: "plan-pro-fallback",
-    slug: "pro",
-    name: "Pro",
-    description: "Corporativo + blog + SEO avanzado + paneles",
-    price: 1490000,
+    id: "plan-pyme-digital-fallback",
+    slug: "pyme-digital",
+    name: "PyME Digital",
+    description: "Presencia comercial completa para captar clientes con web y contacto directo.",
+    price: 390000,
     popular: false,
     tier: "PRO",
     features: [
-      "Sitio corporativo completo + blog",
-      "SEO avanzado + schema JSON-LD",
-      "Panel de cliente + administración base",
-      "Seguridad avanzada y hardening",
-      "Performance enterprise (99+ Lighthouse)",
+      "Sitio comercial tipo landing (hasta 6 secciones)",
+      "Formulario + botón WhatsApp + CTA de cierre",
+      "SEO base con metadatos y estructura comercial",
+      "Diseño responsive para móvil y escritorio",
     ],
-    freeGifts: ["Dominio .cl por 1 año", "1 correo corporativo por 1 año", "Capacitación inicial (2h)"],
+    freeGifts: ["1 mes de soporte post-entrega"],
+  },
+  {
+    id: "plan-empresa-start-fallback",
+    slug: "empresa-start",
+    name: "Empresa Start",
+    description: "Sitio corporativo para empresas con estructura clara y foco en prospección.",
+    price: 790000,
+    popular: false,
+    tier: "BASIC",
+    features: [
+      "Sitio web corporativo (hasta 8 secciones)",
+      "Formularios avanzados con trazabilidad",
+      "SEO on-page intermedio",
+      "Integración de analítica comercial",
+    ],
+    freeGifts: ["1 sesión de transferencia operativa"],
+  },
+  {
+    id: "plan-empresa-growth-fallback",
+    slug: "empresa-growth",
+    name: "Empresa Growth",
+    description: "Implementación para empresas que necesitan escalar captación y operación digital.",
+    price: 1290000,
+    popular: false,
+    tier: "INTERMEDIATE",
+    features: [
+      "Todo lo de Empresa Start",
+      "Blog corporativo optimizado para SEO",
+      "Panel administrativo para gestión de contenidos",
+      "Integración CRM o correo comercial",
+    ],
+    freeGifts: ["Dominio .cl por 1 año", "3 correos corporativos por 1 año"],
+  },
+  {
+    id: "plan-empresa-pro-fallback",
+    slug: "empresa-pro",
+    name: "Empresa Pro",
+    description: "Suite corporativa con arquitectura robusta, automatización y performance avanzada.",
+    price: 1890000,
+    popular: false,
+    tier: "PRO",
+    features: [
+      "Arquitectura web corporativa y modular",
+      "Automatizaciones comerciales y operativas",
+      "Paneles con indicadores de conversión",
+      "Optimización técnica y hardening de seguridad",
+    ],
+    freeGifts: ["Capacitación avanzada (2 sesiones)", "Soporte prioritario 60 días"],
   },
 ];
 
@@ -163,6 +208,33 @@ function normalizePlan(plan: PlanRecord): PublicPlan | null {
   };
 }
 
+function ensurePlanCatalog(plans: PublicPlan[]) {
+  if (plans.length === 0) return FALLBACK_PLANS;
+
+  const hasRequiredLines = plans.some((plan) => /pyme|empresa|formaliz/i.test(`${plan.slug} ${plan.name}`));
+  if (!hasRequiredLines) return FALLBACK_PLANS;
+
+  const existingSlugs = new Set(plans.map((plan) => plan.slug.toLowerCase()));
+  const merged = [...plans];
+  for (const fallbackPlan of FALLBACK_PLANS) {
+    if (!existingSlugs.has(fallbackPlan.slug.toLowerCase())) {
+      merged.push(fallbackPlan);
+    }
+  }
+
+  const fallbackOrder = new Map(FALLBACK_PLANS.map((plan, index) => [plan.slug, index]));
+  merged.sort((a, b) => {
+    const aOrder = fallbackOrder.get(a.slug);
+    const bOrder = fallbackOrder.get(b.slug);
+    if (typeof aOrder === "number" && typeof bOrder === "number") return aOrder - bOrder;
+    if (typeof aOrder === "number") return -1;
+    if (typeof bOrder === "number") return 1;
+    return a.name.localeCompare(b.name, "es");
+  });
+
+  return merged;
+}
+
 function normalizeExtra(extra: ExtraRecord): PublicExtra | null {
   const price = typeof extra.price === "number" && Number.isFinite(extra.price) ? extra.price : null;
   if (!price || price <= 0) return null;
@@ -249,7 +321,7 @@ export async function getWebPricingSnapshot() {
   const reviews = reviewsRaw.map(normalizeReview).filter((item): item is PublicReview => Boolean(item));
 
   return {
-    plans: plans.length > 0 ? plans : FALLBACK_PLANS,
+    plans: ensurePlanCatalog(plans),
     extras: extras.length > 0 ? extras : FALLBACK_EXTRAS,
     products: products.length > 0 ? products : FALLBACK_PRODUCTS,
     discounts,

@@ -11,107 +11,182 @@ export type LocalPageData = {
   faqs: { question: string; answer: string }[];
 };
 
-export const localPages: LocalPageData[] = [
+type LocalSeed = {
+  slug: string;
+  city: string;
+  region: string;
+  marketFocus: string;
+  sectors: string[];
+};
+
+function createLocalPage(seed: LocalSeed): LocalPageData {
+  const sectorsLine = seed.sectors.join(", ");
+
+  return {
+    slug: seed.slug,
+    city: seed.city,
+    region: seed.region,
+    metaTitle: `Diseño web ${seed.city} para empresas`,
+    metaDescription:
+      `Servicio de diseño y desarrollo web en ${seed.city} para empresas en ${seed.region}, con SEO local, estructura comercial y enfoque en conversión.`,
+    heroTitle: `Diseño web en ${seed.city} para empresas con foco comercial real`,
+    heroDescription:
+      `Apoyamos empresas de ${seed.city} y ${seed.region} con proyectos web orientados a demanda, posicionamiento y cierre de oportunidades en ${seed.marketFocus}.`,
+    businessContext: [
+      `Competencia digital creciente en ${seed.city} para servicios empresariales y pymes.`,
+      `Usuarios comparan proveedores por confianza, tiempos de respuesta y claridad de oferta.`,
+      `Sectores con mayor demanda local: ${sectorsLine}.`,
+    ],
+    opportunities: [
+      `Crear páginas de servicio por intención de búsqueda para ${seed.city} y su zona de influencia.`,
+      "Mejorar formularios y llamados a la acción para aumentar contactos calificados.",
+      "Integrar estrategia SEO local con contenido útil y pruebas de confianza comercial.",
+    ],
+    faqs: [
+      {
+        question: `¿Atienden empresas de ${seed.city} en modalidad remota o presencial?`,
+        answer:
+          `Sí. Trabajamos remoto con reuniones online y coordinamos instancias presenciales cuando el proyecto en ${seed.city} lo requiere.`,
+      },
+      {
+        question: `¿El servicio incluye SEO local para ${seed.city}?`,
+        answer:
+          `Sí. Estructuramos contenidos, metadatos y enlazado interno con enfoque local para mejorar visibilidad en búsquedas de ${seed.city} y ${seed.region}.`,
+      },
+    ],
+  };
+}
+
+const localSeeds: LocalSeed[] = [
+  {
+    slug: "region-metropolitana",
+    city: "Región Metropolitana",
+    region: "Región Metropolitana de Santiago",
+    marketFocus: "Santiago y comunas de alta actividad empresarial",
+    sectors: ["servicios profesionales", "tecnología", "salud", "logística"],
+  },
   {
     slug: "santiago",
     city: "Santiago",
     region: "Región Metropolitana",
-    metaTitle: "Diseño web Santiago para empresas B2B",
-    metaDescription:
-      "Servicio de diseño y desarrollo web en Santiago para empresas: captación de leads, SEO local y sitios orientados a conversión.",
-    heroTitle: "Diseño web en Santiago para empresas que buscan más oportunidades comerciales",
-    heroDescription:
-      "Trabajamos con empresas de Santiago y la RM en proyectos web orientados a demanda comercial, posicionamiento y cierre de ventas.",
-    businessContext: [
-      "Alta competencia digital en búsquedas de servicios B2B en la RM.",
-      "Mayor exigencia en velocidad de respuesta y confianza comercial.",
-      "Necesidad de diferenciarse por especialización y casos reales.",
-    ],
-    opportunities: [
-      "Optimizar páginas de servicio para comunas de alto valor (Providencia, Las Condes, Ñuñoa).",
-      "Estrategia de contenidos para búsquedas comparativas y de decisión.",
-      "Mejorar tasa de contacto con landing pages específicas por industria.",
-    ],
-    faqs: [
-      {
-        question: "¿Atienden reuniones presenciales en Santiago?",
-        answer:
-          "Sí. Coordinamos reuniones presenciales o híbridas para levantamiento y presentación de propuestas.",
-      },
-      {
-        question: "¿Pueden segmentar por comuna?",
-        answer:
-          "Sí. Cuando existe demanda real y diferenciación de oferta, se pueden crear landings por comuna sin generar contenido duplicado.",
-      },
-    ],
+    marketFocus: "mercados B2B y servicios de alto ticket",
+    sectors: ["consultoría", "finanzas", "tecnología", "servicios industriales"],
   },
   {
     slug: "vina-del-mar",
     city: "Viña del Mar",
     region: "Región de Valparaíso",
-    metaTitle: "Diseño web Viña del Mar para empresas",
-    metaDescription:
-      "Desarrollo y diseño web en Viña del Mar para empresas de servicios, comercio y turismo con foco en captación de clientes.",
-    heroTitle: "Diseño web en Viña del Mar para empresas que compiten por clientes todo el año",
-    heroDescription:
-      "Creamos sitios para empresas de Viña del Mar con estructura comercial, posicionamiento local y experiencia mobile optimizada.",
-    businessContext: [
-      "Demanda estacional y competencia alta en rubros de servicios y turismo.",
-      "Usuarios móviles con decisiones rápidas y múltiples comparaciones.",
-      "Importancia de confianza local y claridad de oferta.",
-    ],
-    opportunities: [
-      "Landing pages por servicio principal con mensajes orientados a decisión.",
-      "Bloques de confianza local: cobertura, tiempos y modalidad de atención.",
-      "Integración de SEO local con campañas pagadas de alta temporada.",
-    ],
-    faqs: [
-      {
-        question: "¿Trabajan con empresas de Viña y Valparaíso?",
-        answer:
-          "Sí. Atendemos proyectos en toda la región con ejecución remota y reuniones programadas.",
-      },
-      {
-        question: "¿Qué tipo de empresas atienden en la zona?",
-        answer:
-          "Principalmente servicios profesionales, comercio y empresas que requieren generación constante de consultas.",
-      },
-    ],
+    marketFocus: "servicios y comercio con demanda anual",
+    sectors: ["turismo profesional", "inmobiliario", "servicios médicos", "educación"],
+  },
+  {
+    slug: "valparaiso",
+    city: "Valparaíso",
+    region: "Región de Valparaíso",
+    marketFocus: "servicios profesionales, marítimos y comercio local",
+    sectors: ["logística portuaria", "servicios técnicos", "educación", "turismo"],
+  },
+  {
+    slug: "la-serena",
+    city: "La Serena",
+    region: "Región de Coquimbo",
+    marketFocus: "pymes de servicios y comercio regional",
+    sectors: ["salud", "educación", "turismo", "servicios legales"],
+  },
+  {
+    slug: "rancagua",
+    city: "Rancagua",
+    region: "Región de O'Higgins",
+    marketFocus: "servicios corporativos y proveedores industriales",
+    sectors: ["minería", "logística", "servicios técnicos", "agroindustria"],
+  },
+  {
+    slug: "talca",
+    city: "Talca",
+    region: "Región del Maule",
+    marketFocus: "empresas regionales en crecimiento digital",
+    sectors: ["agroindustria", "servicios profesionales", "retail", "educación"],
+  },
+  {
+    slug: "chillan",
+    city: "Chillán",
+    region: "Región de Ñuble",
+    marketFocus: "pymes locales con foco comercial y servicios",
+    sectors: ["construcción", "salud", "servicios técnicos", "agro"],
   },
   {
     slug: "concepcion",
     city: "Concepción",
     region: "Región del Biobío",
-    metaTitle: "Diseño web Concepción para empresas y pymes",
-    metaDescription:
-      "Servicio de diseño web en Concepción para empresas del Biobío: sitios corporativos, SEO local y generación de leads.",
-    heroTitle: "Diseño web en Concepción para empresas que quieren escalar su demanda en el sur de Chile",
-    heroDescription:
-      "Acompañamos empresas de Concepción en estrategia digital con páginas orientadas a conversión y posicionamiento por intención comercial.",
-    businessContext: [
-      "Mercado regional con creciente competencia digital en servicios B2B.",
-      "Necesidad de posicionamiento técnico y contenido útil de nicho.",
-      "Oportunidad de crecimiento orgánico en búsquedas de media cola.",
-    ],
-    opportunities: [
-      "Creación de páginas por servicio con enfoque industrial y profesional.",
-      "Casos de éxito regionales para aumentar confianza comercial.",
-      "Optimización técnica continua para sostener visibilidad orgánica.",
-    ],
-    faqs: [
-      {
-        question: "¿Pueden trabajar con empresas industriales del Biobío?",
-        answer:
-          "Sí. Tenemos enfoque B2B y estructura de contenidos para ciclos de venta consultivos.",
-      },
-      {
-        question: "¿El servicio incluye SEO local en Concepción?",
-        answer:
-          "Sí. Diseñamos la página con señales locales y enlazado interno hacia servicios relevantes.",
-      },
-    ],
+    marketFocus: "empresas industriales y de servicios B2B",
+    sectors: ["industria", "ingeniería", "tecnología", "servicios profesionales"],
+  },
+  {
+    slug: "temuco",
+    city: "Temuco",
+    region: "Región de La Araucanía",
+    marketFocus: "servicios regionales y comercio especializado",
+    sectors: ["salud", "educación", "retail", "servicios legales"],
+  },
+  {
+    slug: "valdivia",
+    city: "Valdivia",
+    region: "Región de Los Ríos",
+    marketFocus: "servicios profesionales y empresas regionales",
+    sectors: ["turismo", "educación", "tecnología", "servicios ambientales"],
+  },
+  {
+    slug: "puerto-montt",
+    city: "Puerto Montt",
+    region: "Región de Los Lagos",
+    marketFocus: "empresas logísticas y de servicios del sur",
+    sectors: ["acuicultura", "logística", "servicios técnicos", "transporte"],
+  },
+  {
+    slug: "antofagasta",
+    city: "Antofagasta",
+    region: "Región de Antofagasta",
+    marketFocus: "servicios para industria minera y proveedores B2B",
+    sectors: ["minería", "energía", "ingeniería", "logística"],
+  },
+  {
+    slug: "calama",
+    city: "Calama",
+    region: "Región de Antofagasta",
+    marketFocus: "proveedores industriales y servicios en minería",
+    sectors: ["mantención industrial", "transportes", "seguridad", "ingeniería"],
+  },
+  {
+    slug: "iquique",
+    city: "Iquique",
+    region: "Región de Tarapacá",
+    marketFocus: "comercio, logística y servicios empresariales",
+    sectors: ["comercio exterior", "logística", "retail", "servicios financieros"],
+  },
+  {
+    slug: "arica",
+    city: "Arica",
+    region: "Región de Arica y Parinacota",
+    marketFocus: "servicios transfronterizos y comercio local",
+    sectors: ["logística", "salud", "turismo", "servicios técnicos"],
+  },
+  {
+    slug: "copiapo",
+    city: "Copiapó",
+    region: "Región de Atacama",
+    marketFocus: "servicios para minería y empresas regionales",
+    sectors: ["minería", "servicios industriales", "logística", "construcción"],
+  },
+  {
+    slug: "punta-arenas",
+    city: "Punta Arenas",
+    region: "Región de Magallanes",
+    marketFocus: "servicios especializados y operaciones austral",
+    sectors: ["energía", "turismo", "logística", "servicios marítimos"],
   },
 ];
+
+export const localPages: LocalPageData[] = localSeeds.map(createLocalPage);
 
 export function getLocalPageBySlug(slug: string) {
   return localPages.find((page) => page.slug === slug);

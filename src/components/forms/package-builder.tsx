@@ -151,7 +151,6 @@ function buildCartSummaryText(input: {
   discountTotal: number;
   iva: number;
   total: number;
-  includeIva: boolean;
   form: {
     name: string;
     email: string;
@@ -169,7 +168,6 @@ function buildCartSummaryText(input: {
     discountTotal,
     iva,
     total,
-    includeIva,
     form,
   } = input;
 
@@ -191,7 +189,7 @@ function buildCartSummaryText(input: {
     `- Subtotal: ${currencyCLP(subtotal)}`,
     ...(discountLines.length > 0 ? discountLines : []),
     `- Descuento total: ${currencyCLP(discountTotal)}`,
-    `- IVA${includeIva ? " (19%)" : ""}: ${currencyCLP(iva)}`,
+    `- IVA (19%): ${currencyCLP(iva)}`,
     `- Total final: ${currencyCLP(total)}`,
     "",
     "Datos de contacto:",
@@ -209,7 +207,6 @@ function buildCartSummaryText(input: {
 export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsSection = true }: BuilderProps) {
   const [selectedPlanId, setSelectedPlanId] = useState<string>(plans[1]?.id || plans[0]?.id || "");
   const [extraQtyById, setExtraQtyById] = useState<Record<string, number>>({});
-  const [includeIva, setIncludeIva] = useState(true);
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
   const [reviewState, setReviewState] = useState<ReviewSubmitState>({ status: "idle" });
   const [submitting, setSubmitting] = useState(false);
@@ -266,7 +263,7 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
   );
 
   const neto = Math.max(0, subtotal - discountTotal);
-  const iva = includeIva ? Math.round(neto * IVA_RATE) : 0;
+  const iva = Math.round(neto * IVA_RATE);
   const total = neto + iva;
 
   const canSubmit = Boolean(selectedPlan) && Boolean(form.name.trim()) && Boolean(form.email.trim());
@@ -282,10 +279,9 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
         discountTotal,
         iva,
         total,
-        includeIva,
         form,
       }),
-    [appliedDiscounts, discountTotal, form, includeIva, iva, selectedExtras, selectedPlan, subtotal, total],
+    [appliedDiscounts, discountTotal, form, iva, selectedExtras, selectedPlan, subtotal, total],
   );
   const whatsappHref = `https://wa.me/56984752936?text=${encodeURIComponent(whatsappMessage)}`;
 
@@ -422,7 +418,7 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
       <section className="py-14 section-alt border-b border-slate-200">
         <div className="grid gap-5 md:grid-cols-3">
           {[
-            { num: "01", title: "Selecciona plan base", desc: "Elige entre Básico, Intermedio o Pro según tu objetivo." },
+            { num: "01", title: "Selecciona plan base", desc: "Elige el plan que mejor calza con tu etapa: PyME o Empresa." },
             { num: "02", title: "Agrega extras", desc: "Usa los botones para sumar funcionalidades y servicios." },
             { num: "03", title: "Envía la solicitud", desc: "Tu carrito llega al admin con el resumen completo." },
           ].map((step) => (
@@ -695,21 +691,10 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
                   <span className="font-semibold text-emerald-700">-{currencyCLP(discount.amount)}</span>
                 </div>
               ))}
-              <label className="mt-2 flex items-center justify-between text-sm">
-                <span className="text-slate-500">Incluir IVA (19%)</span>
-                <input
-                  type="checkbox"
-                  checked={includeIva}
-                  onChange={(event) => setIncludeIva(event.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                />
-              </label>
-              {includeIva ? (
-                <div className="flex justify-between">
-                  <span className="text-slate-500">IVA</span>
-                  <span className="font-semibold text-slate-900">{currencyCLP(iva)}</span>
-                </div>
-              ) : null}
+              <div className="mt-2 flex justify-between">
+                <span className="text-slate-500">IVA (19%)</span>
+                <span className="font-semibold text-slate-900">{currencyCLP(iva)}</span>
+              </div>
             </div>
             <div className="my-4 border-t-2 border-slate-200" />
             <div className="flex items-center justify-between">
