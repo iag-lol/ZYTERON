@@ -19,23 +19,43 @@ function safeRedirectPath(value: unknown) {
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
-  const formData = await request.formData();
-  const status = normalizeStatus(formData.get("status"));
-  const redirectTo = safeRedirectPath(formData.get("redirectTo"));
-  const url = new URL(redirectTo, request.url);
+  const contentType = (request.headers.get("content-type") || "").toLowerCase();
+  const isJsonRequest = contentType.includes("application/json");
+
+  let status: ReviewStatus | null = null;
+  let redirectTo = "/admin/comentarios";
+  if (isJsonRequest) {
+    const body = (await request.json().catch(() => ({}))) as { status?: unknown; redirectTo?: unknown };
+    status = normalizeStatus(body.status);
+    redirectTo = safeRedirectPath(body.redirectTo);
+  } else {
+    const formData = await request.formData();
+    status = normalizeStatus(formData.get("status"));
+    redirectTo = safeRedirectPath(formData.get("redirectTo"));
+  }
+  const redirectUrl = new URL(redirectTo, request.url);
 
   if (!status) {
-    url.searchParams.set("error", encodeURIComponent("Estado inválido para comentario."));
-    return NextResponse.redirect(url, { status: 303 });
+    if (isJsonRequest) {
+      return NextResponse.json({ ok: false, error: "Estado inválido para comentario." }, { status: 400 });
+    }
+    redirectUrl.searchParams.set("error", encodeURIComponent("Estado inválido para comentario."));
+    return NextResponse.redirect(redirectUrl, { status: 303 });
   }
 
   try {
     await setClientReviewStatus(id, status);
-    url.searchParams.set("saved", "1");
+    if (isJsonRequest) {
+      return NextResponse.json({ ok: true, status });
+    }
+    redirectUrl.searchParams.set("saved", "1");
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo actualizar el comentario.";
-    url.searchParams.set("error", encodeURIComponent(message));
+    if (isJsonRequest) {
+      return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    }
+    redirectUrl.searchParams.set("error", encodeURIComponent(message));
   }
 
-  return NextResponse.redirect(url, { status: 303 });
+  return NextResponse.redirect(redirectUrl, { status: 303 });
 }

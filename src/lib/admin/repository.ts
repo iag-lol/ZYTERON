@@ -268,6 +268,15 @@ function isMissingClientReviewRelationError(error: unknown) {
   );
 }
 
+function isClientReviewWriteFallbackError(error: unknown) {
+  const message = toErrorMessage(error).toLowerCase();
+  return (
+    isMissingClientReviewRelationError(error) ||
+    (message.includes("column") && message.includes("does not exist")) ||
+    message.includes("cannot update view")
+  );
+}
+
 export async function safeSelect<T>(table: string, select: string, options: SelectOptions = {}) {
   try {
     const { supabase } = createSupabaseServerClient();
@@ -777,10 +786,21 @@ async function runClientReviewWrite(operation: (table: string) => Promise<void>)
     await operation("ClientReview");
     return;
   } catch (error) {
-    if (!isMissingClientReviewRelationError(error)) throw error;
+    if (!isClientReviewWriteFallbackError(error)) throw error;
   }
 
   await operation("client_review");
+}
+
+async function getClientReviewStatusById(id: string) {
+  const primary = await safeSelectSingle<{ id: string; status?: string | null }>(
+    "ClientReview",
+    "id, status",
+    { id },
+  );
+  if (primary?.id) return primary;
+
+  return safeSelectSingle<{ id: string; status?: string | null }>("client_review", "id, status", { id });
 }
 
 export async function setClientReviewStatus(
@@ -789,27 +809,37 @@ export async function setClientReviewStatus(
 ) {
   const now = new Date().toISOString();
   await runClientReviewWrite(async (table) => {
+    await updateRows(table, { status }, { id });
+
     if (status === "APPROVED") {
-      await updateRows(
-        table,
-        {
-          status: "APPROVED",
-          approvedAt: now,
-        },
-        { id },
-      );
+      try {
+        await updateRows(table, { approvedAt: now }, { id });
+      } catch {
+        try {
+          await updateRows(table, { approved_at: now }, { id });
+        } catch {
+          // Campo opcional según esquema; no bloquea el cambio de estado.
+        }
+      }
       return;
     }
 
-    await updateRows(
-      table,
-      {
-        status,
-        approvedAt: null,
-      },
-      { id },
-    );
+    try {
+      await updateRows(table, { approvedAt: null }, { id });
+    } catch {
+      try {
+        await updateRows(table, { approved_at: null }, { id });
+      } catch {
+        // Campo opcional según esquema; no bloquea el cambio de estado.
+      }
+    }
   });
+
+  const saved = await getClientReviewStatusById(id);
+  const savedStatus = String(saved?.status || "").toUpperCase();
+  if (!saved?.id || savedStatus !== status) {
+    throw new Error("No se pudo confirmar el cambio de estado del comentario.");
+  }
 }
 
 export async function deleteClientReviewById(id: string) {

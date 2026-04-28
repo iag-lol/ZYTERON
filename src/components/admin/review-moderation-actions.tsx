@@ -9,7 +9,7 @@ type Props = {
   redirectTo: string;
 };
 
-type ReviewAction = "approve" | "pending" | "reject" | "delete";
+type ReviewStatus = "APPROVED" | "PENDING" | "REJECTED";
 
 const buttonClass = "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold";
 
@@ -18,19 +18,18 @@ export function ReviewModerationActions({ reviewId, redirectTo }: Props) {
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  function runAction(action: ReviewAction, successMessage: string) {
+  function runStatusAction(status: ReviewStatus, successMessage: string) {
     setMessage("");
     startTransition(async () => {
       try {
-        const response = await fetch("/admin/control-web/submit", {
+        const response = await fetch(`/admin/comentarios/${reviewId}/estado`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            section: "review",
-            action,
-            id: reviewId,
+            status,
+            redirectTo,
           }),
         });
 
@@ -50,12 +49,44 @@ export function ReviewModerationActions({ reviewId, redirectTo }: Props) {
     });
   }
 
+  function runDeleteAction(successMessage: string) {
+    setMessage("");
+    startTransition(async () => {
+      try {
+        const response = await fetch("/admin/control-web/submit", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            section: "review",
+            action: "delete",
+            id: reviewId,
+          }),
+        });
+
+        const data = (await response.json().catch(() => null)) as { error?: string } | null;
+        if (!response.ok) {
+          setMessage(data?.error || "No se pudo eliminar el comentario.");
+          return;
+        }
+
+        const connector = redirectTo.includes("?") ? "&" : "?";
+        router.replace(`${redirectTo}${connector}saved=1`);
+        router.refresh();
+        setMessage(successMessage);
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "No se pudo eliminar el comentario.");
+      }
+    });
+  }
+
   return (
     <div className="mt-3">
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => runAction("approve", "Comentario aprobado.")}
+          onClick={() => runStatusAction("APPROVED", "Comentario aprobado.")}
           className={`${buttonClass} border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100`}
           disabled={isPending}
         >
@@ -64,7 +95,7 @@ export function ReviewModerationActions({ reviewId, redirectTo }: Props) {
 
         <button
           type="button"
-          onClick={() => runAction("pending", "Comentario en pendiente.")}
+          onClick={() => runStatusAction("PENDING", "Comentario en pendiente.")}
           className={`${buttonClass} border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100`}
           disabled={isPending}
         >
@@ -73,7 +104,7 @@ export function ReviewModerationActions({ reviewId, redirectTo }: Props) {
 
         <button
           type="button"
-          onClick={() => runAction("reject", "Comentario rechazado.")}
+          onClick={() => runStatusAction("REJECTED", "Comentario rechazado.")}
           className={`${buttonClass} border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100`}
           disabled={isPending}
         >
@@ -82,7 +113,7 @@ export function ReviewModerationActions({ reviewId, redirectTo }: Props) {
 
         <button
           type="button"
-          onClick={() => runAction("delete", "Comentario eliminado.")}
+          onClick={() => runDeleteAction("Comentario eliminado.")}
           className={`${buttonClass} border border-slate-200 bg-white text-slate-700 hover:bg-slate-50`}
           disabled={isPending}
         >

@@ -418,7 +418,7 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
       <section className="py-14 section-alt border-b border-slate-200">
         <div className="grid gap-5 md:grid-cols-3">
           {[
-            { num: "01", title: "Selecciona plan base", desc: "Elige el plan que mejor calza con tu etapa: PyME o Empresa." },
+            { num: "01", title: "Selecciona plan base", desc: "Elige entre PYME Básico, PYME Medio o PYME Avanzado según tu objetivo." },
             { num: "02", title: "Agrega extras", desc: "Usa los botones para sumar funcionalidades y servicios." },
             { num: "03", title: "Envía la solicitud", desc: "Tu carrito llega al admin con el resumen completo." },
           ].map((step) => (

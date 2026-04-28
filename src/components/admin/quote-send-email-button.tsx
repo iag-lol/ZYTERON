@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Mail } from "lucide-react";
+import { CheckCircle2, Loader2, Mail, TriangleAlert } from "lucide-react";
 
 type Props = {
   quoteId: string;
@@ -73,18 +73,30 @@ export function QuoteSendEmailButton({ quoteId, hasEmail, compact = false }: Pro
           title="Enviar email con cotización adjunta"
           disabled={!hasEmail || isPending}
         >
-          <Mail className="h-3.5 w-3.5" />
+          {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
         </button>
 
         {notice ? (
           <div
-            className={`fixed bottom-5 right-5 z-[70] rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-lg ${
+            className={`fixed bottom-5 right-5 z-[70] min-w-[280px] max-w-[360px] rounded-xl border px-4 py-3 text-sm shadow-xl ${
               notice.type === "success"
                 ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                 : "border-rose-200 bg-rose-50 text-rose-700"
             }`}
           >
-            {notice.text}
+            <div className="flex items-start gap-2">
+              {notice.type === "success" ? (
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+              ) : (
+                <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+              )}
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-widest">
+                  {notice.type === "success" ? "Envío confirmado" : "Error de envío"}
+                </p>
+                <p className="mt-0.5 text-sm font-semibold">{notice.text}</p>
+              </div>
+            </div>
           </div>
         ) : null}
       </>
@@ -105,13 +117,25 @@ export function QuoteSendEmailButton({ quoteId, hasEmail, compact = false }: Pro
 
       {notice ? (
         <div
-          className={`fixed bottom-5 right-5 z-[70] rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-lg ${
+          className={`fixed bottom-5 right-5 z-[70] min-w-[280px] max-w-[360px] rounded-xl border px-4 py-3 text-sm shadow-xl ${
             notice.type === "success"
               ? "border-emerald-200 bg-emerald-50 text-emerald-700"
               : "border-rose-200 bg-rose-50 text-rose-700"
           }`}
         >
-          {notice.text}
+          <div className="flex items-start gap-2">
+            {notice.type === "success" ? (
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+            ) : (
+              <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+            )}
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest">
+                {notice.type === "success" ? "Envío confirmado" : "Error de envío"}
+              </p>
+              <p className="mt-0.5 text-sm font-semibold">{notice.text}</p>
+            </div>
+          </div>
         </div>
       ) : null}
     </>

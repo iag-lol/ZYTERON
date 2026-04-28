@@ -1,113 +1,68 @@
 import {
   getClientReviews,
   getPublicExtras,
-  getPublicPlans,
   getPublicProducts,
   getWebDiscounts,
   type ClientReview,
   type ExtraRecord,
-  type PlanRecord,
   type ProductRecord,
   type WebDiscount,
 } from "@/lib/admin/repository";
 import type { PublicDiscount, PublicExtra, PublicPlan, PublicProduct, PublicReview } from "@/lib/web-control-types";
 
-const FALLBACK_PLANS: PublicPlan[] = [
+const CANONICAL_PYME_PLANS: PublicPlan[] = [
   {
-    id: "plan-pyme-base-fallback",
-    slug: "pyme-base",
-    name: "PyME Base",
-    description: "Formalización para emprendedores que necesitan operar y facturar.",
-    price: 99990,
+    id: "plan-pyme-basico-canonical",
+    slug: "pyme-basico",
+    name: "PYME Básico",
+    description: "Catálogo simple para mostrar productos fijos con derivación directa a WhatsApp.",
+    price: 69990,
     popular: false,
     tier: "BASIC",
     features: [
-      "Creación de empresa",
-      "Constitución e inicio de actividades",
-      "Asesoría en el proceso administrativo",
-      "Apoyo para quedar listo para facturar",
+      "Página de visualización de productos fijos",
+      "Botón a WhatsApp por producto o CTA general",
+      "Secciones héroe, catálogo y contacto",
+      "SSL, performance base y diseño responsive",
+      "Precio cerrado, sin extras obligatorios",
     ],
-    freeGifts: ["Checklist inicial de documentos"],
+    freeGifts: ["Asesoría de arranque 1h"],
   },
   {
-    id: "plan-pyme-plus-fallback",
-    slug: "pyme-plus",
-    name: "PyME Plus",
-    description: "Formalización + identidad digital inicial para comenzar con presencia online.",
-    price: 149990,
+    id: "plan-pyme-medio-canonical",
+    slug: "pyme-medio",
+    name: "PYME Medio",
+    description: "Incluye dominio y hosting gestionado el primer año para que solo te enfoques en vender.",
+    price: 139980,
+    popular: false,
+    tier: "INTERMEDIATE",
+    features: [
+      "Dominio .cl o .com incluido 1 año",
+      "Hosting gestionado + SSL 1 año",
+      "Catálogo PYME Básico + formulario de leads",
+      "Analítica y eventos de conversión configurados",
+      "Precio cerrado, sin extras obligatorios",
+    ],
+    freeGifts: ["Soporte prioritario 30 días"],
+  },
+  {
+    id: "plan-pyme-avanzado-canonical",
+    slug: "pyme-avanzado",
+    name: "PYME Avanzado",
+    description: "Suite completa con panel administrativo para gestionar productos, descuentos y métricas.",
+    price: 209970,
     popular: true,
-    tier: "INTERMEDIATE",
-    features: [
-      "Todo lo del plan PyME Base",
-      "Dominio .cl por 1 año",
-      "2 correos corporativos por 1 año",
-      "Acompañamiento de configuración inicial",
-    ],
-    freeGifts: ["Plantilla de firma corporativa"],
-  },
-  {
-    id: "plan-pyme-digital-fallback",
-    slug: "pyme-digital",
-    name: "PyME Digital",
-    description: "Presencia comercial completa para captar clientes con web y contacto directo.",
-    price: 390000,
-    popular: false,
     tier: "PRO",
     features: [
-      "Sitio comercial tipo landing (hasta 6 secciones)",
-      "Formulario + botón WhatsApp + CTA de cierre",
-      "SEO base con metadatos y estructura comercial",
-      "Diseño responsive para móvil y escritorio",
+      "Dominio + hosting 1 año incluidos",
+      "Panel admin: alta, baja y edición de productos",
+      "Gestión de precios, stock y descuentos",
+      "Dashboard con resumen de ventas e informes",
+      "Sección de reseñas y moderación",
+      "Catálogo responsive para PC y móviles",
+      "Precio cerrado, sin extras obligatorios",
     ],
-    freeGifts: ["1 mes de soporte post-entrega"],
-  },
-  {
-    id: "plan-empresa-start-fallback",
-    slug: "empresa-start",
-    name: "Empresa Start",
-    description: "Sitio corporativo para empresas con estructura clara y foco en prospección.",
-    price: 790000,
-    popular: false,
-    tier: "BASIC",
-    features: [
-      "Sitio web corporativo (hasta 8 secciones)",
-      "Formularios avanzados con trazabilidad",
-      "SEO on-page intermedio",
-      "Integración de analítica comercial",
-    ],
-    freeGifts: ["1 sesión de transferencia operativa"],
-  },
-  {
-    id: "plan-empresa-growth-fallback",
-    slug: "empresa-growth",
-    name: "Empresa Growth",
-    description: "Implementación para empresas que necesitan escalar captación y operación digital.",
-    price: 1290000,
-    popular: false,
-    tier: "INTERMEDIATE",
-    features: [
-      "Todo lo de Empresa Start",
-      "Blog corporativo optimizado para SEO",
-      "Panel administrativo para gestión de contenidos",
-      "Integración CRM o correo comercial",
-    ],
-    freeGifts: ["Dominio .cl por 1 año", "3 correos corporativos por 1 año"],
-  },
-  {
-    id: "plan-empresa-pro-fallback",
-    slug: "empresa-pro",
-    name: "Empresa Pro",
-    description: "Suite corporativa con arquitectura robusta, automatización y performance avanzada.",
-    price: 1890000,
-    popular: false,
-    tier: "PRO",
-    features: [
-      "Arquitectura web corporativa y modular",
-      "Automatizaciones comerciales y operativas",
-      "Paneles con indicadores de conversión",
-      "Optimización técnica y hardening de seguridad",
-    ],
-    freeGifts: ["Capacitación avanzada (2 sesiones)", "Soporte prioritario 60 días"],
+    freeGifts: ["Capacitación 1 sesión", "Soporte 60 días"],
   },
 ];
 
@@ -189,52 +144,6 @@ const FALLBACK_PRODUCTS: PublicProduct[] = [
   },
 ];
 
-function normalizePlan(plan: PlanRecord): PublicPlan | null {
-  const price = typeof plan.price === "number" && Number.isFinite(plan.price) ? plan.price : null;
-  if (!price || price <= 0) return null;
-  const tier = String(plan.tier || "").toUpperCase();
-  const normalizedTier = tier === "BASIC" || tier === "INTERMEDIATE" || tier === "PRO" ? tier : "BASIC";
-
-  return {
-    id: plan.id,
-    slug: plan.slug || plan.id,
-    name: plan.name || "Plan",
-    description: plan.description || "Plan comercial",
-    price,
-    popular: Boolean(plan.popular),
-    tier: normalizedTier,
-    features: Array.isArray(plan.features) ? plan.features.filter(Boolean) : [],
-    freeGifts: Array.isArray(plan.freeGifts) ? plan.freeGifts.filter(Boolean) : [],
-  };
-}
-
-function ensurePlanCatalog(plans: PublicPlan[]) {
-  if (plans.length === 0) return FALLBACK_PLANS;
-
-  const hasRequiredLines = plans.some((plan) => /pyme|empresa|formaliz/i.test(`${plan.slug} ${plan.name}`));
-  if (!hasRequiredLines) return FALLBACK_PLANS;
-
-  const existingSlugs = new Set(plans.map((plan) => plan.slug.toLowerCase()));
-  const merged = [...plans];
-  for (const fallbackPlan of FALLBACK_PLANS) {
-    if (!existingSlugs.has(fallbackPlan.slug.toLowerCase())) {
-      merged.push(fallbackPlan);
-    }
-  }
-
-  const fallbackOrder = new Map(FALLBACK_PLANS.map((plan, index) => [plan.slug, index]));
-  merged.sort((a, b) => {
-    const aOrder = fallbackOrder.get(a.slug);
-    const bOrder = fallbackOrder.get(b.slug);
-    if (typeof aOrder === "number" && typeof bOrder === "number") return aOrder - bOrder;
-    if (typeof aOrder === "number") return -1;
-    if (typeof bOrder === "number") return 1;
-    return a.name.localeCompare(b.name, "es");
-  });
-
-  return merged;
-}
-
 function normalizeExtra(extra: ExtraRecord): PublicExtra | null {
   const price = typeof extra.price === "number" && Number.isFinite(extra.price) ? extra.price : null;
   if (!price || price <= 0) return null;
@@ -306,22 +215,20 @@ function normalizeDiscount(discount: WebDiscount): PublicDiscount | null {
 }
 
 export async function getWebPricingSnapshot() {
-  const [plansRaw, extrasRaw, productsRaw, discountsRaw, reviewsRaw] = await Promise.all([
-    getPublicPlans(),
+  const [extrasRaw, productsRaw, discountsRaw, reviewsRaw] = await Promise.all([
     getPublicExtras(),
     getPublicProducts(),
     getWebDiscounts(true),
     getClientReviews("APPROVED"),
   ]);
 
-  const plans = plansRaw.map(normalizePlan).filter((item): item is PublicPlan => Boolean(item));
   const extras = extrasRaw.map(normalizeExtra).filter((item): item is PublicExtra => Boolean(item));
   const products = productsRaw.map(normalizeProduct).filter((item): item is PublicProduct => Boolean(item));
   const discounts = discountsRaw.map(normalizeDiscount).filter((item): item is PublicDiscount => Boolean(item));
   const reviews = reviewsRaw.map(normalizeReview).filter((item): item is PublicReview => Boolean(item));
 
   return {
-    plans: ensurePlanCatalog(plans),
+    plans: CANONICAL_PYME_PLANS,
     extras: extras.length > 0 ? extras : FALLBACK_EXTRAS,
     products: products.length > 0 ? products : FALLBACK_PRODUCTS,
     discounts,
@@ -335,7 +242,7 @@ export async function getApprovedReviewsSnapshot() {
 }
 
 export const WEB_CONTROL_FALLBACK = {
-  plans: FALLBACK_PLANS,
+  plans: CANONICAL_PYME_PLANS,
   extras: FALLBACK_EXTRAS,
   products: FALLBACK_PRODUCTS,
 };
