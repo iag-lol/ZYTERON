@@ -12,7 +12,7 @@ import {
 
 const bodySchema = z.object({
   section: z.enum(["plan", "extra", "product", "discount", "review"]),
-  action: z.enum(["create", "update", "delete", "approve", "reject"]),
+  action: z.enum(["create", "update", "delete", "approve", "reject", "pending"]),
   id: z.string().trim().optional(),
   data: z.record(z.string(), z.unknown()).optional(),
 });
@@ -309,6 +309,10 @@ export async function POST(request: Request) {
       }
       if (action === "reject") {
         await setClientReviewStatus(id, "REJECTED");
+        return NextResponse.json({ ok: true });
+      }
+      if (action === "pending") {
+        await setClientReviewStatus(id, "PENDING");
         return NextResponse.json({ ok: true });
       }
     }

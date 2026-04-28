@@ -1,6 +1,7 @@
-import { CheckCircle2, Clock3, MessageSquareText, ShieldX, Trash2 } from "lucide-react";
+import { MessageSquareText } from "lucide-react";
 import Link from "next/link";
 import { getClientReviews } from "@/lib/admin/repository";
+import { ReviewModerationActions } from "@/components/admin/review-moderation-actions";
 
 type ReviewStatus = "ALL" | "PENDING" | "APPROVED" | "REJECTED";
 
@@ -67,6 +68,7 @@ export default async function ComentariosPage({ searchParams }: PageProps) {
   const filtered = activeStatus === "ALL"
     ? sorted
     : sorted.filter((item) => String(item.status || "").toUpperCase() === activeStatus);
+  const redirectTo = activeStatus === "ALL" ? "/admin/comentarios" : `/admin/comentarios?status=${activeStatus}`;
 
   const totals = {
     all: sorted.length,
@@ -194,38 +196,7 @@ export default async function ComentariosPage({ searchParams }: PageProps) {
                     {review.comment || "Sin contenido"}
                   </p>
 
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <form action={`/admin/comentarios/${review.id}/estado`} method="post">
-                      <input type="hidden" name="status" value="APPROVED" />
-                      <input type="hidden" name="redirectTo" value={activeStatus === "ALL" ? "/admin/comentarios" : `/admin/comentarios?status=${activeStatus}`} />
-                      <button className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">
-                        <CheckCircle2 className="h-3.5 w-3.5" /> Aprobar
-                      </button>
-                    </form>
-
-                    <form action={`/admin/comentarios/${review.id}/estado`} method="post">
-                      <input type="hidden" name="status" value="PENDING" />
-                      <input type="hidden" name="redirectTo" value={activeStatus === "ALL" ? "/admin/comentarios" : `/admin/comentarios?status=${activeStatus}`} />
-                      <button className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100">
-                        <Clock3 className="h-3.5 w-3.5" /> Dejar pendiente
-                      </button>
-                    </form>
-
-                    <form action={`/admin/comentarios/${review.id}/estado`} method="post">
-                      <input type="hidden" name="status" value="REJECTED" />
-                      <input type="hidden" name="redirectTo" value={activeStatus === "ALL" ? "/admin/comentarios" : `/admin/comentarios?status=${activeStatus}`} />
-                      <button className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100">
-                        <ShieldX className="h-3.5 w-3.5" /> Rechazar
-                      </button>
-                    </form>
-
-                    <form action={`/admin/comentarios/${review.id}/eliminar`} method="post">
-                      <input type="hidden" name="redirectTo" value={activeStatus === "ALL" ? "/admin/comentarios" : `/admin/comentarios?status=${activeStatus}`} />
-                      <button className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                        <Trash2 className="h-3.5 w-3.5" /> Eliminar
-                      </button>
-                    </form>
-                  </div>
+                  <ReviewModerationActions reviewId={review.id} redirectTo={redirectTo} />
                 </article>
               );
             })}
