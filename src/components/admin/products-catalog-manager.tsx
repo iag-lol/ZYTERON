@@ -168,16 +168,16 @@ export function ProductsCatalogManager({ products, categories }: Props) {
     publicDescription: "",
     imageUrl: "",
     price: "",
-    discountPct: "0",
-    stock: "0",
-    soldUnits: "0",
+    discountPct: "",
+    stock: "",
+    soldUnits: "",
     featured: false,
     published: true,
     onOffer: false,
     isCombo: false,
     comboLabel: "",
     comboItems: "",
-    costPrice: "0",
+    costPrice: "",
     discountStartsAt: "",
     discountEndsAt: "",
     status: "ACTIVE",
@@ -313,6 +313,10 @@ export function ProductsCatalogManager({ products, categories }: Props) {
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-base font-bold text-slate-900">Formulario de producto</h2>
         <p className="mt-1 text-xs text-slate-500">Ingresa un producto nuevo con información comercial completa.</p>
+        <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs text-blue-900">
+          <p className="font-semibold">Qué completar en los campos clave:</p>
+          <p className="mt-1">`precio`: valor de venta (ej: 549990) · `costo`: costo interno (ej: 380000) · `% desc`: porcentaje 0 a 100 · `stock`: unidades disponibles.</p>
+        </div>
 
         <div className="mt-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 lg:grid-cols-12">
           <input className={`${inputClass} lg:col-span-2`} placeholder="slug" value={newProduct.slug} onChange={(e) => setNewProduct((p) => ({ ...p, slug: e.target.value }))} />
@@ -323,10 +327,10 @@ export function ProductsCatalogManager({ products, categories }: Props) {
             <option value="PAUSED">Pausado</option>
             <option value="SOLD_OUT">Agotado</option>
           </select>
-          <input className={`${inputClass} lg:col-span-2`} placeholder="precio" value={newProduct.price} onChange={(e) => setNewProduct((p) => ({ ...p, price: e.target.value }))} />
-          <input className={`${inputClass} lg:col-span-1`} placeholder="costo" value={newProduct.costPrice} onChange={(e) => setNewProduct((p) => ({ ...p, costPrice: e.target.value }))} />
-          <input className={`${inputClass} lg:col-span-1`} placeholder="% desc" value={newProduct.discountPct} onChange={(e) => setNewProduct((p) => ({ ...p, discountPct: e.target.value }))} />
-          <input className={`${inputClass} lg:col-span-1`} placeholder="stock" value={newProduct.stock} onChange={(e) => setNewProduct((p) => ({ ...p, stock: e.target.value }))} />
+          <input className={`${inputClass} lg:col-span-2`} placeholder="precio (ej: 549990)" value={newProduct.price} onChange={(e) => setNewProduct((p) => ({ ...p, price: e.target.value }))} />
+          <input className={`${inputClass} lg:col-span-1`} placeholder="costo (ej: 380000)" value={newProduct.costPrice} onChange={(e) => setNewProduct((p) => ({ ...p, costPrice: e.target.value }))} />
+          <input className={`${inputClass} lg:col-span-1`} placeholder="% descuento (0-100)" value={newProduct.discountPct} onChange={(e) => setNewProduct((p) => ({ ...p, discountPct: e.target.value }))} />
+          <input className={`${inputClass} lg:col-span-1`} placeholder="stock (ej: 15)" value={newProduct.stock} onChange={(e) => setNewProduct((p) => ({ ...p, stock: e.target.value }))} />
 
           <select className={`${inputClass} lg:col-span-3`} value={newProduct.categoryId} onChange={(e) => setNewProduct((p) => ({ ...p, categoryId: e.target.value }))}>
             {categories.map((category) => (
