@@ -54,6 +54,16 @@ function stringList(value: unknown) {
   return [] as string[];
 }
 
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
 function normalizeDateTime(value: string | null) {
   if (!value) return null;
   const parsed = new Date(value);
@@ -95,6 +105,17 @@ export async function POST(request: Request) {
         .from("ProductCategory")
         .upsert(DEFAULT_PRODUCT_CATEGORIES, { onConflict: "slug" });
       if (error) {
+        const message = String(error.message || "").toLowerCase();
+        if (message.includes("row-level security policy")) {
+          return NextResponse.json(
+            {
+              ok: false,
+              error:
+                "RLS bloqueó ProductCategory. Verifica SUPABASE_SERVICE_ROLE_KEY (debe ser service role real) o crea políticas de insert/update para ProductCategory.",
+            },
+            { status: 500 },
+          );
+        }
         return NextResponse.json(
           { ok: false, error: `No se pudieron crear categorías base: ${error.message}` },
           { status: 500 },
@@ -116,11 +137,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true });
     }
 
+    const inputName = text(data.name);
+    const inputPublicDescription = text(data.publicDescription);
+    const inputDescription = text(data.description) || inputPublicDescription || (inputName ? `Producto ${inputName}` : "");
+    const inputSlug = text(data.slug).toLowerCase() || slugify(inputName);
+
     const row = {
       id: id || text(data.id) || randomUUID(),
-      slug: text(data.slug).toLowerCase(),
-      name: text(data.name),
-      description: text(data.description),
+      slug: inputSlug,
+      name: inputName,
+      description: inputDescription,
       price: Math.max(0, Math.round(numberValue(data.price, 0))),
       discountPct: Math.max(0, Math.min(100, Math.round(numberValue(data.discountPct, 0)))),
       stock: Math.max(0, Math.round(numberValue(data.stock, 0))),
@@ -128,7 +154,7 @@ export async function POST(request: Request) {
       badges: stringList(data.badges),
       categoryId: text(data.categoryId),
       imageUrl: text(data.imageUrl) || null,
-      publicDescription: text(data.publicDescription) || null,
+      publicDescription: inputPublicDescription || null,
       published: bool(data.published, true),
       status: text(data.status || "ACTIVE").toUpperCase(),
       soldUnits: Math.max(0, Math.round(numberValue(data.soldUnits, 0))),
@@ -167,9 +193,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!row.slug || !row.name || !row.description || row.price <= 0 || !row.categoryId) {
+    if (!row.slug || !row.name || row.price <= 0 || !row.categoryId) {
       return NextResponse.json(
-        { ok: false, error: "Producto inválido: slug, nombre, descripción, precio y categoría son obligatorios." },
+        { ok: false, error: "Producto inválido: slug/nombre, precio y categoría son obligatorios." },
         { status: 400 },
       );
     }

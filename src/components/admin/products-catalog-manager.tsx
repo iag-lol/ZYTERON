@@ -265,6 +265,13 @@ export function ProductsCatalogManager({ products, categories }: Props) {
   }
 
   const canCreate = categories.length > 0;
+  const missingRequiredForCreate = useMemo(() => {
+    const missing: string[] = [];
+    if (!newProduct.name.trim()) missing.push("nombre");
+    if (!newProduct.price.trim() || toMoneyValue(newProduct.price) <= 0) missing.push("precio");
+    if (!newProduct.categoryId.trim()) missing.push("categoría");
+    return missing;
+  }, [newProduct.name, newProduct.price, newProduct.categoryId]);
 
   return (
     <div className="space-y-7">
@@ -386,24 +393,37 @@ export function ProductsCatalogManager({ products, categories }: Props) {
 
           <button
             type="button"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50 lg:col-span-4"
+            className="inline-flex h-10 items-center justify-center gap-2 self-start rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50 lg:col-span-4"
             disabled={isPending || !canCreate}
             onClick={() =>
-              runWithFeedback(
-                () =>
-                  submitProduct({
-                    action: "create",
-                    data: {
-                      ...newProduct,
-                      badges: newProduct.badges,
-                    },
-                  }),
-                "Producto creado correctamente.",
-              )
+              {
+                if (missingRequiredForCreate.length > 0) {
+                  setAlert({
+                    type: "error",
+                    message: `Faltan campos obligatorios: ${missingRequiredForCreate.join(", ")}.`,
+                  });
+                  return;
+                }
+
+                runWithFeedback(
+                  () =>
+                    submitProduct({
+                      action: "create",
+                      data: {
+                        ...newProduct,
+                        badges: newProduct.badges,
+                      },
+                    }),
+                  "Producto creado correctamente.",
+                );
+              }
             }
           >
             {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PlusCircle className="h-3.5 w-3.5" />} Crear producto
           </button>
+          <p className="text-[11px] text-slate-500 lg:col-span-8">
+            Obligatorios para crear: nombre, precio y categoría. `slug` y descripción se completan automáticamente si los dejas vacíos.
+          </p>
 
           <textarea className={`${textareaClass} lg:col-span-6`} rows={2} placeholder="descripción interna" value={newProduct.description} onChange={(e) => setNewProduct((p) => ({ ...p, description: e.target.value }))} />
           <textarea className={`${textareaClass} lg:col-span-6`} rows={2} placeholder="descripción pública" value={newProduct.publicDescription} onChange={(e) => setNewProduct((p) => ({ ...p, publicDescription: e.target.value }))} />
