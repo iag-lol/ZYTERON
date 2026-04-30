@@ -32,11 +32,46 @@ function bool(value: unknown, fallback = false) {
   return fallback;
 }
 
+function parseLocalizedNumber(raw: string) {
+  const cleaned = raw.replace(/[^\d.,-]/g, "").trim();
+  if (!cleaned) return null;
+
+  const negative = cleaned.startsWith("-");
+  const unsigned = negative ? cleaned.slice(1) : cleaned;
+  const dotCount = (unsigned.match(/\./g) || []).length;
+  const commaCount = (unsigned.match(/,/g) || []).length;
+
+  let normalized = unsigned;
+
+  if (dotCount > 0 && commaCount > 0) {
+    const decimalSeparator = unsigned.lastIndexOf(".") > unsigned.lastIndexOf(",") ? "." : ",";
+    const thousandsSeparator = decimalSeparator === "." ? "," : ".";
+    normalized = normalized.split(thousandsSeparator).join("");
+    normalized = normalized.replace(decimalSeparator, ".");
+  } else if (dotCount > 0 || commaCount > 0) {
+    const separator = dotCount > 0 ? "." : ",";
+    const count = dotCount > 0 ? dotCount : commaCount;
+    if (count > 1) {
+      normalized = normalized.split(separator).join("");
+    } else {
+      const [left, right = ""] = normalized.split(separator);
+      if (right.length === 3 && left.length >= 1) {
+        normalized = `${left}${right}`;
+      } else {
+        normalized = `${left}.${right}`;
+      }
+    }
+  }
+
+  const value = Number((negative ? "-" : "") + normalized);
+  return Number.isFinite(value) ? value : null;
+}
+
 function numberValue(value: unknown, fallback = 0) {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string") {
-    const parsed = Number(value.replace(/[^\d.-]/g, ""));
-    if (Number.isFinite(parsed)) return parsed;
+    const parsed = parseLocalizedNumber(value);
+    if (parsed !== null) return parsed;
   }
   return fallback;
 }
