@@ -277,51 +277,53 @@ export function PublicProductsCatalog({ products, whatsappNumber }: Props) {
                       </div>
                     )}
 
-                    <div className="mb-2 flex items-start justify-between gap-2">
-                      <h3 className="text-sm font-bold leading-snug text-slate-900">{product.name}</h3>
-                      <div className="flex flex-col items-end gap-1">
-                        {product.featured ? (
-                          <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                            Destacado
-                          </span>
-                        ) : null}
-                        {product.isCombo ? (
-                          <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-bold text-violet-700">
-                            {product.comboLabel || "Combo"}
-                          </span>
-                        ) : null}
-                        {productHasOffer(product) ? (
-                          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                            Oferta
-                          </span>
-                        ) : null}
+                    <div className="flex flex-1 flex-col">
+                      <div className="mb-2 flex items-start justify-between gap-2">
+                        <h3 className="text-sm font-bold leading-snug text-slate-900">{product.name}</h3>
+                        <div className="flex flex-col items-end gap-1">
+                          {product.featured ? (
+                            <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                              Destacado
+                            </span>
+                          ) : null}
+                          {product.isCombo ? (
+                            <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-bold text-violet-700">
+                              {product.comboLabel || "Combo"}
+                            </span>
+                          ) : null}
+                          {productHasOffer(product) ? (
+                            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                              Oferta
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
+
+                      <p className="text-xs leading-relaxed text-slate-600">{product.publicDescription || product.description}</p>
+
+                      <ul className="mt-3 space-y-1 text-xs text-slate-600">
+                        <li className="flex items-start gap-2">
+                          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
+                          <span>Stock disponible: {product.stock}</span>
+                        </li>
+                        {product.badges.slice(0, 2).map((badge) => (
+                          <li key={`${product.id}-${badge}`} className="flex items-start gap-2">
+                            <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
+                            <span>{badge}</span>
+                          </li>
+                        ))}
+                        {product.isCombo && Array.isArray(product.comboItems) && product.comboItems.length > 0
+                          ? product.comboItems.slice(0, 2).map((item) => (
+                              <li key={`${product.id}-${item}`} className="flex items-start gap-2">
+                                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-600" />
+                                <span>{item}</span>
+                              </li>
+                            ))
+                          : null}
+                      </ul>
                     </div>
 
-                    <p className="text-xs leading-relaxed text-slate-600">{product.publicDescription || product.description}</p>
-
-                    <ul className="mt-3 space-y-1 text-xs text-slate-600">
-                      <li className="flex items-start gap-2">
-                        <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
-                        <span>Stock disponible: {product.stock}</span>
-                      </li>
-                      {product.badges.slice(0, 2).map((badge) => (
-                        <li key={`${product.id}-${badge}`} className="flex items-start gap-2">
-                          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
-                          <span>{badge}</span>
-                        </li>
-                      ))}
-                      {product.isCombo && Array.isArray(product.comboItems) && product.comboItems.length > 0
-                        ? product.comboItems.slice(0, 2).map((item) => (
-                            <li key={`${product.id}-${item}`} className="flex items-start gap-2">
-                              <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-600" />
-                              <span>{item}</span>
-                            </li>
-                          ))
-                        : null}
-                    </ul>
-
-                    <div className="mt-4 space-y-1.5">
+                    <div className="mt-auto space-y-1.5 pt-4">
                       {product.discountPct > 0 && discountActive ? (
                         <p className="text-xs text-slate-400 line-through">{currencyCLP(product.price)}</p>
                       ) : null}
