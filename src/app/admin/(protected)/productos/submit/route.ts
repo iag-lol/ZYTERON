@@ -87,6 +87,22 @@ const DEFAULT_PRODUCT_CATEGORIES = [
   { id: "cat-ti-redes", slug: "redes", name: "Redes y Conectividad", order: 50 },
 ];
 
+async function ensureDefaultCategoriesInSupabase() {
+  const { supabase } = createSupabaseServerClient();
+  const { error } = await supabase
+    .from("ProductCategory")
+    .upsert(DEFAULT_PRODUCT_CATEGORIES, { onConflict: "slug" });
+  if (error) {
+    const message = String(error.message || "").toLowerCase();
+    if (message.includes("row-level security policy")) {
+      throw new Error(
+        "RLS bloqueó ProductCategory. Verifica SUPABASE_SERVICE_ROLE_KEY (debe ser service role real) o crea políticas de insert/update para ProductCategory.",
+      );
+    }
+    throw new Error(`No se pudieron crear categorías base: ${error.message}`);
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const payload = await request.json();
@@ -100,27 +116,7 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
 
     if (action === "ensure_categories") {
-      const { supabase } = createSupabaseServerClient();
-      const { error } = await supabase
-        .from("ProductCategory")
-        .upsert(DEFAULT_PRODUCT_CATEGORIES, { onConflict: "slug" });
-      if (error) {
-        const message = String(error.message || "").toLowerCase();
-        if (message.includes("row-level security policy")) {
-          return NextResponse.json(
-            {
-              ok: false,
-              error:
-                "RLS bloqueó ProductCategory. Verifica SUPABASE_SERVICE_ROLE_KEY (debe ser service role real) o crea políticas de insert/update para ProductCategory.",
-            },
-            { status: 500 },
-          );
-        }
-        return NextResponse.json(
-          { ok: false, error: `No se pudieron crear categorías base: ${error.message}` },
-          { status: 500 },
-        );
-      }
+      await ensureDefaultCategoriesInSupabase();
       revalidateAll();
       return NextResponse.json({ ok: true });
     }
@@ -142,6 +138,12 @@ export async function POST(request: Request) {
     const inputDescription = text(data.description) || inputPublicDescription || (inputName ? `Producto ${inputName}` : "");
     const inputSlug = text(data.slug).toLowerCase() || slugify(inputName);
 
+    let inputCategoryId = text(data.categoryId);
+    if (!inputCategoryId) {
+      await ensureDefaultCategoriesInSupabase();
+      inputCategoryId = DEFAULT_PRODUCT_CATEGORIES[0].id;
+    }
+
     const row = {
       id: id || text(data.id) || randomUUID(),
       slug: inputSlug,
@@ -152,7 +154,7 @@ export async function POST(request: Request) {
       stock: Math.max(0, Math.round(numberValue(data.stock, 0))),
       featured: bool(data.featured, false),
       badges: stringList(data.badges),
-      categoryId: text(data.categoryId),
+      categoryId: inputCategoryId,
       imageUrl: text(data.imageUrl) || null,
       publicDescription: inputPublicDescription || null,
       published: bool(data.published, true),

@@ -133,6 +133,7 @@ export function ProductsCatalogManager({ products, categories }: Props) {
   const [alert, setAlert] = useState<AlertState>({ type: "idle" });
   const [uploadingNewImage, setUploadingNewImage] = useState(false);
   const [uploadingRowId, setUploadingRowId] = useState<string | null>(null);
+  const [inlineCreateFeedback, setInlineCreateFeedback] = useState("");
 
   const [rows, setRows] = useState<ProductRow[]>(
     products.map((product) => ({
@@ -200,6 +201,10 @@ export function ProductsCatalogManager({ products, categories }: Props) {
       body: JSON.stringify(payload),
     });
 
+    if (response.redirected && response.url.includes("/admin/login")) {
+      throw new Error("Sesión admin expirada. Inicia sesión nuevamente.");
+    }
+
     const data = (await response.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
     if (!response.ok || !data?.ok) {
       throw new Error(data?.error || "No se pudo guardar el producto.");
@@ -222,16 +227,20 @@ export function ProductsCatalogManager({ products, categories }: Props) {
 
   function runWithFeedback(action: () => Promise<void>, successMessage: string) {
     setAlert({ type: "idle" });
+    setInlineCreateFeedback("");
     startTransition(async () => {
       try {
         await action();
         setAlert({ type: "success", message: successMessage });
+        setInlineCreateFeedback(successMessage);
         location.reload();
       } catch (error) {
+        const message = error instanceof Error ? error.message : "Error inesperado.";
         setAlert({
           type: "error",
-          message: error instanceof Error ? error.message : "Error inesperado.",
+          message,
         });
+        setInlineCreateFeedback(message);
       }
     });
   }
@@ -264,7 +273,6 @@ export function ProductsCatalogManager({ products, categories }: Props) {
     }
   }
 
-  const canCreate = categories.length > 0;
   const missingRequiredForCreate = useMemo(() => {
     const missing: string[] = [];
     if (!newProduct.name.trim()) missing.push("nombre");
@@ -394,14 +402,16 @@ export function ProductsCatalogManager({ products, categories }: Props) {
           <button
             type="button"
             className="inline-flex h-10 items-center justify-center gap-2 self-start rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50 lg:col-span-4"
-            disabled={isPending || !canCreate}
+            disabled={isPending}
             onClick={() =>
               {
                 if (missingRequiredForCreate.length > 0) {
+                  const message = `Faltan campos obligatorios: ${missingRequiredForCreate.join(", ")}.`;
                   setAlert({
                     type: "error",
-                    message: `Faltan campos obligatorios: ${missingRequiredForCreate.join(", ")}.`,
+                    message,
                   });
+                  setInlineCreateFeedback(message);
                   return;
                 }
 
@@ -424,6 +434,11 @@ export function ProductsCatalogManager({ products, categories }: Props) {
           <p className="text-[11px] text-slate-500 lg:col-span-8">
             Obligatorios para crear: nombre, precio y categoría. `slug` y descripción se completan automáticamente si los dejas vacíos.
           </p>
+          {inlineCreateFeedback ? (
+            <p className={`text-xs lg:col-span-12 ${alert.type === "error" ? "text-rose-700" : "text-emerald-700"}`}>
+              {inlineCreateFeedback}
+            </p>
+          ) : null}
 
           <textarea className={`${textareaClass} lg:col-span-6`} rows={2} placeholder="descripción interna" value={newProduct.description} onChange={(e) => setNewProduct((p) => ({ ...p, description: e.target.value }))} />
           <textarea className={`${textareaClass} lg:col-span-6`} rows={2} placeholder="descripción pública" value={newProduct.publicDescription} onChange={(e) => setNewProduct((p) => ({ ...p, publicDescription: e.target.value }))} />
