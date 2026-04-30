@@ -30,6 +30,10 @@ export default async function AdminProductosPage() {
       onOffer: Boolean(admin?.onOffer),
       isCombo: Boolean(admin?.isCombo),
       comboLabel: admin?.comboLabel ?? null,
+      comboItems: admin?.comboItems ?? [],
+      costPrice: admin?.costPrice ?? null,
+      discountStartsAt: admin?.discountStartsAt ?? null,
+      discountEndsAt: admin?.discountEndsAt ?? null,
       notes: admin?.notes ?? null,
     };
   });

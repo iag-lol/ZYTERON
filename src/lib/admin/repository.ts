@@ -115,6 +115,7 @@ export type ProductRecord = {
   slug: string;
   name: string;
   description?: string | null;
+  createdAt?: string | null;
   price?: number | null;
   discountPct?: number | null;
   stock?: number | null;
@@ -129,6 +130,10 @@ export type ProductRecord = {
   onOffer?: boolean | null;
   isCombo?: boolean | null;
   comboLabel?: string | null;
+  comboItems?: string[] | null;
+  costPrice?: number | null;
+  discountStartsAt?: string | null;
+  discountEndsAt?: string | null;
   notes?: string | null;
 };
 
@@ -190,6 +195,10 @@ export type ProductAdminMeta = {
   onOffer?: boolean | null;
   isCombo?: boolean | null;
   comboLabel?: string | null;
+  comboItems?: string[] | null;
+  costPrice?: number | null;
+  discountStartsAt?: string | null;
+  discountEndsAt?: string | null;
   notes?: string | null;
 };
 
@@ -267,8 +276,26 @@ function toErrorMessage(error: unknown) {
   return String(error ?? "unknown error");
 }
 
+const readErrorDedup = new Set<string>();
+
 function logReadError(table: string, error: unknown) {
   const message = toErrorMessage(error);
+  const normalizedMessage = message.toLowerCase();
+  const supabaseUrl = String(process.env.SUPABASE_URL || "").trim().toLowerCase();
+  const localSupabaseDown =
+    normalizedMessage.includes("fetch failed") && supabaseUrl.startsWith("http://localhost:54321");
+
+  const dedupKey = `${table}|${localSupabaseDown ? "local-supabase-down" : message}`;
+  if (readErrorDedup.has(dedupKey)) return;
+  readErrorDedup.add(dedupKey);
+
+  if (localSupabaseDown) {
+    console.warn(
+      `[admin/read] ${table}: Supabase local no responde en http://localhost:54321. Inicia Supabase (Docker) o usa una URL cloud en SUPABASE_URL.`,
+    );
+    return;
+  }
+
   console.error(`[admin/read] ${table}: ${message}`);
 }
 
@@ -980,6 +1007,17 @@ export async function getProductAdminMetaMap() {
         onOffer: typeof parsed?.onOffer === "boolean" ? parsed.onOffer : false,
         isCombo: typeof parsed?.isCombo === "boolean" ? parsed.isCombo : false,
         comboLabel: typeof parsed?.comboLabel === "string" ? parsed.comboLabel.trim() || null : null,
+        comboItems: Array.isArray(parsed?.comboItems)
+          ? parsed.comboItems.map((item) => String(item || "").trim()).filter(Boolean)
+          : [],
+        costPrice:
+          typeof parsed?.costPrice === "number" && Number.isFinite(parsed.costPrice)
+            ? Math.max(0, Math.round(parsed.costPrice))
+            : null,
+        discountStartsAt:
+          typeof parsed?.discountStartsAt === "string" ? parsed.discountStartsAt.trim() || null : null,
+        discountEndsAt:
+          typeof parsed?.discountEndsAt === "string" ? parsed.discountEndsAt.trim() || null : null,
         notes: typeof parsed?.notes === "string" ? parsed.notes.trim() || null : null,
       };
     } catch {
@@ -989,6 +1027,10 @@ export async function getProductAdminMetaMap() {
         soldUnits: 0,
         onOffer: false,
         isCombo: false,
+        comboItems: [],
+        costPrice: null,
+        discountStartsAt: null,
+        discountEndsAt: null,
       };
     }
   }
@@ -1020,6 +1062,15 @@ export async function upsertProductAdminMetaBySlug(slug: string, meta: ProductAd
       onOffer: Boolean(meta.onOffer),
       isCombo: Boolean(meta.isCombo),
       comboLabel: meta.comboLabel?.trim() || null,
+      comboItems: Array.isArray(meta.comboItems)
+        ? meta.comboItems.map((item) => String(item || "").trim()).filter(Boolean)
+        : [],
+      costPrice:
+        typeof meta.costPrice === "number" && Number.isFinite(meta.costPrice)
+          ? Math.max(0, Math.round(meta.costPrice))
+          : null,
+      discountStartsAt: meta.discountStartsAt?.trim() || null,
+      discountEndsAt: meta.discountEndsAt?.trim() || null,
       notes: meta.notes?.trim() || null,
     }),
   });

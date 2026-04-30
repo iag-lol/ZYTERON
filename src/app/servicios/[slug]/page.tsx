@@ -207,9 +207,9 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
           <div className="grid gap-4 md:grid-cols-3">
             {[
               {
-                title: "Casos de éxito",
-                description: "Revisa implementaciones modelo y enfoque aplicado.",
-                href: "/casos-exito",
+                title: "Productos TI",
+                description: "Revisa catálogo administrable de PCs, combos y equipos para empresas.",
+                href: "/productos",
               },
               {
                 title: "Blog comercial",

@@ -207,15 +207,15 @@ export default function ServiciosPage() {
           <div className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Prueba y contexto</p>
             <h2 className="text-2xl font-extrabold text-slate-900">
-              Complementa tu decisión con casos, guías y FAQs
+              Complementa tu decisión con productos, guías y FAQs
             </h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {[
               {
-                title: "Casos de éxito",
-                description: "Implementaciones reales y enfoque aplicado para empresas B2B.",
-                href: "/casos-exito",
+                title: "Productos TI",
+                description: "Catálogo de PCs, combos y equipos informáticos para empresas.",
+                href: "/productos",
               },
               {
                 title: "Blog comercial",

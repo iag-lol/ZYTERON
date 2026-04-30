@@ -29,6 +29,8 @@ function readRequestIp(request: Request) {
   return withoutPort.slice(0, 120);
 }
 
+let loggedSupabaseTrackingWarning = false;
+
 export async function POST(request: Request) {
   try {
     const payload = (await request.json().catch(() => ({}))) as VisitBody;
@@ -59,8 +61,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
     // No romper navegación pública si falla tracking.
+    const message = error instanceof Error ? error.message : String(error || "unknown error");
+    const usingLocalSupabase = String(process.env.SUPABASE_URL || "").trim().toLowerCase().startsWith("http://localhost:54321");
+    const isConnectionError = message.toLowerCase().includes("fetch failed");
+
+    if (usingLocalSupabase && isConnectionError) {
+      if (!loggedSupabaseTrackingWarning) {
+        console.warn(
+          "[web-visit-track] Supabase local no responde en http://localhost:54321. Tracking de visitas desactivado temporalmente.",
+        );
+        loggedSupabaseTrackingWarning = true;
+      }
+      return NextResponse.json({ ok: true }, { status: 202 });
+    }
+
     console.error("[web-visit-track] failed:", error);
     return NextResponse.json({ ok: true }, { status: 202 });
   }
 }
-

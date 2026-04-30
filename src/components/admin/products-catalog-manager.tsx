@@ -19,6 +19,10 @@ type ProductRow = ProductRecord & {
   onOffer: boolean;
   isCombo: boolean;
   comboLabel: string;
+  comboItemsText: string;
+  costPriceText: string;
+  discountStartsAt: string;
+  discountEndsAt: string;
   notes: string;
 };
 
@@ -42,6 +46,10 @@ type NewProduct = {
   onOffer: boolean;
   isCombo: boolean;
   comboLabel: string;
+  comboItems: string;
+  costPrice: string;
+  discountStartsAt: string;
+  discountEndsAt: string;
   status: "DRAFT" | "ACTIVE" | "PAUSED" | "SOLD_OUT";
   notes: string;
   badges: string;
@@ -100,6 +108,30 @@ function statusBadge(status: ProductRow["status"]) {
   return "bg-slate-100 text-slate-700 ring-slate-200";
 }
 
+function toDateTimeInput(value?: string | null) {
+  if (!value) return "";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  const y = parsed.getFullYear();
+  const m = String(parsed.getMonth() + 1).padStart(2, "0");
+  const d = String(parsed.getDate()).padStart(2, "0");
+  const hh = String(parsed.getHours()).padStart(2, "0");
+  const mm = String(parsed.getMinutes()).padStart(2, "0");
+  return `${y}-${m}-${d}T${hh}:${mm}`;
+}
+
+function isDiscountDateActive(
+  startsAt?: string | null,
+  endsAt?: string | null,
+  nowMs = Date.now(),
+) {
+  const startsMs = startsAt ? new Date(startsAt).getTime() : null;
+  const endsMs = endsAt ? new Date(endsAt).getTime() : null;
+  if (startsMs && !Number.isNaN(startsMs) && startsMs > nowMs) return false;
+  if (endsMs && !Number.isNaN(endsMs) && endsMs < nowMs) return false;
+  return true;
+}
+
 export function ProductsCatalogManager({ products, categories }: Props) {
   const [isPending, startTransition] = useTransition();
   const [alert, setAlert] = useState<AlertState>({ type: "idle" });
@@ -123,6 +155,10 @@ export function ProductsCatalogManager({ products, categories }: Props) {
       onOffer: Boolean(product.onOffer),
       isCombo: Boolean(product.isCombo),
       comboLabel: String(product.comboLabel || ""),
+      comboItemsText: parseTextRows(product.comboItems),
+      costPriceText: String(product.costPrice ?? 0),
+      discountStartsAt: toDateTimeInput(product.discountStartsAt),
+      discountEndsAt: toDateTimeInput(product.discountEndsAt),
       notes: String(product.notes || ""),
     })),
   );
@@ -142,6 +178,10 @@ export function ProductsCatalogManager({ products, categories }: Props) {
     onOffer: false,
     isCombo: false,
     comboLabel: "",
+    comboItems: "",
+    costPrice: "0",
+    discountStartsAt: "",
+    discountEndsAt: "",
     status: "ACTIVE",
     notes: "",
     badges: "",
@@ -223,6 +263,7 @@ export function ProductsCatalogManager({ products, categories }: Props) {
             <option value="SOLD_OUT">Agotado</option>
           </select>
           <input className={`${inputClass} lg:col-span-2`} placeholder="precio" value={newProduct.price} onChange={(e) => setNewProduct((p) => ({ ...p, price: e.target.value }))} />
+          <input className={`${inputClass} lg:col-span-2`} placeholder="costo (ganancia)" value={newProduct.costPrice} onChange={(e) => setNewProduct((p) => ({ ...p, costPrice: e.target.value }))} />
           <input className={`${inputClass} lg:col-span-1`} placeholder="% desc" value={newProduct.discountPct} onChange={(e) => setNewProduct((p) => ({ ...p, discountPct: e.target.value }))} />
           <input className={`${inputClass} lg:col-span-1`} placeholder="stock" value={newProduct.stock} onChange={(e) => setNewProduct((p) => ({ ...p, stock: e.target.value }))} />
           <input className={`${inputClass} lg:col-span-1`} placeholder="vendidos" value={newProduct.soldUnits} onChange={(e) => setNewProduct((p) => ({ ...p, soldUnits: e.target.value }))} />
@@ -234,6 +275,8 @@ export function ProductsCatalogManager({ products, categories }: Props) {
           </select>
           <input className={`${inputClass} lg:col-span-4`} placeholder="imagen URL pública" value={newProduct.imageUrl} onChange={(e) => setNewProduct((p) => ({ ...p, imageUrl: e.target.value }))} />
           <input className={`${inputClass} lg:col-span-3`} placeholder="etiqueta combo (opcional)" value={newProduct.comboLabel} onChange={(e) => setNewProduct((p) => ({ ...p, comboLabel: e.target.value }))} />
+          <input className={`${inputClass} lg:col-span-2`} type="datetime-local" value={newProduct.discountStartsAt} onChange={(e) => setNewProduct((p) => ({ ...p, discountStartsAt: e.target.value }))} />
+          <input className={`${inputClass} lg:col-span-2`} type="datetime-local" value={newProduct.discountEndsAt} onChange={(e) => setNewProduct((p) => ({ ...p, discountEndsAt: e.target.value }))} />
 
           <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700">
             <input type="checkbox" checked={newProduct.featured} onChange={(e) => setNewProduct((p) => ({ ...p, featured: e.target.checked }))} /> Destacado
@@ -272,6 +315,7 @@ export function ProductsCatalogManager({ products, categories }: Props) {
           <textarea className={`${textareaClass} lg:col-span-6`} rows={2} placeholder="descripción interna" value={newProduct.description} onChange={(e) => setNewProduct((p) => ({ ...p, description: e.target.value }))} />
           <textarea className={`${textareaClass} lg:col-span-6`} rows={2} placeholder="descripción pública" value={newProduct.publicDescription} onChange={(e) => setNewProduct((p) => ({ ...p, publicDescription: e.target.value }))} />
           <textarea className={`${textareaClass} lg:col-span-6`} rows={2} placeholder="badges (una línea por item)" value={newProduct.badges} onChange={(e) => setNewProduct((p) => ({ ...p, badges: e.target.value }))} />
+          <textarea className={`${textareaClass} lg:col-span-6`} rows={2} placeholder="items del combo (una línea por item)" value={newProduct.comboItems} onChange={(e) => setNewProduct((p) => ({ ...p, comboItems: e.target.value }))} />
           <textarea className={`${textareaClass} lg:col-span-6`} rows={2} placeholder="notas internas del producto" value={newProduct.notes} onChange={(e) => setNewProduct((p) => ({ ...p, notes: e.target.value }))} />
         </div>
       </section>
@@ -305,7 +349,13 @@ export function ProductsCatalogManager({ products, categories }: Props) {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {sortedRows.map((row) => {
-                const finalPrice = toMoneyValue(row.priceText) * (1 - Math.max(0, Math.min(100, toMoneyValue(row.discountPctText))) / 100);
+                const basePrice = toMoneyValue(row.priceText);
+                const discountPct = Math.max(0, Math.min(100, toMoneyValue(row.discountPctText)));
+                const costPrice = Math.max(0, toMoneyValue(row.costPriceText));
+                const discountActive = discountPct > 0 && isDiscountDateActive(row.discountStartsAt, row.discountEndsAt);
+                const finalPrice = basePrice * (1 - (discountActive ? discountPct : 0) / 100);
+                const utilityPerUnit = finalPrice - costPrice;
+                const marginPct = finalPrice > 0 ? (utilityPerUnit / finalPrice) * 100 : 0;
                 return (
                   <tr key={row.id} className="align-top">
                     <td className="px-3 py-3">
@@ -350,6 +400,7 @@ export function ProductsCatalogManager({ products, categories }: Props) {
                           Combo
                         </label>
                         <input className={inputClass} placeholder="Nombre del combo" value={row.comboLabel} onChange={(e) => setRows((items) => items.map((item) => (item.id === row.id ? { ...item, comboLabel: e.target.value } : item)))} />
+                        <textarea className={textareaClass} rows={2} placeholder="Items del combo (una línea por item)" value={row.comboItemsText} onChange={(e) => setRows((items) => items.map((item) => (item.id === row.id ? { ...item, comboItemsText: e.target.value } : item)))} />
                       </div>
                     </td>
                     <td className="px-3 py-3">
@@ -367,6 +418,15 @@ export function ProductsCatalogManager({ products, categories }: Props) {
                     <td className="px-3 py-3">
                       <div className="space-y-2">
                         <p className="rounded-lg bg-blue-50 px-2 py-1 text-blue-800">Final: {currencyCLP(finalPrice)}</p>
+                        <p className={`rounded-lg px-2 py-1 ${utilityPerUnit >= 0 ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-700"}`}>
+                          Utilidad/u: {currencyCLP(utilityPerUnit)}
+                        </p>
+                        <p className={`rounded-lg px-2 py-1 ${marginPct >= 0 ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-700"}`}>
+                          Margen: {marginPct.toFixed(1)}%
+                        </p>
+                        <input className={inputClass} placeholder="Costo base" value={row.costPriceText} onChange={(e) => setRows((items) => items.map((item) => (item.id === row.id ? { ...item, costPriceText: e.target.value } : item)))} />
+                        <input className={inputClass} type="datetime-local" value={row.discountStartsAt} onChange={(e) => setRows((items) => items.map((item) => (item.id === row.id ? { ...item, discountStartsAt: e.target.value } : item)))} />
+                        <input className={inputClass} type="datetime-local" value={row.discountEndsAt} onChange={(e) => setRows((items) => items.map((item) => (item.id === row.id ? { ...item, discountEndsAt: e.target.value } : item)))} />
                         <input className={inputClass} placeholder="URL imagen" value={row.imageUrl} onChange={(e) => setRows((items) => items.map((item) => (item.id === row.id ? { ...item, imageUrl: e.target.value } : item)))} />
                         <textarea className={textareaClass} rows={2} placeholder="Descripción pública" value={row.publicDescription} onChange={(e) => setRows((items) => items.map((item) => (item.id === row.id ? { ...item, publicDescription: e.target.value } : item)))} />
                         <textarea className={textareaClass} rows={2} placeholder="Descripción interna" value={row.description || ""} onChange={(e) => setRows((items) => items.map((item) => (item.id === row.id ? { ...item, description: e.target.value } : item)))} />
@@ -393,6 +453,10 @@ export function ProductsCatalogManager({ products, categories }: Props) {
                                     stock: row.stockText,
                                     soldUnits: row.soldUnitsText,
                                     badges: row.badgesText,
+                                    comboItems: row.comboItemsText,
+                                    costPrice: row.costPriceText,
+                                    discountStartsAt: row.discountStartsAt,
+                                    discountEndsAt: row.discountEndsAt,
                                     previousSlug: row.originalSlug,
                                   },
                                 }),

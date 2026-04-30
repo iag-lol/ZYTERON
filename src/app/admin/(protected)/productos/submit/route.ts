@@ -53,6 +53,13 @@ function stringList(value: unknown) {
   return [] as string[];
 }
 
+function normalizeDateTime(value: string | null) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString();
+}
+
 function revalidateAll() {
   revalidatePath("/admin/productos");
   revalidatePath("/admin/control-web");
@@ -104,8 +111,37 @@ export async function POST(request: Request) {
       onOffer: bool(data.onOffer, false),
       isCombo: bool(data.isCombo, false),
       comboLabel: text(data.comboLabel) || null,
+      comboItems: stringList(data.comboItems),
+      costPrice: Math.max(0, Math.round(numberValue(data.costPrice, 0))),
+      discountStartsAt: text(data.discountStartsAt) || null,
+      discountEndsAt: text(data.discountEndsAt) || null,
       notes: text(data.notes) || null,
     };
+
+    if (row.discountStartsAt && Number.isNaN(new Date(row.discountStartsAt).getTime())) {
+      return NextResponse.json({ ok: false, error: "Fecha de inicio de descuento inválida." }, { status: 400 });
+    }
+    if (row.discountEndsAt && Number.isNaN(new Date(row.discountEndsAt).getTime())) {
+      return NextResponse.json({ ok: false, error: "Fecha de fin de descuento inválida." }, { status: 400 });
+    }
+    if (row.discountStartsAt && row.discountEndsAt) {
+      const startsAt = new Date(row.discountStartsAt).getTime();
+      const endsAt = new Date(row.discountEndsAt).getTime();
+      if (startsAt > endsAt) {
+        return NextResponse.json(
+          { ok: false, error: "La fecha de inicio no puede ser mayor a la fecha de fin del descuento." },
+          { status: 400 },
+        );
+      }
+    }
+    const normalizedDiscountStartsAt = normalizeDateTime(row.discountStartsAt);
+    const normalizedDiscountEndsAt = normalizeDateTime(row.discountEndsAt);
+    if (row.costPrice > row.price) {
+      return NextResponse.json(
+        { ok: false, error: "El costo no puede ser mayor al precio de venta del producto." },
+        { status: 400 },
+      );
+    }
 
     if (!row.slug || !row.name || !row.description || row.price <= 0 || !row.categoryId) {
       return NextResponse.json(
@@ -171,6 +207,10 @@ export async function POST(request: Request) {
       onOffer: row.onOffer,
       isCombo: row.isCombo,
       comboLabel: row.comboLabel,
+      comboItems: row.comboItems,
+      costPrice: row.costPrice,
+      discountStartsAt: normalizedDiscountStartsAt,
+      discountEndsAt: normalizedDiscountEndsAt,
       notes: row.notes,
     });
 

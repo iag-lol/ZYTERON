@@ -410,9 +410,9 @@ export default async function Home() {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {[
               {
-                title: "Casos de éxito",
-                desc: "Escenarios B2B reales con implementación técnica y comercial.",
-                href: "/casos-exito",
+                title: "Productos TI",
+                desc: "PCs, combos y equipos informáticos con publicación administrable.",
+                href: "/productos",
               },
               {
                 title: "Blog comercial",

@@ -17,7 +17,7 @@ const footerLinks = [
   {
     title: "Recursos",
     items: [
-      { label: "Casos de exito", href: "/casos-exito" },
+      { label: "Productos TI", href: "/productos" },
       { label: "Blog comercial", href: "/blog" },
       { label: "Preguntas frecuentes", href: "/faq" },
       { label: "Páginas por ciudad", href: "/ciudades" },

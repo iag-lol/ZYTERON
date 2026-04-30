@@ -1,6 +1,5 @@
 import { siteConfig } from "@/config/site";
 import { blogPosts } from "@/content/blog-posts";
-import { caseStudies } from "@/content/case-studies";
 import { localPages } from "@/content/local-pages";
 import { servicePages } from "@/content/service-pages";
 import type { MetadataRoute } from "next";
@@ -11,7 +10,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = [
     { path: "", priority: 1 },
     { path: "/servicios", priority: 0.95 },
-    { path: "/casos-exito", priority: 0.9 },
     { path: "/blog", priority: 0.85 },
     { path: "/faq", priority: 0.8 },
     { path: "/ciudades", priority: 0.82 },
@@ -43,13 +41,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.72,
   }));
 
-  const caseRoutes = caseStudies.map((caseStudy) => ({
-    url: `${base}/casos-exito/${caseStudy.slug}`,
-    lastModified: new Date(caseStudy.updatedAt ?? caseStudy.publishedAt),
-    changeFrequency: "monthly" as const,
-    priority: 0.74,
-  }));
-
   const blogRoutes = blogPosts.map((post) => ({
     url: `${base}/blog/${post.slug}`,
     lastModified: new Date(post.updatedAt ?? post.publishedAt),
@@ -57,5 +48,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...serviceRoutes, ...localRoutes, ...caseRoutes, ...blogRoutes];
+  return [...staticRoutes, ...serviceRoutes, ...localRoutes, ...blogRoutes];
 }

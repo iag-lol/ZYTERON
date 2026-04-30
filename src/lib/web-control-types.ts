@@ -32,6 +32,15 @@ export type PublicProduct = {
   imageUrl?: string | null;
   publicDescription?: string | null;
   published?: boolean | null;
+  onOffer?: boolean | null;
+  isCombo?: boolean | null;
+  comboLabel?: string | null;
+  comboItems?: string[] | null;
+  costPrice?: number | null;
+  discountStartsAt?: string | null;
+  discountEndsAt?: string | null;
+  discountActive?: boolean;
+  finalPrice?: number;
 };
 
 export type PublicReview = {

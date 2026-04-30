@@ -3,6 +3,7 @@ import {
   getPublicExtras,
   getPublicPlans,
   getPublicProducts,
+  getProductAdminMetaMap,
   getProductPublicMetaMap,
   getWebDiscounts,
   type ClientReview,
@@ -195,7 +196,23 @@ function normalizeProduct(product: ProductRecord): PublicProduct | null {
     featured: Boolean(product.featured),
     stock: typeof product.stock === "number" && Number.isFinite(product.stock) ? Math.max(0, Math.round(product.stock)) : 0,
     badges: Array.isArray(product.badges) ? product.badges.filter(Boolean) : [],
+    onOffer: Boolean(product.onOffer),
+    isCombo: Boolean(product.isCombo),
+    comboLabel: typeof product.comboLabel === "string" ? product.comboLabel : null,
+    comboItems: Array.isArray(product.comboItems) ? product.comboItems.filter(Boolean) : [],
+    costPrice: typeof product.costPrice === "number" && Number.isFinite(product.costPrice) ? Math.max(0, Math.round(product.costPrice)) : null,
+    discountStartsAt: typeof product.discountStartsAt === "string" ? product.discountStartsAt : null,
+    discountEndsAt: typeof product.discountEndsAt === "string" ? product.discountEndsAt : null,
   };
+}
+
+function isDiscountRangeActive(startsAt?: string | null, endsAt?: string | null) {
+  const now = Date.now();
+  const startsMs = startsAt ? new Date(startsAt).getTime() : null;
+  const endsMs = endsAt ? new Date(endsAt).getTime() : null;
+  if (startsMs && !Number.isNaN(startsMs) && startsMs > now) return false;
+  if (endsMs && !Number.isNaN(endsMs) && endsMs < now) return false;
+  return true;
 }
 
 function normalizeReview(review: ClientReview): PublicReview | null {
@@ -237,13 +254,14 @@ function normalizeDiscount(discount: WebDiscount): PublicDiscount | null {
 }
 
 export async function getWebPricingSnapshot() {
-  const [plansRaw, extrasRaw, productsRaw, discountsRaw, reviewsRaw, productPublicMeta] = await Promise.all([
+  const [plansRaw, extrasRaw, productsRaw, discountsRaw, reviewsRaw, productPublicMeta, productAdminMeta] = await Promise.all([
     getPublicPlans(),
     getPublicExtras(),
     getPublicProducts(),
     getWebDiscounts(true),
     getClientReviews("APPROVED"),
     getProductPublicMetaMap(),
+    getProductAdminMetaMap(),
   ]);
 
   const plans = plansRaw.map(normalizePlan).filter((item): item is PublicPlan => Boolean(item));
@@ -252,12 +270,34 @@ export async function getWebPricingSnapshot() {
     .map(normalizeProduct)
     .filter((item): item is PublicProduct => Boolean(item))
     .map((product) => {
-      const meta = productPublicMeta[String(product.slug || "").toLowerCase()];
+      const slug = String(product.slug || "").toLowerCase();
+      const meta = productPublicMeta[slug];
+      const adminMeta = productAdminMeta[slug];
+      const discountStartsAt = adminMeta?.discountStartsAt || null;
+      const discountEndsAt = adminMeta?.discountEndsAt || null;
+      const discountActive = product.discountPct > 0 && isDiscountRangeActive(discountStartsAt, discountEndsAt);
+      const effectiveDiscountPct = discountActive ? product.discountPct : 0;
+      const finalPrice = Math.max(
+        0,
+        Math.round(product.price - product.price * (Math.max(0, Math.min(100, effectiveDiscountPct)) / 100)),
+      );
       return {
         ...product,
         imageUrl: meta?.imageUrl || null,
         publicDescription: meta?.publicDescription || null,
         published: typeof meta?.published === "boolean" ? meta.published : true,
+        onOffer: Boolean(adminMeta?.onOffer),
+        isCombo: Boolean(adminMeta?.isCombo),
+        comboLabel: adminMeta?.comboLabel || null,
+        comboItems: Array.isArray(adminMeta?.comboItems) ? adminMeta?.comboItems : [],
+        costPrice:
+          typeof adminMeta?.costPrice === "number" && Number.isFinite(adminMeta.costPrice)
+            ? adminMeta.costPrice
+            : null,
+        discountStartsAt,
+        discountEndsAt,
+        discountActive,
+        finalPrice,
       };
     });
   const discounts = discountsRaw.map(normalizeDiscount).filter((item): item is PublicDiscount => Boolean(item));
@@ -266,7 +306,7 @@ export async function getWebPricingSnapshot() {
   return {
     plans: plans.length > 0 ? plans : FALLBACK_PYME_PLANS,
     extras: extras.length > 0 ? extras : FALLBACK_EXTRAS,
-    products: products.length > 0 ? products : FALLBACK_PRODUCTS,
+    products,
     discounts,
     reviews,
   };
