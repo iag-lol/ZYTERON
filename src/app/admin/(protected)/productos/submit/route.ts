@@ -11,9 +11,10 @@ import {
   upsertProductPublicMetaBySlug,
   updateRows,
 } from "@/lib/admin/repository";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const bodySchema = z.object({
-  action: z.enum(["create", "update", "delete"]),
+  action: z.enum(["create", "update", "delete", "ensure_categories"]),
   id: z.string().trim().optional(),
   data: z.record(z.string(), z.unknown()).optional(),
 });
@@ -68,6 +69,14 @@ function revalidateAll() {
   revalidatePath("/");
 }
 
+const DEFAULT_PRODUCT_CATEGORIES = [
+  { id: "cat-ti-notebooks", slug: "notebooks", name: "Notebooks", order: 10 },
+  { id: "cat-ti-pcs", slug: "pc-escritorio", name: "PC Escritorio", order: 20 },
+  { id: "cat-ti-combos", slug: "combos-empresa", name: "Combos Empresa", order: 30 },
+  { id: "cat-ti-perifericos", slug: "perifericos", name: "Periféricos", order: 40 },
+  { id: "cat-ti-redes", slug: "redes", name: "Redes y Conectividad", order: 50 },
+];
+
 export async function POST(request: Request) {
   try {
     const payload = await request.json();
@@ -79,6 +88,21 @@ export async function POST(request: Request) {
 
     const { action, id, data = {} } = parsed.data;
     const now = new Date().toISOString();
+
+    if (action === "ensure_categories") {
+      const { supabase } = createSupabaseServerClient();
+      const { error } = await supabase
+        .from("ProductCategory")
+        .upsert(DEFAULT_PRODUCT_CATEGORIES, { onConflict: "slug" });
+      if (error) {
+        return NextResponse.json(
+          { ok: false, error: `No se pudieron crear categorías base: ${error.message}` },
+          { status: 500 },
+        );
+      }
+      revalidateAll();
+      return NextResponse.json({ ok: true });
+    }
 
     if (action === "delete") {
       if (!id) return NextResponse.json({ ok: false, error: "ID requerido" }, { status: 400 });
