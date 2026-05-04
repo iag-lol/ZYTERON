@@ -56,6 +56,7 @@ export type AdminSnapshot = {
       uniqueIps: number;
       uniqueSessions: number;
       revenuePerVisit: number;
+      estimated: boolean;
       topPaths: { path: string; visits: number; uniqueIps: number }[];
       recentNavigations: {
         path: string;
@@ -75,6 +76,17 @@ export type AdminSnapshot = {
 
 function round(value: number) {
   return Math.round(value * 100) / 100;
+}
+
+function isWonStatus(value?: string | null) {
+  const normalized = String(value || "").trim().toUpperCase();
+  return normalized === "WON" || normalized === "GANADA" || normalized === "GANADO" || normalized.includes("WON");
+}
+
+function isValidDate(value?: string | null) {
+  if (!value) return false;
+  const parsed = new Date(value);
+  return !Number.isNaN(parsed.getTime());
 }
 
 async function fetchLeads(): Promise<Lead[]> {
@@ -121,15 +133,47 @@ function buildSnapshot(base: {
   taxDocuments: TaxDocument[];
   webVisits: WebVisit[];
 }): AdminSnapshot {
-  const leads = base.leads ?? [];
+  const rawLeads = base.leads ?? [];
   const quotes = base.quotes ?? [];
   const visits = base.visits ?? [];
-  const sales = base.sales ?? [];
+  const rawSales = base.sales ?? [];
   const clients = base.clients ?? [];
   const projects = base.projects ?? [];
   const requests = base.requests ?? [];
   const taxDocuments = base.taxDocuments ?? [];
-  const webVisits = base.webVisits ?? [];
+  const rawWebVisits = base.webVisits ?? [];
+
+  const leads: Lead[] =
+    rawLeads.length > 0
+      ? rawLeads
+      : quotes.map((quote) => ({
+          id: `quote-${quote.id}`,
+          name: quote.name || "Contacto desde cotización",
+          email: quote.email || "",
+          phone: quote.phone || "",
+          source: "QUOTE_FALLBACK",
+          message: quote.meta?.serviceSummary || quote.meta?.brief || null,
+          type: "CONTACT",
+          status: quote.status || "PENDING",
+          createdAt: quote.createdAt || null,
+        }));
+
+  const wonQuotes = quotes.filter((quote) => isWonStatus(quote.status));
+  const sales: Sale[] =
+    rawSales.length > 0
+      ? rawSales
+      : wonQuotes.map((quote) => ({
+          id: `quote-sale-${quote.id}`,
+          clientId: quote.userId || null,
+          total: quote.totalAmount || 0,
+          createdAt: quote.createdAt || null,
+          description: `Ingreso estimado desde cotización ${quote.displayNumber || quote.id}`,
+          paymentMethod: "Estimado",
+          invoiceRef: `QUOTE:${quote.id}`,
+        }));
+
+  const webVisits: WebVisit[] = rawWebVisits;
+  const usingWebFallback = webVisits.length === 0;
 
   const totals = {
     leads: leads.length,
@@ -159,49 +203,80 @@ function buildSnapshot(base: {
 
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const todayVisits = webVisits.filter((visit) => {
-    if (!visit.createdAt) return false;
-    const ts = new Date(visit.createdAt).getTime();
-    return !Number.isNaN(ts) && ts >= todayStart;
-  }).length;
 
-  const uniqueIps = new Set(
-    webVisits
-      .map((visit) => String(visit.ipHash || visit.ip || "").trim())
-      .filter(Boolean),
-  ).size;
-  const uniqueSessions = new Set(
-    webVisits
-      .map((visit) => String(visit.sessionId || "").trim())
-      .filter(Boolean),
-  ).size;
+  const fallbackVisitCandidates = [...leads, ...quotes]
+    .map((item) => String(item.createdAt || "").trim())
+    .filter((value) => isValidDate(value));
 
-  const pathMap = new Map<string, { visits: number; ips: Set<string> }>();
-  for (const visit of webVisits) {
-    const key = String(visit.path || "").trim() || "/";
-    const current = pathMap.get(key) || { visits: 0, ips: new Set<string>() };
-    current.visits += 1;
-    const ipKey = String(visit.ipHash || visit.ip || "").trim();
-    if (ipKey) current.ips.add(ipKey);
-    pathMap.set(key, current);
-  }
-  const topPaths = Array.from(pathMap.entries())
-    .map(([path, value]) => ({
-      path,
-      visits: value.visits,
-      uniqueIps: value.ips.size,
-    }))
-    .sort((a, b) => b.visits - a.visits)
-    .slice(0, 6);
+  const totalVisits = usingWebFallback ? fallbackVisitCandidates.length : webVisits.length;
 
-  const revenuePerVisit = webVisits.length > 0 ? revenue / webVisits.length : 0;
-  const recentNavigations = webVisits.slice(0, 8).map((visit) => ({
-    path: visit.path || "/",
-    createdAt: visit.createdAt || null,
-    ip: visit.ip || null,
-    ipHash: visit.ipHash || null,
-    sessionId: visit.sessionId || null,
-  }));
+  const todayVisits = usingWebFallback
+    ? fallbackVisitCandidates.filter((value) => new Date(value).getTime() >= todayStart).length
+    : webVisits.filter((visit) => {
+        if (!visit.createdAt) return false;
+        const ts = new Date(visit.createdAt).getTime();
+        return !Number.isNaN(ts) && ts >= todayStart;
+      }).length;
+
+  const uniqueIps = usingWebFallback
+    ? 0
+    : new Set(
+        webVisits
+          .map((visit) => String(visit.ipHash || visit.ip || "").trim())
+          .filter(Boolean),
+      ).size;
+
+  const uniqueSessions = usingWebFallback
+    ? totalVisits
+    : new Set(
+        webVisits
+          .map((visit) => String(visit.sessionId || "").trim())
+          .filter(Boolean),
+      ).size;
+
+  const topPaths = usingWebFallback
+    ? [
+        { path: "/paquetes", visits: quotes.length, uniqueIps: 0 },
+        { path: "/contacto", visits: leads.length, uniqueIps: 0 },
+      ].filter((item) => item.visits > 0)
+    : (() => {
+        const pathMap = new Map<string, { visits: number; ips: Set<string> }>();
+        for (const visit of webVisits) {
+          const key = String(visit.path || "").trim() || "/";
+          const current = pathMap.get(key) || { visits: 0, ips: new Set<string>() };
+          current.visits += 1;
+          const ipKey = String(visit.ipHash || visit.ip || "").trim();
+          if (ipKey) current.ips.add(ipKey);
+          pathMap.set(key, current);
+        }
+        return Array.from(pathMap.entries())
+          .map(([path, value]) => ({
+            path,
+            visits: value.visits,
+            uniqueIps: value.ips.size,
+          }))
+          .sort((a, b) => b.visits - a.visits)
+          .slice(0, 6);
+      })();
+
+  const revenuePerVisit = totalVisits > 0 ? revenue / totalVisits : 0;
+  const recentNavigations = usingWebFallback
+    ? [...quotes]
+        .slice(0, 8)
+        .map((quote) => ({
+          path: "/paquetes",
+          createdAt: quote.createdAt || null,
+          ip: null,
+          ipHash: null,
+          sessionId: null,
+        }))
+    : webVisits.slice(0, 8).map((visit) => ({
+        path: visit.path || "/",
+        createdAt: visit.createdAt || null,
+        ip: visit.ip || null,
+        ipHash: visit.ipHash || null,
+        sessionId: visit.sessionId || null,
+      }));
 
   return {
     leads,
@@ -228,11 +303,12 @@ function buildSnapshot(base: {
         leadBaseEstimated,
       },
       web: {
-        totalVisits: webVisits.length,
+        totalVisits,
         todayVisits,
         uniqueIps,
         uniqueSessions,
         revenuePerVisit: round(revenuePerVisit),
+        estimated: usingWebFallback,
         topPaths,
         recentNavigations,
       },

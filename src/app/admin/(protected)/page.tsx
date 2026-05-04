@@ -209,7 +209,11 @@ export default async function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-bold text-slate-900">Navegación web</h2>
-              <p className="text-xs text-slate-400">Contador de visitas, IPs y rutas visitadas</p>
+              <p className="text-xs text-slate-400">
+                {metrics.web.estimated
+                  ? "Modo estimado por actividad comercial (sin tracker histórico)."
+                  : "Contador de visitas, IPs y rutas visitadas"}
+              </p>
             </div>
             <span className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-700">
               Hoy: {metrics.web.todayVisits}
