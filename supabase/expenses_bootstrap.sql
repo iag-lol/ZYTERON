@@ -55,7 +55,9 @@ GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT SELECT ON TABLE public."Expense" TO anon, authenticated;
 GRANT INSERT, UPDATE, DELETE ON TABLE public."Expense" TO anon, authenticated;
 
-ALTER TABLE public."Expense" ENABLE ROW LEVEL SECURITY;
+-- SIN RESTRICCIONES RLS PARA GASTOS:
+-- desactiva RLS por completo en Expense para evitar bloqueos de INSERT/UPDATE.
+ALTER TABLE public."Expense" DISABLE ROW LEVEL SECURITY;
 
 -- Limpieza defensiva: elimina cualquier política previa en Expense
 DO $$
@@ -98,10 +100,15 @@ FOR DELETE
 TO PUBLIC
 USING (true);
 
+-- Refuerzo: vuelve a desactivar RLS tras crear policies (las deja inactivas).
+ALTER TABLE public."Expense" DISABLE ROW LEVEL SECURITY;
+
 -- Bucket para respaldos/facturas de gastos
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('expense-documents', 'expense-documents', true)
 ON CONFLICT (id) DO NOTHING;
+
+GRANT USAGE ON SCHEMA storage TO anon, authenticated;
 
 -- Limpieza defensiva: elimina cualquier política previa del bucket expense-documents en storage.objects
 DO $$
