@@ -191,7 +191,7 @@ export async function POST(request: Request) {
       return errorRedirect(
         request,
         redirectTo,
-        "RLS bloqueó el guardado del gasto. Verifica que SUPABASE_SERVICE_ROLE_KEY sea la key secreta/service role real del proyecto.",
+        "RLS bloqueó el guardado del gasto. Revisa políticas de Expense y storage.objects para permitir insert/update desde tu rol actual.",
       );
     }
     return errorRedirect(request, redirectTo, message);

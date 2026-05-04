@@ -53,7 +53,7 @@ EXECUTE FUNCTION public.set_expense_updated_at();
 
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT SELECT ON TABLE public."Expense" TO anon, authenticated;
-GRANT INSERT, UPDATE, DELETE ON TABLE public."Expense" TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON TABLE public."Expense" TO anon, authenticated;
 
 ALTER TABLE public."Expense" ENABLE ROW LEVEL SECURITY;
 
@@ -68,7 +68,7 @@ DROP POLICY IF EXISTS expense_write_authenticated ON public."Expense";
 CREATE POLICY expense_write_authenticated
 ON public."Expense"
 FOR ALL
-TO authenticated
+TO anon, authenticated, service_role
 USING (true)
 WITH CHECK (true);
 
@@ -88,14 +88,14 @@ DROP POLICY IF EXISTS expense_bucket_authenticated_insert ON storage.objects;
 CREATE POLICY expense_bucket_authenticated_insert
 ON storage.objects
 FOR INSERT
-TO authenticated, service_role
+TO anon, authenticated, service_role
 WITH CHECK (bucket_id = 'expense-documents');
 
 DROP POLICY IF EXISTS expense_bucket_authenticated_update ON storage.objects;
 CREATE POLICY expense_bucket_authenticated_update
 ON storage.objects
 FOR UPDATE
-TO authenticated, service_role
+TO anon, authenticated, service_role
 USING (bucket_id = 'expense-documents')
 WITH CHECK (bucket_id = 'expense-documents');
 
@@ -103,7 +103,7 @@ DROP POLICY IF EXISTS expense_bucket_authenticated_delete ON storage.objects;
 CREATE POLICY expense_bucket_authenticated_delete
 ON storage.objects
 FOR DELETE
-TO authenticated, service_role
+TO anon, authenticated, service_role
 USING (bucket_id = 'expense-documents');
 
 -- Fuerza recarga de schema cache de PostgREST.
