@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +10,8 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { IconSprite } from "@/components/ui/icon-sprite";
 import { WebVisitTracker } from "@/components/analytics/web-visit-tracker";
 import { buildOrganizationGraph } from "@/lib/seo";
+
+const GTM_ID = "GTM-T46H3ZCS";
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -62,6 +65,23 @@ export default function RootLayout({
       className={cn(geistSans.variable, geistMono.variable, "antialiased h-full")}
     >
       <body className="min-h-full bg-white text-slate-900">
+        <Script id="gtm-base" strategy="afterInteractive">
+          {`
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','${GTM_ID}');
+          `}
+        </Script>
+        <noscript>
+          <iframe
+            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
         <TooltipProvider>
           <IconSprite />
           <JsonLd id="zyteron-organization-schema" data={buildOrganizationGraph()} />
