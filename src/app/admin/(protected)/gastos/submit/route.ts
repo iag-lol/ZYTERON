@@ -123,19 +123,6 @@ async function saveExpenseWithAnonFallback(id: string, payload: Record<string, u
 
 async function ensureExpenseBucket() {
   const { supabase } = createSupabaseServerClient();
-  const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-  if (listError) {
-    throw new Error(`No se pudo verificar el bucket de gastos: ${listError.message}`);
-  }
-
-  const bucketExists = (buckets || []).some((bucket) => bucket.name === ZYTERON_EXPENSE_BUCKET);
-  if (!bucketExists) {
-    const { error: createError } = await supabase.storage.createBucket(ZYTERON_EXPENSE_BUCKET, { public: true });
-    if (createError && !createError.message.toLowerCase().includes("already exists")) {
-      throw new Error(`No se pudo crear bucket de gastos: ${createError.message}`);
-    }
-  }
-
   return supabase;
 }
 
