@@ -20,6 +20,7 @@ type ResendEmailDetail = {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FROM_WITH_NAME_REGEX = /^[^<>]+<[^<>@\s]+@[^<>@\s]+\.[^<>@\s]+>$/;
+const QUOTE_INTERNAL_COPY_EMAIL = "eduardo.avila@zyteron.cl";
 
 function safeRedirectPath(value: unknown) {
   const path = typeof value === "string" ? value.trim() : "";
@@ -253,6 +254,20 @@ function renderQuoteEmailText(input: {
   ].join("\n");
 }
 
+function uniqueEmails(values: Array<string | null | undefined>) {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const value of values) {
+    const normalized = String(value || "").trim().toLowerCase();
+    if (!normalized || !EMAIL_REGEX.test(normalized) || seen.has(normalized)) continue;
+    seen.add(normalized);
+    result.push(normalized);
+  }
+
+  return result;
+}
+
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const contentType = (request.headers.get("content-type") || "").toLowerCase();
@@ -285,7 +300,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   }
 
   const from = normalizeFromAddress(process.env.RESEND_FROM_EMAIL, ZYTERON_COMPANY.brandName);
-  const replyTo = process.env.RESEND_REPLY_TO || ZYTERON_COMPANY.salesEmail;
+  const replyTo = QUOTE_INTERNAL_COPY_EMAIL;
   const bcc = process.env.RESEND_BCC_EMAIL || undefined;
 
   try {
@@ -325,6 +340,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       total: quote.totalAmount || 0,
     });
 
+    const ccRecipients = uniqueEmails([QUOTE_INTERNAL_COPY_EMAIL]).filter(
+      (email) => email !== String(toEmail || "").trim().toLowerCase(),
+    );
+
     const payload: Record<string, unknown> = {
       from,
       to: [toEmail],
@@ -339,6 +358,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         },
       ],
     };
+    if (ccRecipients.length > 0) {
+      payload.cc = ccRecipients;
+    }
     if (bcc) {
       payload.bcc = [bcc];
     }
