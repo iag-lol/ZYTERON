@@ -364,57 +364,6 @@ export default async function Home() {
         </Container>
       </section>
 
-      {/* ═══════════════════════ WEB PYME SUSCRIPCION ═══════════════════════ */}
-      <section className="cv-auto border-y border-slate-200 bg-slate-50 py-14">
-        <Container>
-          <div className="grid gap-8 rounded-3xl border border-cyan-200/70 bg-white p-6 shadow-xl shadow-slate-200/70 md:grid-cols-[1.1fr_0.9fr] md:p-8">
-            <div className="space-y-4">
-              <span className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-bold uppercase tracking-widest text-cyan-700">
-                Nueva propuesta
-              </span>
-              <h2 className="text-3xl font-extrabold leading-tight text-slate-900 sm:text-4xl">
-                Impulse su negocio con una web profesional
-              </h2>
-              <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
-                {webPymeSubscription.desc}
-              </p>
-
-              <div className="inline-flex items-end gap-2 rounded-2xl bg-gradient-to-r from-blue-900 to-blue-700 px-5 py-3 text-white shadow-lg shadow-blue-900/30">
-                <span className="text-4xl font-extrabold leading-none">{webPymeSubscription.price}</span>
-                <span className="pb-1 text-sm font-semibold text-blue-100">{webPymeSubscription.period}</span>
-              </div>
-
-              <Link
-                href={webPymeSubscriptionWaLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl bg-[#25d366] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#20b858]"
-              >
-                <WhatsAppIcon className="h-5 w-5" />
-                Cotizar por WhatsApp
-              </Link>
-            </div>
-
-            <div className="space-y-3">
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                {webPymeSubscription.features.map((feature) => (
-                  <div key={feature} className="flex items-start gap-2 py-1.5 text-sm text-slate-700">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-cyan-700" />
-                    <span>{feature}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="rounded-2xl border border-cyan-300 bg-cyan-50 px-4 py-3 text-sm font-semibold text-cyan-900">
-                {webPymeSubscription.bonus}
-              </div>
-              <p className="text-xs text-slate-500">
-                Dominio y correos corporativos se cotizan según requerimiento del cliente.
-              </p>
-            </div>
-          </div>
-        </Container>
-      </section>
-
       {/* ═══════════════════════ STATS ═══════════════════════ */}
       <section className="cv-auto border-y border-slate-200 bg-white">
         <Container className="py-10">
@@ -514,6 +463,66 @@ export default async function Home() {
       </section>
 
       {/* ═══════════════════════ PLANS ═══════════════════════ */}
+      {/* ═══════════════════════ WEB PYME SUSCRIPCION ═══════════════════════ */}
+      <section className="cv-auto bg-white py-16">
+        <Container>
+          <div className="relative overflow-hidden rounded-[28px] border border-cyan-200/70 bg-gradient-to-br from-white via-slate-50 to-cyan-50/70 p-6 shadow-xl shadow-slate-200/70 md:p-8">
+            <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-cyan-300/20 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 -left-12 h-64 w-64 rounded-full bg-blue-400/10 blur-3xl" />
+
+            <div className="relative z-10 grid gap-6 lg:grid-cols-[1.25fr_0.95fr]">
+              <div className="space-y-4">
+                <span className="inline-flex items-center rounded-full border border-cyan-300 bg-cyan-100/80 px-3 py-1 text-xs font-bold uppercase tracking-widest text-cyan-800">
+                  Nueva propuesta
+                </span>
+
+                <h2 className="max-w-xl text-3xl font-extrabold leading-tight text-slate-900 sm:text-4xl">
+                  Impulse su negocio con una web profesional
+                </h2>
+                <p className="max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
+                  {webPymeSubscription.desc}
+                </p>
+
+                <div className="flex flex-wrap items-center gap-3 pt-1">
+                  <div className="inline-flex items-end gap-2 rounded-2xl bg-gradient-to-r from-blue-900 to-blue-700 px-5 py-3 text-white shadow-lg shadow-blue-900/30">
+                    <span className="text-4xl font-extrabold leading-none">{webPymeSubscription.price}</span>
+                    <span className="pb-1 text-sm font-semibold text-blue-100">{webPymeSubscription.period}</span>
+                  </div>
+                  <Link
+                    href={webPymeSubscriptionWaLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#25d366] px-5 py-3 text-sm font-bold text-white transition-all hover:bg-[#20b858] hover:shadow-lg hover:shadow-[#25d366]/25"
+                  >
+                    <WhatsAppIcon className="h-5 w-5" />
+                    Cotizar por WhatsApp
+                  </Link>
+                </div>
+
+                <div className="rounded-2xl border border-cyan-300 bg-cyan-50 px-4 py-3 text-sm font-semibold text-cyan-900">
+                  {webPymeSubscription.bonus}
+                </div>
+                <p className="text-xs text-slate-500">
+                  Dominio y correos corporativos se cotizan según requerimiento del cliente.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm">
+                <p className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">Incluye en la suscripción</p>
+                <div className="space-y-2.5">
+                  {webPymeSubscription.features.map((feature) => (
+                    <div key={feature} className="flex items-start gap-2 text-sm text-slate-700">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-cyan-700" />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
       <section className="cv-auto py-20 bg-white">
         <Container className="space-y-10">
           <div className="space-y-3 text-center">
