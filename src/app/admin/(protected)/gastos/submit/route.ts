@@ -12,8 +12,18 @@ function safeRedirectPath(value: unknown) {
   return path;
 }
 
-function errorRedirect(baseUrl: string, path: string, message: string) {
-  const url = new URL(path, baseUrl);
+function buildRedirectUrl(request: Request, path: string) {
+  const requestUrl = new URL(request.url);
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() || "";
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || "";
+  const host = forwardedHost || request.headers.get("host") || requestUrl.host;
+  const protocol = forwardedProto || requestUrl.protocol.replace(":", "");
+  const origin = `${protocol}://${host}`;
+  return new URL(path, origin);
+}
+
+function errorRedirect(request: Request, path: string, message: string) {
+  const url = buildRedirectUrl(request, path);
   url.searchParams.set("error", message);
   return NextResponse.redirect(url, { status: 303 });
 }
@@ -95,13 +105,13 @@ export async function POST(request: Request) {
   const arrivalDate = normalizeDate(formData.get("arrivalDate"));
 
   if (!name) {
-    return errorRedirect(request.url, redirectTo, "El nombre del gasto es obligatorio.");
+    return errorRedirect(request, redirectTo, "El nombre del gasto es obligatorio.");
   }
 
   const invoiceFile = formData.get("invoiceFile");
   const isFileProvided = invoiceFile instanceof File && invoiceFile.size > 0;
   if (isFileProvided && invoiceFile.size > MAX_UPLOAD_BYTES) {
-    return errorRedirect(request.url, redirectTo, "El archivo adjunto supera 12MB.");
+    return errorRedirect(request, redirectTo, "El archivo adjunto supera 12MB.");
   }
 
   let current = null;
@@ -177,10 +187,17 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo guardar el gasto.";
-    return errorRedirect(request.url, redirectTo, message);
+    if (isRlsError(message)) {
+      return errorRedirect(
+        request,
+        redirectTo,
+        "RLS bloqueó el guardado del gasto. Verifica que SUPABASE_SERVICE_ROLE_KEY sea la key secreta/service role real del proyecto.",
+      );
+    }
+    return errorRedirect(request, redirectTo, message);
   }
 
-  const url = new URL(redirectTo, request.url);
+  const url = buildRedirectUrl(request, redirectTo);
   url.searchParams.set("saved", "1");
   if (warningMessage) {
     url.searchParams.set("warning", warningMessage);

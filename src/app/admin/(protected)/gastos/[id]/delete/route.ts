@@ -9,11 +9,21 @@ function safeRedirectPath(value: unknown) {
   return path;
 }
 
+function buildRedirectUrl(request: Request, path: string) {
+  const requestUrl = new URL(request.url);
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() || "";
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || "";
+  const host = forwardedHost || request.headers.get("host") || requestUrl.host;
+  const protocol = forwardedProto || requestUrl.protocol.replace(":", "");
+  const origin = `${protocol}://${host}`;
+  return new URL(path, origin);
+}
+
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const formData = await request.formData();
   const redirectTo = safeRedirectPath(formData.get("redirectTo"));
-  const url = new URL(redirectTo, request.url);
+  const url = buildRedirectUrl(request, redirectTo);
 
   try {
     const expense = await getExpenseById(id);
