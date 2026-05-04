@@ -184,53 +184,12 @@ function drawTextLines(args: {
   });
 }
 
-function drawWrappedText(args: {
-  page: PDFPage;
-  text: string;
-  x: number;
-  y: number;
-  width: number;
-  font: PDFFont;
-  fontSize: number;
-  lineHeight: number;
-  color: Color;
-  align?: "left" | "center" | "right";
-}) {
-  const { page, text, x, y, width, font, fontSize, lineHeight, color, align } = args;
-  const lines = wrapText(text, font, fontSize, width);
-  drawTextLines({
-    page,
-    lines,
-    x,
-    y,
-    width,
-    font,
-    fontSize,
-    lineHeight,
-    color,
-    align,
-  });
-  return lines;
-}
-
 type PartyCard = {
   title: string;
   primary: string;
   rows: string[];
   soft: boolean;
 };
-
-function measurePartyCardHeight(card: PartyCard, width: number, fontRegular: PDFFont, fontBold: PDFFont) {
-  const innerWidth = width - 24;
-  const primaryLines = wrapText(card.primary, fontBold, 12.2, innerWidth);
-  let height = 12 + 10 + 10; // top + title + spacing
-  height += primaryLines.length * 14 + 6;
-  card.rows.forEach((row) => {
-    if (!row.trim()) return;
-    height += wrapText(row, fontRegular, 8.8, innerWidth).length * 11 + 2;
-  });
-  return Math.max(112, height + 10);
-}
 
 function drawPartyCard(args: {
   page: PDFPage;
@@ -245,6 +204,7 @@ function drawPartyCard(args: {
   const { page, card, x, y, width, height, fontRegular, fontBold } = args;
   const innerX = x + 12;
   const innerWidth = width - 24;
+  const minCursorY = y - height + 10;
 
   page.drawRectangle({
     x,
@@ -266,9 +226,12 @@ function drawPartyCard(args: {
 
   let cursor = y - 34;
 
-  const primaryLines = drawWrappedText({
+  const primaryLinesRaw = wrapText(card.primary, fontBold, 12.2, innerWidth);
+  const primaryLines =
+    primaryLinesRaw.length > 2 ? [primaryLinesRaw[0], `${primaryLinesRaw[1].slice(0, 38)}…`] : primaryLinesRaw;
+  drawTextLines({
     page,
-    text: card.primary,
+    lines: primaryLines,
     x: innerX,
     y: cursor,
     width: innerWidth,
@@ -281,12 +244,15 @@ function drawPartyCard(args: {
 
   for (const row of card.rows) {
     if (!row.trim()) continue;
-    const rowLines = drawWrappedText({
+    if (cursor < minCursorY) break;
+    const rowLinesRaw = wrapText(row, fontRegular, 8.8, innerWidth);
+    const rowLines = rowLinesRaw.length > 2 ? [rowLinesRaw[0], `${rowLinesRaw[1].slice(0, 52)}…`] : rowLinesRaw;
+    drawTextLines({
       page,
-      text: row,
       x: innerX,
       y: cursor,
       width: innerWidth,
+      lines: rowLines,
       font: fontRegular,
       fontSize: 8.8,
       lineHeight: 11,
@@ -301,9 +267,8 @@ function drawHeader(args: {
   input: QuotePdfInput;
   fontRegular: PDFFont;
   fontBold: PDFFont;
-  continuation?: boolean;
 }) {
-  const { page, input, fontRegular, fontBold, continuation = false } = args;
+  const { page, input, fontRegular, fontBold } = args;
   const headerHeight = 122;
   const rightEdge = PAGE_WIDTH - MARGIN;
   const quoteCode = input.meta.quoteNumber || `COT-${input.quoteId.slice(0, 8).toUpperCase()}`;
@@ -351,7 +316,7 @@ function drawHeader(args: {
     font: fontBold,
     color: colors.white,
   });
-  page.drawText(continuation ? "Cotización comercial · Continuación" : "Cotización comercial", {
+  page.drawText("Cotización comercial", {
     x: MARGIN + 50,
     y: PAGE_HEIGHT - 79,
     size: 10,
@@ -450,25 +415,36 @@ export async function generateQuotePdf(input: QuotePdfInput) {
   const pdf = await PDFDocument.create();
   const fontRegular = await pdf.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
-
-  let page = pdf.addPage(PAGE_SIZE);
+  const page = pdf.addPage(PAGE_SIZE);
   let y = drawHeader({ page, input, fontRegular, fontBold });
 
-  const newContinuationPage = () => {
-    page = pdf.addPage(PAGE_SIZE);
-    y = drawHeader({ page, input, fontRegular, fontBold, continuation: true });
-  };
+  const tableCols = [
+    { key: "concepto", label: "Concepto", width: CONTENT_WIDTH * 0.41 },
+    { key: "detalle", label: "Detalle", width: CONTENT_WIDTH * 0.23 },
+    { key: "cantidad", label: "Cant.", width: CONTENT_WIDTH * 0.1 },
+    { key: "desc", label: "Desc.", width: CONTENT_WIDTH * 0.1 },
+    { key: "total", label: "Total", width: CONTENT_WIDTH * 0.16 },
+  ] as const;
 
-  const cardGap = 12;
+  const items = input.meta.items.length ? input.meta.items : [];
+  const subtotalFallback = items.reduce((acc, item) => acc + itemTotal(item), 0);
+  const subtotal = valueNumber(input.meta.subtotal, subtotalFallback);
+  const discount = valueNumber(input.meta.totalDescuento, 0);
+  const iva = valueNumber(input.meta.iva, input.meta.includeIva ? subtotal * 0.19 : 0);
+  const total = valueNumber(input.meta.grandTotal, subtotal + iva);
+
+  const cardGap = 10;
   const cardWidth = (CONTENT_WIDTH - cardGap) / 2;
+  const cardsHeight = 116;
   const issuerCard: PartyCard = {
     title: "Emisor",
     primary: safeText(ZYTERON_COMPANY.legalName),
     rows: [
       `RUT: ${safeText(ZYTERON_COMPANY.rut)}`,
       safeText(ZYTERON_COMPANY.businessLine),
-      safeText(ZYTERON_COMPANY.addressLine),
-      safeText(ZYTERON_COMPANY.location),
+      [safeText(ZYTERON_COMPANY.addressLine, ""), safeText(ZYTERON_COMPANY.location, "")]
+        .filter(Boolean)
+        .join(", "),
       `${safeText(ZYTERON_COMPANY.salesEmail)} · ${safeText(ZYTERON_COMPANY.phone)}`,
     ],
     soft: false,
@@ -492,14 +468,6 @@ export async function generateQuotePdf(input: QuotePdfInput) {
     soft: true,
   };
 
-  const issuerHeight = measurePartyCardHeight(issuerCard, cardWidth, fontRegular, fontBold);
-  const clientHeight = measurePartyCardHeight(clientCard, cardWidth, fontRegular, fontBold);
-  const cardsHeight = Math.max(issuerHeight, clientHeight);
-
-  if (y - cardsHeight < MARGIN + FOOTER_RESERVED) {
-    newContinuationPage();
-  }
-
   drawPartyCard({
     page,
     card: issuerCard,
@@ -520,17 +488,14 @@ export async function generateQuotePdf(input: QuotePdfInput) {
     fontRegular,
     fontBold,
   });
-  y -= cardsHeight + 18;
+  y -= cardsHeight + 12;
 
   const summaryText =
     safeText(input.meta.notes, "") ||
-    "Propuesta comercial elaborada para una ejecución profesional, con alcance, plazos y costos claramente definidos.";
-  const summaryLines = wrapText(summaryText, fontRegular, 9, CONTENT_WIDTH - 24);
-  const summaryHeight = Math.max(64, 30 + Math.min(summaryLines.length, 6) * 12);
-
-  if (y - summaryHeight < MARGIN + FOOTER_RESERVED) {
-    newContinuationPage();
-  }
+    "Propuesta comercial profesional con alcance, tiempos y costos definidos para ejecución controlada.";
+  const summaryRawLines = wrapText(summaryText, fontRegular, 8.8, CONTENT_WIDTH - 24);
+  const summaryLines = summaryRawLines.length > 4 ? [...summaryRawLines.slice(0, 3), "…"] : summaryRawLines;
+  const summaryHeight = 30 + summaryLines.length * 10;
 
   page.drawRectangle({
     x: MARGIN,
@@ -543,72 +508,75 @@ export async function generateQuotePdf(input: QuotePdfInput) {
   });
   page.drawText("Resumen ejecutivo", {
     x: MARGIN + 12,
-    y: y - 18,
-    size: 9,
+    y: y - 16,
+    size: 8.8,
     font: fontBold,
     color: colors.slate,
   });
-  drawWrappedText({
+  drawTextLines({
     page,
-    text: summaryText,
+    lines: summaryLines,
     x: MARGIN + 12,
-    y: y - 34,
+    y: y - 30,
     width: CONTENT_WIDTH - 24,
     font: fontRegular,
-    fontSize: 9,
-    lineHeight: 12,
+    fontSize: 8.6,
+    lineHeight: 10,
     color: colors.dark,
   });
-  y -= summaryHeight + 16;
+  y -= summaryHeight + 10;
 
-  const tableCols = [
-    { key: "concepto", label: "Concepto", width: CONTENT_WIDTH * 0.41 },
-    { key: "detalle", label: "Detalle", width: CONTENT_WIDTH * 0.23 },
-    { key: "cantidad", label: "Cant.", width: CONTENT_WIDTH * 0.1 },
-    { key: "desc", label: "Desc.", width: CONTENT_WIDTH * 0.1 },
-    { key: "total", label: "Total", width: CONTENT_WIDTH * 0.16 },
-  ] as const;
-
-  const drawTableHeader = () => {
-    const headerHeight = 24;
-    page.drawRectangle({
-      x: MARGIN,
-      y: y - headerHeight,
-      width: CONTENT_WIDTH,
-      height: headerHeight,
-      color: colors.soft,
-      borderColor: colors.line,
-      borderWidth: 1,
-    });
-
-    let cursorX = MARGIN;
-    tableCols.forEach((col) => {
-      const x = cursorX + 8;
-      page.drawText(col.label, {
-        x,
-        y: y - 16,
-        size: 8.4,
-        font: fontBold,
-        color: colors.slate,
-      });
-      cursorX += col.width;
-    });
-    y -= headerHeight;
-  };
+  const conditionsText =
+    safeText(input.meta.terms, "") ||
+    "La presente cotización considera los alcances descritos. Servicios adicionales se cotizan por separado.";
+  const leftWidth = CONTENT_WIDTH * 0.6;
+  const rightWidth = CONTENT_WIDTH - leftWidth - 12;
+  const conditionsRawLines = wrapText(conditionsText, fontRegular, 8, leftWidth - 24);
+  const conditionsLines =
+    conditionsRawLines.length > 7 ? [...conditionsRawLines.slice(0, 6), "…"] : conditionsRawLines;
+  const leftHeight = Math.max(100, 58 + conditionsLines.length * 9);
+  const rightHeight = 112;
+  const boxesHeight = Math.max(leftHeight, rightHeight);
 
   page.drawText("Detalle de la cotización", {
     x: MARGIN,
     y,
-    size: 10,
+    size: 9.6,
     font: fontBold,
     color: colors.slate,
   });
-  y -= 14;
-  drawTableHeader();
+  y -= 13;
 
-  const items = input.meta.items.length ? input.meta.items : [];
+  const tableHeaderHeight = 22;
+  page.drawRectangle({
+    x: MARGIN,
+    y: y - tableHeaderHeight,
+    width: CONTENT_WIDTH,
+    height: tableHeaderHeight,
+    color: colors.soft,
+    borderColor: colors.line,
+    borderWidth: 1,
+  });
+  let tableHeaderX = MARGIN;
+  tableCols.forEach((col) => {
+    page.drawText(col.label, {
+      x: tableHeaderX + 7,
+      y: y - 15,
+      size: 8,
+      font: fontBold,
+      color: colors.slate,
+    });
+    tableHeaderX += col.width;
+  });
+  y -= tableHeaderHeight;
+
+  const minYAfterTable = MARGIN + FOOTER_RESERVED + boxesHeight + 12;
+  let visibleItems = 0;
+  let hiddenItems = 0;
+  let hiddenTotal = 0;
+
   if (!items.length) {
-    const emptyHeight = 28;
+    const emptyHeight = 22;
     page.drawRectangle({
       x: MARGIN,
       y: y - emptyHeight,
@@ -620,37 +588,32 @@ export async function generateQuotePdf(input: QuotePdfInput) {
     });
     page.drawText("Sin ítems registrados.", {
       x: MARGIN + 10,
-      y: y - 17,
-      size: 8.8,
+      y: y - 14,
+      size: 8.2,
       font: fontRegular,
       color: colors.muted,
     });
     y -= emptyHeight;
   } else {
     for (const item of items) {
-      const descMax = tableCols[0].width - 12;
-      const detailMax = tableCols[1].width - 12;
-      const descLines = wrapText(safeText(item.description), fontBold, 9, descMax);
-      const detailLines = wrapText(
+      const descLinesRaw = wrapText(safeText(item.description), fontBold, 8.2, tableCols[0].width - 12);
+      const detailLinesRaw = wrapText(
         safeText(item.detail || item.unit || "Servicio"),
         fontRegular,
-        8.5,
-        detailMax,
+        7.8,
+        tableCols[1].width - 12,
       );
+      const descLines =
+        descLinesRaw.length > 2 ? [descLinesRaw[0], `${descLinesRaw[1].slice(0, 40)}…`] : descLinesRaw;
+      const detailLines =
+        detailLinesRaw.length > 2 ? [detailLinesRaw[0], `${detailLinesRaw[1].slice(0, 40)}…`] : detailLinesRaw;
       const lineCount = Math.max(descLines.length, detailLines.length, 1);
-      const rowHeight = Math.max(28, lineCount * 11 + 10);
+      const rowHeight = Math.max(20, lineCount * 9 + 8);
 
-      if (y - rowHeight < MARGIN + FOOTER_RESERVED) {
-        newContinuationPage();
-        page.drawText("Detalle de la cotización (continuación)", {
-          x: MARGIN,
-          y,
-          size: 10,
-          font: fontBold,
-          color: colors.slate,
-        });
-        y -= 14;
-        drawTableHeader();
+      if (y - rowHeight < minYAfterTable) {
+        hiddenItems += 1;
+        hiddenTotal += itemTotal(item);
+        continue;
       }
 
       page.drawRectangle({
@@ -668,11 +631,11 @@ export async function generateQuotePdf(input: QuotePdfInput) {
         page,
         lines: descLines,
         x: colX + 6,
-        y: y - 8,
+        y: y - 7,
         width: tableCols[0].width - 12,
         font: fontBold,
-        fontSize: 9,
-        lineHeight: 11,
+        fontSize: 8.2,
+        lineHeight: 9,
         color: colors.dark,
       });
       colX += tableCols[0].width;
@@ -681,11 +644,11 @@ export async function generateQuotePdf(input: QuotePdfInput) {
         page,
         lines: detailLines,
         x: colX + 6,
-        y: y - 8,
+        y: y - 7,
         width: tableCols[1].width - 12,
         font: fontRegular,
-        fontSize: 8.5,
-        lineHeight: 11,
+        fontSize: 7.8,
+        lineHeight: 9,
         color: colors.muted,
       });
       colX += tableCols[1].width;
@@ -694,11 +657,11 @@ export async function generateQuotePdf(input: QuotePdfInput) {
         page,
         lines: [String(valueNumber(item.qty, 0))],
         x: colX,
-        y: y - rowHeight / 2 + 3,
+        y: y - rowHeight / 2 + 2,
         width: tableCols[2].width,
         font: fontRegular,
-        fontSize: 8.8,
-        lineHeight: 10,
+        fontSize: 8,
+        lineHeight: 9,
         color: colors.dark,
         align: "center",
       });
@@ -708,11 +671,11 @@ export async function generateQuotePdf(input: QuotePdfInput) {
         page,
         lines: [`${valueNumber(item.discountPct, 0)}%`],
         x: colX,
-        y: y - rowHeight / 2 + 3,
+        y: y - rowHeight / 2 + 2,
         width: tableCols[3].width,
         font: fontRegular,
-        fontSize: 8.8,
-        lineHeight: 10,
+        fontSize: 8,
+        lineHeight: 9,
         color: colors.dark,
         align: "center",
       });
@@ -722,44 +685,72 @@ export async function generateQuotePdf(input: QuotePdfInput) {
         page,
         lines: [currencyCLP(itemTotal(item))],
         x: colX + 6,
-        y: y - rowHeight / 2 + 3,
+        y: y - rowHeight / 2 + 2,
         width: tableCols[4].width - 12,
         font: fontBold,
-        fontSize: 8.8,
-        lineHeight: 10,
+        fontSize: 8.2,
+        lineHeight: 9,
         color: colors.dark,
         align: "right",
       });
 
       y -= rowHeight;
+      visibleItems += 1;
+    }
+
+    if (hiddenItems > 0 && y - 20 >= minYAfterTable) {
+      const collapsedHeight = 20;
+      page.drawRectangle({
+        x: MARGIN,
+        y: y - collapsedHeight,
+        width: CONTENT_WIDTH,
+        height: collapsedHeight,
+        color: rgb(0.99, 0.99, 1),
+        borderColor: colors.line,
+        borderWidth: 1,
+      });
+      page.drawText(`+ ${hiddenItems} ítems consolidados para mantener una sola hoja`, {
+        x: MARGIN + 8,
+        y: y - 13,
+        size: 7.6,
+        font: fontRegular,
+        color: colors.muted,
+      });
+      drawRightAlignedText({
+        page,
+        text: currencyCLP(hiddenTotal),
+        rightX: MARGIN + CONTENT_WIDTH - 8,
+        y: y - 13,
+        size: 7.8,
+        font: fontBold,
+        color: colors.dark,
+      });
+      y -= collapsedHeight;
+    }
+
+    if (visibleItems === 0 && hiddenItems > 0 && y - 20 >= minYAfterTable) {
+      const condensedHeight = 20;
+      page.drawRectangle({
+        x: MARGIN,
+        y: y - condensedHeight,
+        width: CONTENT_WIDTH,
+        height: condensedHeight,
+        color: colors.white,
+        borderColor: colors.line,
+        borderWidth: 1,
+      });
+      page.drawText("Detalle compacto aplicado para conservar 1 sola hoja A4", {
+        x: MARGIN + 8,
+        y: y - 13,
+        size: 7.6,
+        font: fontRegular,
+        color: colors.muted,
+      });
+      y -= condensedHeight;
     }
   }
 
-  y -= 16;
-
-  const subtotalFallback = items.reduce((acc, item) => acc + itemTotal(item), 0);
-  const subtotal = valueNumber(input.meta.subtotal, subtotalFallback);
-  const discount = valueNumber(input.meta.totalDescuento, 0);
-  const iva = valueNumber(input.meta.iva, input.meta.includeIva ? subtotal * 0.19 : 0);
-  const total = valueNumber(input.meta.grandTotal, subtotal + iva);
-
-  const conditionsText =
-    safeText(input.meta.terms, "") ||
-    "La presente cotización considera los alcances descritos. Cualquier servicio adicional será evaluado y cotizado por separado.";
-  let conditionsLines = wrapText(conditionsText, fontRegular, 8.5, CONTENT_WIDTH * 0.62 - 24);
-  if (conditionsLines.length > 14) {
-    conditionsLines = [...conditionsLines.slice(0, 13), "…"];
-  }
-
-  const leftWidth = CONTENT_WIDTH * 0.62;
-  const rightWidth = CONTENT_WIDTH - leftWidth - 12;
-  const leftHeight = Math.max(116, 74 + conditionsLines.length * 11);
-  const rightHeight = 126;
-  const boxesHeight = Math.max(leftHeight, rightHeight);
-
-  if (y - boxesHeight < MARGIN + FOOTER_RESERVED) {
-    newContinuationPage();
-  }
+  y -= 10;
 
   page.drawRectangle({
     x: MARGIN,
@@ -770,48 +761,51 @@ export async function generateQuotePdf(input: QuotePdfInput) {
     borderColor: colors.line,
     borderWidth: 1,
   });
-  page.drawText("Condiciones", {
-    x: MARGIN + 12,
-    y: y - 17,
-    size: 9,
+  page.drawRectangle({
+    x: MARGIN,
+    y: y - 18,
+    width: leftWidth,
+    height: 18,
+    color: colors.soft,
+  });
+  page.drawText("Condiciones comerciales", {
+    x: MARGIN + 10,
+    y: y - 12,
+    size: 8.6,
     font: fontBold,
     color: colors.slate,
   });
 
   page.drawText(`Pago: ${safeText(input.meta.paymentMethod, "Transferencia bancaria")}`, {
-    x: MARGIN + 12,
-    y: y - 35,
-    size: 8.6,
+    x: MARGIN + 10,
+    y: y - 30,
+    size: 8,
     font: fontRegular,
     color: colors.dark,
   });
   page.drawText(`Plazo: ${safeText(input.meta.paymentTerms, "30 días")}`, {
-    x: MARGIN + 12,
-    y: y - 48,
-    size: 8.6,
+    x: MARGIN + 10,
+    y: y - 41,
+    size: 8,
     font: fontRegular,
     color: colors.dark,
   });
-  page.drawText(
-    `Validez: ${safeText(input.meta.validityDays, "30 días")} · hasta ${formatDate(input.meta.validUntil)}`,
-    {
-      x: MARGIN + 12,
-      y: y - 61,
-      size: 8.6,
-      font: fontRegular,
-      color: colors.dark,
-    },
-  );
-
+  page.drawText(`Validez: ${safeText(input.meta.validityDays, "30 días")} · hasta ${formatDate(input.meta.validUntil)}`, {
+    x: MARGIN + 10,
+    y: y - 52,
+    size: 8,
+    font: fontRegular,
+    color: colors.dark,
+  });
   drawTextLines({
     page,
     lines: conditionsLines,
-    x: MARGIN + 12,
-    y: y - 80,
-    width: leftWidth - 24,
+    x: MARGIN + 10,
+    y: y - 67,
+    width: leftWidth - 20,
     font: fontRegular,
-    fontSize: 8.5,
-    lineHeight: 11,
+    fontSize: 7.8,
+    lineHeight: 9,
     color: colors.muted,
   });
 
@@ -823,11 +817,10 @@ export async function generateQuotePdf(input: QuotePdfInput) {
     height: boxesHeight,
     color: colors.navy,
   });
-
-  page.drawText("Totales", {
-    x: totalsX + 14,
-    y: y - 18,
-    size: 10,
+  page.drawText("Resumen financiero", {
+    x: totalsX + 12,
+    y: y - 14,
+    size: 9,
     font: fontBold,
     color: colors.white,
   });
@@ -836,38 +829,59 @@ export async function generateQuotePdf(input: QuotePdfInput) {
     { label: "Subtotal", value: currencyCLP(subtotal) },
     { label: "Descuentos", value: `-${currencyCLP(discount)}` },
     { label: input.meta.includeIva ? "IVA" : "Impuestos", value: currencyCLP(iva) },
-    { label: "Total", value: currencyCLP(total), emphasize: true },
   ];
 
   entries.forEach((entry, index) => {
-    const rowY = y - 42 - index * 20;
+    const rowY = y - 34 - index * 16;
     page.drawText(entry.label, {
-      x: totalsX + 14,
+      x: totalsX + 12,
       y: rowY,
-      size: entry.emphasize ? 10 : 9,
-      font: entry.emphasize ? fontBold : fontRegular,
+      size: 8.4,
+      font: fontRegular,
       color: rgb(0.84, 0.9, 1),
     });
     drawRightAlignedText({
       page,
       text: entry.value,
-      rightX: totalsX + rightWidth - 14,
+      rightX: totalsX + rightWidth - 12,
       y: rowY,
-      size: entry.emphasize ? 14 : 9.5,
-      font: entry.emphasize ? fontBold : fontBold,
+      size: 8.8,
+      font: fontBold,
       color: colors.white,
     });
   });
 
-  const pages = pdf.getPages();
-  pages.forEach((pdfPage, index) => {
-    drawFooter({
-      page: pdfPage,
-      pageNumber: index + 1,
-      totalPages: pages.length,
-      fontRegular,
-      fontBold,
-    });
+  const totalY = y - boxesHeight + 20;
+  page.drawRectangle({
+    x: totalsX + 10,
+    y: totalY - 8,
+    width: rightWidth - 20,
+    height: 22,
+    color: rgb(0.12, 0.26, 0.52),
+  });
+  page.drawText("TOTAL", {
+    x: totalsX + 16,
+    y: totalY,
+    size: 10,
+    font: fontBold,
+    color: colors.white,
+  });
+  drawRightAlignedText({
+    page,
+    text: currencyCLP(total),
+    rightX: totalsX + rightWidth - 16,
+    y: totalY - 1,
+    size: 12.5,
+    font: fontBold,
+    color: colors.white,
+  });
+
+  drawFooter({
+    page,
+    pageNumber: 1,
+    totalPages: 1,
+    fontRegular,
+    fontBold,
   });
 
   return pdf.save();
