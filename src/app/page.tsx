@@ -143,6 +143,22 @@ const plans = [
   },
 ];
 
+const webPymeSubscription = {
+  name: "Web PYME Suscripción",
+  price: "$25.990",
+  period: "/ mes",
+  desc: "Presencia, confianza y resultados para tu negocio con una suscripción mensual accesible.",
+  features: [
+    "Sitio web profesional para su negocio",
+    "Catálogo de productos",
+    "Botón directo a WhatsApp",
+    "Reseñas de clientes",
+    "Mini panel para editar productos",
+    "Diseño responsive para PC y celular",
+  ],
+  bonus: "Primer mes gratis en modificaciones y asistencia técnica.",
+};
+
 const faqs = [
   {
     q: "Cuanto demora una pagina web para empresas en Chile?",
@@ -180,6 +196,9 @@ const getWaLink = (name: string, price: string, intent: ChatIntent = "plan") => 
       : `Hola, quiero comprar ${name} (${price}, IVA incluido). ¿Disponibilidad y envío a mi dirección?`;
   return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 };
+const webPymeSubscriptionWaLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+  "Hola Zyteron, me interesa la Web PYME Suscripción de $25.990/mes. ¿Me pueden enviar el detalle para contratar?",
+)}`;
 
 /* ── PAGE ── */
 export default async function Home() {
@@ -340,6 +359,57 @@ export default async function Home() {
                 </div>
                 <ArrowRight className="h-5 w-5 text-white" />
               </Link>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* ═══════════════════════ WEB PYME SUSCRIPCION ═══════════════════════ */}
+      <section className="cv-auto border-y border-slate-200 bg-slate-50 py-14">
+        <Container>
+          <div className="grid gap-8 rounded-3xl border border-cyan-200/70 bg-white p-6 shadow-xl shadow-slate-200/70 md:grid-cols-[1.1fr_0.9fr] md:p-8">
+            <div className="space-y-4">
+              <span className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-bold uppercase tracking-widest text-cyan-700">
+                Nueva propuesta
+              </span>
+              <h2 className="text-3xl font-extrabold leading-tight text-slate-900 sm:text-4xl">
+                Impulse su negocio con una web profesional
+              </h2>
+              <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
+                {webPymeSubscription.desc}
+              </p>
+
+              <div className="inline-flex items-end gap-2 rounded-2xl bg-gradient-to-r from-blue-900 to-blue-700 px-5 py-3 text-white shadow-lg shadow-blue-900/30">
+                <span className="text-4xl font-extrabold leading-none">{webPymeSubscription.price}</span>
+                <span className="pb-1 text-sm font-semibold text-blue-100">{webPymeSubscription.period}</span>
+              </div>
+
+              <Link
+                href={webPymeSubscriptionWaLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#25d366] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#20b858]"
+              >
+                <WhatsAppIcon className="h-5 w-5" />
+                Cotizar por WhatsApp
+              </Link>
+            </div>
+
+            <div className="space-y-3">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                {webPymeSubscription.features.map((feature) => (
+                  <div key={feature} className="flex items-start gap-2 py-1.5 text-sm text-slate-700">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-cyan-700" />
+                    <span>{feature}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-cyan-300 bg-cyan-50 px-4 py-3 text-sm font-semibold text-cyan-900">
+                {webPymeSubscription.bonus}
+              </div>
+              <p className="text-xs text-slate-500">
+                Dominio y correos corporativos se cotizan según requerimiento del cliente.
+              </p>
             </div>
           </div>
         </Container>
