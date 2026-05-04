@@ -38,10 +38,46 @@ function normalizeOptional(value: unknown) {
   return cleaned.length > 0 ? cleaned : null;
 }
 
+function parseLocalizedNumber(raw: string) {
+  const cleaned = raw.replace(/[^\d.,-]/g, "").trim();
+  if (!cleaned) return null;
+
+  const negative = cleaned.startsWith("-");
+  const unsigned = negative ? cleaned.slice(1) : cleaned;
+  const dotCount = (unsigned.match(/\./g) || []).length;
+  const commaCount = (unsigned.match(/,/g) || []).length;
+
+  let normalized = unsigned;
+
+  if (dotCount > 0 && commaCount > 0) {
+    const decimalSeparator = unsigned.lastIndexOf(".") > unsigned.lastIndexOf(",") ? "." : ",";
+    const thousandsSeparator = decimalSeparator === "." ? "," : ".";
+    normalized = normalized.split(thousandsSeparator).join("");
+    normalized = normalized.replace(decimalSeparator, ".");
+  } else if (dotCount > 0 || commaCount > 0) {
+    const separator = dotCount > 0 ? "." : ",";
+    const count = dotCount > 0 ? dotCount : commaCount;
+    if (count > 1) {
+      normalized = normalized.split(separator).join("");
+    } else {
+      const [left, right = ""] = normalized.split(separator);
+      if (right.length === 3 && left.length >= 1) {
+        normalized = `${left}${right}`;
+      } else {
+        normalized = `${left}.${right}`;
+      }
+    }
+  }
+
+  const parsed = Number((negative ? "-" : "") + normalized);
+  if (!Number.isFinite(parsed)) return null;
+  return parsed;
+}
+
 function normalizeAmount(value: unknown) {
   const raw = normalizeText(value);
   if (!raw) return null;
-  const parsed = Number(raw.replace(/[^\d.-]/g, ""));
+  const parsed = parseLocalizedNumber(raw);
   if (!Number.isFinite(parsed) || parsed < 0) return null;
   return Math.round(parsed);
 }

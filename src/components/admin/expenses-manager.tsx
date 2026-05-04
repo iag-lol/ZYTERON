@@ -136,7 +136,7 @@ export function ExpensesManager({ expenses, activeCategory, activeStatus }: Prop
             </div>
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Valor (CLP)</label>
-              <input name="amount" type="number" min={0} step={1} placeholder="Ej: 99000" className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100" />
+              <input name="amount" type="text" inputMode="numeric" placeholder="Ej: 30.000" className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100" />
             </div>
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Tienda</label>
@@ -269,7 +269,7 @@ export function ExpensesManager({ expenses, activeCategory, activeStatus }: Prop
                         </div>
                         <div>
                           <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Valor</label>
-                          <input name="amount" type="number" min={0} step={1} defaultValue={typeof expense.amount === "number" ? expense.amount : ""} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900" />
+                          <input name="amount" type="text" inputMode="numeric" defaultValue={typeof expense.amount === "number" ? String(expense.amount) : ""} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900" />
                         </div>
                         <div>
                           <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Tienda</label>
