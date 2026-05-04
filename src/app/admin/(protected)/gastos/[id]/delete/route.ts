@@ -27,7 +27,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     url.searchParams.set("saved", "1");
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo eliminar el gasto.";
-    url.searchParams.set("error", encodeURIComponent(message));
+    url.searchParams.set("error", message);
   }
 
   return NextResponse.redirect(url, { status: 303 });

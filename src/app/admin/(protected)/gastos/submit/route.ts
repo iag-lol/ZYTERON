@@ -14,7 +14,7 @@ function safeRedirectPath(value: unknown) {
 
 function errorRedirect(baseUrl: string, path: string, message: string) {
   const url = new URL(path, baseUrl);
-  url.searchParams.set("error", encodeURIComponent(message));
+  url.searchParams.set("error", message);
   return NextResponse.redirect(url, { status: 303 });
 }
 
@@ -57,6 +57,29 @@ function normalizeFileName(name: string) {
     .slice(0, 100);
 }
 
+function isRlsError(message: string) {
+  const normalized = message.toLowerCase();
+  return normalized.includes("row-level security") || normalized.includes("violates row-level security policy");
+}
+
+async function ensureExpenseBucket() {
+  const { supabase } = createSupabaseServerClient();
+  const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+  if (listError) {
+    throw new Error(`No se pudo verificar el bucket de gastos: ${listError.message}`);
+  }
+
+  const bucketExists = (buckets || []).some((bucket) => bucket.name === ZYTERON_EXPENSE_BUCKET);
+  if (!bucketExists) {
+    const { error: createError } = await supabase.storage.createBucket(ZYTERON_EXPENSE_BUCKET, { public: true });
+    if (createError && !createError.message.toLowerCase().includes("already exists")) {
+      throw new Error(`No se pudo crear bucket de gastos: ${createError.message}`);
+    }
+  }
+
+  return supabase;
+}
+
 export async function POST(request: Request) {
   const formData = await request.formData();
   const redirectTo = safeRedirectPath(formData.get("redirectTo"));
@@ -89,6 +112,7 @@ export async function POST(request: Request) {
   let invoiceFileUrl = current?.invoiceFileUrl || null;
   let invoiceFilePath = current?.invoiceFilePath || null;
   let invoiceFileName = current?.invoiceFileName || null;
+  let warningMessage: string | null = null;
 
   if (isFileProvided) {
     try {
@@ -96,25 +120,28 @@ export async function POST(request: Request) {
       const cleanFileName = normalizeFileName(invoiceFile.name || "adjunto");
       const path = `expenses/${new Date().getFullYear()}/${id}/${Date.now()}-${cleanFileName}`;
 
-      const { supabase } = createSupabaseServerClient();
+      const supabase = await ensureExpenseBucket();
       const upload = await supabase.storage
         .from(ZYTERON_EXPENSE_BUCKET)
         .upload(path, fileBytes, {
           contentType: invoiceFile.type || "application/octet-stream",
-          upsert: true,
+          upsert: false,
         });
 
       if (upload.error) {
-        return errorRedirect(request.url, redirectTo, `No se pudo subir el archivo: ${upload.error.message}`);
+        const uploadMessage = String(upload.error.message || "Error desconocido al adjuntar archivo.");
+        warningMessage = isRlsError(uploadMessage)
+          ? "Gasto guardado sin adjunto: Storage bloqueó la subida por permisos RLS. Revisa políticas del bucket o la Service Role Key."
+          : `Gasto guardado sin adjunto: ${uploadMessage}`;
+      } else {
+        const publicUrl = supabase.storage.from(ZYTERON_EXPENSE_BUCKET).getPublicUrl(path);
+        invoiceFilePath = path;
+        invoiceFileUrl = publicUrl.data.publicUrl || null;
+        invoiceFileName = cleanFileName;
       }
-
-      const publicUrl = supabase.storage.from(ZYTERON_EXPENSE_BUCKET).getPublicUrl(path);
-      invoiceFilePath = path;
-      invoiceFileUrl = publicUrl.data.publicUrl || null;
-      invoiceFileName = cleanFileName;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error al adjuntar el archivo.";
-      return errorRedirect(request.url, redirectTo, message);
+      warningMessage = `Gasto guardado sin adjunto: ${message}`;
     }
   }
 
@@ -155,5 +182,8 @@ export async function POST(request: Request) {
 
   const url = new URL(redirectTo, request.url);
   url.searchParams.set("saved", "1");
+  if (warningMessage) {
+    url.searchParams.set("warning", warningMessage);
+  }
   return NextResponse.redirect(url, { status: 303 });
 }

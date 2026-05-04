@@ -10,12 +10,14 @@ type PageProps = {
         category?: string;
         saved?: string;
         error?: string;
+        warning?: string;
       }
     | Promise<{
         status?: string;
         category?: string;
         saved?: string;
         error?: string;
+        warning?: string;
       }>;
 };
 
@@ -29,6 +31,16 @@ function normalizeCategory(value?: string | null) {
   const candidate = String(value || "").trim().toUpperCase();
   if (!candidate) return "ALL";
   return candidate;
+}
+
+function safeDecodeQueryParam(value?: string | null) {
+  const message = String(value || "").trim();
+  if (!message) return "";
+  try {
+    return decodeURIComponent(message);
+  } catch {
+    return message;
+  }
 }
 
 export default async function GastosPage({ searchParams }: PageProps) {
@@ -56,9 +68,14 @@ export default async function GastosPage({ searchParams }: PageProps) {
           Gasto guardado correctamente.
         </div>
       ) : null}
+      {query?.warning ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {safeDecodeQueryParam(query.warning)}
+        </div>
+      ) : null}
       {query?.error ? (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          {decodeURIComponent(query.error)}
+          {safeDecodeQueryParam(query.error)}
         </div>
       ) : null}
 

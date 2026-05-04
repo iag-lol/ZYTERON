@@ -81,21 +81,21 @@ DROP POLICY IF EXISTS expense_bucket_public_read ON storage.objects;
 CREATE POLICY expense_bucket_public_read
 ON storage.objects
 FOR SELECT
-TO anon, authenticated
+TO anon, authenticated, service_role
 USING (bucket_id = 'expense-documents');
 
 DROP POLICY IF EXISTS expense_bucket_authenticated_insert ON storage.objects;
 CREATE POLICY expense_bucket_authenticated_insert
 ON storage.objects
 FOR INSERT
-TO authenticated
+TO authenticated, service_role
 WITH CHECK (bucket_id = 'expense-documents');
 
 DROP POLICY IF EXISTS expense_bucket_authenticated_update ON storage.objects;
 CREATE POLICY expense_bucket_authenticated_update
 ON storage.objects
 FOR UPDATE
-TO authenticated
+TO authenticated, service_role
 USING (bucket_id = 'expense-documents')
 WITH CHECK (bucket_id = 'expense-documents');
 
@@ -103,7 +103,7 @@ DROP POLICY IF EXISTS expense_bucket_authenticated_delete ON storage.objects;
 CREATE POLICY expense_bucket_authenticated_delete
 ON storage.objects
 FOR DELETE
-TO authenticated
+TO authenticated, service_role
 USING (bucket_id = 'expense-documents');
 
 -- Fuerza recarga de schema cache de PostgREST.
