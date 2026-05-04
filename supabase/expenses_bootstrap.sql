@@ -57,53 +57,96 @@ GRANT INSERT, UPDATE, DELETE ON TABLE public."Expense" TO anon, authenticated;
 
 ALTER TABLE public."Expense" ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS expense_select_public ON public."Expense";
+-- Limpieza defensiva: elimina cualquier política previa en Expense
+DO $$
+DECLARE
+  policy_record RECORD;
+BEGIN
+  FOR policy_record IN
+    SELECT policyname
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'Expense'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public."Expense";', policy_record.policyname);
+  END LOOP;
+END
+$$;
+
 CREATE POLICY expense_select_public
 ON public."Expense"
 FOR SELECT
-TO anon, authenticated
+TO PUBLIC
 USING (true);
 
-DROP POLICY IF EXISTS expense_write_authenticated ON public."Expense";
-CREATE POLICY expense_write_authenticated
+CREATE POLICY expense_insert_public
 ON public."Expense"
-FOR ALL
-TO anon, authenticated, service_role
+FOR INSERT
+TO PUBLIC
+WITH CHECK (true);
+
+CREATE POLICY expense_update_public
+ON public."Expense"
+FOR UPDATE
+TO PUBLIC
 USING (true)
 WITH CHECK (true);
+
+CREATE POLICY expense_delete_public
+ON public."Expense"
+FOR DELETE
+TO PUBLIC
+USING (true);
 
 -- Bucket para respaldos/facturas de gastos
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('expense-documents', 'expense-documents', true)
 ON CONFLICT (id) DO NOTHING;
 
-DROP POLICY IF EXISTS expense_bucket_public_read ON storage.objects;
+-- Limpieza defensiva: elimina cualquier política previa del bucket expense-documents en storage.objects
+DO $$
+DECLARE
+  policy_record RECORD;
+BEGIN
+  FOR policy_record IN
+    SELECT policyname
+    FROM pg_policies
+    WHERE schemaname = 'storage'
+      AND tablename = 'objects'
+      AND (
+        policyname LIKE 'expense_bucket_%'
+        OR coalesce(qual, '') LIKE '%expense-documents%'
+        OR coalesce(with_check, '') LIKE '%expense-documents%'
+      )
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON storage.objects;', policy_record.policyname);
+  END LOOP;
+END
+$$;
+
 CREATE POLICY expense_bucket_public_read
 ON storage.objects
 FOR SELECT
-TO anon, authenticated, service_role
+TO PUBLIC
 USING (bucket_id = 'expense-documents');
 
-DROP POLICY IF EXISTS expense_bucket_authenticated_insert ON storage.objects;
-CREATE POLICY expense_bucket_authenticated_insert
+CREATE POLICY expense_bucket_public_insert
 ON storage.objects
 FOR INSERT
-TO anon, authenticated, service_role
+TO PUBLIC
 WITH CHECK (bucket_id = 'expense-documents');
 
-DROP POLICY IF EXISTS expense_bucket_authenticated_update ON storage.objects;
-CREATE POLICY expense_bucket_authenticated_update
+CREATE POLICY expense_bucket_public_update
 ON storage.objects
 FOR UPDATE
-TO anon, authenticated, service_role
+TO PUBLIC
 USING (bucket_id = 'expense-documents')
 WITH CHECK (bucket_id = 'expense-documents');
 
-DROP POLICY IF EXISTS expense_bucket_authenticated_delete ON storage.objects;
-CREATE POLICY expense_bucket_authenticated_delete
+CREATE POLICY expense_bucket_public_delete
 ON storage.objects
 FOR DELETE
-TO anon, authenticated, service_role
+TO PUBLIC
 USING (bucket_id = 'expense-documents');
 
 -- Fuerza recarga de schema cache de PostgREST.
