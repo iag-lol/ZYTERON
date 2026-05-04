@@ -4,6 +4,7 @@ import {
   getQuotes,
   getRequests,
   getSales,
+  safeSelect,
   syncWonQuotesCrossModules,
   getTaxDocuments,
   getVisits,
@@ -18,7 +19,6 @@ import {
   type Visit,
   type WebVisit,
 } from "@/lib/admin/repository";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type ChartPoint = { label: string; value: number };
 
@@ -78,27 +78,9 @@ function round(value: number) {
 }
 
 async function fetchLeads(): Promise<Lead[]> {
-  try {
-    const { supabase } = createSupabaseServerClient();
-    const { data, error } = await supabase
-      .from("Lead")
-      .select("id, name, email, phone, source, message, type, createdAt")
-      .order("createdAt", { ascending: false });
-
-    if (error) {
-      const relationMissing =
-        error.message.includes("Could not find the table") ||
-        error.message.includes("relation");
-      if (relationMissing) {
-        return [];
-      }
-      throw error;
-    }
-
-    return (data ?? []) as Lead[];
-  } catch {
-    return [];
-  }
+  return safeSelect<Lead>("Lead", "id, name, email, phone, source, message, type, createdAt", {
+    orderBy: "createdAt",
+  });
 }
 
 function buildRevenueSeries(sales: Sale[]): ChartPoint[] {
@@ -270,8 +252,12 @@ function buildSnapshot(base: {
 
 export async function getAdminSnapshot(): Promise<AdminSnapshot> {
   try {
-    // Reconciliación defensiva: asegura que toda cotización WON tenga cliente, venta y documento SII.
-    await syncWonQuotesCrossModules();
+    // Reconciliación defensiva: no debe bloquear el dashboard si falla por permisos/entorno.
+    try {
+      await syncWonQuotesCrossModules();
+    } catch (syncError) {
+      console.warn("[admin/snapshot] syncWonQuotesCrossModules falló, se continúa con lectura de métricas:", syncError);
+    }
 
     const [leads, quotes, visits, sales, clients, projects, requests, taxDocuments, webVisits] =
       await Promise.all([

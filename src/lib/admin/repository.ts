@@ -1,5 +1,6 @@
 import { hash } from "bcrypt";
 import { randomUUID } from "node:crypto";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildQuoteMeta, enrichQuoteRecord, parseQuoteMessage, serializeQuoteMessage, type QuoteMeta, type QuoteRecord } from "@/lib/admin/quote";
 
@@ -330,45 +331,107 @@ function isClientReviewWriteFallbackError(error: unknown) {
   );
 }
 
+function normalizeSupabaseUrl(rawUrl: string) {
+  const trimmed = rawUrl.trim().replace(/\/+$/, "");
+  const suffixes = ["/rest/v1", "/auth/v1", "/storage/v1"];
+  const lowered = trimmed.toLowerCase();
+
+  for (const suffix of suffixes) {
+    if (lowered.endsWith(suffix)) {
+      return trimmed.slice(0, -suffix.length);
+    }
+  }
+
+  return trimmed;
+}
+
+function createSupabaseAnonServerClient() {
+  const rawUrl =
+    process.env.SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.SUPABASE_PROJECT_URL;
+  const anonKey =
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!rawUrl || !anonKey) {
+    return null;
+  }
+
+  return createClient(normalizeSupabaseUrl(rawUrl), anonKey, {
+    global: { headers: { "X-Client-Info": "zyteron-admin-read-fallback" } },
+  });
+}
+
+async function runSelectQuery(
+  supabase: SupabaseClient,
+  table: string,
+  select: string,
+  options: SelectOptions,
+) {
+  let query = supabase.from(table).select(select);
+
+  if (options.filters) {
+    for (const [key, value] of Object.entries(options.filters)) {
+      if (value === undefined) continue;
+      if (value === null) {
+        query = query.is(key, null);
+      } else {
+        query = query.eq(key, value);
+      }
+    }
+  }
+
+  if (options.orderBy) {
+    query = query.order(options.orderBy, { ascending: options.ascending ?? false });
+  }
+
+  if (options.limit) {
+    query = query.limit(options.limit);
+  }
+
+  return query;
+}
+
 export async function safeSelect<T>(table: string, select: string, options: SelectOptions = {}) {
+  let primaryReadError: unknown = null;
+
   try {
     const { supabase } = createSupabaseServerClient();
-    let query = supabase.from(table).select(select);
-
-    if (options.filters) {
-      for (const [key, value] of Object.entries(options.filters)) {
-        if (value === undefined) continue;
-        if (value === null) {
-          query = query.is(key, null);
-        } else {
-          query = query.eq(key, value);
-        }
-      }
-    }
-
-    if (options.orderBy) {
-      query = query.order(options.orderBy, { ascending: options.ascending ?? false });
-    }
-
-    if (options.limit) {
-      query = query.limit(options.limit);
-    }
-
-    const { data, error } = await query;
+    const { data, error } = await runSelectQuery(supabase, table, select, options);
     if (error) {
-      // Lecturas del panel no deben romper render de páginas administrativas.
+      primaryReadError = error.message;
+    } else {
+      return (data ?? []) as T[];
+    }
+  } catch (error) {
+    primaryReadError = error;
+  }
+
+  // Fallback de lectura para entornos donde la "service key" no está disponible
+  // pero sí existe anon/publishable key con políticas de lectura.
+  const anonSupabase = createSupabaseAnonServerClient();
+  if (anonSupabase) {
+    try {
+      const { data, error } = await runSelectQuery(anonSupabase, table, select, options);
+      if (!error) {
+        return (data ?? []) as T[];
+      }
       if (!isMissingRelationError(error.message)) {
-        logReadError(table, error.message);
+        logReadError(table, `${toErrorMessage(primaryReadError)} | anon fallback: ${error.message}`);
       }
       return [] as T[];
+    } catch (fallbackError) {
+      logReadError(table, `${toErrorMessage(primaryReadError)} | anon fallback error: ${toErrorMessage(fallbackError)}`);
+      return [] as T[];
     }
-
-    return (data ?? []) as T[];
-  } catch (error) {
-    // Fallo de entorno/red/permisos: fallback seguro para evitar 500 en navegación.
-    logReadError(table, error);
-    return [] as T[];
   }
+
+  if (!isMissingRelationError(toErrorMessage(primaryReadError))) {
+    logReadError(table, primaryReadError);
+  }
+  return [] as T[];
 }
 
 export async function safeSelectSingle<T>(table: string, select: string, filters: Record<string, string | number>) {
