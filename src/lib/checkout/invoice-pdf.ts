@@ -54,6 +54,7 @@ function formatDate(value?: string | null) {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   });
 }
 
@@ -262,7 +263,7 @@ function drawHeader(ctx: PageContext, input: Input, continuation = false) {
     drawRightText({
       page,
       font,
-      text: `Flow Order: ${input.flowOrder}`,
+      text: `Número de orden: ${input.flowOrder}`,
       size: 8.4,
       xRight: rightX,
       y: PAGE_HEIGHT - (continuation ? 69 : 82),
