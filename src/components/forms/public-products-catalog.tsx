@@ -2,7 +2,7 @@
 
 import { type FormEvent, useMemo, useState } from "react";
 import { AlertTriangle, ArrowRight, Check, CreditCard, Minus, Plus, Search, ShoppingCart, Tag, Trash2 } from "lucide-react";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatRut, isValidRut } from "@/lib/checkout/rut";
 import type { PublicProduct } from "@/lib/web-control-types";
 
@@ -31,6 +31,7 @@ type CheckoutForm = {
 };
 
 type FormErrors = Partial<Record<keyof CheckoutForm, string>>;
+const IVA_RATE = 0.19;
 
 const checkoutDefault: CheckoutForm = {
   buyerName: "",
@@ -141,10 +142,14 @@ export function PublicProductsCatalog({ products }: Props) {
       const unitDiscount = Math.max(0, row.product.price - finalUnitPrice(row.product));
       return acc + unitDiscount * row.qty;
     }, 0);
-    const total = Math.max(0, subtotal - totalDiscount);
+    const netSubtotal = Math.max(0, subtotal - totalDiscount);
+    const taxAmount = Math.max(0, Math.round(netSubtotal * IVA_RATE));
+    const total = Math.max(0, netSubtotal + taxAmount);
     return {
       subtotal,
       totalDiscount,
+      netSubtotal,
+      taxAmount,
       total,
       units: cartItems.reduce((acc, row) => acc + row.qty, 0),
     };
@@ -550,19 +555,27 @@ export function PublicProductsCatalog({ products }: Props) {
 
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Subtotal</span>
+                  <span className="text-slate-500">Subtotal bruto</span>
                   <span className="font-semibold text-slate-900">{currencyCLP(summary.subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Descuento</span>
                   <span className="font-semibold text-emerald-700">-{currencyCLP(summary.totalDiscount)}</span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Subtotal neto</span>
+                  <span className="font-semibold text-slate-900">{currencyCLP(summary.netSubtotal)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">IVA (19%)</span>
+                  <span className="font-semibold text-slate-900">{currencyCLP(summary.taxAmount)}</span>
+                </div>
               </div>
 
               <div className="my-4 border-t-2 border-slate-200" />
 
               <div className="flex items-center justify-between">
-                <span className="text-base font-bold text-slate-900">Total</span>
+                <span className="text-base font-bold text-slate-900">Total con IVA</span>
                 <span className="text-xl font-extrabold text-blue-700">{currencyCLP(summary.total)}</span>
               </div>
 
@@ -577,7 +590,7 @@ export function PublicProductsCatalog({ products }: Props) {
 
               <p className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-500">
                 <Tag className="h-3.5 w-3.5" />
-                Pago online por Flow (crédito, débito y medios disponibles).
+                Pago online por Flow (crédito, débito y medios disponibles). IVA incluido.
               </p>
             </div>
           </aside>
@@ -591,32 +604,74 @@ export function PublicProductsCatalog({ products }: Props) {
           className="fixed right-4 bottom-4 z-40 inline-flex items-center gap-2 rounded-full bg-blue-700 px-4 py-3 text-xs font-bold text-white shadow-lg shadow-blue-700/30 transition hover:bg-blue-800 sm:right-6 sm:bottom-6 sm:text-sm"
         >
           <ShoppingCart className="h-4 w-4" />
-          Comprar ({summary.units}) · {currencyCLP(summary.total)}
+          Comprar ({summary.units}) · {currencyCLP(summary.total)} c/IVA
         </button>
       ) : null}
 
-      <Sheet open={checkoutOpen} onOpenChange={setCheckoutOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-2xl">
-          <SheetHeader>
-            <SheetTitle>Checkout de compra</SheetTitle>
-            <SheetDescription>
+      <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
+        <DialogContent className="max-h-[90vh] w-[min(1020px,94vw)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl sm:max-w-[1020px]">
+          <DialogHeader className="border-b border-slate-200 bg-slate-50 px-6 py-5">
+            <DialogTitle className="text-xl font-extrabold text-slate-900">Checkout de compra empresarial</DialogTitle>
+            <DialogDescription className="text-sm text-slate-600">
               Completa datos de despacho y documento tributario para pagar online con Flow.
-            </SheetDescription>
-          </SheetHeader>
+            </DialogDescription>
+          </DialogHeader>
 
-          <form onSubmit={startPayment} className="space-y-5 px-4 pb-6">
-            <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Resumen compra</p>
-              <div className="mt-3 space-y-2 text-sm">
+          <form onSubmit={startPayment} className="grid gap-5 p-5 lg:grid-cols-[1.05fr_0.95fr]">
+            <section className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Resumen detallado del pedido</p>
+              <div className="space-y-2">
                 {cartItems.map((row) => {
                   const finalUnit = finalUnitPrice(row.product);
+                  const image = row.product.imageUrl?.trim();
                   return (
-                    <div key={`checkout-${row.product.id}`} className="flex items-start justify-between gap-3">
-                      <span className="text-slate-700">{row.product.name} x{row.qty}</span>
-                      <span className="font-bold text-slate-900">{currencyCLP(finalUnit * row.qty)}</span>
+                    <div key={`checkout-${row.product.id}`} className="rounded-xl border border-slate-200 bg-white p-3">
+                      <div className="flex items-start gap-3">
+                        {image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={image} alt={row.product.name} className="h-14 w-14 rounded-lg border border-slate-200 object-cover" />
+                        ) : (
+                          <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-[10px] font-semibold text-slate-500">
+                            SIN IMG
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-bold text-slate-900">{row.product.name}</p>
+                          <p className="text-[11px] text-slate-500">SKU: {row.product.slug} · Stock: {row.product.stock}</p>
+                          <p className="mt-0.5 text-[11px] text-slate-600">
+                            {currencyCLP(finalUnit)} c/u · Cantidad {row.qty}
+                          </p>
+                        </div>
+                        <p className="text-sm font-extrabold text-blue-700">{currencyCLP(finalUnit * row.qty)}</p>
+                      </div>
                     </div>
                   );
                 })}
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500">Subtotal bruto</span>
+                  <span className="font-semibold text-slate-900">{currencyCLP(summary.subtotal)}</span>
+                </div>
+                <div className="mt-1 flex items-center justify-between">
+                  <span className="text-slate-500">Descuento</span>
+                  <span className="font-semibold text-emerald-700">-{currencyCLP(summary.totalDiscount)}</span>
+                </div>
+                <div className="mt-1 flex items-center justify-between">
+                  <span className="text-slate-500">Subtotal neto</span>
+                  <span className="font-semibold text-slate-900">{currencyCLP(summary.netSubtotal)}</span>
+                </div>
+                <div className="mt-1 flex items-center justify-between">
+                  <span className="text-slate-500">IVA (19%)</span>
+                  <span className="font-semibold text-slate-900">{currencyCLP(summary.taxAmount)}</span>
+                </div>
+                <div className="mt-2 border-t border-slate-200 pt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-base font-bold text-slate-900">Total a pagar</span>
+                    <span className="text-xl font-extrabold text-blue-700">{currencyCLP(summary.total)}</span>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -702,13 +757,13 @@ export function PublicProductsCatalog({ products }: Props) {
               </div>
             ) : null}
 
-            <button type="submit" disabled={isCreatingPayment || cartItems.length === 0} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300">
+            <button type="submit" disabled={isCreatingPayment || cartItems.length === 0} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 sm:col-span-2">
               <CreditCard className="h-4 w-4" />
-              {isCreatingPayment ? "Creando pago..." : "Pagar con Flow"}
+              {isCreatingPayment ? "Creando pago..." : `Pagar ${currencyCLP(summary.total)} con Flow`}
             </button>
           </form>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

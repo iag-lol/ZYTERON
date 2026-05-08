@@ -118,6 +118,16 @@ export default async function VentasPage() {
         total: meta.total,
         subtotal: meta.subtotal,
         discount: meta.discount,
+        netSubtotal:
+          typeof meta.netSubtotal === "number" && Number.isFinite(meta.netSubtotal)
+            ? meta.netSubtotal
+            : Math.max(0, meta.subtotal - meta.discount),
+        taxAmount:
+          typeof meta.taxAmount === "number" && Number.isFinite(meta.taxAmount)
+            ? meta.taxAmount
+            : Math.max(0, meta.total - (typeof meta.netSubtotal === "number" ? meta.netSubtotal : Math.max(0, meta.subtotal - meta.discount))),
+        taxRate:
+          typeof meta.taxRate === "number" && Number.isFinite(meta.taxRate) ? meta.taxRate : 0.19,
         flowStatus,
         flowOrder: meta.flow.flowOrder || null,
         flowLabel: meta.flow.statusLabel || mapFlowStatusLabel(flowStatus),
@@ -152,6 +162,7 @@ export default async function VentasPage() {
   const webPending = webOrders.filter((order) => order.flowStatus === 1);
   const webRejected = webOrders.filter((order) => order.flowStatus === 3 || order.flowStatus === 4);
   const webRevenueApproved = webApproved.reduce((acc, order) => acc + order.total, 0);
+  const webTaxApproved = webApproved.reduce((acc, order) => acc + order.taxAmount, 0);
   const webUnits = webOrders.reduce((acc, order) => acc + order.itemsCount, 0);
 
   const stats = [
@@ -360,7 +371,7 @@ export default async function VentasPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 border-b border-slate-100 bg-slate-50 px-6 py-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 border-b border-slate-100 bg-slate-50 px-6 py-4 sm:grid-cols-2 xl:grid-cols-5">
           <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Ventas Web Aprobadas</p>
             <p className="mt-1 text-lg font-extrabold text-emerald-700">{currency(webRevenueApproved)}</p>
@@ -380,6 +391,10 @@ export default async function VentasPage() {
             <p className="mt-1 text-lg font-extrabold text-slate-900">
               {webOrders.filter((order) => order.documentType === "FACTURA").length}
             </p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">IVA Aprobado Web</p>
+            <p className="mt-1 text-lg font-extrabold text-slate-900">{currency(webTaxApproved)}</p>
           </div>
         </div>
 
@@ -449,7 +464,10 @@ export default async function VentasPage() {
                       <p className="mt-0.5 text-[11px] text-slate-500">{order.firstItems[0] || "—"}</p>
                       <p className="text-[11px] text-slate-500">{order.firstItems[1] || "—"}</p>
                       <p className="mt-1 text-[11px] text-slate-400">
-                        Subtotal {currency(order.subtotal)} · Desc. {currency(order.discount)}
+                        Bruto {currency(order.subtotal)} · Desc. {currency(order.discount)}
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        Neto {currency(order.netSubtotal)} · IVA {currency(order.taxAmount)}
                       </p>
                     </div>
 

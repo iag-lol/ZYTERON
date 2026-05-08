@@ -43,9 +43,14 @@ export async function GET(req: Request) {
     const result = await processFlowToken(token);
     return redirectToSummary(req, {
       order: result.orderId,
+      token,
       flowStatus: String(result.flowStatus),
       flowLabel: result.flowLabel,
       quoteStatus: result.quoteStatus,
+      message:
+        result.flowStatus === 2
+          ? "Pago confirmado. Estamos procesando tu pedido, documento y actualización de stock."
+          : "",
     });
   } catch (error) {
     return redirectToSummary(req, {
@@ -70,9 +75,14 @@ export async function POST(req: Request) {
     const result = await processFlowToken(token);
     return redirectToSummary(req, {
       order: result.orderId,
+      token,
       flowStatus: String(result.flowStatus),
       flowLabel: result.flowLabel,
       quoteStatus: result.quoteStatus,
+      message:
+        result.flowStatus === 2
+          ? "Pago confirmado. Estamos procesando tu pedido, documento y actualización de stock."
+          : "",
     });
   } catch (error) {
     return redirectToSummary(req, {

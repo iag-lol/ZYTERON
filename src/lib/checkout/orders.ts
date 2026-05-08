@@ -37,9 +37,12 @@ export type CheckoutMeta = {
   version: 1;
   customer: CheckoutCustomerData;
   items: CheckoutItem[];
-  subtotal: number;
-  discount: number;
-  total: number;
+  subtotal: number; // bruto sin descuento
+  discount: number; // descuento total
+  netSubtotal: number; // subtotal neto sin IVA
+  taxRate: number; // 0.19
+  taxAmount: number; // IVA total
+  total: number; // total final con IVA
   flow: {
     token?: string | null;
     flowOrder?: number | null;
@@ -48,6 +51,11 @@ export type CheckoutMeta = {
     checkoutUrl?: string | null;
     lastError?: Record<string, unknown> | null;
     updatedAt?: string | null;
+  };
+  fulfillment: {
+    stockDiscountedAt?: string | null;
+    stockDiscountedUnits?: number | null;
+    stockDiscountError?: string | null;
   };
   mail: {
     pendingSentAt?: string | null;
@@ -174,14 +182,29 @@ export function parseCheckoutMeta(raw?: string | null): CheckoutMeta | null {
     if (parsed?.type !== "PRODUCT_CHECKOUT") return null;
     if (!parsed.customer || !Array.isArray(parsed.items)) return null;
 
+    const rawSubtotal = Number(parsed.subtotal || 0);
+    const rawDiscount = Number(parsed.discount || 0);
+    const rawNetSubtotal =
+      typeof parsed.netSubtotal === "number"
+        ? Number(parsed.netSubtotal || 0)
+        : Math.max(0, rawSubtotal - rawDiscount);
+    const rawTaxRate = typeof parsed.taxRate === "number" && Number.isFinite(parsed.taxRate) ? parsed.taxRate : 0;
+    const rawTaxAmount =
+      typeof parsed.taxAmount === "number"
+        ? Number(parsed.taxAmount || 0)
+        : Math.max(0, Number(parsed.total || 0) - rawNetSubtotal);
+
     return {
       type: "PRODUCT_CHECKOUT",
       version: 1,
       customer: parsed.customer as CheckoutCustomerData,
       items: parsed.items as CheckoutItem[],
-      subtotal: Number(parsed.subtotal || 0),
-      discount: Number(parsed.discount || 0),
-      total: Number(parsed.total || 0),
+      subtotal: Math.max(0, Math.round(rawSubtotal)),
+      discount: Math.max(0, Math.round(rawDiscount)),
+      netSubtotal: Math.max(0, Math.round(rawNetSubtotal)),
+      taxRate: Math.max(0, rawTaxRate),
+      taxAmount: Math.max(0, Math.round(rawTaxAmount)),
+      total: Math.max(0, Math.round(Number(parsed.total || 0))),
       flow: {
         token: parsed.flow?.token || null,
         flowOrder: typeof parsed.flow?.flowOrder === "number" ? parsed.flow.flowOrder : null,
@@ -190,6 +213,17 @@ export function parseCheckoutMeta(raw?: string | null): CheckoutMeta | null {
         checkoutUrl: parsed.flow?.checkoutUrl || null,
         lastError: parsed.flow?.lastError || null,
         updatedAt: parsed.flow?.updatedAt || null,
+      },
+      fulfillment: {
+        stockDiscountedAt: parsed.fulfillment?.stockDiscountedAt || null,
+        stockDiscountedUnits:
+          typeof parsed.fulfillment?.stockDiscountedUnits === "number"
+            ? parsed.fulfillment.stockDiscountedUnits
+            : null,
+        stockDiscountError:
+          typeof parsed.fulfillment?.stockDiscountError === "string"
+            ? parsed.fulfillment.stockDiscountError
+            : null,
       },
       mail: {
         pendingSentAt: parsed.mail?.pendingSentAt || null,
@@ -207,6 +241,9 @@ export function buildCheckoutMeta(input: {
   items: CheckoutItem[];
   subtotal: number;
   discount: number;
+  netSubtotal: number;
+  taxRate: number;
+  taxAmount: number;
   total: number;
 }): CheckoutMeta {
   return {
@@ -216,6 +253,9 @@ export function buildCheckoutMeta(input: {
     items: input.items,
     subtotal: Math.max(0, Math.round(input.subtotal)),
     discount: Math.max(0, Math.round(input.discount)),
+    netSubtotal: Math.max(0, Math.round(input.netSubtotal)),
+    taxRate: Math.max(0, Number(input.taxRate || 0)),
+    taxAmount: Math.max(0, Math.round(input.taxAmount)),
     total: Math.max(0, Math.round(input.total)),
     flow: {
       token: null,
@@ -225,6 +265,11 @@ export function buildCheckoutMeta(input: {
       checkoutUrl: null,
       lastError: null,
       updatedAt: nowIso(),
+    },
+    fulfillment: {
+      stockDiscountedAt: null,
+      stockDiscountedUnits: null,
+      stockDiscountError: null,
     },
     mail: {
       pendingSentAt: null,
@@ -239,6 +284,9 @@ export async function createCheckoutOrder(input: {
   items: CheckoutItem[];
   subtotal: number;
   discount: number;
+  netSubtotal: number;
+  taxRate: number;
+  taxAmount: number;
   total: number;
 }) {
   const meta = buildCheckoutMeta(input);
@@ -416,6 +464,32 @@ export async function markCheckoutEmailSent(orderId: string, type: "pending" | "
       pendingSentAt: type === "pending" ? nowIso() : meta.mail.pendingSentAt || null,
       approvedSentAt: type === "approved" ? nowIso() : meta.mail.approvedSentAt || null,
       rejectedSentAt: type === "rejected" ? nowIso() : meta.mail.rejectedSentAt || null,
+    },
+  }));
+}
+
+export async function markCheckoutStockHandled(input: {
+  orderId: string;
+  stockDiscountedAt?: string | null;
+  stockDiscountedUnits?: number | null;
+  stockDiscountError?: string | null;
+}) {
+  return patchOrderMeta(input.orderId, (meta) => ({
+    ...meta,
+    fulfillment: {
+      ...meta.fulfillment,
+      stockDiscountedAt:
+        typeof input.stockDiscountedAt === "string"
+          ? input.stockDiscountedAt
+          : meta.fulfillment?.stockDiscountedAt || null,
+      stockDiscountedUnits:
+        typeof input.stockDiscountedUnits === "number"
+          ? Math.max(0, Math.round(input.stockDiscountedUnits))
+          : meta.fulfillment?.stockDiscountedUnits || null,
+      stockDiscountError:
+        typeof input.stockDiscountError === "string"
+          ? input.stockDiscountError
+          : meta.fulfillment?.stockDiscountError || null,
     },
   }));
 }

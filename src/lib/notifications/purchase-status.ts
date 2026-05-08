@@ -12,6 +12,7 @@ type Input = {
   flowLabel: string;
   meta: CheckoutMeta;
   checkoutUrl?: string | null;
+  invoiceUrl?: string | null;
 };
 
 function normalizeText(value?: string | null) {
@@ -95,6 +96,20 @@ function nextStepByStatus(status: number, checkoutUrl?: string | null) {
   return "Tu orden quedó registrada y será actualizada cuando Flow confirme el estado final del pago.";
 }
 
+function getNetSubtotal(meta: CheckoutMeta) {
+  if (typeof meta.netSubtotal === "number" && Number.isFinite(meta.netSubtotal)) {
+    return Math.max(0, Math.round(meta.netSubtotal));
+  }
+  return Math.max(0, Math.round(meta.subtotal - meta.discount));
+}
+
+function getTaxAmount(meta: CheckoutMeta) {
+  if (typeof meta.taxAmount === "number" && Number.isFinite(meta.taxAmount)) {
+    return Math.max(0, Math.round(meta.taxAmount));
+  }
+  return Math.max(0, Math.round(meta.total - getNetSubtotal(meta)));
+}
+
 function statusStyles(status: number) {
   if (status === 2) {
     return {
@@ -126,6 +141,8 @@ function statusStyles(status: number) {
 function renderText(input: Input) {
   const statusDetail = `${input.flowLabel} (${input.flowStatus})`;
   const customer = input.meta.customer;
+  const netSubtotal = getNetSubtotal(input.meta);
+  const taxAmount = getTaxAmount(input.meta);
   const lines = [
     `${ZYTERON_COMPANY.brandName} - ${titleByStatus(input.flowStatus)}`,
     "",
@@ -146,9 +163,11 @@ function renderText(input: Input) {
       (item) => `- ${item.name} x${item.quantity} · ${formatCurrency(item.finalUnitPrice)} c/u · ${formatCurrency(item.lineTotal)}`,
     ),
     "",
-    `Subtotal: ${formatCurrency(input.meta.subtotal)}`,
+    `Subtotal bruto: ${formatCurrency(input.meta.subtotal)}`,
     `Descuento: ${formatCurrency(input.meta.discount)}`,
-    `Total: ${formatCurrency(input.meta.total)}`,
+    `Subtotal neto: ${formatCurrency(netSubtotal)}`,
+    `IVA: ${formatCurrency(taxAmount)}`,
+    `Total final: ${formatCurrency(input.meta.total)}`,
     input.meta.customer.comments ? `Comentarios: ${input.meta.customer.comments}` : "",
     "",
     `Última actualización: ${formatDate(input.meta.flow.updatedAt)}`,
@@ -156,6 +175,7 @@ function renderText(input: Input) {
     bodyByStatus(input.flowStatus),
     nextStepByStatus(input.flowStatus, input.checkoutUrl),
     input.checkoutUrl ? `Link de pago: ${input.checkoutUrl}` : "",
+    input.invoiceUrl ? `Boleta/Comprobante PDF: ${input.invoiceUrl}` : "",
     "",
     "Seguimiento:",
     `- Responde este correo: ${ZYTERON_COMPANY.salesEmail}`,
@@ -170,6 +190,8 @@ function renderHtml(input: Input) {
   const styles = statusStyles(input.flowStatus);
   const customer = input.meta.customer;
   const statusText = `${input.flowLabel} (${input.flowStatus})`;
+  const netSubtotal = getNetSubtotal(input.meta);
+  const taxAmount = getTaxAmount(input.meta);
   const comment = normalizeText(customer.comments);
   const detailRows = input.meta.items
     .map(
@@ -246,12 +268,20 @@ function renderHtml(input: Input) {
             </tr>
             ${detailRows}
             <tr>
-              <td colspan="3" style="padding:10px 12px;text-align:right;font-size:12px;color:#64748b;">Subtotal</td>
+              <td colspan="3" style="padding:10px 12px;text-align:right;font-size:12px;color:#64748b;">Subtotal bruto</td>
               <td style="padding:10px 12px;text-align:right;font-size:12px;color:#0f172a;">${formatCurrency(input.meta.subtotal)}</td>
             </tr>
             <tr>
               <td colspan="3" style="padding:10px 12px;text-align:right;font-size:12px;color:#64748b;">Descuento</td>
               <td style="padding:10px 12px;text-align:right;font-size:12px;color:#047857;">-${formatCurrency(input.meta.discount)}</td>
+            </tr>
+            <tr>
+              <td colspan="3" style="padding:10px 12px;text-align:right;font-size:12px;color:#64748b;">Subtotal neto</td>
+              <td style="padding:10px 12px;text-align:right;font-size:12px;color:#0f172a;">${formatCurrency(netSubtotal)}</td>
+            </tr>
+            <tr>
+              <td colspan="3" style="padding:10px 12px;text-align:right;font-size:12px;color:#64748b;">IVA</td>
+              <td style="padding:10px 12px;text-align:right;font-size:12px;color:#0f172a;">${formatCurrency(taxAmount)}</td>
             </tr>
             <tr>
               <td colspan="3" style="padding:12px;text-align:right;font-size:13px;font-weight:700;color:#0f172a;border-top:1px solid #e2e8f0;">Total final</td>
@@ -270,6 +300,11 @@ function renderHtml(input: Input) {
         <td style="padding:16px 24px 6px 24px;">
           <p style="margin:0 0 8px 0;font-size:13px;color:#334155;"><strong>Siguiente paso:</strong> ${escapeHtml(nextStepByStatus(input.flowStatus, input.checkoutUrl))}</p>
           <p style="margin:0 0 8px 0;font-size:12px;color:#64748b;">Última actualización: ${formatDate(input.meta.flow.updatedAt)}</p>
+          ${
+            input.invoiceUrl
+              ? `<p style="margin:0 0 8px 0;font-size:12px;color:#0f172a;"><strong>Documento PDF:</strong> <a href="${escapeHtml(input.invoiceUrl)}" style="color:#0F5FFF;">Descargar boleta/comprobante</a></p>`
+              : ""
+          }
           <table role="presentation" cellpadding="0" cellspacing="0">${retryCta}</table>
         </td>
       </tr>

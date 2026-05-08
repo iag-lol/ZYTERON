@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createCheckoutOrder, markCheckoutEmailSent, setCheckoutFlowCreation, type CheckoutItem } from "@/lib/checkout/orders";
 import { formatRut, isValidRut } from "@/lib/checkout/rut";
 import { sendCheckoutStatusEmail } from "@/lib/notifications/purchase-status";
+import { computeCheckoutTotals } from "@/lib/checkout/tax";
 import { createFlowPayment } from "@/lib/payments/flow";
 import { getWebPricingSnapshot } from "@/lib/web-control";
 
@@ -72,6 +73,10 @@ function finalUnitPrice(product: {
 }
 
 function resolveBaseUrl(req: Request) {
+  const requestHost = (req.headers.get("x-forwarded-host") || req.headers.get("host") || "").toLowerCase();
+  const requestIsLocal =
+    requestHost.includes("localhost") || requestHost.includes("127.0.0.1") || requestHost.includes("::1");
+
   const explicit =
     process.env.FLOW_PUBLIC_BASE_URL ||
     process.env.NEXT_PUBLIC_SITE_URL ||
@@ -79,7 +84,16 @@ function resolveBaseUrl(req: Request) {
     process.env.RENDER_EXTERNAL_URL;
 
   if (explicit && /^https?:\/\//i.test(explicit.trim())) {
-    return explicit.trim().replace(/\/+$/, "");
+    try {
+      const parsed = new URL(explicit.trim());
+      const host = parsed.hostname.toLowerCase();
+      const explicitIsLocal = host === "localhost" || host === "127.0.0.1" || host === "::1";
+      if (!explicitIsLocal || requestIsLocal) {
+        return explicit.trim().replace(/\/+$/, "");
+      }
+    } catch {
+      // ignore malformed explicit URL and continue with request-derived values.
+    }
   }
 
   const origin = req.headers.get("origin");
@@ -151,11 +165,14 @@ export async function POST(req: Request) {
       });
     }
 
-    const subtotal = checkoutItems.reduce((acc, item) => acc + item.listPrice * item.quantity, 0);
-    const total = checkoutItems.reduce((acc, item) => acc + item.lineTotal, 0);
-    const discount = Math.max(0, subtotal - total);
+    const grossSubtotal = checkoutItems.reduce((acc, item) => acc + item.listPrice * item.quantity, 0);
+    const netSubtotal = checkoutItems.reduce((acc, item) => acc + item.lineTotal, 0);
+    const totals = computeCheckoutTotals({
+      grossSubtotal,
+      netSubtotal,
+    });
 
-    if (total <= 0) {
+    if (totals.totalWithTax <= 0) {
       return NextResponse.json({ error: "El total debe ser mayor a 0." }, { status: 400 });
     }
 
@@ -175,9 +192,12 @@ export async function POST(req: Request) {
         companyBusinessLine: normalizeOptional(checkout.companyBusinessLine),
       },
       items: checkoutItems,
-      subtotal,
-      discount,
-      total,
+      subtotal: totals.grossSubtotal,
+      discount: totals.discountAmount,
+      netSubtotal: totals.netSubtotal,
+      taxRate: totals.taxRate,
+      taxAmount: totals.taxAmount,
+      total: totals.totalWithTax,
     });
 
     const baseUrl = resolveBaseUrl(req);
@@ -186,7 +206,7 @@ export async function POST(req: Request) {
     const flow = await createFlowPayment({
       commerceOrder: order.id,
       subject: `Compra Zyteron #${reference}`,
-      amount: total,
+      amount: totals.totalWithTax,
       email: checkout.buyerEmail,
       urlConfirmation: `${baseUrl}/api/checkout/flow/confirmation`,
       urlReturn: `${baseUrl}/api/checkout/flow/return`,
@@ -243,6 +263,13 @@ export async function POST(req: Request) {
       orderId: order.id,
       reference,
       checkoutUrl,
+      totals: {
+        grossSubtotal: totals.grossSubtotal,
+        discount: totals.discountAmount,
+        netSubtotal: totals.netSubtotal,
+        taxAmount: totals.taxAmount,
+        total: totals.totalWithTax,
+      },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo iniciar checkout.";

@@ -1,6 +1,29 @@
-import { getCheckoutOrder, markCheckoutEmailSent, setCheckoutFlowStatus } from "@/lib/checkout/orders";
+import { getCheckoutOrder, markCheckoutEmailSent, markCheckoutStockHandled, setCheckoutFlowStatus } from "@/lib/checkout/orders";
+import { syncWonQuoteById } from "@/lib/admin/repository";
+import { deductStockFromCheckout } from "@/lib/checkout/stock";
 import { getFlowPaymentStatus, isFlowApproved, isFlowRejected, mapFlowStatusLabel } from "@/lib/payments/flow";
 import { sendCheckoutStatusEmail } from "@/lib/notifications/purchase-status";
+
+function resolvePublicBaseUrl() {
+  const candidates = [
+    process.env.FLOW_PUBLIC_BASE_URL,
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.PUBLIC_SITE_URL,
+    process.env.RENDER_EXTERNAL_URL,
+  ];
+
+  for (const candidate of candidates) {
+    const value = String(candidate || "").trim();
+    if (!value) continue;
+    if (!/^https?:\/\//i.test(value)) continue;
+    const parsed = new URL(value);
+    const host = parsed.hostname.toLowerCase();
+    if (host === "localhost" || host === "127.0.0.1" || host === "::1") continue;
+    return value.replace(/\/+$/, "");
+  }
+
+  return "";
+}
 
 export async function processFlowToken(token: string) {
   const status = await getFlowPaymentStatus(token);
@@ -21,6 +44,39 @@ export async function processFlowToken(token: string) {
     lastError: status.lastError || null,
   });
 
+  const freshestOrder = (await getCheckoutOrder(orderId)) || updated;
+
+  if (isFlowApproved(status.status) && !freshestOrder.meta.fulfillment?.stockDiscountedAt) {
+    try {
+      const stockResult = await deductStockFromCheckout(freshestOrder.meta);
+      await markCheckoutStockHandled({
+        orderId,
+        stockDiscountedAt: new Date().toISOString(),
+        stockDiscountedUnits: stockResult.deductedUnits,
+        stockDiscountError: stockResult.warnings.length > 0 ? stockResult.warnings.join(" | ") : null,
+      });
+      await syncWonQuoteById(orderId);
+    } catch (error) {
+      await markCheckoutStockHandled({
+        orderId,
+        stockDiscountError: error instanceof Error ? error.message : String(error),
+      });
+      console.error("[checkout] stock deduction failed", {
+        orderId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  } else if (isFlowApproved(status.status)) {
+    try {
+      await syncWonQuoteById(orderId);
+    } catch (error) {
+      console.error("[checkout] quote won sync failed", {
+        orderId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
   const shouldSendApproved = isFlowApproved(status.status) && !updated.meta.mail.approvedSentAt;
   const shouldSendRejected = isFlowRejected(status.status) && !updated.meta.mail.rejectedSentAt;
   const shouldSendPending =
@@ -30,6 +86,12 @@ export async function processFlowToken(token: string) {
 
   if (shouldSendApproved || shouldSendRejected || shouldSendPending) {
     try {
+      const baseUrl = resolvePublicBaseUrl();
+      const invoiceUrl =
+        shouldSendApproved && baseUrl
+          ? `${baseUrl}/api/checkout/invoice/${encodeURIComponent(orderId)}?token=${encodeURIComponent(token)}`
+          : null;
+
       await sendCheckoutStatusEmail({
         orderId,
         recipientEmail: updated.email || updated.meta.customer.buyerEmail,
@@ -38,6 +100,7 @@ export async function processFlowToken(token: string) {
         flowLabel: mapFlowStatusLabel(status.status),
         meta: updated.meta,
         checkoutUrl: updated.meta.flow.checkoutUrl || null,
+        invoiceUrl,
       });
 
       await markCheckoutEmailSent(
