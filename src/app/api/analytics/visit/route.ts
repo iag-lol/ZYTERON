@@ -31,6 +31,14 @@ function readRequestIp(request: Request) {
 
 let loggedSupabaseTrackingWarning = false;
 
+function isSupabaseConfigError(message: string) {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("supabase_url o keys válidas de supabase no configuradas") ||
+    normalized.includes("supabase_service_role_key inválida")
+  );
+}
+
 export async function POST(request: Request) {
   try {
     const payload = (await request.json().catch(() => ({}))) as VisitBody;
@@ -64,11 +72,12 @@ export async function POST(request: Request) {
     const message = error instanceof Error ? error.message : String(error || "unknown error");
     const usingLocalSupabase = String(process.env.SUPABASE_URL || "").trim().toLowerCase().startsWith("http://localhost:54321");
     const isConnectionError = message.toLowerCase().includes("fetch failed");
+    const localOrInvalidConfig = (usingLocalSupabase && isConnectionError) || isSupabaseConfigError(message);
 
-    if (usingLocalSupabase && isConnectionError) {
+    if (localOrInvalidConfig) {
       if (!loggedSupabaseTrackingWarning) {
         console.warn(
-          "[web-visit-track] Supabase local no responde en http://localhost:54321. Tracking de visitas desactivado temporalmente.",
+          "[web-visit-track] Supabase no disponible o mal configurado. Tracking de visitas desactivado temporalmente.",
         );
         loggedSupabaseTrackingWarning = true;
       }

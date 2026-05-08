@@ -1,14 +1,20 @@
 import { getAdminSnapshot } from "@/lib/admin-data";
+import { parseCheckoutMeta } from "@/lib/checkout/orders";
+import { mapFlowStatusLabel } from "@/lib/payments/flow";
 import {
   ArrowUpRight,
+  BadgeCheck,
+  Calendar,
+  Clock3,
   DollarSign,
+  Globe,
+  Hash,
   Plus,
   Receipt,
-  TrendingUp,
-  Target,
-  Calendar,
-  Hash,
   ShoppingCart,
+  Target,
+  TrendingUp,
+  XCircle,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -20,16 +26,109 @@ function currency(value: number) {
   }).format(value || 0);
 }
 
+function toDateLabel(value?: string | null) {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "—";
+  return parsed.toLocaleDateString("es-CL", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function toTimeLabel(value?: string | null) {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "—";
+  return parsed.toLocaleTimeString("es-CL", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function normalizeFlowStatus(input: { quoteStatus?: string | null; flowStatus?: number | null }) {
+  if (typeof input.flowStatus === "number") return input.flowStatus;
+  const quoteStatus = String(input.quoteStatus || "").toUpperCase();
+  if (quoteStatus === "WON") return 2;
+  if (quoteStatus === "LOST") return 3;
+  return 1;
+}
+
+function flowVisual(status: number) {
+  if (status === 2) {
+    return {
+      label: "Pagada",
+      chip: "border-emerald-200 bg-emerald-50 text-emerald-700",
+      icon: BadgeCheck,
+      iconColor: "text-emerald-600",
+    };
+  }
+  if (status === 3 || status === 4) {
+    return {
+      label: "Rechazada",
+      chip: "border-rose-200 bg-rose-50 text-rose-700",
+      icon: XCircle,
+      iconColor: "text-rose-600",
+    };
+  }
+  return {
+    label: "Pendiente",
+    chip: "border-blue-200 bg-blue-50 text-blue-700",
+    icon: Clock3,
+    iconColor: "text-blue-600",
+  };
+}
+
 export default async function VentasPage() {
   const data = await getAdminSnapshot();
   const sales = data.sales
     .slice()
     .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 
+  const webOrders = data.quotes
+    .map((quote) => {
+      const meta = parseCheckoutMeta(quote.message);
+      if (!meta) return null;
+
+      const flowStatus = normalizeFlowStatus({
+        quoteStatus: quote.status,
+        flowStatus: meta.flow.status,
+      });
+      const itemsCount = meta.items.reduce((acc, item) => acc + item.quantity, 0);
+      const firstItems = meta.items.slice(0, 2).map((item) => `${item.name} x${item.quantity}`);
+
+      return {
+        quoteId: quote.id,
+        quoteStatus: quote.status || "PENDING",
+        createdAt: quote.createdAt || null,
+        customerName: meta.customer.buyerName,
+        customerEmail: meta.customer.buyerEmail,
+        customerRut: meta.customer.buyerRut,
+        customerPhone: meta.customer.buyerPhone || "—",
+        documentType: meta.customer.documentType,
+        companyName: meta.customer.companyName || "—",
+        companyRut: meta.customer.companyRut || "—",
+        address: meta.customer.address,
+        commune: meta.customer.commune || "—",
+        city: meta.customer.city || "—",
+        comments: meta.customer.comments || "",
+        itemsCount,
+        firstItems,
+        total: meta.total,
+        subtotal: meta.subtotal,
+        discount: meta.discount,
+        flowStatus,
+        flowOrder: meta.flow.flowOrder || null,
+        flowLabel: meta.flow.statusLabel || mapFlowStatusLabel(flowStatus),
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => Boolean(row))
+    .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+
   const revenue = data.metrics.money.revenue;
   const avgTicket = data.metrics.money.avgTicket;
 
-  // Monthly breakdown
   const now = new Date();
   const thisMonth = sales.filter((s) => {
     if (!s.createdAt) return false;
@@ -48,6 +147,12 @@ export default async function VentasPage() {
   const growth = lastMonthRevenue > 0
     ? Math.round(((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100)
     : 0;
+
+  const webApproved = webOrders.filter((order) => order.flowStatus === 2);
+  const webPending = webOrders.filter((order) => order.flowStatus === 1);
+  const webRejected = webOrders.filter((order) => order.flowStatus === 3 || order.flowStatus === 4);
+  const webRevenueApproved = webApproved.reduce((acc, order) => acc + order.total, 0);
+  const webUnits = webOrders.reduce((acc, order) => acc + order.itemsCount, 0);
 
   const stats = [
     {
@@ -86,7 +191,6 @@ export default async function VentasPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
@@ -94,7 +198,7 @@ export default async function VentasPage() {
           </p>
           <h1 className="mt-0.5 text-2xl font-extrabold text-slate-900">Ventas y revenue</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {sales.length} ventas · {currency(revenue)} en ingresos totales
+            {sales.length} ventas manuales + {webOrders.length} ventas web
           </p>
         </div>
         <Link
@@ -106,7 +210,6 @@ export default async function VentasPage() {
         </Link>
       </div>
 
-      {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((s) => (
           <div
@@ -125,18 +228,15 @@ export default async function VentasPage() {
         ))}
       </div>
 
-      {/* Sales table */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <div>
             <h2 className="text-base font-bold text-slate-900">Historial de ventas</h2>
             <p className="text-xs text-slate-400">Tabla Sale · Supabase · ordenado por fecha desc</p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
-              {sales.length} registros
-            </span>
-          </div>
+          <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+            {sales.length} registros
+          </span>
         </div>
 
         {sales.length === 0 ? (
@@ -156,7 +256,6 @@ export default async function VentasPage() {
           </div>
         ) : (
           <>
-            {/* Table header */}
             <div className="grid grid-cols-[auto_2fr_1.5fr_1.5fr_auto] items-center gap-4 border-b border-slate-100 bg-slate-50 px-6 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
               <span className="w-8 text-center">#</span>
               <span>ID Venta</span>
@@ -171,12 +270,10 @@ export default async function VentasPage() {
                   key={s.id}
                   className="grid grid-cols-[auto_2fr_1.5fr_1.5fr_auto] items-center gap-4 px-6 py-4 transition-colors hover:bg-slate-50"
                 >
-                  {/* Row number */}
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-[11px] font-bold text-slate-500">
                     {sales.length - idx}
                   </div>
 
-                  {/* Sale ID */}
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100">
                       <Receipt className="h-4 w-4 text-emerald-600" />
@@ -191,48 +288,29 @@ export default async function VentasPage() {
                     </div>
                   </div>
 
-                  {/* Total */}
                   <div>
                     <p className="text-[15px] font-extrabold text-emerald-700">
                       {currency(s.total || 0)}
                     </p>
                   </div>
 
-                  {/* Date */}
                   <div>
-                    <p className="text-[13px] text-slate-600">
-                      {s.createdAt
-                        ? new Date(s.createdAt).toLocaleDateString("es-CL", {
-                            day: "2-digit",
-                            month: "long",
-                            year: "numeric",
-                          })
-                        : "—"}
-                    </p>
-                    {s.createdAt && (
-                      <p className="text-[11px] text-slate-400">
-                        {new Date(s.createdAt).toLocaleTimeString("es-CL", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    )}
+                    <p className="text-[13px] text-slate-600">{toDateLabel(s.createdAt)}</p>
+                    <p className="text-[11px] text-slate-400">{toTimeLabel(s.createdAt)}</p>
                   </div>
 
-                  {/* Actions */}
                   <div>
-                    <Link
-                      href={`/admin/ventas/${s.id}`}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600"
+                    <span
+                      title="Detalle de venta manual"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-300"
                     >
                       <ArrowUpRight className="h-3.5 w-3.5" />
-                    </Link>
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Table footer */}
             <div className="border-t border-slate-100 bg-slate-50 px-6 py-3">
               <div className="flex items-center justify-between">
                 <p className="text-[11px] text-slate-400">
@@ -254,18 +332,165 @@ export default async function VentasPage() {
         )}
       </div>
 
-      {/* Quick tip */}
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 px-6 py-4">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Subsección</p>
+            <h2 className="mt-0.5 flex items-center gap-2 text-base font-bold text-slate-900">
+              <Globe className="h-4.5 w-4.5 text-blue-600" />
+              Ventas Web
+            </h2>
+            <p className="text-xs text-slate-500">
+              Compras online desde Flow guardadas en Quote con metadata PRODUCT_CHECKOUT.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-[11px]">
+            <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 font-semibold text-blue-700">
+              {webOrders.length} pedidos
+            </span>
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
+              {webApproved.length} pagadas
+            </span>
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 font-semibold text-amber-700">
+              {webPending.length} pendientes
+            </span>
+            <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 font-semibold text-rose-700">
+              {webRejected.length} rechazadas
+            </span>
+          </div>
+        </div>
+
+        <div className="grid gap-4 border-b border-slate-100 bg-slate-50 px-6 py-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Ventas Web Aprobadas</p>
+            <p className="mt-1 text-lg font-extrabold text-emerald-700">{currency(webRevenueApproved)}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Ítems Vendidos Web</p>
+            <p className="mt-1 text-lg font-extrabold text-slate-900">{webUnits}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Ticket Web Promedio</p>
+            <p className="mt-1 text-lg font-extrabold text-slate-900">
+              {currency(webOrders.length ? webOrders.reduce((acc, order) => acc + order.total, 0) / webOrders.length : 0)}
+            </p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Facturas Emitibles</p>
+            <p className="mt-1 text-lg font-extrabold text-slate-900">
+              {webOrders.filter((order) => order.documentType === "FACTURA").length}
+            </p>
+          </div>
+        </div>
+
+        {webOrders.length === 0 ? (
+          <div className="px-6 py-14 text-center">
+            <Globe className="mx-auto h-12 w-12 text-slate-200" />
+            <p className="mt-3 text-base font-semibold text-slate-500">Aún no hay ventas web</p>
+            <p className="mt-1 text-sm text-slate-400">
+              Esta tabla se llenará automáticamente cuando entren compras por Flow.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-[1.1fr_1.25fr_1fr_1.1fr_1fr_auto] gap-3 border-b border-slate-100 bg-white px-6 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              <span>Pedido / Estado</span>
+              <span>Cliente</span>
+              <span>Documento</span>
+              <span>Productos</span>
+              <span>Total / Fecha</span>
+              <span>Acción</span>
+            </div>
+
+            <div className="divide-y divide-slate-100">
+              {webOrders.map((order) => {
+                const status = flowVisual(order.flowStatus);
+                const StatusIcon = status.icon;
+                return (
+                  <div key={order.quoteId} className="grid grid-cols-[1.1fr_1.25fr_1fr_1.1fr_1fr_auto] gap-3 px-6 py-4 hover:bg-slate-50">
+                    <div>
+                      <p className="font-mono text-[12px] font-semibold text-slate-800">WEB-{order.quoteId.slice(0, 8).toUpperCase()}</p>
+                      <div className="mt-1 flex items-center gap-1.5">
+                        <StatusIcon className={`h-3.5 w-3.5 ${status.iconColor}`} />
+                        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${status.chip}`}>
+                          {status.label}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        Flow: {order.flowLabel}
+                        {order.flowOrder ? ` · #${order.flowOrder}` : ""}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[12px] font-semibold text-slate-900">{order.customerName}</p>
+                      <p className="text-[11px] text-slate-500">{order.customerEmail}</p>
+                      <p className="text-[11px] text-slate-500">{order.customerRut}</p>
+                      <p className="text-[11px] text-slate-500">{order.customerPhone}</p>
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        {order.address}, {order.commune}, {order.city}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[12px] font-semibold text-slate-900">{order.documentType}</p>
+                      {order.documentType === "FACTURA" ? (
+                        <>
+                          <p className="text-[11px] text-slate-500">{order.companyName}</p>
+                          <p className="text-[11px] text-slate-500">{order.companyRut}</p>
+                        </>
+                      ) : (
+                        <p className="text-[11px] text-slate-500">Boleta consumidor final</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="text-[12px] font-semibold text-slate-900">{order.itemsCount} productos</p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">{order.firstItems[0] || "—"}</p>
+                      <p className="text-[11px] text-slate-500">{order.firstItems[1] || "—"}</p>
+                      <p className="mt-1 text-[11px] text-slate-400">
+                        Subtotal {currency(order.subtotal)} · Desc. {currency(order.discount)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[15px] font-extrabold text-blue-700">{currency(order.total)}</p>
+                      <p className="text-[11px] text-slate-500">{toDateLabel(order.createdAt)}</p>
+                      <p className="text-[11px] text-slate-400">{toTimeLabel(order.createdAt)}</p>
+                    </div>
+
+                    <div className="flex items-start justify-end">
+                      <Link
+                        href={`/admin/cotizaciones/${order.quoteId}`}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
+                        title="Abrir pedido web"
+                      >
+                        <ArrowUpRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="border-t border-slate-100 bg-slate-50 px-6 py-3 text-[11px] text-slate-500">
+              Ventas Web resumen: {webOrders.length} pedidos · {webApproved.length} pagados · {webPending.length} pendientes · {webRejected.length} rechazados.
+            </div>
+          </>
+        )}
+      </section>
+
       <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-slate-50 p-5">
         <div className="flex items-start gap-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100">
             <Hash className="h-4 w-4 text-blue-600" />
           </div>
           <div>
-            <p className="text-sm font-bold text-slate-900">Sobre las ventas en Supabase</p>
+            <p className="text-sm font-bold text-slate-900">Modelo de datos de ventas</p>
             <p className="mt-1 text-[12px] text-slate-500">
-              Las ventas se almacenan en la tabla <code className="rounded bg-slate-200 px-1 font-mono text-[11px]">Sale</code> con los campos{" "}
-              <code className="rounded bg-slate-200 px-1 font-mono text-[11px]">id, clientId, total, createdAt</code>.
-              Asegúrate de que las políticas RLS permitan acceso al service role.
+              Ventas manuales se guardan en <code className="rounded bg-slate-200 px-1 font-mono text-[11px]">Sale</code>.
+              Ventas web se guardan en <code className="rounded bg-slate-200 px-1 font-mono text-[11px]">Quote</code> con metadata{" "}
+              <code className="rounded bg-slate-200 px-1 font-mono text-[11px]">PRODUCT_CHECKOUT</code>, incluyendo cliente, ítems, documento y estado Flow.
             </p>
           </div>
         </div>

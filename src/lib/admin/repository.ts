@@ -265,6 +265,23 @@ type SelectOptions = {
   filters?: Record<string, string | number | null | undefined>;
 };
 
+function readEnvValue(...names: string[]) {
+  for (const name of names) {
+    const value = process.env[name];
+    if (typeof value !== "string") continue;
+    const trimmed = value.trim();
+    if (!trimmed) continue;
+    if (
+      (trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
+      (trimmed.startsWith("'") && trimmed.endsWith("'"))
+    ) {
+      return trimmed.slice(1, -1).trim();
+    }
+    return trimmed;
+  }
+  return "";
+}
+
 function toErrorMessage(error: unknown) {
   if (error instanceof Error && error.message) return error.message;
   if (error && typeof error === "object") {
@@ -282,7 +299,7 @@ const readErrorDedup = new Set<string>();
 function logReadError(table: string, error: unknown) {
   const message = toErrorMessage(error);
   const normalizedMessage = message.toLowerCase();
-  const supabaseUrl = String(process.env.SUPABASE_URL || "").trim().toLowerCase();
+  const supabaseUrl = readEnvValue("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL").toLowerCase();
   const localSupabaseDown =
     normalizedMessage.includes("fetch failed") && supabaseUrl.startsWith("http://localhost:54321");
 
@@ -346,15 +363,13 @@ function normalizeSupabaseUrl(rawUrl: string) {
 }
 
 function createSupabaseAnonServerClient() {
-  const rawUrl =
-    process.env.SUPABASE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    process.env.SUPABASE_PROJECT_URL;
-  const anonKey =
-    process.env.SUPABASE_ANON_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.SUPABASE_PUBLISHABLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const rawUrl = readEnvValue("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_PROJECT_URL");
+  const anonKey = readEnvValue(
+    "SUPABASE_ANON_KEY",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "SUPABASE_PUBLISHABLE_KEY",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+  );
   if (!rawUrl || !anonKey) {
     return null;
   }

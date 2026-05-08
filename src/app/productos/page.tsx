@@ -18,8 +18,6 @@ export const metadata: Metadata = createPageMetadata({
   keywords: ["productos ti empresas chile", "catalogo productos zyteron", "comprar productos por whatsapp"],
 });
 
-const whatsappNumber = "56984752936";
-
 export default async function ProductosPage() {
   const { products } = await getWebPricingSnapshot();
   const visibleProducts = products.filter((product) => product.published !== false);
@@ -57,8 +55,8 @@ export default async function ProductosPage() {
             </p>
             <div className="flex flex-wrap gap-3 pt-1">
               <Button asChild size="lg" className="btn-primary-glow gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800">
-                <Link href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noopener noreferrer">
-                  Hablar con ventas <ArrowRight className="h-4 w-4" />
+                <Link href="#catalogo-compra">
+                  Comprar productos <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50 font-semibold">
@@ -97,9 +95,9 @@ export default async function ProductosPage() {
         </Container>
       </section>
 
-      <section className="bg-white py-16">
+      <section id="catalogo-compra" className="bg-white py-16">
         <Container>
-          <PublicProductsCatalog products={products} whatsappNumber={whatsappNumber} />
+          <PublicProductsCatalog products={products} whatsappNumber="56984752936" />
         </Container>
       </section>
     </main>

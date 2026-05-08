@@ -14,6 +14,46 @@ import {
 } from "@/lib/admin/repository";
 import type { PublicDiscount, PublicExtra, PublicPlan, PublicProduct, PublicReview } from "@/lib/web-control-types";
 
+function readEnvValue(...names: string[]) {
+  for (const name of names) {
+    const value = process.env[name];
+    if (typeof value !== "string") continue;
+    const trimmed = value.trim();
+    if (!trimmed) continue;
+    if (
+      (trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
+      (trimmed.startsWith("'") && trimmed.endsWith("'"))
+    ) {
+      return trimmed.slice(1, -1).trim();
+    }
+    return trimmed;
+  }
+  return "";
+}
+
+function looksPlaceholderKey(key: string) {
+  const normalized = key.trim().toLowerCase();
+  return (
+    !normalized ||
+    normalized.length < 40 ||
+    normalized.includes("dev-service-role-key") ||
+    normalized.includes("dev-anon-key") ||
+    normalized.includes("replace-me")
+  );
+}
+
+function shouldUseFastFallbackMode() {
+  const url = readEnvValue("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL").toLowerCase();
+  const service = readEnvValue("SUPABASE_SERVICE_ROLE_KEY");
+  const anon = readEnvValue("SUPABASE_ANON_KEY", "NEXT_PUBLIC_SUPABASE_ANON_KEY");
+
+  if (!url) return true;
+  if (url.startsWith("http://localhost:54321")) {
+    return looksPlaceholderKey(service) && looksPlaceholderKey(anon);
+  }
+  return false;
+}
+
 const FALLBACK_PYME_PLANS: PublicPlan[] = [
   {
     id: "plan-pyme-basico-canonical",
@@ -206,6 +246,118 @@ function normalizeProduct(product: ProductRecord): PublicProduct | null {
   };
 }
 
+function normalizeFallbackWebProduct(input: unknown): PublicProduct | null {
+  if (!input || typeof input !== "object") return null;
+  const raw = input as Record<string, unknown>;
+  const id = String(raw.id || "").trim();
+  const slug = String(raw.slug || "").trim();
+  const name = String(raw.name || "").trim();
+  if (!id || !slug || !name) return null;
+
+  const price = Number(raw.price);
+  if (!Number.isFinite(price) || price <= 0) return null;
+
+  const discountPct = Number(raw.discountPct);
+  const stock = Number(raw.stock);
+  const featured = Boolean(raw.featured);
+  const badges = Array.isArray(raw.badges) ? raw.badges.map((value) => String(value || "").trim()).filter(Boolean) : [];
+  const published = typeof raw.published === "boolean" ? raw.published : true;
+
+  return {
+    id,
+    slug,
+    name,
+    description: String(raw.description || "Producto empresarial"),
+    price: Math.round(price),
+    discountPct: Number.isFinite(discountPct) ? Math.max(0, Math.round(discountPct)) : 0,
+    featured,
+    stock: Number.isFinite(stock) ? Math.max(0, Math.round(stock)) : 0,
+    badges,
+    imageUrl: typeof raw.imageUrl === "string" ? raw.imageUrl : null,
+    publicDescription: typeof raw.publicDescription === "string" ? raw.publicDescription : null,
+    published,
+    onOffer: Boolean(raw.onOffer),
+    isCombo: Boolean(raw.isCombo),
+    comboLabel: typeof raw.comboLabel === "string" ? raw.comboLabel : null,
+    comboItems: Array.isArray(raw.comboItems)
+      ? raw.comboItems.map((value) => String(value || "").trim()).filter(Boolean)
+      : [],
+    costPrice:
+      typeof raw.costPrice === "number" && Number.isFinite(raw.costPrice) ? Math.max(0, Math.round(raw.costPrice)) : null,
+    discountStartsAt: typeof raw.discountStartsAt === "string" ? raw.discountStartsAt : null,
+    discountEndsAt: typeof raw.discountEndsAt === "string" ? raw.discountEndsAt : null,
+    discountActive: Boolean(raw.discountActive),
+    finalPrice:
+      typeof raw.finalPrice === "number" && Number.isFinite(raw.finalPrice)
+        ? Math.max(0, Math.round(raw.finalPrice))
+        : undefined,
+  };
+}
+
+async function fetchPublishedProductsFromPublicSiteFallback() {
+  const fallbackUrl =
+    String(process.env.PUBLIC_PRODUCTS_FALLBACK_URL || "").trim() || "https://www.zyteron.cl/productos";
+
+  const response = await fetch(fallbackUrl, {
+    cache: "no-store",
+    headers: {
+      "User-Agent": "zyteron-web/1.0",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Fallback productos remoto respondió ${response.status}.`);
+  }
+
+  const html = await response.text();
+  const startCandidates = ["\\\"products\\\":[", "\"products\":["];
+  let startMarker = "";
+  let startIdx = -1;
+  for (const candidate of startCandidates) {
+    const index = html.indexOf(candidate);
+    if (index >= 0) {
+      startMarker = candidate;
+      startIdx = index;
+      break;
+    }
+  }
+
+  if (startIdx < 0) {
+    return [] as PublicProduct[];
+  }
+
+  const startContent = startIdx + startMarker.length;
+  const endCandidates = ["],\\\"whatsappNumber\\\"", "],\"whatsappNumber\""];
+  let endIdx = -1;
+  for (const candidate of endCandidates) {
+    const index = html.indexOf(candidate, startContent);
+    if (index >= 0) {
+      endIdx = index;
+      break;
+    }
+  }
+  if (endIdx < 0) {
+    return [] as PublicProduct[];
+  }
+
+  let productsChunk = html.slice(startContent, endIdx);
+  if (productsChunk.includes("\\\"")) {
+    productsChunk = productsChunk
+      .replace(/\\"/g, "\"")
+      .replace(/\\\\n/g, "\\n")
+      .replace(/\\\\r/g, "\\r")
+      .replace(/\\\\t/g, "\\t")
+      .replace(/\\\\\//g, "/")
+      .replace(/\\\\/g, "\\");
+  }
+
+  const parsed = JSON.parse(`[${productsChunk}]`) as unknown[];
+  return parsed
+    .map(normalizeFallbackWebProduct)
+    .filter((item): item is PublicProduct => Boolean(item))
+    .filter((item) => item.published !== false);
+}
+
 function isDiscountRangeActive(startsAt?: string | null, endsAt?: string | null) {
   const now = Date.now();
   const startsMs = startsAt ? new Date(startsAt).getTime() : null;
@@ -254,6 +406,23 @@ function normalizeDiscount(discount: WebDiscount): PublicDiscount | null {
 }
 
 export async function getWebPricingSnapshot() {
+  if (shouldUseFastFallbackMode()) {
+    let products = [] as PublicProduct[];
+    try {
+      products = await fetchPublishedProductsFromPublicSiteFallback();
+    } catch (error) {
+      console.error("[web-control] fast fallback productos remoto falló", error);
+    }
+
+    return {
+      plans: FALLBACK_PYME_PLANS,
+      extras: FALLBACK_EXTRAS,
+      products: products.length > 0 ? products : FALLBACK_PRODUCTS,
+      discounts: [],
+      reviews: [],
+    };
+  }
+
   const [plansRaw, extrasRaw, productsRaw, discountsRaw, reviewsRaw, productPublicMeta, productAdminMeta] = await Promise.all([
     getPublicPlans(),
     getPublicExtras(),
@@ -266,7 +435,7 @@ export async function getWebPricingSnapshot() {
 
   const plans = plansRaw.map(normalizePlan).filter((item): item is PublicPlan => Boolean(item));
   const extras = extrasRaw.map(normalizeExtra).filter((item): item is PublicExtra => Boolean(item));
-  const products = productsRaw
+  let products = productsRaw
     .map(normalizeProduct)
     .filter((item): item is PublicProduct => Boolean(item))
     .map((product) => {
@@ -300,6 +469,26 @@ export async function getWebPricingSnapshot() {
         finalPrice,
       };
     });
+
+  if (products.length === 0) {
+    const supabaseUrl = readEnvValue("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL").toLowerCase();
+    const serviceRoleKey = readEnvValue("SUPABASE_SERVICE_ROLE_KEY").toLowerCase();
+    const localOrPlaceholderEnv =
+      supabaseUrl.startsWith("http://localhost:54321") ||
+      serviceRoleKey.includes("dev-service-role-key") ||
+      serviceRoleKey.includes("replace-me");
+
+    if (localOrPlaceholderEnv) {
+      try {
+        const fallbackProducts = await fetchPublishedProductsFromPublicSiteFallback();
+        if (fallbackProducts.length > 0) {
+          products = fallbackProducts;
+        }
+      } catch (error) {
+        console.error("[web-control] fallback productos remoto falló", error);
+      }
+    }
+  }
   const discounts = discountsRaw.map(normalizeDiscount).filter((item): item is PublicDiscount => Boolean(item));
   const reviews = reviewsRaw.map(normalizeReview).filter((item): item is PublicReview => Boolean(item));
 
