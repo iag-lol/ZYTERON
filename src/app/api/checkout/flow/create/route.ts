@@ -6,6 +6,7 @@ import { sendCheckoutStatusEmail } from "@/lib/notifications/purchase-status";
 import { computeCheckoutTotals } from "@/lib/checkout/tax";
 import { createFlowPayment } from "@/lib/payments/flow";
 import { getWebPricingSnapshot } from "@/lib/web-control";
+import { ZYTERON_COMPANY } from "@/lib/company";
 
 const itemSchema = z.object({
   productId: z.string().trim().min(1),
@@ -73,41 +74,48 @@ function finalUnitPrice(product: {
 }
 
 function resolveBaseUrl(req: Request) {
-  const requestHost = (req.headers.get("x-forwarded-host") || req.headers.get("host") || "").toLowerCase();
-  const requestIsLocal =
-    requestHost.includes("localhost") || requestHost.includes("127.0.0.1") || requestHost.includes("::1");
+  const isProduction = process.env.NODE_ENV === "production";
 
-  const explicit =
-    process.env.FLOW_PUBLIC_BASE_URL ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.PUBLIC_SITE_URL ||
-    process.env.RENDER_EXTERNAL_URL;
+  const isLocalHost = (host: string) =>
+    host === "localhost" || host === "127.0.0.1" || host === "::1";
 
-  if (explicit && /^https?:\/\//i.test(explicit.trim())) {
+  const sanitizeUrl = (value?: string | null) => {
+    const normalized = String(value || "").trim();
+    if (!normalized || !/^https?:\/\//i.test(normalized)) return "";
     try {
-      const parsed = new URL(explicit.trim());
-      const host = parsed.hostname.toLowerCase();
-      const explicitIsLocal = host === "localhost" || host === "127.0.0.1" || host === "::1";
-      if (!explicitIsLocal || requestIsLocal) {
-        return explicit.trim().replace(/\/+$/, "");
-      }
+      const parsed = new URL(normalized);
+      if (isProduction && isLocalHost(parsed.hostname.toLowerCase())) return "";
+      return normalized.replace(/\/+$/, "");
     } catch {
-      // ignore malformed explicit URL and continue with request-derived values.
+      return "";
     }
+  };
+
+  const envCandidates = [
+    process.env.FLOW_PUBLIC_BASE_URL,
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.PUBLIC_SITE_URL,
+    process.env.RENDER_EXTERNAL_URL,
+  ];
+  for (const candidate of envCandidates) {
+    const resolved = sanitizeUrl(candidate);
+    if (resolved) return resolved;
   }
 
-  const origin = req.headers.get("origin");
-  if (origin && /^https?:\/\//i.test(origin)) {
-    return origin.replace(/\/+$/, "");
-  }
-
-  const forwardedHost = req.headers.get("x-forwarded-host") || req.headers.get("host");
+  const forwardedHost = String(req.headers.get("x-forwarded-host") || "").trim();
   if (forwardedHost) {
-    const proto = req.headers.get("x-forwarded-proto") || "https";
-    return `${proto}://${forwardedHost}`.replace(/\/+$/, "");
+    const proto = String(req.headers.get("x-forwarded-proto") || "https").trim();
+    const resolved = sanitizeUrl(`${proto}://${forwardedHost}`);
+    if (resolved) return resolved;
   }
 
-  return new URL(req.url).origin.replace(/\/+$/, "");
+  const origin = sanitizeUrl(req.headers.get("origin"));
+  if (origin) return origin;
+
+  const requestOrigin = sanitizeUrl(new URL(req.url).origin);
+  if (requestOrigin) return requestOrigin;
+
+  return ZYTERON_COMPANY.website.replace(/\/+$/, "");
 }
 
 export async function POST(req: Request) {

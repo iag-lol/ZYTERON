@@ -3,23 +3,36 @@ import { syncWonQuoteById } from "@/lib/admin/repository";
 import { deductStockFromCheckout } from "@/lib/checkout/stock";
 import { getFlowPaymentStatus, isFlowApproved, isFlowRejected, mapFlowStatusLabel } from "@/lib/payments/flow";
 import { sendCheckoutStatusEmail } from "@/lib/notifications/purchase-status";
+import { ZYTERON_COMPANY } from "@/lib/company";
 
 function resolvePublicBaseUrl() {
+  const isProduction = process.env.NODE_ENV === "production";
+  const isLocalHost = (host: string) =>
+    host === "localhost" || host === "127.0.0.1" || host === "::1";
+  const sanitizeUrl = (value?: string | null) => {
+    const normalized = String(value || "").trim();
+    if (!normalized || !/^https?:\/\//i.test(normalized)) return "";
+    try {
+      const parsed = new URL(normalized);
+      if (isProduction && isLocalHost(parsed.hostname.toLowerCase())) return "";
+      return normalized.replace(/\/+$/, "");
+    } catch {
+      return "";
+    }
+  };
+
   const candidates = [
     process.env.FLOW_PUBLIC_BASE_URL,
     process.env.NEXT_PUBLIC_SITE_URL,
     process.env.PUBLIC_SITE_URL,
     process.env.RENDER_EXTERNAL_URL,
+    ZYTERON_COMPANY.website,
   ];
 
   for (const candidate of candidates) {
-    const value = String(candidate || "").trim();
-    if (!value) continue;
-    if (!/^https?:\/\//i.test(value)) continue;
-    const parsed = new URL(value);
-    const host = parsed.hostname.toLowerCase();
-    if (host === "localhost" || host === "127.0.0.1" || host === "::1") continue;
-    return value.replace(/\/+$/, "");
+    const resolved = sanitizeUrl(candidate);
+    if (!resolved) continue;
+    return resolved;
   }
 
   return "";
