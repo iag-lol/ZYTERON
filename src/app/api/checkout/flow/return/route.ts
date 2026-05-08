@@ -1,8 +1,40 @@
 import { NextResponse } from "next/server";
 import { processFlowToken } from "@/lib/checkout/process-flow";
+import { ZYTERON_COMPANY } from "@/lib/company";
+
+function resolvePublicCheckoutBase() {
+  const isProduction = process.env.NODE_ENV === "production";
+  const isLocalHost = (host: string) =>
+    host === "localhost" || host === "127.0.0.1" || host === "::1";
+
+  const candidates = [
+    process.env.FLOW_PUBLIC_BASE_URL,
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.PUBLIC_SITE_URL,
+    process.env.RENDER_EXTERNAL_URL,
+    ZYTERON_COMPANY.website,
+  ];
+
+  for (const candidate of candidates) {
+    const value = String(candidate || "").trim();
+    if (!value || !/^https?:\/\//i.test(value)) continue;
+    try {
+      const parsed = new URL(value);
+      if (isProduction && isLocalHost(parsed.hostname.toLowerCase())) continue;
+      return value.replace(/\/+$/, "");
+    } catch {
+      continue;
+    }
+  }
+
+  return "";
+}
 
 function redirectToSummary(req: Request, params: Record<string, string>) {
-  const url = new URL("/checkout/finalizado", req.url);
+  const preferredBase = resolvePublicCheckoutBase();
+  const url = preferredBase
+    ? new URL("/checkout/finalizado", preferredBase)
+    : new URL("/checkout/finalizado", req.url);
   for (const [key, value] of Object.entries(params)) {
     if (!value) continue;
     url.searchParams.set(key, value);
