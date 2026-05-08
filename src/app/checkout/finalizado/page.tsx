@@ -2,10 +2,7 @@ import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Clock3, CreditCard, ReceiptText } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
-import { getCheckoutOrder, markCheckoutEmailSent, markCheckoutStockHandled } from "@/lib/checkout/orders";
-import { deductStockFromCheckout } from "@/lib/checkout/stock";
-import { sendCheckoutStatusEmail } from "@/lib/notifications/purchase-status";
-import { syncWonQuoteById } from "@/lib/admin/repository";
+import { getCheckoutOrder } from "@/lib/checkout/orders";
 
 export const dynamic = "force-dynamic";
 
@@ -50,44 +47,12 @@ export default async function CheckoutFinalizadoPage({
 
   const status = resolveStatus(Number.isFinite(flowStatus) ? flowStatus : 0);
   const Icon = status.icon;
-  let orderData = order ? await getCheckoutOrder(order) : null;
-
-  if (
-    flowStatus === 2 &&
-    orderData &&
-    orderData.meta.flow.status === 2 &&
-    !orderData.meta.fulfillment?.stockDiscountedAt
-  ) {
+  let orderData = null;
+  if (order) {
     try {
-      const stockResult = await deductStockFromCheckout(orderData.meta);
-      await markCheckoutStockHandled({
-        orderId: order,
-        stockDiscountedAt: new Date().toISOString(),
-        stockDiscountedUnits: stockResult.deductedUnits,
-        stockDiscountError: stockResult.warnings.length > 0 ? stockResult.warnings.join(" | ") : null,
-      });
-      await syncWonQuoteById(order);
-
-      if (!orderData.meta.mail.approvedSentAt) {
-        try {
-          await sendCheckoutStatusEmail({
-            orderId: order,
-            recipientEmail: orderData.email || orderData.meta.customer.buyerEmail,
-            recipientName: orderData.name || orderData.meta.customer.buyerName,
-            flowStatus: 2,
-            flowLabel: "PAGADA",
-            meta: orderData.meta,
-            checkoutUrl: orderData.meta.flow.checkoutUrl || null,
-          });
-          await markCheckoutEmailSent(order, "approved");
-        } catch {
-          // no-op: no bloquea visualización de confirmación
-        }
-      }
-
       orderData = await getCheckoutOrder(order);
     } catch {
-      // no-op: evita romper vista final por fallo de reconciliación
+      orderData = null;
     }
   }
   const canDownloadInvoice = flowStatus === 2 && orderData && token && orderData.meta.flow.token === token;

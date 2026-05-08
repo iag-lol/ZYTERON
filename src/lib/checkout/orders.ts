@@ -61,6 +61,8 @@ export type CheckoutMeta = {
     pendingSentAt?: string | null;
     approvedSentAt?: string | null;
     rejectedSentAt?: string | null;
+    internalSentAt?: string | null;
+    whatsappSentAt?: string | null;
   };
 };
 
@@ -229,6 +231,8 @@ export function parseCheckoutMeta(raw?: string | null): CheckoutMeta | null {
         pendingSentAt: parsed.mail?.pendingSentAt || null,
         approvedSentAt: parsed.mail?.approvedSentAt || null,
         rejectedSentAt: parsed.mail?.rejectedSentAt || null,
+        internalSentAt: parsed.mail?.internalSentAt || null,
+        whatsappSentAt: parsed.mail?.whatsappSentAt || null,
       },
     };
   } catch {
@@ -275,6 +279,8 @@ export function buildCheckoutMeta(input: {
       pendingSentAt: null,
       approvedSentAt: null,
       rejectedSentAt: null,
+      internalSentAt: null,
+      whatsappSentAt: null,
     },
   };
 }
@@ -457,13 +463,18 @@ export async function setCheckoutFlowStatus(input: {
   };
 }
 
-export async function markCheckoutEmailSent(orderId: string, type: "pending" | "approved" | "rejected") {
+export async function markCheckoutEmailSent(
+  orderId: string,
+  type: "pending" | "approved" | "rejected" | "internal" | "whatsapp",
+) {
   return patchOrderMeta(orderId, (meta) => ({
     ...meta,
     mail: {
       pendingSentAt: type === "pending" ? nowIso() : meta.mail.pendingSentAt || null,
       approvedSentAt: type === "approved" ? nowIso() : meta.mail.approvedSentAt || null,
       rejectedSentAt: type === "rejected" ? nowIso() : meta.mail.rejectedSentAt || null,
+      internalSentAt: type === "internal" ? nowIso() : meta.mail.internalSentAt || null,
+      whatsappSentAt: type === "whatsapp" ? nowIso() : meta.mail.whatsappSentAt || null,
     },
   }));
 }

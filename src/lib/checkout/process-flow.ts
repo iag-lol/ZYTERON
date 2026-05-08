@@ -3,6 +3,7 @@ import { syncWonQuoteById } from "@/lib/admin/repository";
 import { deductStockFromCheckout } from "@/lib/checkout/stock";
 import { getFlowPaymentStatus, isFlowApproved, isFlowRejected, mapFlowStatusLabel } from "@/lib/payments/flow";
 import { sendCheckoutStatusEmail } from "@/lib/notifications/purchase-status";
+import { sendPurchaseWhatsappNotification } from "@/lib/notifications/purchase-whatsapp";
 import { ZYTERON_COMPANY } from "@/lib/company";
 
 function resolvePublicBaseUrl() {
@@ -36,6 +37,17 @@ function resolvePublicBaseUrl() {
   }
 
   return "";
+}
+
+function parseAlertEmails(rawValue: string | undefined) {
+  return Array.from(
+    new Set(
+      String(rawValue || "")
+        .split(/[,\n;]/)
+        .map((value) => value.trim().toLowerCase())
+        .filter((value) => value.includes("@") && value.includes(".")),
+    ),
+  );
 }
 
 export async function processFlowToken(token: string) {
@@ -90,12 +102,13 @@ export async function processFlowToken(token: string) {
     }
   }
 
-  const shouldSendApproved = isFlowApproved(status.status) && !updated.meta.mail.approvedSentAt;
-  const shouldSendRejected = isFlowRejected(status.status) && !updated.meta.mail.rejectedSentAt;
+  const afterStatusOrder = (await getCheckoutOrder(orderId)) || updated;
+  const shouldSendApproved = isFlowApproved(status.status) && !afterStatusOrder.meta.mail.approvedSentAt;
+  const shouldSendRejected = isFlowRejected(status.status) && !afterStatusOrder.meta.mail.rejectedSentAt;
   const shouldSendPending =
     !isFlowApproved(status.status) &&
     !isFlowRejected(status.status) &&
-    !updated.meta.mail.pendingSentAt;
+    !afterStatusOrder.meta.mail.pendingSentAt;
 
   if (shouldSendApproved || shouldSendRejected || shouldSendPending) {
     try {
@@ -107,12 +120,12 @@ export async function processFlowToken(token: string) {
 
       await sendCheckoutStatusEmail({
         orderId,
-        recipientEmail: updated.email || updated.meta.customer.buyerEmail,
-        recipientName: updated.name || updated.meta.customer.buyerName,
+        recipientEmail: afterStatusOrder.email || afterStatusOrder.meta.customer.buyerEmail,
+        recipientName: afterStatusOrder.name || afterStatusOrder.meta.customer.buyerName,
         flowStatus: status.status,
         flowLabel: mapFlowStatusLabel(status.status),
-        meta: updated.meta,
-        checkoutUrl: updated.meta.flow.checkoutUrl || null,
+        meta: afterStatusOrder.meta,
+        checkoutUrl: afterStatusOrder.meta.flow.checkoutUrl || null,
         invoiceUrl,
       });
 
@@ -126,6 +139,59 @@ export async function processFlowToken(token: string) {
         status: status.status,
         error: error instanceof Error ? error.message : String(error),
       });
+    }
+  }
+
+  if (isFlowApproved(status.status)) {
+    const afterApprovedOrder = (await getCheckoutOrder(orderId)) || updated;
+    const baseUrl = resolvePublicBaseUrl();
+    const invoiceUrl = baseUrl
+      ? `${baseUrl}/api/checkout/invoice/${encodeURIComponent(orderId)}?token=${encodeURIComponent(token)}`
+      : null;
+
+    const shouldSendInternal = !afterApprovedOrder.meta.mail.internalSentAt;
+    if (shouldSendInternal) {
+      const configured = parseAlertEmails(process.env.CHECKOUT_ALERT_EMAILS);
+      const recipients = configured.length > 0 ? configured : [ZYTERON_COMPANY.salesEmail];
+      try {
+        for (const recipient of recipients) {
+          await sendCheckoutStatusEmail({
+            orderId,
+            recipientEmail: recipient,
+            recipientName: ZYTERON_COMPANY.brandName,
+            flowStatus: status.status,
+            flowLabel: mapFlowStatusLabel(status.status),
+            meta: afterApprovedOrder.meta,
+            checkoutUrl: afterApprovedOrder.meta.flow.checkoutUrl || null,
+            invoiceUrl,
+          });
+        }
+        await markCheckoutEmailSent(orderId, "internal");
+      } catch (error) {
+        console.error("[checkout] send internal sale alert failed", {
+          orderId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    const shouldSendWhatsapp = !afterApprovedOrder.meta.mail.whatsappSentAt;
+    if (shouldSendWhatsapp) {
+      try {
+        await sendPurchaseWhatsappNotification({
+          orderId,
+          customerName: afterApprovedOrder.name || afterApprovedOrder.meta.customer.buyerName,
+          totalAmount: afterApprovedOrder.meta.total,
+          documentType: afterApprovedOrder.meta.customer.documentType,
+          invoiceUrl,
+        });
+        await markCheckoutEmailSent(orderId, "whatsapp");
+      } catch (error) {
+        console.error("[checkout] send whatsapp sale alert failed", {
+          orderId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
   }
 
