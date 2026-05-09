@@ -22,12 +22,14 @@ import {
   SlidersHorizontal,
   WalletCards,
   Boxes,
+  ClipboardCheck,
 } from "lucide-react";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/clientes", label: "Clientes", icon: Users },
   { href: "/admin/cotizaciones", label: "Cotizaciones", icon: FileText },
+  { href: "/admin/ordenes-trabajo", label: "Ordenes de trabajo", icon: ClipboardCheck },
   { href: "/admin/proyectos", label: "Proyectos", icon: BriefcaseBusiness },
   { href: "/admin/solicitudes", label: "Solicitudes", icon: MessagesSquare },
   { href: "/admin/comentarios", label: "Comentarios", icon: MessageSquareQuote },
@@ -134,6 +136,13 @@ export function AdminSidebar() {
             >
               <PlusCircle className="h-3.5 w-3.5" />
               Registrar venta
+            </Link>
+            <Link
+              href="/admin/ordenes-trabajo"
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[12px] font-medium text-blue-300/70 transition-all hover:bg-blue-500/10 hover:text-blue-200"
+            >
+              <PlusCircle className="h-3.5 w-3.5" />
+              Gestionar OT
             </Link>
             <Link
               href="/admin/visitas/nueva"

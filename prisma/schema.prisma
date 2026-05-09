@@ -36,6 +36,7 @@ model User {
   projects    Project[]
   requests    ClientRequest[]
   taxDocuments TaxDocument[]
+  workOrders  WorkOrder[]
 }
 
 enum Role {
@@ -163,6 +164,7 @@ model Quote {
   createdAt DateTime     @default(now())
   taxDocuments TaxDocument[]
   projects   Project[]
+  workOrders WorkOrder[]
 }
 
 model QuoteExtra {
@@ -245,6 +247,7 @@ model Sale {
   createdAt     DateTime       @default(now())
   projects      Project[]
   taxDocuments  TaxDocument[]
+  workOrders    WorkOrder[]
 }
 
 model Project {
@@ -273,6 +276,36 @@ model Project {
   createdAt      DateTime        @default(now())
   requests       ClientRequest[]
   taxDocuments   TaxDocument[]
+}
+
+model WorkOrder {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  source         String   @default("MANUAL_QUOTE")
+  status         String   @default("ACTIVE")
+  priority       String   @default("NORMAL")
+  quoteId        String?
+  quote          Quote?   @relation(fields: [quoteId], references: [id])
+  saleId         String?
+  sale           Sale?    @relation(fields: [saleId], references: [id])
+  clientId       String?
+  client         User?    @relation(fields: [clientId], references: [id])
+  title          String
+  description    String?
+  scope          Json?
+  plannedDate    DateTime?
+  dueDate        DateTime?
+  estimatedHours Int?
+  actualHours    Int?
+  budget         Int?
+  assignedTo     String?
+  notes          String?
+  pdfUrl         String?
+  completedAt    DateTime?
+  closedAt       DateTime?
+  cancelledAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model ClientRequest {

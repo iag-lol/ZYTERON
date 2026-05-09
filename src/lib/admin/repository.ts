@@ -35,6 +35,36 @@ export type Sale = {
   invoiceRef?: string | null;
 };
 
+export type WorkOrderStatus = "ACTIVE" | "IN_PROGRESS" | "COMPLETED" | "CLOSED" | "CANCELLED";
+export type WorkOrderSource = "MANUAL_QUOTE" | "WEB_ORDER";
+
+export type WorkOrder = {
+  id: string;
+  code: string;
+  source?: WorkOrderSource | string | null;
+  status?: WorkOrderStatus | string | null;
+  priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT" | string | null;
+  quoteId?: string | null;
+  saleId?: string | null;
+  clientId?: string | null;
+  title: string;
+  description?: string | null;
+  scope?: string[] | null;
+  plannedDate?: string | null;
+  dueDate?: string | null;
+  estimatedHours?: number | null;
+  actualHours?: number | null;
+  budget?: number | null;
+  assignedTo?: string | null;
+  notes?: string | null;
+  pdfUrl?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  completedAt?: string | null;
+  closedAt?: string | null;
+  cancelledAt?: string | null;
+};
+
 export type Client = {
   id: string;
   name: string;
@@ -592,6 +622,30 @@ export async function getSales() {
     "Sale",
     "id, clientId, total, createdAt, description, paymentMethod, invoiceRef",
     { orderBy: "createdAt" },
+  );
+}
+
+export async function getWorkOrders() {
+  return safeSelect<WorkOrder>(
+    "WorkOrder",
+    "id, code, source, status, priority, quoteId, saleId, clientId, title, description, scope, plannedDate, dueDate, estimatedHours, actualHours, budget, assignedTo, notes, pdfUrl, createdAt, updatedAt, completedAt, closedAt, cancelledAt",
+    { orderBy: "createdAt" },
+  );
+}
+
+export async function getWorkOrderById(id: string) {
+  return safeSelectSingle<WorkOrder>(
+    "WorkOrder",
+    "id, code, source, status, priority, quoteId, saleId, clientId, title, description, scope, plannedDate, dueDate, estimatedHours, actualHours, budget, assignedTo, notes, pdfUrl, createdAt, updatedAt, completedAt, closedAt, cancelledAt",
+    { id },
+  );
+}
+
+export async function getWorkOrderByQuoteId(quoteId: string) {
+  return safeSelectSingle<WorkOrder>(
+    "WorkOrder",
+    "id, code, source, status, priority, quoteId, saleId, clientId, title, description, scope, plannedDate, dueDate, estimatedHours, actualHours, budget, assignedTo, notes, pdfUrl, createdAt, updatedAt, completedAt, closedAt, cancelledAt",
+    { quoteId },
   );
 }
 

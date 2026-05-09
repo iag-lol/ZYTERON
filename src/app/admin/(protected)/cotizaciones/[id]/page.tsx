@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, Download, FileEdit, Mail, MapPin, Phone, ReceiptText } from "lucide-react";
+import { ArrowLeft, CalendarDays, ClipboardCheck, ClipboardPlus, Download, FileEdit, Mail, MapPin, Phone, ReceiptText } from "lucide-react";
 import { currencyCLP } from "@/lib/admin/quote";
-import { getQuoteById } from "@/lib/admin/repository";
+import { getQuoteById, getWorkOrderByQuoteId } from "@/lib/admin/repository";
 import { QuoteSendEmailButton } from "@/components/admin/quote-send-email-button";
+import { isManualQuote } from "@/lib/admin/work-orders";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -20,11 +21,13 @@ function infoRow(label: string, value?: string | null) {
 
 export default async function CotizacionDetallePage({ params }: Params) {
   const { id } = await params;
-  const quote = await getQuoteById(id);
+  const [quote, workOrder] = await Promise.all([getQuoteById(id), getWorkOrderByQuoteId(id)]);
 
   if (!quote) {
     notFound();
   }
+
+  const canGenerateOt = isManualQuote(quote) && ["PENDING", "SENT"].includes(String(quote.status || "").toUpperCase());
 
   return (
     <div className="space-y-8">
@@ -48,6 +51,28 @@ export default async function CotizacionDetallePage({ params }: Params) {
         </div>
 
         <div className="flex gap-2">
+          {workOrder ? (
+            <Link
+              href="/admin/ordenes-trabajo"
+              className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-100"
+            >
+              <ClipboardCheck className="h-4 w-4" />
+              OT vinculada
+            </Link>
+          ) : canGenerateOt ? (
+            <form action="/admin/ordenes-trabajo/generar" method="post">
+              <input type="hidden" name="quoteId" value={quote.id} />
+              <input type="hidden" name="source" value="MANUAL_QUOTE" />
+              <input type="hidden" name="redirectTo" value="/admin/cotizaciones" />
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-100"
+              >
+                <ClipboardPlus className="h-4 w-4" />
+                Generar OT
+              </button>
+            </form>
+          ) : null}
           <Link
             href={`/admin/cotizaciones/${quote.id}/editar`}
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"

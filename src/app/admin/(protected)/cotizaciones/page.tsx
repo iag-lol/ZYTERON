@@ -2,6 +2,8 @@ import { getAdminSnapshot } from "@/lib/admin-data";
 import {
   ArrowUpRight,
   BarChart2,
+  ClipboardCheck,
+  ClipboardPlus,
   Download,
   FileEdit,
   FileText,
@@ -12,6 +14,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { QuoteSendEmailButton } from "@/components/admin/quote-send-email-button";
+import { getWorkOrders } from "@/lib/admin/repository";
+import { isManualQuote } from "@/lib/admin/work-orders";
 
 type QuoteStatus = "PENDING" | "SENT" | "WON" | "LOST";
 type QuoteStatusFilter = "ALL" | QuoteStatus;
@@ -67,6 +71,10 @@ type PageProps = {
         email_error?: string;
         email_id?: string;
         email_event?: string;
+        ot_created?: string;
+        ot_error?: string;
+        ot_exists?: string;
+        ot_invalid_quote?: string;
       }
     | Promise<{
         status?: string;
@@ -75,6 +83,10 @@ type PageProps = {
         email_error?: string;
         email_id?: string;
         email_event?: string;
+        ot_created?: string;
+        ot_error?: string;
+        ot_exists?: string;
+        ot_invalid_quote?: string;
       }>;
 };
 
@@ -86,35 +98,48 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
   const emailError = query?.email_error ? decodeURIComponent(query.email_error) : "";
   const emailId = query?.email_id ? String(query.email_id) : "";
   const emailEvent = query?.email_event ? String(query.email_event) : "";
-  const data = await getAdminSnapshot();
-  const allQuotes = data.quotes
+  const otCreated = query?.ot_created === "1";
+  const otError = query?.ot_error === "1";
+  const otExists = query?.ot_exists === "1";
+  const otInvalidQuote = query?.ot_invalid_quote === "1";
+
+  const [data, workOrders] = await Promise.all([getAdminSnapshot(), getWorkOrders()]);
+  const manualQuotes = data.quotes
+    .filter((quote) => isManualQuote(quote))
     .slice()
     .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 
-  const quotes = activeFilter === "ALL"
-    ? allQuotes
-    : allQuotes.filter((q) => normalizeQuoteStatus(q.status) === activeFilter);
+  const workOrderByQuote = new Map(
+    workOrders
+      .filter((order) => String(order.source || "").toUpperCase() === "MANUAL_QUOTE")
+      .filter((order) => Boolean(order.quoteId))
+      .map((order) => [String(order.quoteId), order]),
+  );
 
-  const pipelineValue = allQuotes.reduce((acc, q) => acc + (q.totalAmount || 0), 0);
-  const wonValue = allQuotes
+  const quotes = activeFilter === "ALL"
+    ? manualQuotes
+    : manualQuotes.filter((q) => normalizeQuoteStatus(q.status) === activeFilter);
+
+  const pipelineValue = manualQuotes.reduce((acc, q) => acc + (q.totalAmount || 0), 0);
+  const wonValue = manualQuotes
     .filter((q) => normalizeQuoteStatus(q.status) === "WON")
     .reduce((acc, q) => acc + (q.totalAmount || 0), 0);
-  const pending = allQuotes.filter((q) => normalizeQuoteStatus(q.status) === "PENDING").length;
-  const sent = allQuotes.filter((q) => normalizeQuoteStatus(q.status) === "SENT").length;
-  const won = allQuotes.filter((q) => normalizeQuoteStatus(q.status) === "WON").length;
-  const lost = allQuotes.filter((q) => normalizeQuoteStatus(q.status) === "LOST").length;
+  const pending = manualQuotes.filter((q) => normalizeQuoteStatus(q.status) === "PENDING").length;
+  const sent = manualQuotes.filter((q) => normalizeQuoteStatus(q.status) === "SENT").length;
+  const won = manualQuotes.filter((q) => normalizeQuoteStatus(q.status) === "WON").length;
+  const lost = manualQuotes.filter((q) => normalizeQuoteStatus(q.status) === "LOST").length;
   const filteredPipelineValue = quotes.reduce((acc, q) => acc + (q.totalAmount || 0), 0);
   const filteredWonValue = quotes
     .filter((q) => normalizeQuoteStatus(q.status) === "WON")
     .reduce((acc, q) => acc + (q.totalAmount || 0), 0);
-  const winRate = data.metrics.conversion.winRate;
+  const winRate = manualQuotes.length ? Math.round((won / manualQuotes.length) * 100) : 0;
   const returnTo = activeFilter === "ALL" ? "/admin/cotizaciones" : `/admin/cotizaciones?status=${activeFilter}`;
 
   const stats = [
     {
       label: "Pipeline total",
       value: currency(pipelineValue),
-      sub: `${allQuotes.length} cotizaciones activas`,
+      sub: `${manualQuotes.length} cotizaciones activas`,
       icon: BarChart2,
       iconBg: "bg-blue-500",
       shadow: "shadow-blue-500/30",
@@ -130,7 +155,7 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
     {
       label: "Win Rate",
       value: `${winRate}%`,
-      sub: `${won} ganadas de ${allQuotes.length}`,
+      sub: `${won} ganadas de ${manualQuotes.length}`,
       icon: Target,
       iconBg: "bg-violet-500",
       shadow: "shadow-violet-500/30",
@@ -168,6 +193,21 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
           {emailError}
         </div>
       ) : null}
+      {otCreated ? (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          Orden de trabajo creada desde cotización manual.
+        </div>
+      ) : null}
+      {otExists ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          Esa cotización ya tiene una orden de trabajo asociada.
+        </div>
+      ) : null}
+      {otError || otInvalidQuote ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          No se pudo generar la orden de trabajo. Debe ser una cotización manual pendiente o enviada.
+        </div>
+      ) : null}
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -176,16 +216,25 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
           </p>
           <h1 className="mt-0.5 text-2xl font-extrabold text-slate-900">Cotizaciones</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {allQuotes.length} cotizaciones · {currency(pipelineValue)} en pipeline
+            {manualQuotes.length} cotizaciones manuales · {currency(pipelineValue)} en pipeline
           </p>
         </div>
-        <Link
-          href="/admin/cotizaciones/nueva"
-          className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
-        >
-          <Plus className="h-4 w-4" />
-          Nueva cotización
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/admin/ordenes-trabajo"
+            className="flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3.5 py-2 text-sm font-semibold text-violet-700 shadow-sm transition-colors hover:bg-violet-100"
+          >
+            <ClipboardCheck className="h-4 w-4" />
+            Ver OT
+          </Link>
+          <Link
+            href="/admin/cotizaciones/nueva"
+            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+          >
+            <Plus className="h-4 w-4" />
+            Nueva cotización
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
@@ -228,7 +277,7 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
           {[
-            { key: "ALL", label: "Todas", count: allQuotes.length },
+            { key: "ALL", label: "Todas", count: manualQuotes.length },
             { key: "PENDING", label: "Pendiente", count: pending },
             { key: "SENT", label: "Enviada", count: sent },
             { key: "WON", label: "Ganada", count: won },
@@ -308,6 +357,8 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
                 const statusKey = normalizeQuoteStatus(q.status);
                 const cfg = statusConfig[statusKey];
                 const avatarBg = avatarColors[idx % avatarColors.length];
+                const existingOt = workOrderByQuote.get(q.id);
+                const canGenerateOt = statusKey === "PENDING" || statusKey === "SENT";
                 return (
                   <div
                     key={q.id}
@@ -375,6 +426,28 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
 
                     {/* Actions */}
                     <div className="flex items-center gap-1.5">
+                      {existingOt ? (
+                        <Link
+                          href="/admin/ordenes-trabajo"
+                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-violet-200 bg-violet-50 text-violet-700 transition-colors hover:bg-violet-100"
+                          title={`OT ${existingOt.code}`}
+                        >
+                          <ClipboardCheck className="h-3.5 w-3.5" />
+                        </Link>
+                      ) : canGenerateOt ? (
+                        <form action="/admin/ordenes-trabajo/generar" method="post">
+                          <input type="hidden" name="quoteId" value={q.id} />
+                          <input type="hidden" name="source" value="MANUAL_QUOTE" />
+                          <input type="hidden" name="redirectTo" value={returnTo} />
+                          <button
+                            type="submit"
+                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-violet-200 bg-violet-50 text-violet-700 transition-colors hover:bg-violet-100"
+                            title="Generar orden de trabajo"
+                          >
+                            <ClipboardPlus className="h-3.5 w-3.5" />
+                          </button>
+                        </form>
+                      ) : null}
                       <a
                         href={q.pdfUrl}
                         target="_blank"

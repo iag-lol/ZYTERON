@@ -1,10 +1,14 @@
 import { getAdminSnapshot } from "@/lib/admin-data";
 import { parseCheckoutMeta } from "@/lib/checkout/orders";
 import { mapFlowStatusLabel } from "@/lib/payments/flow";
+import { getWorkOrders } from "@/lib/admin/repository";
+import { normalizeWorkOrderStatus, workOrderStatusLabel, workOrderStatusStyles } from "@/lib/admin/work-orders";
 import {
   ArrowUpRight,
   BadgeCheck,
   Calendar,
+  ClipboardCheck,
+  ClipboardPlus,
   Clock3,
   DollarSign,
   Globe,
@@ -15,6 +19,7 @@ import {
   Target,
   TrendingUp,
   XCircle,
+  Wrench,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -80,8 +85,27 @@ function flowVisual(status: number) {
   };
 }
 
-export default async function VentasPage() {
-  const data = await getAdminSnapshot();
+type PageProps = {
+  searchParams?:
+    | {
+        ot_created?: string;
+        ot_error?: string;
+        ot_exists?: string;
+        ot_invalid_quote?: string;
+        ot_status_error?: string;
+      }
+    | Promise<{
+        ot_created?: string;
+        ot_error?: string;
+        ot_exists?: string;
+        ot_invalid_quote?: string;
+        ot_status_error?: string;
+      }>;
+};
+
+export default async function VentasPage({ searchParams }: PageProps) {
+  const query = await Promise.resolve(searchParams);
+  const [data, workOrders] = await Promise.all([getAdminSnapshot(), getWorkOrders()]);
   const sales = data.sales
     .slice()
     .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
@@ -136,6 +160,19 @@ export default async function VentasPage() {
     .filter((row): row is NonNullable<typeof row> => Boolean(row))
     .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 
+  const otCreated = query?.ot_created === "1";
+  const otError = query?.ot_error === "1";
+  const otExists = query?.ot_exists === "1";
+  const otInvalidQuote = query?.ot_invalid_quote === "1";
+  const otStatusError = query?.ot_status_error === "1";
+
+  const webWorkOrders = workOrders.filter((order) => String(order.source || "").toUpperCase() === "WEB_ORDER");
+  const webWorkOrderByQuoteId = new Map(
+    webWorkOrders
+      .filter((order) => Boolean(order.quoteId))
+      .map((order) => [String(order.quoteId), order]),
+  );
+
   const revenue = data.metrics.money.revenue;
   const avgTicket = data.metrics.money.avgTicket;
 
@@ -164,6 +201,13 @@ export default async function VentasPage() {
   const webRevenueApproved = webApproved.reduce((acc, order) => acc + order.total, 0);
   const webTaxApproved = webApproved.reduce((acc, order) => acc + order.taxAmount, 0);
   const webUnits = webOrders.reduce((acc, order) => acc + order.itemsCount, 0);
+  const webOtActive = webWorkOrders.filter((order) => {
+    const status = normalizeWorkOrderStatus(order.status);
+    return status === "ACTIVE" || status === "IN_PROGRESS";
+  }).length;
+  const webOtCompleted = webWorkOrders.filter((order) => normalizeWorkOrderStatus(order.status) === "COMPLETED").length;
+  const webOtClosed = webWorkOrders.filter((order) => normalizeWorkOrderStatus(order.status) === "CLOSED").length;
+  const webOtCancelled = webWorkOrders.filter((order) => normalizeWorkOrderStatus(order.status) === "CANCELLED").length;
 
   const stats = [
     {
@@ -202,6 +246,21 @@ export default async function VentasPage() {
 
   return (
     <div className="space-y-8">
+      {otCreated ? (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          Orden de trabajo web creada correctamente.
+        </div>
+      ) : null}
+      {otExists ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          El pedido web ya tenía una orden de trabajo asociada.
+        </div>
+      ) : null}
+      {otError || otInvalidQuote || otStatusError ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          No se pudo completar la operación de orden de trabajo en ventas web.
+        </div>
+      ) : null}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
@@ -212,13 +271,22 @@ export default async function VentasPage() {
             {sales.length} ventas manuales + {webOrders.length} ventas web
           </p>
         </div>
-        <Link
-          href="/admin/ventas/nueva"
-          className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
-        >
-          <Plus className="h-4 w-4" />
-          Registrar venta
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/admin/ordenes-trabajo"
+            className="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-2 text-sm font-semibold text-blue-700 shadow-sm transition-colors hover:bg-blue-100"
+          >
+            <Wrench className="h-4 w-4" />
+            OT
+          </Link>
+          <Link
+            href="/admin/ventas/nueva"
+            className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
+          >
+            <Plus className="h-4 w-4" />
+            Registrar venta
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -368,6 +436,18 @@ export default async function VentasPage() {
             <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 font-semibold text-rose-700">
               {webRejected.length} rechazadas
             </span>
+            <span className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 font-semibold text-indigo-700">
+              {webOtActive} OT activas
+            </span>
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
+              {webOtCompleted} OT terminadas
+            </span>
+            <span className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1 font-semibold text-slate-700">
+              {webOtClosed} OT cerradas
+            </span>
+            <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 font-semibold text-rose-700">
+              {webOtCancelled} OT canceladas
+            </span>
           </div>
         </div>
 
@@ -408,12 +488,13 @@ export default async function VentasPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-[1.1fr_1.25fr_1fr_1.1fr_1fr_auto] gap-3 border-b border-slate-100 bg-white px-6 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+            <div className="grid grid-cols-[1.05fr_1.2fr_1fr_1.05fr_1fr_0.95fr_auto] gap-3 border-b border-slate-100 bg-white px-6 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
               <span>Pedido / Estado</span>
               <span>Cliente</span>
               <span>Documento</span>
               <span>Productos</span>
               <span>Total / Fecha</span>
+              <span>OT</span>
               <span>Acción</span>
             </div>
 
@@ -421,8 +502,10 @@ export default async function VentasPage() {
               {webOrders.map((order) => {
                 const status = flowVisual(order.flowStatus);
                 const StatusIcon = status.icon;
+                const workOrder = webWorkOrderByQuoteId.get(order.quoteId);
+                const workOrderStatus = workOrder ? normalizeWorkOrderStatus(workOrder.status) : null;
                 return (
-                  <div key={order.quoteId} className="grid grid-cols-[1.1fr_1.25fr_1fr_1.1fr_1fr_auto] gap-3 px-6 py-4 hover:bg-slate-50">
+                  <div key={order.quoteId} className="grid grid-cols-[1.05fr_1.2fr_1fr_1.05fr_1fr_0.95fr_auto] gap-3 px-6 py-4 hover:bg-slate-50">
                     <div>
                       <p className="font-mono text-[12px] font-semibold text-slate-800">WEB-{order.quoteId.slice(0, 8).toUpperCase()}</p>
                       <div className="mt-1 flex items-center gap-1.5">
@@ -477,7 +560,62 @@ export default async function VentasPage() {
                       <p className="text-[11px] text-slate-400">{toTimeLabel(order.createdAt)}</p>
                     </div>
 
+                    <div className="space-y-1.5">
+                      {workOrder ? (
+                        <>
+                          <p className="font-mono text-[11px] font-semibold text-slate-700">{workOrder.code}</p>
+                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold ${workOrderStatusStyles(workOrderStatus)}`}>
+                            {workOrderStatusLabel(workOrderStatus)}
+                          </span>
+                          <form action={`/admin/ordenes-trabajo/${workOrder.id}/estado`} method="post" className="pt-1">
+                            <select
+                              name="status"
+                              defaultValue={workOrderStatus || "ACTIVE"}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold text-slate-700 focus:border-blue-400 focus:outline-none"
+                            >
+                              <option value="ACTIVE">Activa</option>
+                              <option value="IN_PROGRESS">En progreso</option>
+                              <option value="COMPLETED">Terminada</option>
+                              <option value="CLOSED">Cerrada</option>
+                              <option value="CANCELLED">Cancelada</option>
+                            </select>
+                            <input type="hidden" name="redirectTo" value="/admin/ventas" />
+                            <button
+                              type="submit"
+                              className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-700 hover:bg-slate-100"
+                            >
+                              Guardar
+                            </button>
+                          </form>
+                        </>
+                      ) : (
+                        <form action="/admin/ordenes-trabajo/generar" method="post">
+                          <input type="hidden" name="quoteId" value={order.quoteId} />
+                          <input type="hidden" name="source" value="WEB_ORDER" />
+                          <input type="hidden" name="redirectTo" value="/admin/ventas" />
+                          <button
+                            type="submit"
+                            className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2 py-1 text-[10px] font-bold text-indigo-700 transition-colors hover:bg-indigo-100"
+                          >
+                            <ClipboardPlus className="h-3 w-3" />
+                            Crear OT
+                          </button>
+                        </form>
+                      )}
+                    </div>
+
                     <div className="flex items-start justify-end">
+                      {workOrder ? (
+                        <a
+                          href={workOrder.pdfUrl || `/admin/ordenes-trabajo/${workOrder.id}/pdf`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mr-1 flex h-7 w-7 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 transition-colors hover:bg-indigo-100"
+                          title="PDF OT"
+                        >
+                          <ClipboardCheck className="h-3.5 w-3.5" />
+                        </a>
+                      ) : null}
                       <Link
                         href={`/admin/cotizaciones/${order.quoteId}`}
                         className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
@@ -492,7 +630,7 @@ export default async function VentasPage() {
             </div>
 
             <div className="border-t border-slate-100 bg-slate-50 px-6 py-3 text-[11px] text-slate-500">
-              Ventas Web resumen: {webOrders.length} pedidos · {webApproved.length} pagados · {webPending.length} pendientes · {webRejected.length} rechazados.
+              Ventas Web resumen: {webOrders.length} pedidos · {webApproved.length} pagados · {webPending.length} pendientes · {webRejected.length} rechazados · OT activas {webOtActive} · terminadas {webOtCompleted} · cerradas {webOtClosed} · canceladas {webOtCancelled}.
             </div>
           </>
         )}
@@ -509,6 +647,8 @@ export default async function VentasPage() {
               Ventas manuales se guardan en <code className="rounded bg-slate-200 px-1 font-mono text-[11px]">Sale</code>.
               Ventas web se guardan en <code className="rounded bg-slate-200 px-1 font-mono text-[11px]">Quote</code> con metadata{" "}
               <code className="rounded bg-slate-200 px-1 font-mono text-[11px]">PRODUCT_CHECKOUT</code>, incluyendo cliente, ítems, documento y estado Flow.
+              Las órdenes de trabajo operativas se gestionan en{" "}
+              <code className="rounded bg-slate-200 px-1 font-mono text-[11px]">WorkOrder</code> con estados activos, terminadas, cerradas y canceladas.
             </p>
           </div>
         </div>
