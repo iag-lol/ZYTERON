@@ -21,6 +21,13 @@ export const metadata: Metadata = createPageMetadata({
 
 const demoCards = [
   {
+    title: "Demo tienda online de ropa",
+    description:
+      "Tienda online profesional para marcas de ropa: diseño moderno, catálogo, carrito y estructura preparada para pagos online.",
+    tech: "Desde $499.990 CLP · Responsive · Catálogo · Carrito · Panel administrativo según requerimiento",
+    demoHref: "https://iag-lol.github.io/tienda.mck/",
+  },
+  {
     title: "Demo tienda online",
     description: "Flujo de catálogo, carrito y estados de pedido para venta digital.",
     tech: "Catálogo, carrito, pagos, panel de pedidos",
@@ -121,9 +128,15 @@ export default function DemosPage() {
                 <p className="text-xs text-slate-500">{demo.tech}</p>
                 <div className="flex flex-wrap gap-2 pt-1">
                   <Button asChild size="sm" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-                    <Link href="/contacto?origen=demo">
-                      <Eye className="h-4 w-4" /> Ver demo
-                    </Link>
+                    {demo.demoHref ? (
+                      <a href={demo.demoHref} target="_blank" rel="noopener noreferrer">
+                        <Eye className="h-4 w-4" /> Ver demo
+                      </a>
+                    ) : (
+                      <Link href="/contacto?origen=demo">
+                        <Eye className="h-4 w-4" /> Ver demo
+                      </Link>
+                    )}
                   </Button>
                   <Button asChild size="sm" className="bg-blue-700 text-white hover:bg-blue-800">
                     <Link href={`/contacto?origen=demo&item=${encodeURIComponent(demo.title)}`}>

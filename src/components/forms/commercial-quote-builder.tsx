@@ -41,14 +41,20 @@ const advancedFeatureKeys = new Set([
   "soporte-mensual",
 ]);
 
-const systemNeedKeys = new Set([
+const complexNeedKeys = new Set([
   "sistema-web",
   "panel-administrativo",
   "cotizador-pdf",
   "sistema-reservas",
+  "gestion-clientes",
+  "gestion-productos",
+  "sistema-inventario",
+  "control-registros",
+  "reportes-dashboard",
+  "automatizacion-procesos",
+  // Compatibilidad con datos históricos del cotizador.
   "control-flota",
   "control-combustible",
-  "automatizacion-whatsapp",
   "proyecto-personalizado",
 ]);
 
@@ -61,6 +67,40 @@ const planGuidance = [
   "Si necesitas integraciones, automatizaciones o módulos personalizados: Desarrollo a medida.",
 ];
 
+const needTypeGroups = [
+  {
+    title: "Presencia digital",
+    options: [
+      ["landing-page", "Landing page"],
+      ["pagina-corporativa", "Página web corporativa"],
+      ["catalogo-productos", "Catálogo de productos"],
+      ["tienda-online", "Tienda online"],
+    ],
+  },
+  {
+    title: "Sistemas y gestión",
+    options: [
+      ["sistema-web", "Sistema web"],
+      ["panel-administrativo", "Panel administrativo"],
+      ["sistema-reservas", "Sistema de reservas"],
+      ["cotizador-pdf", "Cotizador con PDF"],
+      ["gestion-clientes", "Gestión de clientes"],
+      ["gestion-productos", "Gestión de productos"],
+      ["sistema-inventario", "Sistema de inventario"],
+      ["control-registros", "Control de registros"],
+      ["reportes-dashboard", "Reportes y dashboard"],
+      ["automatizacion-procesos", "Automatización de procesos"],
+    ],
+  },
+  {
+    title: "Servicios técnicos",
+    options: [
+      ["soporte-ti", "Soporte TI"],
+      ["proyecto-personalizado", "Proyecto personalizado"],
+    ],
+  },
+] as const;
+
 function computeRecommendation(input: {
   projectFor: string;
   needType: string;
@@ -71,12 +111,12 @@ function computeRecommendation(input: {
   const isInstitution = ["empresa", "colegio-institucion", "institucion", "organizacion"].includes(
     input.projectFor,
   );
-  const hasSystemNeed = systemNeedKeys.has(input.needType);
+  const hasComplexNeed = complexNeedKeys.has(input.needType);
   const advancedCount = input.features.filter((item) => advancedFeatureKeys.has(item)).length;
   const hugePageCount = input.pageCount === "mas-10";
   const highBudget = input.budgetRange === "500-1000" || input.budgetRange === "mas-1000";
 
-  if (hasSystemNeed || advancedCount >= 3 || (advancedCount >= 2 && hugePageCount)) {
+  if (hasComplexNeed || advancedCount >= 3 || (advancedCount >= 2 && hugePageCount)) {
     if (advancedCount >= 5 || (highBudget && advancedCount >= 3)) {
       return {
         planName: "Sistema Avanzado / Desarrollo a medida",
@@ -91,12 +131,12 @@ function computeRecommendation(input: {
       planName: "Sistema Web / Panel Administrativo",
       fromPrice: 450000,
       rangeLabel: "$450.000 a $1.200.000",
-      note: "Este tipo de proyecto requiere evaluación del alcance.",
+      note: "Este proyecto requiere evaluación y cotización formal según alcance.",
       requiresReview: true,
     } satisfies Recommendation;
   }
 
-  if (input.needType === "tienda-online" || input.needType === "catalogo-productos") {
+  if (input.needType === "tienda-online") {
     return {
       planName: "Catálogo / Tienda Online",
       fromPrice: 399990,
@@ -106,13 +146,33 @@ function computeRecommendation(input: {
     } satisfies Recommendation;
   }
 
+  if (input.needType === "catalogo-productos") {
+    return {
+      planName: "Catálogo simple",
+      fromPrice: 149990,
+      rangeLabel: "$149.990 a $399.990",
+      note: "Ideal para mostrar productos sin integrar procesos complejos en una primera etapa.",
+      requiresReview: false,
+    } satisfies Recommendation;
+  }
+
+  if (input.needType === "soporte-ti") {
+    return {
+      planName: "Soporte TI",
+      fromPrice: 69990,
+      rangeLabel: "$69.990 a $250.000",
+      note: "Recomendado para soporte técnico y mejoras operativas puntuales.",
+      requiresReview: false,
+    } satisfies Recommendation;
+  }
+
   if (isInstitution || input.needType === "pagina-corporativa") {
     return {
       planName: "Plan Empresa",
       fromPrice: 299990,
       rangeLabel: "$299.990 a $650.000",
       note: "Recomendado para webs corporativas estructuradas y requerimientos institucionales.",
-      requiresReview: true,
+      requiresReview: false,
     } satisfies Recommendation;
   }
 
@@ -131,7 +191,7 @@ function computeRecommendation(input: {
     fromPrice: 149990,
     rangeLabel: "$149.990 a $299.990",
     note: "Para negocios que necesitan una web comercial más completa y profesional.",
-    requiresReview: true,
+    requiresReview: false,
   } satisfies Recommendation;
 }
 
@@ -306,33 +366,33 @@ export function CommercialQuoteBuilder() {
 
         <section className="card-premium p-6">
           <p className="text-xs font-bold uppercase tracking-widest text-blue-600">B) ¿Qué necesitas?</p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              ["landing-page", "Landing page"],
-              ["pagina-corporativa", "Página web corporativa"],
-              ["catalogo-productos", "Catálogo de productos"],
-              ["tienda-online", "Tienda online"],
-              ["sistema-web", "Sistema web"],
-              ["panel-administrativo", "Panel administrativo"],
-              ["cotizador-pdf", "Cotizador con PDF"],
-              ["sistema-reservas", "Sistema de reservas"],
-              ["control-flota", "Control de flota"],
-              ["control-combustible", "Control de combustible"],
-              ["automatizacion-whatsapp", "Automatización WhatsApp"],
-              ["soporte-ti", "Soporte TI"],
-              ["proyecto-personalizado", "Proyecto personalizado"],
-            ].map(([value, label]) => (
-              <label key={value} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
-                <input
-                  type="radio"
-                  name="need-type"
-                  checked={form.needType === value}
-                  onChange={() => setForm((prev) => ({ ...prev, needType: value }))}
-                />
-                {label}
-              </label>
+          <div className="mt-4 space-y-4">
+            {needTypeGroups.map((group) => (
+              <div key={group.title} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-600">{group.title}</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {group.options.map(([value, label]) => (
+                    <label
+                      key={value}
+                      className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    >
+                      <input
+                        type="radio"
+                        name="need-type"
+                        checked={form.needType === value}
+                        onChange={() => setForm((prev) => ({ ...prev, needType: value }))}
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
+          <p className="mt-3 text-xs text-slate-500">
+            También desarrollamos sistemas personalizados para control operativo, flota, combustible, asistencia,
+            inventario, reservas, reportes u otros procesos internos.
+          </p>
         </section>
 
         <section className="card-premium p-6">
@@ -527,18 +587,26 @@ export function CommercialQuoteBuilder() {
           <p className="mt-2 text-sm text-slate-700">
             Proyecto recomendado: <strong>{recommendation.planName}</strong>
           </p>
-          <p className="mt-1 text-sm text-slate-700">
-            Valor estimado desde: <strong>{formatCLP(recommendation.fromPrice)}</strong>
-          </p>
-          <p className="mt-1 text-sm text-slate-700">
-            Rango aproximado: <strong>{recommendation.rangeLabel}</strong>
-          </p>
-          <p className="mt-2 text-sm text-slate-600">{recommendation.note}</p>
           {recommendation.requiresReview ? (
-            <p className="mt-2 text-xs font-semibold text-blue-800">
-              Este proyecto requiere revisión comercial/técnica antes de definir propuesta final.
+            <p className="mt-1 text-sm font-semibold text-blue-900">
+              Este proyecto requiere evaluación y cotización formal según alcance.
             </p>
-          ) : null}
+          ) : (
+            <>
+              <p className="mt-1 text-sm text-slate-700">
+                Valor estimado desde: <strong>{formatCLP(recommendation.fromPrice)}</strong>
+              </p>
+              <p className="mt-1 text-sm text-slate-700">
+                Rango aproximado: <strong>{recommendation.rangeLabel}</strong>
+              </p>
+            </>
+          )}
+          <p className="mt-2 text-sm text-slate-600">{recommendation.note}</p>
+          <div className="mt-3 space-y-1 text-xs text-slate-600">
+            <p>Valor referencial sujeto al alcance.</p>
+            <p>Revisaremos tu solicitud antes de confirmar el valor final.</p>
+            <p>Podrás pagar un abono inicial una vez aprobada la cotización.</p>
+          </div>
         </section>
 
         <Button

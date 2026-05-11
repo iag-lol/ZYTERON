@@ -104,6 +104,11 @@ const serviceGroups = [
 
 const demoCards = [
   {
+    name: "Demo tienda online de ropa",
+    desc: "Demo visual para marcas que quieren vender online con diseño personalizado y responsive.",
+    tech: "Desde $499.990 CLP · Catálogo, carrito y estructura para pagos",
+  },
+  {
     name: "Demo tienda online",
     desc: "Flujo de compra con catálogo, carrito y derivación comercial.",
     tech: "Catálogo, carrito, pagos, panel de pedidos",
