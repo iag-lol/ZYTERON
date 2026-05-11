@@ -21,6 +21,7 @@ const footerColumns = [
     title: "Soluciones",
     items: [
       { label: "Demos funcionales", href: "/demos" },
+      { label: "Productos TI", href: "/productos" },
       { label: "Planes y precios", href: "/planes" },
       { label: "Cotizador", href: "/paquetes" },
       { label: "Preguntas frecuentes", href: "/faq" },
@@ -126,8 +127,8 @@ export function SiteFooter() {
           <p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">Identidad comercial</p>
           <div className="grid gap-2 text-xs text-slate-300 md:grid-cols-2">
             <p>Nombre comercial: ZYTERON</p>
-            <p>Razón social: [AGREGAR RAZÓN SOCIAL]</p>
-            <p>RUT: [AGREGAR RUT]</p>
+            <p>Razón social: ZYTERON SpA</p>
+            <p>RUT: 78.398.774-0</p>
             <p>Giro: Servicios informáticos, desarrollo web, soporte TI y soluciones digitales</p>
             <p>Ubicación: Santiago, Chile</p>
             <p>Atención: Empresas, pymes y emprendedores</p>

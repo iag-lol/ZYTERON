@@ -354,9 +354,9 @@ export default function PlanesPage() {
       </section>
 
       <section className="bg-white py-16">
-        <Container className="grid gap-6 lg:grid-cols-2">
+        <Container className="grid gap-6 lg:auto-rows-fr lg:grid-cols-2">
           {plans.map((plan) => (
-            <article key={plan.id} className="card-premium flex flex-col p-6">
+            <article key={plan.id} className="card-premium flex h-full flex-col p-6">
               <div className="mb-3 inline-flex w-fit rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
                 {plan.tag}
               </div>
@@ -365,7 +365,7 @@ export default function PlanesPage() {
               <p className="mt-2 text-sm text-slate-600">{plan.audience}</p>
               <p className="mt-2 text-sm font-medium text-slate-700">{plan.copy}</p>
 
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div className="mt-4 grid flex-1 gap-4 md:grid-cols-2">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-widest text-emerald-700">Incluye</p>
                   <div className="mt-2 space-y-1.5">

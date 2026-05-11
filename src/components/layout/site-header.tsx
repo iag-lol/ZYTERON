@@ -15,6 +15,7 @@ const navItems = [
   { href: "/", label: "Inicio" },
   { href: "/servicios", label: "Servicios" },
   { href: "/demos", label: "Demos" },
+  { href: "/productos", label: "Productos TI" },
   { href: "/planes", label: "Planes" },
   { href: "/nosotros", label: "Nosotros" },
   { href: "/blog", label: "Blog" },
