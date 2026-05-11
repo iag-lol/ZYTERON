@@ -16,17 +16,37 @@ const lineItemSchema = z.object({
 const payloadSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(160),
-  phone: z.string().trim().max(32).optional().or(z.literal("")),
-  company: z.string().trim().max(140).optional().or(z.literal("")),
+  phone: z.string().trim().min(8).max(32),
+  company: z.string().trim().min(2).max(140),
+  projectType: z.string().trim().min(2).max(120),
+  budget: z.string().trim().max(80).optional().or(z.literal("")),
+  expectedDate: z.string().trim().max(40).optional().or(z.literal("")),
+  needDomain: z.enum(["si", "no", "no-se"]),
+  needHosting: z.enum(["si", "no", "no-se"]),
+  needPayments: z.enum(["si", "no", "no-se"]),
+  needAdminPanel: z.enum(["si", "no", "no-se"]),
+  needCustomSystem: z.enum(["si", "no", "no-se"]),
+  needTaxDocument: z.enum(["si", "no", "no-se"]),
+  projectFor: z.string().trim().max(120).optional().or(z.literal("")),
+  needType: z.string().trim().max(120).optional().or(z.literal("")),
+  features: z.array(z.string().trim().max(120)).max(60).optional(),
+  pageCount: z.string().trim().max(40).optional().or(z.literal("")),
+  contentReady: z.string().trim().max(80).optional().or(z.literal("")),
+  domainHosting: z.string().trim().max(80).optional().or(z.literal("")),
+  taxDocument: z.string().trim().max(40).optional().or(z.literal("")),
+  budgetRange: z.string().trim().max(40).optional().or(z.literal("")),
+  recommendedPlan: z.string().trim().max(180).optional().or(z.literal("")),
+  estimatedFrom: z.number().nonnegative().optional(),
+  estimatedRange: z.string().trim().max(120).optional().or(z.literal("")),
   service: z.string().trim().max(500).optional().or(z.literal("")),
   message: z.string().trim().max(4000).optional().or(z.literal("")),
-  planName: z.string().trim().min(2).max(180),
-  planPrice: z.number().nonnegative(),
-  extras: z.array(lineItemSchema).max(40),
-  subtotal: z.number().nonnegative(),
+  planName: z.string().trim().min(2).max(180).optional().or(z.literal("")),
+  planPrice: z.number().nonnegative().optional(),
+  extras: z.array(lineItemSchema).max(40).optional(),
+  subtotal: z.number().nonnegative().optional(),
   discountTotal: z.number().nonnegative().default(0),
   iva: z.number().nonnegative().default(0),
-  total: z.number().nonnegative(),
+  total: z.number().nonnegative().optional(),
 });
 
 function normalizeOptional(value?: string) {
@@ -40,6 +60,12 @@ function formatCurrency(value: number) {
     currency: "CLP",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function humanizeChoice(value: "si" | "no" | "no-se") {
+  if (value === "si") return "Sí";
+  if (value === "no") return "No";
+  return "No definido";
 }
 
 function normalizeSupabaseUrl(rawUrl: string) {
@@ -127,43 +153,94 @@ export async function POST(req: Request) {
     }
 
     const data = parsed.data;
-    const extrasSummary = data.extras
+    const extras = data.extras || [];
+    const planName = data.planName?.trim() || data.recommendedPlan?.trim() || "Proyecto personalizado";
+    const planPrice = typeof data.planPrice === "number" ? data.planPrice : data.estimatedFrom || 0;
+
+    const extrasSummary = extras
       .map((extra) => `${extra.name} x${extra.quantity} (${formatCurrency(extra.price * extra.quantity)})`)
       .join(" | ");
 
     const serviceSummary =
       data.service?.trim() ||
-      `Cotizador web: ${data.planName} + ${data.extras.length} extra(s) · Total ${formatCurrency(data.total)}`;
+      `Cotizador web: ${planName} + ${extras.length} extra(s)`;
+
+    const subtotal = typeof data.subtotal === "number" ? data.subtotal : planPrice;
+    const discountTotal = typeof data.discountTotal === "number" ? data.discountTotal : 0;
+    const iva = typeof data.iva === "number" ? data.iva : Math.round(subtotal * 0.19);
+    const total = typeof data.total === "number" ? data.total : Math.max(0, subtotal - discountTotal) + iva;
 
     const detailLines = [
-      `Plan base: ${data.planName} (${formatCurrency(data.planPrice)})`,
+      `Plan base: ${planName} (${formatCurrency(planPrice)})`,
+      `Tipo de proyecto: ${data.projectType}`,
+      `Presupuesto estimado: ${data.budget?.trim() || "No definido"}`,
+      `Fecha esperada: ${data.expectedDate?.trim() || "No definida"}`,
+      `Necesita dominio: ${humanizeChoice(data.needDomain)}`,
+      `Necesita hosting: ${humanizeChoice(data.needHosting)}`,
+      `Necesita pagos online: ${humanizeChoice(data.needPayments)}`,
+      `Necesita panel administrativo: ${humanizeChoice(data.needAdminPanel)}`,
+      `Necesita sistema a medida: ${humanizeChoice(data.needCustomSystem)}`,
+      `Requiere documento tributario: ${humanizeChoice(data.needTaxDocument)}`,
+      data.projectFor?.trim() ? `Tipo de cliente: ${data.projectFor.trim()}` : "",
+      data.needType?.trim() ? `Necesidad principal: ${data.needType.trim()}` : "",
+      data.pageCount?.trim() ? `Páginas/secciones: ${data.pageCount.trim()}` : "",
+      data.contentReady?.trim() ? `Contenido disponible: ${data.contentReady.trim()}` : "",
+      data.domainHosting?.trim() ? `Dominio/hosting: ${data.domainHosting.trim()}` : "",
+      data.taxDocument?.trim() ? `Documento tributario solicitado: ${data.taxDocument.trim()}` : "",
+      data.budgetRange?.trim() ? `Rango presupuesto: ${data.budgetRange.trim()}` : "",
+      data.recommendedPlan?.trim() ? `Plan recomendado por cotizador: ${data.recommendedPlan.trim()}` : "",
+      data.estimatedRange?.trim() ? `Rango estimado cotizador: ${data.estimatedRange.trim()}` : "",
+      data.features?.length ? `Funcionalidades seleccionadas: ${data.features.join(", ")}` : "",
       `Extras: ${extrasSummary || "Sin extras"}`,
-      `Subtotal: ${formatCurrency(data.subtotal)}`,
-      `Descuentos: ${formatCurrency(data.discountTotal)}`,
-      `IVA: ${formatCurrency(data.iva)}`,
-      `Total final: ${formatCurrency(data.total)}`,
+      `Subtotal: ${formatCurrency(subtotal)}`,
+      `Descuentos: ${formatCurrency(discountTotal)}`,
+      `IVA: ${formatCurrency(iva)}`,
+      `Total final: ${formatCurrency(total)}`,
       data.message?.trim() ? `Necesidad cliente: ${data.message.trim()}` : "",
     ]
       .filter(Boolean)
       .join("\n");
 
     const cartLines = [
-      `Plan: ${data.planName} (${formatCurrency(data.planPrice)})`,
-      ...data.extras.map((item) => `${item.name} x${item.quantity} (${formatCurrency(item.price * item.quantity)})`),
-      `Subtotal: ${formatCurrency(data.subtotal)}`,
-      `Descuentos: ${formatCurrency(data.discountTotal)}`,
-      `IVA: ${formatCurrency(data.iva)}`,
-      `Total: ${formatCurrency(data.total)}`,
+      `Plan: ${planName} (${formatCurrency(planPrice)})`,
+      ...extras.map((item) => `${item.name} x${item.quantity} (${formatCurrency(item.price * item.quantity)})`),
+      `Subtotal: ${formatCurrency(subtotal)}`,
+      `Descuentos: ${formatCurrency(discountTotal)}`,
+      `IVA: ${formatCurrency(iva)}`,
+      `Total: ${formatCurrency(total)}`,
     ];
 
     const leadMessage = serializeContactLeadDetails({
       company: data.company,
       service: serviceSummary,
       brief: detailLines,
-      selectedPlan: data.planName,
-      selectedExtras: data.extras.map((item) => item.name),
+      projectType: data.projectType,
+      budget: data.budget,
+      expectedDate: data.expectedDate,
+      needDomain: data.needDomain,
+      needHosting: data.needHosting,
+      needPayments: data.needPayments,
+      needAdminPanel: data.needAdminPanel,
+      needCustomSystem: data.needCustomSystem,
+      needTaxDocument: data.needTaxDocument,
+      projectFor: data.projectFor,
+      needType: data.needType,
+      featureList: data.features,
+      pageCount: data.pageCount,
+      contentReady: data.contentReady,
+      domainHosting: data.domainHosting,
+      taxDocument: data.taxDocument,
+      budgetRange: data.budgetRange,
+      recommendedPlan: data.recommendedPlan,
+      estimatedFrom:
+        typeof data.estimatedFrom === "number" && Number.isFinite(data.estimatedFrom)
+          ? String(Math.round(data.estimatedFrom))
+          : undefined,
+      estimatedRange: data.estimatedRange,
+      selectedPlan: planName,
+      selectedExtras: extras.map((item) => item.name),
       cartLines,
-      cartTotal: data.total,
+      cartTotal: total,
       submittedFrom: req.headers.get("referer") || undefined,
     });
 
@@ -192,13 +269,13 @@ export async function POST(req: Request) {
         service: serviceSummary,
         message: detailLines,
         submittedFrom: req.headers.get("referer") || null,
-        planName: data.planName,
-        planPrice: data.planPrice,
-        subtotal: data.subtotal,
-        discountTotal: data.discountTotal,
-        iva: data.iva,
-        total: data.total,
-        extras: data.extras.map((item) => ({
+        planName,
+        planPrice,
+        subtotal,
+        discountTotal,
+        iva,
+        total,
+        extras: extras.map((item) => ({
           name: item.name,
           quantity: item.quantity,
           unitPrice: item.price,

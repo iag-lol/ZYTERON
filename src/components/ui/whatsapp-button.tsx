@@ -3,16 +3,20 @@
 import Link from "next/link";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 
+const WHATSAPP_URL =
+  "https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.";
+
 export function WhatsAppButton() {
   return (
     <Link
-      href="https://wa.me/56984752936?text=Hola%20Zyteron%2C%20me%20interesa%20conocer%20m%C3%A1s%20sobre%20sus%20servicios"
+      href={WHATSAPP_URL}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Contactar por WhatsApp"
-      className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#25d366] wsp-pulse transition-transform duration-200 hover:scale-110"
+      className="fixed bottom-5 right-4 z-40 inline-flex items-center gap-2 rounded-full bg-[#25d366] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[#25d366]/30 transition-transform duration-200 hover:scale-[1.02] sm:bottom-6 sm:right-6"
     >
-      <WhatsAppIcon className="h-7 w-7 text-white" />
+      <WhatsAppIcon className="h-5 w-5 text-white" />
+      <span className="hidden md:inline">WhatsApp</span>
     </Link>
   );
 }

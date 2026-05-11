@@ -24,10 +24,23 @@ globalThis.zyteronContactRateLimit = rateLimitStore;
 const contactSchema = z.object({
   name: z.string().trim().min(2, "Ingresa tu nombre completo").max(120, "Nombre demasiado largo"),
   email: z.string().trim().email("Email inválido").max(160, "Email demasiado largo"),
-  phone: z.string().trim().max(32, "Teléfono demasiado largo").optional().or(z.literal("")),
-  company: z.string().trim().max(140, "Empresa demasiado larga").optional().or(z.literal("")),
+  phone: z.string().trim().min(8, "Ingresa un teléfono válido").max(32, "Teléfono demasiado largo"),
+  company: z.string().trim().min(2, "Ingresa tu empresa").max(140, "Empresa demasiado larga"),
+  projectType: z.string().trim().min(2, "Selecciona tipo de proyecto").max(120, "Tipo de proyecto inválido"),
+  budget: z.string().trim().max(80, "Presupuesto demasiado largo").optional().or(z.literal("")),
+  expectedDate: z.string().trim().max(40, "Fecha inválida").optional().or(z.literal("")),
+  needDomain: z.enum(["si", "no", "no-se"]),
+  needHosting: z.enum(["si", "no", "no-se"]),
+  needPayments: z.enum(["si", "no", "no-se"]),
+  needAdminPanel: z.enum(["si", "no", "no-se"]),
+  needCustomSystem: z.enum(["si", "no", "no-se"]),
+  needTaxDocument: z.enum(["si", "no", "no-se"]),
   service: z.string().trim().max(500, "Servicio demasiado largo").optional().or(z.literal("")),
-  message: z.string().trim().max(4000, "Mensaje demasiado largo").optional().or(z.literal("")),
+  message: z
+    .string()
+    .trim()
+    .min(10, "Describe brevemente tu requerimiento")
+    .max(4000, "Mensaje demasiado largo"),
   website: z.string().max(200).optional().or(z.literal("")),
 });
 
@@ -43,6 +56,12 @@ function extractRequestIp(req: Request) {
 function normalizeOptional(value?: string) {
   const normalized = value?.trim();
   return normalized ? normalized : null;
+}
+
+function humanizeChoice(value: "si" | "no" | "no-se") {
+  if (value === "si") return "Sí";
+  if (value === "no") return "No";
+  return "No definido";
 }
 
 function checkRateLimit(ip: string) {
@@ -179,11 +198,35 @@ export async function POST(req: Request) {
     }
 
     const referer = req.headers.get("referer") || undefined;
+    const serviceSummary = data.service?.trim() || data.projectType;
+    const detailLines = [
+      `Tipo de proyecto: ${data.projectType}`,
+      `Presupuesto estimado: ${data.budget?.trim() || "No definido"}`,
+      `Fecha esperada: ${data.expectedDate?.trim() || "No definida"}`,
+      `Necesita dominio: ${humanizeChoice(data.needDomain)}`,
+      `Necesita hosting: ${humanizeChoice(data.needHosting)}`,
+      `Necesita pagos online: ${humanizeChoice(data.needPayments)}`,
+      `Necesita panel administrativo: ${humanizeChoice(data.needAdminPanel)}`,
+      `Necesita sistema a medida: ${humanizeChoice(data.needCustomSystem)}`,
+      `Requiere documento tributario: ${humanizeChoice(data.needTaxDocument)}`,
+      "",
+      `Requerimiento: ${data.message.trim()}`,
+    ].join("\n");
+
     const leadMessage = serializeContactLeadDetails({
       company: data.company,
-      service: data.service,
-      brief: data.message,
+      service: serviceSummary,
+      brief: detailLines,
       submittedFrom: referer,
+      projectType: data.projectType,
+      budget: data.budget,
+      expectedDate: data.expectedDate,
+      needDomain: data.needDomain,
+      needHosting: data.needHosting,
+      needPayments: data.needPayments,
+      needAdminPanel: data.needAdminPanel,
+      needCustomSystem: data.needCustomSystem,
+      needTaxDocument: data.needTaxDocument,
     });
 
     const leadId = randomUUID();
@@ -208,8 +251,8 @@ export async function POST(req: Request) {
         email: data.email,
         phone: normalizeOptional(data.phone),
         company: normalizeOptional(data.company),
-        service: normalizeOptional(data.service),
-        message: normalizeOptional(data.message),
+        service: normalizeOptional(serviceSummary),
+        message: normalizeOptional(detailLines),
         submittedFrom: referer || null,
       });
     } catch (emailError) {

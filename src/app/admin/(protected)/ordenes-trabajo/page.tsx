@@ -60,6 +60,7 @@ type PageProps = {
         ot_exists?: string;
         ot_not_found?: string;
         ot_invalid_quote?: string;
+        ot_permission_error?: string;
       }
     | Promise<{
         status?: string;
@@ -70,6 +71,7 @@ type PageProps = {
         ot_exists?: string;
         ot_not_found?: string;
         ot_invalid_quote?: string;
+        ot_permission_error?: string;
       }>;
 };
 
@@ -132,6 +134,11 @@ export default async function OrdenesTrabajoPage({ searchParams }: PageProps) {
       {query?.ot_schema_missing === "1" ? (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           Falta la tabla WorkOrder en Supabase. Ejecuta el SQL de bootstrap que te dejé para habilitar el módulo.
+        </div>
+      ) : null}
+      {query?.ot_permission_error === "1" ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          No hay permisos para crear OT en WorkOrder. Revisa service role key o políticas RLS.
         </div>
       ) : null}
       {query?.ot_error === "1" || query?.ot_status_error === "1" || query?.ot_not_found === "1" || query?.ot_invalid_quote === "1" ? (

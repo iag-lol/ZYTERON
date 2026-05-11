@@ -1,6 +1,6 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { ZYTERON_COMPANY } from "@/lib/company";
-import { currencyCLP, type QuoteLineItem, type QuoteMeta } from "@/lib/admin/quote";
+import { buildDefaultQuoteTerms, currencyCLP, type QuoteLineItem, type QuoteMeta } from "@/lib/admin/quote";
 
 type QuotePdfInput = {
   quoteId: string;
@@ -528,7 +528,7 @@ export async function generateQuotePdf(input: QuotePdfInput) {
 
   const conditionsText =
     safeText(input.meta.terms, "") ||
-    "La presente cotización considera los alcances descritos. Servicios adicionales se cotizan por separado.";
+    buildDefaultQuoteTerms(input.meta.includeIva ?? true);
   const leftWidth = CONTENT_WIDTH * 0.6;
   const rightWidth = CONTENT_WIDTH - leftWidth - 12;
   const conditionsRawLines = wrapText(conditionsText, fontRegular, 8, leftWidth - 24);

@@ -8,62 +8,77 @@ export type FaqCategory = {
 
 export const faqCategories: FaqCategory[] = [
   {
-    title: "Páginas web para empresas",
+    title: "Cotización y tiempos",
     items: [
       {
-        question: "¿Qué diferencia una página corporativa de una landing page?",
+        question: "¿Cuánto demora una página web?",
         answer:
-          "La página corporativa cubre posicionamiento integral de marca y servicios. La landing se enfoca en una sola oferta o campaña para maximizar conversión.",
+          "Depende del alcance. Una landing puede tomar 1 a 2 semanas y un sitio corporativo completo entre 3 y 6 semanas.",
       },
       {
-        question: "¿Cuántas páginas debería tener un sitio B2B?",
+        question: "¿Puedo pagar por etapas?",
         answer:
-          "Como base: home, hub de servicios, páginas de servicio individual, nosotros, contacto y una sección de soporte comercial como FAQ o casos.",
+          "Sí. Podemos definir pagos por hitos según avance y entregables del proyecto.",
       },
       {
-        question: "¿Puedo partir con una versión inicial y escalar después?",
+        question: "¿Qué necesito para comenzar?",
         answer:
-          "Sí. Lo importante es que la arquitectura técnica y semántica quede preparada para crecer sin rehacer estructura ni perder indexación.",
+          "Objetivo del proyecto, información base del negocio y alcance inicial para preparar una cotización formal.",
+      },
+      {
+        question: "¿Emiten factura o boleta?",
+        answer:
+          "Cuando corresponde y según condiciones acordadas, podemos emitir el documento tributario aplicable.",
       },
     ],
   },
   {
-    title: "SEO y posicionamiento en Chile",
+    title: "Desarrollo web y sistemas",
     items: [
       {
-        question: "¿Cuándo se empiezan a ver resultados en SEO?",
+        question: "¿Incluye dominio y hosting?",
         answer:
-          "Depende de la competencia y del estado inicial del sitio. Normalmente las primeras señales aparecen entre 8 y 16 semanas.",
+          "Puede incluirse según plan. Queda detallado en la cotización formal para evitar ambigüedades.",
       },
       {
-        question: "¿Qué priorizan primero: técnica, contenido o backlinks?",
+        question: "¿Puedo administrar mi web?",
         answer:
-          "Primero técnica e indexación, luego páginas transaccionales y contenido útil. Después se trabaja autoridad externa.",
+          "Sí. Podemos desarrollar un panel administrativo para gestionar contenido, productos, reservas u otros módulos.",
       },
       {
-        question: "¿Cómo evitan canibalización entre servicios parecidos?",
+        question: "¿Hacen tiendas online?",
         answer:
-          "Definiendo una keyword primaria por URL, intención clara por página y enlazado interno con anchors diferenciados.",
+          "Sí. Desarrollamos tiendas online con estructura comercial, gestión de catálogo y flujo de compra.",
+      },
+      {
+        question: "¿Integran pagos?",
+        answer:
+          "Sí. La integración de pagos se evalúa según la necesidad y el alcance técnico de cada proyecto.",
+      },
+      {
+        question: "¿Hacen sistemas personalizados?",
+        answer:
+          "Sí. Diseñamos sistemas internos y soluciones a medida por etapas, con alcance definido.",
       },
     ],
   },
   {
-    title: "Cotización, tiempos y soporte",
+    title: "Soporte y continuidad",
     items: [
       {
-        question: "¿Trabajan con empresas fuera de Santiago?",
+        question: "¿Entregan soporte después?",
         answer:
-          "Sí. Operamos remoto en todo Chile y coordinamos reuniones presenciales cuando el proyecto lo requiere.",
+          "Sí. Cada proyecto considera soporte post-entrega según el alcance contratado y opciones de continuidad.",
       },
       {
-        question: "¿Qué incluye la mantención web mensual?",
+        question: "¿Atienden solo Santiago?",
         answer:
-          "Monitoreo, actualizaciones, correcciones técnicas, seguridad, mejoras de performance y soporte operativo continuo.",
+          "Operamos con base en Santiago y atendemos empresas, pymes y emprendedores en todo Chile.",
       },
       {
-        question: "¿Puedo pedir una propuesta sin compromiso?",
+        question: "¿Pueden trabajar con empresas y pymes al mismo tiempo?",
         answer:
-          "Sí. Puedes contactarnos por formulario o WhatsApp y recibir una propuesta inicial según tus objetivos.",
+          "Sí. Adaptamos el nivel de solución y presupuesto a la etapa real de cada negocio.",
       },
     ],
   },

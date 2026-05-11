@@ -31,6 +31,45 @@ export type FlowStatusResult = {
   lastError?: Record<string, unknown>;
 };
 
+export type FlowCustomerCreateResult = {
+  customerId: string;
+  created?: string;
+  email?: string;
+  name?: string;
+  externalId?: string;
+  status?: string;
+};
+
+export type FlowCustomerRegisterResult = {
+  url: string;
+  token: string;
+};
+
+export type FlowCustomerRegisterStatus = {
+  status: string;
+  customerId?: string;
+  creditCardType?: string;
+  last4CardDigits?: string;
+  cardNumber?: string;
+  issuerBank?: string;
+};
+
+export type FlowSubscriptionCreateInput = {
+  planId: string;
+  customerId: string;
+  subscriptionStart?: string;
+  periodsNumber?: number;
+};
+
+export type FlowSubscriptionCreateResult = {
+  subscriptionId: string;
+  planId: string;
+  customerId: string;
+  status?: number;
+  paymentLink?: string;
+  nextInvoiceDate?: string;
+};
+
 function readEnv(...names: string[]) {
   for (const name of names) {
     const value = process.env[name];
@@ -118,6 +157,56 @@ function flowError(status: number, body: unknown) {
   return new Error(`Flow respondió con error ${status}.`);
 }
 
+async function flowPost(path: string, payload: Record<string, unknown>) {
+  const { apiKey, secret, base } = getFlowConfig();
+  const bodyPayload: Record<string, unknown> = { apiKey, ...payload };
+  bodyPayload.s = signFlowParams(bodyPayload, secret);
+
+  const response = await fetch(`${base}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "User-Agent": "zyteron-web/1.0",
+    },
+    body: toFormBody(bodyPayload),
+    cache: "no-store",
+  });
+
+  const body = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!response.ok || !body) {
+    throw flowError(response.status, body);
+  }
+
+  return body;
+}
+
+async function flowGet(path: string, query: Record<string, unknown>) {
+  const { apiKey, secret, base } = getFlowConfig();
+  const payload: Record<string, unknown> = { apiKey, ...query };
+  payload.s = signFlowParams(payload, secret);
+
+  const url = new URL(`${base}${path}`);
+  for (const [key, value] of Object.entries(payload)) {
+    if (value === undefined || value === null) continue;
+    url.searchParams.set(key, String(value));
+  }
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      "User-Agent": "zyteron-web/1.0",
+    },
+    cache: "no-store",
+  });
+
+  const body = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!response.ok || !body) {
+    throw flowError(response.status, body);
+  }
+
+  return body;
+}
+
 export function mapFlowStatusLabel(status: number) {
   if (status === 2) return "PAGADA";
   if (status === 1) return "PENDIENTE";
@@ -172,6 +261,96 @@ export async function createFlowPayment(input: FlowPaymentCreateInput): Promise<
     url: String(body.url),
     token: String(body.token),
     flowOrder: typeof body.flowOrder === "number" ? body.flowOrder : undefined,
+  };
+}
+
+export async function createFlowCustomer(input: {
+  name: string;
+  email: string;
+  externalId: string;
+}): Promise<FlowCustomerCreateResult> {
+  const body = await flowPost("/customer/create", {
+    name: input.name,
+    email: input.email,
+    externalId: input.externalId,
+  });
+
+  const customerId = String(body.customerId || "").trim();
+  if (!customerId) {
+    throw new Error("Flow no devolvió customerId al crear cliente.");
+  }
+
+  return {
+    customerId,
+    created: typeof body.created === "string" ? body.created : undefined,
+    email: typeof body.email === "string" ? body.email : undefined,
+    name: typeof body.name === "string" ? body.name : undefined,
+    externalId: typeof body.externalId === "string" ? body.externalId : undefined,
+    status: typeof body.status === "string" ? body.status : undefined,
+  };
+}
+
+export async function registerFlowCustomerCard(input: {
+  customerId: string;
+  urlReturn: string;
+}): Promise<FlowCustomerRegisterResult> {
+  const body = await flowPost("/customer/register", {
+    customerId: input.customerId,
+    url_return: input.urlReturn,
+  });
+
+  const url = String(body.url || "").trim();
+  const token = String(body.token || "").trim();
+  if (!url || !token) {
+    throw new Error("Flow no devolvió URL/token para registro de tarjeta.");
+  }
+
+  return {
+    url,
+    token,
+  };
+}
+
+export async function getFlowCustomerRegisterStatus(token: string): Promise<FlowCustomerRegisterStatus> {
+  const body = await flowGet("/customer/getRegisterStatus", { token });
+
+  return {
+    status: String(body.status || "").trim(),
+    customerId: typeof body.customerId === "string" ? body.customerId : undefined,
+    creditCardType: typeof body.creditCardType === "string" ? body.creditCardType : undefined,
+    last4CardDigits: typeof body.last4CardDigits === "string" ? body.last4CardDigits : undefined,
+    cardNumber: typeof body.cardNumber === "string" ? body.cardNumber : undefined,
+    issuerBank: typeof body.issuerBank === "string" ? body.issuerBank : undefined,
+  };
+}
+
+export async function createFlowSubscription(
+  input: FlowSubscriptionCreateInput,
+): Promise<FlowSubscriptionCreateResult> {
+  const body = await flowPost("/subscription/create", {
+    planId: input.planId,
+    customerId: input.customerId,
+    subscription_start: input.subscriptionStart,
+    periods_number:
+      typeof input.periodsNumber === "number" && Number.isFinite(input.periodsNumber)
+        ? Math.max(0, Math.round(input.periodsNumber))
+        : undefined,
+  });
+
+  const subscriptionId = String(body.subscriptionId || "").trim();
+  const planId = String(body.planId || "").trim();
+  const customerId = String(body.customerId || "").trim();
+  if (!subscriptionId || !planId || !customerId) {
+    throw new Error("Flow no devolvió datos completos de suscripción.");
+  }
+
+  return {
+    subscriptionId,
+    planId,
+    customerId,
+    status: typeof body.status === "number" ? body.status : undefined,
+    paymentLink: typeof body.paymentLink === "string" ? body.paymentLink : undefined,
+    nextInvoiceDate: typeof body.next_invoice_date === "string" ? body.next_invoice_date : undefined,
   };
 }
 

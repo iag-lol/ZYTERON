@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition, useCallback } from "react";
+import { useState, useTransition, useCallback, useEffect } from "react";
 import {
   ArrowLeft,
   Plus,
@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ZYTERON_COMPANY } from "@/lib/company";
+import { buildDefaultQuoteTerms } from "@/lib/admin/quote";
 
 const COMPANY = {
   name: ZYTERON_COMPANY.legalName,
@@ -234,10 +235,14 @@ export default function NuevaCotizacion() {
 
   /* Extra */
   const [notes, setNotes] = useState("");
-  const [terms, setTerms] = useState(
-    "Esta cotización tiene validez según el plazo indicado. Los precios no incluyen IVA salvo indicación contraria. El servicio comenzará una vez recibido el anticipo o acuerdo firmado."
-  );
+  const [terms, setTerms] = useState(() => buildDefaultQuoteTerms(true));
+  const [termsTouched, setTermsTouched] = useState(false);
   const [includeIva, setIncludeIva] = useState(true);
+
+  useEffect(() => {
+    if (termsTouched) return;
+    setTerms(buildDefaultQuoteTerms(includeIva));
+  }, [includeIva, termsTouched]);
 
   /* ─── Computed totals ─── */
   const itemTotals = items.map((item) => {
@@ -582,8 +587,9 @@ export default function NuevaCotizacion() {
                 onChange={(e) => setIncludeIva(e.target.checked)}
                 className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
               />
-              Incluir IVA (19%)
+              Todo con IVA (19%)
             </label>
+            <p className="text-[11px] text-slate-500">Si desmarcas, la cotización quedará en valores netos + IVA.</p>
           </div>
         </div>
 
@@ -935,7 +941,10 @@ export default function NuevaCotizacion() {
               <Textarea
                 rows={4}
                 value={terms}
-                onChange={(e) => setTerms(e.target.value)}
+                onChange={(e) => {
+                  setTermsTouched(true);
+                  setTerms(e.target.value);
+                }}
               />
             </div>
           </div>

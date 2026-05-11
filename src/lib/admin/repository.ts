@@ -392,6 +392,16 @@ function normalizeSupabaseUrl(rawUrl: string) {
   return trimmed;
 }
 
+function isPlaceholderKey(value: string) {
+  const normalized = value.trim().toLowerCase();
+  return (
+    normalized.length < 40 ||
+    normalized.includes("dev-service-role-key") ||
+    normalized.includes("dev-anon-key") ||
+    normalized.includes("replace-me")
+  );
+}
+
 function createSupabaseAnonServerClient() {
   const rawUrl = readEnvValue("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_PROJECT_URL");
   const anonKey = readEnvValue(
@@ -401,6 +411,11 @@ function createSupabaseAnonServerClient() {
     "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
   );
   if (!rawUrl || !anonKey) {
+    return null;
+  }
+
+  // Evita intentos de red lentos cuando sólo hay llaves placeholder locales.
+  if (isPlaceholderKey(anonKey)) {
     return null;
   }
 

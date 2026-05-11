@@ -65,6 +65,21 @@ export function currencyCLP(value: number) {
   }).format(value || 0);
 }
 
+export function buildDefaultQuoteTerms(includeIva = true) {
+  const ivaLine = includeIva
+    ? "Todos los valores indicados en esta cotización incluyen IVA (19%)."
+    : "Todos los valores indicados en esta cotización son netos y se les adicionará IVA (19%) al momento de facturar.";
+
+  return [
+    "1) Alcance: esta propuesta considera únicamente los servicios y entregables descritos en el detalle de ítems.",
+    "2) Cambios: cualquier solicitud fuera de alcance se evaluará y cotizará por separado antes de su ejecución.",
+    `3) Impuestos: ${ivaLine}`,
+    "4) Inicio de servicios: la ejecución comienza una vez confirmada la aceptación comercial y recibido el pago acordado.",
+    "5) Vigencia: la cotización mantiene validez por el plazo indicado en el documento.",
+    "6) Forma y plazo de pago: se aplican según lo indicado en el resumen comercial de esta cotización.",
+  ].join("\n");
+}
+
 export function parseQuoteMessage(message?: string | null): QuoteMeta {
   const safeBase: QuoteMeta = {
     items: [],
@@ -77,6 +92,7 @@ export function parseQuoteMessage(message?: string | null): QuoteMeta {
     companyName: ZYTERON_COMPANY.legalName,
     companyRut: ZYTERON_COMPANY.rut,
     companyGiro: ZYTERON_COMPANY.businessLine,
+    terms: buildDefaultQuoteTerms(true),
   };
 
   if (!message) {
@@ -106,6 +122,10 @@ export function parseQuoteMessage(message?: string | null): QuoteMeta {
       grandTotal: Number(raw.grandTotal || 0),
       includeIva: raw.includeIva ?? true,
       ivaRate: typeof raw.ivaRate === "number" ? raw.ivaRate : 0.19,
+      terms:
+        typeof raw.terms === "string" && raw.terms.trim().length > 0
+          ? raw.terms
+          : buildDefaultQuoteTerms(raw.includeIva ?? true),
     };
   } catch {
     return safeBase;
@@ -132,6 +152,7 @@ export function enrichQuoteRecord(record: QuoteRecord) {
 }
 
 export function buildQuoteMeta(input: Partial<QuoteMeta>): QuoteMeta {
+  const includeIva = input.includeIva ?? true;
   const meta: QuoteMeta = {
     items: input.items ?? [],
     subtotal: input.subtotal ?? 0,
@@ -148,10 +169,10 @@ export function buildQuoteMeta(input: Partial<QuoteMeta>): QuoteMeta {
     validityDays: input.validityDays,
     paymentMethod: input.paymentMethod,
     paymentTerms: input.paymentTerms,
-    includeIva: input.includeIva ?? true,
+    includeIva,
     ivaRate: input.ivaRate ?? 0.19,
     notes: input.notes,
-    terms: input.terms,
+    terms: input.terms && input.terms.trim().length > 0 ? input.terms : buildDefaultQuoteTerms(includeIva),
     companyName: input.companyName || ZYTERON_COMPANY.legalName,
     companyRut: input.companyRut || ZYTERON_COMPANY.rut,
     companyGiro: input.companyGiro || ZYTERON_COMPANY.businessLine,

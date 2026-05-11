@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition, useEffect } from "react";
 import {
   Briefcase,
   Calculator,
@@ -17,6 +17,7 @@ import {
   User,
 } from "lucide-react";
 import type { EnrichedQuote } from "@/lib/admin/repository";
+import { buildDefaultQuoteTerms } from "@/lib/admin/quote";
 
 type Props = {
   quote: EnrichedQuote;
@@ -246,7 +247,17 @@ export function QuoteEditForm({ quote }: Props) {
   });
 
   const [notes, setNotes] = useState(quote.meta.notes || "");
-  const [terms, setTerms] = useState(quote.meta.terms || "");
+  const [terms, setTerms] = useState(
+    quote.meta.terms && quote.meta.terms.trim().length > 0
+      ? quote.meta.terms
+      : buildDefaultQuoteTerms(quote.meta.includeIva ?? true),
+  );
+  const [termsTouched, setTermsTouched] = useState(() => {
+    const currentTerms = (quote.meta.terms || "").trim();
+    if (!currentTerms) return false;
+    const defaultTerms = buildDefaultQuoteTerms(quote.meta.includeIva ?? true).trim();
+    return currentTerms !== defaultTerms;
+  });
 
   const quoteDate = useMemo(() => {
     const base = meta.date ? new Date(`${meta.date}T00:00:00`) : new Date();
@@ -268,6 +279,11 @@ export function QuoteEditForm({ quote }: Props) {
   const totalDescuento = itemTotals.reduce((acc, t) => acc + t.descuento, 0);
   const iva = meta.includeIva ? subtotal * IVA_RATE : 0;
   const grandTotal = subtotal + iva;
+
+  useEffect(() => {
+    if (termsTouched) return;
+    setTerms(buildDefaultQuoteTerms(meta.includeIva));
+  }, [meta.includeIva, termsTouched]);
 
   const setItem = useCallback((id: string, field: keyof LineItem, value: string | number) => {
     setItems((prev) =>
@@ -597,15 +613,18 @@ export function QuoteEditForm({ quote }: Props) {
               </Select>
             </Field>
             <div className="sm:col-span-2 lg:col-span-2">
-              <label className="mt-6 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600">
-                <input
-                  type="checkbox"
-                  checked={meta.includeIva}
-                  onChange={(e) => setMeta((p) => ({ ...p, includeIva: e.target.checked }))}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                />
-                Incluir IVA (19%)
-              </label>
+              <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-600">
+                  <input
+                    type="checkbox"
+                    checked={meta.includeIva}
+                    onChange={(e) => setMeta((p) => ({ ...p, includeIva: e.target.checked }))}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  Todo con IVA (19%)
+                </label>
+                <p className="mt-1 text-[11px] text-slate-500">Si desmarcas, la cotización quedará en valores netos + IVA.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -804,7 +823,14 @@ export function QuoteEditForm({ quote }: Props) {
 
             <div>
               <h3 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-slate-500">Términos y condiciones</h3>
-              <Textarea rows={4} value={terms} onChange={(e) => setTerms(e.target.value)} />
+              <Textarea
+                rows={4}
+                value={terms}
+                onChange={(e) => {
+                  setTermsTouched(true);
+                  setTerms(e.target.value);
+                }}
+              />
             </div>
           </div>
 

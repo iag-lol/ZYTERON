@@ -28,7 +28,7 @@ function currency(value: number) {
   }).format(value || 0);
 }
 
-function initials(name?: string) {
+function initials(name?: string | null) {
   if (!name) return "?";
   return name
     .split(" ")
@@ -75,6 +75,9 @@ type PageProps = {
         ot_error?: string;
         ot_exists?: string;
         ot_invalid_quote?: string;
+        ot_not_found?: string;
+        ot_schema_missing?: string;
+        ot_permission_error?: string;
       }
     | Promise<{
         status?: string;
@@ -87,6 +90,9 @@ type PageProps = {
         ot_error?: string;
         ot_exists?: string;
         ot_invalid_quote?: string;
+        ot_not_found?: string;
+        ot_schema_missing?: string;
+        ot_permission_error?: string;
       }>;
 };
 
@@ -102,6 +108,9 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
   const otError = query?.ot_error === "1";
   const otExists = query?.ot_exists === "1";
   const otInvalidQuote = query?.ot_invalid_quote === "1";
+  const otNotFound = query?.ot_not_found === "1";
+  const otSchemaMissing = query?.ot_schema_missing === "1";
+  const otPermissionError = query?.ot_permission_error === "1";
 
   const [data, workOrders] = await Promise.all([getAdminSnapshot(), getWorkOrders()]);
   const manualQuotes = data.quotes
@@ -203,7 +212,17 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
           Esa cotización ya tiene una orden de trabajo asociada.
         </div>
       ) : null}
-      {otError || otInvalidQuote ? (
+      {otSchemaMissing ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          Falta la tabla WorkOrder en Supabase. Ejecuta el SQL de bootstrap para habilitar OT.
+        </div>
+      ) : null}
+      {otPermissionError ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          No hay permisos de escritura para WorkOrder. Revisa la service role key o políticas RLS.
+        </div>
+      ) : null}
+      {otError || otInvalidQuote || otNotFound ? (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           No se pudo generar la orden de trabajo. Debe ser una cotización manual pendiente o enviada.
         </div>

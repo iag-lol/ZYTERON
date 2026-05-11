@@ -104,6 +104,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     }
 
     const includeIva = body.includeIva ?? current.meta.includeIva ?? true;
+    const providedTerms = text(body.terms);
     const ivaRate = typeof body.ivaRate === "number" ? body.ivaRate : current.meta.ivaRate ?? 0.19;
     const subtotal = items.reduce((acc, item) => {
       const gross = item.qty * item.unitPrice;
@@ -153,7 +154,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       iva: Math.max(0, Math.round(iva)),
       grandTotal: Math.max(0, Math.round(grandTotal)),
       notes: text(body.notes) || current.meta.notes,
-      terms: text(body.terms) || current.meta.terms,
+      terms: providedTerms || undefined,
     });
 
     await updateRows(

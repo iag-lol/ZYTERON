@@ -156,6 +156,15 @@ function buildCartSummaryText(input: {
     email: string;
     phone: string;
     company: string;
+    projectType: string;
+    budget: string;
+    expectedDate: string;
+    needDomain: "si" | "no" | "no-se";
+    needHosting: "si" | "no" | "no-se";
+    needPayments: "si" | "no" | "no-se";
+    needAdminPanel: "si" | "no" | "no-se";
+    needCustomSystem: "si" | "no" | "no-se";
+    needTaxDocument: "si" | "no" | "no-se";
     service: string;
     message: string;
   };
@@ -198,6 +207,15 @@ function buildCartSummaryText(input: {
     `- Email: ${form.email.trim() || "No informado"}`,
     `- Teléfono: ${form.phone.trim() || "No informado"}`,
     `- Servicio: ${form.service.trim() || "No especificado"}`,
+    `- Tipo de proyecto: ${form.projectType.trim() || "No especificado"}`,
+    `- Presupuesto estimado: ${form.budget.trim() || "No definido"}`,
+    `- Fecha esperada: ${form.expectedDate.trim() || "No definida"}`,
+    `- Necesita dominio: ${form.needDomain}`,
+    `- Necesita hosting: ${form.needHosting}`,
+    `- Necesita pagos online: ${form.needPayments}`,
+    `- Necesita panel administrativo: ${form.needAdminPanel}`,
+    `- Necesita sistema a medida: ${form.needCustomSystem}`,
+    `- Requiere documento tributario: ${form.needTaxDocument}`,
     form.message.trim() ? `- Necesidad: ${form.message.trim()}` : "",
   ].filter(Boolean);
 
@@ -218,6 +236,15 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
     email: "",
     phone: "",
     company: "",
+    projectType: "",
+    budget: "",
+    expectedDate: "",
+    needDomain: "no-se" as const,
+    needHosting: "no-se" as const,
+    needPayments: "no-se" as const,
+    needAdminPanel: "no-se" as const,
+    needCustomSystem: "no-se" as const,
+    needTaxDocument: "no-se" as const,
     service: "",
     message: "",
   });
@@ -266,7 +293,13 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
   const iva = Math.round(neto * IVA_RATE);
   const total = neto + iva;
 
-  const canSubmit = Boolean(selectedPlan) && Boolean(form.name.trim()) && Boolean(form.email.trim());
+  const canSubmit =
+    Boolean(selectedPlan) &&
+    Boolean(form.name.trim()) &&
+    Boolean(form.company.trim()) &&
+    Boolean(form.email.trim()) &&
+    Boolean(form.phone.trim()) &&
+    Boolean(form.projectType.trim());
 
   const extrasByCategory = useMemo(() => groupedExtras(extras), [extras]);
   const whatsappMessage = useMemo(
@@ -308,7 +341,10 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
     event.preventDefault();
     if (!selectedPlan) return;
     if (!canSubmit) {
-      setSubmitState({ status: "error", message: "Completa nombre y email para enviar tu cotización." });
+      setSubmitState({
+        status: "error",
+        message: "Completa nombre, empresa, email, WhatsApp y tipo de proyecto para enviar tu cotización.",
+      });
       return;
     }
 
@@ -325,6 +361,9 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
       body: JSON.stringify({
         ...form,
         service: serviceSummary,
+        projectType: form.projectType.trim() || "No definido",
+        budget: form.budget.trim() || "",
+        expectedDate: form.expectedDate.trim() || "",
         planName: selectedPlan.name,
         planPrice: selectedPlan.price,
         extras: selectedExtras.map((item) => ({
@@ -362,6 +401,15 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
       email: "",
       phone: "",
       company: "",
+      projectType: "",
+      budget: "",
+      expectedDate: "",
+      needDomain: "no-se",
+      needHosting: "no-se",
+      needPayments: "no-se",
+      needAdminPanel: "no-se",
+      needCustomSystem: "no-se",
+      needTaxDocument: "no-se",
       service: "",
       message: "",
     });
@@ -592,7 +640,7 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="builder-phone">Teléfono</Label>
+              <Label htmlFor="builder-phone">WhatsApp</Label>
               <Input
                 id="builder-phone"
                 value={form.phone}
@@ -609,6 +657,73 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
                 placeholder="Empresa SpA"
               />
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="builder-project-type">Tipo de proyecto</Label>
+            <select
+              id="builder-project-type"
+              className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-blue-400 focus:bg-white focus:outline-none"
+              value={form.projectType}
+              onChange={(event) => setForm((prev) => ({ ...prev, projectType: event.target.value }))}
+            >
+              <option value="">Selecciona una opción</option>
+              <option value="Página web corporativa">Página web corporativa</option>
+              <option value="Landing page comercial">Landing page comercial</option>
+              <option value="Tienda online">Tienda online</option>
+              <option value="Sistema interno">Sistema interno</option>
+              <option value="Panel administrativo">Panel administrativo</option>
+              <option value="Soporte TI">Soporte TI</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="builder-budget">Presupuesto estimado (opcional)</Label>
+              <Input
+                id="builder-budget"
+                value={form.budget}
+                onChange={(event) => setForm((prev) => ({ ...prev, budget: event.target.value }))}
+                placeholder="Ej: $900.000 - $1.800.000"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="builder-expected-date">Fecha esperada</Label>
+              <Input
+                id="builder-expected-date"
+                type="date"
+                value={form.expectedDate}
+                onChange={(event) => setForm((prev) => ({ ...prev, expectedDate: event.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {([
+              { key: "needDomain", label: "¿Necesitas dominio?" },
+              { key: "needHosting", label: "¿Necesitas hosting?" },
+              { key: "needPayments", label: "¿Necesitas pagos online?" },
+              { key: "needAdminPanel", label: "¿Necesitas panel administrativo?" },
+              { key: "needCustomSystem", label: "¿Necesitas sistema a medida?" },
+              { key: "needTaxDocument", label: "¿Necesitas factura/documento tributario?" },
+            ] as const).map((field) => (
+              <div key={field.key} className="space-y-1.5">
+                <Label htmlFor={`builder-${field.key}`}>{field.label}</Label>
+                <select
+                  id={`builder-${field.key}`}
+                  className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-blue-400 focus:bg-white focus:outline-none"
+                  value={form[field.key]}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, [field.key]: event.target.value as "si" | "no" | "no-se" }))
+                  }
+                >
+                  <option value="no-se">No definido</option>
+                  <option value="si">Sí</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+            ))}
           </div>
 
           <div className="space-y-1.5">
@@ -640,14 +755,19 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
               </>
             ) : (
               <>
-                Enviar al admin <Send className="h-4 w-4" />
-              </>
-            )}
+                  Enviar al admin <Send className="h-4 w-4" />
+                </>
+              )}
           </Button>
+
+          <p className="text-center text-xs text-slate-500">
+            Cotización formal según requerimiento. No se inicia ningún trabajo sin definir alcance y condiciones.
+          </p>
 
           {submitState.status === "success" ? (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              Solicitud enviada con éxito. Código: <strong>{submitState.reference}</strong>.
+              Gracias. Recibimos tu solicitud. Revisaremos los antecedentes y te contactaremos para preparar una cotización formal. Código:{" "}
+              <strong>{submitState.reference}</strong>.
             </div>
           ) : null}
 

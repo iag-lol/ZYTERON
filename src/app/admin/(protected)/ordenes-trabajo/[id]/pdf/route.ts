@@ -36,6 +36,23 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
     : [];
 
   const scope = scopeFromOrder.length > 0 ? scopeFromOrder : scopeFromWebQuote;
+  const lineItems = checkoutMeta
+    ? checkoutMeta.items.map((item) => ({
+        description: item.name,
+        detail: `Producto ${item.slug}`,
+        qty: item.quantity,
+        unit: "unidad",
+        unitPrice: item.finalUnitPrice,
+        total: item.lineTotal,
+      }))
+    : (quote?.meta.items || []).map((item) => ({
+        description: item.description,
+        detail: item.detail || item.unit || "",
+        qty: item.qty,
+        unit: item.unit || "unidad",
+        unitPrice: item.unitPrice,
+        total: item.qty * item.unitPrice - item.qty * item.unitPrice * ((item.discountPct || 0) / 100),
+      }));
 
   const pdfBytes = await generateWorkOrderPdf({
     code: workOrder.code,
@@ -57,6 +74,11 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
     notes: workOrder.notes,
     description: workOrder.description,
     scope,
+    quoteNumber: quote?.displayNumber || null,
+    paymentMethod: quote?.meta.paymentMethod || null,
+    paymentTerms: quote?.meta.paymentTerms || null,
+    validUntil: quote?.meta.validUntil || null,
+    lineItems,
   });
 
   return new NextResponse(pdfBytes, {

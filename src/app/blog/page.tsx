@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Clock3 } from "lucide-react";
+import { ArrowRight, Clock3, Tag } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -8,12 +8,32 @@ import { blogPosts } from "@/content/blog-posts";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Blog de diseño web, SEO y desarrollo para empresas en Chile",
+  title: "Blog para empresas y pymes",
   description:
-    "Guías prácticas para empresas y pymes en Chile sobre diseño web, desarrollo, SEO técnico, landing pages, mantención y conversión.",
+    "Contenido de ZYTERON sobre desarrollo web, pymes, automatización, soporte TI, tiendas online y seguridad digital con enfoque comercial.",
   path: "/blog",
-  keywords: ["blog diseño web chile", "seo para empresas chile", "desarrollo web chile"],
+  keywords: ["blog desarrollo web chile", "blog pymes chile", "automatización para empresas"],
 });
+
+const categories = [
+  "Desarrollo web",
+  "Pymes",
+  "Automatización",
+  "Soporte TI",
+  "Tiendas online",
+  "Seguridad digital",
+  "Consejos para empresas",
+];
+
+const suggestedArticles = [
+  "Qué debe tener una página web profesional para una empresa",
+  "Cuánto cuesta una página web en Chile",
+  "Diferencia entre página web y sistema web",
+  "Cómo una pyme puede vender online",
+  "Por qué tu negocio necesita un panel administrativo",
+  "Errores comunes al contratar una web",
+  "Cómo automatizar procesos con soluciones digitales",
+];
 
 export default function BlogPage() {
   return (
@@ -22,41 +42,35 @@ export default function BlogPage() {
         id="blog-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/blog",
-          title: "Blog de diseño web, SEO y desarrollo para empresas en Chile",
-          description: "Hub de contenidos prácticos para empresas B2B en Chile.",
+          title: "Blog para empresas y pymes",
+          description: "Hub de contenidos comerciales y técnicos de ZYTERON.",
           breadcrumbs: [
             { name: "Inicio", path: "/" },
             { name: "Blog", path: "/blog" },
           ],
         })}
       />
-      <JsonLd
-        id="blog-itemlist-schema"
-        data={{
-          "@context": "https://schema.org",
-          "@type": "ItemList",
-          itemListElement: blogPosts.map((post, index) => ({
-            "@type": "ListItem",
-            position: index + 1,
-            name: post.title,
-            url: `https://www.zyteron.cl/blog/${post.slug}`,
-          })),
-        }}
-      />
 
       <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-20">
-        <Container className="relative z-10 space-y-5">
+        <Container className="space-y-5">
           <div className="badge-blue w-fit">
             <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
-            Blog comercial
+            Blog comercial y técnico
           </div>
           <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
-            Guías útiles para tomar mejores decisiones web en Chile
+            Contenido para vender mejor y digitalizar con criterio
           </h1>
           <p className="max-w-3xl text-lg text-slate-600">
-            Contenido diseñado para empresas que necesitan resultados: más posicionamiento, mejor
-            conversión y menos improvisación en proyectos digitales.
+            Publicamos guías para empresas, pymes y emprendedores que necesitan tomar decisiones web con enfoque real de negocio.
           </p>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <span key={category} className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+                <Tag className="h-3.5 w-3.5 text-blue-600" />
+                {category}
+              </span>
+            ))}
+          </div>
         </Container>
       </section>
 
@@ -65,9 +79,7 @@ export default function BlogPage() {
           <div className="grid gap-4 md:grid-cols-2">
             {blogPosts.map((post) => (
               <article key={post.slug} className="card-premium flex flex-col p-6">
-                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">
-                  {post.primaryKeyword}
-                </p>
+                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">{post.primaryKeyword}</p>
                 <h2 className="mb-2 text-xl font-extrabold text-slate-900">{post.title}</h2>
                 <p className="mb-4 text-sm leading-relaxed text-slate-600">{post.excerpt}</p>
                 <div className="mb-5 flex flex-wrap gap-2 text-xs text-slate-500">
@@ -75,7 +87,7 @@ export default function BlogPage() {
                     <Clock3 className="h-3.5 w-3.5" />
                     {post.readingTime}
                   </span>
-                  <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-semibold">
+                  <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-semibold capitalize">
                     {post.intent}
                   </span>
                 </div>
@@ -88,8 +100,23 @@ export default function BlogPage() {
             ))}
           </div>
 
+          <section className="card-premium p-6">
+            <h2 className="text-2xl font-extrabold text-slate-900">Temas sugeridos para próximos artículos</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Línea editorial orientada a resolver dudas reales de decisión comercial.
+            </p>
+            <div className="mt-4 grid gap-2 md:grid-cols-2">
+              {suggestedArticles.map((article) => (
+                <div key={article} className="flex items-start gap-2 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm text-slate-700">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" />
+                  <span>{article}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
           <div className="flex flex-wrap gap-3">
-            <Button asChild className="gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800">
+            <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
               <Link href="/contacto">
                 Hablar con un especialista <ArrowRight className="h-4 w-4" />
               </Link>

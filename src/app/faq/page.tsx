@@ -8,11 +8,11 @@ import { faqCategories, flatFaqItems } from "@/content/faq-content";
 import { buildFaqJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "FAQ de diseño web, desarrollo y SEO para empresas en Chile",
+  title: "FAQ para empresas y pymes",
   description:
-    "Preguntas frecuentes sobre páginas web para empresas, SEO, mantención y cotización de proyectos digitales en Chile.",
+    "Preguntas frecuentes sobre cotización, tiempos, alcance, sistemas web, paneles administrativos y soporte post-entrega en Chile.",
   path: "/faq",
-  keywords: ["faq diseno web chile", "preguntas diseno web empresas", "seo para empresas chile"],
+  keywords: ["faq desarrollo web chile", "preguntas cotización web", "faq sistemas para empresas"],
 });
 
 export default function FaqPage() {
@@ -22,8 +22,8 @@ export default function FaqPage() {
         id="faq-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/faq",
-          title: "FAQ de diseño web, desarrollo y SEO para empresas en Chile",
-          description: "Centro de preguntas frecuentes de Zyteron para empresas y pymes en Chile.",
+          title: "FAQ para empresas y pymes",
+          description: "Centro de preguntas frecuentes de ZYTERON.",
           breadcrumbs: [
             { name: "Inicio", path: "/" },
             { name: "FAQ", path: "/faq" },
@@ -33,17 +33,14 @@ export default function FaqPage() {
       <JsonLd id="faq-page-schema" data={buildFaqJsonLd(flatFaqItems)} />
 
       <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-20">
-        <Container className="relative z-10 space-y-5">
-          <div className="badge-blue w-fit">
+        <Container className="space-y-5 text-center">
+          <div className="badge-blue mx-auto w-fit">
             <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
-            FAQ
+            Preguntas frecuentes
           </div>
-          <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
-            Respuestas claras para decisiones web y SEO en Chile
-          </h1>
-          <p className="max-w-3xl text-lg text-slate-600">
-            Reunimos las preguntas más comunes de empresas y pymes para ayudarte a definir alcance,
-            tiempos y estrategia digital sin improvisar.
+          <h1 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">Respuestas claras para cotizar con confianza</h1>
+          <p className="mx-auto max-w-3xl text-base text-slate-600 sm:text-lg">
+            Reunimos dudas comunes de empresas, pymes y emprendedores para que tomes decisiones con mejor información.
           </p>
         </Container>
       </section>
@@ -64,15 +61,21 @@ export default function FaqPage() {
             </section>
           ))}
 
-          <div className="flex flex-wrap gap-3">
-            <Button asChild className="gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/contacto">
-                Resolver mi caso con un especialista <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-              <Link href="/servicios">Ver servicios</Link>
-            </Button>
+          <div className="rounded-2xl section-blue p-7 text-center text-white">
+            <h2 className="text-2xl font-extrabold">¿Tienes una duda específica de tu proyecto?</h2>
+            <p className="mx-auto mt-2 max-w-2xl text-sm text-blue-100 sm:text-base">
+              Podemos revisar tu caso y orientarte en alcance, tiempos y forma de trabajo antes de iniciar.
+            </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <Button asChild className="bg-white font-bold text-blue-800 hover:bg-blue-50">
+                <Link href="/contacto">
+                  Hablar con un especialista <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="border-white/35 text-white hover:bg-white/10 hover:text-white">
+                <Link href="/paquetes">Solicitar cotización</Link>
+              </Button>
+            </div>
           </div>
         </Container>
       </section>
