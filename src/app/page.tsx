@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -107,61 +108,23 @@ const demoCards = [
     name: "Demo tienda online de ropa",
     desc: "Demo visual para marcas que quieren vender online con diseño personalizado y responsive.",
     tech: "Desde $499.990 CLP · Catálogo, carrito y estructura para pagos",
+    gallery: [
+      "/demos/tienda-ropa/tienda-ropa-01.png",
+      "/demos/tienda-ropa/tienda-ropa-02.png",
+      "/demos/tienda-ropa/tienda-ropa-03.png",
+      "/demos/tienda-ropa/tienda-ropa-04.png",
+    ],
   },
   {
     name: "Demo estudio jurídico",
     desc: "Web profesional para estudios jurídicos orientada a consultas y posicionamiento de servicios legales.",
     tech: "Servicios legales, equipo, formulario de consulta, SEO local",
-  },
-  {
-    name: "Demo tienda online",
-    desc: "Flujo de compra con catálogo, carrito y derivación comercial.",
-    tech: "Catálogo, carrito, pagos, panel de pedidos",
-  },
-  {
-    name: "Demo página corporativa",
-    desc: "Sitio institucional con propuesta de valor y captación de leads.",
-    tech: "Secciones comerciales, formularios, SEO básico",
-  },
-  {
-    name: "Demo catálogo de productos",
-    desc: "Catálogo digital para mostrar líneas de productos y fichas técnicas.",
-    tech: "Filtros, fichas, contacto por producto",
-  },
-  {
-    name: "Demo sistema de reservas",
-    desc: "Reserva de horas o servicios con confirmación y seguimiento.",
-    tech: "Agenda, estados, alertas por correo/WhatsApp",
-  },
-  {
-    name: "Demo cotizador con PDF",
-    desc: "Solicitud guiada con resumen y generación de cotización en PDF.",
-    tech: "Formulario avanzado, cálculo, exportación PDF",
-  },
-  {
-    name: "Demo panel administrativo",
-    desc: "Panel de gestión para administrar contenido, productos y usuarios.",
-    tech: "CRUD, permisos, reportes básicos",
-  },
-  {
-    name: "Demo control de flota",
-    desc: "Gestión operativa para vehículos, estados y mantenimientos.",
-    tech: "Bitácora, alertas, control operacional",
-  },
-  {
-    name: "Demo control de combustible",
-    desc: "Registro de cargas, costos y rendimiento por unidad.",
-    tech: "Dashboard, reportes, exportación",
-  },
-  {
-    name: "Demo sistema interno para empresas",
-    desc: "Módulos internos para procesos administrativos y operativos.",
-    tech: "Formularios, registros, panel de control",
-  },
-  {
-    name: "Demo landing page comercial",
-    desc: "Landing enfocada en conversiones para campañas o servicio puntual.",
-    tech: "Copy comercial, CTA, integración de leads",
+    gallery: [
+      "/demos/estudio-juridico/estudio-juridico-01.png",
+      "/demos/estudio-juridico/estudio-juridico-02.png",
+      "/demos/estudio-juridico/estudio-juridico-03.png",
+      "/demos/estudio-juridico/estudio-juridico-04.png",
+    ],
   },
 ];
 
@@ -474,15 +437,22 @@ export default async function Home() {
             </Button>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2">
             {demoCards.map((demo) => (
               <article key={demo.name} className="card-premium overflow-hidden">
                 <div className="bg-grid-light border-b border-slate-200 p-5">
-                  <div className="flex aspect-[16/9] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white/80">
-                    <div className="text-center">
-                      <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Demo funcional</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-700">Vista de referencia profesional</p>
-                    </div>
+                  <div className="grid aspect-[16/9] grid-cols-2 gap-1 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                    {demo.gallery.slice(0, 4).map((src, index) => (
+                      <div key={src} className="relative">
+                        <Image
+                          src={src}
+                          alt={`${demo.name} vista ${index + 1}`}
+                          fill
+                          sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 30vw"
+                          className="object-cover"
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
                 <div className="space-y-3 p-5">

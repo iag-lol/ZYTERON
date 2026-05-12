@@ -68,56 +68,6 @@ const demoCards = [
     ],
     note: "Precio final según estructura, secciones, formularios, automatizaciones e integraciones requeridas.",
   },
-  {
-    title: "Demo tienda online",
-    description: "Flujo de catálogo, carrito y estados de pedido para venta digital.",
-    tech: "Catálogo, carrito, pagos, panel de pedidos",
-  },
-  {
-    title: "Demo página corporativa",
-    description: "Sitio institucional con propuesta de valor y captación comercial.",
-    tech: "Home comercial, servicios, contacto, SEO base",
-  },
-  {
-    title: "Demo catálogo de productos",
-    description: "Publicación ordenada de productos con fichas y canal de contacto.",
-    tech: "Categorías, filtros, fichas técnicas",
-  },
-  {
-    title: "Demo sistema de reservas",
-    description: "Agenda de servicios con control de disponibilidad y estados.",
-    tech: "Reservas, confirmaciones, historial",
-  },
-  {
-    title: "Demo cotizador con PDF",
-    description: "Cotización guiada con resumen financiero y generación de PDF.",
-    tech: "Formulario, cálculo, exportación PDF",
-  },
-  {
-    title: "Demo panel administrativo",
-    description: "Panel interno para gestionar contenido, productos y usuarios.",
-    tech: "CRUD, permisos, dashboard",
-  },
-  {
-    title: "Demo control de flota",
-    description: "Control operacional de vehículos, mantenimientos y reportes.",
-    tech: "Bitácora, alertas, métricas",
-  },
-  {
-    title: "Demo control de combustible",
-    description: "Seguimiento de cargas, costos y rendimiento por unidad.",
-    tech: "Registros, análisis y reportes",
-  },
-  {
-    title: "Demo sistema interno para empresas",
-    description: "Automatización de procesos administrativos y operativos.",
-    tech: "Formularios, flujos internos, control",
-  },
-  {
-    title: "Demo landing page comercial",
-    description: "Landing enfocada en captar solicitudes de cotización.",
-    tech: "Copy comercial, CTA, formulario",
-  },
 ];
 
 export default function DemosPage() {
