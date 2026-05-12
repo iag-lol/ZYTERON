@@ -28,6 +28,14 @@ export function DemosGrid({ demos }: DemosGridProps) {
 
   const activeGallery = useMemo(() => activeDemo?.gallery ?? [], [activeDemo]);
   const activeImageSrc = activeGallery[activeImageIndex] ?? activeGallery[0] ?? "";
+  const activeIncludes = useMemo(() => {
+    if (!activeDemo) return [];
+    if (activeDemo.includes?.length) return activeDemo.includes;
+    return activeDemo.tech
+      .split("·")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }, [activeDemo]);
 
   function openDemoModal(demo: DemoCard) {
     setActiveDemo(demo);
@@ -167,14 +175,12 @@ export function DemosGrid({ demos }: DemosGridProps) {
 
               <h3 className="mt-3 text-xs font-bold uppercase tracking-widest text-slate-500">Qué contiene esta web</h3>
               <div className="mt-2 space-y-2">
-                {(activeDemo?.includes?.length ? activeDemo.includes : activeDemo?.tech.split("·").map((item) => item.trim())).map(
-                  (item) => (
-                    <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-700" />
-                      <span>{item}</span>
-                    </div>
-                  ),
-                )}
+                {activeIncludes.map((item) => (
+                  <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-700" />
+                    <span>{item}</span>
+                  </div>
+                ))}
               </div>
 
               <p className="mt-4 text-sm text-slate-600">
