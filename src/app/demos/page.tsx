@@ -51,7 +51,6 @@ const demoCards = [
       "Sitio profesional para estudios jurídicos: servicios legales, perfil de abogados, áreas de práctica y captación de consultas.",
     tech: "Web corporativa legal · Formularios de consulta · SEO local · Diseño responsive",
     demoHref: "https://iag-lol.github.io/abogados.mck/",
-    galleryPending: true,
     gallery: [
       "/demos/estudio-juridico/estudio-juridico-01.png",
       "/demos/estudio-juridico/estudio-juridico-02.png",
@@ -67,7 +66,7 @@ const demoCards = [
       "Vista responsive para celular, tablet y computador",
       "Estructura base SEO para posicionamiento local",
     ],
-    note: "Cuando subas las 4 capturas PNG, este demo mostrará la galería completa en la ventana flotante.",
+    note: "Precio final según estructura, secciones, formularios, automatizaciones e integraciones requeridas.",
   },
   {
     title: "Demo tienda online",

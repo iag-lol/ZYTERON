@@ -49,8 +49,14 @@ export function DemosGrid({ demos }: DemosGridProps) {
   return (
     <>
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {demos.map((demo) => (
-          <article key={demo.title} className="card-premium overflow-hidden">
+        {demos.map((demo) => {
+          const isInteractive = Boolean((demo.gallery?.length && !demo.galleryPending) || demo.demoHref);
+
+          return (
+          <article
+            key={demo.title}
+            className={`card-premium overflow-hidden ${isInteractive ? "cursor-pointer" : "cursor-default"}`}
+          >
             <div className="bg-grid-light border-b border-slate-200 p-5">
               {demo.gallery?.length && !demo.galleryPending ? (
                 <button
@@ -122,7 +128,8 @@ export function DemosGrid({ demos }: DemosGridProps) {
               </div>
             </div>
           </article>
-        ))}
+          );
+        })}
       </div>
 
       <Dialog open={Boolean(activeDemo)} onOpenChange={(open) => (!open ? setActiveDemo(null) : undefined)}>
