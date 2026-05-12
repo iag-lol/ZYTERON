@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowRight, Eye, LayoutTemplate } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
+import { DemosGrid } from "@/components/demos/demos-grid";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
@@ -27,12 +27,23 @@ const demoCards = [
       "Tienda online profesional para marcas de ropa: diseño moderno, catálogo, carrito y estructura preparada para pagos online.",
     tech: "Desde $499.990 CLP · Responsive · Catálogo · Carrito · Panel administrativo según requerimiento",
     demoHref: "https://iag-lol.github.io/tienda.mck/",
+    priceFrom: "Desde $499.990 CLP",
     gallery: [
       "/demos/tienda-ropa/tienda-ropa-01.png",
       "/demos/tienda-ropa/tienda-ropa-02.png",
       "/demos/tienda-ropa/tienda-ropa-03.png",
       "/demos/tienda-ropa/tienda-ropa-04.png",
     ],
+    includes: [
+      "Diseño personalizado",
+      "Catálogo de productos",
+      "Carrito de compra",
+      "Vista responsive para celular",
+      "Estructura preparada para pagos online",
+      "Demo visual para mostrar productos",
+      "Panel administrativo según requerimiento",
+    ],
+    note: "Precio final según funciones, cantidad de productos, medios de pago e integraciones.",
   },
   {
     title: "Demo tienda online",
@@ -118,58 +129,8 @@ export default function DemosPage() {
       </section>
 
       <section className="section-alt py-16">
-        <Container className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {demoCards.map((demo) => (
-            <article key={demo.title} className="card-premium overflow-hidden">
-              <div className="bg-grid-light border-b border-slate-200 p-5">
-                {demo.gallery?.length ? (
-                  <div className="grid aspect-[16/9] grid-cols-2 gap-1 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                    {demo.gallery.slice(0, 4).map((src, index) => (
-                      <div key={src} className="relative">
-                        <Image
-                          src={src}
-                          alt={`${demo.title} vista ${index + 1}`}
-                          fill
-                          sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 20vw"
-                          className="object-cover"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex aspect-[16/9] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white/80">
-                    <div className="text-center">
-                      <LayoutTemplate className="mx-auto h-6 w-6 text-blue-700" />
-                      <p className="mt-2 text-xs font-bold uppercase tracking-widest text-blue-700">Demo funcional</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="space-y-3 p-5">
-                <h2 className="text-base font-bold text-slate-900">{demo.title}</h2>
-                <p className="text-sm text-slate-600">{demo.description}</p>
-                <p className="text-xs text-slate-500">{demo.tech}</p>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <Button asChild size="sm" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-                    {demo.demoHref ? (
-                      <a href={demo.demoHref} target="_blank" rel="noopener noreferrer">
-                        <Eye className="h-4 w-4" /> Ver demo
-                      </a>
-                    ) : (
-                      <Link href="/contacto?origen=demo">
-                        <Eye className="h-4 w-4" /> Ver demo
-                      </Link>
-                    )}
-                  </Button>
-                  <Button asChild size="sm" className="bg-blue-700 text-white hover:bg-blue-800">
-                    <Link href={`/contacto?origen=demo&item=${encodeURIComponent(demo.title)}`}>
-                      Cotizar algo similar
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </article>
-          ))}
+        <Container>
+          <DemosGrid demos={demoCards} />
         </Container>
       </section>
 
