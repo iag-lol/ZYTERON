@@ -106,6 +106,9 @@ export default function ContactoPage() {
               <p className="text-sm leading-relaxed text-slate-600">
                 Elige el canal que prefieras. Si tu solicitud es urgente, recomendamos WhatsApp.
               </p>
+              <p className="text-sm leading-relaxed text-slate-600">
+                Atendemos empresas, pymes y emprendedores en Santiago y otras regiones de Chile mediante atención remota.
+              </p>
             </div>
 
             <div className="space-y-3">

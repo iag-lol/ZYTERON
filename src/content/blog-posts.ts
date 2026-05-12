@@ -21,6 +21,7 @@ export type BlogPostData = {
   readingTime: string;
   publishedAt: string;
   updatedAt?: string;
+  authorName?: string;
   sections: BlogSection[];
   faqs: BlogFaq[];
   relatedServices: string[];

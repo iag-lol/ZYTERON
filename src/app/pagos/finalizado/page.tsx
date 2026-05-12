@@ -1,7 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Clock3, CreditCard } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
+import { createPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Resultado de pago",
+  description: "Confirmación de pagos y suscripciones.",
+  path: "/pagos/finalizado",
+  noIndex: true,
+});
 
 function resolveStatus(flowStatus: number, mode: string) {
   if (mode === "subscription" && flowStatus >= 1) {

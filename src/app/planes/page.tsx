@@ -342,6 +342,9 @@ export default function PlanesPage() {
             cantidad de secciones, funcionalidades, carga de contenido, integraciones, panel administrativo, pasarela de
             pago, automatizaciones, soporte requerido y nivel de personalización.
           </p>
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+            El valor final depende del alcance, secciones, formularios, integraciones y automatizaciones requeridas.
+          </p>
           <p className="text-sm text-slate-700">
             Cada proyecto se cotiza según su alcance real. Así evitamos cobros injustos, entregamos claridad desde el
             inicio y aseguramos una solución adaptada a las necesidades de cada cliente.
@@ -594,6 +597,17 @@ export default function PlanesPage() {
               </div>
             ))}
           </div>
+
+          <article className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
+            <h3 className="text-lg font-extrabold text-slate-900">¿No sabes qué plan elegir?</h3>
+            <p className="mt-2 text-sm text-slate-700">
+              Podemos revisar tu caso y recomendar una estructura según objetivo, presupuesto y funcionalidades
+              necesarias.
+            </p>
+            <Button asChild className="mt-4 bg-blue-700 text-white hover:bg-blue-800">
+              <Link href="/contacto">Solicitar orientación</Link>
+            </Button>
+          </article>
         </Container>
       </section>
 

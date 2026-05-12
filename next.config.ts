@@ -21,6 +21,21 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "zyteron.cl",
+          },
+        ],
+        destination: "https://www.zyteron.cl/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

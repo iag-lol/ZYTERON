@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
-import { buildFaqJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import { buildFaqJsonLd, buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 import { getApprovedReviewsSnapshot } from "@/lib/web-control";
 import { ClientReviewsSection } from "@/components/home/client-reviews-section";
 
@@ -240,6 +240,44 @@ const homeFaqs = [
   },
 ];
 
+const solutionsByNeed = [
+  {
+    title: "Necesito una página web profesional",
+    description:
+      "Diseñamos webs corporativas con propuesta de valor clara, estructura comercial y foco en generación de consultas.",
+    href: "/servicios",
+    cta: "Ver servicio",
+  },
+  {
+    title: "Necesito vender online",
+    description:
+      "Implementamos tiendas online y catálogos para ordenar productos, vender por web y complementar venta por WhatsApp.",
+    href: "/tiendas-online-chile",
+    cta: "Cotizar tienda",
+  },
+  {
+    title: "Necesito ordenar procesos internos",
+    description:
+      "Desarrollamos sistemas web y paneles administrativos para registrar información, controlar estados y reducir tareas manuales.",
+    href: "/sistemas-web-a-medida",
+    cta: "Ver solución",
+  },
+  {
+    title: "Necesito automatizar tareas o WhatsApp",
+    description:
+      "Creamos flujos de automatización para responder más rápido, filtrar solicitudes y mejorar trazabilidad comercial.",
+    href: "/automatizacion-whatsapp-empresas",
+    cta: "Cotizar automatización",
+  },
+  {
+    title: "Necesito soporte TI para mi empresa",
+    description:
+      "Entregamos soporte técnico para continuidad operativa en pymes y empresas con atención en Santiago y otras regiones.",
+    href: "/soporte-ti-pymes-santiago",
+    cta: "Solicitar soporte",
+  },
+];
+
 export default async function Home() {
   const reviews = await getApprovedReviewsSnapshot();
 
@@ -263,6 +301,40 @@ export default async function Home() {
             answer: faq.a,
           })),
         )}
+      />
+      <JsonLd
+        id="home-services-list-schema"
+        data={buildServicesListJsonLd({
+          path: "/",
+          title: "Servicios principales ZYTERON",
+          services: [
+            {
+              name: "Desarrollo web",
+              description: "Páginas web profesionales para empresas y pymes en Chile.",
+              path: "/desarrollo-web-santiago",
+            },
+            {
+              name: "Tiendas online",
+              description: "Implementación de ecommerce y catálogos digitales para venta en línea.",
+              path: "/tiendas-online-chile",
+            },
+            {
+              name: "Sistemas web a medida",
+              description: "Sistemas internos y paneles administrativos adaptados al negocio.",
+              path: "/sistemas-web-a-medida",
+            },
+            {
+              name: "Automatización empresarial",
+              description: "Automatización de flujos y atención por WhatsApp para empresas.",
+              path: "/automatizacion-whatsapp-empresas",
+            },
+            {
+              name: "Soporte TI",
+              description: "Soporte técnico y continuidad operativa para pymes y empresas.",
+              path: "/soporte-ti-pymes-santiago",
+            },
+          ],
+        })}
       />
 
       <section className="relative overflow-hidden bg-hero-pattern">
@@ -422,6 +494,29 @@ export default async function Home() {
 
       <section className="section-alt py-20">
         <Container className="space-y-10">
+          <div className="space-y-2 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Soluciones según necesidad</p>
+            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              Qué necesitas resolver hoy
+            </h2>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {solutionsByNeed.map((solution) => (
+              <article key={solution.title} className="card-premium flex flex-col p-6">
+                <h3 className="text-lg font-bold text-slate-900">{solution.title}</h3>
+                <p className="mt-2 flex-1 text-sm text-slate-600">{solution.description}</p>
+                <Button asChild variant="outline" className="mt-4 border-slate-300 text-slate-800 hover:bg-slate-50">
+                  <Link href={solution.href}>{solution.cta}</Link>
+                </Button>
+              </article>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      <section className="section-alt py-20">
+        <Container className="space-y-10">
           <div className="flex flex-col gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Portafolio y demos</p>
@@ -566,6 +661,16 @@ export default async function Home() {
 
       <ClientReviewsSection reviews={reviews} />
 
+      <section className="bg-white py-16">
+        <Container className="rounded-2xl border border-slate-200 bg-slate-50 p-7 text-center">
+          <h2 className="text-2xl font-extrabold text-slate-900">Casos reales</h2>
+          <p className="mt-2 text-sm text-slate-600">Casos en preparación.</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Próximamente publicaremos proyectos documentados con problema, solución y resultado.
+          </p>
+        </Container>
+      </section>
+
       <section className="section-alt py-20">
         <Container className="space-y-10">
           <div className="space-y-2 text-center">
@@ -580,6 +685,11 @@ export default async function Home() {
                 <p className="text-sm text-slate-600">{faq.a}</p>
               </article>
             ))}
+          </div>
+          <div className="text-center">
+            <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+              <Link href="/faq">Ver todas las preguntas frecuentes</Link>
+            </Button>
           </div>
         </Container>
       </section>

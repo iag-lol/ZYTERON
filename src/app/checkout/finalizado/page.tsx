@@ -1,10 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Clock3, CreditCard, ReceiptText } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { getCheckoutOrder } from "@/lib/checkout/orders";
+import { createPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = createPageMetadata({
+  title: "Estado de pago",
+  description: "Estado final de pago de productos y servicios.",
+  path: "/checkout/finalizado",
+  noIndex: true,
+});
 
 function resolveStatus(flowStatus: number) {
   if (flowStatus === 2) {

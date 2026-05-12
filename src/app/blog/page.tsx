@@ -26,13 +26,14 @@ const categories = [
 ];
 
 const suggestedArticles = [
-  "Qué debe tener una página web profesional para una empresa",
-  "Cuánto cuesta una página web en Chile",
-  "Diferencia entre página web y sistema web",
-  "Cómo una pyme puede vender online",
-  "Por qué tu negocio necesita un panel administrativo",
-  "Errores comunes al contratar una web",
-  "Cómo automatizar procesos con soluciones digitales",
+  "Cuánto cuesta una página web para pyme en Chile",
+  "Qué debe tener una web profesional para vender",
+  "Página web vs sistema web: diferencias",
+  "Cómo automatizar reservas por WhatsApp",
+  "Qué es un panel administrativo para empresas",
+  "Errores al contratar desarrollo web en Chile",
+  "Tienda online para pyme: qué necesitas antes de empezar",
+  "Cómo elegir una empresa de desarrollo web en Santiago",
 ];
 
 export default function BlogPage() {

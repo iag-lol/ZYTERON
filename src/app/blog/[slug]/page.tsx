@@ -10,6 +10,7 @@ import { getServicePageBySlug } from "@/content/service-pages";
 import {
   buildArticleJsonLd,
   buildFaqJsonLd,
+  buildPrimaryOgImageUrl,
   buildWebPageJsonLd,
   createPageMetadata,
 } from "@/lib/seo";
@@ -62,6 +63,25 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
     .slice(0, 3);
 
   const postPath = `/blog/${post.slug}`;
+  const publishedDate = new Date(post.publishedAt).toLocaleDateString("es-CL", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+  const modifiedDate = new Date(post.updatedAt ?? post.publishedAt).toLocaleDateString("es-CL", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+  const tableOfContents = post.sections.map((section) => ({
+    heading: section.heading,
+    id: section.heading
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, ""),
+  }));
 
   return (
     <main className="bg-white">
@@ -86,6 +106,8 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
           description: post.excerpt,
           datePublished: post.publishedAt,
           dateModified: post.updatedAt,
+          image: buildPrimaryOgImageUrl(),
+          authorName: post.authorName ?? "Equipo editorial ZYTERON",
         })}
       />
       <JsonLd
@@ -105,11 +127,17 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
           <div className="flex flex-wrap gap-3 text-xs text-slate-600">
             <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-semibold">
               <CalendarDays className="h-3.5 w-3.5" />
-              Publicado: {post.publishedAt}
+              Publicado: {publishedDate}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-semibold">
+              Actualizado: {modifiedDate}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-semibold">
               <Clock3 className="h-3.5 w-3.5" />
               {post.readingTime}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-semibold">
+              Autor: {post.authorName ?? "Equipo editorial ZYTERON"}
             </span>
           </div>
         </Container>
@@ -118,8 +146,8 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
       <article className="py-16">
         <Container className="grid gap-10 lg:grid-cols-[1.4fr_0.6fr]">
           <div className="space-y-8">
-            {post.sections.map((section) => (
-              <section key={section.heading} className="card-premium p-6">
+            {post.sections.map((section, index) => (
+              <section key={section.heading} id={tableOfContents[index].id} className="card-premium p-6">
                 <h2 className="mb-4 text-2xl font-extrabold text-slate-900">{section.heading}</h2>
                 <div className="space-y-3">
                   {section.paragraphs.map((paragraph) => (
@@ -152,9 +180,38 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
                 ))}
               </div>
             </section>
+
+            <section className="rounded-2xl section-blue p-6 text-white">
+              <h2 className="text-2xl font-extrabold">¿Quieres aplicar esto en tu empresa?</h2>
+              <p className="mt-2 text-sm text-blue-100">
+                Podemos revisar tu web y definir una hoja de ruta de mejoras priorizada para SEO técnico y conversión.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Button asChild className="bg-white font-bold text-blue-800 hover:bg-blue-50">
+                  <Link href="/contacto">Solicitar diagnóstico</Link>
+                </Button>
+                <Button asChild variant="outline" className="border-white/35 text-white hover:bg-white/10 hover:text-white">
+                  <Link href="/servicios">Ver servicios</Link>
+                </Button>
+              </div>
+            </section>
           </div>
 
           <aside className="space-y-4">
+            {tableOfContents.length > 3 ? (
+              <div className="card-premium p-5">
+                <h2 className="mb-3 text-lg font-extrabold text-slate-900">Tabla de contenidos</h2>
+                <ul className="space-y-2 text-sm">
+                  {tableOfContents.map((item) => (
+                    <li key={item.id}>
+                      <a href={`#${item.id}`} className="text-blue-700 transition-colors hover:text-blue-900">
+                        {item.heading}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             <div className="card-premium p-5">
               <h2 className="mb-3 text-lg font-extrabold text-slate-900">Servicios relacionados</h2>
               <ul className="space-y-2 text-sm">

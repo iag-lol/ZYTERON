@@ -27,7 +27,7 @@ const teamMembers = [
   {
     name: "Eduardo Ávila",
     role: "Liderazgo y dirección de proyectos",
-    photo: "/equipo/eduardo-avila/perfil.png",
+    photo: "/equipo/eduardo-avila/perfil-web.png",
     bio: "ZYTERON nace con el objetivo de ayudar a empresas, pymes y emprendedores a digitalizar, ordenar y mejorar sus procesos mediante soluciones web, soporte TI y herramientas tecnológicas prácticas.",
     focus:
       "Nuestro enfoque es entregar desarrollos claros, funcionales y adaptados a la realidad de cada negocio, manteniendo una comunicación cercana y un proceso de trabajo ordenado desde la cotización hasta la entrega final.",
@@ -36,14 +36,14 @@ const teamMembers = [
   {
     name: "Víctor",
     role: "Desarrollo y soporte TI",
-    photo: "/equipo/victor/perfil.png",
+    photo: "/equipo/victor/perfil-web.png",
     bio: "Participa en implementación técnica, continuidad operativa y soporte para clientes.",
     focus: "Acompaña proyectos web y tecnológicos con foco en estabilidad y resultados prácticos.",
   },
   {
     name: "Leonel",
     role: "Análisis, desarrollo y calidad",
-    photo: "/equipo/leonel/perfil.png",
+    photo: "/equipo/leonel/perfil-web.png",
     bio: "Participa en análisis de requerimientos, desarrollo e integración técnica.",
     focus: "Trabaja en control de calidad, automatización y mejoras funcionales de sistemas.",
   },

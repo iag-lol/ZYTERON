@@ -4,7 +4,7 @@ import { ArrowRight, Check, MonitorSmartphone, Settings, ShieldCheck } from "luc
 import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
-import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import { buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Servicios digitales para empresas y pymes",
@@ -78,6 +78,40 @@ export default function ServiciosPage() {
           ],
         })}
       />
+      <JsonLd
+        id="servicios-list-schema"
+        data={buildServicesListJsonLd({
+          path: "/servicios",
+          title: "Servicios principales ZYTERON",
+          services: [
+            {
+              name: "Desarrollo web",
+              description: "Páginas web profesionales para empresas y pymes.",
+              path: "/desarrollo-web-santiago",
+            },
+            {
+              name: "Tiendas online",
+              description: "Tiendas online y catálogos digitales para venta en Chile.",
+              path: "/tiendas-online-chile",
+            },
+            {
+              name: "Sistemas web a medida",
+              description: "Sistemas internos y paneles administrativos personalizados.",
+              path: "/sistemas-web-a-medida",
+            },
+            {
+              name: "Automatización empresarial",
+              description: "Automatización de WhatsApp y tareas operativas de atención.",
+              path: "/automatizacion-whatsapp-empresas",
+            },
+            {
+              name: "Soporte TI",
+              description: "Soporte TI para empresas y pymes en Santiago y Chile.",
+              path: "/soporte-ti-pymes-santiago",
+            },
+          ],
+        })}
+      />
 
       <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-20">
         <Container className="space-y-5 text-center">
@@ -128,7 +162,13 @@ export default function ServiciosPage() {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/35 text-white hover:bg-white/10 hover:text-white">
+              <Link href="/planes">Ver planes</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-white/35 text-white hover:bg-white/10 hover:text-white">
               <Link href="/demos">Ver demos</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-white/35 text-white hover:bg-white/10 hover:text-white">
+              <Link href="/contacto">Hablar con un especialista</Link>
             </Button>
           </div>
         </Container>

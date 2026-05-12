@@ -1,0 +1,23 @@
+# Google Business Profile - Datos sugeridos ZYTERON
+
+- Nombre: ZYTERON SpA
+- Sitio web: https://www.zyteron.cl
+- Teléfono: +56 9 8475 2936
+- Categorías sugeridas:
+  - Diseñador de sitios web
+  - Empresa de software
+  - Consultora informática
+- Horario comercial: lunes a viernes de 09:00 a 18:00
+- Ubicación base: Santiago, Chile
+- Área de atención: Chile (modalidad remota + coordinación según proyecto)
+- Correo comercial: eduardo.avila@zyteron.cl
+- Servicios principales:
+  - Desarrollo de páginas web profesionales
+  - Tiendas online
+  - Sistemas web a medida
+  - Paneles administrativos
+  - Cotizadores web con generación de PDF
+  - Automatizaciones empresariales e integración con WhatsApp
+  - Soporte TI para empresas y pymes
+- Descripción corta sugerida:
+  - ZYTERON SpA desarrolla webs, sistemas y soporte TI para empresas, pymes y emprendedores en Chile. Trabajamos por alcance, con cotización formal y enfoque en resultados comerciales.

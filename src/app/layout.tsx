@@ -9,7 +9,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { JsonLd } from "@/components/seo/json-ld";
 import { IconSprite } from "@/components/ui/icon-sprite";
 import { WebVisitTracker } from "@/components/analytics/web-visit-tracker";
-import { buildOrganizationGraph } from "@/lib/seo";
+import { buildOrganizationGraph, buildPrimaryOgImageUrl } from "@/lib/seo";
 
 const GTM_ID = "GTM-T46H3ZCS";
 
@@ -34,7 +34,9 @@ export const metadata: Metadata = {
     template: "%s | ZYTERON",
   },
   description: siteConfig.description,
-  keywords: siteConfig.keywords,
+  alternates: {
+    canonical: siteConfig.url,
+  },
   openGraph: {
     type: "website",
     locale: siteConfig.locale,
@@ -42,11 +44,20 @@ export const metadata: Metadata = {
     title: "ZYTERON | Páginas web, sistemas y soporte TI en Chile",
     description: siteConfig.description,
     siteName: siteConfig.name,
+    images: [
+      {
+        url: buildPrimaryOgImageUrl(),
+        width: 1200,
+        height: 630,
+        alt: "ZYTERON - Webs, sistemas y soporte TI para empresas",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "ZYTERON | Páginas web, sistemas y soporte TI en Chile",
     description: siteConfig.description,
+    images: [buildPrimaryOgImageUrl()],
   },
   robots: {
     index: true,

@@ -1,6 +1,7 @@
 import { siteConfig } from "@/config/site";
 import { blogPosts } from "@/content/blog-posts";
 import { localPages } from "@/content/local-pages";
+import { priorityServicePages } from "@/content/priority-service-pages";
 import { servicePages } from "@/content/service-pages";
 import type { MetadataRoute } from "next";
 
@@ -10,13 +11,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = [
     { path: "", priority: 1 },
     { path: "/servicios", priority: 0.95 },
-    { path: "/blog", priority: 0.85 },
-    { path: "/demos", priority: 0.84 },
-    { path: "/faq", priority: 0.8 },
-    { path: "/ciudades", priority: 0.82 },
+    { path: "/planes", priority: 0.94 },
+    { path: "/paquetes", priority: 0.92 },
     { path: "/contacto", priority: 0.9 },
-    { path: "/paquetes", priority: 0.85 },
-    { path: "/planes", priority: 0.85 },
+    { path: "/demos", priority: 0.88 },
+    { path: "/blog", priority: 0.86 },
+    { path: "/faq", priority: 0.84 },
+    { path: "/ciudades", priority: 0.82 },
     { path: "/productos", priority: 0.75 },
     { path: "/nosotros", priority: 0.7 },
     { path: "/privacidad", priority: 0.3 },
@@ -26,6 +27,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: now,
     changeFrequency: "weekly" as const,
     priority,
+  }));
+
+  const priorityServiceRoutes = priorityServicePages.map((servicePage) => ({
+    url: `${base}${servicePage.path}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.9,
   }));
 
   const serviceRoutes = servicePages.map((service) => ({
@@ -49,5 +57,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...serviceRoutes, ...localRoutes, ...blogRoutes];
+  return [...staticRoutes, ...priorityServiceRoutes, ...serviceRoutes, ...localRoutes, ...blogRoutes];
 }

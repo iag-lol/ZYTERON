@@ -111,7 +111,8 @@ export function ClientReviewsSection({ reviews }: Props) {
             <div className="grid gap-4 sm:grid-cols-2">
               {reviews.length === 0 ? (
                 <div className="sm:col-span-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-7 text-sm text-slate-500">
-                  Aún no hay comentarios aprobados.
+                  <p>Pronto publicaremos reseñas verificadas de clientes.</p>
+                  <p className="mt-1 font-semibold text-slate-700">¿Ya trabajaste con ZYTERON? Deja tu reseña.</p>
                 </div>
               ) : (
                 reviews.slice(0, 6).map((review, index) => (

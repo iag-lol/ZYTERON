@@ -10,11 +10,11 @@ const footerColumns = [
   {
     title: "Servicios Principales",
     items: [
-      { label: "Páginas web corporativas", href: "/servicios" },
-      { label: "Tiendas online", href: "/servicios" },
-      { label: "Sistemas internos", href: "/servicios" },
-      { label: "Paneles administrativos", href: "/servicios" },
-      { label: "Soporte TI", href: "/servicios" },
+      { label: "Páginas web corporativas", href: "/desarrollo-web-santiago" },
+      { label: "Tiendas online", href: "/tiendas-online-chile" },
+      { label: "Sistemas internos", href: "/sistemas-web-a-medida" },
+      { label: "Automatización WhatsApp", href: "/automatizacion-whatsapp-empresas" },
+      { label: "Soporte TI", href: "/soporte-ti-pymes-santiago" },
     ],
   },
   {
@@ -77,6 +77,9 @@ export function SiteFooter() {
           <p className="max-w-xs text-sm leading-relaxed text-slate-300">
             ZYTERON - Soluciones web, soporte TI y sistemas digitales para empresas y pymes en Chile.
           </p>
+          <p className="max-w-sm text-xs leading-relaxed text-slate-400">
+            Atendemos empresas, pymes y emprendedores en Santiago y otras regiones de Chile mediante atención remota.
+          </p>
 
           <div className="space-y-2.5 text-sm">
             <a
@@ -103,6 +106,14 @@ export function SiteFooter() {
               <Phone className="h-4 w-4" />
               Atención comercial: Lun-Vie 09:00 a 18:00
             </div>
+            <a
+              href="https://www.linkedin.com/company/zyteron"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-slate-300 transition-colors hover:text-white"
+            >
+              LinkedIn ZYTERON
+            </a>
           </div>
         </div>
 

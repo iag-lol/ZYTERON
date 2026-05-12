@@ -40,6 +40,18 @@ type ArticleJsonLdInput = {
   description: string;
   datePublished: string;
   dateModified?: string;
+  image?: string;
+  authorName?: string;
+};
+
+type ServicesListJsonLdInput = {
+  path: string;
+  title: string;
+  services: Array<{
+    name: string;
+    description: string;
+    path: string;
+  }>;
 };
 
 function normalizePath(path: string) {
@@ -63,22 +75,23 @@ export function buildAbsoluteUrl(path: string) {
   return normalized === "/" ? siteConfig.url : `${siteConfig.url}${normalized}`;
 }
 
+export function buildPrimaryOgImageUrl() {
+  return buildAbsoluteUrl("/opengraph-image");
+}
+
 export function createPageMetadata({
   title: rawTitle,
   description,
   path,
-  keywords = [],
   noIndex = false,
 }: SeoMetadataInput): Metadata {
   const url = buildAbsoluteUrl(path);
-  const socialImage = buildAbsoluteUrl("/logo.svg");
-  const mergedKeywords = [...new Set([...siteConfig.keywords, ...keywords])];
+  const socialImage = buildPrimaryOgImageUrl();
   const title = normalizeMetadataTitle(rawTitle);
 
   return {
     title,
     description,
-    keywords: mergedKeywords,
     alternates: {
       canonical: url,
     },
@@ -90,9 +103,9 @@ export function createPageMetadata({
       images: [
         {
           url: socialImage,
-          width: 512,
-          height: 512,
-          alt: `${siteConfig.name} logo`,
+          width: 1200,
+          height: 630,
+          alt: "ZYTERON - Webs, sistemas y soporte TI para empresas",
         },
       ],
     },
@@ -123,6 +136,8 @@ export function createPageMetadata({
 }
 
 export function buildOrganizationGraph() {
+  const sameAs = [siteConfig.social.linkedin].filter(Boolean);
+
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -133,38 +148,57 @@ export function buildOrganizationGraph() {
         url: siteConfig.url,
         name: siteConfig.name,
         inLanguage: siteConfig.locale,
+        publisher: {
+          "@id": `${siteConfig.url}/#organization`,
+        },
       },
       {
         "@type": "ProfessionalService",
         "@id": `${siteConfig.url}/#professionalservice`,
-        name: `${siteConfig.name} Agencia Web`,
+        name: siteConfig.name,
+        legalName: siteConfig.legalName,
         url: siteConfig.url,
         image: `${siteConfig.url}/logo.svg`,
         telephone: siteConfig.contact.phone,
         email: siteConfig.contact.email,
-        areaServed: "Chile",
+        areaServed: {
+          "@type": "Country",
+          name: siteConfig.business.areaServed,
+        },
         address: {
           "@type": "PostalAddress",
           addressLocality: siteConfig.address.city,
           addressRegion: siteConfig.address.region,
-          addressCountry: "CL",
+          addressCountry: siteConfig.address.countryCode,
         },
-        sameAs: [siteConfig.social.linkedin].filter(Boolean),
+        openingHours: siteConfig.business.hours,
+        priceRange: siteConfig.business.priceRange,
+        sameAs,
+        parentOrganization: {
+          "@id": `${siteConfig.url}/#organization`,
+        },
       },
       {
         "@type": "LocalBusiness",
         "@id": `${siteConfig.url}/#localbusiness`,
         name: siteConfig.name,
+        legalName: siteConfig.legalName,
+        taxID: siteConfig.taxId,
         url: siteConfig.url,
         image: `${siteConfig.url}/logo.svg`,
         telephone: siteConfig.contact.phone,
         email: siteConfig.contact.email,
-        areaServed: "Chile",
+        openingHours: siteConfig.business.hours,
+        priceRange: siteConfig.business.priceRange,
+        areaServed: {
+          "@type": "Country",
+          name: siteConfig.business.areaServed,
+        },
         address: {
           "@type": "PostalAddress",
           addressLocality: siteConfig.address.city,
           addressRegion: siteConfig.address.region,
-          addressCountry: "CL",
+          addressCountry: siteConfig.address.countryCode,
         },
         parentOrganization: {
           "@id": `${siteConfig.url}/#organization`,
@@ -225,10 +259,37 @@ export function buildServiceJsonLd({
     name,
     description,
     url: pageUrl,
-    areaServed: "Chile",
+    areaServed: {
+      "@type": "Country",
+      name: siteConfig.business.areaServed,
+    },
     provider: {
       "@id": `${siteConfig.url}/#organization`,
     },
+  };
+}
+
+export function buildServicesListJsonLd({ path, title, services }: ServicesListJsonLdInput) {
+  const pageUrl = buildAbsoluteUrl(path);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "@id": `${pageUrl}#services`,
+    name: title,
+    itemListElement: services.map((service, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "Service",
+        name: service.name,
+        description: service.description,
+        url: buildAbsoluteUrl(service.path),
+        provider: {
+          "@id": `${siteConfig.url}/#organization`,
+        },
+      },
+    })),
   };
 }
 
@@ -267,7 +328,7 @@ export function buildContactPageJsonLd(path: string, description: string) {
     "@type": "ContactPage",
     "@id": `${pageUrl}#contactpage`,
     url: pageUrl,
-    name: "Contacto Zyteron",
+    name: "Contacto ZYTERON",
     description,
     isPartOf: {
       "@id": `${siteConfig.url}/#website`,
@@ -284,6 +345,8 @@ export function buildArticleJsonLd({
   description,
   datePublished,
   dateModified,
+  image,
+  authorName,
 }: ArticleJsonLdInput) {
   const pageUrl = buildAbsoluteUrl(path);
 
@@ -295,10 +358,12 @@ export function buildArticleJsonLd({
     description,
     inLanguage: siteConfig.locale,
     url: pageUrl,
+    image: image ? [buildAbsoluteUrl(image)] : [buildPrimaryOgImageUrl()],
     datePublished,
     dateModified: dateModified ?? datePublished,
     author: {
-      "@id": `${siteConfig.url}/#organization`,
+      "@type": "Person",
+      name: authorName ?? "Equipo editorial ZYTERON",
     },
     publisher: {
       "@id": `${siteConfig.url}/#organization`,
