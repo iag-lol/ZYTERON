@@ -46,6 +46,30 @@ const demoCards = [
     note: "Precio final según funciones, cantidad de productos, medios de pago e integraciones.",
   },
   {
+    title: "Demo estudio jurídico",
+    description:
+      "Sitio profesional para estudios jurídicos: servicios legales, perfil de abogados, áreas de práctica y captación de consultas.",
+    tech: "Web corporativa legal · Formularios de consulta · SEO local · Diseño responsive",
+    demoHref: "https://iag-lol.github.io/abogados.mck/",
+    galleryPending: true,
+    gallery: [
+      "/demos/estudio-juridico/estudio-juridico-01.png",
+      "/demos/estudio-juridico/estudio-juridico-02.png",
+      "/demos/estudio-juridico/estudio-juridico-03.png",
+      "/demos/estudio-juridico/estudio-juridico-04.png",
+    ],
+    includes: [
+      "Diseño profesional para rubro legal",
+      "Secciones de áreas de práctica y servicios",
+      "Perfil de abogados y equipo",
+      "Formulario de contacto y consulta",
+      "Botón directo a WhatsApp",
+      "Vista responsive para celular, tablet y computador",
+      "Estructura base SEO para posicionamiento local",
+    ],
+    note: "Cuando subas las 4 capturas PNG, este demo mostrará la galería completa en la ventana flotante.",
+  },
+  {
     title: "Demo tienda online",
     description: "Flujo de catálogo, carrito y estados de pedido para venta digital.",
     tech: "Catálogo, carrito, pagos, panel de pedidos",

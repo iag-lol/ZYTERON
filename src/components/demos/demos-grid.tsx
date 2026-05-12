@@ -13,6 +13,7 @@ export type DemoCard = {
   tech: string;
   demoHref?: string;
   gallery?: string[];
+  galleryPending?: boolean;
   priceFrom?: string;
   includes?: string[];
   note?: string;
@@ -26,7 +27,10 @@ export function DemosGrid({ demos }: DemosGridProps) {
   const [activeDemo, setActiveDemo] = useState<DemoCard | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  const activeGallery = useMemo(() => activeDemo?.gallery ?? [], [activeDemo]);
+  const activeGallery = useMemo(() => {
+    if (!activeDemo || activeDemo.galleryPending) return [];
+    return activeDemo.gallery ?? [];
+  }, [activeDemo]);
   const activeImageSrc = activeGallery[activeImageIndex] ?? activeGallery[0] ?? "";
   const activeIncludes = useMemo(() => {
     if (!activeDemo) return [];
@@ -48,7 +52,7 @@ export function DemosGrid({ demos }: DemosGridProps) {
         {demos.map((demo) => (
           <article key={demo.title} className="card-premium overflow-hidden">
             <div className="bg-grid-light border-b border-slate-200 p-5">
-              {demo.gallery?.length ? (
+              {demo.gallery?.length && !demo.galleryPending ? (
                 <button
                   type="button"
                   onClick={() => openDemoModal(demo)}
@@ -71,10 +75,13 @@ export function DemosGrid({ demos }: DemosGridProps) {
                   </div>
                 </button>
               ) : (
-                <div className="flex aspect-[16/9] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white/80">
+                <div className="flex aspect-[16/9] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white/80 p-4 text-center">
                   <div className="text-center">
                     <LayoutTemplate className="mx-auto h-6 w-6 text-blue-700" />
                     <p className="mt-2 text-xs font-bold uppercase tracking-widest text-blue-700">Demo funcional</p>
+                    {demo.galleryPending ? (
+                      <p className="mt-2 text-xs text-slate-500">Espacio listo para 4 capturas PNG</p>
+                    ) : null}
                   </div>
                 </div>
               )}

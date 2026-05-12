@@ -109,6 +109,11 @@ const demoCards = [
     tech: "Desde $499.990 CLP · Catálogo, carrito y estructura para pagos",
   },
   {
+    name: "Demo estudio jurídico",
+    desc: "Web profesional para estudios jurídicos orientada a consultas y posicionamiento de servicios legales.",
+    tech: "Servicios legales, equipo, formulario de consulta, SEO local",
+  },
+  {
     name: "Demo tienda online",
     desc: "Flujo de compra con catálogo, carrito y derivación comercial.",
     tech: "Catálogo, carrito, pagos, panel de pedidos",
