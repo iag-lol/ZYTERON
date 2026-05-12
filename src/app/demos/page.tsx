@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Eye, LayoutTemplate } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,12 @@ const demoCards = [
       "Tienda online profesional para marcas de ropa: diseño moderno, catálogo, carrito y estructura preparada para pagos online.",
     tech: "Desde $499.990 CLP · Responsive · Catálogo · Carrito · Panel administrativo según requerimiento",
     demoHref: "https://iag-lol.github.io/tienda.mck/",
+    gallery: [
+      "/demos/tienda-ropa/tienda-ropa-01.png",
+      "/demos/tienda-ropa/tienda-ropa-02.png",
+      "/demos/tienda-ropa/tienda-ropa-03.png",
+      "/demos/tienda-ropa/tienda-ropa-04.png",
+    ],
   },
   {
     title: "Demo tienda online",
@@ -115,12 +122,28 @@ export default function DemosPage() {
           {demoCards.map((demo) => (
             <article key={demo.title} className="card-premium overflow-hidden">
               <div className="bg-grid-light border-b border-slate-200 p-5">
-                <div className="flex aspect-[16/9] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white/80">
-                  <div className="text-center">
-                    <LayoutTemplate className="mx-auto h-6 w-6 text-blue-700" />
-                    <p className="mt-2 text-xs font-bold uppercase tracking-widest text-blue-700">Demo funcional</p>
+                {demo.gallery?.length ? (
+                  <div className="grid aspect-[16/9] grid-cols-2 gap-1 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                    {demo.gallery.slice(0, 4).map((src, index) => (
+                      <div key={src} className="relative">
+                        <Image
+                          src={src}
+                          alt={`${demo.title} vista ${index + 1}`}
+                          fill
+                          sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 20vw"
+                          className="object-cover"
+                        />
+                      </div>
+                    ))}
                   </div>
-                </div>
+                ) : (
+                  <div className="flex aspect-[16/9] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white/80">
+                    <div className="text-center">
+                      <LayoutTemplate className="mx-auto h-6 w-6 text-blue-700" />
+                      <p className="mt-2 text-xs font-bold uppercase tracking-widest text-blue-700">Demo funcional</p>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="space-y-3 p-5">
                 <h2 className="text-base font-bold text-slate-900">{demo.title}</h2>
