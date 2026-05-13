@@ -20,6 +20,42 @@ function readEnv(...names: string[]) {
   return "";
 }
 
+function isPlaceholderSupabaseUrl(value: string) {
+  const normalized = value.trim().toLowerCase();
+  return (
+    !normalized ||
+    normalized.includes("localhost:54321") ||
+    normalized.includes("your-project.supabase.co") ||
+    normalized.includes("replace-me")
+  );
+}
+
+function isPlaceholderKey(value: string) {
+  const normalized = value.trim().toLowerCase();
+  return (
+    normalized.length < 40 ||
+    normalized.includes("dev-service-role-key") ||
+    normalized.includes("dev-anon-key") ||
+    normalized.includes("replace-me")
+  );
+}
+
+function readBestEnv(
+  names: string[],
+  isInvalid: (value: string) => boolean,
+) {
+  let fallback = "";
+
+  for (const name of names) {
+    const value = readEnv(name);
+    if (!value) continue;
+    if (!fallback) fallback = value;
+    if (!isInvalid(value)) return value;
+  }
+
+  return fallback;
+}
+
 function normalizeSupabaseUrl(rawUrl: string) {
   const trimmed = rawUrl.trim().replace(/\/+$/, "");
   const suffixes = ["/rest/v1", "/auth/v1", "/storage/v1"];
@@ -35,33 +71,30 @@ function normalizeSupabaseUrl(rawUrl: string) {
 }
 
 export function createSupabaseServerClient() {
-  const rawUrl = readEnv("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_PROJECT_URL");
+  const rawUrl = readBestEnv(
+    ["SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_PROJECT_URL"],
+    isPlaceholderSupabaseUrl,
+  );
 
   const keyCandidates = [
     { source: "SUPABASE_SERVICE_ROLE_KEY", value: readEnv("SUPABASE_SERVICE_ROLE_KEY") },
     { source: "SUPABASE_SERVICE_ROLE", value: readEnv("SUPABASE_SERVICE_ROLE") },
     { source: "SUPABASE_SECRET_KEY", value: readEnv("SUPABASE_SECRET_KEY") },
+    // Compatibilidad por si el proveedor expone nombres no estándar.
+    { source: "NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY", value: readEnv("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY") },
+    { source: "NEXT_PUBLIC_SUPABASE_SECRET_KEY", value: readEnv("NEXT_PUBLIC_SUPABASE_SECRET_KEY") },
+    // Solo para fallback de lectura en operaciones no críticas.
     { source: "SUPABASE_ANON_KEY", value: readEnv("SUPABASE_ANON_KEY") },
     { source: "NEXT_PUBLIC_SUPABASE_ANON_KEY", value: readEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY") },
     { source: "SUPABASE_PUBLISHABLE_KEY", value: readEnv("SUPABASE_PUBLISHABLE_KEY") },
     { source: "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", value: readEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY") },
   ] as const;
 
-  function isPlaceholder(value: string) {
-    const normalized = value.trim().toLowerCase();
-    return (
-      normalized.length < 40 ||
-      normalized.includes("dev-service-role-key") ||
-      normalized.includes("dev-anon-key") ||
-      normalized.includes("replace-me")
-    );
-  }
-
   const selected = keyCandidates.find((candidate) => {
     if (typeof candidate.value !== "string") return false;
     const trimmed = candidate.value.trim();
     if (!trimmed) return false;
-    return !isPlaceholder(trimmed);
+    return !isPlaceholderKey(trimmed);
   });
 
   if (!rawUrl || !selected?.value) {

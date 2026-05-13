@@ -402,8 +402,34 @@ function isPlaceholderKey(value: string) {
   );
 }
 
+function isPlaceholderSupabaseUrl(value: string) {
+  const normalized = value.trim().toLowerCase();
+  return (
+    !normalized ||
+    normalized.includes("localhost:54321") ||
+    normalized.includes("your-project.supabase.co") ||
+    normalized.includes("replace-me")
+  );
+}
+
+function readBestEnvValue(names: string[], isInvalid: (value: string) => boolean) {
+  let fallback = "";
+
+  for (const name of names) {
+    const value = readEnvValue(name);
+    if (!value) continue;
+    if (!fallback) fallback = value;
+    if (!isInvalid(value)) return value;
+  }
+
+  return fallback;
+}
+
 function createSupabaseAnonServerClient() {
-  const rawUrl = readEnvValue("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_PROJECT_URL");
+  const rawUrl = readBestEnvValue(
+    ["SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_PROJECT_URL"],
+    isPlaceholderSupabaseUrl,
+  );
   const anonKey = readEnvValue(
     "SUPABASE_ANON_KEY",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY",
