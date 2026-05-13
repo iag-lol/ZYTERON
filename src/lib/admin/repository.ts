@@ -641,27 +641,42 @@ export async function getSales() {
 }
 
 export async function getWorkOrders() {
-  return safeSelect<WorkOrder>(
-    "WorkOrder",
-    "id, code, source, status, priority, quoteId, saleId, clientId, title, description, scope, plannedDate, dueDate, estimatedHours, actualHours, budget, assignedTo, notes, pdfUrl, createdAt, updatedAt, completedAt, closedAt, cancelledAt",
-    { orderBy: "createdAt" },
-  );
+  const select =
+    "id, code, source, status, priority, quoteId, saleId, clientId, title, description, scope, plannedDate, dueDate, estimatedHours, actualHours, budget, assignedTo, notes, pdfUrl, createdAt, updatedAt, completedAt, closedAt, cancelledAt";
+  const tables = ["WorkOrder", "workorder", "work_order"] as const;
+
+  for (const table of tables) {
+    const rows = await safeSelect<WorkOrder>(table, select, { orderBy: "createdAt" });
+    if (rows.length > 0) return rows;
+  }
+
+  return [] as WorkOrder[];
 }
 
 export async function getWorkOrderById(id: string) {
-  return safeSelectSingle<WorkOrder>(
-    "WorkOrder",
-    "id, code, source, status, priority, quoteId, saleId, clientId, title, description, scope, plannedDate, dueDate, estimatedHours, actualHours, budget, assignedTo, notes, pdfUrl, createdAt, updatedAt, completedAt, closedAt, cancelledAt",
-    { id },
-  );
+  const select =
+    "id, code, source, status, priority, quoteId, saleId, clientId, title, description, scope, plannedDate, dueDate, estimatedHours, actualHours, budget, assignedTo, notes, pdfUrl, createdAt, updatedAt, completedAt, closedAt, cancelledAt";
+  const tables = ["WorkOrder", "workorder", "work_order"] as const;
+
+  for (const table of tables) {
+    const row = await safeSelectSingle<WorkOrder>(table, select, { id });
+    if (row) return row;
+  }
+
+  return null;
 }
 
 export async function getWorkOrderByQuoteId(quoteId: string) {
-  return safeSelectSingle<WorkOrder>(
-    "WorkOrder",
-    "id, code, source, status, priority, quoteId, saleId, clientId, title, description, scope, plannedDate, dueDate, estimatedHours, actualHours, budget, assignedTo, notes, pdfUrl, createdAt, updatedAt, completedAt, closedAt, cancelledAt",
-    { quoteId },
-  );
+  const select =
+    "id, code, source, status, priority, quoteId, saleId, clientId, title, description, scope, plannedDate, dueDate, estimatedHours, actualHours, budget, assignedTo, notes, pdfUrl, createdAt, updatedAt, completedAt, closedAt, cancelledAt";
+  const tables = ["WorkOrder", "workorder", "work_order"] as const;
+
+  for (const table of tables) {
+    const row = await safeSelectSingle<WorkOrder>(table, select, { quoteId });
+    if (row) return row;
+  }
+
+  return null;
 }
 
 export async function getExpenses() {

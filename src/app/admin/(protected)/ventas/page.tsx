@@ -93,6 +93,8 @@ type PageProps = {
         ot_exists?: string;
         ot_invalid_quote?: string;
         ot_status_error?: string;
+        ot_schema_missing?: string;
+        ot_permission_error?: string;
       }
     | Promise<{
         ot_created?: string;
@@ -100,6 +102,8 @@ type PageProps = {
         ot_exists?: string;
         ot_invalid_quote?: string;
         ot_status_error?: string;
+        ot_schema_missing?: string;
+        ot_permission_error?: string;
       }>;
 };
 
@@ -165,6 +169,8 @@ export default async function VentasPage({ searchParams }: PageProps) {
   const otExists = query?.ot_exists === "1";
   const otInvalidQuote = query?.ot_invalid_quote === "1";
   const otStatusError = query?.ot_status_error === "1";
+  const otSchemaMissing = query?.ot_schema_missing === "1";
+  const otPermissionError = query?.ot_permission_error === "1";
 
   const webWorkOrders = workOrders.filter((order) => String(order.source || "").toUpperCase() === "WEB_ORDER");
   const webWorkOrderByQuoteId = new Map(
@@ -254,6 +260,16 @@ export default async function VentasPage({ searchParams }: PageProps) {
       {otExists ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
           El pedido web ya tenía una orden de trabajo asociada.
+        </div>
+      ) : null}
+      {otSchemaMissing ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          No se pudo acceder a WorkOrder. Verifica bootstrap SQL y permisos de escritura para OT.
+        </div>
+      ) : null}
+      {otPermissionError ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          Sin permisos para crear OT en WorkOrder. Revisa service role key y políticas RLS.
         </div>
       ) : null}
       {otError || otInvalidQuote || otStatusError ? (

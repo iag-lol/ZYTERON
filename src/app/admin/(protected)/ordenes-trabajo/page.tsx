@@ -133,7 +133,7 @@ export default async function OrdenesTrabajoPage({ searchParams }: PageProps) {
       ) : null}
       {query?.ot_schema_missing === "1" ? (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          Falta la tabla WorkOrder en Supabase. Ejecuta el SQL de bootstrap que te dejé para habilitar el módulo.
+          No se pudo acceder a WorkOrder. Revisa que la tabla exista (bootstrap SQL) y que esté visible con permisos de escritura.
         </div>
       ) : null}
       {query?.ot_permission_error === "1" ? (

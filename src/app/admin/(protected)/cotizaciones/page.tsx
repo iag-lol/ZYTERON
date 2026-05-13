@@ -214,7 +214,7 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
       ) : null}
       {otSchemaMissing ? (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          Falta la tabla WorkOrder en Supabase. Ejecuta el SQL de bootstrap para habilitar OT.
+          No se pudo acceder a WorkOrder. Verifica bootstrap SQL y permisos de escritura para OT.
         </div>
       ) : null}
       {otPermissionError ? (

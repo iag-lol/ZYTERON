@@ -17,6 +17,26 @@ function safeRedirect(path: FormDataEntryValue | null) {
   return "/admin/ordenes-trabajo";
 }
 
+function firstHeaderValue(value: string | null) {
+  if (!value) return "";
+  return value.split(",")[0]?.trim() || "";
+}
+
+function resolveRequestOrigin(request: Request) {
+  const requestUrl = new URL(request.url);
+  const forwardedProto = firstHeaderValue(request.headers.get("x-forwarded-proto"));
+  const forwardedHost = firstHeaderValue(request.headers.get("x-forwarded-host"));
+  const host = firstHeaderValue(request.headers.get("host"));
+  const targetHost = forwardedHost || host;
+  const targetProto = forwardedProto || requestUrl.protocol.replace(":", "");
+
+  if (targetHost && (targetProto === "http" || targetProto === "https")) {
+    return `${targetProto}://${targetHost}`;
+  }
+
+  return requestUrl.origin;
+}
+
 function shouldBePending(status?: string | null) {
   const normalized = String(status || "").trim().toUpperCase();
   return normalized === "PENDING" || normalized === "SENT";
@@ -54,12 +74,59 @@ function isSchemaMissingError(message: string) {
   );
 }
 
+async function insertWorkOrder(payload: Record<string, unknown>) {
+  const tables = ["WorkOrder", "workorder", "work_order"] as const;
+  let lastError: Error | null = null;
+
+  for (const table of tables) {
+    try {
+      await insertRow(table, payload, "id");
+      return;
+    } catch (error) {
+      const message = error instanceof Error ? error.message.toLowerCase() : String(error || "").toLowerCase();
+      if (isSchemaMissingError(message)) {
+        lastError = error instanceof Error ? error : new Error(String(error || "Schema not available"));
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
+  throw new Error("No se pudo resolver la tabla WorkOrder.");
+}
+
+function isPlaceholderKey(value: string) {
+  const normalized = value.trim().toLowerCase();
+  return (
+    normalized.length < 40 ||
+    normalized.includes("dev-service-role-key") ||
+    normalized.includes("replace-me")
+  );
+}
+
+function hasWriteServiceKeyConfigured() {
+  const candidates = [
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    process.env.SUPABASE_SERVICE_ROLE,
+    process.env.SUPABASE_SECRET_KEY,
+  ];
+
+  return candidates.some((raw) => {
+    const value = String(raw || "").trim();
+    if (!value) return false;
+    return !isPlaceholderKey(value);
+  });
+}
+
 export async function POST(request: Request) {
   const formData = await request.formData();
   const quoteId = String(formData.get("quoteId") || "").trim();
   const source = normalizeSource(formData.get("source"));
   const redirectTo = safeRedirect(formData.get("redirectTo"));
-  const redirectUrl = new URL(redirectTo, request.url);
+  const redirectUrl = new URL(redirectTo, resolveRequestOrigin(request));
 
   if (!quoteId) {
     redirectUrl.searchParams.set("ot_error", "1");
@@ -120,43 +187,56 @@ export async function POST(request: Request) {
         ? `Pedido web asociado. Documento: ${checkoutMeta?.customer.documentType || "N/A"}`
         : `Cotización manual asociada. Estado comercial: ${String(quote.status || "PENDING").toUpperCase()}`;
 
-    await insertRow(
-      "WorkOrder",
-      {
-        id,
-        code: buildWorkOrderCode(quote.id),
-        source,
-        status: "ACTIVE",
-        priority: source === "WEB_ORDER" ? "HIGH" : "NORMAL",
-        quoteId: quote.id,
-        saleId: null,
-        clientId,
-        title,
-        description,
-        scope,
-        plannedDate,
-        dueDate,
-        estimatedHours: source === "WEB_ORDER" ? 6 : 12,
-        actualHours: null,
-        budget: Math.max(0, Math.round(quote.totalAmount || 0)),
-        assignedTo: null,
-        notes,
-        pdfUrl: `/admin/ordenes-trabajo/${id}/pdf`,
-        createdAt,
-        updatedAt: createdAt,
-      },
-      "id",
-    );
+    await insertWorkOrder({
+      id,
+      code: buildWorkOrderCode(quote.id),
+      source,
+      status: "ACTIVE",
+      priority: source === "WEB_ORDER" ? "HIGH" : "NORMAL",
+      quoteId: quote.id,
+      saleId: null,
+      clientId,
+      title,
+      description,
+      scope,
+      plannedDate,
+      dueDate,
+      estimatedHours: source === "WEB_ORDER" ? 6 : 12,
+      actualHours: null,
+      budget: Math.max(0, Math.round(quote.totalAmount || 0)),
+      assignedTo: null,
+      notes,
+      pdfUrl: `/admin/ordenes-trabajo/${id}/pdf`,
+      createdAt,
+      updatedAt: createdAt,
+    });
 
     redirectUrl.searchParams.set("ot_created", "1");
     return NextResponse.redirect(redirectUrl, { status: 303 });
   } catch (error) {
     const message = error instanceof Error ? error.message.toLowerCase() : "";
-    if (isSchemaMissingError(message)) {
-      redirectUrl.searchParams.set("ot_schema_missing", "1");
-    } else if (message.includes("row-level security") || message.includes("permission")) {
+    if (
+      message.includes("supabase_url o keys válidas") ||
+      message.includes("row-level security") ||
+      message.includes("permission denied") ||
+      message.includes("insufficient_privilege") ||
+      message.includes("not configured")
+    ) {
+      redirectUrl.searchParams.set("ot_permission_error", "1");
+    } else if (isSchemaMissingError(message)) {
+      // Si no existe una key de servicio válida, el error "schema cache"
+      // suele ser por permisos/visibilidad (no necesariamente por tabla faltante).
+      if (!hasWriteServiceKeyConfigured()) {
+        redirectUrl.searchParams.set("ot_permission_error", "1");
+      } else {
+        redirectUrl.searchParams.set("ot_schema_missing", "1");
+      }
+    } else if (message.includes("permission")) {
       redirectUrl.searchParams.set("ot_permission_error", "1");
     } else {
+      redirectUrl.searchParams.set("ot_error", "1");
+    }
+    if (!redirectUrl.searchParams.has("ot_schema_missing") && !redirectUrl.searchParams.has("ot_permission_error")) {
       redirectUrl.searchParams.set("ot_error", "1");
     }
     return NextResponse.redirect(redirectUrl, { status: 303 });

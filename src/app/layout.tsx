@@ -30,8 +30,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: "ZYTERON | Páginas web, sistemas y soporte TI en Chile",
-    template: "%s | ZYTERON",
+    default: "Zyteron",
+    template: "%s | Zyteron",
   },
   description: siteConfig.description,
   alternates: {
