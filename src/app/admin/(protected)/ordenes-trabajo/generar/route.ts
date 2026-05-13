@@ -215,6 +215,12 @@ export async function POST(request: Request) {
     return NextResponse.redirect(redirectUrl, { status: 303 });
   } catch (error) {
     const message = error instanceof Error ? error.message.toLowerCase() : "";
+    console.error("[ot/generar] failed", {
+      quoteId,
+      source,
+      redirectTo,
+      message: error instanceof Error ? error.message : String(error || "unknown error"),
+    });
     if (
       message.includes("supabase_url o keys válidas") ||
       message.includes("row-level security") ||

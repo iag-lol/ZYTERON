@@ -112,6 +112,7 @@ export function createSupabaseServerClient() {
   const url = normalizeSupabaseUrl(rawUrl);
   // We don't use auth helpers; for admin metrics we rely on service role.
   const supabase = createClient(url, trimmedKey, {
+    db: { schema: "public" },
     global: { headers: { "X-Client-Info": "zyteron-admin" } },
   });
   return { supabase };

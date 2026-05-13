@@ -456,7 +456,7 @@ async function runSelectQuery(
   select: string,
   options: SelectOptions,
 ) {
-  let query = supabase.from(table).select(select);
+  let query = supabase.schema("public").from(table).select(select);
 
   if (options.filters) {
     for (const [key, value] of Object.entries(options.filters)) {
@@ -530,7 +530,7 @@ export async function insertRow<T>(table: string, payload: Record<string, unknow
   const rowPayload = Object.prototype.hasOwnProperty.call(payload, "id")
     ? payload
     : { id: randomUUID(), ...payload };
-  const { data, error } = await supabase.from(table).insert(rowPayload).select(select).single();
+  const { data, error } = await supabase.schema("public").from(table).insert(rowPayload).select(select).single();
   if (error) {
     throw new Error(toErrorMessage(error));
   }
@@ -539,7 +539,7 @@ export async function insertRow<T>(table: string, payload: Record<string, unknow
 
 export async function updateRows(table: string, payload: Record<string, unknown>, filters: Record<string, string | number>) {
   const { supabase } = createSupabaseServerClient();
-  let query = supabase.from(table).update(payload);
+  let query = supabase.schema("public").from(table).update(payload);
 
   for (const [key, value] of Object.entries(filters)) {
     query = query.eq(key, value);
@@ -553,7 +553,7 @@ export async function updateRows(table: string, payload: Record<string, unknown>
 
 export async function deleteRows(table: string, filters: Record<string, string | number>) {
   const { supabase } = createSupabaseServerClient();
-  let query = supabase.from(table).delete();
+  let query = supabase.schema("public").from(table).delete();
 
   for (const [key, value] of Object.entries(filters)) {
     query = query.eq(key, value);

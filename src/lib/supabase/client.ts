@@ -26,5 +26,5 @@ export function createSupabaseBrowserClient() {
   if (!url || !key) {
     throw new Error("Supabase URL o anon key no configurados");
   }
-  return createClient(url, key);
+  return createClient(url, key, { db: { schema: "public" } });
 }
