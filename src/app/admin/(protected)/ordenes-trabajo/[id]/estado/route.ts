@@ -38,7 +38,7 @@ function resolveRequestOrigin(request: Request) {
 }
 
 async function updateWorkOrderRows(payload: Record<string, unknown>, filters: Record<string, string | number>) {
-  const tables = ["WorkOrder", "workorder", "work_order"] as const;
+  const tables = ["WorkOrder", "workorder", "work_order", "\"WorkOrder\""] as const;
   let lastError: Error | null = null;
 
   for (const table of tables) {

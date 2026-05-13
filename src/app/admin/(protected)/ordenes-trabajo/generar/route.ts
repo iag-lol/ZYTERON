@@ -75,7 +75,7 @@ function isSchemaMissingError(message: string) {
 }
 
 async function insertWorkOrder(payload: Record<string, unknown>) {
-  const tables = ["WorkOrder", "workorder", "work_order"] as const;
+  const tables = ["WorkOrder", "workorder", "work_order", "\"WorkOrder\""] as const;
   let lastError: Error | null = null;
 
   for (const table of tables) {

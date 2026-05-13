@@ -669,7 +669,7 @@ export async function getSales() {
 export async function getWorkOrders() {
   const select =
     "id, code, source, status, priority, quoteId, saleId, clientId, title, description, scope, plannedDate, dueDate, estimatedHours, actualHours, budget, assignedTo, notes, pdfUrl, createdAt, updatedAt, completedAt, closedAt, cancelledAt";
-  const tables = ["WorkOrder", "workorder", "work_order"] as const;
+  const tables = ["WorkOrder", "workorder", "work_order", "\"WorkOrder\""] as const;
 
   for (const table of tables) {
     const rows = await safeSelect<WorkOrder>(table, select, { orderBy: "createdAt" });
@@ -682,7 +682,7 @@ export async function getWorkOrders() {
 export async function getWorkOrderById(id: string) {
   const select =
     "id, code, source, status, priority, quoteId, saleId, clientId, title, description, scope, plannedDate, dueDate, estimatedHours, actualHours, budget, assignedTo, notes, pdfUrl, createdAt, updatedAt, completedAt, closedAt, cancelledAt";
-  const tables = ["WorkOrder", "workorder", "work_order"] as const;
+  const tables = ["WorkOrder", "workorder", "work_order", "\"WorkOrder\""] as const;
 
   for (const table of tables) {
     const row = await safeSelectSingle<WorkOrder>(table, select, { id });
@@ -695,7 +695,7 @@ export async function getWorkOrderById(id: string) {
 export async function getWorkOrderByQuoteId(quoteId: string) {
   const select =
     "id, code, source, status, priority, quoteId, saleId, clientId, title, description, scope, plannedDate, dueDate, estimatedHours, actualHours, budget, assignedTo, notes, pdfUrl, createdAt, updatedAt, completedAt, closedAt, cancelledAt";
-  const tables = ["WorkOrder", "workorder", "work_order"] as const;
+  const tables = ["WorkOrder", "workorder", "work_order", "\"WorkOrder\""] as const;
 
   for (const table of tables) {
     const row = await safeSelectSingle<WorkOrder>(table, select, { quoteId });
