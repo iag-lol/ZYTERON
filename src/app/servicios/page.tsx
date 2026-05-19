@@ -5,6 +5,7 @@ import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
 import { buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import { seoServicePages } from "@/content/seo-service-pages";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Servicios digitales para empresas y pymes",
@@ -87,27 +88,32 @@ export default function ServiciosPage() {
             {
               name: "Desarrollo web",
               description: "Páginas web profesionales para empresas y pymes.",
-              path: "/desarrollo-web-santiago",
+              path: "/desarrollo-web",
             },
             {
               name: "Tiendas online",
               description: "Tiendas online y catálogos digitales para venta en Chile.",
-              path: "/tiendas-online-chile",
+              path: "/tiendas-online",
             },
             {
               name: "Sistemas web a medida",
               description: "Sistemas internos y paneles administrativos personalizados.",
-              path: "/sistemas-web-a-medida",
+              path: "/sistemas-web",
             },
             {
               name: "Automatización empresarial",
               description: "Automatización de WhatsApp y tareas operativas de atención.",
-              path: "/automatizacion-whatsapp-empresas",
+              path: "/automatizacion",
             },
             {
               name: "Soporte TI",
               description: "Soporte TI para empresas y pymes en Santiago y Chile.",
-              path: "/soporte-ti-pymes-santiago",
+              path: "/soporte-ti",
+            },
+            {
+              name: "SEO técnico",
+              description: "Optimización técnica, estructura on-page y crecimiento orgánico para empresas.",
+              path: "/servicios/seo-para-empresas-chile",
             },
           ],
         })}
@@ -124,6 +130,33 @@ export default function ServiciosPage() {
             Trabajamos con empresas, pymes y emprendedores en Chile. Cada servicio se cotiza según alcance,
             funcionalidades y prioridad del proyecto.
           </p>
+        </Container>
+      </section>
+
+      <section className="bg-white py-16">
+        <Container className="space-y-8">
+          <div className="space-y-2 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Servicios SEO</p>
+            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              Páginas específicas por necesidad de búsqueda
+            </h2>
+            <p className="mx-auto max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              Si ya sabes qué necesita tu empresa, revisa el servicio específico y solicita una propuesta con contexto.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {seoServicePages.map((service) => (
+              <Link key={service.path} href={service.path} className="card-premium p-5 transition-colors hover:border-blue-200">
+                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">{service.primaryKeyword}</p>
+                <h3 className="text-lg font-extrabold text-slate-900">{service.navLabel}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{service.metaDescription}</p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
+                  Ver servicio <ArrowRight className="h-4 w-4" />
+                </span>
+              </Link>
+            ))}
+          </div>
         </Container>
       </section>
 
@@ -166,6 +199,9 @@ export default function ServiciosPage() {
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/35 text-white hover:bg-white/10 hover:text-white">
               <Link href="/demos">Ver demos</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-white/35 text-white hover:bg-white/10 hover:text-white">
+              <Link href="/casos-exito">Ver casos</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/35 text-white hover:bg-white/10 hover:text-white">
               <Link href="/contacto">Hablar con un especialista</Link>

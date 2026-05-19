@@ -156,6 +156,32 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
                     </p>
                   ))}
                 </div>
+                {section.table ? (
+                  <div className="mt-5 overflow-x-auto rounded-xl border border-slate-200">
+                    <table className="w-full min-w-[680px] text-left text-sm">
+                      <thead className="bg-slate-100 text-slate-700">
+                        <tr>
+                          {section.table.headers.map((header) => (
+                            <th key={header} className="px-4 py-3 font-bold">
+                              {header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {section.table.rows.map((row) => (
+                          <tr key={row.join("|")} className="border-t border-slate-200">
+                            {row.map((cell) => (
+                              <td key={cell} className="px-4 py-3 text-slate-700">
+                                {cell}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : null}
                 {section.bullets?.length ? (
                   <ul className="mt-4 space-y-2 text-sm text-slate-700">
                     {section.bullets.map((bullet) => (

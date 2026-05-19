@@ -6,7 +6,7 @@ export const siteConfig = {
   url: "https://www.zyteron.cl",
   locale: "es-CL",
   description:
-    "Desarrollamos páginas web, sistemas internos y soluciones digitales para empresas, pymes y emprendedores en Chile.",
+    "Creamos páginas web profesionales, tiendas online, sistemas web, automatizaciones y soluciones digitales para empresas, pymes y emprendedores en Chile.",
   address: {
     city: "Santiago",
     region: "Región Metropolitana",
@@ -22,9 +22,22 @@ export const siteConfig = {
     priceRange: "$$",
     hours: ["Mo-Fr 09:00-18:00"],
     areaServed: "Chile",
+    serviceTypes: [
+      "Desarrollo web",
+      "Sistemas web",
+      "Software a medida",
+      "Tiendas online",
+      "Automatización",
+      "Soporte TI",
+      "SEO técnico",
+    ],
   },
   social: {
     linkedin: "https://www.linkedin.com/company/zyteron",
+  },
+  representative: {
+    name: "Eduardo Ávila",
+    role: "Fundador y líder de proyectos",
   },
 };
 

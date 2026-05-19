@@ -9,12 +9,14 @@ if (!pageData) {
   throw new Error("Missing SEO priority page data for soporte-ti-pymes-santiago");
 }
 
+const priorityServicePage = pageData;
+
 export const metadata: Metadata = createPageMetadata({
-  title: pageData.metaTitle,
-  description: pageData.metaDescription,
-  path: pageData.path,
+  title: priorityServicePage.metaTitle,
+  description: priorityServicePage.metaDescription,
+  path: priorityServicePage.path,
 });
 
 export default function PriorityServiceRoutePage() {
-  return <PriorityServicePageTemplate page={pageData} />;
+  return <PriorityServicePageTemplate page={priorityServicePage} />;
 }

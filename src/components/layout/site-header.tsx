@@ -23,6 +23,7 @@ const primaryNavItems = [
 
 const secondaryNavItems = [
   { href: "/nosotros", label: "Nosotros" },
+  { href: "/casos-exito", label: "Casos" },
   { href: "/blog", label: "Blog" },
   { href: "/faq", label: "FAQ" },
 ];
@@ -34,6 +35,7 @@ const mobileNavItems = [
   { href: "/productos", label: "Productos TI" },
   { href: "/planes", label: "Planes" },
   { href: "/nosotros", label: "Nosotros" },
+  { href: "/casos-exito", label: "Casos" },
   { href: "/blog", label: "Blog" },
   { href: "/faq", label: "FAQ" },
   { href: "/paquetes", label: "Cotizar" },

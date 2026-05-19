@@ -83,6 +83,7 @@ export function createPageMetadata({
   title: rawTitle,
   description,
   path,
+  keywords,
   noIndex = false,
 }: SeoMetadataInput): Metadata {
   const url = buildAbsoluteUrl(path);
@@ -92,6 +93,7 @@ export function createPageMetadata({
   return {
     title,
     description,
+    keywords,
     alternates: {
       canonical: url,
     },
@@ -137,6 +139,30 @@ export function createPageMetadata({
 
 export function buildOrganizationGraph() {
   const sameAs = [siteConfig.social.linkedin].filter(Boolean);
+  const servedAreas = [
+    {
+      "@type": "Country",
+      name: "Chile",
+    },
+    {
+      "@type": "City",
+      name: "Santiago",
+    },
+    {
+      "@type": "AdministrativeArea",
+      name: "Región Metropolitana",
+    },
+  ];
+  const contactPoint = [
+    {
+      "@type": "ContactPoint",
+      contactType: "sales",
+      telephone: siteConfig.contact.phone,
+      email: siteConfig.contact.email,
+      areaServed: siteConfig.business.areaServed,
+      availableLanguage: ["es-CL", "es"],
+    },
+  ];
 
   return {
     "@context": "https://schema.org",
@@ -161,10 +187,10 @@ export function buildOrganizationGraph() {
         image: `${siteConfig.url}/logo.svg`,
         telephone: siteConfig.contact.phone,
         email: siteConfig.contact.email,
-        areaServed: {
-          "@type": "Country",
-          name: siteConfig.business.areaServed,
-        },
+        description: siteConfig.description,
+        areaServed: servedAreas,
+        serviceType: siteConfig.business.serviceTypes,
+        contactPoint,
         address: {
           "@type": "PostalAddress",
           addressLocality: siteConfig.address.city,
@@ -188,12 +214,12 @@ export function buildOrganizationGraph() {
         image: `${siteConfig.url}/logo.svg`,
         telephone: siteConfig.contact.phone,
         email: siteConfig.contact.email,
+        description: siteConfig.description,
         openingHours: siteConfig.business.hours,
         priceRange: siteConfig.business.priceRange,
-        areaServed: {
-          "@type": "Country",
-          name: siteConfig.business.areaServed,
-        },
+        areaServed: servedAreas,
+        serviceType: siteConfig.business.serviceTypes,
+        contactPoint,
         address: {
           "@type": "PostalAddress",
           addressLocality: siteConfig.address.city,
@@ -250,6 +276,20 @@ export function buildServiceJsonLd({
   serviceType,
 }: ServiceJsonLdInput) {
   const pageUrl = buildAbsoluteUrl(path);
+  const areaServed = [
+    {
+      "@type": "Country",
+      name: "Chile",
+    },
+    {
+      "@type": "City",
+      name: "Santiago",
+    },
+    {
+      "@type": "AdministrativeArea",
+      name: "Región Metropolitana",
+    },
+  ];
 
   return {
     "@context": "https://schema.org",
@@ -259,10 +299,7 @@ export function buildServiceJsonLd({
     name,
     description,
     url: pageUrl,
-    areaServed: {
-      "@type": "Country",
-      name: siteConfig.business.areaServed,
-    },
+    areaServed,
     provider: {
       "@id": `${siteConfig.url}/#organization`,
     },

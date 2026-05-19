@@ -10,13 +10,14 @@ import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 export const metadata: Metadata = createPageMetadata({
   title: "Demos funcionales y casos de uso",
   description:
-    "Explora demos funcionales de ZYTERON para empresas y pymes: tienda online, web corporativa, paneles administrativos y sistemas internos.",
+    "Explora demos funcionales de ZYTERON para empresas y pymes: tienda online, web corporativa, plataformas de cursos, paneles administrativos y sistemas internos.",
   path: "/demos",
   keywords: [
     "demos desarrollo web chile",
     "demo panel administrativo",
     "casos de uso sistemas web",
     "demo tienda online chile",
+    "demo plataforma de cursos",
   ],
 });
 
@@ -67,6 +68,25 @@ const demoCards = [
       "Estructura base SEO para posicionamiento local",
     ],
     note: "Precio final según estructura, secciones, formularios, automatizaciones e integraciones requeridas.",
+  },
+  {
+    title: "Demo plataforma de cursos con videos",
+    description:
+      "Plataforma web para publicar cursos de cualquier rubro: presentación de programas, lecciones en video y captación de nuevos alumnos.",
+    tech: "Desde $599.990 CLP · Plataforma de cursos · Lecciones en video · Responsive · Escalable",
+    demoHref: "https://iag-lol.github.io/cursos.mck/",
+    priceFrom: "Desde $599.990 CLP",
+    galleryPending: true,
+    includes: [
+      "Landing profesional para vender cursos",
+      "Sección de catálogo o programas formativos",
+      "Módulos con lecciones en video embebidas",
+      "Vista responsive para celular, tablet y computador",
+      "Estructura preparada para escalar a múltiples cursos",
+      "Formulario de contacto o inscripción",
+      "Base para integrar panel administrativo según requerimiento",
+    ],
+    note: "Precio final según cantidad de cursos, estructura académica, integraciones y nivel de automatización solicitado.",
   },
 ];
 

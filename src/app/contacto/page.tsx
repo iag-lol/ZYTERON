@@ -7,9 +7,9 @@ import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { buildContactPageJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Contacto y cotización profesional",
+  title: "Contacto | Cotiza tu Página Web o Sistema Digital",
   description:
-    "Solicita cotización formal para desarrollo web, sistemas internos, automatización y soporte TI para empresas y pymes en Chile.",
+    "Contáctanos para cotizar páginas web, tiendas online, sistemas internos, automatizaciones y soluciones digitales para tu empresa.",
   path: "/contacto",
   keywords: ["cotización web chile", "contacto desarrollo web", "cotizar sistema web"],
 });
@@ -20,7 +20,7 @@ const WHATSAPP_URL =
 const contactInfo = [
   {
     icon: <WhatsAppIcon className="h-5 w-5" />,
-    label: "WhatsApp",
+    label: "Teléfono / WhatsApp",
     value: "+56 9 8475 2936",
     sub: "Canal recomendado para contacto rápido",
     href: WHATSAPP_URL,
@@ -67,7 +67,7 @@ export default function ContactoPage() {
         id="contacto-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/contacto",
-          title: "Contacto y cotización profesional",
+          title: "Contacto | Cotiza tu Página Web o Sistema Digital",
           description: "Página de contacto comercial para solicitar cotización formal.",
           breadcrumbs: [
             { name: "Inicio", path: "/" },
@@ -90,10 +90,11 @@ export default function ContactoPage() {
             Contacto comercial
           </div>
           <h1 className="text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
-            Solicita una cotización formal para tu proyecto
+            Cotiza tu página web, sistema digital o solución tecnológica
           </h1>
           <p className="mx-auto max-w-3xl text-base text-slate-600 sm:text-lg">
-            Revisamos alcance, prioridades y requerimientos para entregar una propuesta clara y profesional.
+            Cuéntanos qué necesita tu empresa. Revisaremos alcance, prioridades y requerimientos para entregarte
+            una orientación clara y una propuesta profesional según el tipo de proyecto.
           </p>
         </Container>
       </section>
@@ -108,6 +109,9 @@ export default function ContactoPage() {
               </p>
               <p className="text-sm leading-relaxed text-slate-600">
                 Atendemos empresas, pymes y emprendedores en Santiago y otras regiones de Chile mediante atención remota.
+              </p>
+              <p className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm leading-relaxed text-slate-700">
+                Responderemos con una orientación clara según el tipo de proyecto y necesidad de tu negocio.
               </p>
             </div>
 

@@ -21,8 +21,15 @@ export const defaultJsonLdOrganization = {
   taxID: siteConfig.taxId,
   url: siteConfig.url,
   logo: `${siteConfig.url}/logo.svg`,
+  description: siteConfig.description,
   email: siteConfig.contact.email,
   telephone: siteConfig.contact.phone,
+  founder: {
+    "@type": "Person",
+    name: siteConfig.representative.name,
+    jobTitle: siteConfig.representative.role,
+  },
+  knowsAbout: siteConfig.business.serviceTypes,
   contactPoint: [
     {
       "@type": "ContactPoint",

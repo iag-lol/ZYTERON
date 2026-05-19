@@ -10,11 +10,13 @@ const footerColumns = [
   {
     title: "Servicios Principales",
     items: [
-      { label: "Páginas web corporativas", href: "/desarrollo-web-santiago" },
-      { label: "Tiendas online", href: "/tiendas-online-chile" },
-      { label: "Sistemas internos", href: "/sistemas-web-a-medida" },
-      { label: "Automatización WhatsApp", href: "/automatizacion-whatsapp-empresas" },
-      { label: "Soporte TI", href: "/soporte-ti-pymes-santiago" },
+      { label: "Desarrollo web", href: "/desarrollo-web" },
+      { label: "Páginas web para pymes", href: "/paginas-web-para-pymes" },
+      { label: "Diseño web para empresas", href: "/diseno-web-empresas" },
+      { label: "Tiendas online", href: "/tiendas-online" },
+      { label: "Sistemas web", href: "/sistemas-web" },
+      { label: "Automatización", href: "/automatizacion" },
+      { label: "Soporte TI", href: "/soporte-ti" },
     ],
   },
   {
@@ -24,6 +26,7 @@ const footerColumns = [
       { label: "Productos TI", href: "/productos" },
       { label: "Planes y precios", href: "/planes" },
       { label: "Cotizador", href: "/paquetes" },
+      { label: "Casos de éxito", href: "/casos-exito" },
       { label: "Preguntas frecuentes", href: "/faq" },
       { label: "Blog", href: "/blog" },
     ],

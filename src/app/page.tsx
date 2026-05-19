@@ -21,6 +21,7 @@ import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { buildFaqJsonLd, buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 import { getApprovedReviewsSnapshot } from "@/lib/web-control";
 import { ClientReviewsSection } from "@/components/home/client-reviews-section";
+import { caseStudies } from "@/content/case-studies";
 
 export const dynamic = "force-dynamic";
 
@@ -28,9 +29,9 @@ const WHATSAPP_BASE =
   "https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Desarrollo web y sistemas para empresas en Chile",
+  title: "Desarrollo Web, Sistemas y Soluciones Digitales para Empresas",
   description:
-    "Desarrollamos páginas web, sistemas internos y soluciones digitales para empresas y pymes en Chile. Cotización formal, proceso ordenado y soporte post-entrega.",
+    "Creamos páginas web, tiendas online, sistemas web y soluciones digitales para empresas, pymes y emprendedores en Chile. Diseño profesional, SEO base y tecnología escalable.",
   path: "/",
   keywords: [
     "desarrollo web en chile",
@@ -46,6 +47,7 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 const trustPoints = [
+  "Más de 7 años de experiencia ligada a tecnología, procesos y soluciones digitales.",
   "Cotización formal antes de iniciar.",
   "Proceso de trabajo ordenado y documentado.",
   "Entrega por etapas con revisión del cliente.",
@@ -59,8 +61,9 @@ const trustPoints = [
 
 const serviceGroups = [
   {
-    title: "A) Desarrollo Web",
+    title: "Desarrollo Web",
     icon: <MonitorSmartphone className="h-5 w-5" />,
+    href: "/desarrollo-web",
     description:
       "Sitios profesionales para presentar, posicionar y vender tus servicios o productos.",
     items: [
@@ -74,8 +77,9 @@ const serviceGroups = [
     ],
   },
   {
-    title: "B) Sistemas y automatización",
+    title: "Sistemas y automatización",
     icon: <Settings className="h-5 w-5" />,
+    href: "/sistemas-web",
     description:
       "Herramientas para ordenar procesos y reducir tareas manuales dentro de tu empresa.",
     items: [
@@ -89,8 +93,9 @@ const serviceGroups = [
     ],
   },
   {
-    title: "C) Soporte TI y soluciones tecnológicas",
+    title: "Soporte TI y soluciones tecnológicas",
     icon: <ShieldCheck className="h-5 w-5" />,
+    href: "/soporte-ti",
     description:
       "Acompañamiento técnico para mantener continuidad operativa en tu negocio.",
     items: [
@@ -199,6 +204,10 @@ const planCards = [
 
 const homeFaqs = [
   {
+    q: "¿Cuánto cuesta una página web profesional?",
+    a: "Depende del alcance, cantidad de secciones, contenido, integraciones y soporte. Publicamos valores referenciales y siempre entregamos cotización formal antes de iniciar.",
+  },
+  {
     q: "¿Cuánto demora una página web?",
     a: "Depende del alcance. Una landing puede tomar 1 a 2 semanas y un sitio corporativo más completo 3 a 6 semanas.",
   },
@@ -215,6 +224,10 @@ const homeFaqs = [
     a: "Sí. Podemos implementar un panel para que gestiones contenidos y datos sin depender de terceros.",
   },
   {
+    q: "¿La web queda adaptada a celular?",
+    a: "Sí. Todo proyecto web se trabaja responsive para celular, tablet y escritorio.",
+  },
+  {
     q: "¿Hacen tiendas online?",
     a: "Sí, desarrollamos tiendas online adaptadas al tipo de negocio y catálogo.",
   },
@@ -223,12 +236,20 @@ const homeFaqs = [
     a: "Sí. Se puede integrar pasarela de pago según requerimientos técnicos y comerciales.",
   },
   {
+    q: "¿Incluyen SEO?",
+    a: "Incluimos base SEO técnica y on-page: estructura, metadata, sitemap, robots, schema cuando corresponde y contenido organizado.",
+  },
+  {
     q: "¿Hacen sistemas personalizados?",
     a: "Sí. Diseñamos sistemas internos y soluciones a medida por módulo y alcance.",
   },
   {
     q: "¿Entregan soporte después?",
     a: "Sí. Incluimos soporte post-entrega y planes de continuidad según necesidad.",
+  },
+  {
+    q: "¿Trabajan con empresas fuera de Santiago?",
+    a: "Sí. Atendemos proyectos para pymes, emprendedores y empresas de distintas regiones de Chile mediante atención remota.",
   },
   {
     q: "¿Emiten factura o boleta?",
@@ -245,37 +266,71 @@ const solutionsByNeed = [
     title: "Necesito una página web profesional",
     description:
       "Diseñamos webs corporativas con propuesta de valor clara, estructura comercial y foco en generación de consultas.",
-    href: "/servicios",
+    href: "/desarrollo-web",
     cta: "Ver servicio",
   },
   {
     title: "Necesito vender online",
     description:
       "Implementamos tiendas online y catálogos para ordenar productos, vender por web y complementar venta por WhatsApp.",
-    href: "/tiendas-online-chile",
+    href: "/tiendas-online",
     cta: "Cotizar tienda",
   },
   {
     title: "Necesito ordenar procesos internos",
     description:
       "Desarrollamos sistemas web y paneles administrativos para registrar información, controlar estados y reducir tareas manuales.",
-    href: "/sistemas-web-a-medida",
+    href: "/sistemas-web",
     cta: "Ver solución",
   },
   {
     title: "Necesito automatizar tareas o WhatsApp",
     description:
       "Creamos flujos de automatización para responder más rápido, filtrar solicitudes y mejorar trazabilidad comercial.",
-    href: "/automatizacion-whatsapp-empresas",
+    href: "/automatizacion",
     cta: "Cotizar automatización",
   },
   {
     title: "Necesito soporte TI para mi empresa",
     description:
       "Entregamos soporte técnico para continuidad operativa en pymes y empresas con atención en Santiago y otras regiones.",
-    href: "/soporte-ti-pymes-santiago",
+    href: "/soporte-ti",
     cta: "Solicitar soporte",
   },
+];
+
+const clientTypes = [
+  {
+    title: "Pymes que quieren profesionalizarse",
+    description:
+      "Sitios claros, rápidos y con contacto directo para negocios que necesitan mejorar confianza y ordenar su presencia digital.",
+    href: "/paginas-web-para-pymes",
+  },
+  {
+    title: "Empresas con operación interna",
+    description:
+      "Sistemas web, paneles y automatizaciones para controlar información, procesos, documentos y reportes.",
+    href: "/sistemas-web",
+  },
+  {
+    title: "Negocios que venden productos",
+    description:
+      "Tiendas online, catálogos y flujos de venta asistida por WhatsApp para vender con estructura.",
+    href: "/tiendas-online",
+  },
+  {
+    title: "Equipos que necesitan continuidad TI",
+    description:
+      "Soporte, configuración y acompañamiento técnico para reducir fricciones en la operación diaria.",
+    href: "/soporte-ti",
+  },
+];
+
+const localSignals = [
+  "Atendemos proyectos para pymes, emprendedores y empresas de distintas regiones de Chile.",
+  "Base operativa en Santiago y foco en empresas de la Región Metropolitana cuando el proyecto requiere contexto local.",
+  "Trabajo remoto, seguimiento por etapas y comunicación directa para avanzar sin depender de reuniones innecesarias.",
+  "Enfoque comercial, técnico y operativo para que la solución no sea solo diseño, sino una herramienta útil para el negocio.",
 ];
 
 export default async function Home() {
@@ -287,9 +342,9 @@ export default async function Home() {
         id="home-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/",
-          title: "Desarrollo web y sistemas para empresas en Chile",
+          title: "Zyteron | Desarrollo Web, Sistemas y Soluciones Digitales para Empresas",
           description:
-            "Desarrollamos páginas web, sistemas internos y soluciones digitales para empresas y pymes en Chile.",
+            "Creamos páginas web, tiendas online, sistemas web y soluciones digitales para empresas, pymes y emprendedores en Chile.",
           breadcrumbs: [{ name: "Inicio", path: "/" }],
         })}
       />
@@ -311,27 +366,32 @@ export default async function Home() {
             {
               name: "Desarrollo web",
               description: "Páginas web profesionales para empresas y pymes en Chile.",
-              path: "/desarrollo-web-santiago",
+              path: "/desarrollo-web",
             },
             {
               name: "Tiendas online",
               description: "Implementación de ecommerce y catálogos digitales para venta en línea.",
-              path: "/tiendas-online-chile",
+              path: "/tiendas-online",
             },
             {
               name: "Sistemas web a medida",
               description: "Sistemas internos y paneles administrativos adaptados al negocio.",
-              path: "/sistemas-web-a-medida",
+              path: "/sistemas-web",
             },
             {
               name: "Automatización empresarial",
               description: "Automatización de flujos y atención por WhatsApp para empresas.",
-              path: "/automatizacion-whatsapp-empresas",
+              path: "/automatizacion",
             },
             {
               name: "Soporte TI",
               description: "Soporte técnico y continuidad operativa para pymes y empresas.",
-              path: "/soporte-ti-pymes-santiago",
+              path: "/soporte-ti",
+            },
+            {
+              name: "SEO técnico",
+              description: "Optimización técnica y estructura SEO para empresas en Chile.",
+              path: "/servicios/seo-para-empresas-chile",
             },
           ],
         })}
@@ -346,12 +406,13 @@ export default async function Home() {
             </div>
 
             <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl">
-              Desarrollamos páginas web, sistemas internos y soluciones digitales para empresas y pymes en Chile.
+              Desarrollo web, sistemas digitales y soluciones tecnológicas para empresas en Chile
             </h1>
 
             <p className="max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
-              Creamos sitios web, tiendas online, paneles administrativos y herramientas digitales que
-              ayudan a ordenar, vender y profesionalizar tu negocio.
+              En Zyteron creamos páginas web profesionales, tiendas online, sistemas internos,
+              automatizaciones y soluciones digitales para pymes, empresas y emprendedores que buscan
+              crecer con tecnología seria, clara y escalable.
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -361,7 +422,10 @@ export default async function Home() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-                <Link href="/demos">Ver demos</Link>
+                <Link href="/servicios">Ver servicios</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+                <Link href="/nosotros">Conocer Zyteron</Link>
               </Button>
               <Link
                 href={WHATSAPP_BASE}
@@ -462,6 +526,9 @@ export default async function Home() {
                     </div>
                   ))}
                 </div>
+                <Button asChild variant="outline" className="mt-5 w-full border-slate-300 text-slate-800 hover:bg-slate-50">
+                  <Link href={group.href}>Ver {group.title.toLowerCase()}</Link>
+                </Button>
               </article>
             ))}
           </div>
@@ -489,6 +556,15 @@ export default async function Home() {
               </div>
             ))}
           </div>
+
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+              <Link href="/nosotros">Ver quién está detrás de Zyteron</Link>
+            </Button>
+            <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
+              <Link href="/contacto">Hablar con un especialista</Link>
+            </Button>
+          </div>
         </Container>
       </section>
 
@@ -511,6 +587,45 @@ export default async function Home() {
                 </Button>
               </article>
             ))}
+          </div>
+        </Container>
+      </section>
+
+      <section className="bg-white py-20">
+        <Container className="space-y-10">
+          <div className="space-y-2 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Tipo de cliente</p>
+            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              Soluciones digitales para empresas en Chile
+            </h2>
+            <p className="mx-auto max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              Atendemos proyectos para pymes, emprendedores y empresas de distintas regiones de Chile, con foco
+              en soluciones claras, escalables y alineadas a la etapa real del negocio.
+            </p>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {clientTypes.map((client) => (
+              <Link key={client.title} href={client.href} className="card-premium p-6 transition-colors hover:border-blue-200">
+                <h3 className="text-lg font-extrabold text-slate-900">{client.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{client.description}</p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
+                  Ver solución <ArrowRight className="h-4 w-4" />
+                </span>
+              </Link>
+            ))}
+          </div>
+
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6">
+            <h2 className="text-xl font-extrabold text-slate-900">Cobertura local y forma de trabajo</h2>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {localSignals.map((item) => (
+                <div key={item} className="flex items-start gap-2 text-sm leading-relaxed text-slate-700">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </Container>
       </section>
@@ -662,12 +777,34 @@ export default async function Home() {
       <ClientReviewsSection reviews={reviews} />
 
       <section className="bg-white py-16">
-        <Container className="rounded-2xl border border-slate-200 bg-slate-50 p-7 text-center">
-          <h2 className="text-2xl font-extrabold text-slate-900">Casos reales</h2>
-          <p className="mt-2 text-sm text-slate-600">Casos en preparación.</p>
-          <p className="mt-1 text-sm text-slate-500">
-            Próximamente publicaremos proyectos documentados con problema, solución y resultado.
-          </p>
+        <Container className="space-y-8">
+          <div className="flex flex-col gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
+            <div className="space-y-2">
+              <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Casos documentados</p>
+              <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+                Pruebas comerciales de soluciones aplicadas
+              </h2>
+              <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
+                Casos anónimos de sistemas, automatizaciones, ecommerce y SEO implementados para resolver problemas reales de operación y presencia digital.
+              </p>
+            </div>
+            <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+              <Link href="/casos-exito">Ver todos los casos</Link>
+            </Button>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {caseStudies.slice(0, 4).map((caseStudy) => (
+              <Link key={caseStudy.slug} href={`/casos-exito/${caseStudy.slug}`} className="card-premium p-5 transition-colors hover:border-blue-200">
+                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">{caseStudy.industry}</p>
+                <h3 className="text-base font-extrabold leading-snug text-slate-900">{caseStudy.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{caseStudy.summary}</p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
+                  Ver caso <ArrowRight className="h-4 w-4" />
+                </span>
+              </Link>
+            ))}
+          </div>
         </Container>
       </section>
 

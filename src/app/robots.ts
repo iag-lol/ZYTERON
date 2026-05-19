@@ -10,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin/", "/api/", "/checkout/", "/pagos/", "/roadmap"],
       },
     ],
-    host: siteConfig.url,
+    host: "www.zyteron.cl",
     sitemap: `${siteConfig.url}/sitemap.xml`,
   };
 }

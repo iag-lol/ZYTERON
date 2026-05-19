@@ -102,9 +102,9 @@ export default function BlogPage() {
           </div>
 
           <section className="card-premium p-6">
-            <h2 className="text-2xl font-extrabold text-slate-900">Temas sugeridos para próximos artículos</h2>
+            <h2 className="text-2xl font-extrabold text-slate-900">Rutas de aprendizaje recomendadas</h2>
             <p className="mt-1 text-sm text-slate-600">
-              Línea editorial orientada a resolver dudas reales de decisión comercial.
+              Temas clave para empresas y pymes que quieren cotizar, mejorar o planificar su presencia digital.
             </p>
             <div className="mt-4 grid gap-2 md:grid-cols-2">
               {suggestedArticles.map((article) => (
