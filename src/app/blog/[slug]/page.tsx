@@ -10,7 +10,6 @@ import { getServicePageBySlug } from "@/content/service-pages";
 import {
   buildArticleJsonLd,
   buildFaqJsonLd,
-  buildPrimaryOgImageUrl,
   buildWebPageJsonLd,
   createPageMetadata,
 } from "@/lib/seo";
@@ -42,7 +41,6 @@ export async function generateMetadata({ params }: BlogDetailProps): Promise<Met
     title: post.metaTitle,
     description: post.metaDescription,
     path: `/blog/${post.slug}`,
-    keywords: [post.primaryKeyword, ...post.secondaryKeywords],
   });
 }
 
@@ -106,8 +104,8 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
           description: post.excerpt,
           datePublished: post.publishedAt,
           dateModified: post.updatedAt,
-          image: buildPrimaryOgImageUrl(),
-          authorName: post.authorName ?? "Equipo editorial ZYTERON",
+          image: "/og/blog.png",
+          authorName: post.authorName ?? "Zyteron",
         })}
       />
       <JsonLd
@@ -137,7 +135,7 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
               {post.readingTime}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-semibold">
-              Autor: {post.authorName ?? "Equipo editorial ZYTERON"}
+              Autor: {post.authorName ?? "Zyteron"}
             </span>
           </div>
         </Container>

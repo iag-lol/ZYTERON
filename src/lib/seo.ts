@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { defaultJsonLdOrganization, defaultOpenGraph, defaultTwitter } from "@/config/seo";
 import { siteConfig } from "@/config/site";
+import { getAbsoluteOgImageUrl } from "@/config/og";
 
 type SeoMetadataInput = {
   title: string;
   description: string;
   path: string;
-  keywords?: string[];
   noIndex?: boolean;
+  ogImagePath?: string;
+  ogImageAlt?: string;
 };
 
 type BreadcrumbItem = {
@@ -54,6 +56,11 @@ type ServicesListJsonLdInput = {
   }>;
 };
 
+type ProfessionalServiceJsonLdInput = {
+  path: string;
+  description?: string;
+};
+
 function normalizePath(path: string) {
   if (!path) return "/";
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
@@ -76,24 +83,24 @@ export function buildAbsoluteUrl(path: string) {
 }
 
 export function buildPrimaryOgImageUrl() {
-  return buildAbsoluteUrl("/opengraph-image");
+  return getAbsoluteOgImageUrl("/");
 }
 
 export function createPageMetadata({
   title: rawTitle,
   description,
   path,
-  keywords,
+  ogImagePath,
+  ogImageAlt,
   noIndex = false,
 }: SeoMetadataInput): Metadata {
   const url = buildAbsoluteUrl(path);
-  const socialImage = buildPrimaryOgImageUrl();
+  const socialImage = ogImagePath ? buildAbsoluteUrl(ogImagePath) : getAbsoluteOgImageUrl(path);
   const title = normalizeMetadataTitle(rawTitle);
 
   return {
     title,
     description,
-    keywords,
     alternates: {
       canonical: url,
     },
@@ -107,7 +114,7 @@ export function createPageMetadata({
           url: socialImage,
           width: 1200,
           height: 630,
-          alt: "ZYTERON - Webs, sistemas y soporte TI para empresas",
+          alt: ogImageAlt ?? `${title} - ${siteConfig.name}`,
         },
       ],
     },
@@ -137,9 +144,8 @@ export function createPageMetadata({
   };
 }
 
-export function buildOrganizationGraph() {
-  const sameAs = [siteConfig.social.linkedin].filter(Boolean);
-  const servedAreas = [
+function buildServedAreas() {
+  return [
     {
       "@type": "Country",
       name: "Chile",
@@ -153,7 +159,10 @@ export function buildOrganizationGraph() {
       name: "Región Metropolitana",
     },
   ];
-  const contactPoint = [
+}
+
+function buildContactPoint() {
+  return [
     {
       "@type": "ContactPoint",
       contactType: "sales",
@@ -163,6 +172,12 @@ export function buildOrganizationGraph() {
       availableLanguage: ["es-CL", "es"],
     },
   ];
+}
+
+export function buildOrganizationGraph() {
+  const sameAs = [siteConfig.social.linkedin].filter(Boolean);
+  const servedAreas = buildServedAreas();
+  const contactPoint = buildContactPoint();
 
   return {
     "@context": "https://schema.org",
@@ -234,6 +249,35 @@ export function buildOrganizationGraph() {
   };
 }
 
+export function buildProfessionalServiceJsonLd({
+  path,
+  description = siteConfig.description,
+}: ProfessionalServiceJsonLdInput) {
+  const pageUrl = buildAbsoluteUrl(path);
+  const sameAs = [siteConfig.social.linkedin].filter(Boolean);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    "@id": `${siteConfig.url}/#professionalservice`,
+    name: siteConfig.name,
+    legalName: siteConfig.legalName,
+    url: siteConfig.url,
+    logo: `${siteConfig.url}/logo.svg`,
+    image: getAbsoluteOgImageUrl(path),
+    description,
+    telephone: siteConfig.contact.phone,
+    email: siteConfig.contact.email,
+    areaServed: buildServedAreas(),
+    priceRange: siteConfig.business.priceRange,
+    sameAs,
+    contactPoint: buildContactPoint(),
+    mainEntityOfPage: {
+      "@id": `${pageUrl}#webpage`,
+    },
+  };
+}
+
 export function buildWebPageJsonLd({
   path,
   title,
@@ -276,20 +320,7 @@ export function buildServiceJsonLd({
   serviceType,
 }: ServiceJsonLdInput) {
   const pageUrl = buildAbsoluteUrl(path);
-  const areaServed = [
-    {
-      "@type": "Country",
-      name: "Chile",
-    },
-    {
-      "@type": "City",
-      name: "Santiago",
-    },
-    {
-      "@type": "AdministrativeArea",
-      name: "Región Metropolitana",
-    },
-  ];
+  const areaServed = buildServedAreas();
 
   return {
     "@context": "https://schema.org",
@@ -302,6 +333,9 @@ export function buildServiceJsonLd({
     areaServed,
     provider: {
       "@id": `${siteConfig.url}/#organization`,
+      name: siteConfig.name,
+      url: siteConfig.url,
+      logo: `${siteConfig.url}/logo.svg`,
     },
   };
 }
@@ -389,7 +423,7 @@ export function buildArticleJsonLd({
 
   return {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "BlogPosting",
     "@id": `${pageUrl}#article`,
     headline: title,
     description,
@@ -399,11 +433,18 @@ export function buildArticleJsonLd({
     datePublished,
     dateModified: dateModified ?? datePublished,
     author: {
-      "@type": "Person",
-      name: authorName ?? "Equipo editorial ZYTERON",
+      "@type": "Organization",
+      name: authorName ?? siteConfig.name,
+      url: siteConfig.url,
     },
     publisher: {
+      "@type": "Organization",
       "@id": `${siteConfig.url}/#organization`,
+      name: siteConfig.name,
+      logo: {
+        "@type": "ImageObject",
+        url: `${siteConfig.url}/logo.svg`,
+      },
     },
     mainEntityOfPage: {
       "@id": `${pageUrl}#webpage`,

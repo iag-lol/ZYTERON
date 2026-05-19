@@ -29,7 +29,6 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Conoce Zyteron, empresa chilena enfocada en desarrollo web, sistemas digitales, automatización y soluciones tecnológicas para empresas y pymes.",
   path: "/nosotros",
-  keywords: ["empresa desarrollo web chile", "nosotros zyteron", "soluciones digitales para empresas"],
 });
 
 const workSteps = [

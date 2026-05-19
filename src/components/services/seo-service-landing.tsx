@@ -4,7 +4,12 @@ import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import type { SeoServicePage } from "@/content/seo-service-pages";
-import { buildFaqJsonLd, buildServiceJsonLd, buildWebPageJsonLd } from "@/lib/seo";
+import {
+  buildFaqJsonLd,
+  buildProfessionalServiceJsonLd,
+  buildServiceJsonLd,
+  buildWebPageJsonLd,
+} from "@/lib/seo";
 
 const WHATSAPP_PHONE = "56984752936";
 
@@ -33,10 +38,17 @@ export function SeoServiceLanding({ page }: Props) {
         })}
       />
       <JsonLd
+        id={`${page.slug}-professional-service-schema`}
+        data={buildProfessionalServiceJsonLd({
+          path: page.path,
+          description: page.metaDescription,
+        })}
+      />
+      <JsonLd
         id={`${page.slug}-service-schema`}
         data={buildServiceJsonLd({
           path: page.path,
-          name: page.navLabel,
+          name: page.heroTitle,
           description: page.metaDescription,
           serviceType: page.serviceType,
         })}

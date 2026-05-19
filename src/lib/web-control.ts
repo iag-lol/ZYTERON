@@ -482,7 +482,22 @@ export async function getWebPricingSnapshot() {
       try {
         const fallbackProducts = await fetchPublishedProductsFromPublicSiteFallback();
         if (fallbackProducts.length > 0) {
-          products = fallbackProducts;
+          products = fallbackProducts.map((product) => ({
+            ...product,
+            imageUrl: product.imageUrl ?? null,
+            publicDescription: product.publicDescription ?? null,
+            published: typeof product.published === "boolean" ? product.published : true,
+            onOffer: Boolean(product.onOffer),
+            isCombo: Boolean(product.isCombo),
+            comboLabel: product.comboLabel ?? null,
+            comboItems: Array.isArray(product.comboItems) ? product.comboItems : [],
+            costPrice:
+              typeof product.costPrice === "number" && Number.isFinite(product.costPrice) ? product.costPrice : null,
+            discountStartsAt: product.discountStartsAt ?? null,
+            discountEndsAt: product.discountEndsAt ?? null,
+            discountActive: Boolean(product.discountActive),
+            finalPrice: typeof product.finalPrice === "number" ? product.finalPrice : product.price,
+          }));
         }
       } catch (error) {
         console.error("[web-control] fallback productos remoto falló", error);

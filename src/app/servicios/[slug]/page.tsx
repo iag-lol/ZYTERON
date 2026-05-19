@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import {
   buildFaqJsonLd,
+  buildProfessionalServiceJsonLd,
   buildServiceJsonLd,
   buildWebPageJsonLd,
   createPageMetadata,
@@ -40,7 +41,6 @@ export async function generateMetadata({ params }: ServicePageProps): Promise<Me
     title: service.metaTitle,
     description: service.metaDescription,
     path: `/servicios/${service.slug}`,
-    keywords: [service.primaryKeyword, ...service.secondaryKeywords],
   });
 }
 
@@ -70,6 +70,13 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
             { name: "Servicios", path: "/servicios" },
             { name: service.navLabel, path: servicePath },
           ],
+        })}
+      />
+      <JsonLd
+        id={`professional-service-schema-${service.slug}`}
+        data={buildProfessionalServiceJsonLd({
+          path: servicePath,
+          description: service.metaDescription,
         })}
       />
       <JsonLd

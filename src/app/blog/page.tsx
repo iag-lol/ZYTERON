@@ -12,7 +12,6 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Contenido de ZYTERON sobre desarrollo web, pymes, automatización, soporte TI, tiendas online y seguridad digital con enfoque comercial.",
   path: "/blog",
-  keywords: ["blog desarrollo web chile", "blog pymes chile", "automatización para empresas"],
 });
 
 const categories = [

@@ -17,13 +17,6 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Planes y precios desde de ZYTERON para personas, emprendedores, pymes, empresas, colegios e instituciones. Cotización formal según alcance real.",
   path: "/planes",
-  keywords: [
-    "precios páginas web chile",
-    "planes desarrollo web",
-    "cotización sistema web",
-    "tienda online chile precio",
-    "panel administrativo chile",
-  ],
 });
 
 const plans = [

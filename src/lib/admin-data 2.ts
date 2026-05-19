@@ -69,7 +69,7 @@ async function fetchTable<T>(table: string, select: string): Promise<T[]> {
   const { supabase } = createSupabaseServerClient();
   const { data, error } = await supabase.from(table).select(select);
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as T[];
 }
 
 function round(value: number) {
@@ -158,7 +158,7 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
     ]);
 
     return buildSnapshot({ leads, quotes, visits, sales, clients });
-  } catch (error) {
+  } catch {
     // No datos si Supabase falla: devolver estructuras vacías sin datos ficticios
     const empty: AdminSnapshot = {
       leads: [],
@@ -178,4 +178,4 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
   }
 }
 
-export { Lead, Quote, Visit, Sale, Client };
+export type { Lead, Quote, Visit, Sale, Client };

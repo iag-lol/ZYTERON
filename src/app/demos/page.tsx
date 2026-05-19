@@ -12,13 +12,6 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Explora demos funcionales de ZYTERON para empresas y pymes: tienda online, web corporativa, plataformas de cursos, paneles administrativos y sistemas internos.",
   path: "/demos",
-  keywords: [
-    "demos desarrollo web chile",
-    "demo panel administrativo",
-    "casos de uso sistemas web",
-    "demo tienda online chile",
-    "demo plataforma de cursos",
-  ],
 });
 
 const demoCards = [

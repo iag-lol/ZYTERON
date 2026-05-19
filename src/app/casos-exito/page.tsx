@@ -12,12 +12,6 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Casos anónimos de Zyteron: sistemas web, control de flota, asistencia, inventario, tickets, cotizaciones PDF, tiendas online y SEO para empresas en Chile.",
   path: "/casos-exito",
-  keywords: [
-    "casos de éxito desarrollo web chile",
-    "sistemas web para empresas",
-    "software a medida chile",
-    "casos anonimos zyteron",
-  ],
 });
 
 function buildCaseStudiesItemListJsonLd() {

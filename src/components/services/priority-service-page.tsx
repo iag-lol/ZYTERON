@@ -4,7 +4,12 @@ import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
 import type { PriorityServicePage } from "@/content/priority-service-pages";
-import { buildFaqJsonLd, buildServiceJsonLd, buildWebPageJsonLd } from "@/lib/seo";
+import {
+  buildFaqJsonLd,
+  buildProfessionalServiceJsonLd,
+  buildServiceJsonLd,
+  buildWebPageJsonLd,
+} from "@/lib/seo";
 
 const WHATSAPP_URL =
   "https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.";
@@ -27,6 +32,13 @@ export function PriorityServicePageTemplate({ page }: Props) {
             { name: "Servicios", path: "/servicios" },
             { name: page.title, path: page.path },
           ],
+        })}
+      />
+      <JsonLd
+        id={`${page.slug}-professional-service-schema`}
+        data={buildProfessionalServiceJsonLd({
+          path: page.path,
+          description: page.metaDescription,
         })}
       />
       <JsonLd

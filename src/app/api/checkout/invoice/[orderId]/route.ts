@@ -42,7 +42,9 @@ export async function GET(
     const documentPrefix = order.meta.customer.documentType === "FACTURA" ? "factura-referencial" : "boleta";
     const fileName = `${documentPrefix}-${orderId.slice(0, 8).toUpperCase()}.pdf`;
 
-    return new NextResponse(pdfBytes, {
+    const pdfBody = pdfBytes.buffer.slice(pdfBytes.byteOffset, pdfBytes.byteOffset + pdfBytes.byteLength) as ArrayBuffer;
+
+    return new NextResponse(pdfBody, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
@@ -57,4 +59,3 @@ export async function GET(
     );
   }
 }
-

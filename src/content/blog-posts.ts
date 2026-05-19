@@ -403,7 +403,7 @@ export const blogPosts: BlogPostData[] = [
     intent: "mixta",
     readingTime: "10 min",
     publishedAt: "2026-05-19",
-    authorName: "Equipo editorial ZYTERON",
+    authorName: "Zyteron",
     sections: [
       {
         heading: "Precios referenciales por tipo de proyecto",
@@ -491,7 +491,7 @@ export const blogPosts: BlogPostData[] = [
     intent: "informativa",
     readingTime: "8 min",
     publishedAt: "2026-05-19",
-    authorName: "Equipo editorial ZYTERON",
+    authorName: "Zyteron",
     sections: [
       {
         heading: "Checklist esencial para una web de pyme",
@@ -564,7 +564,7 @@ export const blogPosts: BlogPostData[] = [
     intent: "informativa",
     readingTime: "7 min",
     publishedAt: "2026-05-19",
-    authorName: "Equipo editorial ZYTERON",
+    authorName: "Zyteron",
     sections: [
       {
         heading: "Qué es una página web",
@@ -630,7 +630,7 @@ export const blogPosts: BlogPostData[] = [
     intent: "informativa",
     readingTime: "7 min",
     publishedAt: "2026-05-19",
-    authorName: "Equipo editorial ZYTERON",
+    authorName: "Zyteron",
     sections: [
       {
         heading: "Confianza antes del primer contacto",
@@ -688,7 +688,7 @@ export const blogPosts: BlogPostData[] = [
     intent: "informativa",
     readingTime: "8 min",
     publishedAt: "2026-05-19",
-    authorName: "Equipo editorial ZYTERON",
+    authorName: "Zyteron",
     sections: [
       {
         heading: "Definición simple",
@@ -752,7 +752,7 @@ export const blogPosts: BlogPostData[] = [
     intent: "informativa",
     readingTime: "9 min",
     publishedAt: "2026-05-19",
-    authorName: "Equipo editorial ZYTERON",
+    authorName: "Zyteron",
     sections: [
       {
         heading: "SEO local: partir por intención real",

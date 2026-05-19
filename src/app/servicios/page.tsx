@@ -1,25 +1,27 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, MonitorSmartphone, Settings, ShieldCheck } from "lucide-react";
+import { ArrowRight, Check, MessageCircle, MonitorSmartphone, Settings, ShieldCheck } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
 import { buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 import { seoServicePages } from "@/content/seo-service-pages";
 
+const WHATSAPP_URL =
+  "https://wa.me/56984752936?text=Hola%20Zyteron%2C%20quiero%20orientaci%C3%B3n%20sobre%20un%20servicio%20digital%20para%20mi%20empresa.";
+
 export const metadata: Metadata = createPageMetadata({
   title: "Servicios digitales para empresas y pymes",
   description:
     "Servicios de ZYTERON en Chile: desarrollo web, sistemas internos, automatización, soporte TI y soluciones tecnológicas para negocios.",
   path: "/servicios",
-  keywords: [
-    "páginas web para empresas",
-    "desarrollo de sistemas web",
-    "soporte ti para empresas",
-    "automatización para empresas",
-    "tiendas online chile",
-  ],
 });
+
+const introParagraphs = [
+  "En Zyteron desarrollamos soluciones digitales para empresas, pymes y emprendedores en Chile que necesitan mejorar su presencia online, ordenar procesos internos y avanzar con tecnología útil. Nuestro trabajo combina desarrollo web, tiendas online, sistemas web, automatización, soporte TI y optimización web con un enfoque práctico: resolver problemas reales del negocio.",
+  "Cada servicio se define según alcance, prioridad y etapa de la empresa. No todos los proyectos necesitan una solución compleja desde el inicio; algunas pymes requieren una página web clara para generar confianza, mientras otras necesitan un sistema web para controlar datos, documentación, ventas, inventario o tareas operativas.",
+  "El objetivo es ayudarte a elegir una alternativa profesional, escalable y coherente con lo que quieres lograr. Por eso trabajamos con diagnóstico inicial, propuesta clara, diseño responsive, estructura SEO base, rutas de contacto visibles y acompañamiento posterior según el tipo de proyecto.",
+];
 
 const serviceGroups = [
   {
@@ -62,6 +64,65 @@ const serviceGroups = [
       "Productos TI como complemento",
     ],
   },
+];
+
+const detailedServices = [
+  {
+    title: "Desarrollo web",
+    href: "/desarrollo-web",
+    description:
+      "Desarrollamos páginas web profesionales para empresas, pymes y emprendedores que necesitan una presencia digital clara, moderna y confiable. Este servicio ayuda a presentar productos, servicios, información corporativa y canales de contacto de forma ordenada, mejorando la imagen de marca y facilitando nuevas oportunidades comerciales.",
+  },
+  {
+    title: "Tiendas online",
+    href: "/tiendas-online",
+    description:
+      "Creamos tiendas online y catálogos digitales para negocios que quieren vender productos o recibir pedidos de forma más estructurada. Es una solución útil para pymes que hoy venden por redes sociales o WhatsApp y necesitan un canal propio con fichas de producto, categorías, contacto y una experiencia responsive.",
+  },
+  {
+    title: "Sistemas web a medida",
+    href: "/sistemas-web",
+    description:
+      "Desarrollamos sistemas web para empresas que necesitan ordenar procesos internos, controlar registros, gestionar usuarios, generar reportes o centralizar información. Aplica cuando una planilla, papel o flujo manual ya no entrega trazabilidad suficiente para operar con seguridad y tomar mejores decisiones.",
+  },
+  {
+    title: "Automatización de procesos",
+    href: "/automatizacion",
+    description:
+      "Automatizamos tareas repetitivas, formularios, notificaciones y flujos digitales para reducir carga operativa. Este servicio es útil si tu empresa pierde tiempo copiando datos, respondiendo lo mismo por WhatsApp, derivando solicitudes manualmente o revisando procesos sin seguimiento claro.",
+  },
+  {
+    title: "Soporte TI",
+    href: "/soporte-ti",
+    description:
+      "Entregamos soporte TI para empresas y pymes que necesitan asistencia tecnológica, configuración, mantención y orientación para mantener continuidad operativa. Ayudamos con requerimientos técnicos, correos, herramientas, equipos, sistemas y decisiones tecnológicas sin sobrecomplicar la operación.",
+  },
+  {
+    title: "SEO y optimización web",
+    href: "/servicios/seo-para-empresas-chile",
+    description:
+      "Optimizamos estructura, metadata, contenido, rendimiento y señales técnicas para mejorar la lectura del sitio por Google y usuarios reales. Es recomendable para empresas que ya tienen web, pero no logran posicionarse, explicar bien sus servicios o convertir visitas en contactos de calidad.",
+  },
+  {
+    title: "Mantención web",
+    href: "/servicios/mantencion-web-chile",
+    description:
+      "La mantención web permite cuidar estabilidad, seguridad, contenido, rendimiento y mejoras continuas después de publicar. Es útil para empresas que dependen de su sitio como canal comercial y necesitan soporte para cambios, ajustes técnicos o evolución gradual sin rehacer todo desde cero.",
+  },
+  {
+    title: "Landing pages",
+    href: "/servicios/landing-pages-para-empresas",
+    description:
+      "Diseñamos landing pages para campañas, servicios específicos o lanzamientos que requieren una ruta de conversión directa. Este tipo de página concentra el mensaje, reduce distracciones y guía al usuario hacia una acción concreta como cotizar, agendar o hablar por WhatsApp.",
+  },
+];
+
+const serviceSelector = [
+  "Si necesitas presencia digital y confianza comercial, lo más adecuado suele ser desarrollo web.",
+  "Si quieres vender productos o mostrar catálogo, conviene evaluar una tienda online.",
+  "Si necesitas ordenar procesos, registros, documentos o reportes, corresponde un sistema web.",
+  "Si pierdes tiempo en tareas repetitivas, formularios o seguimiento manual, puede servir una automatización.",
+  "Si necesitas ayuda tecnológica continua, configuración o mantención operativa, revisemos soporte TI.",
 ];
 
 export default function ServiciosPage() {
@@ -133,6 +194,24 @@ export default function ServiciosPage() {
         </Container>
       </section>
 
+      <section className="bg-white py-14">
+        <Container className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+          <div className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Soluciones digitales en Chile</p>
+            <h2 className="text-3xl font-extrabold text-slate-900">
+              Desarrollo web, sistemas, ecommerce, automatización y soporte para empresas
+            </h2>
+          </div>
+          <div className="space-y-4">
+            {introParagraphs.map((paragraph) => (
+              <p key={paragraph} className="text-sm leading-relaxed text-slate-600 sm:text-base">
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </Container>
+      </section>
+
       <section className="bg-white py-16">
         <Container className="space-y-8">
           <div className="space-y-2 text-center">
@@ -183,16 +262,66 @@ export default function ServiciosPage() {
       </section>
 
       <section className="bg-white py-16">
+        <Container className="space-y-8">
+          <div className="space-y-2 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Detalle de servicios</p>
+            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              Qué resuelve cada servicio de Zyteron
+            </h2>
+            <p className="mx-auto max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              Estas líneas de trabajo pueden contratarse por separado o combinarse en una solución mayor según el problema que tu empresa necesita resolver.
+            </p>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2">
+            {detailedServices.map((service) => (
+              <Link key={service.href} href={service.href} className="card-premium p-6 transition-colors hover:border-blue-200">
+                <h3 className="text-xl font-extrabold text-slate-900">{service.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">{service.description}</p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
+                  Revisar servicio <ArrowRight className="h-4 w-4" />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      <section className="section-alt py-16">
+        <Container className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+          <article className="card-premium p-6">
+            <h2 className="text-2xl font-extrabold text-slate-900">¿Qué servicio necesita tu empresa?</h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+              Si todavía no tienes claro qué cotizar, podemos ayudarte a identificar la solución más conveniente según objetivo, presupuesto, urgencia y complejidad operativa.
+            </p>
+          </article>
+          <div className="grid gap-3 md:grid-cols-2">
+            {serviceSelector.map((item) => (
+              <div key={item} className="card-premium flex items-start gap-3 p-4">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" />
+                <p className="text-sm leading-relaxed text-slate-700">{item}</p>
+              </div>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      <section className="bg-white py-16">
         <Container className="rounded-2xl section-blue p-8 text-center text-white">
-          <h2 className="text-2xl font-extrabold sm:text-3xl">¿Qué servicio necesitas cotizar?</h2>
+          <h2 className="text-2xl font-extrabold sm:text-3xl">Conversemos sobre la solución que necesita tu empresa</h2>
           <p className="mx-auto mt-2 max-w-3xl text-sm text-blue-100 sm:text-base">
-            Definimos contigo alcance, etapas, plazos y condiciones para entregar una propuesta seria y ejecutable.
+            Cuéntanos qué problema quieres resolver y te orientamos con una alternativa clara, profesional y escalable.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" className="bg-white font-bold text-blue-800 hover:bg-blue-50">
               <Link href="/paquetes">
                 Solicitar cotización <ArrowRight className="h-4 w-4" />
               </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-white/35 text-white hover:bg-white/10 hover:text-white">
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="h-4 w-4" /> Hablar por WhatsApp
+              </a>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/35 text-white hover:bg-white/10 hover:text-white">
               <Link href="/planes">Ver planes</Link>

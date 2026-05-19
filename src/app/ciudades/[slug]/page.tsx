@@ -35,11 +35,6 @@ export async function generateMetadata({ params }: LocalPageProps): Promise<Meta
     title: cityPage.metaTitle,
     description: cityPage.metaDescription,
     path: `/ciudades/${cityPage.slug}`,
-    keywords: [
-      `diseño web ${cityPage.city.toLowerCase()}`,
-      `desarrollo web ${cityPage.city.toLowerCase()}`,
-      "seo local chile",
-    ],
   });
 }
 

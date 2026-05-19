@@ -448,7 +448,7 @@ export default async function AdminDashboard() {
             {quotes.slice(0, 7).map((q) => (
               <div key={q.id} className="flex items-center gap-3 px-6 py-3 transition-colors hover:bg-slate-50">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[11px] font-bold text-blue-700">
-                  {initials(q.name)}
+                  {initials(q.name || "Sin nombre")}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13px] font-semibold text-slate-900">

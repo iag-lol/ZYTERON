@@ -15,7 +15,6 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Catálogo público de productos Zyteron para empresas en Chile, con precios, descuentos, carrito y envío por WhatsApp.",
   path: "/productos",
-  keywords: ["productos ti empresas chile", "catalogo productos zyteron", "comprar productos por whatsapp"],
 });
 
 export default async function ProductosPage() {

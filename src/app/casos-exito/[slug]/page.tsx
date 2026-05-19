@@ -40,7 +40,6 @@ export async function generateMetadata({ params }: CaseDetailProps): Promise<Met
     title: caseStudy.metaTitle,
     description: caseStudy.metaDescription,
     path: `/casos-exito/${caseStudy.slug}`,
-    keywords: [caseStudy.industry, caseStudy.clientProfile, "caso anonimo Zyteron"],
   });
 }
 

@@ -81,7 +81,9 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
     lineItems,
   });
 
-  return new NextResponse(pdfBytes, {
+  const pdfBody = pdfBytes.buffer.slice(pdfBytes.byteOffset, pdfBytes.byteOffset + pdfBytes.byteLength) as ArrayBuffer;
+
+  return new NextResponse(pdfBody, {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",

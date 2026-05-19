@@ -12,7 +12,6 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Preguntas frecuentes sobre cotización, tiempos, alcance, sistemas web, paneles administrativos y soporte post-entrega en Chile.",
   path: "/faq",
-  keywords: ["faq desarrollo web chile", "preguntas cotización web", "faq sistemas para empresas"],
 });
 
 export default function FaqPage() {

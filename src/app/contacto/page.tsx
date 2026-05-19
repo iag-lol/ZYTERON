@@ -11,7 +11,6 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Contáctanos para cotizar páginas web, tiendas online, sistemas internos, automatizaciones y soluciones digitales para tu empresa.",
   path: "/contacto",
-  keywords: ["cotización web chile", "contacto desarrollo web", "cotizar sistema web"],
 });
 
 const WHATSAPP_URL =

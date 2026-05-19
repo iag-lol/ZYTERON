@@ -33,17 +33,6 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Creamos páginas web, tiendas online, sistemas web y soluciones digitales para empresas, pymes y emprendedores en Chile. Diseño profesional, SEO base y tecnología escalable.",
   path: "/",
-  keywords: [
-    "desarrollo web en chile",
-    "páginas web para empresas",
-    "páginas web para pymes",
-    "desarrollo de sistemas web",
-    "soporte TI para empresas",
-    "soluciones digitales para negocios",
-    "tiendas online chile",
-    "cotizador web con PDF",
-    "automatización para empresas",
-  ],
 });
 
 const trustPoints = [

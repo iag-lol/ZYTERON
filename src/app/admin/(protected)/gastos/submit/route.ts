@@ -78,7 +78,7 @@ function normalizeAmount(value: unknown) {
   const raw = normalizeText(value);
   if (!raw) return null;
   const parsed = parseLocalizedNumber(raw);
-  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  if (parsed === null || !Number.isFinite(parsed) || parsed < 0) return null;
   return Math.round(parsed);
 }
 

@@ -9,12 +9,6 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Cotizador inteligente de ZYTERON para empresas, pymes y emprendedores en Chile. Obtén recomendación de plan, rango estimado y cotización formal según alcance.",
   path: "/paquetes",
-  keywords: [
-    "cotizador web chile",
-    "cotizar sistema web",
-    "cotización formal desarrollo web",
-    "precios páginas web chile",
-  ],
 });
 
 const extras = [

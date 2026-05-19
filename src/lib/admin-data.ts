@@ -146,17 +146,21 @@ function buildSnapshot(base: {
   const leads: Lead[] =
     rawLeads.length > 0
       ? rawLeads
-      : quotes.map((quote) => ({
-          id: `quote-${quote.id}`,
-          name: quote.name || "Contacto desde cotización",
-          email: quote.email || "",
-          phone: quote.phone || "",
-          source: "QUOTE_FALLBACK",
-          message: quote.meta?.serviceSummary || quote.meta?.brief || null,
-          type: "CONTACT",
-          status: quote.status || "PENDING",
-          createdAt: quote.createdAt || null,
-        }));
+      : quotes.map((quote) => {
+          const quoteMeta = quote.meta as ({ serviceSummary?: string; brief?: string } & typeof quote.meta) | null;
+
+          return {
+            id: `quote-${quote.id}`,
+            name: quote.name || "Contacto desde cotización",
+            email: quote.email || "",
+            phone: quote.phone || "",
+            source: "QUOTE_FALLBACK",
+            message: quoteMeta?.serviceSummary || quoteMeta?.brief || undefined,
+            type: "CONTACT",
+            status: quote.status || "PENDING",
+            createdAt: quote.createdAt || undefined,
+          };
+        });
 
   const wonQuotes = quotes.filter((quote) => isWonStatus(quote.status));
   const sales: Sale[] =
