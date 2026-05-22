@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Loader2, MessageSquare, Quote, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, MessageSquare, Quote, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,7 @@ function formatDate(value?: string | null) {
 }
 
 export function ClientReviewsSection({ reviews }: Props) {
+  const [activeReviewIndex, setActiveReviewIndex] = useState(0);
   const [reviewState, setReviewState] = useState<ReviewSubmitState>({ status: "idle" });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [rating, setRating] = useState(5);
@@ -85,13 +86,21 @@ export function ClientReviewsSection({ reviews }: Props) {
     setRating(5);
   }
 
-  return (
-    <section className="cv-auto relative overflow-hidden border-y border-slate-200 bg-hero-pattern py-20">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
-        <div className="absolute right-0 bottom-0 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" />
-      </div>
+  const visibleReviews = reviews.slice(0, 8);
+  const activeReview = visibleReviews[activeReviewIndex] ?? visibleReviews[0];
 
+  function goToPreviousReview() {
+    if (!visibleReviews.length) return;
+    setActiveReviewIndex((current) => (current === 0 ? visibleReviews.length - 1 : current - 1));
+  }
+
+  function goToNextReview() {
+    if (!visibleReviews.length) return;
+    setActiveReviewIndex((current) => (current + 1) % visibleReviews.length);
+  }
+
+  return (
+    <section className="cv-auto border-y border-slate-200 bg-white py-20">
       <div className="relative mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8">
         <div className="space-y-4 text-center">
           <div className="badge-blue mx-auto w-fit">
@@ -99,76 +108,110 @@ export function ClientReviewsSection({ reviews }: Props) {
             Comentarios de clientes
           </div>
           <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
-            Opiniones <span className="text-gradient-hero">publicadas</span>
+            Opiniones de quienes ya confiaron
           </h2>
           <p className="mx-auto max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
-            Mostramos testimonios moderados y ejemplos referenciales mientras se recopilan reseñas reales verificadas.
+            Comentarios simples y directos sobre la experiencia de trabajar con ZYTERON.
           </p>
         </div>
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
-          <div className="rounded-3xl border border-slate-200/70 bg-white/85 p-5 shadow-[0_15px_45px_-24px_rgba(15,23,42,0.35)] backdrop-blur-sm sm:p-6">
-            <div className="grid gap-4 sm:grid-cols-2">
-              {reviews.length === 0 ? (
-                <div className="sm:col-span-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-7 text-sm text-slate-500">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm sm:p-6">
+            {visibleReviews.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-7 text-sm text-slate-500">
                   <p>Pronto publicaremos reseñas verificadas de clientes.</p>
                   <p className="mt-1 font-semibold text-slate-700">¿Ya trabajaste con ZYTERON? Deja tu reseña.</p>
-                </div>
-              ) : (
-                reviews.slice(0, 6).map((review, index) => (
-                  <article
-                    key={review.id}
-                    className={`rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
-                      index === 0 ? "sm:col-span-2" : ""
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">{review.name}</p>
-                        <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          {review.company || "Cliente Zyteron"}
-                        </p>
-                        {review.role ? (
-                          <p className="mt-1 text-xs text-slate-500">{review.role}</p>
-                        ) : null}
-                      </div>
-                      <div className="rounded-lg bg-blue-50 p-1.5 text-blue-700">
-                        <Quote className="h-3.5 w-3.5" />
-                      </div>
+              </div>
+            ) : (
+              <div className="flex h-full flex-col">
+                <article className="flex min-h-[360px] flex-1 flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">{activeReview.name}</p>
+                      <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {activeReview.company || "Cliente ZYTERON"}
+                      </p>
+                      {activeReview.role ? (
+                        <p className="mt-1 text-xs text-slate-500">{activeReview.role}</p>
+                      ) : null}
                     </div>
-                    <div className="mt-3 flex items-center gap-0.5 text-amber-500">
+                    <div className="rounded-xl bg-blue-50 p-2 text-blue-700">
+                      <Quote className="h-5 w-5" />
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex items-center gap-1 text-amber-500">
                       {Array.from({ length: 5 }).map((_, starIndex) => (
                         <Star
-                          key={`${review.id}-star-${starIndex + 1}`}
-                          className={`h-3.5 w-3.5 ${starIndex < review.rating ? "fill-current" : "text-slate-300"}`}
+                          key={`${activeReview.id}-star-${starIndex + 1}`}
+                          className={`h-5 w-5 ${starIndex < activeReview.rating ? "fill-current" : "text-slate-300"}`}
                         />
                       ))}
-                    </div>
-                    <p className="mt-3 text-sm leading-relaxed text-slate-600">{review.comment}</p>
-                    <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                      <span>{formatDate(review.createdAt)}</span>
-                      {review.service ? <span>Servicio: {review.service}</span> : null}
-                      {review.source === "placeholder" ? <span>Ejemplo referencial</span> : null}
-                    </div>
-                  </article>
-                ))
-              )}
-            </div>
+                  </div>
+
+                  <p className="mt-6 flex-1 text-xl font-semibold leading-relaxed text-slate-800">
+                    “{activeReview.comment}”
+                  </p>
+
+                  <div className="mt-8 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                    <span>{formatDate(activeReview.createdAt)}</span>
+                    {activeReview.service ? <span>Servicio: {activeReview.service}</span> : null}
+                    {activeReview.source === "placeholder" ? <span>Comentario de ejemplo</span> : null}
+                  </div>
+                </article>
+
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <div className="flex gap-2">
+                    {visibleReviews.map((review, index) => (
+                      <button
+                        key={review.id}
+                        type="button"
+                        className={`h-2.5 rounded-full transition-all ${
+                          index === activeReviewIndex ? "w-8 bg-blue-700" : "w-2.5 bg-slate-300 hover:bg-slate-400"
+                        }`}
+                        aria-label={`Ver comentario ${index + 1}`}
+                        onClick={() => setActiveReviewIndex(index)}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={goToPreviousReview}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition-colors hover:border-blue-200 hover:text-blue-700"
+                      aria-label="Comentario anterior"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={goToNextReview}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition-colors hover:border-blue-200 hover:text-blue-700"
+                      aria-label="Comentario siguiente"
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <form
             onSubmit={handleReviewSubmit}
-            className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_18px_45px_-26px_rgba(30,64,175,0.45)] sm:p-7"
+            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7"
           >
-            <div className="flex items-center gap-2">
-              <div className="rounded-lg bg-blue-100 p-1.5 text-blue-700">
-                <MessageSquare className="h-4 w-4" />
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+              <div className="flex items-center gap-2">
+                <div className="rounded-lg bg-white p-1.5 text-blue-700">
+                  <MessageSquare className="h-4 w-4" />
+                </div>
+                <h3 className="text-lg font-extrabold text-slate-900">Comparte tu experiencia</h3>
               </div>
-              <h3 className="text-lg font-extrabold text-slate-900">Deja tu comentario</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                Tu comentario ayuda a otros negocios a decidir con más confianza. Lo revisamos antes de publicarlo.
+              </p>
             </div>
-            <p className="mt-2 text-sm text-slate-500">
-              Tu reseña quedará pendiente hasta ser aprobada por nuestro equipo.
-            </p>
 
             <div className="mt-5 space-y-4">
               <div className="space-y-2">
@@ -186,6 +229,7 @@ export function ClientReviewsSection({ reviews }: Props) {
                             ? "border-amber-300 bg-amber-50 text-amber-500"
                             : "border-slate-200 text-slate-300 hover:border-slate-300 hover:text-slate-500"
                         }`}
+                        aria-label={`Calificar con ${value} estrella${value === 1 ? "" : "s"}`}
                       >
                         <Star className={`h-4 w-4 ${value <= rating ? "fill-current" : ""}`} />
                       </button>
@@ -233,7 +277,7 @@ export function ClientReviewsSection({ reviews }: Props) {
                     id="home-review-service"
                     value={reviewForm.service}
                     onChange={(event) => setReviewForm((prev) => ({ ...prev, service: event.target.value }))}
-                    placeholder="Ej: Desarrollo web + SEO"
+                    placeholder="Ej: Página web para mi negocio"
                     className="border-slate-200 bg-white/90 focus-visible:ring-blue-500"
                   />
                 </div>
@@ -246,7 +290,7 @@ export function ClientReviewsSection({ reviews }: Props) {
                   rows={4}
                   value={reviewForm.comment}
                   onChange={(event) => setReviewForm((prev) => ({ ...prev, comment: event.target.value }))}
-                  placeholder="¿Cómo fue tu experiencia con Zyteron?"
+                  placeholder="Ej: Me ayudaron mucho con mi página y resolvieron mis dudas hasta el final."
                   className="border-slate-200 bg-white/90 focus-visible:ring-blue-500"
                   required
                 />

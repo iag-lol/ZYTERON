@@ -14,10 +14,20 @@ const WHATSAPP_URL =
 const primaryNavItems = [
   { href: "/", label: "Inicio" },
   { href: "/demos", label: "Demos" },
+  { href: "/productos", label: "Productos TI" },
   { href: "/planes", label: "Planes" },
   { href: "/blog", label: "Blog" },
   { href: "/paquetes", label: "Cotizar" },
+  { href: "/contacto", label: "Contacto" },
 ];
+
+const secondaryNavItems = [
+  { href: "/nosotros", label: "Nosotros" },
+  { href: "/casos-exito", label: "Casos" },
+  { href: "/faq", label: "FAQ" },
+];
+
+const servicesHubItem = { href: "/servicios", label: "Todos los servicios" };
 
 const servicesNavItems = [
   { href: "/desarrollo-web", label: "Desarrollo Web" },
@@ -126,30 +136,37 @@ export function SiteHeader() {
               onMouseEnter={() => setServicesOpen(true)}
               onMouseLeave={() => setServicesOpen(false)}
             >
-              <button
-                type="button"
+              <Link
+                href="/servicios"
                 className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap text-slate-700 transition-colors hover:bg-white hover:text-blue-700"
-                onClick={() => setServicesOpen((value) => !value)}
+                onFocus={() => setServicesOpen(true)}
                 aria-expanded={servicesOpen}
                 aria-controls="desktop-services-menu"
               >
                 Servicios <ChevronDown className="h-3.5 w-3.5" />
-              </button>
+              </Link>
               {servicesOpen ? (
-                <div
-                  id="desktop-services-menu"
-                  className="absolute left-0 top-full z-40 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-xl"
-                >
-                  {servicesNavItems.map((item) => (
+                <div id="desktop-services-menu" className="absolute left-0 top-full z-40 w-64 pt-2">
+                  <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
                     <Link
-                      key={item.href}
-                      href={item.href}
-                      className="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                      href={servicesHubItem.href}
+                      className="block rounded-lg px-3 py-2 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
                       onClick={() => setServicesOpen(false)}
                     >
-                      {item.label}
+                      {servicesHubItem.label}
                     </Link>
-                  ))}
+                    <div className="my-1 h-px bg-slate-100" />
+                    {servicesNavItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                        onClick={() => setServicesOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               ) : null}
             </div>
@@ -158,6 +175,18 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-white hover:text-blue-700 whitespace-nowrap"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          <nav className="flex flex-wrap items-center gap-1">
+            {secondaryNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-lg px-2.5 py-2 text-sm font-medium whitespace-nowrap text-slate-600 transition-colors hover:bg-slate-100 hover:text-blue-700"
               >
                 {item.label}
               </Link>
@@ -184,6 +213,13 @@ export function SiteHeader() {
           </Link>
           <div className="rounded-xl border border-slate-100 bg-slate-50 p-2">
             <p className="px-2 pb-1 text-[11px] font-bold uppercase tracking-widest text-slate-500">Servicios</p>
+            <Link
+              href={servicesHubItem.href}
+              className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+              onClick={() => setOpen(false)}
+            >
+              {servicesHubItem.label}
+            </Link>
             {servicesNavItems.map((item) => (
               <Link
                 key={item.href}
@@ -196,6 +232,16 @@ export function SiteHeader() {
             ))}
           </div>
           {primaryNavItems.slice(1).map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
+              onClick={() => setOpen(false)}
+            >
+              {item.label}
+            </Link>
+          ))}
+          {secondaryNavItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}

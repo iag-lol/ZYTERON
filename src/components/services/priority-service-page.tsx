@@ -197,7 +197,7 @@ export function PriorityServicePageTemplate({ page }: Props) {
                 Solicitar cotización <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" className="border-white/35 text-white hover:bg-white/10 hover:text-white">
+            <Button asChild variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-4 w-4" /> Hablar por WhatsApp
               </a>

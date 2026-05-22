@@ -268,7 +268,7 @@ export default async function CaseDetailPage({ params }: CaseDetailProps) {
             <Button asChild size="lg" className="bg-white font-bold text-blue-800 hover:bg-blue-50">
               <Link href={`/contacto?caso=${caseStudy.slug}`}>Solicitar evaluación</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/35 text-white hover:bg-white/10 hover:text-white">
+            <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
               <Link href="/casos-exito">Ver más casos</Link>
             </Button>
           </div>

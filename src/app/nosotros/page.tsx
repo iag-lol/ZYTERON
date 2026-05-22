@@ -398,10 +398,10 @@ export default function NosotrosPage() {
             <Button asChild size="lg" className="bg-white font-bold text-blue-800 hover:bg-blue-50">
               <Link href="/contacto">Solicitar asesoría</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/35 text-white hover:bg-white/10 hover:text-white">
+            <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
               <Link href="/servicios">Ver servicios</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/35 text-white hover:bg-white/10 hover:text-white">
+            <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
               <Link href="/blog">Leer blog</Link>
             </Button>
           </div>

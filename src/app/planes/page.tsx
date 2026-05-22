@@ -728,7 +728,7 @@ export default function PlanesPage() {
                 Solicitar propuesta formal <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" className="border-white/30 text-white hover:bg-white/10 hover:text-white">
+            <Button asChild variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white">
               <a href="https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20agendar%20diagn%C3%B3stico" target="_blank" rel="noopener noreferrer">
                 Agendar diagnóstico
               </a>

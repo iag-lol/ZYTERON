@@ -284,7 +284,7 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
                 <Button asChild className="bg-white font-bold text-blue-800 hover:bg-blue-50">
                   <Link href="/contacto">Solicitar diagnóstico</Link>
                 </Button>
-                <Button asChild variant="outline" className="border-white/35 text-white hover:bg-white/10 hover:text-white">
+                <Button asChild variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
                   <Link href="/desarrollo-web">Ver desarrollo web</Link>
                 </Button>
               </div>
