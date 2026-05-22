@@ -20,7 +20,7 @@ import { SERVICE_PAYMENT_ITEMS } from "@/lib/payments/service-catalog";
 export const metadata: Metadata = createPageMetadata({
   title: "Planes flexibles para cada etapa de tu negocio",
   description:
-    "Planes y precios desde de ZYTERON para personas, emprendedores, pymes, empresas, colegios e instituciones. Cotización formal según alcance real.",
+    "Planes y precios competitivos de ZYTERON para emprendedores, pymes, empresas e instituciones. Cotización formal según alcance real.",
   path: "/planes",
 });
 
@@ -29,7 +29,7 @@ const plans = [
     id: "emprendedor",
     tag: "Para comenzar",
     name: "Plan Emprendedor",
-    price: "Desde $69.990",
+    price: "Desde $59.990",
     audience:
       "Personas naturales, emprendedores, técnicos, servicios pequeños, barberías, negocios locales y profesionales independientes.",
     copy:
@@ -60,7 +60,7 @@ const plans = [
     id: "pyme",
     tag: "Más solicitado",
     name: "Plan Pyme",
-    price: "Desde $149.990",
+    price: "Desde $129.990",
     audience:
       "Pymes, locales comerciales, pequeños negocios, servicios profesionales, tiendas pequeñas y emprendimientos en crecimiento.",
     copy:
@@ -92,7 +92,7 @@ const plans = [
     id: "empresa",
     tag: "Para empresas",
     name: "Plan Empresa",
-    price: "Desde $299.990",
+    price: "Desde $249.990",
     audience:
       "Empresas, colegios, instituciones, oficinas, clínicas, talleres, transportes, constructoras y servicios B2B.",
     copy:
@@ -124,7 +124,7 @@ const plans = [
     id: "tienda",
     tag: "Venta digital",
     name: "Catálogo / Tienda Online",
-    price: "Desde $399.990",
+    price: "Desde $299.990",
     audience:
       "Negocios que quieren mostrar productos, recibir pedidos, vender online o profesionalizar su catálogo digital.",
     copy:
@@ -155,7 +155,7 @@ const plans = [
     id: "sistema",
     tag: "A medida",
     name: "Sistema Web / Panel Administrativo",
-    price: "Desde $450.000",
+    price: "Desde $399.990",
     audience:
       "Empresas, pymes o instituciones que necesitan administrar información, usuarios, registros y procesos internos.",
     copy:
@@ -183,7 +183,7 @@ const plans = [
     id: "avanzado",
     tag: "Proyecto crítico",
     name: "Sistema Avanzado / Desarrollo a medida",
-    price: "Desde $900.000",
+    price: "Desde $749.990",
     audience:
       "Empresas que requieren soluciones complejas, múltiples usuarios, integraciones, automatizaciones y procesos críticos.",
     copy:
@@ -214,50 +214,50 @@ const plans = [
 const referencePlans = [
   {
     name: "Plan Básico",
-    range: "$250.000 - $450.000 CLP",
+    range: "$59.990 - $189.990 CLP",
     bestFor: "Presencia profesional inicial, landing o sitio pequeño con contacto directo.",
     includes: "Estructura base, diseño responsive, formulario, WhatsApp, SEO inicial y publicación.",
   },
   {
     name: "Plan Medio",
-    range: "$500.000 - $900.000 CLP",
+    range: "$129.990 - $399.990 CLP",
     bestFor: "Web corporativa más completa para pymes con servicios, FAQ, confianza y conversión.",
     includes: "Más páginas, arquitectura comercial, optimización técnica, contenido base y soporte inicial.",
   },
   {
     name: "Plan Avanzado",
-    range: "$1.000.000 - $2.000.000 CLP",
+    range: "$450.000 - $850.000 CLP",
     bestFor: "Empresas que requieren mayor alcance, integraciones, ecommerce o módulos personalizados.",
     includes: "Arquitectura extendida, funciones avanzadas, automatizaciones, medición y acompañamiento.",
   },
   {
     name: "Plan Sistema",
-    range: "Desde $800.000 CLP",
+    range: "Desde $399.990 CLP",
     bestFor: "Sistemas web, paneles administrativos, reportes, usuarios y procesos internos.",
     includes: "Diagnóstico incluido, levantamiento funcional, primera etapa técnica y roadmap por módulos.",
   },
 ];
 
 const extras = [
-  ["Página adicional", "Desde $20.000"],
-  ["Sección adicional", "Desde $15.000"],
-  ["Formulario avanzado", "Desde $25.000"],
-  ["Carga de productos hasta 20", "Desde $30.000"],
-  ["Carga de productos hasta 50", "Desde $70.000"],
-  ["Catálogo administrable", "Desde $80.000"],
-  ["Mini panel administrativo", "Desde $120.000"],
-  ["Panel administrativo completo", "Desde $300.000"],
-  ["Integración Flow/Webpay/Mercado Pago", "Desde $120.000"],
-  ["Generador de PDF", "Desde $120.000"],
-  ["Sistema de reservas", "Desde $180.000"],
-  ["Login de usuarios", "Desde $150.000"],
-  ["Correos corporativos", "Desde $25.000 configuración"],
-  ["SEO inicial avanzado", "Desde $80.000"],
-  ["Automatización WhatsApp", "Desde $150.000"],
-  ["Reportes o dashboard", "Desde $120.000"],
-  ["Exportación Excel/PDF", "Desde $80.000"],
-  ["Mantención mensual", "Desde $25.990"],
-  ["Soporte prioritario", "Desde $49.990/mes"],
+  ["Página adicional", "Desde $14.990"],
+  ["Sección adicional", "Desde $9.990"],
+  ["Formulario avanzado", "Desde $19.990"],
+  ["Carga de productos hasta 20", "Desde $19.990"],
+  ["Carga de productos hasta 50", "Desde $49.990"],
+  ["Catálogo administrable", "Desde $59.990"],
+  ["Mini panel administrativo", "Desde $89.990"],
+  ["Panel administrativo completo", "Desde $219.990"],
+  ["Integración Flow/Webpay/Mercado Pago", "Desde $89.990"],
+  ["Generador de PDF", "Desde $79.990"],
+  ["Sistema de reservas", "Desde $129.990"],
+  ["Login de usuarios", "Desde $99.990"],
+  ["Correos corporativos", "Desde $19.990 configuración"],
+  ["SEO inicial avanzado", "Desde $59.990"],
+  ["Automatización WhatsApp", "Desde $99.990"],
+  ["Reportes o dashboard", "Desde $89.990"],
+  ["Exportación Excel/PDF", "Desde $49.990"],
+  ["Mantención mensual", "Desde $19.990"],
+  ["Soporte prioritario", "Desde $34.990/mes"],
 ];
 
 const priceFaqs = [
@@ -337,8 +337,8 @@ export default function PlanesPage() {
           </div>
           <h1 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">Planes flexibles para cada etapa de tu negocio</h1>
           <p className="mx-auto max-w-4xl text-base text-slate-600 sm:text-lg">
-            Desde una web inicial hasta un sistema completo, en ZYTERON cotizamos según el alcance real de tu proyecto
-            para entregar una solución justa, clara y profesional.
+            Desde una web inicial hasta un sistema completo, en ZYTERON trabajamos con valores competitivos para ganar
+            clientes sin cobrar funcionalidades que tu negocio no necesita.
           </p>
           <div className="mx-auto max-w-4xl rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-slate-700">
             No todos los negocios necesitan lo mismo. Por eso trabajamos con valores base, levantamiento de
@@ -376,8 +376,9 @@ export default function PlanesPage() {
             inicio y aseguramos una solución adaptada a las necesidades de cada cliente.
           </p>
           <p className="text-sm text-slate-700">
-            Trabajamos con precios competitivos porque optimizamos el desarrollo con herramientas modernas, procesos
-            claros y reutilización inteligente de componentes, sin sacrificar calidad ni profesionalismo.
+            Trabajamos con precios de entrada por debajo de rangos habituales de agencia porque optimizamos el
+            desarrollo con herramientas modernas, procesos claros y reutilización inteligente de componentes, sin
+            sacrificar calidad ni profesionalismo.
           </p>
         </Container>
       </section>
@@ -485,7 +486,7 @@ export default function PlanesPage() {
               Opción mensual
             </div>
             <h2 className="text-2xl font-extrabold text-slate-900">Plan Web Administrada</h2>
-            <p className="mt-1 text-xl font-bold text-blue-700">Desde $25.990/mes</p>
+            <p className="mt-1 text-xl font-bold text-blue-700">Desde $19.990/mes</p>
             <p className="mt-2 text-sm text-slate-600">
               Una alternativa simple para quienes necesitan presencia digital sin realizar una inversión inicial alta.
             </p>

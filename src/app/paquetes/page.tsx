@@ -7,31 +7,31 @@ import { CommercialQuoteBuilder } from "@/components/forms/commercial-quote-buil
 export const metadata: Metadata = createPageMetadata({
   title: "Cotizador profesional y solicitud de propuesta",
   description:
-    "Cotizador inteligente de ZYTERON para empresas, pymes y emprendedores en Chile. Obtén recomendación de plan, rango estimado y cotización formal según alcance.",
+    "Cotizador inteligente de ZYTERON con precios competitivos para pymes en Chile. Obtén recomendación, rango estimado y cotización formal.",
   path: "/paquetes",
   noIndex: true,
 });
 
 const extras = [
-  ["Página adicional", "Desde $20.000"],
-  ["Sección adicional", "Desde $15.000"],
-  ["Formulario avanzado", "Desde $25.000"],
-  ["Carga de productos hasta 20", "Desde $30.000"],
-  ["Carga de productos hasta 50", "Desde $70.000"],
-  ["Catálogo administrable", "Desde $80.000"],
-  ["Mini panel administrativo", "Desde $120.000"],
-  ["Panel administrativo completo", "Desde $300.000"],
-  ["Integración Flow/Webpay/Mercado Pago", "Desde $120.000"],
-  ["Generador de PDF", "Desde $120.000"],
-  ["Sistema de reservas", "Desde $180.000"],
-  ["Login de usuarios", "Desde $150.000"],
-  ["Correos corporativos (configuración)", "Desde $25.000"],
-  ["SEO inicial avanzado", "Desde $80.000"],
-  ["Automatización WhatsApp", "Desde $150.000"],
-  ["Reportes o dashboard", "Desde $120.000"],
-  ["Exportación Excel/PDF", "Desde $80.000"],
-  ["Mantención mensual", "Desde $25.990"],
-  ["Soporte prioritario", "Desde $49.990/mes"],
+  ["Página adicional", "Desde $14.990"],
+  ["Sección adicional", "Desde $9.990"],
+  ["Formulario avanzado", "Desde $19.990"],
+  ["Carga de productos hasta 20", "Desde $19.990"],
+  ["Carga de productos hasta 50", "Desde $49.990"],
+  ["Catálogo administrable", "Desde $59.990"],
+  ["Mini panel administrativo", "Desde $89.990"],
+  ["Panel administrativo completo", "Desde $219.990"],
+  ["Integración Flow/Webpay/Mercado Pago", "Desde $89.990"],
+  ["Generador de PDF", "Desde $79.990"],
+  ["Sistema de reservas", "Desde $129.990"],
+  ["Login de usuarios", "Desde $99.990"],
+  ["Correos corporativos (configuración)", "Desde $19.990"],
+  ["SEO inicial avanzado", "Desde $59.990"],
+  ["Automatización WhatsApp", "Desde $99.990"],
+  ["Reportes o dashboard", "Desde $89.990"],
+  ["Exportación Excel/PDF", "Desde $49.990"],
+  ["Mantención mensual", "Desde $19.990"],
+  ["Soporte prioritario", "Desde $34.990/mes"],
 ];
 
 export default function PaquetesPage() {
@@ -60,8 +60,8 @@ export default function PaquetesPage() {
             Cotiza con claridad, paga con seguridad y desarrolla con respaldo
           </h1>
           <p className="mx-auto max-w-3xl text-base text-slate-600 sm:text-lg">
-            Este cotizador entrega una referencia comercial. El valor final depende del alcance, funcionalidades,
-            integraciones y nivel de personalización.
+            Este cotizador entrega valores competitivos de entrada para pymes en Chile. El valor final depende del
+            alcance, funcionalidades, integraciones y nivel de personalización.
           </p>
         </Container>
       </section>
@@ -73,8 +73,8 @@ export default function PaquetesPage() {
           <section className="card-premium p-6">
             <h2 className="text-2xl font-extrabold text-slate-900">Extras y funcionalidades adicionales</h2>
             <p className="mt-2 text-sm text-slate-600">
-              Los extras se agregan solo si el proyecto los requiere. Esto permite entregar precios justos y evitar
-              cobrar funcionalidades innecesarias.
+              Los extras se agregan solo si el proyecto los requiere. Ajustamos estos valores para competir por debajo
+              de rangos habituales de agencia, manteniendo cotización formal antes de iniciar.
             </p>
 
             <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">

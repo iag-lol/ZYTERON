@@ -62,8 +62,8 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
     ],
     offer: {
       name: "Desarrollo web profesional",
-      lowPrice: 250000,
-      highPrice: 2000000,
+      lowPrice: 59990,
+      highPrice: 850000,
       description: "Rango referencial según cantidad de páginas, contenido, integraciones y soporte.",
     },
   },
@@ -99,8 +99,8 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
     ],
     offer: {
       name: "Tienda online o catálogo digital",
-      lowPrice: 500000,
-      highPrice: 2000000,
+      lowPrice: 299990,
+      highPrice: 900000,
       description: "Rango referencial según catálogo, pagos, carga inicial y administración requerida.",
     },
   },
@@ -137,8 +137,8 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
     ],
     offer: {
       name: "Sistema web a medida",
-      lowPrice: 800000,
-      highPrice: 2000000,
+      lowPrice: 399990,
+      highPrice: 1800000,
       description: "Rango referencial para primera etapa con diagnóstico técnico incluido.",
     },
   },
@@ -174,8 +174,8 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
     ],
     offer: {
       name: "Automatización de procesos",
-      lowPrice: 300000,
-      highPrice: 1200000,
+      lowPrice: 99990,
+      highPrice: 750000,
       description: "Rango referencial según canales, reglas, integraciones y pruebas requeridas.",
     },
   },
@@ -212,7 +212,7 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
     offer: {
       name: "Soporte TI para pymes",
       lowPrice: 49990,
-      highPrice: 300000,
+      highPrice: 180000,
       description: "Rango referencial mensual o por requerimiento según carga, criticidad y cobertura.",
     },
   },

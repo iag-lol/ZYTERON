@@ -120,8 +120,8 @@ function computeRecommendation(input: {
     if (advancedCount >= 5 || (highBudget && advancedCount >= 3)) {
       return {
         planName: "Sistema Avanzado / Desarrollo a medida",
-        fromPrice: 900000,
-        rangeLabel: "$900.000 a $2.500.000+",
+        fromPrice: 749990,
+        rangeLabel: "$749.990 a $1.800.000+",
         note: "Se recomienda agendar diagnóstico para definir módulos, integraciones y etapas.",
         requiresReview: true,
       } satisfies Recommendation;
@@ -129,8 +129,8 @@ function computeRecommendation(input: {
 
     return {
       planName: "Sistema Web / Panel Administrativo",
-      fromPrice: 450000,
-      rangeLabel: "$450.000 a $1.200.000",
+      fromPrice: 399990,
+      rangeLabel: "$399.990 a $990.000",
       note: "Este proyecto requiere evaluación y cotización formal según alcance.",
       requiresReview: true,
     } satisfies Recommendation;
@@ -139,8 +139,8 @@ function computeRecommendation(input: {
   if (input.needType === "tienda-online") {
     return {
       planName: "Catálogo / Tienda Online",
-      fromPrice: 399990,
-      rangeLabel: "$399.990 a $900.000",
+      fromPrice: 299990,
+      rangeLabel: "$299.990 a $699.990",
       note: "Pasarela de pago, panel y automatizaciones se evalúan por separado según requerimiento.",
       requiresReview: true,
     } satisfies Recommendation;
@@ -149,8 +149,8 @@ function computeRecommendation(input: {
   if (input.needType === "catalogo-productos") {
     return {
       planName: "Catálogo simple",
-      fromPrice: 149990,
-      rangeLabel: "$149.990 a $399.990",
+      fromPrice: 99990,
+      rangeLabel: "$99.990 a $249.990",
       note: "Ideal para mostrar productos sin integrar procesos complejos en una primera etapa.",
       requiresReview: false,
     } satisfies Recommendation;
@@ -159,8 +159,8 @@ function computeRecommendation(input: {
   if (input.needType === "soporte-ti") {
     return {
       planName: "Soporte TI",
-      fromPrice: 69990,
-      rangeLabel: "$69.990 a $250.000",
+      fromPrice: 49990,
+      rangeLabel: "$49.990 a $180.000",
       note: "Recomendado para soporte técnico y mejoras operativas puntuales.",
       requiresReview: false,
     } satisfies Recommendation;
@@ -169,8 +169,8 @@ function computeRecommendation(input: {
   if (isInstitution || input.needType === "pagina-corporativa") {
     return {
       planName: "Plan Empresa",
-      fromPrice: 299990,
-      rangeLabel: "$299.990 a $650.000",
+      fromPrice: 249990,
+      rangeLabel: "$249.990 a $549.990",
       note: "Recomendado para webs corporativas estructuradas y requerimientos institucionales.",
       requiresReview: false,
     } satisfies Recommendation;
@@ -179,8 +179,8 @@ function computeRecommendation(input: {
   if (input.needType === "landing-page") {
     return {
       planName: "Plan Emprendedor",
-      fromPrice: 69990,
-      rangeLabel: "$69.990 a $149.990",
+      fromPrice: 59990,
+      rangeLabel: "$59.990 a $129.990",
       note: "Ideal para presencia inicial y captación simple de contactos.",
       requiresReview: false,
     } satisfies Recommendation;
@@ -188,8 +188,8 @@ function computeRecommendation(input: {
 
   return {
     planName: "Plan Pyme",
-    fromPrice: 149990,
-    rangeLabel: "$149.990 a $299.990",
+    fromPrice: 129990,
+    rangeLabel: "$129.990 a $269.990",
     note: "Para negocios que necesitan una web comercial más completa y profesional.",
     requiresReview: false,
   } satisfies Recommendation;
@@ -517,11 +517,11 @@ export function CommercialQuoteBuilder() {
                 value={form.budgetRange}
                 onChange={(event) => setForm((prev) => ({ ...prev, budgetRange: event.target.value as BudgetRange }))}
               >
-                <option value="menos-100">Menos de $100.000</option>
-                <option value="100-250">$100.000 a $250.000</option>
-                <option value="250-500">$250.000 a $500.000</option>
-                <option value="500-1000">$500.000 a $1.000.000</option>
-                <option value="mas-1000">Más de $1.000.000</option>
+                <option value="menos-100">Menos de $80.000</option>
+                <option value="100-250">$80.000 a $180.000</option>
+                <option value="250-500">$180.000 a $350.000</option>
+                <option value="500-1000">$350.000 a $750.000</option>
+                <option value="mas-1000">Más de $750.000</option>
                 <option value="sin-definir">No tengo presupuesto definido</option>
               </select>
             </div>

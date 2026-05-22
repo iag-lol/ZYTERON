@@ -587,8 +587,8 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 250000,
-          maxPrice: 450000,
+          minPrice: 59990,
+          maxPrice: 189990,
         },
       },
       {
@@ -598,8 +598,8 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 500000,
-          maxPrice: 900000,
+          minPrice: 129990,
+          maxPrice: 399990,
         },
       },
       {
@@ -609,8 +609,8 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 1000000,
-          maxPrice: 2000000,
+          minPrice: 450000,
+          maxPrice: 850000,
         },
       },
       {
@@ -620,7 +620,7 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 800000,
+          minPrice: 399990,
         },
       },
     ],

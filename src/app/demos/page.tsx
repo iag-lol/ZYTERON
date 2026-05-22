@@ -19,9 +19,9 @@ const demoCards = [
     title: "Demo tienda online de ropa",
     description:
       "Tienda online profesional para marcas de ropa: diseño moderno, catálogo, carrito y estructura preparada para pagos online.",
-    tech: "Desde $499.990 CLP · Responsive · Catálogo · Carrito · Panel administrativo según requerimiento",
+    tech: "Desde $299.990 CLP · Responsive · Catálogo · Carrito · Panel administrativo según requerimiento",
     demoHref: "https://iag-lol.github.io/tienda.mck/",
-    priceFrom: "Desde $499.990 CLP",
+    priceFrom: "Desde $299.990 CLP",
     gallery: [
       "/demos/tienda-ropa/tienda-ropa-01.png",
       "/demos/tienda-ropa/tienda-ropa-02.png",
@@ -66,9 +66,9 @@ const demoCards = [
     title: "Demo plataforma de cursos con videos",
     description:
       "Plataforma web para publicar cursos de cualquier rubro: presentación de programas, lecciones en video y captación de nuevos alumnos.",
-    tech: "Desde $599.990 CLP · Plataforma de cursos · Lecciones en video · Responsive · Escalable",
+    tech: "Desde $399.990 CLP · Plataforma de cursos · Lecciones en video · Responsive · Escalable",
     demoHref: "https://iag-lol.github.io/cursos.mck/",
-    priceFrom: "Desde $599.990 CLP",
+    priceFrom: "Desde $399.990 CLP",
     galleryPending: true,
     includes: [
       "Landing profesional para vender cursos",

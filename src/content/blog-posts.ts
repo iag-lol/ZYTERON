@@ -414,10 +414,10 @@ export const blogPosts: BlogPostData[] = [
         table: {
           headers: ["Tipo de proyecto", "Rango referencial", "Cuándo conviene"],
           rows: [
-            ["Landing page", "Desde $69.990 a $180.000+", "Campañas, servicios puntuales o presencia inicial"],
-            ["Web corporativa pyme", "Desde $149.990 a $450.000+", "Pymes que necesitan servicios, confianza y contacto"],
-            ["Tienda online", "Desde $399.990 a $900.000+", "Negocios con catálogo, productos y flujo de compra"],
-            ["Sistema web", "Desde $450.000 a $1.500.000+", "Procesos internos, paneles, usuarios y reportes"]
+            ["Landing page", "Desde $59.990 a $129.990+", "Campañas, servicios puntuales o presencia inicial"],
+            ["Web corporativa pyme", "Desde $129.990 a $269.990+", "Pymes que necesitan servicios, confianza y contacto"],
+            ["Tienda online", "Desde $299.990 a $699.990+", "Negocios con catálogo, productos y flujo de compra"],
+            ["Sistema web", "Desde $399.990 a $990.000+", "Procesos internos, paneles, usuarios y reportes"]
           ]
         }
       },

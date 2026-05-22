@@ -685,7 +685,7 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
                 id="builder-budget"
                 value={form.budget}
                 onChange={(event) => setForm((prev) => ({ ...prev, budget: event.target.value }))}
-                placeholder="Ej: $900.000 - $1.800.000"
+                placeholder="Ej: $180.000 - $350.000"
               />
             </div>
             <div className="space-y-1.5">

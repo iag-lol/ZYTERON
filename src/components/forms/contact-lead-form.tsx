@@ -173,7 +173,7 @@ export function ContactLeadForm() {
             <Label htmlFor="budget" className="text-xs font-bold uppercase tracking-wide text-slate-500">
               Presupuesto estimado (opcional)
             </Label>
-            <Input id="budget" placeholder="Ej: $800.000 - $1.500.000" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("budget")} />
+            <Input id="budget" placeholder="Ej: $180.000 - $350.000" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("budget")} />
             {errors.budget ? <p className="text-xs text-rose-600">{errors.budget.message}</p> : null}
           </div>
 
