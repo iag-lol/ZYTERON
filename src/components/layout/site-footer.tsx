@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Container } from "./container";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
+import { blogPosts } from "@/content/blog-posts";
 
 const WHATSAPP_URL =
   "https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.";
@@ -42,6 +43,18 @@ const footerColumns = [
   },
 ];
 
+const recentArticles = [...blogPosts]
+  .sort(
+    (a, b) =>
+      new Date(b.updatedAt ?? b.publishedAt).getTime() -
+      new Date(a.updatedAt ?? a.publishedAt).getTime(),
+  )
+  .slice(0, 3)
+  .map((post) => ({
+    label: post.title,
+    href: `/blog/${post.slug}`,
+  }));
+
 export function SiteFooter() {
   return (
     <footer className="bg-slate-950 text-white">
@@ -65,7 +78,7 @@ export function SiteFooter() {
         </Container>
       </div>
 
-      <Container className="grid gap-10 py-12 md:grid-cols-[1.35fr_1fr_1fr_1fr]">
+      <Container className="grid gap-10 py-12 md:grid-cols-[1.35fr_1fr_1fr_1fr_1fr]">
         <div className="space-y-4">
           <Link href="/" className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-lg font-extrabold text-white">
@@ -134,6 +147,18 @@ export function SiteFooter() {
             </ul>
           </div>
         ))}
+        <div className="space-y-4">
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-300">Artículos recientes</p>
+          <ul className="space-y-3 text-sm">
+            {recentArticles.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href} className="text-slate-400 transition-colors hover:text-white">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       </Container>
 
       <div className="border-y border-white/[0.07] bg-slate-900/60">

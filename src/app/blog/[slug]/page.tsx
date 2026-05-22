@@ -6,7 +6,6 @@ import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { blogPosts, getBlogPostBySlug } from "@/content/blog-posts";
-import { getServicePageBySlug } from "@/content/service-pages";
 import {
   buildArticleJsonLd,
   buildFaqJsonLd,
@@ -19,6 +18,76 @@ type BlogDetailProps = {
     slug: string;
   }>;
 };
+
+const mainServiceLinks = [
+  {
+    key: "desarrollo-web",
+    label: "Desarrollo web",
+    href: "/desarrollo-web",
+    summary: "Sitios corporativos, landing pages y presencia digital profesional para empresas.",
+  },
+  {
+    key: "tiendas-online",
+    label: "Tiendas online",
+    href: "/tiendas-online",
+    summary: "Ecommerce, catálogos y venta asistida por WhatsApp para pymes.",
+  },
+  {
+    key: "sistemas-web",
+    label: "Sistemas web",
+    href: "/sistemas-web",
+    summary: "Paneles administrativos, registros, reportes y software a medida.",
+  },
+  {
+    key: "automatizacion",
+    label: "Automatización",
+    href: "/automatizacion",
+    summary: "Flujos digitales, formularios, WhatsApp y tareas repetitivas automatizadas.",
+  },
+  {
+    key: "soporte-ti",
+    label: "Soporte TI",
+    href: "/soporte-ti",
+    summary: "Mantención, configuración, continuidad operativa y asistencia tecnológica.",
+  },
+];
+
+function getBlogServiceLinks(post: NonNullable<ReturnType<typeof getBlogPostBySlug>>) {
+  const signals = [
+    post.title,
+    post.primaryKeyword,
+    ...post.secondaryKeywords,
+    ...post.relatedServices,
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  const selected = new Set<string>();
+  const add = (key: string) => selected.add(key);
+
+  if (/tienda|ecommerce|shopify|cat[aá]logo|inventario|vender online|venta por whatsapp/.test(signals)) {
+    add("tiendas-online");
+  }
+  if (/sistema|software|panel|excel|gesti[oó]n|cotizador|pdf|administrativo|interno/.test(signals)) {
+    add("sistemas-web");
+  }
+  if (/automat|whatsapp|reserva|flujo|tarea repetitiva/.test(signals)) {
+    add("automatizacion");
+  }
+  if (/soporte|seguridad|mantenci[oó]n|ti\b|correo|continuidad/.test(signals)) {
+    add("soporte-ti");
+  }
+  if (/web|p[aá]gina|landing|wordpress|next\\.js|saas|diseño|seo|b2b|empresa/.test(signals)) {
+    add("desarrollo-web");
+  }
+
+  for (const fallback of ["desarrollo-web", "sistemas-web", "automatizacion", "tiendas-online", "soporte-ti"]) {
+    if (selected.size >= 3) break;
+    add(fallback);
+  }
+
+  return mainServiceLinks.filter((service) => selected.has(service.key));
+}
 
 export function generateStaticParams() {
   return blogPosts.map((post) => ({ slug: post.slug }));
@@ -41,6 +110,9 @@ export async function generateMetadata({ params }: BlogDetailProps): Promise<Met
     title: post.metaTitle,
     description: post.metaDescription,
     path: `/blog/${post.slug}`,
+    ogImagePath: `/blog/${post.slug}/opengraph-image`,
+    ogImageAlt: `${post.title} | ZYTERON`,
+    keywords: [post.primaryKeyword, ...post.secondaryKeywords],
   });
 }
 
@@ -52,9 +124,7 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
     notFound();
   }
 
-  const relatedServices = post.relatedServices
-    .map((slug) => getServicePageBySlug(slug))
-    .filter((item): item is NonNullable<typeof item> => Boolean(item));
+  const relatedServiceLinks = getBlogServiceLinks(post);
 
   const relatedPosts = blogPosts
     .filter((item) => item.slug !== post.slug)
@@ -104,7 +174,7 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
           description: post.excerpt,
           datePublished: post.publishedAt,
           dateModified: post.updatedAt,
-          image: "/og/blog.png",
+          image: `/blog/${post.slug}/opengraph-image`,
           authorName: post.authorName ?? "Zyteron",
         })}
       />
@@ -215,7 +285,7 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
                   <Link href="/contacto">Solicitar diagnóstico</Link>
                 </Button>
                 <Button asChild variant="outline" className="border-white/35 text-white hover:bg-white/10 hover:text-white">
-                  <Link href="/servicios">Ver servicios</Link>
+                  <Link href="/desarrollo-web">Ver desarrollo web</Link>
                 </Button>
               </div>
             </section>
@@ -239,14 +309,15 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
             <div className="card-premium p-5">
               <h2 className="mb-3 text-lg font-extrabold text-slate-900">Servicios relacionados</h2>
               <ul className="space-y-2 text-sm">
-                {relatedServices.map((service) => (
-                  <li key={service.slug}>
+                {relatedServiceLinks.map((service) => (
+                  <li key={service.key}>
                     <Link
-                      href={`/servicios/${service.slug}`}
+                      href={service.href}
                       className="text-blue-700 transition-colors hover:text-blue-900"
                     >
-                      {service.navLabel}
+                      {service.label}
                     </Link>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">{service.summary}</p>
                   </li>
                 ))}
               </ul>

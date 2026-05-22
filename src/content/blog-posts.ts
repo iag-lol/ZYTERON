@@ -34,13 +34,13 @@ export type BlogPostData = {
 export const blogPosts: BlogPostData[] = [
   {
     slug: "cuanto-cuesta-pagina-web-empresa-chile",
-    title: "Cuánto cuesta una página web para empresa en Chile en 2026",
+    title: "¿Cuánto cuesta una página web para empresa en Chile en 2026?",
     metaTitle: "Cuánto cuesta una página web para empresas en Chile",
     metaDescription:
       "Guía práctica para estimar el costo real de una página web para empresas en Chile: alcances, variables, errores frecuentes y cómo cotizar sin pagar de más.",
     excerpt:
       "Si vas a cotizar una web corporativa en Chile, esta guía te ayuda a separar precio de valor y a definir un alcance que sí genere resultados comerciales.",
-    primaryKeyword: "paginas web para empresas",
+    primaryKeyword: "precio página web empresa Chile",
     secondaryKeywords: [
       "creacion de sitios web para empresas",
       "cotizacion pagina web empresa",
@@ -813,6 +813,552 @@ export const blogPosts: BlogPostData[] = [
   }
 
 ];
+
+function buildPracticalArticleSections(input: {
+  problem: string;
+  solution: string;
+  checklist: string[];
+  cta: string;
+  table?: BlogSection["table"];
+}): BlogSection[] {
+  return [
+    {
+      heading: "Introducción: el problema",
+      paragraphs: [input.problem],
+    },
+    {
+      heading: "Desarrollo: solución con contexto chileno",
+      paragraphs: [input.solution],
+    },
+    {
+      heading: input.table ? "Tabla práctica" : "Checklist práctico",
+      paragraphs: [
+        "Usa esta guía como punto de partida antes de cotizar, rediseñar o implementar una solución digital.",
+      ],
+      bullets: input.table ? undefined : input.checklist,
+      table: input.table,
+    },
+    {
+      heading: "CTA interno",
+      paragraphs: [input.cta],
+    },
+  ];
+}
+
+const plannedBlogPosts: BlogPostData[] = [
+  {
+    slug: "elegir-wordpress-nextjs-saas-web-empresa-chile",
+    title: "Cómo elegir entre WordPress, Next.js o plataforma SaaS para tu web",
+    metaTitle: "WordPress, Next.js o SaaS para web empresa Chile",
+    metaDescription:
+      "Compara WordPress, Next.js y plataformas SaaS para elegir la mejor base web para tu empresa en Chile según SEO, presupuesto y escalabilidad.",
+    excerpt:
+      "La plataforma correcta depende de administración, rendimiento, SEO, integraciones y costo total de mantención.",
+    primaryKeyword: "qué plataforma usar para mi web empresa chile",
+    secondaryKeywords: ["wordpress vs nextjs chile", "plataforma saas web empresa", "desarrollo web chile"],
+    intent: "mixta",
+    readingTime: "8 min",
+    publishedAt: "2026-06-03",
+    authorName: "Zyteron",
+    sections: buildPracticalArticleSections({
+      problem:
+        "Muchas empresas eligen plataforma mirando solo precio inicial o moda técnica. Esa decisión puede limitar SEO, velocidad, integraciones o crecimiento cuando el sitio empieza a generar más demanda.",
+      solution:
+        "WordPress puede servir si necesitas edición frecuente y CMS tradicional; Next.js conviene cuando priorizas performance, arquitectura y escalabilidad; una plataforma SaaS ayuda a lanzar rápido, pero con menor control técnico. En Chile, la decisión debe considerar quién mantendrá la web, qué tan importante será Google y qué integraciones necesitará el negocio.",
+      checklist: [
+        "Define si la web será solo presencia, canal SEO, ecommerce o base para sistemas.",
+        "Evalúa quién administrará contenidos y cada cuánto.",
+        "Revisa costos mensuales, licencias, hosting y mantención.",
+        "Confirma control de metadata, URLs, velocidad y schema.",
+        "Proyecta integraciones futuras con formularios, pagos, CRM o WhatsApp.",
+      ],
+      cta: "Si necesitas decidir con criterio técnico y comercial, revisa nuestro servicio de desarrollo web y solicita una evaluación de alcance.",
+      table: {
+        headers: ["Opción", "Conviene cuando", "Riesgo principal"],
+        rows: [
+          ["WordPress", "Necesitas CMS y edición frecuente", "Plugins, seguridad y rendimiento"],
+          ["Next.js", "Necesitas velocidad, SEO técnico e integraciones", "Requiere soporte técnico"],
+          ["SaaS", "Quieres lanzar rápido con bajo mantenimiento", "Menor control y costos mensuales"],
+        ],
+      },
+    }),
+    faqs: [
+      {
+        question: "¿Next.js siempre es mejor que WordPress?",
+        answer: "No. Next.js destaca en performance y desarrollo a medida, pero WordPress puede ser adecuado para contenido editable y presupuestos acotados.",
+      },
+      {
+        question: "¿Una plataforma SaaS sirve para SEO?",
+        answer: "Puede servir, pero conviene revisar control de metadata, URLs, rendimiento, schema y exportabilidad.",
+      },
+    ],
+    relatedServices: ["desarrollo-web-chile", "paginas-web-para-empresas", "mantencion-web-chile"],
+  },
+  {
+    slug: "que-debe-incluir-sistema-gestion-interno-pymes",
+    title: "Qué debe incluir un sistema de gestión interno para pymes",
+    metaTitle: "Sistema de gestión pyme Chile: qué debe incluir",
+    metaDescription:
+      "Conoce qué módulos debe incluir un sistema de gestión interno para pymes chilenas: usuarios, estados, reportes, permisos y datos.",
+    excerpt:
+      "Un sistema interno útil parte por el proceso que más tiempo, errores o desorden genera, no por todas las funciones posibles.",
+    primaryKeyword: "sistema gestión pyme chile",
+    secondaryKeywords: ["sistemas web a medida", "panel administrativo", "software pyme chile"],
+    intent: "comercial",
+    readingTime: "8 min",
+    publishedAt: "2026-06-10",
+    authorName: "Zyteron",
+    sections: buildPracticalArticleSections({
+      problem:
+        "Muchas pymes gestionan clientes, ventas, asistencia, inventario o solicitudes con planillas, papel y mensajes. El problema aparece cuando no existe historial confiable, responsables claros ni reportes oportunos.",
+      solution:
+        "Un sistema de gestión interno debe centralizar datos, definir roles, registrar estados y entregar información consultable. En empresas chilenas conviene partir con una primera etapa viable: el módulo que reduce más errores o trabajo administrativo desde el primer mes.",
+      checklist: [
+        "Login y permisos por rol.",
+        "Formularios con validaciones y campos obligatorios.",
+        "Estados del proceso y responsables.",
+        "Filtros por fecha, cliente, estado o categoría.",
+        "Reportes simples, PDF o exportaciones cuando aportan valor.",
+      ],
+      cta: "Si tu operación ya no cabe en planillas, revisa el servicio de sistemas web y parte con un diagnóstico del proceso más crítico.",
+      table: {
+        headers: ["Módulo", "Valor para la pyme", "Prioridad"],
+        rows: [
+          ["Usuarios y permisos", "Control de acceso", "Alta"],
+          ["Registros y estados", "Trazabilidad operativa", "Alta"],
+          ["Reportes", "Mejor decisión con datos", "Media"],
+          ["PDF/exportaciones", "Formalización y respaldo", "Media"],
+        ],
+      },
+    }),
+    faqs: [
+      {
+        question: "¿Conviene hacer un sistema completo desde el inicio?",
+        answer: "Normalmente no. Es mejor partir con una primera versión viable y escalar según uso real.",
+      },
+      {
+        question: "¿Un sistema interno necesita SEO?",
+        answer: "No si es privado. El SEO aplica a páginas públicas de captación.",
+      },
+    ],
+    relatedServices: ["desarrollo-web-chile", "mantencion-web-chile", "paginas-web-para-empresas"],
+  },
+  {
+    slug: "soporte-ti-pymes-santiago-que-buscar-evitar",
+    title: "Soporte TI para pymes en Santiago: qué buscar y qué evitar",
+    metaTitle: "Soporte TI pymes Santiago: qué buscar y evitar",
+    metaDescription:
+      "Guía para contratar soporte TI para pymes en Santiago: continuidad, correos, equipos, seguridad básica, tiempos y señales de alerta.",
+    excerpt: "El soporte TI debe resolver incidentes y prevenir recurrencias. Estas son las señales que conviene revisar.",
+    primaryKeyword: "soporte TI para pymes en Santiago",
+    secondaryKeywords: ["soporte TI empresas Chile", "mantención TI pymes", "asistencia tecnológica Santiago"],
+    intent: "comercial",
+    readingTime: "7 min",
+    publishedAt: "2026-06-17",
+    authorName: "Zyteron",
+    sections: buildPracticalArticleSections({
+      problem:
+        "Muchas pymes buscan soporte solo cuando algo falla: correo caído, web lenta, equipo mal configurado o herramienta bloqueada. Eso resuelve la urgencia, pero no evita recurrencias.",
+      solution:
+        "Un buen soporte TI en Santiago debe entender impacto operativo, priorizar incidentes, documentar acciones y recomendar mejoras proporcionales al tamaño del negocio. No se trata solo de apagar incendios técnicos.",
+      checklist: [
+        "Diagnóstico antes de prometer solución.",
+        "Tiempos de respuesta y alcance por escrito.",
+        "Registro de acciones realizadas.",
+        "Recomendaciones preventivas de seguridad y respaldo.",
+        "Capacidad de conectar soporte con web, sistemas o automatización.",
+      ],
+      cta: "Si necesitas continuidad operativa, revisa soporte TI y define un plan proporcional a tu carga real.",
+    }),
+    faqs: [
+      {
+        question: "¿El soporte TI puede ser remoto?",
+        answer: "Sí. Correos, herramientas, web, formularios y configuración suelen resolverse de forma remota.",
+      },
+      {
+        question: "¿Conviene soporte mensual?",
+        answer: "Conviene cuando hay solicitudes frecuentes o herramientas críticas para la operación.",
+      },
+    ],
+    relatedServices: ["mantencion-web-chile", "desarrollo-web-chile", "seo-para-empresas-chile"],
+  },
+  {
+    slug: "automatizacion-whatsapp-empresas-casos-reales-chile",
+    title: "Automatización de WhatsApp para empresas: casos reales en Chile",
+    metaTitle: "Automatización WhatsApp empresas Chile: casos reales",
+    metaDescription:
+      "Ideas de automatización de WhatsApp para empresas chilenas: pre-calificación, formularios, seguimiento, cotizaciones y atención.",
+    excerpt:
+      "WhatsApp puede ser un canal comercial más ordenado si se conecta con formularios, reglas, mensajes y seguimiento.",
+    primaryKeyword: "automatización WhatsApp empresas",
+    secondaryKeywords: ["automatización para pymes", "whatsapp empresas chile", "flujos digitales"],
+    intent: "comercial",
+    readingTime: "7 min",
+    publishedAt: "2026-06-24",
+    authorName: "Zyteron",
+    sections: buildPracticalArticleSections({
+      problem:
+        "WhatsApp es cercano, pero puede convertirse en una bandeja desordenada con solicitudes incompletas, respuestas repetidas y seguimiento manual.",
+      solution:
+        "La automatización permite capturar datos iniciales, generar mensajes de recepción, derivar solicitudes y registrar estados. En pymes chilenas funciona bien cuando se combina con formularios, web y criterio humano.",
+      checklist: [
+        "Define preguntas mínimas antes de iniciar conversación.",
+        "Usa enlaces con mensajes precargados por servicio o producto.",
+        "Separa consultas comerciales, soporte y postventa.",
+        "Mide tiempo de respuesta y solicitudes completas.",
+        "Define cuándo interviene una persona.",
+      ],
+      cta: "Si WhatsApp ya es crítico para tu empresa, revisa automatización y sistemas web para ordenar el flujo completo.",
+    }),
+    faqs: [
+      {
+        question: "¿Automatizar WhatsApp reemplaza al vendedor?",
+        answer: "No. Ordena la entrada de datos para que el vendedor atienda mejor los casos importantes.",
+      },
+      {
+        question: "¿Siempre se necesita API oficial?",
+        answer: "No siempre. Algunos flujos parten con formularios y enlaces precargados; otros requieren proveedor API.",
+      },
+    ],
+    relatedServices: ["desarrollo-web-chile", "landing-pages-para-empresas", "mantencion-web-chile"],
+  },
+  {
+    slug: "vender-online-chile-sin-shopify-alternativas-pymes",
+    title: "Cómo vender online en Chile sin Shopify: alternativas para pymes",
+    metaTitle: "Vender online en Chile sin Shopify: alternativas pyme",
+    metaDescription:
+      "Alternativas a Shopify para vender online en Chile: catálogo propio, tienda a medida, WordPress, SaaS local y venta por WhatsApp.",
+    excerpt:
+      "Shopify no es la única forma de vender online. Para algunas pymes conviene partir con catálogo, tienda propia o venta asistida.",
+    primaryKeyword: "vender online en Chile sin Shopify",
+    secondaryKeywords: ["tienda online para pymes", "catálogo digital chile", "ecommerce chile"],
+    intent: "mixta",
+    readingTime: "8 min",
+    publishedAt: "2026-07-01",
+    authorName: "Zyteron",
+    sections: buildPracticalArticleSections({
+      problem:
+        "Algunas pymes pagan una plataforma antes de ordenar productos, fotos, precios, despacho y atención. Eso puede elevar costos sin resolver la operación base.",
+      solution:
+        "Puedes vender online con catálogo propio, tienda a medida, WooCommerce, SaaS local o venta asistida por WhatsApp. La decisión depende de volumen, stock, pagos, personalización y capacidad interna.",
+      checklist: [
+        "Ordena categorías y nombres de productos.",
+        "Define precios, stock y condiciones de despacho.",
+        "Prepara fotos consistentes.",
+        "Decide si necesitas carrito, pago online o solo cotización.",
+        "Mide consultas antes de escalar funciones.",
+      ],
+      cta: "Si quieres vender por etapas, revisa tiendas online y define si conviene catálogo, carrito o ecommerce completo.",
+      table: {
+        headers: ["Alternativa", "Conviene cuando", "Limitación"],
+        rows: [
+          ["Catálogo propio", "Quieres validar demanda", "No automatiza compra completa"],
+          ["Tienda a medida", "Necesitas control visual", "Requiere desarrollo"],
+          ["SaaS", "Quieres funciones prearmadas", "Menor personalización"],
+          ["WhatsApp asistido", "Venta consultiva", "Requiere seguimiento"],
+        ],
+      },
+    }),
+    faqs: [
+      {
+        question: "¿Puedo partir sin pago online?",
+        answer: "Sí. Muchas pymes parten con catálogo y WhatsApp, y luego suman pagos.",
+      },
+      {
+        question: "¿Una tienda a medida es más cara?",
+        answer: "Puede tener mayor inversión inicial, pero entrega más control sobre diseño e integraciones.",
+      },
+    ],
+    relatedServices: ["paginas-web-para-pymes", "desarrollo-web-chile", "landing-pages-para-empresas"],
+  },
+  {
+    slug: "panel-administrativo-vs-excel-salto-digital",
+    title: "Panel administrativo vs Excel: cuándo dar el salto digital",
+    metaTitle: "Panel administrativo vs Excel: cuándo cambiar",
+    metaDescription:
+      "Aprende cuándo una pyme debe dejar Excel y pasar a un panel administrativo: trazabilidad, permisos, reportes y reducción de errores.",
+    excerpt:
+      "Excel sirve mucho, pero deja de ser suficiente cuando necesitas permisos, historial, estados y datos confiables.",
+    primaryKeyword: "panel administrativo vs Excel",
+    secondaryKeywords: ["sistema gestión pyme chile", "panel administrativo empresa", "software a medida"],
+    intent: "mixta",
+    readingTime: "7 min",
+    publishedAt: "2026-07-08",
+    authorName: "Zyteron",
+    sections: buildPracticalArticleSections({
+      problem:
+        "Excel es flexible y barato, pero se vuelve frágil cuando muchas personas editan información, existen versiones distintas o se requiere historial de cambios.",
+      solution:
+        "Un panel administrativo centraliza registros, permisos, estados y reportes. El salto conviene cuando el costo del desorden supera el costo de construir una primera versión simple.",
+      checklist: [
+        "Hay registros duplicados o versiones contradictorias.",
+        "No sabes quién modificó un dato.",
+        "Faltan permisos por rol.",
+        "Los reportes se arman manualmente.",
+        "La información vive entre correos, WhatsApp y planillas.",
+      ],
+      cta: "Si tu planilla ya concentra decisiones críticas, evalúa sistemas web a medida con una primera etapa acotada.",
+      table: {
+        headers: ["Criterio", "Excel", "Panel administrativo"],
+        rows: [
+          ["Costo inicial", "Bajo", "Mayor"],
+          ["Permisos", "Limitados", "Por rol"],
+          ["Historial", "Difícil", "Trazable"],
+          ["Reportes", "Manual", "Automatizable"],
+        ],
+      },
+    }),
+    faqs: [
+      {
+        question: "¿Un panel elimina Excel?",
+        answer: "No siempre. Puede mantener exportaciones para análisis o respaldo.",
+      },
+      {
+        question: "¿Cuál es el primer módulo recomendado?",
+        answer: "El que concentre más errores, tiempo manual o impacto operativo.",
+      },
+    ],
+    relatedServices: ["desarrollo-web-chile", "mantencion-web-chile", "paginas-web-para-empresas"],
+  },
+  {
+    slug: "landing-page-vs-sitio-web-completo-negocio",
+    title: "Landing page vs sitio web completo: cuál necesita tu negocio",
+    metaTitle: "Landing page vs sitio web completo para negocios",
+    metaDescription:
+      "Compara landing page y sitio web completo para decidir qué necesita tu negocio: campañas, SEO, servicios, confianza y conversión.",
+    excerpt:
+      "Una landing y un sitio completo cumplen roles distintos. Elegir bien evita pagar de más o quedarse corto en captación.",
+    primaryKeyword: "landing page vs sitio web completo",
+    secondaryKeywords: ["landing pages para empresas", "páginas web para pymes", "desarrollo web chile"],
+    intent: "comercial",
+    readingTime: "7 min",
+    publishedAt: "2026-07-15",
+    authorName: "Zyteron",
+    sections: buildPracticalArticleSections({
+      problem:
+        "Una landing page concentra el mensaje en una acción. Un sitio completo organiza varias páginas, servicios, recursos y señales de confianza.",
+      solution:
+        "Si harás campaña para un servicio puntual, una landing puede ser suficiente. Si necesitas posicionar varios servicios y construir autoridad, conviene un sitio completo con arquitectura SEO.",
+      checklist: [
+        "¿Tienes uno o varios servicios?",
+        "¿Recibirás tráfico de anuncios o Google?",
+        "¿Necesitas blog, FAQ o casos?",
+        "¿El usuario debe comparar alternativas?",
+        "¿La web será activo de largo plazo?",
+      ],
+      cta: "Podemos ayudarte a partir con landing o sitio completo. Revisa desarrollo web y planes referenciales.",
+      table: {
+        headers: ["Criterio", "Landing page", "Sitio completo"],
+        rows: [
+          ["Objetivo", "Una conversión puntual", "Presencia y crecimiento"],
+          ["SEO", "Una intención", "Varias URLs por servicio"],
+          ["Costo", "Menor", "Mayor"],
+          ["Escalabilidad", "Campañas", "Blog, servicios y casos"],
+        ],
+      },
+    }),
+    faqs: [
+      {
+        question: "¿Puedo partir con landing y crecer después?",
+        answer: "Sí, si se construye con base técnica preparada para escalar.",
+      },
+      {
+        question: "¿Una landing posiciona en Google?",
+        answer: "Puede posicionar una intención concreta, pero un sitio completo da más cobertura.",
+      },
+    ],
+    relatedServices: ["landing-pages-para-empresas", "paginas-web-para-empresas", "diseno-web-chile"],
+  },
+  {
+    slug: "checklist-seguridad-digital-pymes-chilenas-2026",
+    title: "Checklist de seguridad digital para pymes chilenas en 2026",
+    metaTitle: "Checklist seguridad digital pymes Chile 2026",
+    metaDescription:
+      "Checklist de seguridad digital para pymes chilenas: correos, contraseñas, respaldos, hosting, accesos, actualizaciones y continuidad.",
+    excerpt:
+      "La seguridad básica parte por orden, accesos y hábitos técnicos consistentes antes de proyectos complejos.",
+    primaryKeyword: "seguridad digital para pymes chilenas",
+    secondaryKeywords: ["soporte TI empresas Chile", "mantención web chile", "continuidad operativa TI"],
+    intent: "informativa",
+    readingTime: "8 min",
+    publishedAt: "2026-07-22",
+    authorName: "Zyteron",
+    sections: buildPracticalArticleSections({
+      problem:
+        "Muchas pymes revisan seguridad solo después de perder acceso, sufrir una caída o detectar correos comprometidos. Reaccionar tarde suele salir más caro.",
+      solution:
+        "Un checklist trimestral permite ordenar contraseñas, accesos, respaldos, dominio, hosting, correos y actualizaciones. No elimina todo riesgo, pero reduce incidentes comunes.",
+      checklist: [
+        "Contraseñas únicas y autenticación en dos pasos.",
+        "Accesos documentados por usuario y proveedor.",
+        "Respaldos revisados y recuperables.",
+        "Dominio, hosting y correos con titularidad clara.",
+        "Usuarios antiguos desactivados.",
+        "Actualizaciones y plugins bajo control.",
+      ],
+      cta: "Si necesitas ordenar accesos, correos, web o continuidad, revisa soporte TI y mantención web.",
+      table: {
+        headers: ["Área", "Riesgo", "Prioridad"],
+        rows: [
+          ["Correo", "Suplantación o pérdida de comunicación", "Alta"],
+          ["Dominio", "Pérdida de control del sitio", "Alta"],
+          ["Hosting", "Caídas o malware", "Alta"],
+          ["Usuarios", "Accesos indebidos", "Media"],
+        ],
+      },
+    }),
+    faqs: [
+      {
+        question: "¿Una pyme necesita seguridad avanzada?",
+        answer: "Depende del riesgo, pero toda pyme necesita controles básicos de acceso, respaldo y actualización.",
+      },
+      {
+        question: "¿Cada cuánto revisar respaldos?",
+        answer: "Al menos trimestralmente y siempre antes de cambios importantes.",
+      },
+    ],
+    relatedServices: ["mantencion-web-chile", "desarrollo-web-chile", "seo-para-empresas-chile"],
+  },
+  {
+    slug: "tienda-online-sin-inventario-catalogo-whatsapp",
+    title: "Tienda online sin inventario: catálogo + venta por WhatsApp",
+    metaTitle: "Tienda online sin inventario: catálogo y WhatsApp",
+    metaDescription:
+      "Cómo vender con tienda online sin inventario: catálogo digital, pedidos por WhatsApp, preventa, productos personalizados y validación.",
+    excerpt:
+      "No todos los negocios necesitan stock administrable desde el día uno. Un catálogo con WhatsApp puede validar demanda.",
+    primaryKeyword: "tienda online sin inventario",
+    secondaryKeywords: ["catálogo digital para empresas", "venta por WhatsApp", "tienda online para pymes"],
+    intent: "mixta",
+    readingTime: "7 min",
+    publishedAt: "2026-07-29",
+    authorName: "Zyteron",
+    sections: buildPracticalArticleSections({
+      problem:
+        "Si vendes productos personalizados, bajo pedido o con stock variable, una tienda tradicional puede quedar sobredimensionada al inicio.",
+      solution:
+        "Un catálogo digital permite mostrar productos, explicar condiciones y llevar al usuario a WhatsApp con contexto. Luego puedes sumar carrito, pagos o stock cuando el flujo esté validado.",
+      checklist: [
+        "Categorías claras.",
+        "Fichas con fotos, medidas y condiciones.",
+        "Botón de consulta por producto.",
+        "Mensaje precargado con nombre del producto.",
+        "Seguimiento manual o semiautomatizado.",
+      ],
+      cta: "Si quieres vender sin sobreinvertir, revisa tiendas online y automatización de WhatsApp.",
+      table: {
+        headers: ["Modelo", "Ventaja", "Cuándo conviene"],
+        rows: [
+          ["Catálogo + WhatsApp", "Bajo costo y venta asistida", "Stock variable"],
+          ["Carrito sin pago", "Ordena pedido", "Cotización antes de cerrar"],
+          ["Ecommerce completo", "Compra autónoma", "Stock y precios estables"],
+        ],
+      },
+    }),
+    faqs: [
+      {
+        question: "¿Google puede indexar un catálogo sin carrito?",
+        answer: "Sí, si cada producto o categoría tiene contenido útil y buena estructura técnica.",
+      },
+      {
+        question: "¿Después puedo agregar pago online?",
+        answer: "Sí. Lo importante es construir una base preparada para crecer.",
+      },
+    ],
+    relatedServices: ["paginas-web-para-pymes", "landing-pages-para-empresas", "desarrollo-web-chile"],
+  },
+  {
+    slug: "errores-criticos-contratar-desarrollo-web-chile",
+    title: "Errores críticos al contratar desarrollo web en Chile",
+    metaTitle: "Errores al contratar desarrollo web en Chile",
+    metaDescription:
+      "Evita errores al contratar desarrollo web en Chile: alcance ambiguo, mala base SEO, falta de soporte, plantillas genéricas y sin medición.",
+    excerpt:
+      "La cotización más barata puede salir cara si no define alcance, propiedad, SEO técnico, soporte y criterios de entrega.",
+    primaryKeyword: "errores al contratar desarrollo web en Chile",
+    secondaryKeywords: ["empresa desarrollo web chile", "agencia diseño web chile", "cotización página web empresa"],
+    intent: "comercial",
+    readingTime: "8 min",
+    publishedAt: "2026-08-05",
+    authorName: "Zyteron",
+    sections: buildPracticalArticleSections({
+      problem:
+        "Dos propuestas pueden llamarse desarrollo web y tener alcances totalmente distintos. Comparar solo precio deja fuera SEO, soporte, propiedad y medición.",
+      solution:
+        "Antes de contratar, exige alcance por escrito, páginas incluidas, funcionalidades, exclusiones, soporte posterior, setup SEO técnico y acceso a dominio, hosting y analítica.",
+      checklist: [
+        "Páginas, secciones y funcionalidades definidas.",
+        "Metadata, sitemap, canonical y schema cuando corresponda.",
+        "Responsables de textos, imágenes y accesos.",
+        "Soporte posterior y condiciones de cambios.",
+        "Medición de formularios y clics de WhatsApp.",
+      ],
+      cta: "Antes de contratar, revisa desarrollo web y planes para comparar alcance real, no solo precio.",
+    }),
+    faqs: [
+      {
+        question: "¿Qué debe incluir una cotización web?",
+        answer: "Objetivo, páginas, funcionalidades, plazos, exclusiones, forma de pago, soporte y condiciones.",
+      },
+      {
+        question: "¿Es malo usar plantilla?",
+        answer: "No siempre, pero debe adaptarse a estrategia, contenido, rendimiento y SEO.",
+      },
+    ],
+    relatedServices: ["paginas-web-para-empresas", "agencia-diseno-web-chile", "diseno-web-chile"],
+  },
+  {
+    slug: "medir-roi-pagina-web-empresa-b2b",
+    title: "Cómo medir el ROI de tu página web como empresa B2B",
+    metaTitle: "Cómo medir ROI página web empresa B2B",
+    metaDescription:
+      "Aprende a medir el ROI de una página web B2B: leads, tasa de conversión, costo por oportunidad, ventas asistidas y valor del ciclo.",
+    excerpt:
+      "El ROI web no se mide solo por visitas. En B2B importa la calidad de oportunidades, atribución y avance comercial.",
+    primaryKeyword: "medir ROI página web empresa B2B",
+    secondaryKeywords: ["conversiones web b2b", "leads desde página web", "analítica web empresas"],
+    intent: "mixta",
+    readingTime: "8 min",
+    publishedAt: "2026-08-12",
+    authorName: "Zyteron",
+    sections: buildPracticalArticleSections({
+      problem:
+        "Una empresa B2B puede tener pocas visitas y aun así generar oportunidades de alto valor. Medir solo tráfico no muestra retorno real.",
+      solution:
+        "Conecta visitas, formularios, WhatsApp, reuniones, cotizaciones y ventas cerradas. El ROI se calcula mejor con eventos de conversión y seguimiento comercial.",
+      checklist: [
+        "Visitas orgánicas y por campaña.",
+        "Clics en WhatsApp y formularios enviados.",
+        "Tasa de conversión por página.",
+        "Oportunidades calificadas.",
+        "Cotizaciones generadas y ventas cerradas.",
+      ],
+      cta: "Para medir ROI necesitas una web con eventos y rutas claras. Revisa desarrollo web, SEO técnico y automatización de seguimiento.",
+      table: {
+        headers: ["Dato", "Ejemplo", "Uso"],
+        rows: [
+          ["Inversión web", "$900.000", "Costo base"],
+          ["Leads mensuales", "20", "Volumen"],
+          ["Cierre", "15%", "Ventas esperadas"],
+          ["Ticket promedio", "$600.000", "Ingresos estimados"],
+        ],
+      },
+    }),
+    faqs: [
+      {
+        question: "¿GA4 basta para medir ROI?",
+        answer: "Ayuda, pero conviene complementar con CRM, planilla comercial o sistema de seguimiento.",
+      },
+      {
+        question: "¿Qué conversión medir primero?",
+        answer: "Formulario enviado, clic de WhatsApp y clic a cotizar son eventos mínimos.",
+      },
+    ],
+    relatedServices: ["seo-para-empresas-chile", "paginas-web-para-empresas", "landing-pages-para-empresas"],
+  },
+];
+
+blogPosts.push(...plannedBlogPosts);
 
 export function getBlogPostBySlug(slug: string) {
   return blogPosts.find((post) => post.slug === slug);

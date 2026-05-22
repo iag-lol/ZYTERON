@@ -7,6 +7,7 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Condiciones comerciales de ZYTERON sobre cotizaciones, abonos, pagos por etapas, suscripciones mensuales, alcance y soporte.",
   path: "/terminos",
+  noIndex: true,
 });
 
 const sections = [

@@ -18,10 +18,17 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
-import { buildFaqJsonLd, buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import {
+  buildFaqJsonLd,
+  buildReviewsJsonLd,
+  buildServicesListJsonLd,
+  buildWebPageJsonLd,
+  createPageMetadata,
+} from "@/lib/seo";
 import { getApprovedReviewsSnapshot } from "@/lib/web-control";
 import { ClientReviewsSection } from "@/components/home/client-reviews-section";
 import { caseStudies } from "@/content/case-studies";
+import { softBlueBlurDataUrl } from "@/lib/image-placeholders";
 
 export const dynamic = "force-dynamic";
 
@@ -29,10 +36,17 @@ const WHATSAPP_BASE =
   "https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Desarrollo Web, Sistemas y Soluciones Digitales para Empresas",
+  title: "Desarrollo Web y Sistemas Digitales | ZYTERON · Santiago, Chile",
   description:
-    "Creamos páginas web, tiendas online, sistemas web y soluciones digitales para empresas, pymes y emprendedores en Chile. Diseño profesional, SEO base y tecnología escalable.",
+    "Creamos desarrollo web, sistemas digitales, tiendas online, automatización y soporte TI para empresas en Chile. Cotiza sin compromiso con Zyteron.",
   path: "/",
+  keywords: [
+    "desarrollo web Chile",
+    "sistemas web a medida",
+    "tiendas online para pymes",
+    "automatización de procesos",
+    "soporte TI para pymes",
+  ],
 });
 
 const trustPoints = [
@@ -385,6 +399,7 @@ export default async function Home() {
           ],
         })}
       />
+      <JsonLd id="home-review-schema" data={buildReviewsJsonLd(reviews)} />
 
       <section className="relative overflow-hidden bg-hero-pattern">
         <Container className="relative z-10 grid items-center gap-12 py-20 lg:grid-cols-[1.15fr_0.85fr] lg:py-24">
@@ -411,7 +426,7 @@ export default async function Home() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-                <Link href="/servicios">Ver servicios</Link>
+                <Link href="/desarrollo-web">Ver desarrollo web</Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
                 <Link href="/nosotros">Conocer Zyteron</Link>
@@ -524,7 +539,7 @@ export default async function Home() {
 
           <div className="text-center">
             <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/servicios">Ver servicios detallados</Link>
+              <Link href="/desarrollo-web">Ver desarrollo web detallado</Link>
             </Button>
           </div>
         </Container>
@@ -645,9 +660,13 @@ export default async function Home() {
                       <div key={src} className="relative">
                         <Image
                           src={src}
-                          alt={`${demo.name} vista ${index + 1}`}
+                          alt={`Captura ${index + 1} de ${demo.name} para evaluar desarrollo web y tienda online`}
                           fill
-                          sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 30vw"
+                          sizes="(max-width: 768px) 45vw, (max-width: 1280px) 260px, 300px"
+                          quality={80}
+                          loading="lazy"
+                          placeholder="blur"
+                          blurDataURL={softBlueBlurDataUrl}
                           className="object-cover"
                         />
                       </div>

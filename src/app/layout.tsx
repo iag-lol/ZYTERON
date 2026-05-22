@@ -18,6 +18,7 @@ const geistSans = Geist({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   display: "swap",
+  preload: true,
 });
 
 const geistMono = Geist_Mono({
@@ -25,6 +26,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
   display: "swap",
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -75,6 +77,11 @@ export default function RootLayout({
       lang="es"
       className={cn(geistSans.variable, geistMono.variable, "antialiased h-full")}
     >
+      <head>
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://wa.me" />
+        <link rel="preconnect" href="https://www.linkedin.com" />
+      </head>
       <body className="min-h-full bg-white text-slate-900">
         <Script id="gtm-base" strategy="afterInteractive">
           {`

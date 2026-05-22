@@ -13,6 +13,7 @@ import {
   type WebDiscount,
 } from "@/lib/admin/repository";
 import type { PublicDiscount, PublicExtra, PublicPlan, PublicProduct, PublicReview } from "@/lib/web-control-types";
+import { placeholderReviews } from "@/content/reviews";
 
 function readEnvValue(...names: string[]) {
   for (const name of names) {
@@ -375,10 +376,12 @@ function normalizeReview(review: ClientReview): PublicReview | null {
     id: review.id,
     name: review.name,
     company: review.company,
+    role: null,
     rating,
     comment: review.comment.trim(),
     service: review.service,
     createdAt: review.createdAt,
+    source: "client",
   };
 }
 
@@ -518,7 +521,8 @@ export async function getWebPricingSnapshot() {
 
 export async function getApprovedReviewsSnapshot() {
   const reviewsRaw = await getClientReviews("APPROVED");
-  return reviewsRaw.map(normalizeReview).filter((item): item is PublicReview => Boolean(item));
+  const reviews = reviewsRaw.map(normalizeReview).filter((item): item is PublicReview => Boolean(item));
+  return reviews.length > 0 ? reviews : placeholderReviews;
 }
 
 export const WEB_CONTROL_FALLBACK = {

@@ -8,10 +8,18 @@ import { blogPosts } from "@/content/blog-posts";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Blog para empresas y pymes",
+  title: "Blog de Desarrollo Web | ZYTERON · Chile",
   description:
-    "Contenido de ZYTERON sobre desarrollo web, pymes, automatización, soporte TI, tiendas online y seguridad digital con enfoque comercial.",
+    "Guías para empresas chilenas sobre desarrollo web, sistemas, soporte TI, ecommerce, automatización y SEO técnico. Conoce nuestra metodología hoy.",
   path: "/blog",
+  keywords: [
+    "desarrollo web Chile",
+    "sistemas web para pymes",
+    "soporte TI Santiago",
+    "tiendas online Chile",
+    "automatización WhatsApp empresas",
+    "precio página web empresa Chile",
+  ],
 });
 
 const categories = [

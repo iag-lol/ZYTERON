@@ -47,10 +47,12 @@ export type PublicReview = {
   id: string;
   name: string;
   company?: string | null;
+  role?: string | null;
   rating: number;
   comment: string;
   service?: string | null;
   createdAt?: string | null;
+  source?: "placeholder" | "client" | string | null;
 };
 
 export type PublicDiscount = {

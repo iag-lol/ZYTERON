@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ExternalLink, Eye, LayoutTemplate } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { softBlueBlurDataUrl } from "@/lib/image-placeholders";
 
 export type DemoCard = {
   title: string;
@@ -69,9 +70,13 @@ export function DemosGrid({ demos }: DemosGridProps) {
                     <div key={src} className="relative">
                       <Image
                         src={src}
-                        alt={`${demo.title} vista ${index + 1}`}
+                        alt={`Captura ${index + 1} de ${demo.title} para revisar diseño web responsive`}
                         fill
-                        sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 20vw"
+                        sizes="(max-width: 768px) 45vw, (max-width: 1280px) 260px, 300px"
+                        quality={80}
+                        loading="lazy"
+                        placeholder="blur"
+                        blurDataURL={softBlueBlurDataUrl}
                         className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                       />
                     </div>
@@ -146,9 +151,13 @@ export function DemosGrid({ demos }: DemosGridProps) {
                   <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
                     <Image
                       src={activeImageSrc}
-                      alt={`${activeDemo?.title ?? "Demo"} imagen principal`}
+                      alt={`Imagen principal de ${activeDemo?.title ?? "demo web"} con vista de diseño y experiencia responsive`}
                       fill
-                      sizes="(max-width: 1024px) 90vw, 60vw"
+                      sizes="(max-width: 1024px) 90vw, 800px"
+                      quality={80}
+                      loading="lazy"
+                      placeholder="blur"
+                      blurDataURL={softBlueBlurDataUrl}
                       className="object-cover"
                     />
                   </div>
@@ -167,9 +176,13 @@ export function DemosGrid({ demos }: DemosGridProps) {
                         >
                           <Image
                             src={src}
-                            alt={`${activeDemo?.title ?? "Demo"} miniatura ${index + 1}`}
+                            alt={`Miniatura ${index + 1} de ${activeDemo?.title ?? "demo web"}`}
                             fill
-                            sizes="20vw"
+                            sizes="120px"
+                            quality={80}
+                            loading="lazy"
+                            placeholder="blur"
+                            blurDataURL={softBlueBlurDataUrl}
                             className="object-cover"
                           />
                         </button>

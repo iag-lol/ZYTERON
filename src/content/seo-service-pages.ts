@@ -94,9 +94,9 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "desarrollo-web",
     path: "/desarrollo-web",
     navLabel: "Desarrollo web",
-    metaTitle: "Desarrollo Web en Chile | Páginas Web Profesionales para Empresas | Zyteron",
+    metaTitle: "Desarrollo Web para Empresas | ZYTERON · Santiago, Chile",
     metaDescription:
-      "Creamos páginas web profesionales para empresas, pymes y emprendedores en Chile. Diseño moderno, responsive, SEO base y enfoque comercial.",
+      "Desarrolla una web profesional para captar clientes en Chile, con SEO base, diseño responsive y rutas de contacto claras. Cotiza sin compromiso hoy.",
     primaryKeyword: "desarrollo web en Chile",
     secondaryKeywords: [
       "páginas web profesionales",
@@ -152,6 +152,11 @@ export const seoServicePages: SeoServicePage[] = [
         question: "¿Puedo administrar mi sitio web?",
         answer:
           "Sí, cuando el proyecto lo requiere podemos implementar panel administrativo o estructura editable según alcance.",
+      },
+      {
+        question: "¿Qué información necesito entregar para comenzar?",
+        answer:
+          "Objetivos comerciales, servicios principales, referencias visuales, datos de contacto, identidad de marca y cualquier contenido disponible para estructurar una primera propuesta.",
       },
     ],
     relatedLinks: [
@@ -312,9 +317,9 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "tiendas-online",
     path: "/tiendas-online",
     navLabel: "Tiendas online",
-    metaTitle: "Tiendas Online para Pymes y Empresas | Ecommerce en Chile | Zyteron",
+    metaTitle: "Tiendas Online para Pymes | ZYTERON · Chile",
     metaDescription:
-      "Creamos tiendas online modernas, administrables y preparadas para vender productos o servicios de forma profesional.",
+      "Crea una tienda online profesional para vender en Chile con catálogo, pagos, WhatsApp y base SEO lista para crecer. Cotiza sin compromiso para pymes.",
     primaryKeyword: "tiendas online para pymes",
     secondaryKeywords: ["ecommerce Chile", "tienda online administrable", "catálogo digital para empresas"],
     heroTitle: "Tiendas online para pymes y empresas que quieren vender con orden",
@@ -366,6 +371,11 @@ export const seoServicePages: SeoServicePage[] = [
         answer:
           "Sí, evaluamos integración con pasarelas según proveedor, requisitos técnicos y alcance del proyecto.",
       },
+      {
+        question: "¿La tienda puede partir como catálogo sin pago online?",
+        answer:
+          "Sí. Muchas pymes parten con catálogo y venta asistida por WhatsApp, y luego incorporan carrito, pagos o stock según avance comercial.",
+      },
     ],
     relatedLinks: [
       { label: "Páginas web para pymes", href: "/paginas-web-para-pymes", description: "Presencia digital profesional antes de escalar a ecommerce." },
@@ -383,9 +393,9 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "sistemas-web",
     path: "/sistemas-web",
     navLabel: "Sistemas web",
-    metaTitle: "Sistemas Web a Medida para Empresas | Plataformas Administrativas",
+    metaTitle: "Sistemas Web a Medida | ZYTERON · Chile",
     metaDescription:
-      "Desarrollamos sistemas web personalizados para controlar procesos, clientes, productos, reportes, documentos y operaciones internas.",
+      "Ordena procesos con sistemas web a medida para pymes y empresas en Chile: paneles, reportes, permisos y automatización. Conoce nuestra metodología.",
     primaryKeyword: "sistemas web a medida",
     secondaryKeywords: ["software a medida", "panel administrativo", "plataformas administrativas para empresas"],
     heroTitle: "Sistemas web a medida para empresas que necesitan ordenar su operación",
@@ -437,6 +447,11 @@ export const seoServicePages: SeoServicePage[] = [
         answer:
           "Sí. Podemos integrar notificaciones, generación de documentos y flujos de contacto según factibilidad.",
       },
+      {
+        question: "¿Cómo se define el alcance de un sistema web?",
+        answer:
+          "Partimos con levantamiento del proceso, usuarios, datos, reglas, reportes y prioridades para separar una primera versión viable de mejoras futuras.",
+      },
     ],
     relatedLinks: [
       { label: "Automatización", href: "/automatizacion", description: "Automatiza tareas repetitivas y notificaciones del negocio." },
@@ -454,9 +469,9 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "automatizacion",
     path: "/automatizacion",
     navLabel: "Automatización",
-    metaTitle: "Automatización de Procesos para Empresas | Soluciones Digitales | Zyteron",
+    metaTitle: "Automatización de Procesos | ZYTERON · Chile",
     metaDescription:
-      "Automatizamos tareas, formularios, notificaciones, flujos internos y procesos digitales para mejorar la eficiencia de tu empresa.",
+      "Automatiza tareas, formularios y WhatsApp para tu empresa en Chile con flujos medibles, alertas y soporte técnico. Conoce nuestra metodología hoy.",
     primaryKeyword: "automatización de procesos para empresas",
     secondaryKeywords: ["automatización para pymes", "flujos digitales", "automatización WhatsApp empresas"],
     heroTitle: "Automatización de procesos para empresas que quieren operar con menos fricción",
@@ -508,6 +523,11 @@ export const seoServicePages: SeoServicePage[] = [
         answer:
           "No siempre. Algunas automatizaciones pueden partir con formularios y notificaciones; otras requieren panel o sistema interno.",
       },
+      {
+        question: "¿Cómo se mide si una automatización funcionó?",
+        answer:
+          "Definimos indicadores simples como tiempo ahorrado, solicitudes ordenadas, errores evitados, respuestas entregadas o casos derivados correctamente.",
+      },
     ],
     relatedLinks: [
       { label: "Sistemas web", href: "/sistemas-web", description: "Crea paneles y módulos para operar procesos internos." },
@@ -525,9 +545,9 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "soporte-ti",
     path: "/soporte-ti",
     navLabel: "Soporte TI",
-    metaTitle: "Soporte TI para Pymes y Empresas | Asistencia Tecnológica en Chile",
+    metaTitle: "Soporte TI para Pymes | ZYTERON · Santiago, Chile",
     metaDescription:
-      "Soporte TI para empresas y pymes: mantención, configuración, asistencia técnica, correos, equipos, sistemas y soluciones digitales.",
+      "Soporte TI para pymes y empresas en Santiago: correos, equipos, mantención, seguridad básica y continuidad operativa. Cotiza atención técnica clara.",
     primaryKeyword: "soporte TI para pymes",
     secondaryKeywords: ["soporte TI empresas Chile", "asistencia tecnológica", "mantención TI para pymes"],
     heroTitle: "Soporte TI para pymes y empresas que necesitan continuidad operativa",
@@ -578,6 +598,11 @@ export const seoServicePages: SeoServicePage[] = [
         question: "¿Puedo contratar soporte mensual?",
         answer:
           "Sí. Se puede evaluar un esquema recurrente según volumen de requerimientos y criticidad de la operación.",
+      },
+      {
+        question: "¿El soporte incluye recomendaciones preventivas?",
+        answer:
+          "Sí. Además de resolver incidentes, entregamos recomendaciones para disminuir recurrencias, mejorar continuidad y priorizar próximas acciones técnicas.",
       },
     ],
     relatedLinks: [

@@ -11,6 +11,7 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Contáctanos para cotizar páginas web, tiendas online, sistemas internos, automatizaciones y soluciones digitales para tu empresa.",
   path: "/contacto",
+  noIndex: true,
 });
 
 const WHATSAPP_URL =

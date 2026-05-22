@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Sitemap: https://www.zyteron.cl/sitemap.xml
+Disallow: /api/
+Disallow: /admin/

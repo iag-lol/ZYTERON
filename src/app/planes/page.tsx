@@ -8,7 +8,12 @@ import {
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
-import { buildFaqJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import {
+  buildFaqJsonLd,
+  buildPlanPriceSpecificationJsonLd,
+  buildWebPageJsonLd,
+  createPageMetadata,
+} from "@/lib/seo";
 import { OnlinePaymentLauncher } from "@/components/payments/online-payment-launcher";
 import { SERVICE_PAYMENT_ITEMS } from "@/lib/payments/service-catalog";
 
@@ -206,6 +211,33 @@ const plans = [
   },
 ];
 
+const referencePlans = [
+  {
+    name: "Plan Básico",
+    range: "$250.000 - $450.000 CLP",
+    bestFor: "Presencia profesional inicial, landing o sitio pequeño con contacto directo.",
+    includes: "Estructura base, diseño responsive, formulario, WhatsApp, SEO inicial y publicación.",
+  },
+  {
+    name: "Plan Medio",
+    range: "$500.000 - $900.000 CLP",
+    bestFor: "Web corporativa más completa para pymes con servicios, FAQ, confianza y conversión.",
+    includes: "Más páginas, arquitectura comercial, optimización técnica, contenido base y soporte inicial.",
+  },
+  {
+    name: "Plan Avanzado",
+    range: "$1.000.000 - $2.000.000 CLP",
+    bestFor: "Empresas que requieren mayor alcance, integraciones, ecommerce o módulos personalizados.",
+    includes: "Arquitectura extendida, funciones avanzadas, automatizaciones, medición y acompañamiento.",
+  },
+  {
+    name: "Plan Sistema",
+    range: "Desde $800.000 CLP",
+    bestFor: "Sistemas web, paneles administrativos, reportes, usuarios y procesos internos.",
+    includes: "Diagnóstico incluido, levantamiento funcional, primera etapa técnica y roadmap por módulos.",
+  },
+];
+
 const extras = [
   ["Página adicional", "Desde $20.000"],
   ["Sección adicional", "Desde $15.000"],
@@ -295,6 +327,7 @@ export default function PlanesPage() {
           })),
         )}
       />
+      <JsonLd id="planes-price-specification-schema" data={buildPlanPriceSpecificationJsonLd("/planes")} />
 
       <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-20">
         <Container className="space-y-6 text-center">
@@ -345,6 +378,47 @@ export default function PlanesPage() {
           <p className="text-sm text-slate-700">
             Trabajamos con precios competitivos porque optimizamos el desarrollo con herramientas modernas, procesos
             claros y reutilización inteligente de componentes, sin sacrificar calidad ni profesionalismo.
+          </p>
+        </Container>
+      </section>
+
+      <section className="bg-white py-16">
+        <Container className="space-y-6">
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Precios referenciales</p>
+            <h2 className="text-3xl font-extrabold text-slate-900">Rangos concretos para planificar inversión</h2>
+            <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              Estos valores sirven como referencia inicial para empresas y pymes en Chile. El precio final puede variar
+              según alcance, cantidad de páginas, contenido, integraciones, urgencia, soporte, automatizaciones,
+              licencias externas y nivel de personalización.
+            </p>
+          </div>
+          <div className="overflow-x-auto rounded-2xl border border-slate-200">
+            <table className="w-full min-w-[840px] text-left text-sm">
+              <thead className="bg-slate-100 text-slate-700">
+                <tr>
+                  <th className="px-4 py-3 font-bold">Plan</th>
+                  <th className="px-4 py-3 font-bold">Rango referencial</th>
+                  <th className="px-4 py-3 font-bold">Ideal para</th>
+                  <th className="px-4 py-3 font-bold">Incluye base</th>
+                </tr>
+              </thead>
+              <tbody>
+                {referencePlans.map((plan) => (
+                  <tr key={plan.name} className="border-t border-slate-200">
+                    <td className="px-4 py-3 font-bold text-slate-900">{plan.name}</td>
+                    <td className="px-4 py-3 font-extrabold text-blue-700">{plan.range}</td>
+                    <td className="px-4 py-3 text-slate-700">{plan.bestFor}</td>
+                    <td className="px-4 py-3 text-slate-700">{plan.includes}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+            Disclaimer: los rangos son referenciales y no reemplazan una cotización formal. Todo proyecto se confirma
+            por escrito después de revisar requerimientos, funcionalidades, contenidos, integraciones y condiciones de
+            entrega.
           </p>
         </Container>
       </section>

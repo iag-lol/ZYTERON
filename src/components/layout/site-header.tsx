@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Menu, X, ArrowRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { cn } from "@/lib/utils";
@@ -13,37 +13,42 @@ const WHATSAPP_URL =
 
 const primaryNavItems = [
   { href: "/", label: "Inicio" },
-  { href: "/servicios", label: "Servicios" },
   { href: "/demos", label: "Demos" },
-  { href: "/productos", label: "Productos TI" },
   { href: "/planes", label: "Planes" },
+  { href: "/blog", label: "Blog" },
   { href: "/paquetes", label: "Cotizar" },
-  { href: "/contacto", label: "Contacto" },
 ];
 
-const secondaryNavItems = [
-  { href: "/nosotros", label: "Nosotros" },
-  { href: "/casos-exito", label: "Casos" },
-  { href: "/blog", label: "Blog" },
-  { href: "/faq", label: "FAQ" },
-];
-
-const mobileNavItems = [
-  { href: "/", label: "Inicio" },
-  { href: "/servicios", label: "Servicios" },
-  { href: "/demos", label: "Demos" },
-  { href: "/productos", label: "Productos TI" },
-  { href: "/planes", label: "Planes" },
-  { href: "/nosotros", label: "Nosotros" },
-  { href: "/casos-exito", label: "Casos" },
-  { href: "/blog", label: "Blog" },
-  { href: "/faq", label: "FAQ" },
-  { href: "/paquetes", label: "Cotizar" },
-  { href: "/contacto", label: "Contacto" },
+const servicesNavItems = [
+  { href: "/desarrollo-web", label: "Desarrollo Web" },
+  { href: "/tiendas-online", label: "Tiendas Online" },
+  { href: "/sistemas-web", label: "Sistemas Web" },
+  { href: "/automatizacion", label: "Automatización" },
+  { href: "/soporte-ti", label: "Soporte TI" },
 ];
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
+  const firstMobileLinkRef = useRef<HTMLAnchorElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    firstMobileLinkRef.current?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-lg">
@@ -100,8 +105,9 @@ export function SiteHeader() {
           <button
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition-colors hover:bg-slate-100 lg:hidden"
             onClick={() => setOpen((value) => !value)}
-            aria-label="Abrir menú"
+            aria-label={open ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={open}
+            aria-controls="mobile-navigation"
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -109,7 +115,45 @@ export function SiteHeader() {
 
         <div className="mt-3 hidden items-center justify-between gap-4 lg:flex">
           <nav className="flex flex-wrap items-center gap-1 rounded-xl border border-slate-200 bg-slate-50/90 p-1">
-            {primaryNavItems.map((item) => (
+            <Link
+              href="/"
+              className="rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap text-slate-700 transition-colors hover:bg-white hover:text-blue-700"
+            >
+              Inicio
+            </Link>
+            <div
+              className="relative"
+              onMouseEnter={() => setServicesOpen(true)}
+              onMouseLeave={() => setServicesOpen(false)}
+            >
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap text-slate-700 transition-colors hover:bg-white hover:text-blue-700"
+                onClick={() => setServicesOpen((value) => !value)}
+                aria-expanded={servicesOpen}
+                aria-controls="desktop-services-menu"
+              >
+                Servicios <ChevronDown className="h-3.5 w-3.5" />
+              </button>
+              {servicesOpen ? (
+                <div
+                  id="desktop-services-menu"
+                  className="absolute left-0 top-full z-40 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-xl"
+                >
+                  {servicesNavItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                      onClick={() => setServicesOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            {primaryNavItems.slice(1).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -119,29 +163,39 @@ export function SiteHeader() {
               </Link>
             ))}
           </nav>
-
-          <nav className="hidden items-center gap-1 xl:flex">
-            {secondaryNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-lg px-2.5 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-blue-700 whitespace-nowrap"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
         </div>
       </Container>
 
       <div
+        id="mobile-navigation"
         className={cn(
           "border-t border-slate-100 bg-white shadow-lg transition-[max-height,opacity] duration-300 lg:hidden",
           open ? "max-h-[700px] opacity-100" : "max-h-0 overflow-hidden opacity-0",
         )}
       >
         <Container className="flex flex-col gap-1 py-4">
-          {mobileNavItems.map((item) => (
+          <Link
+            ref={firstMobileLinkRef}
+            href="/"
+            className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
+            onClick={() => setOpen(false)}
+          >
+            Inicio
+          </Link>
+          <div className="rounded-xl border border-slate-100 bg-slate-50 p-2">
+            <p className="px-2 pb-1 text-[11px] font-bold uppercase tracking-widest text-slate-500">Servicios</p>
+            {servicesNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                onClick={() => setOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+          {primaryNavItems.slice(1).map((item) => (
             <Link
               key={item.href}
               href={item.href}

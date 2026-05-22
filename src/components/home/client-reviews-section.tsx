@@ -99,10 +99,10 @@ export function ClientReviewsSection({ reviews }: Props) {
             Comentarios de clientes
           </div>
           <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
-            Opiniones <span className="text-gradient-hero">verificadas</span>
+            Opiniones <span className="text-gradient-hero">publicadas</span>
           </h2>
           <p className="mx-auto max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
-            Publicamos solo reseñas moderadas para mantener transparencia y calidad en cada testimonio.
+            Mostramos testimonios moderados y ejemplos referenciales mientras se recopilan reseñas reales verificadas.
           </p>
         </div>
 
@@ -128,6 +128,9 @@ export function ClientReviewsSection({ reviews }: Props) {
                         <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
                           {review.company || "Cliente Zyteron"}
                         </p>
+                        {review.role ? (
+                          <p className="mt-1 text-xs text-slate-500">{review.role}</p>
+                        ) : null}
                       </div>
                       <div className="rounded-lg bg-blue-50 p-1.5 text-blue-700">
                         <Quote className="h-3.5 w-3.5" />
@@ -142,7 +145,11 @@ export function ClientReviewsSection({ reviews }: Props) {
                       ))}
                     </div>
                     <p className="mt-3 text-sm leading-relaxed text-slate-600">{review.comment}</p>
-                    <p className="mt-4 text-xs text-slate-400">{formatDate(review.createdAt)}</p>
+                    <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                      <span>{formatDate(review.createdAt)}</span>
+                      {review.service ? <span>Servicio: {review.service}</span> : null}
+                      {review.source === "placeholder" ? <span>Ejemplo referencial</span> : null}
+                    </div>
                   </article>
                 ))
               )}

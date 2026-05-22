@@ -23,6 +23,7 @@ import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import { softBlueBlurDataUrl } from "@/lib/image-placeholders";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Nosotros, Desarrollo Web y Soluciones Digitales en Chile",
@@ -338,6 +339,9 @@ export default function NosotrosPage() {
                   alt={`Foto profesional de ${leader.name}, ${leader.role}`}
                   fill
                   sizes="(max-width: 768px) 100vw, 45vw"
+                  quality={90}
+                  placeholder="blur"
+                  blurDataURL={softBlueBlurDataUrl}
                   className="object-cover object-[center_20%]"
                   priority
                 />
@@ -365,6 +369,10 @@ export default function NosotrosPage() {
                       alt={`Foto de ${member.name}, ${member.role}`}
                       fill
                       sizes="110px"
+                      quality={80}
+                      loading="lazy"
+                      placeholder="blur"
+                      blurDataURL={softBlueBlurDataUrl}
                       className="object-cover object-[center_20%]"
                     />
                   </div>

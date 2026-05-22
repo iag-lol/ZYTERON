@@ -1,6 +1,6 @@
 import { siteConfig } from "@/config/site";
 
-const sameAs = [siteConfig.social.linkedin].filter(Boolean);
+const sameAs = [siteConfig.social.linkedin, siteConfig.social.whatsapp].filter(Boolean);
 
 export const defaultOpenGraph = {
   type: "website",

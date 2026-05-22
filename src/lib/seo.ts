@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { defaultJsonLdOrganization, defaultOpenGraph, defaultTwitter } from "@/config/seo";
 import { siteConfig } from "@/config/site";
 import { getAbsoluteOgImageUrl } from "@/config/og";
+import { getReviewAggregate, placeholderReviews } from "@/content/reviews";
 
 type SeoMetadataInput = {
   title: string;
@@ -10,6 +11,7 @@ type SeoMetadataInput = {
   noIndex?: boolean;
   ogImagePath?: string;
   ogImageAlt?: string;
+  keywords?: string[];
 };
 
 type BreadcrumbItem = {
@@ -29,6 +31,12 @@ type ServiceJsonLdInput = {
   name: string;
   description: string;
   serviceType: string;
+  offers?: Array<{
+    name: string;
+    lowPrice: number;
+    highPrice?: number;
+    description?: string;
+  }>;
 };
 
 type FaqItem = {
@@ -63,9 +71,14 @@ type ProfessionalServiceJsonLdInput = {
 
 function normalizePath(path: string) {
   if (!path) return "/";
-  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    const parsed = new URL(path);
+    return parsed.pathname === "/" ? "/" : parsed.pathname.replace(/\/$/, "");
+  }
   if (path === "/") return "/";
-  return path.startsWith("/") ? path : `/${path}`;
+  const withoutQuery = path.split("?")[0]?.split("#")[0] || "/";
+  const normalized = withoutQuery.startsWith("/") ? withoutQuery : `/${withoutQuery}`;
+  return normalized === "/" ? "/" : normalized.replace(/\/$/, "");
 }
 
 function normalizeMetadataTitle(rawTitle: string) {
@@ -92,6 +105,7 @@ export function createPageMetadata({
   path,
   ogImagePath,
   ogImageAlt,
+  keywords,
   noIndex = false,
 }: SeoMetadataInput): Metadata {
   const url = buildAbsoluteUrl(path);
@@ -99,8 +113,11 @@ export function createPageMetadata({
   const title = normalizeMetadataTitle(rawTitle);
 
   return {
-    title,
+    title: {
+      absolute: title,
+    },
     description,
+    keywords,
     alternates: {
       canonical: url,
     },
@@ -127,7 +144,7 @@ export function createPageMetadata({
     robots: noIndex
       ? {
           index: false,
-          follow: false,
+          follow: true,
           nocache: true,
         }
       : {
@@ -175,9 +192,10 @@ function buildContactPoint() {
 }
 
 export function buildOrganizationGraph() {
-  const sameAs = [siteConfig.social.linkedin].filter(Boolean);
+  const sameAs = [siteConfig.social.linkedin, siteConfig.social.whatsapp].filter(Boolean);
   const servedAreas = buildServedAreas();
   const contactPoint = buildContactPoint();
+  const aggregateRating = getReviewAggregate();
 
   return {
     "@context": "https://schema.org",
@@ -200,6 +218,7 @@ export function buildOrganizationGraph() {
         legalName: siteConfig.legalName,
         url: siteConfig.url,
         image: `${siteConfig.url}/logo.svg`,
+        logo: `${siteConfig.url}/logo.svg`,
         telephone: siteConfig.contact.phone,
         email: siteConfig.contact.email,
         description: siteConfig.description,
@@ -213,6 +232,14 @@ export function buildOrganizationGraph() {
           addressCountry: siteConfig.address.countryCode,
         },
         openingHours: siteConfig.business.hours,
+        openingHoursSpecification: [
+          {
+            "@type": "OpeningHoursSpecification",
+            dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+            opens: "09:00",
+            closes: "18:00",
+          },
+        ],
         priceRange: siteConfig.business.priceRange,
         sameAs,
         parentOrganization: {
@@ -227,12 +254,31 @@ export function buildOrganizationGraph() {
         taxID: siteConfig.taxId,
         url: siteConfig.url,
         image: `${siteConfig.url}/logo.svg`,
+        logo: `${siteConfig.url}/logo.svg`,
         telephone: siteConfig.contact.phone,
         email: siteConfig.contact.email,
         description: siteConfig.description,
         openingHours: siteConfig.business.hours,
+        openingHoursSpecification: [
+          {
+            "@type": "OpeningHoursSpecification",
+            dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+            opens: "09:00",
+            closes: "18:00",
+          },
+        ],
         priceRange: siteConfig.business.priceRange,
         areaServed: servedAreas,
+        aggregateRating:
+          aggregateRating.reviewCount > 0
+            ? {
+                "@type": "AggregateRating",
+                ratingValue: aggregateRating.ratingValue,
+                reviewCount: aggregateRating.reviewCount,
+                bestRating: 5,
+                worstRating: 1,
+              }
+            : undefined,
         serviceType: siteConfig.business.serviceTypes,
         contactPoint,
         address: {
@@ -254,7 +300,7 @@ export function buildProfessionalServiceJsonLd({
   description = siteConfig.description,
 }: ProfessionalServiceJsonLdInput) {
   const pageUrl = buildAbsoluteUrl(path);
-  const sameAs = [siteConfig.social.linkedin].filter(Boolean);
+  const sameAs = [siteConfig.social.linkedin, siteConfig.social.whatsapp].filter(Boolean);
 
   return {
     "@context": "https://schema.org",
@@ -318,6 +364,7 @@ export function buildServiceJsonLd({
   name,
   description,
   serviceType,
+  offers,
 }: ServiceJsonLdInput) {
   const pageUrl = buildAbsoluteUrl(path);
   const areaServed = buildServedAreas();
@@ -337,6 +384,29 @@ export function buildServiceJsonLd({
       url: siteConfig.url,
       logo: `${siteConfig.url}/logo.svg`,
     },
+    offers: offers?.length
+      ? {
+          "@type": "OfferCatalog",
+          name: `Ofertas referenciales de ${name}`,
+          itemListElement: offers.map((offer) => ({
+            "@type": "Offer",
+            name: offer.name,
+            description: offer.description,
+            priceCurrency: "CLP",
+            priceSpecification: {
+              "@type": "PriceSpecification",
+              priceCurrency: "CLP",
+              minPrice: offer.lowPrice,
+              ...(offer.highPrice ? { maxPrice: offer.highPrice } : {}),
+            },
+            availability: "https://schema.org/InStock",
+            url: pageUrl,
+            seller: {
+              "@id": `${siteConfig.url}/#organization`,
+            },
+          })),
+        }
+      : undefined,
   };
 }
 
@@ -423,7 +493,7 @@ export function buildArticleJsonLd({
 
   return {
     "@context": "https://schema.org",
-    "@type": "BlogPosting",
+    "@type": "Article",
     "@id": `${pageUrl}#article`,
     headline: title,
     description,
@@ -451,3 +521,110 @@ export function buildArticleJsonLd({
     },
   };
 }
+
+export function buildReviewsJsonLd(
+  reviews: Array<{
+    id: string;
+    name: string;
+    company?: string | null;
+    role?: string | null;
+    service?: string | null;
+    rating: number;
+    comment: string;
+    createdAt?: string | null;
+  }>,
+) {
+  return {
+    "@context": "https://schema.org",
+    "@graph": reviews.map((review) => ({
+      "@type": "Review",
+      "@id": `${siteConfig.url}/#review-${review.id}`,
+      itemReviewed: {
+        "@id": `${siteConfig.url}/#localbusiness`,
+      },
+      author: {
+        "@type": "Person",
+        name: review.name,
+        ...(review.role ? { jobTitle: review.role } : {}),
+        ...(review.company
+          ? {
+              worksFor: {
+                "@type": "Organization",
+                name: review.company,
+              },
+            }
+          : {}),
+      },
+      reviewRating: {
+        "@type": "Rating",
+        ratingValue: review.rating,
+        bestRating: 5,
+        worstRating: 1,
+      },
+      reviewBody: review.comment,
+      datePublished: review.createdAt,
+      publisher: {
+        "@id": `${siteConfig.url}/#organization`,
+      },
+    })),
+  };
+}
+
+export function buildPlanPriceSpecificationJsonLd(path: string) {
+  const pageUrl = buildAbsoluteUrl(path);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "OfferCatalog",
+    "@id": `${pageUrl}#price-specifications`,
+    name: "Planes referenciales ZYTERON",
+    url: pageUrl,
+    itemListElement: [
+      {
+        "@type": "Offer",
+        name: "Plan Básico",
+        priceCurrency: "CLP",
+        priceSpecification: {
+          "@type": "PriceSpecification",
+          priceCurrency: "CLP",
+          minPrice: 250000,
+          maxPrice: 450000,
+        },
+      },
+      {
+        "@type": "Offer",
+        name: "Plan Medio",
+        priceCurrency: "CLP",
+        priceSpecification: {
+          "@type": "PriceSpecification",
+          priceCurrency: "CLP",
+          minPrice: 500000,
+          maxPrice: 900000,
+        },
+      },
+      {
+        "@type": "Offer",
+        name: "Plan Avanzado",
+        priceCurrency: "CLP",
+        priceSpecification: {
+          "@type": "PriceSpecification",
+          priceCurrency: "CLP",
+          minPrice: 1000000,
+          maxPrice: 2000000,
+        },
+      },
+      {
+        "@type": "Offer",
+        name: "Plan Sistema",
+        priceCurrency: "CLP",
+        priceSpecification: {
+          "@type": "PriceSpecification",
+          priceCurrency: "CLP",
+          minPrice: 800000,
+        },
+      },
+    ],
+  };
+}
+
+export { placeholderReviews };

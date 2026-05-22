@@ -34,6 +34,7 @@ export const siteConfig = {
   },
   social: {
     linkedin: "https://www.linkedin.com/company/zyteron",
+    whatsapp: "https://wa.me/56984752936",
   },
   representative: {
     name: "Eduardo Ávila",
