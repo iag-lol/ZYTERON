@@ -3,6 +3,7 @@ import { Container } from "./container";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { blogPosts } from "@/content/blog-posts";
+import { siteConfig } from "@/config/site";
 
 const WHATSAPP_URL =
   "https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.";
@@ -108,11 +109,11 @@ export function SiteFooter() {
               +56 9 8475 2936
             </a>
             <a
-              href="mailto:eduardo.avila@zyteron.cl"
+              href={`mailto:${siteConfig.contact.email}`}
               className="flex items-center gap-2 text-slate-300 transition-colors hover:text-white"
             >
               <Mail className="h-4 w-4" />
-              eduardo.avila@zyteron.cl
+              {siteConfig.contact.email}
             </a>
             <div className="flex items-center gap-2 text-slate-300">
               <MapPin className="h-4 w-4" />

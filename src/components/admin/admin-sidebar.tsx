@@ -184,7 +184,7 @@ export function AdminSidebar() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[12px] font-bold text-slate-200">Zyteron Admin</p>
-            <p className="truncate text-[10px] text-slate-500">eduardo.avila@zyteron.cl</p>
+            <p className="truncate text-[10px] text-slate-500">contacto@zyteron.cl</p>
           </div>
           <div className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
         </div>

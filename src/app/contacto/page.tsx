@@ -4,6 +4,7 @@ import { ContactLeadForm } from "@/components/forms/contact-lead-form";
 import { Mail, MapPin, Clock, FileText } from "lucide-react";
 import { JsonLd } from "@/components/seo/json-ld";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
+import { siteConfig } from "@/config/site";
 import { buildContactPageJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
@@ -31,9 +32,9 @@ const contactInfo = [
   {
     icon: <Mail className="h-5 w-5" />,
     label: "Correo",
-    value: "eduardo.avila@zyteron.cl",
+    value: siteConfig.contact.email,
     sub: "Atención comercial y coordinación",
-    href: "mailto:eduardo.avila@zyteron.cl",
+    href: `mailto:${siteConfig.contact.email}`,
     classes: "border-blue-200 bg-blue-50 hover:bg-blue-100/70",
     iconClasses: "bg-blue-100 text-blue-700",
     external: false,

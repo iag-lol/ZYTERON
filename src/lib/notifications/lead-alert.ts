@@ -257,7 +257,7 @@ export async function sendLeadAlertEmail(input: LeadAlertInput) {
     return { sent: false as const, reason: "missing_api_key" as const };
   }
 
-  const toEmail = normalizeText(process.env.RESEND_LEAD_TO_EMAIL) || "eduardo.avila@zyteron.cl";
+  const toEmail = normalizeText(process.env.RESEND_LEAD_TO_EMAIL) || "contacto@zyteron.cl";
   const from = normalizeFromAddress(process.env.RESEND_FROM_EMAIL, ZYTERON_COMPANY.brandName);
   const replyTo = normalizeText(process.env.RESEND_REPLY_TO) || ZYTERON_COMPANY.salesEmail;
   const bcc = normalizeText(process.env.RESEND_BCC_EMAIL);

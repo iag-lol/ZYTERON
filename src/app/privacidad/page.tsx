@@ -63,7 +63,7 @@ const sections = [
   {
     title: "7. Derechos de actualización o eliminación",
     points: [
-      "Puedes solicitar actualización, rectificación o eliminación de tus datos escribiendo a eduardo.avila@zyteron.cl.",
+      "Puedes solicitar actualización, rectificación o eliminación de tus datos escribiendo a contacto@zyteron.cl.",
       "La solicitud será revisada conforme a obligaciones legales, tributarias y contractuales aplicables.",
     ],
   },

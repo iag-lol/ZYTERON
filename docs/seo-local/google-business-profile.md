@@ -15,7 +15,7 @@ Esta acción no se resuelve por código. Debe ejecutarse desde una cuenta Google
 - Horario comercial: lunes a viernes de 09:00 a 18:00
 - Dirección o área de servicio: Santiago, Región Metropolitana, Chile
 - Área de atención: Chile
-- Correo comercial: eduardo.avila@zyteron.cl
+- Correo comercial: contacto@zyteron.cl
 
 ## Servicios principales
 

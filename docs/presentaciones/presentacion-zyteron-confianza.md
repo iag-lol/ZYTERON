@@ -14,7 +14,7 @@
 - Eduardo Ávila, fundador y líder de proyectos
 - Dirección estratégica, relación con clientes y ejecución ordenada
 - Contacto directo y acompañamiento cercano en cada etapa
-- Correo: eduardo.avila@zyteron.cl
+- Correo: contacto@zyteron.cl
 
 ## Diapositiva 4: Equipo Técnico
 - Víctor: desarrollo web, soporte técnico, mantenimiento de sistemas e implementación TI
@@ -43,4 +43,4 @@
 - En Zyteron creemos en la tecnología bien aplicada: simple, segura y útil
 - Estamos listos para apoyar a tu empresa con soluciones a medida
 - Web: zyteron.cl
-- Correo: eduardo.avila@zyteron.cl
+- Correo: contacto@zyteron.cl

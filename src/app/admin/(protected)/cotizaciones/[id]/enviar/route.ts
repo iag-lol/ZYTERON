@@ -20,7 +20,7 @@ type ResendEmailDetail = {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FROM_WITH_NAME_REGEX = /^[^<>]+<[^<>@\s]+@[^<>@\s]+\.[^<>@\s]+>$/;
-const QUOTE_INTERNAL_COPY_EMAIL = "eduardo.avila@zyteron.cl";
+const QUOTE_INTERNAL_COPY_EMAIL = "contacto@zyteron.cl";
 
 function safeRedirectPath(value: unknown) {
   const path = typeof value === "string" ? value.trim() : "";
