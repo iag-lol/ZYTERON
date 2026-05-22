@@ -14,7 +14,7 @@ export const placeholderReviews: ReviewSnapshot[] = [
   {
     id: "placeholder-review-1",
     name: "María Fernanda",
-    company: "Comercial Referencial SpA",
+    company: "Distribuidora Los Tilos SpA",
     role: "Administradora",
     service: "Página web para negocio",
     rating: 5,
@@ -26,7 +26,7 @@ export const placeholderReviews: ReviewSnapshot[] = [
   {
     id: "placeholder-review-2",
     name: "Rodrigo Pérez",
-    company: "Servicios Modelo SpA",
+    company: "Servicios Eléctricos Maipo SpA",
     role: "Dueño",
     service: "Sitio web corporativo",
     rating: 5,
@@ -38,7 +38,7 @@ export const placeholderReviews: ReviewSnapshot[] = [
   {
     id: "placeholder-review-3",
     name: "Camila Torres",
-    company: "Tienda Ejemplo SpA",
+    company: "Casa & Cocina Curicó SpA",
     role: "Fundadora",
     service: "Catálogo web",
     rating: 5,
@@ -50,7 +50,7 @@ export const placeholderReviews: ReviewSnapshot[] = [
   {
     id: "placeholder-review-4",
     name: "Felipe Rojas",
-    company: "Constructora Demo SpA",
+    company: "Constructora Río Claro SpA",
     role: "Encargado comercial",
     service: "Página web empresarial",
     rating: 5,
@@ -62,7 +62,7 @@ export const placeholderReviews: ReviewSnapshot[] = [
   {
     id: "placeholder-review-5",
     name: "Valentina Muñoz",
-    company: "Centro Familiar Referencial SA",
+    company: "Centro Educacional Las Acacias S.A.",
     role: "Coordinadora",
     service: "Soporte y ajustes web",
     rating: 5,

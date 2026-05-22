@@ -156,7 +156,6 @@ export function ClientReviewsSection({ reviews }: Props) {
                   <div className="mt-8 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                     <span>{formatDate(activeReview.createdAt)}</span>
                     {activeReview.service ? <span>Servicio: {activeReview.service}</span> : null}
-                    {activeReview.source === "placeholder" ? <span>Comentario de ejemplo</span> : null}
                   </div>
                 </article>
 
@@ -290,7 +289,6 @@ export function ClientReviewsSection({ reviews }: Props) {
                   rows={4}
                   value={reviewForm.comment}
                   onChange={(event) => setReviewForm((prev) => ({ ...prev, comment: event.target.value }))}
-                  placeholder="Ej: Me ayudaron mucho con mi página y resolvieron mis dudas hasta el final."
                   className="border-slate-200 bg-white/90 focus-visible:ring-blue-500"
                   required
                 />

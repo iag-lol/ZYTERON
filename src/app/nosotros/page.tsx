@@ -3,8 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
+  Building2,
   CheckCircle2,
   Compass,
+  Cpu,
   Eye,
   Handshake,
   Lightbulb,
@@ -111,6 +113,14 @@ const values = [
   },
 ];
 
+const leaderExpertise = [
+  { icon: Cpu, label: "Tecnología" },
+  { icon: Workflow, label: "Análisis de procesos" },
+  { icon: Users, label: "Liderazgo operativo" },
+  { icon: MonitorSmartphone, label: "Soluciones digitales" },
+  { icon: Building2, label: "Negocios reales" },
+];
+
 const teamMembers = [
   {
     name: "Eduardo Ávila",
@@ -206,6 +216,91 @@ export default function NosotrosPage() {
             <p className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs leading-relaxed text-slate-500">
               Información comercial y tributaria disponible para clientes y procesos contractuales. No publicamos datos incompletos ni antecedentes no verificados en esta página.
             </p>
+          </div>
+        </Container>
+      </section>
+
+      <section className="border-b border-slate-200 bg-white py-20">
+        <Container className="space-y-10">
+          <div className="space-y-2 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Equipo</p>
+            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Quién está detrás de Zyteron</h2>
+            <p className="mx-auto max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              Profesionales enfocados en desarrollo web, sistemas digitales y soporte tecnológico para empresas en Chile.
+            </p>
+          </div>
+
+          <article className="card-premium mx-auto max-w-5xl overflow-hidden border-blue-100 p-6 shadow-md md:p-8">
+            <div className="grid gap-6 md:grid-cols-[0.85fr_1.15fr] md:items-start">
+              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                <Image
+                  src={leader.photo}
+                  alt={`Foto profesional de ${leader.name}, ${leader.role}`}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 45vw"
+                  quality={90}
+                  placeholder="blur"
+                  blurDataURL={softBlueBlurDataUrl}
+                  className="object-cover object-[center_20%]"
+                  priority
+                />
+              </div>
+              <div className="space-y-5">
+                <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Representante de Zyteron</p>
+                <h3 className="text-3xl font-extrabold text-slate-900">{leader.name}</h3>
+                <p className="text-sm font-semibold text-slate-700">{leader.role}</p>
+                <p className="text-sm leading-relaxed text-slate-600 sm:text-base">{leader.bio}</p>
+
+                <ul className="grid gap-2.5 sm:grid-cols-2">
+                  {leaderExpertise.map(({ icon: Icon, label }) => (
+                    <li
+                      key={label}
+                      className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 transition-colors hover:border-blue-200 hover:bg-blue-50/60"
+                    >
+                      <span className="inline-flex shrink-0 rounded-lg bg-blue-100 p-2 text-blue-700">
+                        <Icon className="h-4 w-4" aria-hidden />
+                      </span>
+                      <span className="text-sm font-semibold text-slate-800">{label}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <a
+                  href={`mailto:${leader.contact}`}
+                  className="inline-flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 transition-colors hover:border-blue-200 hover:bg-blue-100 hover:text-blue-900"
+                >
+                  <Mail className="h-4 w-4" aria-hidden />
+                  {leader.contact}
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {team.map((member) => (
+              <article key={member.name} className="card-premium p-5">
+                <div className="grid gap-4 sm:grid-cols-[110px_1fr] sm:items-start">
+                  <div className="relative mx-auto aspect-[4/5] w-full max-w-[110px] overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:mx-0">
+                    <Image
+                      src={member.photo}
+                      alt={`Foto de ${member.name}, ${member.role}`}
+                      fill
+                      sizes="110px"
+                      quality={80}
+                      loading="lazy"
+                      placeholder="blur"
+                      blurDataURL={softBlueBlurDataUrl}
+                      className="object-cover object-[center_20%]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-blue-600">{member.role}</p>
+                    <h3 className="text-xl font-extrabold text-slate-900">{member.name}</h3>
+                    <p className="text-sm leading-relaxed text-slate-600">{member.bio}</p>
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
         </Container>
       </section>
@@ -319,70 +414,6 @@ export default function NosotrosPage() {
                 <ShieldCheck className="h-5 w-5 text-blue-700" />
                 <p className="text-sm font-semibold text-slate-700">{item}</p>
               </div>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      <section className="bg-white py-20">
-        <Container className="space-y-10">
-          <div className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Equipo</p>
-            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Quién está detrás de Zyteron</h2>
-          </div>
-
-          <article className="card-premium mx-auto max-w-5xl p-6 md:p-8">
-            <div className="grid gap-6 md:grid-cols-[0.85fr_1.15fr] md:items-start">
-              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                <Image
-                  src={leader.photo}
-                  alt={`Foto profesional de ${leader.name}, ${leader.role}`}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 45vw"
-                  quality={90}
-                  placeholder="blur"
-                  blurDataURL={softBlueBlurDataUrl}
-                  className="object-cover object-[center_20%]"
-                  priority
-                />
-              </div>
-              <div className="space-y-4">
-                <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Representante de Zyteron</p>
-                <h3 className="text-3xl font-extrabold text-slate-900">{leader.name}</h3>
-                <p className="text-sm font-semibold text-slate-700">{leader.role}</p>
-                <p className="text-sm leading-relaxed text-slate-600 sm:text-base">{leader.bio}</p>
-                <a href={`mailto:${leader.contact}`} className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-900">
-                  <Mail className="h-4 w-4" />
-                  {leader.contact}
-                </a>
-              </div>
-            </div>
-          </article>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {team.map((member) => (
-              <article key={member.name} className="card-premium p-5">
-                <div className="grid gap-4 sm:grid-cols-[110px_1fr] sm:items-start">
-                  <div className="relative mx-auto aspect-[4/5] w-full max-w-[110px] overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:mx-0">
-                    <Image
-                      src={member.photo}
-                      alt={`Foto de ${member.name}, ${member.role}`}
-                      fill
-                      sizes="110px"
-                      quality={80}
-                      loading="lazy"
-                      placeholder="blur"
-                      blurDataURL={softBlueBlurDataUrl}
-                      className="object-cover object-[center_20%]"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-blue-600">{member.role}</p>
-                    <h3 className="text-xl font-extrabold text-slate-900">{member.name}</h3>
-                    <p className="text-sm leading-relaxed text-slate-600">{member.bio}</p>
-                  </div>
-                </div>
-              </article>
             ))}
           </div>
         </Container>
