@@ -8,6 +8,8 @@ import { siteConfig } from "@/config/site";
 const WHATSAPP_URL =
   "https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.";
 
+const COPYRIGHT_YEAR = 2026;
+
 const footerColumns = [
   {
     title: "Servicios Principales",
@@ -178,7 +180,7 @@ export function SiteFooter() {
 
       <div className="border-t border-white/[0.07]">
         <Container className="flex flex-wrap items-center justify-between gap-3 py-4 text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} ZYTERON.CL. Todos los derechos reservados.</p>
+          <p>© {COPYRIGHT_YEAR} ZYTERON.CL. Todos los derechos reservados.</p>
           <div className="flex gap-5">
             <Link href="/privacidad" className="transition-colors hover:text-slate-300">
               Privacidad

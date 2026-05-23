@@ -1,23 +1,28 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { Suspense, useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function AdminLoginPage() {
+function AdminLoginInner() {
+  const searchParams = useSearchParams();
+  return <AdminLoginForm queryHasError={Boolean(searchParams.get("error"))} />;
+}
+
+function AdminLoginForm({ queryHasError }: { queryHasError: boolean }) {
   const [pwd, setPwd] = useState("");
-  const [error, setError] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return new URLSearchParams(window.location.search).get("error")
-      ? "Contraseña incorrecta"
-      : "";
-  });
+  const [error, setError] = useState("");
+  const [hideQueryError, setHideQueryError] = useState(false);
   const [pending, startTransition] = useTransition();
+  const queryError = !hideQueryError && queryHasError ? "Contraseña incorrecta" : "";
+  const visibleError = error || queryError;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setHideQueryError(true);
     startTransition(async () => {
       const res = await fetch("/admin/login/submit", {
         method: "POST",
@@ -56,12 +61,20 @@ export default function AdminLoginPage() {
               placeholder="••••••••"
             />
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {visibleError && <p className="text-sm text-red-600">{visibleError}</p>}
           <Button type="submit" className="w-full" disabled={pending}>
             {pending ? "Verificando..." : "Ingresar"}
           </Button>
         </form>
       </div>
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={<AdminLoginForm queryHasError={false} />}>
+      <AdminLoginInner />
+    </Suspense>
   );
 }

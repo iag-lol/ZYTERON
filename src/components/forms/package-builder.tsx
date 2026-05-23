@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { formatStableDateEsCl } from "@/lib/stable-date";
 import type { PublicDiscount, PublicExtra, PublicPlan, PublicReview } from "@/lib/web-control-types";
 
 type SubmitState =
@@ -58,17 +59,6 @@ function currencyCLP(value: number) {
     currency: "CLP",
     maximumFractionDigits: 0,
   }).format(Math.max(0, Math.round(value)));
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return "Reciente";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "Reciente";
-  return parsed.toLocaleDateString("es-CL", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
 }
 
 function groupedExtras(extras: PublicExtra[]) {
@@ -880,7 +870,7 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
                     </div>
                     <p className="mt-2 text-sm leading-relaxed text-slate-600">{review.comment}</p>
                     <p className="mt-3 text-xs text-slate-400">
-                      {review.company || "Cliente Zyteron"} · {formatDate(review.createdAt)}
+                      {review.company || "Cliente Zyteron"} · {formatStableDateEsCl(review.createdAt)}
                     </p>
                   </article>
                 ))

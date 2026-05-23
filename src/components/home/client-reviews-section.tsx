@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { formatStableDateEsCl } from "@/lib/stable-date";
 import type { PublicReview } from "@/lib/web-control-types";
 
 type Props = {
@@ -16,17 +17,6 @@ type ReviewSubmitState =
   | { status: "idle" }
   | { status: "success"; reference: string }
   | { status: "error"; message: string };
-
-function formatDate(value?: string | null) {
-  if (!value) return "Reciente";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "Reciente";
-  return parsed.toLocaleDateString("es-CL", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 export function ClientReviewsSection({ reviews }: Props) {
   const [activeReviewIndex, setActiveReviewIndex] = useState(0);
@@ -154,7 +144,7 @@ export function ClientReviewsSection({ reviews }: Props) {
                   </p>
 
                   <div className="mt-8 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                    <span>{formatDate(activeReview.createdAt)}</span>
+                    <span>{formatStableDateEsCl(activeReview.createdAt)}</span>
                     {activeReview.service ? <span>Servicio: {activeReview.service}</span> : null}
                   </div>
                 </article>

@@ -30,7 +30,7 @@ import { ClientReviewsSection } from "@/components/home/client-reviews-section";
 import { caseStudies } from "@/content/case-studies";
 import { softBlueBlurDataUrl } from "@/lib/image-placeholders";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const WHATSAPP_BASE =
   "https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.";

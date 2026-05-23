@@ -4,6 +4,7 @@ import { type FormEvent, useMemo, useState } from "react";
 import { AlertTriangle, ArrowRight, Check, CreditCard, Minus, Plus, Search, ShoppingCart, Tag, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatRut, isValidRut } from "@/lib/checkout/rut";
+import { formatStableDateEsCl } from "@/lib/stable-date";
 import type { PublicProduct } from "@/lib/web-control-types";
 
 type Props = {
@@ -85,14 +86,8 @@ function finalUnitPrice(product: PublicProduct) {
 }
 
 function formatDateTime(value?: string | null) {
-  if (!value) return null;
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return parsed.toLocaleDateString("es-CL", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  const formatted = formatStableDateEsCl(value, "");
+  return formatted || null;
 }
 
 function productHasOffer(product: PublicProduct) {
