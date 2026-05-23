@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { cn } from "@/lib/utils";
 import { Container } from "./container";
+import { PortalAccessLink } from "./portal-access-link";
 
 const WHATSAPP_URL =
   "https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.";
@@ -77,6 +78,7 @@ export function SiteHeader() {
           </Link>
 
           <div className="hidden items-center gap-2 lg:flex xl:hidden">
+            <PortalAccessLink size="sm" label="Portal" />
             <Link
               href={WHATSAPP_URL}
               target="_blank"
@@ -92,6 +94,7 @@ export function SiteHeader() {
           </div>
 
           <div className="hidden items-center gap-2.5 xl:flex">
+            <PortalAccessLink />
             <Link
               href={WHATSAPP_URL}
               target="_blank"
@@ -253,6 +256,11 @@ export function SiteHeader() {
           ))}
 
           <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3">
+            <PortalAccessLink
+              className="w-full justify-center py-2.5"
+              label="Portal de clientes"
+              onClick={() => setOpen(false)}
+            />
             <Link
               href={WHATSAPP_URL}
               target="_blank"

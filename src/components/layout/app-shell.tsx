@@ -8,8 +8,9 @@ import { WhatsAppButton } from "@/components/ui/whatsapp-button";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdminRoute = pathname.startsWith("/admin");
+  const isPortalRoute = pathname.startsWith("/portal-clientes");
 
-  if (isAdminRoute) {
+  if (isAdminRoute || isPortalRoute) {
     return <div className="min-h-screen">{children}</div>;
   }
 

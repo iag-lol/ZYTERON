@@ -23,11 +23,13 @@ import {
   WalletCards,
   Boxes,
   ClipboardCheck,
+  ShieldCheck,
 } from "lucide-react";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/clientes", label: "Clientes", icon: Users },
+  { href: "/admin/portal-clientes", label: "Portal Clientes", icon: ShieldCheck },
   { href: "/admin/cotizaciones", label: "Cotizaciones", icon: FileText },
   { href: "/admin/ordenes-trabajo", label: "Ordenes de trabajo", icon: ClipboardCheck },
   { href: "/admin/proyectos", label: "Proyectos", icon: BriefcaseBusiness },

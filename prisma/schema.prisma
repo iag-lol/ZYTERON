@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
@@ -14,7 +15,15 @@ model User {
   email        String   @unique
   passwordHash String
   name         String
+  firstName    String?
+  lastName     String?
   role         Role     @default(CLIENT)
+  accountStatus AccountStatus @default(ACTIVE)
+  authProvider AuthProvider @default(LOCAL)
+  emailVerifiedAt DateTime?
+  lastLoginAt  DateTime?
+  deactivatedAt DateTime?
+  googleId     String?  @unique
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   company      String?
@@ -37,11 +46,38 @@ model User {
   requests    ClientRequest[]
   taxDocuments TaxDocument[]
   workOrders  WorkOrder[]
+  verificationCodes EmailVerificationCode[]
+  passwordResetCodes PasswordResetCode[]
+  documents ClientDocument[] @relation("ClientDocuments")
+  uploadedDocuments ClientDocument[] @relation("ClientDocUploadedBy")
+  supportTickets SupportTicket[] @relation("ClientSupportTickets")
+  assignedTickets SupportTicket[] @relation("TicketAssignedTo")
+  supportMessages SupportTicketMessage[]
+  credentials ClientCredential[] @relation("ClientCredentials")
+  createdCredentials ClientCredential[] @relation("CredentialCreatedBy")
+  updatedCredentials ClientCredential[] @relation("CredentialUpdatedBy")
+  notifications ClientNotification[]
+  communications ClientCommunication[]
+  portalRequests PortalRequest[]
+  auditLogs ClientAuditLog[] @relation("AuditActor")
+  affectedAuditLogs ClientAuditLog[] @relation("AuditTarget")
 }
 
 enum Role {
+  SUPERADMIN
   CLIENT
   ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  DISABLED
+  PENDING
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
 }
 
 model Session {
@@ -276,6 +312,8 @@ model Project {
   createdAt      DateTime        @default(now())
   requests       ClientRequest[]
   taxDocuments   TaxDocument[]
+  supportTickets SupportTicket[]
+  credentials    ClientCredential[]
 }
 
 model WorkOrder {
@@ -348,6 +386,178 @@ model TaxDocument {
   xmlUrl         String?
   notes          String?
   createdAt      DateTime @default(now())
+}
+
+model EmailVerificationCode {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email       String
+  codeHash    String
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  attempts    Int      @default(0)
+  sentCount   Int      @default(1)
+  lastSentAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([userId, email, createdAt])
+}
+
+model PasswordResetCode {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email       String
+  codeHash    String
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  attempts    Int      @default(0)
+  sentCount   Int      @default(1)
+  lastSentAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([userId, email, createdAt])
+}
+
+model ClientDocument {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation("ClientDocuments", fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?
+  category     String
+  fileUrl      String
+  fileName     String?
+  mimeType     String?
+  fileSize     Int?
+  uploadedById String?
+  uploadedBy   User?    @relation("ClientDocUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
+  isPrivate    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId, category, createdAt])
+}
+
+model SupportTicket {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation("ClientSupportTickets", fields: [userId], references: [id], onDelete: Cascade)
+  projectId     String?
+  project       Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  title         String
+  description   String
+  status        String   @default("OPEN")
+  priority      String   @default("NORMAL")
+  category      String?
+  assignedToId  String?
+  assignedTo    User?    @relation("TicketAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  resolvedAt    DateTime?
+  closedAt      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  messages      SupportTicketMessage[]
+
+  @@index([userId, status, createdAt])
+}
+
+model SupportTicketMessage {
+  id          String   @id @default(cuid())
+  ticketId    String
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  authorRole  Role
+  message     String
+  isInternal  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([ticketId, createdAt])
+}
+
+model ClientCredential {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation("ClientCredentials", fields: [userId], references: [id], onDelete: Cascade)
+  projectId         String?
+  project           Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  serviceName       String
+  username          String?
+  secretCiphertext  String?
+  secretIv          String?
+  secretTag         String?
+  url               String?
+  notes             String?
+  isSensitive       Boolean  @default(true)
+  createdById       String?
+  createdBy         User?    @relation("CredentialCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById       String?
+  updatedBy         User?    @relation("CredentialUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId, createdAt])
+}
+
+model ClientNotification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  body        String
+  type        String   @default("INFO")
+  link        String?
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, isRead, createdAt])
+}
+
+model ClientCommunication {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject     String
+  message     String
+  direction   String   @default("OUTBOUND")
+  channel     String   @default("PORTAL")
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model PortalRequest {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type           String
+  title          String
+  details        String
+  attachmentUrl  String?
+  attachmentName String?
+  status         String   @default("PENDING")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId, type, status, createdAt])
+}
+
+model ClientAuditLog {
+  id            String   @id @default(cuid())
+  actorId       String?
+  actor         User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  targetUserId  String?
+  targetUser    User?    @relation("AuditTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+  action        String
+  entityType    String
+  entityId      String?
+  details       Json?
+  createdAt     DateTime @default(now())
+
+  @@index([targetUserId, createdAt])
+  @@index([actorId, createdAt])
 }
 
 enum LeadType {
