@@ -72,19 +72,3 @@ export const placeholderReviews: ReviewSnapshot[] = [
     source: "placeholder",
   },
 ];
-
-export function getReviewAggregate(reviews = placeholderReviews) {
-  const validReviews = reviews.filter((review) => Number.isFinite(review.rating) && review.rating > 0);
-  const reviewCount = validReviews.length;
-  const ratingValue =
-    reviewCount === 0
-      ? 0
-      : Number(
-          (validReviews.reduce((total, review) => total + review.rating, 0) / reviewCount).toFixed(1),
-        );
-
-  return {
-    ratingValue,
-    reviewCount,
-  };
-}

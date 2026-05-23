@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { defaultJsonLdOrganization, defaultOpenGraph, defaultTwitter } from "@/config/seo";
 import { siteConfig } from "@/config/site";
 import { getAbsoluteOgImageUrl } from "@/config/og";
-import { getReviewAggregate, placeholderReviews } from "@/content/reviews";
 
 type SeoMetadataInput = {
   title: string;
@@ -194,8 +193,7 @@ function buildContactPoint() {
 export function buildOrganizationGraph() {
   const sameAs = [siteConfig.social.linkedin, siteConfig.social.whatsapp].filter(Boolean);
   const servedAreas = buildServedAreas();
-  const contactPoint = buildContactPoint();
-  const aggregateRating = getReviewAggregate();
+  const [salesContactPoint] = buildContactPoint();
 
   return {
     "@context": "https://schema.org",
@@ -204,45 +202,10 @@ export function buildOrganizationGraph() {
       {
         "@type": "WebSite",
         "@id": `${siteConfig.url}/#website`,
-        url: siteConfig.url,
+        url: `${siteConfig.url}/`,
         name: siteConfig.name,
         inLanguage: siteConfig.locale,
         publisher: {
-          "@id": `${siteConfig.url}/#organization`,
-        },
-      },
-      {
-        "@type": "ProfessionalService",
-        "@id": `${siteConfig.url}/#professionalservice`,
-        name: siteConfig.name,
-        legalName: siteConfig.legalName,
-        url: siteConfig.url,
-        image: `${siteConfig.url}/logo.svg`,
-        logo: `${siteConfig.url}/logo.svg`,
-        telephone: siteConfig.contact.phone,
-        email: siteConfig.contact.email,
-        description: siteConfig.description,
-        areaServed: servedAreas,
-        serviceType: siteConfig.business.serviceTypes,
-        contactPoint,
-        address: {
-          "@type": "PostalAddress",
-          addressLocality: siteConfig.address.city,
-          addressRegion: siteConfig.address.region,
-          addressCountry: siteConfig.address.countryCode,
-        },
-        openingHours: siteConfig.business.hours,
-        openingHoursSpecification: [
-          {
-            "@type": "OpeningHoursSpecification",
-            dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-            opens: "09:00",
-            closes: "18:00",
-          },
-        ],
-        priceRange: siteConfig.business.priceRange,
-        sameAs,
-        parentOrganization: {
           "@id": `${siteConfig.url}/#organization`,
         },
       },
@@ -252,13 +215,12 @@ export function buildOrganizationGraph() {
         name: siteConfig.name,
         legalName: siteConfig.legalName,
         taxID: siteConfig.taxId,
-        url: siteConfig.url,
+        url: `${siteConfig.url}/`,
         image: `${siteConfig.url}/logo.svg`,
         logo: `${siteConfig.url}/logo.svg`,
         telephone: siteConfig.contact.phone,
         email: siteConfig.contact.email,
         description: siteConfig.description,
-        openingHours: siteConfig.business.hours,
         openingHoursSpecification: [
           {
             "@type": "OpeningHoursSpecification",
@@ -269,27 +231,14 @@ export function buildOrganizationGraph() {
         ],
         priceRange: siteConfig.business.priceRange,
         areaServed: servedAreas,
-        aggregateRating:
-          aggregateRating.reviewCount > 0
-            ? {
-                "@type": "AggregateRating",
-                ratingValue: aggregateRating.ratingValue,
-                reviewCount: aggregateRating.reviewCount,
-                bestRating: 5,
-                worstRating: 1,
-              }
-            : undefined,
-        serviceType: siteConfig.business.serviceTypes,
-        contactPoint,
+        contactPoint: salesContactPoint,
         address: {
           "@type": "PostalAddress",
           addressLocality: siteConfig.address.city,
           addressRegion: siteConfig.address.region,
           addressCountry: siteConfig.address.countryCode,
         },
-        parentOrganization: {
-          "@id": `${siteConfig.url}/#organization`,
-        },
+        sameAs,
       },
     ],
   };
@@ -305,7 +254,7 @@ export function buildProfessionalServiceJsonLd({
   return {
     "@context": "https://schema.org",
     "@type": "ProfessionalService",
-    "@id": `${siteConfig.url}/#professionalservice`,
+    "@id": `${pageUrl}#professionalservice`,
     name: siteConfig.name,
     legalName: siteConfig.legalName,
     url: siteConfig.url,
@@ -522,54 +471,6 @@ export function buildArticleJsonLd({
   };
 }
 
-export function buildReviewsJsonLd(
-  reviews: Array<{
-    id: string;
-    name: string;
-    company?: string | null;
-    role?: string | null;
-    service?: string | null;
-    rating: number;
-    comment: string;
-    createdAt?: string | null;
-  }>,
-) {
-  return {
-    "@context": "https://schema.org",
-    "@graph": reviews.map((review) => ({
-      "@type": "Review",
-      "@id": `${siteConfig.url}/#review-${review.id}`,
-      itemReviewed: {
-        "@id": `${siteConfig.url}/#localbusiness`,
-      },
-      author: {
-        "@type": "Person",
-        name: review.name,
-        ...(review.role ? { jobTitle: review.role } : {}),
-        ...(review.company
-          ? {
-              worksFor: {
-                "@type": "Organization",
-                name: review.company,
-              },
-            }
-          : {}),
-      },
-      reviewRating: {
-        "@type": "Rating",
-        ratingValue: review.rating,
-        bestRating: 5,
-        worstRating: 1,
-      },
-      reviewBody: review.comment,
-      datePublished: review.createdAt,
-      publisher: {
-        "@id": `${siteConfig.url}/#organization`,
-      },
-    })),
-  };
-}
-
 export function buildPlanPriceSpecificationJsonLd(path: string) {
   const pageUrl = buildAbsoluteUrl(path);
 
@@ -626,5 +527,3 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
     ],
   };
 }
-
-export { placeholderReviews };

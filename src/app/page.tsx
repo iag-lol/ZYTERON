@@ -20,7 +20,6 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import {
   buildFaqJsonLd,
-  buildReviewsJsonLd,
   buildServicesListJsonLd,
   buildWebPageJsonLd,
   createPageMetadata,
@@ -399,7 +398,6 @@ export default async function Home() {
           ],
         })}
       />
-      <JsonLd id="home-review-schema" data={buildReviewsJsonLd(reviews)} />
 
       <section className="relative overflow-hidden bg-hero-pattern">
         <Container className="relative z-10 grid items-center gap-12 py-20 lg:grid-cols-[1.15fr_0.85fr] lg:py-24">
