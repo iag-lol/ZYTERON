@@ -6,6 +6,8 @@ import { getPortalSession } from "@/lib/auth/portal-session";
 const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   portal_schema:
     "Falta actualizar la base de datos del portal en producción. Ejecuta el SQL de portal y vuelve a intentar.",
+  portal_db_connection:
+    "No hay conexión con la base de datos del portal en producción. Revisa DATABASE_URL en Render.",
   google_auth_failed:
     "No fue posible completar el acceso con Google. Intenta nuevamente en unos segundos.",
   account_not_active: "Tu cuenta está pendiente o desactivada. Contacta a soporte para habilitarla.",

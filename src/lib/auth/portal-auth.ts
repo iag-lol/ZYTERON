@@ -34,6 +34,19 @@ function isSchemaOutOfSyncPrismaError(error: unknown) {
   );
 }
 
+function isDbConnectionPrismaError(error: unknown) {
+  const code = getPrismaErrorCode(error);
+  if (code === "P1000" || code === "P1001" || code === "P1002") return true;
+  const message = error instanceof Error ? error.message : "";
+  return (
+    message.includes("DATABASE_URL") ||
+    message.includes("Can't reach database server") ||
+    message.includes("connect ECONNREFUSED") ||
+    message.includes("timeout") ||
+    message.includes("Falta DATABASE_URL")
+  );
+}
+
 async function ensureGoogleUser(params: {
   email: string;
   name: string;
@@ -203,6 +216,13 @@ export const portalAuthOptions: NextAuthOptions = {
         }
         return true;
       } catch (error) {
+        if (isDbConnectionPrismaError(error)) {
+          console.error(
+            "[portal/auth/google] Conexión a base de datos fallida. Verifica DATABASE_URL en Render.",
+            error,
+          );
+          return "/portal-clientes/login?error=portal_db_connection";
+        }
         if (isSchemaOutOfSyncPrismaError(error)) {
           console.error(
             "[portal/auth/google] Esquema desalineado en base de datos. Ejecuta portal_setup_all_in_one.sql.",
@@ -236,7 +256,12 @@ export const portalAuthOptions: NextAuthOptions = {
         token.emailVerifiedAt = dbUser.emailVerifiedAt ? dbUser.emailVerifiedAt.toISOString() : null;
         return token;
       } catch (error) {
-        if (isSchemaOutOfSyncPrismaError(error)) {
+        if (isDbConnectionPrismaError(error)) {
+          console.error(
+            "[portal/auth/jwt] Conexión a base de datos fallida. Verifica DATABASE_URL en Render.",
+            error,
+          );
+        } else if (isSchemaOutOfSyncPrismaError(error)) {
           console.error(
             "[portal/auth/jwt] Esquema desalineado en base de datos. Ejecuta portal_setup_all_in_one.sql.",
             error,

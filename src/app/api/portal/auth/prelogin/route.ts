@@ -21,6 +21,19 @@ function isSchemaOutOfSyncPrismaError(error: unknown) {
   );
 }
 
+function isDbConnectionPrismaError(error: unknown) {
+  const code = getPrismaErrorCode(error);
+  if (code === "P1000" || code === "P1001" || code === "P1002") return true;
+  const message = error instanceof Error ? error.message : "";
+  return (
+    message.includes("DATABASE_URL") ||
+    message.includes("Can't reach database server") ||
+    message.includes("connect ECONNREFUSED") ||
+    message.includes("timeout") ||
+    message.includes("Falta DATABASE_URL")
+  );
+}
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json().catch(() => null)) as
@@ -81,6 +94,19 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (isDbConnectionPrismaError(error)) {
+      console.error(
+        "[portal/prelogin] Conexión a base de datos fallida. Verifica DATABASE_URL en Render.",
+        error,
+      );
+      return NextResponse.json(
+        {
+          error:
+            "No se pudo conectar con la base de datos del portal. Verifica DATABASE_URL del entorno de producción.",
+        },
+        { status: 500 },
+      );
+    }
     if (isSchemaOutOfSyncPrismaError(error)) {
       console.error(
         "[portal/prelogin] Esquema desalineado en base de datos. Ejecuta portal_setup_all_in_one.sql.",
