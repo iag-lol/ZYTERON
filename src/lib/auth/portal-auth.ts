@@ -143,8 +143,15 @@ export const portalAuthOptions: NextAuthOptions = {
         if (!user) return null;
         if (user.accountStatus !== AccountStatus.ACTIVE) return null;
         if (!user.emailVerifiedAt) return null;
+        if (!user.passwordHash || user.passwordHash.length < 20) return null;
 
-        const ok = await compare(password, user.passwordHash);
+        let ok = false;
+        try {
+          ok = await compare(password, user.passwordHash);
+        } catch (error) {
+          console.error("[portal/auth/credentials] Error al comparar password hash.", error);
+          ok = false;
+        }
         if (!ok) return null;
 
         await prisma.user.update({
