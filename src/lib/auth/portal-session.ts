@@ -4,7 +4,15 @@ import { redirect } from "next/navigation";
 import { portalAuthOptions } from "@/lib/auth/portal-auth";
 
 export async function getPortalSession() {
-  return getServerSession(portalAuthOptions);
+  try {
+    return await getServerSession(portalAuthOptions);
+  } catch (error) {
+    const digest = typeof error === "object" && error && "digest" in error ? (error as { digest?: string }).digest : "";
+    if (digest !== "DYNAMIC_SERVER_USAGE") {
+      console.error("[portal/auth] No se pudo resolver la sesión del portal.", error);
+    }
+    return null;
+  }
 }
 
 export async function requirePortalSession() {
@@ -28,4 +36,3 @@ export async function requirePortalAdminSession() {
   }
   return session;
 }
-
