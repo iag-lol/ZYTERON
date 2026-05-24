@@ -10,6 +10,13 @@ function normalizeEmail(value?: string | null) {
   return String(value || "").trim().toLowerCase();
 }
 
+function isEnabled(value?: string) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+}
+
+const GOOGLE_AUTO_SIGNUP_ENABLED = isEnabled(process.env.PORTAL_GOOGLE_AUTO_SIGNUP);
+
 type AuthUser = {
   id: string;
   email: string;
@@ -63,17 +70,21 @@ async function ensureGoogleUser(params: {
       role: true,
       accountStatus: true,
       emailVerifiedAt: true,
+      googleId: true,
     },
   });
 
   if (!existing) {
+    if (!GOOGLE_AUTO_SIGNUP_ENABLED) {
+      return { status: "not_registered" as const };
+    }
     const created = await prisma.user.create({
       data: {
         email,
         name: params.name || email,
         passwordHash: await hash(randomUUID(), 12),
         role: Role.CLIENT,
-        accountStatus: AccountStatus.ACTIVE,
+        accountStatus: params.isVerifiedByGoogle ? AccountStatus.ACTIVE : AccountStatus.PENDING,
         authProvider: AuthProvider.GOOGLE,
         emailVerifiedAt: params.isVerifiedByGoogle ? now : null,
         googleId: params.googleId || null,
@@ -87,30 +98,33 @@ async function ensureGoogleUser(params: {
         emailVerifiedAt: true,
       },
     });
-    return created;
+    return { status: "ok" as const, user: created };
+  }
+
+  if (existing.accountStatus !== AccountStatus.ACTIVE) {
+    return { status: "not_active" as const };
+  }
+  if (!existing.emailVerifiedAt) {
+    return { status: "not_verified" as const };
   }
 
   const patch: Record<string, unknown> = {
-    authProvider: AuthProvider.GOOGLE,
     lastLoginAt: now,
   };
-  if (params.googleId) patch.googleId = params.googleId;
-  if (!existing.emailVerifiedAt && params.isVerifiedByGoogle) {
-    patch.emailVerifiedAt = now;
-  }
-  if (existing.accountStatus === AccountStatus.PENDING && params.isVerifiedByGoogle) {
-    patch.accountStatus = AccountStatus.ACTIVE;
-  }
+  if (params.googleId && !existing.googleId) patch.googleId = params.googleId;
   if (!existing.name && params.name) patch.name = params.name;
   await prisma.user.update({ where: { id: existing.id }, data: patch });
 
   return {
-    id: existing.id,
-    email,
-    name: existing.name || params.name || email,
-    role: existing.role,
-    accountStatus: existing.accountStatus,
-    emailVerifiedAt: existing.emailVerifiedAt,
+    status: "ok" as const,
+    user: {
+      id: existing.id,
+      email,
+      name: existing.name || params.name || email,
+      role: existing.role,
+      accountStatus: existing.accountStatus,
+      emailVerifiedAt: existing.emailVerifiedAt,
+    },
   };
 }
 
@@ -198,22 +212,34 @@ export const portalAuthOptions: NextAuthOptions = {
       if (account?.provider !== "google") return true;
       const email = normalizeEmail(user.email);
       if (!email) return false;
+      const googleEmailVerified = Boolean(
+        (profile as { email_verified?: boolean } | undefined)?.email_verified,
+      );
+      if (!googleEmailVerified) {
+        return "/portal-clientes/login?error=google_email_not_verified";
+      }
 
       try {
-        const ensured = await ensureGoogleUser({
+        const resolution = await ensureGoogleUser({
           email,
           name: user.name || email,
           googleId: account.providerAccountId,
-          isVerifiedByGoogle:
-            Boolean((profile as { email_verified?: boolean } | undefined)?.email_verified) || true,
+          isVerifiedByGoogle: googleEmailVerified,
         });
+        if (resolution.status === "not_registered") {
+          return "/portal-clientes/login?error=google_not_registered";
+        }
+        if (resolution.status === "not_active") {
+          return "/portal-clientes/login?error=account_not_active";
+        }
+        if (resolution.status === "not_verified") {
+          return "/portal-clientes/login?error=email_not_verified";
+        }
+        const ensured = resolution.user;
 
         user.id = ensured.id;
         user.name = ensured.name;
         user.email = ensured.email;
-        if (ensured.accountStatus !== AccountStatus.ACTIVE) {
-          return "/portal-clientes/login?error=account_not_active";
-        }
         return true;
       } catch (error) {
         if (isDbConnectionPrismaError(error)) {

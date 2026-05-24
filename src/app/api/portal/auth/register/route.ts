@@ -109,10 +109,12 @@ export async function POST(req: Request) {
     if (!emailResult.sent) {
       return NextResponse.json(
         {
-          error:
-            "La cuenta fue creada, pero no se pudo enviar el código de verificación. Intenta reenviar el código.",
+          ok: true,
+          email: user.email,
+          warning:
+            "La cuenta fue creada, pero no se pudo enviar el código de verificación. Usa 'Reenviar código' en la pantalla de verificación.",
         },
-        { status: 500 },
+        { status: 200 },
       );
     }
 

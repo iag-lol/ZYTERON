@@ -92,7 +92,26 @@ async function sendResendEmail(input: {
   });
 
   if (!response.ok) {
-    return { sent: false as const, reason: "provider_error" as const };
+    let providerMessage = "";
+    try {
+      const payload = (await response.json()) as { message?: string; name?: string };
+      providerMessage = normalizeText(payload?.message) || normalizeText(payload?.name);
+    } catch {
+      providerMessage = "";
+    }
+    console.error("[portal/email] Error enviando correo con Resend.", {
+      status: response.status,
+      reason: providerMessage || "provider_error",
+      to: input.to,
+      subject: input.subject,
+      from: normalizeFrom(),
+    });
+    return {
+      sent: false as const,
+      reason: "provider_error" as const,
+      status: response.status,
+      providerMessage,
+    };
   }
   return { sent: true as const };
 }
@@ -163,4 +182,3 @@ export async function sendPortalPasswordResetCodeEmail(input: {
     text: `Código de recuperación: ${input.code}. Expira en ${input.expiresMinutes} minutos.`,
   });
 }
-

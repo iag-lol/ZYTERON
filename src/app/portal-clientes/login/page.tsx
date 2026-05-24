@@ -10,6 +10,12 @@ const OAUTH_ERROR_MESSAGES: Record<string, string> = {
     "No hay conexión con la base de datos del portal en producción. Revisa DATABASE_URL en Render.",
   google_auth_failed:
     "No fue posible completar el acceso con Google. Intenta nuevamente en unos segundos.",
+  google_not_registered:
+    "Tu cuenta Google no está autorizada en el portal. Primero debes registrarte y verificar tu correo.",
+  google_email_not_verified:
+    "Tu cuenta de Google no tiene correo verificado. Verifica tu correo en Google e inténtalo de nuevo.",
+  email_not_verified:
+    "Tu cuenta existe, pero aún no está verificada. Completa la verificación por código para ingresar.",
   account_not_active: "Tu cuenta está pendiente o desactivada. Contacta a soporte para habilitarla.",
   OAuthAccountNotLinked:
     "Este correo ya existe con otro método de acceso. Ingresa con contraseña o recupera acceso.",

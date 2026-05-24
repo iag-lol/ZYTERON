@@ -43,7 +43,10 @@ export function PortalRegisterForm({ googleEnabled = false }: PortalRegisterForm
       setError(payload?.error || "No se pudo completar el registro.");
       return;
     }
-    setSuccess("Cuenta creada. Te enviamos un código al correo para verificar tu acceso.");
+    setSuccess(
+      payload?.warning ||
+        "Cuenta creada. Te enviamos un código al correo para verificar tu acceso.",
+    );
     router.push(`/portal-clientes/verificar?email=${encodeURIComponent(form.email)}`);
   }
 
