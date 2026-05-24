@@ -34,11 +34,12 @@ export async function middleware(req: NextRequest) {
   }
 
   const isPortalAuthApi = pathname.startsWith("/api/portal/auth");
+  const isPortalDiagApi = pathname === "/api/portal/diag";
   const isPortalApi = pathname.startsWith("/api/portal");
   const isPortalPrivatePage =
     pathname.startsWith("/portal-clientes/panel") || pathname.startsWith("/portal-clientes/admin");
 
-  if (!isPortalAuthApi && (isPortalApi || isPortalPrivatePage)) {
+  if (!isPortalAuthApi && !isPortalDiagApi && (isPortalApi || isPortalPrivatePage)) {
     return protectPortalRequest(req);
   }
 
