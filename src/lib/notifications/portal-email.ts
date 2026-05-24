@@ -1,6 +1,7 @@
 import { ZYTERON_COMPANY } from "@/lib/company";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const FROM_WITH_NAME_REGEX = /^[^<>]+<[^<>@\s]+@[^<>@\s]+\.[^<>@\s]+>$/;
 
 function normalizeText(value?: string | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -16,11 +17,21 @@ function escapeHtml(value: string) {
 }
 
 function normalizeFrom() {
+  const fallback = `${ZYTERON_COMPANY.brandName} <onboarding@resend.dev>`;
   const raw = normalizeText(process.env.RESEND_FROM_EMAIL) || normalizeText(process.env.RESEND_FROM);
-  if (EMAIL_REGEX.test(raw)) {
-    return `${ZYTERON_COMPANY.brandName} <${raw}>`;
-  }
-  return `${ZYTERON_COMPANY.brandName} <onboarding@resend.dev>`;
+  if (!raw) return fallback;
+  if (EMAIL_REGEX.test(raw)) return `${ZYTERON_COMPANY.brandName} <${raw}>`;
+  if (FROM_WITH_NAME_REGEX.test(raw)) return raw.replace(/\s+/g, " ").trim();
+
+  const emailMatch = raw.match(/[^\s<>,;:()]+@[^\s<>,;:()]+\.[^\s<>,;:()]+/);
+  if (!emailMatch) return fallback;
+  const email = emailMatch[0];
+  const name = raw
+    .replace(email, "")
+    .replace(/[<>\"']/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return name ? `${name} <${email}>` : email;
 }
 
 function renderEmailShell(input: {
