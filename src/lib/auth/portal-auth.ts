@@ -10,14 +10,6 @@ function normalizeEmail(value?: string | null) {
   return String(value || "").trim().toLowerCase();
 }
 
-function splitName(fullName: string) {
-  const clean = String(fullName || "").trim();
-  if (!clean) return { firstName: "", lastName: "" };
-  const parts = clean.split(/\s+/).filter(Boolean);
-  const [firstName = "", ...rest] = parts;
-  return { firstName, lastName: rest.join(" ") };
-}
-
 type AuthUser = {
   id: string;
   email: string;
@@ -26,6 +18,21 @@ type AuthUser = {
   accountStatus: AccountStatus;
   emailVerifiedAt: string | null;
 };
+
+function getPrismaErrorCode(error: unknown) {
+  if (typeof error !== "object" || !error || !("code" in error)) return "";
+  return String((error as { code?: string }).code || "");
+}
+
+function isSchemaOutOfSyncPrismaError(error: unknown) {
+  const code = getPrismaErrorCode(error);
+  if (code === "P2021" || code === "P2022") return true;
+  const message = error instanceof Error ? error.message : "";
+  return (
+    message.includes("Invalid `prisma.") &&
+    (message.includes("does not exist in the current database") || message.includes("column"))
+  );
+}
 
 async function ensureGoogleUser(params: {
   email: string;
@@ -43,19 +50,14 @@ async function ensureGoogleUser(params: {
       role: true,
       accountStatus: true,
       emailVerifiedAt: true,
-      firstName: true,
-      lastName: true,
     },
   });
 
   if (!existing) {
-    const { firstName, lastName } = splitName(params.name);
     const created = await prisma.user.create({
       data: {
         email,
         name: params.name || email,
-        firstName: firstName || null,
-        lastName: lastName || null,
         passwordHash: await hash(randomUUID(), 12),
         role: Role.CLIENT,
         accountStatus: AccountStatus.ACTIVE,
@@ -83,6 +85,9 @@ async function ensureGoogleUser(params: {
   if (!existing.emailVerifiedAt && params.isVerifiedByGoogle) {
     patch.emailVerifiedAt = now;
   }
+  if (existing.accountStatus === AccountStatus.PENDING && params.isVerifiedByGoogle) {
+    patch.accountStatus = AccountStatus.ACTIVE;
+  }
   if (!existing.name && params.name) patch.name = params.name;
   await prisma.user.update({ where: { id: existing.id }, data: patch });
 
@@ -108,6 +113,7 @@ export const portalAuthOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/portal-clientes/login",
+    error: "/portal-clientes/login",
   },
   providers: (() => {
     const providers: NextAuthOptions["providers"] = [
@@ -173,39 +179,66 @@ export const portalAuthOptions: NextAuthOptions = {
       const email = normalizeEmail(user.email);
       if (!email) return false;
 
-      const ensured = await ensureGoogleUser({
-        email,
-        name: user.name || email,
-        googleId: account.providerAccountId,
-        isVerifiedByGoogle:
-          Boolean((profile as { email_verified?: boolean } | undefined)?.email_verified) || true,
-      });
+      try {
+        const ensured = await ensureGoogleUser({
+          email,
+          name: user.name || email,
+          googleId: account.providerAccountId,
+          isVerifiedByGoogle:
+            Boolean((profile as { email_verified?: boolean } | undefined)?.email_verified) || true,
+        });
 
-      user.id = ensured.id;
-      user.name = ensured.name;
-      user.email = ensured.email;
-      return ensured.accountStatus === AccountStatus.ACTIVE;
+        user.id = ensured.id;
+        user.name = ensured.name;
+        user.email = ensured.email;
+        if (ensured.accountStatus !== AccountStatus.ACTIVE) {
+          return "/portal-clientes/login?error=account_not_active";
+        }
+        return true;
+      } catch (error) {
+        if (isSchemaOutOfSyncPrismaError(error)) {
+          console.error(
+            "[portal/auth/google] Esquema desalineado en base de datos. Ejecuta portal_setup_all_in_one.sql.",
+            error,
+          );
+          return "/portal-clientes/login?error=portal_schema";
+        }
+        console.error("[portal/auth/google] Error en alta/inicio de usuario Google.", error);
+        return "/portal-clientes/login?error=google_auth_failed";
+      }
     },
     async jwt({ token, user }) {
       const email = normalizeEmail(user?.email || token.email);
       if (!email) return token;
 
-      const dbUser = await prisma.user.findUnique({
-        where: { email },
-        select: {
-          id: true,
-          role: true,
-          accountStatus: true,
-          emailVerifiedAt: true,
-        },
-      });
-      if (!dbUser) return token;
+      try {
+        const dbUser = await prisma.user.findUnique({
+          where: { email },
+          select: {
+            id: true,
+            role: true,
+            accountStatus: true,
+            emailVerifiedAt: true,
+          },
+        });
+        if (!dbUser) return token;
 
-      token.sub = dbUser.id;
-      token.role = dbUser.role;
-      token.accountStatus = dbUser.accountStatus;
-      token.emailVerifiedAt = dbUser.emailVerifiedAt ? dbUser.emailVerifiedAt.toISOString() : null;
-      return token;
+        token.sub = dbUser.id;
+        token.role = dbUser.role;
+        token.accountStatus = dbUser.accountStatus;
+        token.emailVerifiedAt = dbUser.emailVerifiedAt ? dbUser.emailVerifiedAt.toISOString() : null;
+        return token;
+      } catch (error) {
+        if (isSchemaOutOfSyncPrismaError(error)) {
+          console.error(
+            "[portal/auth/jwt] Esquema desalineado en base de datos. Ejecuta portal_setup_all_in_one.sql.",
+            error,
+          );
+        } else {
+          console.error("[portal/auth/jwt] Error resolviendo usuario para token.", error);
+        }
+        return token;
+      }
     },
     async session({ session, token }) {
       if (session.user) {

@@ -2,12 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function PortalRegisterForm() {
+type PortalRegisterFormProps = {
+  googleEnabled?: boolean;
+};
+
+export function PortalRegisterForm({ googleEnabled = false }: PortalRegisterFormProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
@@ -40,6 +45,12 @@ export function PortalRegisterForm() {
     }
     setSuccess("Cuenta creada. Te enviamos un código al correo para verificar tu acceso.");
     router.push(`/portal-clientes/verificar?email=${encodeURIComponent(form.email)}`);
+  }
+
+  async function continueWithGoogle() {
+    setError("");
+    setSuccess("");
+    await signIn("google", { callbackUrl: "/portal-clientes/panel" });
   }
 
   return (
@@ -135,6 +146,16 @@ export function PortalRegisterForm() {
         {pending ? "Creando cuenta..." : "Crear cuenta"}
       </Button>
 
+      {googleEnabled ? (
+        <button
+          type="button"
+          onClick={() => startTransition(continueWithGoogle)}
+          className="flex h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+        >
+          Crear cuenta con Google
+        </button>
+      ) : null}
+
       <p className="text-center text-sm text-slate-500">
         ¿Ya tienes cuenta?{" "}
         <Link href="/portal-clientes/login" className="font-semibold text-blue-700 hover:text-blue-800">
@@ -144,4 +165,3 @@ export function PortalRegisterForm() {
     </form>
   );
 }
-

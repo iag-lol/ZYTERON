@@ -8,10 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function PortalLoginForm() {
+type PortalLoginFormProps = {
+  googleEnabled?: boolean;
+  initialError?: string;
+};
+export function PortalLoginForm({ googleEnabled = false, initialError = "" }: PortalLoginFormProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialError);
   const [form, setForm] = useState({ email: "", password: "" });
 
   async function loginWithCredentials() {
@@ -89,13 +93,15 @@ export function PortalLoginForm() {
         {pending ? "Ingresando..." : "Ingresar al portal"}
       </Button>
 
-      <button
-        type="button"
-        onClick={() => startTransition(loginWithGoogle)}
-        className="flex h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-      >
-        Continuar con Google
-      </button>
+      {googleEnabled ? (
+        <button
+          type="button"
+          onClick={() => startTransition(loginWithGoogle)}
+          className="flex h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+        >
+          Continuar con Google
+        </button>
+      ) : null}
 
       <div className="flex items-center justify-between text-sm">
         <Link href="/portal-clientes/recuperar" className="font-medium text-blue-700 hover:text-blue-800">
@@ -108,4 +114,3 @@ export function PortalLoginForm() {
     </form>
   );
 }
-

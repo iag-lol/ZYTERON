@@ -4,6 +4,7 @@ import { PortalRegisterForm } from "@/components/portal/auth/register-form";
 import { getPortalSession } from "@/lib/auth/portal-session";
 
 export default async function PortalRegisterPage() {
+  const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
   const session = await getPortalSession();
   if (session?.user?.id && session.user.emailVerifiedAt) {
     redirect("/portal-clientes/panel");
@@ -14,8 +15,7 @@ export default async function PortalRegisterPage() {
       title="Crear cuenta de cliente"
       subtitle="Registra tu acceso privado para gestionar tus servicios con Zyteron."
     >
-      <PortalRegisterForm />
+      <PortalRegisterForm googleEnabled={googleEnabled} />
     </PortalAuthShell>
   );
 }
-

@@ -6,6 +6,21 @@ import { normalizeEmail, registerSchema } from "@/lib/auth/portal-validators";
 import { sendPortalVerificationCodeEmail } from "@/lib/notifications/portal-email";
 import { prisma } from "@/lib/prisma";
 
+function getPrismaErrorCode(error: unknown) {
+  if (typeof error !== "object" || !error || !("code" in error)) return "";
+  return String((error as { code?: string }).code || "");
+}
+
+function isSchemaOutOfSyncPrismaError(error: unknown) {
+  const code = getPrismaErrorCode(error);
+  if (code === "P2021" || code === "P2022") return true;
+  const message = error instanceof Error ? error.message : "";
+  return (
+    message.includes("Invalid `prisma.") &&
+    (message.includes("does not exist in the current database") || message.includes("column"))
+  );
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -94,8 +109,20 @@ export async function POST(req: Request) {
       email: user.email,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "No se pudo completar el registro.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    if (isSchemaOutOfSyncPrismaError(error)) {
+      console.error(
+        "[portal/register] Esquema desalineado en base de datos. Ejecuta portal_setup_all_in_one.sql.",
+        error,
+      );
+      return NextResponse.json(
+        {
+          error:
+            "La base de datos del portal no está completamente actualizada. Ejecuta el SQL de portal y vuelve a intentar.",
+        },
+        { status: 500 },
+      );
+    }
+    console.error("[portal/register] Error no controlado en registro.", error);
+    return NextResponse.json({ error: "No se pudo completar el registro." }, { status: 500 });
   }
 }
-
