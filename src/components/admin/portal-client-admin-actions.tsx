@@ -1,22 +1,33 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 function ActionBox({
   title,
+  subtitle,
+  defaultOpen = true,
   children,
 }: {
   title: string;
+  subtitle?: string;
+  defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h3 className="text-sm font-bold text-slate-900">{title}</h3>
-      <div className="mt-3">{children}</div>
-    </section>
+    <details open={defaultOpen} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <summary className="flex cursor-pointer list-none items-start justify-between gap-3 bg-slate-50/70 px-4 py-3">
+        <div>
+          <h3 className="text-sm font-bold text-slate-900">{title}</h3>
+          {subtitle ? <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p> : null}
+        </div>
+        <ChevronDown className="mt-0.5 h-4 w-4 text-slate-500 transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="p-4">{children}</div>
+    </details>
   );
 }
 
@@ -89,9 +100,16 @@ export function PortalClientAdminActions({
 
   return (
     <div className="space-y-4">
-      {feedback ? <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">{feedback}</p> : null}
+      {feedback ? (
+        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-800">
+          {feedback}
+        </p>
+      ) : null}
 
-      <ActionBox title="Actualizar perfil y estado">
+      <ActionBox
+        title="Actualizar perfil y estado"
+        subtitle="Controla datos base, observaciones internas y estado de acceso del cliente."
+      >
         <form
           className="grid gap-3"
           onSubmit={(event) => {
@@ -121,7 +139,10 @@ export function PortalClientAdminActions({
         </form>
       </ActionBox>
 
-      <ActionBox title="Vincular registros existentes">
+      <ActionBox
+        title="Vincular registros existentes"
+        subtitle="Asocia cotizaciones, proyectos, ventas y solicitudes ya creadas al cliente."
+      >
         <form
           className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]"
           onSubmit={(event) => {
@@ -143,115 +164,121 @@ export function PortalClientAdminActions({
         </form>
       </ActionBox>
 
-      <ActionBox title="Subir documento (URL)">
-        <form
-          className="grid gap-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            startTransition(async () => {
-              const ok = await callApi(`/api/portal/admin/users/${userId}/documents`, "POST", doc);
-              if (ok) setDoc({ title: "", category: "CONTRATO", fileUrl: "", fileName: "", description: "" });
-            });
-          }}
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Input value={doc.title} onChange={(event) => setDoc((prev) => ({ ...prev, title: event.target.value }))} placeholder="Título documento" />
-            <Input value={doc.category} onChange={(event) => setDoc((prev) => ({ ...prev, category: event.target.value }))} placeholder="Categoría" />
-          </div>
-          <Input value={doc.fileUrl} onChange={(event) => setDoc((prev) => ({ ...prev, fileUrl: event.target.value }))} placeholder="https://archivo..." />
-          <Input value={doc.fileName} onChange={(event) => setDoc((prev) => ({ ...prev, fileName: event.target.value }))} placeholder="Nombre archivo (opcional)" />
-          <Textarea value={doc.description} onChange={(event) => setDoc((prev) => ({ ...prev, description: event.target.value }))} placeholder="Descripción breve" rows={3} />
-          <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Registrar documento</Button>
-        </form>
-      </ActionBox>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <ActionBox title="Subir documento (URL)" subtitle="Publica contratos, respaldos y documentos técnicos." defaultOpen={false}>
+          <form
+            className="grid gap-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              startTransition(async () => {
+                const ok = await callApi(`/api/portal/admin/users/${userId}/documents`, "POST", doc);
+                if (ok) setDoc({ title: "", category: "CONTRATO", fileUrl: "", fileName: "", description: "" });
+              });
+            }}
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input value={doc.title} onChange={(event) => setDoc((prev) => ({ ...prev, title: event.target.value }))} placeholder="Título documento" />
+              <Input value={doc.category} onChange={(event) => setDoc((prev) => ({ ...prev, category: event.target.value }))} placeholder="Categoría" />
+            </div>
+            <Input value={doc.fileUrl} onChange={(event) => setDoc((prev) => ({ ...prev, fileUrl: event.target.value }))} placeholder="https://archivo..." />
+            <Input value={doc.fileName} onChange={(event) => setDoc((prev) => ({ ...prev, fileName: event.target.value }))} placeholder="Nombre archivo (opcional)" />
+            <Textarea value={doc.description} onChange={(event) => setDoc((prev) => ({ ...prev, description: event.target.value }))} placeholder="Descripción breve" rows={3} />
+            <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Registrar documento</Button>
+          </form>
+        </ActionBox>
 
-      <ActionBox title="Registrar credencial / acceso">
-        <form
-          className="grid gap-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            startTransition(async () => {
-              const ok = await callApi(`/api/portal/admin/users/${userId}/credentials`, "POST", credential);
-              if (ok) setCredential({ serviceName: "", username: "", secret: "", url: "", notes: "" });
-            });
-          }}
+        <ActionBox
+          title="Registrar credencial / acceso"
+          subtitle="Guarda accesos de servicios con cifrado y control de auditoría."
+          defaultOpen={false}
         >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Input value={credential.serviceName} onChange={(event) => setCredential((prev) => ({ ...prev, serviceName: event.target.value }))} placeholder="Servicio (ej: Hosting)" />
-            <Input value={credential.username} onChange={(event) => setCredential((prev) => ({ ...prev, username: event.target.value }))} placeholder="Usuario" />
-          </div>
-          <Input value={credential.secret} onChange={(event) => setCredential((prev) => ({ ...prev, secret: event.target.value }))} placeholder="Secreto / contraseña" />
-          <Input value={credential.url} onChange={(event) => setCredential((prev) => ({ ...prev, url: event.target.value }))} placeholder="URL de acceso" />
-          <Textarea value={credential.notes} onChange={(event) => setCredential((prev) => ({ ...prev, notes: event.target.value }))} placeholder="Notas internas" rows={3} />
-          <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Guardar credencial</Button>
-        </form>
-      </ActionBox>
+          <form
+            className="grid gap-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              startTransition(async () => {
+                const ok = await callApi(`/api/portal/admin/users/${userId}/credentials`, "POST", credential);
+                if (ok) setCredential({ serviceName: "", username: "", secret: "", url: "", notes: "" });
+              });
+            }}
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input value={credential.serviceName} onChange={(event) => setCredential((prev) => ({ ...prev, serviceName: event.target.value }))} placeholder="Servicio (ej: Hosting)" />
+              <Input value={credential.username} onChange={(event) => setCredential((prev) => ({ ...prev, username: event.target.value }))} placeholder="Usuario" />
+            </div>
+            <Input value={credential.secret} onChange={(event) => setCredential((prev) => ({ ...prev, secret: event.target.value }))} placeholder="Secreto / contraseña" />
+            <Input value={credential.url} onChange={(event) => setCredential((prev) => ({ ...prev, url: event.target.value }))} placeholder="URL de acceso" />
+            <Textarea value={credential.notes} onChange={(event) => setCredential((prev) => ({ ...prev, notes: event.target.value }))} placeholder="Notas internas" rows={3} />
+            <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Guardar credencial</Button>
+          </form>
+        </ActionBox>
 
-      <ActionBox title="Crear ticket de soporte para cliente">
-        <form
-          className="grid gap-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            startTransition(async () => {
-              const ok = await callApi(`/api/portal/admin/users/${userId}/tickets`, "POST", ticket);
-              if (ok) setTicket({ title: "", description: "", category: "SOPORTE", priority: "NORMAL" });
-            });
-          }}
-        >
-          <Input value={ticket.title} onChange={(event) => setTicket((prev) => ({ ...prev, title: event.target.value }))} placeholder="Título ticket" />
-          <Textarea value={ticket.description} onChange={(event) => setTicket((prev) => ({ ...prev, description: event.target.value }))} rows={3} placeholder="Descripción del ticket" />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Input value={ticket.category} onChange={(event) => setTicket((prev) => ({ ...prev, category: event.target.value }))} placeholder="Categoría" />
-            <Input value={ticket.priority} onChange={(event) => setTicket((prev) => ({ ...prev, priority: event.target.value }))} placeholder="Prioridad" />
-          </div>
-          <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Crear ticket</Button>
-        </form>
-      </ActionBox>
+        <ActionBox title="Crear ticket de soporte" subtitle="Abre un caso directamente desde administración." defaultOpen={false}>
+          <form
+            className="grid gap-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              startTransition(async () => {
+                const ok = await callApi(`/api/portal/admin/users/${userId}/tickets`, "POST", ticket);
+                if (ok) setTicket({ title: "", description: "", category: "SOPORTE", priority: "NORMAL" });
+              });
+            }}
+          >
+            <Input value={ticket.title} onChange={(event) => setTicket((prev) => ({ ...prev, title: event.target.value }))} placeholder="Título ticket" />
+            <Textarea value={ticket.description} onChange={(event) => setTicket((prev) => ({ ...prev, description: event.target.value }))} rows={3} placeholder="Descripción del ticket" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input value={ticket.category} onChange={(event) => setTicket((prev) => ({ ...prev, category: event.target.value }))} placeholder="Categoría" />
+              <Input value={ticket.priority} onChange={(event) => setTicket((prev) => ({ ...prev, priority: event.target.value }))} placeholder="Prioridad" />
+            </div>
+            <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Crear ticket</Button>
+          </form>
+        </ActionBox>
 
-      <ActionBox title="Notificación al cliente">
-        <form
-          className="grid gap-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            startTransition(async () => {
-              const ok = await callApi(`/api/portal/admin/users/${userId}/notifications`, "POST", notification);
-              if (ok) setNotification({ title: "", body: "", type: "INFO", link: "" });
-            });
-          }}
-        >
-          <Input value={notification.title} onChange={(event) => setNotification((prev) => ({ ...prev, title: event.target.value }))} placeholder="Título notificación" />
-          <Textarea value={notification.body} onChange={(event) => setNotification((prev) => ({ ...prev, body: event.target.value }))} rows={3} placeholder="Mensaje" />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Input value={notification.type} onChange={(event) => setNotification((prev) => ({ ...prev, type: event.target.value }))} placeholder="Tipo (INFO, ALERT...)" />
-            <Input value={notification.link} onChange={(event) => setNotification((prev) => ({ ...prev, link: event.target.value }))} placeholder="Link opcional" />
-          </div>
-          <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Enviar notificación</Button>
-        </form>
-      </ActionBox>
+        <ActionBox title="Notificación al cliente" subtitle="Publica alertas o avisos internos en su portal." defaultOpen={false}>
+          <form
+            className="grid gap-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              startTransition(async () => {
+                const ok = await callApi(`/api/portal/admin/users/${userId}/notifications`, "POST", notification);
+                if (ok) setNotification({ title: "", body: "", type: "INFO", link: "" });
+              });
+            }}
+          >
+            <Input value={notification.title} onChange={(event) => setNotification((prev) => ({ ...prev, title: event.target.value }))} placeholder="Título notificación" />
+            <Textarea value={notification.body} onChange={(event) => setNotification((prev) => ({ ...prev, body: event.target.value }))} rows={3} placeholder="Mensaje" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input value={notification.type} onChange={(event) => setNotification((prev) => ({ ...prev, type: event.target.value }))} placeholder="Tipo (INFO, ALERT...)" />
+              <Input value={notification.link} onChange={(event) => setNotification((prev) => ({ ...prev, link: event.target.value }))} placeholder="Link opcional" />
+            </div>
+            <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Enviar notificación</Button>
+          </form>
+        </ActionBox>
 
-      <ActionBox title="Registrar comunicación">
-        <form
-          className="grid gap-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            startTransition(async () => {
-              const ok = await callApi(`/api/portal/admin/users/${userId}/communications`, "POST", communication);
-              if (ok) setCommunication({ subject: "", message: "", direction: "OUTBOUND", channel: "PORTAL" });
-            });
-          }}
-        >
-          <Input value={communication.subject} onChange={(event) => setCommunication((prev) => ({ ...prev, subject: event.target.value }))} placeholder="Asunto" />
-          <Textarea value={communication.message} onChange={(event) => setCommunication((prev) => ({ ...prev, message: event.target.value }))} rows={3} placeholder="Mensaje" />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <select className="h-10 rounded-lg border border-slate-200 px-3 text-sm" value={communication.direction} onChange={(event) => setCommunication((prev) => ({ ...prev, direction: event.target.value }))}>
-              <option value="OUTBOUND">OUTBOUND</option>
-              <option value="INBOUND">INBOUND</option>
-            </select>
-            <Input value={communication.channel} onChange={(event) => setCommunication((prev) => ({ ...prev, channel: event.target.value }))} placeholder="Canal" />
-          </div>
-          <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Guardar comunicación</Button>
-        </form>
-      </ActionBox>
+        <ActionBox title="Registrar comunicación" subtitle="Documenta conversaciones e hitos de seguimiento." defaultOpen={false}>
+          <form
+            className="grid gap-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              startTransition(async () => {
+                const ok = await callApi(`/api/portal/admin/users/${userId}/communications`, "POST", communication);
+                if (ok) setCommunication({ subject: "", message: "", direction: "OUTBOUND", channel: "PORTAL" });
+              });
+            }}
+          >
+            <Input value={communication.subject} onChange={(event) => setCommunication((prev) => ({ ...prev, subject: event.target.value }))} placeholder="Asunto" />
+            <Textarea value={communication.message} onChange={(event) => setCommunication((prev) => ({ ...prev, message: event.target.value }))} rows={3} placeholder="Mensaje" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <select className="h-10 rounded-lg border border-slate-200 px-3 text-sm" value={communication.direction} onChange={(event) => setCommunication((prev) => ({ ...prev, direction: event.target.value }))}>
+                <option value="OUTBOUND">OUTBOUND</option>
+                <option value="INBOUND">INBOUND</option>
+              </select>
+              <Input value={communication.channel} onChange={(event) => setCommunication((prev) => ({ ...prev, channel: event.target.value }))} placeholder="Canal" />
+            </div>
+            <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Guardar comunicación</Button>
+          </form>
+        </ActionBox>
+      </div>
     </div>
   );
 }

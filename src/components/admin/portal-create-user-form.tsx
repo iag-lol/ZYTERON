@@ -46,13 +46,19 @@ export function PortalCreateUserForm() {
 
   return (
     <form
-      className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+      className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
       onSubmit={(event) => {
         event.preventDefault();
         startTransition(onSubmit);
       }}
     >
-      <h3 className="text-sm font-bold text-slate-900">Crear cuenta manual</h3>
+      <div className="space-y-1">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600">Alta controlada</p>
+        <h3 className="text-lg font-extrabold text-slate-900">Crear cuenta manual de cliente</h3>
+        <p className="text-sm text-slate-500">
+          Registra cuentas internas con trazabilidad, contraseña inicial opcional y envío de verificación.
+        </p>
+      </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="firstName">Nombre</Label>
@@ -93,10 +99,9 @@ export function PortalCreateUserForm() {
       </label>
       {error ? <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p> : null}
       {success ? <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p> : null}
-      <Button type="submit" className="h-10 w-fit bg-blue-700 hover:bg-blue-800" disabled={pending}>
+      <Button type="submit" className="h-10 w-fit bg-blue-700 px-5 hover:bg-blue-800" disabled={pending}>
         {pending ? "Creando..." : "Crear usuario"}
       </Button>
     </form>
   );
 }
-
