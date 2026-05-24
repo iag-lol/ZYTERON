@@ -238,26 +238,59 @@ const referencePlans = [
   },
 ];
 
-const extras = [
-  ["Página adicional", "Desde $14.990"],
-  ["Sección adicional", "Desde $9.990"],
-  ["Formulario avanzado", "Desde $19.990"],
-  ["Carga de productos hasta 20", "Desde $19.990"],
-  ["Carga de productos hasta 50", "Desde $49.990"],
-  ["Catálogo administrable", "Desde $59.990"],
-  ["Mini panel administrativo", "Desde $89.990"],
-  ["Panel administrativo completo", "Desde $219.990"],
-  ["Integración Flow/Webpay/Mercado Pago", "Desde $89.990"],
-  ["Generador de PDF", "Desde $79.990"],
-  ["Sistema de reservas", "Desde $129.990"],
-  ["Login de usuarios", "Desde $99.990"],
-  ["Correos corporativos", "Desde $19.990 configuración"],
-  ["SEO inicial avanzado", "Desde $59.990"],
-  ["Automatización WhatsApp", "Desde $99.990"],
-  ["Reportes o dashboard", "Desde $89.990"],
-  ["Exportación Excel/PDF", "Desde $49.990"],
-  ["Mantención mensual", "Desde $19.990"],
-  ["Soporte prioritario", "Desde $34.990/mes"],
+const additionalServicesByCategory = [
+  {
+    title: "1. Funcionalidades para sitios web",
+    items: [
+      ["Página adicional", "Desde $29.990"],
+      ["Sección adicional", "Desde $19.990"],
+      ["Formulario avanzado", "Desde $39.990"],
+      ["Login de usuarios", "Desde $199.990"],
+    ],
+  },
+  {
+    title: "2. Ecommerce y productos",
+    items: [
+      ["Carga de productos hasta 20", "Desde $19.990"],
+      ["Carga de productos hasta 50", "Desde $49.990"],
+      ["Catálogo administrable", "Desde $99.990"],
+    ],
+  },
+  {
+    title: "3. Paneles administrativos y sistemas",
+    items: [
+      ["Mini panel administrativo", "Desde $149.990"],
+      ["Panel administrativo completo", "Desde $399.990"],
+      ["Sistema de reservas", "Desde $249.990"],
+    ],
+  },
+  {
+    title: "4. Integraciones y automatización",
+    items: [
+      ["Integración Flow / Webpay / Mercado Pago (configuración estándar)", "Desde $89.990"],
+      ["Integración Flow / Webpay / Mercado Pago (API o desarrollo personalizado)", "Desde $199.990"],
+      ["Automatización WhatsApp", "Desde $99.990"],
+    ],
+  },
+  {
+    title: "5. SEO, reportes y documentos",
+    items: [
+      ["Generador de PDF", "Desde $149.990"],
+      ["SEO inicial avanzado", "Desde $99.990"],
+      ["Reportes o dashboard", "Desde $199.990"],
+      ["Exportación Excel / PDF", "Desde $49.990"],
+    ],
+  },
+  {
+    title: "6. Mantención y soporte mensual",
+    items: [
+      ["Mantención básica", "Desde $29.990/mes"],
+      ["Mantención profesional", "Desde $59.990/mes"],
+      ["Mantención ecommerce o sistema web", "Desde $99.990/mes"],
+      ["Soporte prioritario", "Desde $69.990/mes"],
+      ["Correos corporativos", "Desde $19.990 configuración inicial"],
+    ],
+  },
 ];
 
 const priceFaqs = [
@@ -485,21 +518,21 @@ export default function PlanesPage() {
               <CircleDollarSign className="h-4 w-4" />
               Opción mensual
             </div>
-            <h2 className="text-2xl font-extrabold text-slate-900">Plan Web Administrada</h2>
-            <p className="mt-1 text-xl font-bold text-blue-700">Desde $19.990/mes</p>
+            <h2 className="text-2xl font-extrabold text-slate-900">Planes de mantención y soporte</h2>
+            <p className="mt-1 text-xl font-bold text-blue-700">Desde $29.990/mes</p>
             <p className="mt-2 text-sm text-slate-600">
-              Una alternativa simple para quienes necesitan presencia digital sin realizar una inversión inicial alta.
+              Modalidades escalables para mantener tu web, ecommerce o sistema actualizado, seguro y operativo.
             </p>
             <div className="mt-4 grid gap-2 md:grid-cols-2">
               {[
-                "Web básica activa",
-                "Hosting incluido",
-                "Soporte limitado",
-                "Cambios menores mensuales",
-                "Botón WhatsApp",
-                "Formulario de contacto",
-                "Mantención técnica básica",
-                "Actualizaciones menores de contenido",
+                "Mantención básica: desde $29.990/mes",
+                "Mantención profesional: desde $59.990/mes",
+                "Mantención ecommerce o sistema web: desde $99.990/mes",
+                "Soporte prioritario: desde $69.990/mes",
+                "Correcciones y ajustes por alcance",
+                "Monitoreo y continuidad operativa",
+                "Soporte técnico por prioridad",
+                "Evolución mensual según necesidad",
               ].map((item) => (
                 <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
@@ -548,29 +581,49 @@ export default function PlanesPage() {
       </section>
 
       <section className="bg-white py-16">
-        <Container className="space-y-5">
-          <h2 className="text-2xl font-extrabold text-slate-900">Extras y funcionalidades adicionales</h2>
-          <p className="text-sm text-slate-600">
-            Los extras se agregan solo si el proyecto los requiere. Esto permite entregar precios justos y evitar cobrar
-            funcionalidades innecesarias.
+        <Container className="space-y-6">
+          <div className="space-y-2">
+            <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+              Servicios adicionales y funcionalidades a medida
+            </h2>
+            <p className="max-w-4xl text-sm text-slate-600 sm:text-base">
+              Cada proyecto puede crecer según las necesidades del negocio. Estos valores son referenciales y permiten
+              agregar nuevas funcionalidades, integraciones, paneles administrativos, automatizaciones, ecommerce, SEO y
+              soporte técnico según el alcance requerido.
+            </p>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            {additionalServicesByCategory.map((category) => (
+              <article key={category.title} className="card-premium p-5">
+                <h3 className="text-base font-extrabold text-slate-900">{category.title}</h3>
+                <div className="mt-3 overflow-hidden rounded-xl border border-slate-200">
+                  <table className="w-full text-left text-sm">
+                    <tbody>
+                      {category.items.map(([name, value]) => (
+                        <tr key={name} className="border-t border-slate-100 first:border-t-0">
+                          <td className="px-4 py-3 text-slate-700">{name}</td>
+                          <td className="px-4 py-3 text-right font-bold text-blue-700">{value}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+            Valores referenciales. El precio final puede variar según complejidad, cantidad de vistas, integraciones,
+            funcionalidades, volumen de información y soporte requerido.
           </p>
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
-            <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="bg-slate-100 text-slate-700">
-                <tr>
-                  <th className="px-4 py-3 font-bold">Funcionalidad</th>
-                  <th className="px-4 py-3 font-bold">Valor referencial</th>
-                </tr>
-              </thead>
-              <tbody>
-                {extras.map(([name, value]) => (
-                  <tr key={name} className="border-t border-slate-200">
-                    <td className="px-4 py-3 text-slate-700">{name}</td>
-                    <td className="px-4 py-3 font-semibold text-blue-700">{value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          <div>
+            <Button asChild className="bg-blue-700 text-white hover:bg-blue-800">
+              <Link href="/paquetes">
+                Solicitar evaluación <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </Container>
       </section>
