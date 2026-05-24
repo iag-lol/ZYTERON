@@ -11,8 +11,13 @@ import { Label } from "@/components/ui/label";
 type PortalLoginFormProps = {
   googleEnabled?: boolean;
   initialError?: string;
+  loginOnly?: boolean;
 };
-export function PortalLoginForm({ googleEnabled = false, initialError = "" }: PortalLoginFormProps) {
+export function PortalLoginForm({
+  googleEnabled = false,
+  initialError = "",
+  loginOnly = false,
+}: PortalLoginFormProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState(initialError);
@@ -93,7 +98,7 @@ export function PortalLoginForm({ googleEnabled = false, initialError = "" }: Po
         {pending ? "Ingresando..." : "Ingresar al portal"}
       </Button>
 
-      {googleEnabled ? (
+      {googleEnabled && !loginOnly ? (
         <button
           type="button"
           onClick={() => startTransition(loginWithGoogle)}
@@ -103,14 +108,16 @@ export function PortalLoginForm({ googleEnabled = false, initialError = "" }: Po
         </button>
       ) : null}
 
-      <div className="flex items-center justify-between text-sm">
-        <Link href="/portal-clientes/recuperar" className="font-medium text-blue-700 hover:text-blue-800">
-          Recuperar contraseña
-        </Link>
-        <Link href="/portal-clientes/registro" className="font-medium text-slate-600 hover:text-slate-800">
-          Crear cuenta
-        </Link>
-      </div>
+      {!loginOnly ? (
+        <div className="flex items-center justify-between text-sm">
+          <Link href="/portal-clientes/recuperar" className="font-medium text-blue-700 hover:text-blue-800">
+            Recuperar contraseña
+          </Link>
+          <Link href="/portal-clientes/registro" className="font-medium text-slate-600 hover:text-slate-800">
+            Crear cuenta
+          </Link>
+        </div>
+      ) : null}
     </form>
   );
 }

@@ -29,7 +29,6 @@ type PortalLoginPageProps = {
 };
 
 export default async function PortalLoginPage({ searchParams }: PortalLoginPageProps) {
-  const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
   const query = (await searchParams) || {};
   const rawError = Array.isArray(query.error) ? query.error[0] : query.error;
   const initialError = rawError
@@ -41,8 +40,13 @@ export default async function PortalLoginPage({ searchParams }: PortalLoginPageP
   }
 
   return (
-    <PortalAuthShell title="Iniciar sesión" subtitle="Accede con tu correo corporativo y contraseña segura.">
-      <PortalLoginForm googleEnabled={googleEnabled} initialError={initialError} />
+    <PortalAuthShell
+      title="Iniciar sesión"
+      subtitle="Accede a tu portal privado de clientes con tu correo y contraseña."
+      minimal
+      hideBackLink
+    >
+      <PortalLoginForm initialError={initialError} loginOnly />
     </PortalAuthShell>
   );
 }

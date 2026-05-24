@@ -5,12 +5,45 @@ export function PortalAuthShell({
   subtitle,
   children,
   footer,
+  minimal = false,
+  hideBackLink = false,
 }: {
   title: string;
   subtitle: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  minimal?: boolean;
+  hideBackLink?: boolean;
 }) {
+  if (minimal) {
+    return (
+      <div className="relative min-h-screen overflow-hidden bg-[#020d2f]">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.38),transparent_58%)]" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-gradient-to-b from-blue-500/20 to-transparent" />
+        <div className="pointer-events-none absolute left-1/2 top-14 h-56 w-56 -translate-x-1/2 rounded-full bg-cyan-300/20 blur-[110px]" />
+
+        <main className="relative mx-auto flex min-h-screen max-w-lg items-center px-4 py-12">
+          <section className="w-full rounded-3xl border border-white/15 bg-white/95 p-7 shadow-2xl shadow-blue-950/35 backdrop-blur sm:p-9">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-600">Zyteron Secure Access</p>
+              <h2 className="mt-2 text-3xl font-black text-slate-950">{title}</h2>
+              <p className="mt-2 text-sm text-slate-600">{subtitle}</p>
+            </div>
+            <div className="mt-7">{children}</div>
+            {footer ? <div className="mt-6 text-sm text-slate-500">{footer}</div> : null}
+            {!hideBackLink ? (
+              <div className="mt-6 border-t border-slate-200 pt-5">
+                <Link href="/" className="text-xs font-semibold text-slate-500 hover:text-slate-700">
+                  Volver al sitio Zyteron
+                </Link>
+              </div>
+            ) : null}
+          </section>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-950">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.3),transparent_56%)]" />
@@ -53,15 +86,16 @@ export function PortalAuthShell({
             </div>
             <div className="mt-6">{children}</div>
             {footer ? <div className="mt-6 text-sm text-slate-500">{footer}</div> : null}
-            <div className="mt-6 border-t border-slate-200 pt-5">
-              <Link href="/" className="text-xs font-semibold text-slate-500 hover:text-slate-700">
-                Volver al sitio Zyteron
-              </Link>
-            </div>
+            {!hideBackLink ? (
+              <div className="mt-6 border-t border-slate-200 pt-5">
+                <Link href="/" className="text-xs font-semibold text-slate-500 hover:text-slate-700">
+                  Volver al sitio Zyteron
+                </Link>
+              </div>
+            ) : null}
           </section>
         </div>
       </main>
     </div>
   );
 }
-
