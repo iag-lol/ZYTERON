@@ -6,11 +6,29 @@ import { portalAuthOptions } from "@/lib/auth/portal-auth";
 import { prisma } from "@/lib/prisma";
 
 const createTicketSchema = z.object({
-  title: z.string().trim().min(4).max(140),
-  description: z.string().trim().min(10).max(5000),
-  category: z.string().trim().max(80).optional().or(z.literal("")),
+  title: z
+    .string()
+    .trim()
+    .min(4, "El título debe tener al menos 4 caracteres.")
+    .max(140, "El título no puede superar 140 caracteres."),
+  description: z
+    .string()
+    .trim()
+    .min(10, "El detalle debe tener al menos 10 caracteres.")
+    .max(5000, "El detalle no puede superar 5000 caracteres."),
+  category: z
+    .string()
+    .trim()
+    .max(80, "La categoría no puede superar 80 caracteres.")
+    .optional()
+    .or(z.literal("")),
   priority: z.enum(["LOW", "NORMAL", "HIGH", "URGENT"]).optional(),
-  projectId: z.string().trim().min(1).optional().or(z.literal("")),
+  projectId: z
+    .string()
+    .trim()
+    .min(1, "El proyecto seleccionado no es válido.")
+    .optional()
+    .or(z.literal("")),
 });
 
 export async function POST(req: Request) {
@@ -76,4 +94,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

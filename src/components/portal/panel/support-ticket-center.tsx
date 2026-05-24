@@ -50,8 +50,32 @@ export function SupportTicketCenter({
   });
   const [replyTextByTicket, setReplyTextByTicket] = useState<Record<string, string>>({});
 
+  function mapApiError(input: unknown, fallback: string) {
+    const message = String(input || "").trim();
+    if (!message) return fallback;
+    if (message.includes("Too small: expected string to have >=10 characters")) {
+      return "El detalle debe tener al menos 10 caracteres.";
+    }
+    if (message.includes("Too small: expected string to have >=4 characters")) {
+      return "El título debe tener al menos 4 caracteres.";
+    }
+    return message;
+  }
+
   async function createTicket() {
     setError("");
+    setMessage("");
+    const title = String(form.title || "").trim();
+    const description = String(form.description || "").trim();
+    if (title.length < 4) {
+      setError("El título debe tener al menos 4 caracteres.");
+      return;
+    }
+    if (description.length < 10) {
+      setError("El detalle debe tener al menos 10 caracteres.");
+      return;
+    }
+
     const response = await fetch("/api/portal/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -59,7 +83,7 @@ export function SupportTicketCenter({
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setError(payload?.error || "No se pudo crear el ticket.");
+      setError(mapApiError(payload?.error, "No se pudo crear el ticket."));
       return;
     }
     setMessage("Ticket creado correctamente. Actualiza la vista para ver el detalle completo.");
@@ -76,7 +100,7 @@ export function SupportTicketCenter({
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setError(payload?.error || "No se pudo enviar el mensaje.");
+      setError(mapApiError(payload?.error, "No se pudo enviar el mensaje."));
       return;
     }
     setTickets((current) =>
@@ -245,4 +269,3 @@ export function SupportTicketCenter({
     </div>
   );
 }
-
