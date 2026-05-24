@@ -61,6 +61,18 @@ export function SiteHeader() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open]);
 
+  useEffect(() => {
+    if (!open) {
+      document.body.style.overflow = "";
+      return;
+    }
+
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-lg">
       <Container className="py-3.5">
@@ -116,13 +128,14 @@ export function SiteHeader() {
           </div>
 
           <button
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition-colors hover:bg-slate-100 lg:hidden"
+            className="flex h-10 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-slate-700 transition-colors hover:bg-slate-100 lg:hidden"
             onClick={() => setOpen((value) => !value)}
             aria-label={open ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={open}
             aria-controls="mobile-navigation"
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            <span className="text-xs font-semibold">{open ? "Cerrar" : "Menú"}</span>
           </button>
         </div>
 
@@ -201,83 +214,94 @@ export function SiteHeader() {
       <div
         id="mobile-navigation"
         className={cn(
-          "border-t border-slate-100 bg-white shadow-lg transition-[max-height,opacity] duration-300 lg:hidden",
-          open ? "max-h-[700px] opacity-100" : "max-h-0 overflow-hidden opacity-0",
+          "fixed inset-0 z-40 bg-slate-950/30 opacity-0 backdrop-blur-[1px] transition-opacity duration-200 lg:hidden",
+          open ? "pointer-events-auto opacity-100" : "pointer-events-none",
         )}
+        onClick={() => setOpen(false)}
       >
-        <Container className="flex flex-col gap-1 py-4">
-          <Link
-            ref={firstMobileLinkRef}
-            href="/"
-            className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
-            onClick={() => setOpen(false)}
-          >
-            Inicio
-          </Link>
-          <div className="rounded-xl border border-slate-100 bg-slate-50 p-2">
-            <p className="px-2 pb-1 text-[11px] font-bold uppercase tracking-widest text-slate-500">Servicios</p>
-            <Link
-              href={servicesHubItem.href}
-              className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
-              onClick={() => setOpen(false)}
-            >
-              {servicesHubItem.label}
-            </Link>
-            {servicesNavItems.map((item) => (
+        <div
+          className={cn(
+            "absolute inset-x-0 top-[73px] bottom-0 border-t border-slate-200 bg-white shadow-2xl transition-transform duration-300",
+            open ? "translate-y-0" : "-translate-y-2",
+          )}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <Container className="flex h-full flex-col py-3">
+            <div className="flex-1 space-y-1 overflow-y-auto pb-4 pr-1">
               <Link
-                key={item.href}
-                href={item.href}
-                className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                ref={firstMobileLinkRef}
+                href="/"
+                className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
                 onClick={() => setOpen(false)}
               >
-                {item.label}
+                Inicio
               </Link>
-            ))}
-          </div>
-          {primaryNavItems.slice(1).map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
-              onClick={() => setOpen(false)}
-            >
-              {item.label}
-            </Link>
-          ))}
-          {secondaryNavItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
-              onClick={() => setOpen(false)}
-            >
-              {item.label}
-            </Link>
-          ))}
+              <div className="rounded-xl border border-slate-100 bg-slate-50 p-2">
+                <p className="px-2 pb-1 text-[11px] font-bold uppercase tracking-widest text-slate-500">Servicios</p>
+                <Link
+                  href={servicesHubItem.href}
+                  className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+                  onClick={() => setOpen(false)}
+                >
+                  {servicesHubItem.label}
+                </Link>
+                {servicesNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                    onClick={() => setOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+              {primaryNavItems.slice(1).map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                  onClick={() => setOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              {secondaryNavItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                  onClick={() => setOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
 
-          <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3">
-            <PortalAccessLink
-              className="w-full justify-center py-2.5"
-              label="Portal de clientes"
-              onClick={() => setOpen(false)}
-            />
-            <Link
-              href={WHATSAPP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 rounded-lg border border-[#25d366]/25 bg-[#25d366]/10 px-4 py-2.5 text-sm font-semibold text-[#18a34d]"
-              onClick={() => setOpen(false)}
-            >
-              <WhatsAppIcon className="h-4 w-4" />
-              Hablar por WhatsApp
-            </Link>
-            <Button asChild className="w-full bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/paquetes" onClick={() => setOpen(false)}>
-                Cotizar mi proyecto
+            <div className="mt-auto flex flex-col gap-2 border-t border-slate-100 bg-white pt-3">
+              <PortalAccessLink
+                className="w-full justify-center py-2.5"
+                label="Portal de clientes"
+                onClick={() => setOpen(false)}
+              />
+              <Link
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-lg border border-[#25d366]/25 bg-[#25d366]/10 px-4 py-2.5 text-sm font-semibold text-[#18a34d]"
+                onClick={() => setOpen(false)}
+              >
+                <WhatsAppIcon className="h-4 w-4" />
+                Hablar por WhatsApp
               </Link>
-            </Button>
-          </div>
-        </Container>
+              <Button asChild className="w-full bg-blue-700 font-bold text-white hover:bg-blue-800">
+                <Link href="/paquetes" onClick={() => setOpen(false)}>
+                  Cotizar mi proyecto
+                </Link>
+              </Button>
+            </div>
+          </Container>
+        </div>
       </div>
     </header>
   );
