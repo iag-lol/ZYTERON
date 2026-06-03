@@ -43,10 +43,8 @@ export default async function PortalLoginPage({ searchParams }: PortalLoginPageP
     <PortalAuthShell
       title="Iniciar sesión"
       subtitle="Accede a tu portal privado de clientes con tu correo y contraseña."
-      minimal
-      hideBackLink
     >
-      <PortalLoginForm initialError={initialError} loginOnly />
+      <PortalLoginForm initialError={initialError} googleEnabled={true} />
     </PortalAuthShell>
   );
 }
