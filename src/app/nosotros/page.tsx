@@ -3,11 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
-  Building2,
   CheckCircle2,
   Compass,
-  Cpu,
-  Eye,
   Handshake,
   Lightbulb,
   Mail,
@@ -113,39 +110,7 @@ const values = [
   },
 ];
 
-const leaderExpertise = [
-  { icon: Cpu, label: "Tecnología" },
-  { icon: Workflow, label: "Análisis de procesos" },
-  { icon: Users, label: "Liderazgo operativo" },
-  { icon: MonitorSmartphone, label: "Soluciones digitales" },
-  { icon: Building2, label: "Negocios reales" },
-];
-
-const teamMembers = [
-  {
-    name: "Eduardo Ávila",
-    role: "Fundador y líder de proyectos de Zyteron",
-    photo: "/equipo/eduardo-avila/perfil-web.png",
-    bio:
-      "Con experiencia en tecnología, análisis de procesos, liderazgo operativo y desarrollo de soluciones digitales para empresas, lidera Zyteron con una visión práctica: crear herramientas claras, profesionales y útiles para negocios reales.",
-    contact: "eduardo.avila@zyteron.cl",
-  },
-  {
-    name: "Víctor",
-    role: "Desarrollo y soporte TI",
-    photo: "/equipo/victor/perfil-web.png",
-    bio: "Profesional enfocado en desarrollo web, soporte técnico, mantenimiento de sistemas e implementación TI.",
-  },
-  {
-    name: "Leonel",
-    role: "Análisis, desarrollo y calidad",
-    photo: "/equipo/leonel/perfil-web.png",
-    bio: "Profesional enfocado en análisis, desarrollo de aplicaciones, integración de sistemas, automatización y control de calidad.",
-  },
-];
-
 export default function NosotrosPage() {
-  const [leader, ...team] = teamMembers;
 
   return (
     <main className="bg-white">
@@ -189,7 +154,7 @@ export default function NosotrosPage() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-                <Link href="/servicios">Ver servicios</Link>
+                <Link href="/quienes-somos">Conoce al equipo</Link>
               </Button>
             </div>
           </div>
@@ -220,122 +185,7 @@ export default function NosotrosPage() {
         </Container>
       </section>
 
-      <section className="border-b border-slate-200 bg-white py-20">
-        <Container className="space-y-10">
-          <div className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Equipo</p>
-            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Quién está detrás de Zyteron</h2>
-            <p className="mx-auto max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Profesionales enfocados en desarrollo web, sistemas digitales y soporte tecnológico para empresas en Chile.
-            </p>
-          </div>
 
-          <article className="card-premium mx-auto max-w-5xl overflow-hidden border-blue-100 p-6 shadow-md md:p-8">
-            <div className="grid gap-6 md:grid-cols-[0.85fr_1.15fr] md:items-start">
-              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                <Image
-                  src={leader.photo}
-                  alt={`Foto profesional de ${leader.name}, ${leader.role}`}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 45vw"
-                  quality={90}
-                  placeholder="blur"
-                  blurDataURL={softBlueBlurDataUrl}
-                  className="object-cover object-[center_20%]"
-                  priority
-                />
-              </div>
-              <div className="space-y-5">
-                <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Representante de Zyteron</p>
-                <h3 className="text-3xl font-extrabold text-slate-900">{leader.name}</h3>
-                <p className="text-sm font-semibold text-slate-700">{leader.role}</p>
-                <p className="text-sm leading-relaxed text-slate-600 sm:text-base">{leader.bio}</p>
-
-                <ul className="grid gap-2.5 sm:grid-cols-2">
-                  {leaderExpertise.map(({ icon: Icon, label }) => (
-                    <li
-                      key={label}
-                      className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 transition-colors hover:border-blue-200 hover:bg-blue-50/60"
-                    >
-                      <span className="inline-flex shrink-0 rounded-lg bg-blue-100 p-2 text-blue-700">
-                        <Icon className="h-4 w-4" aria-hidden />
-                      </span>
-                      <span className="text-sm font-semibold text-slate-800">{label}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <a
-                  href={`mailto:${leader.contact}`}
-                  className="inline-flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 transition-colors hover:border-blue-200 hover:bg-blue-100 hover:text-blue-900"
-                >
-                  <Mail className="h-4 w-4" aria-hidden />
-                  {leader.contact}
-                </a>
-              </div>
-            </div>
-          </article>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {team.map((member) => (
-              <article key={member.name} className="card-premium p-5">
-                <div className="grid gap-4 sm:grid-cols-[110px_1fr] sm:items-start">
-                  <div className="relative mx-auto aspect-[4/5] w-full max-w-[110px] overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:mx-0">
-                    <Image
-                      src={member.photo}
-                      alt={`Foto de ${member.name}, ${member.role}`}
-                      fill
-                      sizes="110px"
-                      quality={80}
-                      loading="lazy"
-                      placeholder="blur"
-                      blurDataURL={softBlueBlurDataUrl}
-                      className="object-cover object-[center_20%]"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-blue-600">{member.role}</p>
-                    <h3 className="text-xl font-extrabold text-slate-900">{member.name}</h3>
-                    <p className="text-sm leading-relaxed text-slate-600">{member.bio}</p>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      <section className="section-alt py-16">
-        <Container className="grid gap-6 lg:grid-cols-3">
-          <article className="card-premium p-6 lg:col-span-1">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Trayectoria</p>
-            <h2 className="mt-2 text-2xl font-extrabold text-slate-900">Más de 7 años ligados al mundo tecnológico</h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              Contamos con más de 7 años de experiencia ligada al mundo tecnológico, desarrollo de soluciones digitales, análisis de procesos, soporte operativo y creación de herramientas para empresas. Esta experiencia nos permite entender no solo el diseño de una web, sino también la lógica real detrás de un negocio: operación, clientes, ventas, administración, control, reportes y crecimiento.
-            </p>
-          </article>
-
-          <article className="card-premium p-6">
-            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-600">
-              <Target className="h-4 w-4" /> Misión
-            </p>
-            <h2 className="mt-2 text-2xl font-extrabold text-slate-900">Soluciones digitales claras y funcionales</h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              Nuestra misión es entregar soluciones digitales claras, funcionales y profesionales que ayuden a empresas y pymes a mejorar su presencia online, ordenar sus procesos y aprovechar la tecnología como una herramienta real de crecimiento.
-            </p>
-          </article>
-
-          <article className="card-premium p-6">
-            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-600">
-              <Eye className="h-4 w-4" /> Visión
-            </p>
-            <h2 className="mt-2 text-2xl font-extrabold text-slate-900">Tecnología confiable, moderna y accesible</h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              Nuestra visión es convertirnos en una empresa tecnológica reconocida en Chile por crear soluciones digitales confiables, modernas y accesibles para negocios que necesitan avanzar, profesionalizarse y competir mejor en el mundo digital.
-            </p>
-          </article>
-        </Container>
-      </section>
 
       <section className="bg-white py-16">
         <Container className="space-y-10">
@@ -372,18 +222,31 @@ export default function NosotrosPage() {
         </Container>
       </section>
 
-      <section className="bg-white py-16">
-        <Container className="space-y-10">
-          <div className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Valores</p>
-            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Principios que guían cada proyecto</h2>
+      <section className="relative overflow-hidden bg-slate-50 py-24">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-100/50 via-slate-50 to-white" />
+        <Container className="relative space-y-16">
+          <div className="space-y-4 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Nuestros Valores</p>
+            <h2 className="text-3xl font-extrabold sm:text-5xl text-slate-900">Principios que guían cada proyecto</h2>
+            <p className="mx-auto max-w-2xl text-slate-600">
+              No solo escribimos código, construimos soluciones basadas en la confianza y el profesionalismo.
+            </p>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {values.map((value) => (
-              <article key={value.title} className="card-premium p-5">
-                <div className="mb-3 inline-flex rounded-xl bg-blue-50 p-2 text-blue-700">{value.icon}</div>
-                <h3 className="text-base font-extrabold text-slate-900">{value.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{value.description}</p>
+          
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {values.map((value, index) => (
+              <article 
+                key={value.title} 
+                className={`group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 transition-all hover:-translate-y-2 hover:shadow-xl hover:shadow-blue-900/5 ${index === values.length - 1 ? 'xl:col-start-2' : ''}`}
+              >
+                <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-blue-50 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:bg-blue-100" />
+                <div className="relative z-10">
+                  <div className="mb-6 inline-flex rounded-2xl bg-blue-50 p-4 text-blue-700 transition-all duration-300 group-hover:scale-110 group-hover:bg-blue-700 group-hover:text-white">
+                    {value.icon}
+                  </div>
+                  <h3 className="mb-3 text-xl font-extrabold text-slate-900 transition-colors group-hover:text-blue-700">{value.title}</h3>
+                  <p className="leading-relaxed text-slate-600">{value.description}</p>
+                </div>
               </article>
             ))}
           </div>
@@ -419,22 +282,67 @@ export default function NosotrosPage() {
         </Container>
       </section>
 
-      <section className="bg-white py-16">
-        <Container className="rounded-2xl section-blue p-8 text-center text-white md:p-12">
-          <h2 className="text-2xl font-extrabold sm:text-3xl">Conversemos sobre tu proyecto</h2>
-          <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-blue-100 sm:text-base">
-            Cuéntanos qué necesita tu empresa y te ayudamos a definir una solución digital clara, profesional y escalable.
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" className="bg-white font-bold text-blue-800 hover:bg-blue-50">
-              <Link href="/contacto">Solicitar asesoría</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
-              <Link href="/servicios">Ver servicios</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
-              <Link href="/blog">Leer blog</Link>
-            </Button>
+      <section className="bg-white py-16" aria-labelledby="cta-segmentacion">
+        <Container className="space-y-10">
+          <div className="text-center space-y-4">
+            <h2 id="cta-segmentacion" className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              Soluciones a la medida de tu negocio
+            </h2>
+            <p className="mx-auto max-w-2xl text-lg text-slate-600">
+              Entendemos que un emprendimiento no necesita lo mismo que una gran corporación. Elige tu perfil para descubrir cómo impulsamos tu crecimiento.
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* CTA para PYMEs */}
+            <article className="group relative overflow-hidden rounded-3xl border border-blue-100 bg-blue-50/50 p-8 sm:p-10 transition-all hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/5">
+              <div className="relative z-10 flex flex-col h-full">
+                <span className="mb-4 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-bold uppercase tracking-widest text-blue-700 w-fit">
+                  Para PYMEs y Emprendedores
+                </span>
+                <h3 className="mb-4 text-2xl font-extrabold text-slate-900">
+                  Desarrollo Web y Tiendas Online Rápidas
+                </h3>
+                <p className="mb-8 leading-relaxed text-slate-600 flex-1">
+                  Paquetes de diseño web accesibles, tiendas e-commerce optimizadas para SEO y herramientas de gestión básicas para que empieces a vender y digitalizarte sin complicaciones.
+                </p>
+                <div className="flex flex-wrap gap-3 mt-auto">
+                  <Button asChild size="lg" className="bg-blue-700 font-bold text-white hover:bg-blue-800">
+                    <Link href="/paginas-web-para-pymes" title="Ver páginas web para pymes">
+                      Ver planes para PYMEs
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </article>
+
+            {/* CTA para Grandes Empresas */}
+            <article className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-900 p-8 sm:p-10 text-white transition-all hover:shadow-2xl hover:shadow-slate-900/20">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-blue-900/40 via-transparent to-transparent" />
+              <div className="relative z-10 flex flex-col h-full">
+                <span className="mb-4 inline-block rounded-full bg-slate-800 border border-slate-700 px-3 py-1 text-xs font-bold uppercase tracking-widest text-blue-400 w-fit">
+                  Para Empresas Corporativas
+                </span>
+                <h3 className="mb-4 text-2xl font-extrabold text-white">
+                  Sistemas a Medida y Automatización
+                </h3>
+                <p className="mb-8 leading-relaxed text-slate-300 flex-1">
+                  Consultoría TI, desarrollo de software administrativo, integraciones de sistemas, automatización de procesos operativos e infraestructura cloud para alta demanda.
+                </p>
+                <div className="flex flex-wrap gap-3 mt-auto">
+                  <Button asChild size="lg" className="bg-white font-bold text-slate-900 hover:bg-slate-100">
+                    <Link href="/contacto" title="Agendar consultoría para desarrollo de software">
+                      Agendar consultoría técnica
+                    </Link>
+                  </Button>
+                  <Button asChild size="lg" variant="outline" className="border-slate-700 bg-slate-800/50 text-white hover:bg-slate-800 hover:text-white">
+                    <Link href="/sistemas-web" title="Sistemas web para empresas">
+                      Ver sistemas a medida
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </article>
           </div>
         </Container>
       </section>
