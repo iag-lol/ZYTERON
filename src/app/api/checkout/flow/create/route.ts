@@ -144,24 +144,36 @@ export async function POST(req: Request) {
       }
     }
 
-    const { products } = await getWebPricingSnapshot();
-    const byId = new Map(products.map((product) => [product.id, product]));
+    const { products, plans, extras } = await getWebPricingSnapshot();
+    const byId = new Map([
+      ...products.map((p) => [p.id, p]),
+      ...plans.map((p) => [p.id, p]),
+      ...extras.map((e) => [e.id, e]),
+    ] as [string, any][]);
 
     const checkoutItems: CheckoutItem[] = [];
 
     for (const row of items) {
       const product = byId.get(row.productId);
       if (!product) {
-        return NextResponse.json({ error: `Producto no disponible: ${row.productId}` }, { status: 400 });
+        return NextResponse.json({ error: `Ítem no disponible: ${row.productId}` }, { status: 400 });
       }
       if (product.published === false) {
-        return NextResponse.json({ error: `Producto no publicado: ${product.name}` }, { status: 400 });
+        return NextResponse.json({ error: `Ítem no publicado: ${product.name}` }, { status: 400 });
       }
-      if (row.quantity > product.stock) {
+      if (product.stock !== undefined && row.quantity > product.stock) {
         return NextResponse.json({ error: `Stock insuficiente para ${product.name}.` }, { status: 400 });
       }
 
-      const finalUnit = finalUnitPrice(product);
+      const finalUnit = finalUnitPrice({
+        price: product.price,
+        discountPct: product.discountPct || 0,
+        finalPrice: product.finalPrice,
+        discountActive: product.discountActive,
+        discountStartsAt: product.discountStartsAt,
+        discountEndsAt: product.discountEndsAt,
+      });
+
       checkoutItems.push({
         productId: product.id,
         slug: product.slug,

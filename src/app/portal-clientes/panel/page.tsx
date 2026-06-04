@@ -22,6 +22,8 @@ import {
 import { PortalMetricCard } from "@/components/portal/panel/metric-card";
 import { requirePortalSession } from "@/lib/auth/portal-session";
 import { currencyCLP, getClientPortalSnapshot } from "@/lib/portal/data";
+import { getWebPricingSnapshot } from "@/lib/web-control";
+import { PortalStore } from "@/components/portal/panel/portal-store";
 import { prisma } from "@/lib/prisma";
 
 function formatDate(value?: Date | null) {
@@ -112,6 +114,7 @@ function ProgressRing({ value, max, size = 56, strokeWidth = 5, color = "#3b82f6
 export default async function PortalDashboardPage() {
   const session = await requirePortalSession();
   const snapshot = await getClientPortalSnapshot(session.user.id);
+  const pricingSnapshot = await getWebPricingSnapshot();
 
   const auditLogs = await prisma.clientAuditLog.findMany({
     where: { targetUserId: session.user.id },
@@ -491,6 +494,19 @@ export default async function PortalDashboardPage() {
         <Shield className="h-3.5 w-3.5 text-blue-600" />
         Tu información está protegida por sesión segura, cifrado AES-256 y permisos por rol. Solo tú puedes ver estos datos.
       </section>
+      {/* ── Tienda y Servicios Integrados ── */}
+      <PortalStore
+        plans={pricingSnapshot.plans}
+        extras={pricingSnapshot.extras}
+        products={pricingSnapshot.products}
+        user={{
+          name: snapshot.user?.name || session.user.name || "",
+          email: snapshot.user?.email || session.user.email || "",
+          phone: snapshot.user?.phone || "",
+          rut: snapshot.user?.rut || "",
+          address: snapshot.user?.address || "",
+        }}
+      />
     </div>
   );
 }
