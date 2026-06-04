@@ -81,3 +81,56 @@ export async function PATCH(req: Request, { params }: Context) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request, { params }: Context) {
+  const auth = await requirePortalAdminApiSession();
+  if (auth.error) return auth.error;
+
+  try {
+    const { id } = await params;
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, name: true, role: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "Cliente no encontrado." }, { status: 404 });
+    }
+
+    if (user.role === "SUPERADMIN" || user.id === auth.session?.user?.id) {
+      return NextResponse.json({ error: "No puedes eliminar este usuario." }, { status: 403 });
+    }
+
+    // Unlink CRM records so we don't lose financial/project history
+    await prisma.$transaction([
+      prisma.quote.updateMany({ where: { userId: id }, data: { userId: null } }),
+      prisma.lead.updateMany({ where: { userId: id }, data: { userId: null } }),
+      prisma.visit.updateMany({ where: { clientId: id }, data: { clientId: null } }),
+      prisma.sale.updateMany({ where: { clientId: id }, data: { clientId: null } }),
+      prisma.project.updateMany({ where: { clientId: id }, data: { clientId: null } }),
+      prisma.workOrder.updateMany({ where: { clientId: id }, data: { clientId: null } }),
+      prisma.clientRequest.updateMany({ where: { clientId: id }, data: { clientId: null } }),
+      prisma.taxDocument.updateMany({ where: { clientId: id }, data: { clientId: null } }),
+      prisma.user.delete({ where: { id } }),
+    ]);
+
+    const actorId = auth.legacy ? null : auth.session?.user?.id;
+    if (actorId) {
+      await logPortalAdminAction({
+        actorId,
+        targetUserId: null, // User is deleted
+        action: "ADMIN_CLIENT_DELETED",
+        entityType: "User",
+        entityId: id,
+        details: { name: user.name },
+      }).catch(console.error);
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "No se pudo eliminar el cliente.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+

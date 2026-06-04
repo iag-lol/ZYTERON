@@ -1,35 +1,30 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ChevronDown } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
-function ActionBox({
-  title,
-  subtitle,
-  defaultOpen = true,
-  children,
-}: {
-  title: string;
-  subtitle?: string;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <details open={defaultOpen} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <summary className="flex cursor-pointer list-none items-start justify-between gap-3 bg-slate-50/70 px-4 py-3">
-        <div>
-          <h3 className="text-sm font-bold text-slate-900">{title}</h3>
-          {subtitle ? <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p> : null}
-        </div>
-        <ChevronDown className="mt-0.5 h-4 w-4 text-slate-500 transition-transform group-open:rotate-180" />
-      </summary>
-      <div className="p-4">{children}</div>
-    </details>
-  );
-}
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  UserCircle,
+  Link as LinkIcon,
+  Key,
+  FileText,
+  LifeBuoy,
+  Bell,
+  Trash2,
+  AlertTriangle,
+} from "lucide-react";
 
 export function PortalClientAdminActions({
   userId,
@@ -45,6 +40,7 @@ export function PortalClientAdminActions({
     accountStatus: "ACTIVE" | "PENDING" | "DISABLED";
   };
 }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState("");
   const [profile, setProfile] = useState(initial);
@@ -75,19 +71,14 @@ export function PortalClientAdminActions({
     type: "INFO",
     link: "",
   });
-  const [communication, setCommunication] = useState({
-    subject: "",
-    message: "",
-    direction: "OUTBOUND",
-    channel: "PORTAL",
-  });
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  async function callApi(path: string, method: "POST" | "PATCH", body: unknown) {
+  async function callApi(path: string, method: "POST" | "PATCH" | "DELETE", body?: unknown) {
     setFeedback("");
     const response = await fetch(path, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: body ? JSON.stringify(body) : undefined,
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -98,187 +89,335 @@ export function PortalClientAdminActions({
     return true;
   }
 
+  async function handleDelete() {
+    startTransition(async () => {
+      const ok = await callApi(`/api/portal/admin/users/${userId}`, "DELETE");
+      if (ok) {
+        setIsDeleteDialogOpen(false);
+        router.push("/admin/portal-clientes");
+        router.refresh();
+      }
+    });
+  }
+
   return (
-    <div className="space-y-4">
-      {feedback ? (
-        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-800">
+    <div className="space-y-6">
+      {feedback && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-800 shadow-sm animate-in fade-in zoom-in-95">
           {feedback}
-        </p>
-      ) : null}
+        </div>
+      )}
 
-      <ActionBox
-        title="Actualizar perfil y estado"
-        subtitle="Controla datos base, observaciones internas y estado de acceso del cliente."
-      >
-        <form
-          className="grid gap-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            startTransition(async () => {
-              await callApi(`/api/portal/admin/users/${userId}`, "PATCH", profile);
-            });
-          }}
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Input value={profile.firstName} onChange={(event) => setProfile((prev) => ({ ...prev, firstName: event.target.value }))} placeholder="Nombre" />
-            <Input value={profile.lastName} onChange={(event) => setProfile((prev) => ({ ...prev, lastName: event.target.value }))} placeholder="Apellido" />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Input value={profile.company} onChange={(event) => setProfile((prev) => ({ ...prev, company: event.target.value }))} placeholder="Empresa" />
-            <Input value={profile.phone} onChange={(event) => setProfile((prev) => ({ ...prev, phone: event.target.value }))} placeholder="Teléfono" />
-          </div>
-          <Textarea value={profile.notes} onChange={(event) => setProfile((prev) => ({ ...prev, notes: event.target.value }))} placeholder="Observaciones internas..." rows={4} />
-          <select className="h-10 rounded-lg border border-slate-200 px-3 text-sm" value={profile.accountStatus} onChange={(event) => setProfile((prev) => ({ ...prev, accountStatus: event.target.value as "ACTIVE" | "PENDING" | "DISABLED" }))}>
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="PENDING">PENDING</option>
-            <option value="DISABLED">DISABLED</option>
-          </select>
-          <Button type="submit" className="h-10 w-fit bg-blue-700 hover:bg-blue-800" disabled={pending}>
-            Guardar cambios
-          </Button>
-        </form>
-      </ActionBox>
+      <Tabs defaultValue="perfil" className="w-full">
+        <TabsList className="mb-4 flex flex-wrap h-auto gap-2 bg-transparent justify-start">
+          <TabsTrigger value="perfil" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-xl px-4 py-2 text-slate-600">
+            <UserCircle className="mr-2 h-4 w-4" />
+            Perfil & Estado
+          </TabsTrigger>
+          <TabsTrigger value="vincular" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-xl px-4 py-2 text-slate-600">
+            <LinkIcon className="mr-2 h-4 w-4" />
+            Vincular
+          </TabsTrigger>
+          <TabsTrigger value="credenciales" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-xl px-4 py-2 text-slate-600">
+            <Key className="mr-2 h-4 w-4" />
+            Credenciales
+          </TabsTrigger>
+          <TabsTrigger value="documentos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-xl px-4 py-2 text-slate-600">
+            <FileText className="mr-2 h-4 w-4" />
+            Documentos
+          </TabsTrigger>
+          <TabsTrigger value="tickets" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-xl px-4 py-2 text-slate-600">
+            <LifeBuoy className="mr-2 h-4 w-4" />
+            Soporte
+          </TabsTrigger>
+          <TabsTrigger value="notificaciones" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-xl px-4 py-2 text-slate-600">
+            <Bell className="mr-2 h-4 w-4" />
+            Avisos
+          </TabsTrigger>
+        </TabsList>
 
-      <ActionBox
-        title="Vincular registros existentes"
-        subtitle="Asocia cotizaciones, proyectos, ventas y solicitudes ya creadas al cliente."
-      >
-        <form
-          className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]"
-          onSubmit={(event) => {
-            event.preventDefault();
-            startTransition(async () => {
-              await callApi(`/api/portal/admin/users/${userId}/assign`, "POST", assign);
-            });
-          }}
-        >
-          <select className="h-10 rounded-lg border border-slate-200 px-3 text-sm" value={assign.entityType} onChange={(event) => setAssign((prev) => ({ ...prev, entityType: event.target.value }))}>
-            <option value="QUOTE">Cotización</option>
-            <option value="PROJECT">Proyecto</option>
-            <option value="SALE">Compra/Venta</option>
-            <option value="TAX_DOCUMENT">Boleta/Documento tributario</option>
-            <option value="CLIENT_REQUEST">Solicitud</option>
-          </select>
-          <Input value={assign.entityId} onChange={(event) => setAssign((prev) => ({ ...prev, entityId: event.target.value }))} placeholder="ID del registro" />
-          <Button type="submit" variant="secondary" disabled={pending}>Vincular</Button>
-        </form>
-      </ActionBox>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <TabsContent value="perfil" className="m-0 space-y-6 outline-none focus:ring-0">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Configuración Base</h3>
+              <p className="text-sm text-slate-500 mb-4">Actualiza los datos corporativos y el estado de acceso del cliente al portal.</p>
+              
+              <form
+                className="grid gap-4"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  startTransition(async () => {
+                    await callApi(`/api/portal/admin/users/${userId}`, "PATCH", profile);
+                  });
+                }}
+              >
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Nombre</label>
+                    <Input value={profile.firstName} onChange={(e) => setProfile({ ...profile, firstName: e.target.value })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Apellido</label>
+                    <Input value={profile.lastName} onChange={(e) => setProfile({ ...profile, lastName: e.target.value })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Empresa</label>
+                    <Input value={profile.company} onChange={(e) => setProfile({ ...profile, company: e.target.value })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Teléfono</label>
+                    <Input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} />
+                  </div>
+                </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        <ActionBox title="Subir documento (URL)" subtitle="Publica contratos, respaldos y documentos técnicos." defaultOpen={false}>
-          <form
-            className="grid gap-3"
-            onSubmit={(event) => {
-              event.preventDefault();
-              startTransition(async () => {
-                const ok = await callApi(`/api/portal/admin/users/${userId}/documents`, "POST", doc);
-                if (ok) setDoc({ title: "", category: "CONTRATO", fileUrl: "", fileName: "", description: "" });
-              });
-            }}
-          >
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Input value={doc.title} onChange={(event) => setDoc((prev) => ({ ...prev, title: event.target.value }))} placeholder="Título documento" />
-              <Input value={doc.category} onChange={(event) => setDoc((prev) => ({ ...prev, category: event.target.value }))} placeholder="Categoría" />
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Notas u Observaciones Internas</label>
+                  <Textarea value={profile.notes} onChange={(e) => setProfile({ ...profile, notes: e.target.value })} rows={4} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Estado de Cuenta</label>
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    value={profile.accountStatus} 
+                    onChange={(e) => setProfile({ ...profile, accountStatus: e.target.value as any })}
+                  >
+                    <option value="ACTIVE">Activa (Acceso Permitido)</option>
+                    <option value="PENDING">Pendiente (Verificación)</option>
+                    <option value="DISABLED">Deshabilitada (Acceso Bloqueado)</option>
+                  </select>
+                </div>
+
+                <Button type="submit" className="w-fit bg-blue-700 hover:bg-blue-800 mt-2" disabled={pending}>
+                  Guardar Cambios
+                </Button>
+              </form>
             </div>
-            <Input value={doc.fileUrl} onChange={(event) => setDoc((prev) => ({ ...prev, fileUrl: event.target.value }))} placeholder="https://archivo..." />
-            <Input value={doc.fileName} onChange={(event) => setDoc((prev) => ({ ...prev, fileName: event.target.value }))} placeholder="Nombre archivo (opcional)" />
-            <Textarea value={doc.description} onChange={(event) => setDoc((prev) => ({ ...prev, description: event.target.value }))} placeholder="Descripción breve" rows={3} />
-            <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Registrar documento</Button>
-          </form>
-        </ActionBox>
 
-        <ActionBox
-          title="Registrar credencial / acceso"
-          subtitle="Guarda accesos de servicios con cifrado y control de auditoría."
-          defaultOpen={false}
-        >
-          <form
-            className="grid gap-3"
-            onSubmit={(event) => {
-              event.preventDefault();
-              startTransition(async () => {
-                const ok = await callApi(`/api/portal/admin/users/${userId}/credentials`, "POST", credential);
-                if (ok) setCredential({ serviceName: "", username: "", secret: "", url: "", notes: "" });
-              });
-            }}
-          >
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Input value={credential.serviceName} onChange={(event) => setCredential((prev) => ({ ...prev, serviceName: event.target.value }))} placeholder="Servicio (ej: Hosting)" />
-              <Input value={credential.username} onChange={(event) => setCredential((prev) => ({ ...prev, username: event.target.value }))} placeholder="Usuario" />
-            </div>
-            <Input value={credential.secret} onChange={(event) => setCredential((prev) => ({ ...prev, secret: event.target.value }))} placeholder="Secreto / contraseña" />
-            <Input value={credential.url} onChange={(event) => setCredential((prev) => ({ ...prev, url: event.target.value }))} placeholder="URL de acceso" />
-            <Textarea value={credential.notes} onChange={(event) => setCredential((prev) => ({ ...prev, notes: event.target.value }))} placeholder="Notas internas" rows={3} />
-            <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Guardar credencial</Button>
-          </form>
-        </ActionBox>
+            <hr className="border-slate-100" />
 
-        <ActionBox title="Crear ticket de soporte" subtitle="Abre un caso directamente desde administración." defaultOpen={false}>
-          <form
-            className="grid gap-3"
-            onSubmit={(event) => {
-              event.preventDefault();
-              startTransition(async () => {
-                const ok = await callApi(`/api/portal/admin/users/${userId}/tickets`, "POST", ticket);
-                if (ok) setTicket({ title: "", description: "", category: "SOPORTE", priority: "NORMAL" });
-              });
-            }}
-          >
-            <Input value={ticket.title} onChange={(event) => setTicket((prev) => ({ ...prev, title: event.target.value }))} placeholder="Título ticket" />
-            <Textarea value={ticket.description} onChange={(event) => setTicket((prev) => ({ ...prev, description: event.target.value }))} rows={3} placeholder="Descripción del ticket" />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Input value={ticket.category} onChange={(event) => setTicket((prev) => ({ ...prev, category: event.target.value }))} placeholder="Categoría" />
-              <Input value={ticket.priority} onChange={(event) => setTicket((prev) => ({ ...prev, priority: event.target.value }))} placeholder="Prioridad" />
+            <div>
+              <h3 className="text-lg font-bold text-red-600">Zona de Peligro</h3>
+              <p className="text-sm text-slate-500 mb-4">La eliminación del cliente es irreversible. Las cotizaciones y proyectos asociados se mantendrán pero se desvincularán de este usuario.</p>
+              
+              <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="destructive" className="bg-red-600 hover:bg-red-700">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Eliminar Cliente
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-red-600">
+                      <AlertTriangle className="h-5 w-5" />
+                      ¿Eliminar cliente definitivamente?
+                    </DialogTitle>
+                    <DialogDescription>
+                      Estás a punto de borrar a este cliente y todo su acceso al portal.
+                      Sus compras y proyectos se mantendrán en el sistema como huérfanos para no afectar tu contabilidad, pero se borrarán sus credenciales y mensajes.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter className="sm:justify-end gap-2 mt-4">
+                    <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={pending}>
+                      Cancelar
+                    </Button>
+                    <Button variant="destructive" onClick={handleDelete} disabled={pending}>
+                      {pending ? "Eliminando..." : "Sí, eliminar cliente"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
-            <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Crear ticket</Button>
-          </form>
-        </ActionBox>
+          </TabsContent>
 
-        <ActionBox title="Notificación al cliente" subtitle="Publica alertas o avisos internos en su portal." defaultOpen={false}>
-          <form
-            className="grid gap-3"
-            onSubmit={(event) => {
-              event.preventDefault();
-              startTransition(async () => {
-                const ok = await callApi(`/api/portal/admin/users/${userId}/notifications`, "POST", notification);
-                if (ok) setNotification({ title: "", body: "", type: "INFO", link: "" });
-              });
-            }}
-          >
-            <Input value={notification.title} onChange={(event) => setNotification((prev) => ({ ...prev, title: event.target.value }))} placeholder="Título notificación" />
-            <Textarea value={notification.body} onChange={(event) => setNotification((prev) => ({ ...prev, body: event.target.value }))} rows={3} placeholder="Mensaje" />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Input value={notification.type} onChange={(event) => setNotification((prev) => ({ ...prev, type: event.target.value }))} placeholder="Tipo (INFO, ALERT...)" />
-              <Input value={notification.link} onChange={(event) => setNotification((prev) => ({ ...prev, link: event.target.value }))} placeholder="Link opcional" />
-            </div>
-            <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Enviar notificación</Button>
-          </form>
-        </ActionBox>
+          <TabsContent value="vincular" className="m-0 space-y-6 outline-none focus:ring-0">
+            <h3 className="text-lg font-bold text-slate-900">Vincular Registros Existentes</h3>
+            <p className="text-sm text-slate-500 mb-4">Asocia manualmente cotizaciones, proyectos, o ventas huérfanas introduciendo su ID interno.</p>
+            <form
+              className="grid gap-4 sm:grid-cols-[1fr_2fr_auto] items-end"
+              onSubmit={(event) => {
+                event.preventDefault();
+                startTransition(async () => {
+                  await callApi(`/api/portal/admin/users/${userId}/assign`, "POST", assign);
+                });
+              }}
+            >
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">Tipo de Registro</label>
+                <select className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm focus:ring-2 focus:ring-blue-500" value={assign.entityType} onChange={(e) => setAssign({ ...assign, entityType: e.target.value })}>
+                  <option value="QUOTE">Cotización</option>
+                  <option value="PROJECT">Proyecto</option>
+                  <option value="SALE">Compra/Venta</option>
+                  <option value="TAX_DOCUMENT">Documento Tributario</option>
+                  <option value="CLIENT_REQUEST">Solicitud</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">ID del Registro</label>
+                <Input value={assign.entityId} onChange={(e) => setAssign({ ...assign, entityId: e.target.value })} placeholder="Ej: cm02j3n8m0000..." />
+              </div>
+              <Button type="submit" variant="secondary" className="h-10" disabled={pending}>Vincular</Button>
+            </form>
+          </TabsContent>
 
-        <ActionBox title="Registrar comunicación" subtitle="Documenta conversaciones e hitos de seguimiento." defaultOpen={false}>
-          <form
-            className="grid gap-3"
-            onSubmit={(event) => {
-              event.preventDefault();
-              startTransition(async () => {
-                const ok = await callApi(`/api/portal/admin/users/${userId}/communications`, "POST", communication);
-                if (ok) setCommunication({ subject: "", message: "", direction: "OUTBOUND", channel: "PORTAL" });
-              });
-            }}
-          >
-            <Input value={communication.subject} onChange={(event) => setCommunication((prev) => ({ ...prev, subject: event.target.value }))} placeholder="Asunto" />
-            <Textarea value={communication.message} onChange={(event) => setCommunication((prev) => ({ ...prev, message: event.target.value }))} rows={3} placeholder="Mensaje" />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <select className="h-10 rounded-lg border border-slate-200 px-3 text-sm" value={communication.direction} onChange={(event) => setCommunication((prev) => ({ ...prev, direction: event.target.value }))}>
-                <option value="OUTBOUND">OUTBOUND</option>
-                <option value="INBOUND">INBOUND</option>
-              </select>
-              <Input value={communication.channel} onChange={(event) => setCommunication((prev) => ({ ...prev, channel: event.target.value }))} placeholder="Canal" />
-            </div>
-            <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Guardar comunicación</Button>
-          </form>
-        </ActionBox>
-      </div>
+          <TabsContent value="credenciales" className="m-0 space-y-6 outline-none focus:ring-0">
+            <h3 className="text-lg font-bold text-slate-900">Registrar Nueva Credencial</h3>
+            <p className="text-sm text-slate-500 mb-4">Crea accesos seguros para que el cliente pueda ver sus claves de Hosting, Cpanel, WordPress, etc.</p>
+            <form
+              className="grid gap-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                startTransition(async () => {
+                  const ok = await callApi(`/api/portal/admin/users/${userId}/credentials`, "POST", credential);
+                  if (ok) setCredential({ serviceName: "", username: "", secret: "", url: "", notes: "" });
+                });
+              }}
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Nombre del Servicio</label>
+                  <Input value={credential.serviceName} onChange={(e) => setCredential({ ...credential, serviceName: e.target.value })} placeholder="Ej: WordPress" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Usuario (Opcional)</label>
+                  <Input value={credential.username} onChange={(e) => setCredential({ ...credential, username: e.target.value })} placeholder="admin" />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Contraseña / Secreto</label>
+                  <Input value={credential.secret} onChange={(e) => setCredential({ ...credential, secret: e.target.value })} placeholder="••••••••" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">URL de Acceso (Opcional)</label>
+                  <Input value={credential.url} onChange={(e) => setCredential({ ...credential, url: e.target.value })} placeholder="https://..." />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">Instrucciones o Notas (Opcional)</label>
+                <Textarea value={credential.notes} onChange={(e) => setCredential({ ...credential, notes: e.target.value })} rows={3} placeholder="No compartir esta clave..." />
+              </div>
+              <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Guardar Credencial Segura</Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="documentos" className="m-0 space-y-6 outline-none focus:ring-0">
+            <h3 className="text-lg font-bold text-slate-900">Publicar Documento</h3>
+            <p className="text-sm text-slate-500 mb-4">Enlaza URLs de contratos, respaldos o actas técnicas para que el cliente pueda descargarlas.</p>
+            <form
+              className="grid gap-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                startTransition(async () => {
+                  const ok = await callApi(`/api/portal/admin/users/${userId}/documents`, "POST", doc);
+                  if (ok) setDoc({ title: "", category: "CONTRATO", fileUrl: "", fileName: "", description: "" });
+                });
+              }}
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Título del Documento</label>
+                  <Input value={doc.title} onChange={(e) => setDoc({ ...doc, title: e.target.value })} placeholder="Contrato de Mantención" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Categoría</label>
+                  <Input value={doc.category} onChange={(e) => setDoc({ ...doc, category: e.target.value })} placeholder="CONTRATO, REPORTE, FACTURA..." />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">URL del Archivo</label>
+                <Input value={doc.fileUrl} onChange={(e) => setDoc({ ...doc, fileUrl: e.target.value })} placeholder="https://docs.google.com/..." />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">Descripción Breve (Opcional)</label>
+                <Textarea value={doc.description} onChange={(e) => setDoc({ ...doc, description: e.target.value })} rows={2} />
+              </div>
+              <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Registrar Enlace</Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="tickets" className="m-0 space-y-6 outline-none focus:ring-0">
+            <h3 className="text-lg font-bold text-slate-900">Apertura Manual de Ticket</h3>
+            <p className="text-sm text-slate-500 mb-4">Crea un caso de soporte en nombre del cliente si te contactó por teléfono o en persona.</p>
+            <form
+              className="grid gap-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                startTransition(async () => {
+                  const ok = await callApi(`/api/portal/admin/users/${userId}/tickets`, "POST", ticket);
+                  if (ok) setTicket({ title: "", description: "", category: "SOPORTE", priority: "NORMAL" });
+                });
+              }}
+            >
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">Asunto del Ticket</label>
+                <Input value={ticket.title} onChange={(e) => setTicket({ ...ticket, title: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">Detalle del Problema</label>
+                <Textarea value={ticket.description} onChange={(e) => setTicket({ ...ticket, description: e.target.value })} rows={4} />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Categoría</label>
+                  <Input value={ticket.category} onChange={(e) => setTicket({ ...ticket, category: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Prioridad</label>
+                  <select className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm focus:ring-2 focus:ring-blue-500" value={ticket.priority} onChange={(e) => setTicket({ ...ticket, priority: e.target.value })}>
+                    <option value="BAJA">Baja</option>
+                    <option value="NORMAL">Normal</option>
+                    <option value="ALTA">Alta</option>
+                    <option value="CRITICA">Crítica</option>
+                  </select>
+                </div>
+              </div>
+              <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Crear Ticket a nombre del Cliente</Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="notificaciones" className="m-0 space-y-6 outline-none focus:ring-0">
+            <h3 className="text-lg font-bold text-slate-900">Enviar Alerta al Portal</h3>
+            <p className="text-sm text-slate-500 mb-4">El cliente verá esta notificación en la campana de su portal apenas inicie sesión.</p>
+            <form
+              className="grid gap-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                startTransition(async () => {
+                  const ok = await callApi(`/api/portal/admin/users/${userId}/notifications`, "POST", notification);
+                  if (ok) setNotification({ title: "", body: "", type: "INFO", link: "" });
+                });
+              }}
+            >
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">Título Corto</label>
+                <Input value={notification.title} onChange={(e) => setNotification({ ...notification, title: e.target.value })} placeholder="Ej: Mantención programada" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">Cuerpo del Mensaje</label>
+                <Textarea value={notification.body} onChange={(e) => setNotification({ ...notification, body: e.target.value })} rows={3} placeholder="Estimado cliente, su sitio estará en mantenimiento..." />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Nivel de Alerta</label>
+                  <select className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm focus:ring-2 focus:ring-blue-500" value={notification.type} onChange={(e) => setNotification({ ...notification, type: e.target.value })}>
+                    <option value="INFO">Informativa (Azul)</option>
+                    <option value="SUCCESS">Éxito (Verde)</option>
+                    <option value="WARNING">Advertencia (Amarillo)</option>
+                    <option value="ERROR">Importante (Rojo)</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Enlace de Acción (Opcional)</label>
+                  <Input value={notification.link} onChange={(e) => setNotification({ ...notification, link: e.target.value })} placeholder="/mis-proyectos/123" />
+                </div>
+              </div>
+              <Button type="submit" variant="secondary" className="w-fit" disabled={pending}>Emitir Notificación Directa</Button>
+            </form>
+          </TabsContent>
+        </div>
+      </Tabs>
     </div>
   );
 }
