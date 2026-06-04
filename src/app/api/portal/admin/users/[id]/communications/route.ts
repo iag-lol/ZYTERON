@@ -15,6 +15,24 @@ type Context = {
   params: Promise<{ id: string }>;
 };
 
+export async function GET(req: Request, { params }: Context) {
+  const auth = await requirePortalAdminApiSession();
+  if (auth.error) return auth.error;
+
+  try {
+    const { id } = await params;
+    const communications = await prisma.clientCommunication.findMany({
+      where: { userId: id },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+    });
+    return NextResponse.json({ communications });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Error al obtener comunicaciones.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request, { params }: Context) {
   const auth = await requirePortalAdminApiSession();
   if (auth.error) return auth.error;
@@ -38,7 +56,6 @@ export async function POST(req: Request, { params }: Context) {
         direction: parsed.data.direction || "OUTBOUND",
         channel: parsed.data.channel || "PORTAL",
       },
-      select: { id: true },
     });
 
     const actorId = auth.legacy ? null : auth.session.user.id;
@@ -50,7 +67,7 @@ export async function POST(req: Request, { params }: Context) {
       entityId: comm.id,
     });
 
-    return NextResponse.json({ ok: true, id: comm.id });
+    return NextResponse.json({ ok: true, id: comm.id, communication: comm });
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo registrar la comunicación.";
     return NextResponse.json({ error: message }, { status: 500 });

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { updateRows } from "@/lib/admin/repository";
+import { prisma } from "@/lib/prisma";
 
 const allowed = ["ACTIVE", "IN_PROGRESS", "COMPLETED", "CLOSED", "CANCELLED"] as const;
 type AllowedStatus = (typeof allowed)[number];
@@ -37,35 +37,7 @@ function resolveRequestOrigin(request: Request) {
   return requestUrl.origin;
 }
 
-async function updateWorkOrderRows(payload: Record<string, unknown>, filters: Record<string, string | number>) {
-  const tables = ["WorkOrder", "workorder", "work_order", "\"WorkOrder\""] as const;
-  let lastError: Error | null = null;
 
-  for (const table of tables) {
-    try {
-      await updateRows(table, payload, filters);
-      return;
-    } catch (error) {
-      const message = error instanceof Error ? error.message.toLowerCase() : String(error || "").toLowerCase();
-      const missingSchema =
-        (message.includes("workorder") && message.includes("does not exist")) ||
-        message.includes("could not find the table") ||
-        message.includes("schema cache");
-
-      if (missingSchema) {
-        lastError = error instanceof Error ? error : new Error(String(error || "Schema not available"));
-        continue;
-      }
-
-      throw error;
-    }
-  }
-
-  if (lastError) {
-    throw lastError;
-  }
-  throw new Error("No se pudo resolver la tabla WorkOrder.");
-}
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
@@ -79,24 +51,16 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     return NextResponse.redirect(redirectUrl, { status: 303 });
   }
 
-  const now = new Date().toISOString();
-  const payload: Record<string, unknown> = {
-    status,
-    updatedAt: now,
-  };
-
-  if (status === "COMPLETED") {
-    payload.completedAt = now;
-  }
-  if (status === "CLOSED") {
-    payload.closedAt = now;
-  }
-  if (status === "CANCELLED") {
-    payload.cancelledAt = now;
-  }
-
   try {
-    await updateWorkOrderRows(payload, { id });
+    await prisma.workOrder.update({
+      where: { id },
+      data: {
+        status,
+        completedAt: status === "COMPLETED" ? new Date() : undefined,
+        closedAt: status === "CLOSED" ? new Date() : undefined,
+        cancelledAt: status === "CANCELLED" ? new Date() : undefined,
+      },
+    });
   } catch {
     redirectUrl.searchParams.set("ot_status_error", "1");
     return NextResponse.redirect(redirectUrl, { status: 303 });

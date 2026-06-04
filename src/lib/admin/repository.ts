@@ -2,6 +2,7 @@ import { hash } from "bcrypt";
 import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 import { buildQuoteMeta, enrichQuoteRecord, parseQuoteMessage, serializeQuoteMessage, type QuoteMeta, type QuoteRecord } from "@/lib/admin/quote";
 
 export type Lead = {
@@ -666,43 +667,39 @@ export async function getSales() {
   );
 }
 
+function mapWorkOrderFromPrisma(order: any): WorkOrder {
+  return {
+    ...order,
+    scope: Array.isArray(order.scope) ? order.scope : order.scope ? [order.scope] : null,
+    plannedDate: order.plannedDate?.toISOString() || null,
+    dueDate: order.dueDate?.toISOString() || null,
+    createdAt: order.createdAt?.toISOString() || null,
+    updatedAt: order.updatedAt?.toISOString() || null,
+    completedAt: order.completedAt?.toISOString() || null,
+    closedAt: order.closedAt?.toISOString() || null,
+    cancelledAt: order.cancelledAt?.toISOString() || null,
+  };
+}
+
 export async function getWorkOrders() {
-  const select =
-    "id, code, source, status, priority, quoteId, saleId, clientId, title, description, scope, plannedDate, dueDate, estimatedHours, actualHours, budget, assignedTo, notes, pdfUrl, createdAt, updatedAt, completedAt, closedAt, cancelledAt";
-  const tables = ["WorkOrder", "workorder", "work_order", "\"WorkOrder\""] as const;
-
-  for (const table of tables) {
-    const rows = await safeSelect<WorkOrder>(table, select, { orderBy: "createdAt" });
-    if (rows.length > 0) return rows;
-  }
-
-  return [] as WorkOrder[];
+  const orders = await prisma.workOrder.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+  return orders.map(mapWorkOrderFromPrisma);
 }
 
 export async function getWorkOrderById(id: string) {
-  const select =
-    "id, code, source, status, priority, quoteId, saleId, clientId, title, description, scope, plannedDate, dueDate, estimatedHours, actualHours, budget, assignedTo, notes, pdfUrl, createdAt, updatedAt, completedAt, closedAt, cancelledAt";
-  const tables = ["WorkOrder", "workorder", "work_order", "\"WorkOrder\""] as const;
-
-  for (const table of tables) {
-    const row = await safeSelectSingle<WorkOrder>(table, select, { id });
-    if (row) return row;
-  }
-
-  return null;
+  const order = await prisma.workOrder.findUnique({
+    where: { id },
+  });
+  return order ? mapWorkOrderFromPrisma(order) : null;
 }
 
 export async function getWorkOrderByQuoteId(quoteId: string) {
-  const select =
-    "id, code, source, status, priority, quoteId, saleId, clientId, title, description, scope, plannedDate, dueDate, estimatedHours, actualHours, budget, assignedTo, notes, pdfUrl, createdAt, updatedAt, completedAt, closedAt, cancelledAt";
-  const tables = ["WorkOrder", "workorder", "work_order", "\"WorkOrder\""] as const;
-
-  for (const table of tables) {
-    const row = await safeSelectSingle<WorkOrder>(table, select, { quoteId });
-    if (row) return row;
-  }
-
-  return null;
+  const order = await prisma.workOrder.findFirst({
+    where: { quoteId },
+  });
+  return order ? mapWorkOrderFromPrisma(order) : null;
 }
 
 export async function getExpenses() {

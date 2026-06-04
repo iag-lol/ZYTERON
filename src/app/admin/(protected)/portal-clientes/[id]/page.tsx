@@ -13,6 +13,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { PortalClientAdminActions } from "@/components/admin/portal-client-admin-actions";
+import { AdminCommunicationsCenter } from "@/components/admin/admin-communications-center";
 import { getPortalAdminClientDetail } from "@/lib/portal/data";
 
 type Params = {
@@ -225,22 +226,16 @@ export default async function AdminPortalClienteDetallePage({ params }: Params) 
         </article>
 
         <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h3 className="text-sm font-bold text-slate-900">Soporte y comunicaciones</h3>
+          <h3 className="text-sm font-bold text-slate-900">Tickets de soporte</h3>
           <div className="mt-3 space-y-2">
-            {tickets.slice(0, 3).map((ticket) => (
+            {tickets.slice(0, 5).map((ticket) => (
               <div key={ticket.id} className="rounded-lg border border-slate-200 px-3 py-2">
                 <p className="text-sm font-semibold text-slate-900">{ticket.title}</p>
                 <p className="text-xs text-slate-500">{ticket.status} · {ticket.priority}</p>
               </div>
             ))}
-            {communications.slice(0, 2).map((item) => (
-              <div key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                <p className="text-sm font-semibold text-slate-900">{item.subject}</p>
-                <p className="text-xs text-slate-500">{item.direction} · {formatDate(item.createdAt)}</p>
-              </div>
-            ))}
-            {tickets.length === 0 && communications.length === 0 ? (
-              <p className="text-sm text-slate-500">Sin registros de soporte o comunicación.</p>
+            {tickets.length === 0 ? (
+              <p className="text-sm text-slate-500">Sin tickets de soporte.</p>
             ) : null}
           </div>
         </article>
@@ -291,6 +286,21 @@ export default async function AdminPortalClienteDetallePage({ params }: Params) 
             </div>
           </div>
         </article>
+      </section>
+
+      <section className="mt-6">
+        <h3 className="text-lg font-extrabold text-slate-900 mb-4">Centro de Comunicaciones (Portal)</h3>
+        <AdminCommunicationsCenter
+          userId={user.id}
+          initialCommunications={communications.map((c) => ({
+            id: c.id,
+            subject: c.subject,
+            message: c.message,
+            direction: c.direction,
+            channel: c.channel,
+            createdAt: c.createdAt.toISOString(),
+          }))}
+        />
       </section>
     </div>
   );
