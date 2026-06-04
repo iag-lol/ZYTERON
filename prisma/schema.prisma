@@ -8,6 +8,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -200,7 +201,7 @@ model Quote {
   createdAt DateTime     @default(now())
   taxDocuments TaxDocument[]
   projects   Project[]
-  workOrders WorkOrder[]
+  // workOrders WorkOrder[]
 }
 
 model QuoteExtra {
@@ -283,7 +284,7 @@ model Sale {
   createdAt     DateTime       @default(now())
   projects      Project[]
   taxDocuments  TaxDocument[]
-  workOrders    WorkOrder[]
+  // workOrders    WorkOrder[]
 }
 
 model Project {
@@ -323,9 +324,9 @@ model WorkOrder {
   status         String   @default("ACTIVE")
   priority       String   @default("NORMAL")
   quoteId        String?
-  quote          Quote?   @relation(fields: [quoteId], references: [id])
+  // quote          Quote?   @relation(fields: [quoteId], references: [id])
   saleId         String?
-  sale           Sale?    @relation(fields: [saleId], references: [id])
+  // sale           Sale?    @relation(fields: [saleId], references: [id])
   clientId       String?
   client         User?    @relation(fields: [clientId], references: [id])
   title          String

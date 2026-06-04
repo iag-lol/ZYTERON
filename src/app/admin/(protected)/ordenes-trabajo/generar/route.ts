@@ -166,6 +166,7 @@ export async function POST(request: Request) {
       message: error instanceof Error ? error.message : String(error || "unknown error"),
     });
     redirectUrl.searchParams.set("ot_error", "1");
+    redirectUrl.searchParams.set("error_detail", error instanceof Error ? error.message : "unknown");
     return NextResponse.redirect(redirectUrl, { status: 303 });
   }
 }
