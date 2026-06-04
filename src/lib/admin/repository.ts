@@ -682,24 +682,39 @@ function mapWorkOrderFromPrisma(order: any): WorkOrder {
 }
 
 export async function getWorkOrders() {
-  const orders = await prisma.workOrder.findMany({
-    orderBy: { createdAt: "desc" },
-  });
-  return orders.map(mapWorkOrderFromPrisma);
+  try {
+    const orders = await prisma.workOrder.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return orders.map(mapWorkOrderFromPrisma);
+  } catch (err) {
+    console.error("Prisma getWorkOrders error:", err);
+    return [];
+  }
 }
 
 export async function getWorkOrderById(id: string) {
-  const order = await prisma.workOrder.findUnique({
-    where: { id },
-  });
-  return order ? mapWorkOrderFromPrisma(order) : null;
+  try {
+    const order = await prisma.workOrder.findUnique({
+      where: { id },
+    });
+    return order ? mapWorkOrderFromPrisma(order) : null;
+  } catch (err) {
+    console.error("Prisma getWorkOrderById error:", err);
+    return null;
+  }
 }
 
 export async function getWorkOrderByQuoteId(quoteId: string) {
-  const order = await prisma.workOrder.findFirst({
-    where: { quoteId },
-  });
-  return order ? mapWorkOrderFromPrisma(order) : null;
+  try {
+    const order = await prisma.workOrder.findFirst({
+      where: { quoteId },
+    });
+    return order ? mapWorkOrderFromPrisma(order) : null;
+  } catch (err) {
+    console.error("Prisma getWorkOrderByQuoteId error:", err);
+    return null;
+  }
 }
 
 export async function getExpenses() {
