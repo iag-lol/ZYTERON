@@ -24,6 +24,7 @@ import {
   Boxes,
   ClipboardCheck,
   ShieldCheck,
+  Inbox,
 } from "lucide-react";
 
 const navItems = [
@@ -36,6 +37,7 @@ const navItems = [
   { href: "/admin/solicitudes", label: "Solicitudes", icon: MessagesSquare },
   { href: "/admin/comentarios", label: "Comentarios", icon: MessageSquareQuote },
   { href: "/admin/contactos", label: "Contactos", icon: Mail },
+  { href: "/admin/comunicaciones", label: "Mensajes", icon: Inbox },
   { href: "/admin/visitas", label: "Visitas técnicas", icon: CalendarClock },
   { href: "/admin/ventas", label: "Ventas", icon: ShoppingCart },
   { href: "/admin/gastos", label: "Gastos", icon: WalletCards },
