@@ -4,6 +4,7 @@ import { AccountStatus, AuthProvider, Role } from "@prisma/client";
 import { createEmailVerificationCode } from "@/lib/auth/portal-codes";
 import { normalizeEmail, registerSchema } from "@/lib/auth/portal-validators";
 import { sendPortalVerificationCodeEmail } from "@/lib/notifications/portal-email";
+import { sendAdminWhatsappNotification } from "@/lib/notifications/admin-whatsapp";
 import { prisma } from "@/lib/prisma";
 
 function getPrismaErrorCode(error: unknown) {
@@ -117,6 +118,10 @@ export async function POST(req: Request) {
         { status: 200 },
       );
     }
+
+    sendAdminWhatsappNotification(
+      `🔔 *Nuevo Registro en Zyteron*\n\n👤 Cliente: ${user.name}\n🏢 Empresa: ${parsed.data.company || "No especificada"}\n📧 Correo: ${user.email}`
+    ).catch(err => console.error("Error sending admin WhatsApp on register:", err));
 
     return NextResponse.json({
       ok: true,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { portalAuthOptions } from "@/lib/auth/portal-auth";
+import { sendAdminWhatsappNotification } from "@/lib/notifications/admin-whatsapp";
 import { prisma } from "@/lib/prisma";
 
 const createCommunicationSchema = z.object({
@@ -73,6 +74,10 @@ export async function POST(req: Request) {
         entityId: communication.id,
       },
     });
+
+    sendAdminWhatsappNotification(
+      `📩 *Nuevo Mensaje de Cliente*\n\n👤 Cliente: ${session.user.name || session.user.email}\n📝 Asunto: ${parsed.data.subject}\n\nIngresa al panel admin para responder.`
+    ).catch((err) => console.error("Error sending admin WhatsApp on communication:", err));
 
     return NextResponse.json({
       ok: true,
