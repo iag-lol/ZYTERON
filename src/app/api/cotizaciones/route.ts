@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import { serializeContactLeadDetails } from "@/lib/admin/contact-lead";
 import { insertRow, updateRowsWithFallback } from "@/lib/admin/repository";
+import { sendLeadAlertEmail } from "@/lib/notifications/lead-alert";
+import { sendAdminWhatsappNotification } from "@/lib/notifications/admin-whatsapp";
 import { prisma } from "@/lib/prisma";
 import {
+  BINARY_CHOICE_LABELS,
   appendQuoteRequestError,
   buildQuoteRequestMeta,
+  buildQuoteRequestSummary,
   budgetRangeToEstimate,
   generateQuoteCode,
   quoteRequestSchema,
-  sendQuoteRequestEmail,
-  sendQuoteRequestWhatsapp,
   serializeQuoteRequestMeta,
   type QuoteRequestMeta,
 } from "@/lib/quote-requests";
@@ -186,10 +189,10 @@ async function insertLeadWithFallback(payload: {
   id: string;
   name: string;
   email: string;
-  phone: string;
+  phone: string | null;
   source: string;
   message: string;
-  type: "QUOTE";
+  type: "PACKAGE_BUILDER";
   createdAt: string;
 }) {
   try {
@@ -243,6 +246,82 @@ async function persistMeta(quoteId: string, meta: QuoteRequestMeta) {
     where: { id: quoteId },
     data: { message: serializeQuoteRequestMeta(meta) },
   });
+}
+
+function normalizeOptional(value?: string | null) {
+  const normalized = String(value || "").trim();
+  return normalized || null;
+}
+
+function buildQuoteLeadSummary(meta: QuoteRequestMeta) {
+  const lines = [
+    `Código solicitud: ${meta.quoteCode || "Sin código"}`,
+    `Tipo de proyecto: ${meta.projectTypeLabel || "Solicitud web"}`,
+    `Empresa o negocio: ${meta.contactCompany || meta.businessName || "No informado"}`,
+    `Rubro: ${meta.businessRubro || "No informado"}`,
+    `Ciudad: ${meta.businessCity || "No informada"}`,
+    `Presupuesto: ${meta.budgetRangeLabel || "No definido"}`,
+    `Plazo: ${meta.deadlineLabel || "No definido"}`,
+    `Urgencia: ${meta.urgencyLabel || "No definida"}`,
+    `Tiene sitio web: ${BINARY_CHOICE_LABELS[meta.hasWebsite || "no-se"]}`,
+    `Tiene logo: ${BINARY_CHOICE_LABELS[meta.hasLogo || "no-se"]}`,
+    `Tiene dominio: ${BINARY_CHOICE_LABELS[meta.hasDomain || "no-se"]}`,
+    `Tiene contenido: ${BINARY_CHOICE_LABELS[meta.hasContent || "no-se"]}`,
+    meta.currentWebsite ? `Sitio actual: ${meta.currentWebsite}` : "",
+    "",
+    "Respuestas del formulario:",
+    ...(meta.projectAnswers || []).map((item) => `- ${item.label}: ${item.value}`),
+    meta.projectComment ? "" : "",
+    meta.projectComment ? `Comentario del proyecto: ${meta.projectComment}` : "",
+    meta.additionalMessage ? `Mensaje adicional: ${meta.additionalMessage}` : "",
+  ];
+
+  return lines.filter(Boolean).join("\n");
+}
+
+function buildQuoteLeadMessage(meta: QuoteRequestMeta) {
+  return serializeContactLeadDetails({
+    company: meta.contactCompany || meta.businessName,
+    service: meta.projectTypeLabel || "Solicitud web",
+    brief: buildQuoteLeadSummary(meta),
+    submittedFrom: meta.submittedFrom,
+    projectType: meta.projectTypeLabel,
+    budget: meta.budgetRangeLabel,
+    expectedDate: meta.deadlineLabel,
+    projectFor: meta.businessRubro,
+    needType: meta.urgencyLabel,
+    selectedPlan: meta.projectTypeLabel,
+    cartLines: [
+      `Código: ${meta.quoteCode || "Sin código"}`,
+      `Presupuesto: ${meta.budgetRangeLabel || "No definido"}`,
+      `Plazo: ${meta.deadlineLabel || "No definido"}`,
+      `Urgencia: ${meta.urgencyLabel || "No definida"}`,
+    ],
+    cartTotal: budgetRangeToEstimate(meta.budgetRange || "no-claro"),
+  });
+}
+
+function buildAdminWhatsappMessage(meta: QuoteRequestMeta, quoteId: string) {
+  const adminUrl = `${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://zyteron.cl"}/admin/cotizaciones/${quoteId}`;
+
+  return [
+    "Nueva cotización web Zyteron",
+    "",
+    `Código: ${meta.quoteCode || quoteId}`,
+    `Proyecto: ${meta.projectTypeLabel || "Solicitud web"}`,
+    `Cliente: ${meta.contactName || "Sin nombre"}`,
+    `Empresa: ${meta.contactCompany || meta.businessName || "Sin empresa"}`,
+    `WhatsApp: ${meta.contactWhatsapp || "Sin WhatsApp"}`,
+    `Email: ${meta.contactEmail || "Sin email"}`,
+    `Presupuesto: ${meta.budgetRangeLabel || "No definido"}`,
+    `Plazo: ${meta.deadlineLabel || "No definido"}`,
+    `Urgencia: ${meta.urgencyLabel || "No definida"}`,
+    "",
+    "Resumen:",
+    meta.shortSummary || buildQuoteRequestSummary(meta) || "Sin resumen",
+    "",
+    `Ver en admin: ${adminUrl}`,
+  ].join("\n");
 }
 
 export async function POST(req: Request) {
@@ -318,27 +397,31 @@ export async function POST(req: Request) {
     });
 
     try {
-      const leadMessage = [
-        `${meta.projectTypeLabel || "Solicitud"} · ${meta.businessName || ""}`,
-        `Presupuesto: ${meta.budgetRangeLabel || "No definido"}`,
-        `Urgencia: ${meta.urgencyLabel || "No definida"}`,
-        meta.shortSummary || "",
-      ]
-        .filter(Boolean)
-        .join("\n");
-
       await insertLeadWithFallback({
         id: randomUUID(),
         name: data.contactName.trim(),
         email: data.contactEmail.trim(),
-        phone: meta.contactWhatsappE164 || data.contactWhatsapp.trim(),
-        source: "QUOTE_REQUEST",
-        message: leadMessage,
-        type: "QUOTE",
+        phone: normalizeOptional(meta.contactWhatsappE164 || data.contactWhatsapp.trim()),
+        source: "COTIZADOR_WEB",
+        message: buildQuoteLeadMessage(meta),
+        type: "PACKAGE_BUILDER",
         createdAt: submittedAt,
       });
     } catch (leadError) {
       console.error("[quote-request] lead insert failed:", leadError);
+      meta = appendQuoteRequestError(
+        {
+          ...meta,
+          adminStatus: "failed",
+        },
+        "admin",
+        leadError instanceof Error ? leadError.message : "No se pudo registrar el lead en admin.",
+      );
+      try {
+        await persistMeta(quoteId, meta);
+      } catch (persistError) {
+        console.error("[quote-request] persist lead failure failed:", persistError);
+      }
     }
 
     const successResponse = {
@@ -353,12 +436,29 @@ export async function POST(req: Request) {
     });
 
     try {
-      const emailResult = await sendQuoteRequestEmail(meta, quoteId);
+      const emailResult = await sendLeadAlertEmail({
+        leadId: quoteId,
+        source: "COTIZADOR_WEB",
+        submittedAtIso: submittedAt,
+        name: data.contactName.trim(),
+        email: data.contactEmail.trim(),
+        phone: normalizeOptional(meta.contactWhatsappE164 || data.contactWhatsapp.trim()),
+        company: normalizeOptional((data.contactCompany || data.businessName).trim()),
+        service: meta.projectTypeLabel || "Solicitud web",
+        message: buildQuoteLeadSummary(meta),
+        submittedFrom,
+        planName: meta.projectTypeLabel || null,
+        planPrice: estimatedValue,
+        subtotal: estimatedValue,
+        discountTotal: 0,
+        iva: 0,
+        total: estimatedValue,
+      });
       if (emailResult.sent) {
         meta = {
           ...meta,
           emailStatus: "sent",
-          resendMessageId: emailResult.messageId,
+          resendMessageId: emailResult.id,
         };
       } else {
         meta = appendQuoteRequestError(
@@ -367,7 +467,7 @@ export async function POST(req: Request) {
             emailStatus: "failed",
           },
           "email",
-          emailResult.error,
+          emailResult.reason || "No se pudo enviar el correo interno.",
         );
       }
       await persistMeta(quoteId, meta);
@@ -388,12 +488,12 @@ export async function POST(req: Request) {
     }
 
     try {
-      const whatsappResult = await sendQuoteRequestWhatsapp(meta, quoteId);
+      const whatsappResult = await sendAdminWhatsappNotification(buildAdminWhatsappMessage(meta, quoteId));
       if (whatsappResult.sent) {
         meta = {
           ...meta,
           whatsappStatus: "sent",
-          twilioMessageId: whatsappResult.messageId,
+          twilioMessageId: whatsappResult.messageSids?.[0],
         };
       } else {
         meta = appendQuoteRequestError(
@@ -402,7 +502,9 @@ export async function POST(req: Request) {
             whatsappStatus: "failed",
           },
           "whatsapp",
-          whatsappResult.error,
+          whatsappResult.failed?.map((item) => item.error).filter(Boolean).join(" | ") ||
+            whatsappResult.reason ||
+            "No se pudo enviar el aviso por WhatsApp.",
         );
       }
       await persistMeta(quoteId, meta);

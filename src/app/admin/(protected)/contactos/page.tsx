@@ -28,6 +28,15 @@ function initials(name?: string) {
     .toUpperCase();
 }
 
+function isQuoteLead(lead: { source?: string | null; type?: string | null }) {
+  const source = String(lead.source || "").toUpperCase();
+  const type = String(lead.type || "").toUpperCase();
+  return (
+    (source === "COTIZADOR_WEB" && type === "PACKAGE_BUILDER") ||
+    (source === "QUOTE_REQUEST" && type === "QUOTE")
+  );
+}
+
 export default async function AdminContactosPage() {
   const rows = await getContactLeads();
   const contacts = rows
@@ -39,8 +48,8 @@ export default async function AdminContactosPage() {
     }));
 
   const now = new Date().getTime();
-  const packageLeads = contacts.filter((lead) => String(lead.type || "").toUpperCase() === "PACKAGE_BUILDER").length;
-  const contactLeads = contacts.filter((lead) => String(lead.type || "").toUpperCase() === "CONTACT").length;
+  const packageLeads = contacts.filter((lead) => isQuoteLead(lead)).length;
+  const contactLeads = contacts.filter((lead) => !isQuoteLead(lead)).length;
   const last24h = contacts.filter((lead) => {
     if (!lead.createdAt) return false;
     const created = new Date(lead.createdAt).getTime();
@@ -141,12 +150,12 @@ export default async function AdminContactosPage() {
                         <div className="mt-1 flex items-center gap-1.5">
                           <span
                             className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                              String(lead.type || "").toUpperCase() === "PACKAGE_BUILDER"
+                              isQuoteLead(lead)
                                 ? "bg-blue-100 text-blue-700"
                                 : "bg-slate-100 text-slate-600"
                             }`}
                           >
-                            {String(lead.type || "").toUpperCase() === "PACKAGE_BUILDER" ? "Cotizador" : "Contacto"}
+                            {isQuoteLead(lead) ? "Cotizador" : "Contacto"}
                           </span>
                           {lead.details.cartTotal ? (
                             <span className="text-[11px] font-semibold text-blue-700">

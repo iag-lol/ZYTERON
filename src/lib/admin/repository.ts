@@ -825,7 +825,8 @@ export async function getContactLeads() {
     const type = String(lead.type || "").toUpperCase();
     return (
       (source === "CONTACTO_WEB" && type === "CONTACT") ||
-      (source === "COTIZADOR_WEB" && type === "PACKAGE_BUILDER")
+      (source === "COTIZADOR_WEB" && type === "PACKAGE_BUILDER") ||
+      (source === "QUOTE_REQUEST" && type === "QUOTE")
     );
   });
 }
