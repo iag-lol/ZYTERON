@@ -375,8 +375,8 @@ export async function generateWorkOrderPdf(input: WorkOrderPdfInput) {
   }
 
   // --- Approval / Signatures ---
-  ensureSpace(100);
-  y -= 40; // Add some breathing room before signatures
+  ensureSpace(60);
+  y -= 25; // Add some breathing room before signatures
 
   const sigWidth = 180;
   const sigY = y;
