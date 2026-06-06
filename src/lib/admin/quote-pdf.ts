@@ -419,11 +419,11 @@ export async function generateQuotePdf(input: QuotePdfInput) {
   let y = drawHeader({ page, input, fontRegular, fontBold });
 
   const tableCols = [
-    { key: "concepto", label: "Concepto", width: CONTENT_WIDTH * 0.41 },
-    { key: "detalle", label: "Detalle", width: CONTENT_WIDTH * 0.23 },
-    { key: "cantidad", label: "Cant.", width: CONTENT_WIDTH * 0.1 },
-    { key: "desc", label: "Desc.", width: CONTENT_WIDTH * 0.1 },
-    { key: "total", label: "Total", width: CONTENT_WIDTH * 0.16 },
+    { key: "concepto", label: "Concepto", width: CONTENT_WIDTH * 0.35 },
+    { key: "detalle", label: "Detalle", width: CONTENT_WIDTH * 0.35 },
+    { key: "cantidad", label: "Cant.", width: CONTENT_WIDTH * 0.08 },
+    { key: "desc", label: "Desc.", width: CONTENT_WIDTH * 0.08 },
+    { key: "total", label: "Total", width: CONTENT_WIDTH * 0.14 },
   ] as const;
 
   const items = input.meta.items.length ? input.meta.items : [];
@@ -603,10 +603,8 @@ export async function generateQuotePdf(input: QuotePdfInput) {
         7.8,
         tableCols[1].width - 12,
       );
-      const descLines =
-        descLinesRaw.length > 2 ? [descLinesRaw[0], `${descLinesRaw[1].slice(0, 40)}…`] : descLinesRaw;
-      const detailLines =
-        detailLinesRaw.length > 2 ? [detailLinesRaw[0], `${detailLinesRaw[1].slice(0, 40)}…`] : detailLinesRaw;
+      const descLines = descLinesRaw.length > 8 ? [...descLinesRaw.slice(0, 7), `${descLinesRaw[7].slice(0, 40)}…`] : descLinesRaw;
+      const detailLines = detailLinesRaw.length > 8 ? [...detailLinesRaw.slice(0, 7), `${detailLinesRaw[7].slice(0, 40)}…`] : detailLinesRaw;
       const lineCount = Math.max(descLines.length, detailLines.length, 1);
       const rowHeight = Math.max(20, lineCount * 9 + 8);
 
