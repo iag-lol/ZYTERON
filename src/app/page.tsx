@@ -427,7 +427,7 @@ export default async function Home() {
                 <Link href="/desarrollo-web">Ver desarrollo web</Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-                <Link href="/nosotros">Conocer Zyteron</Link>
+                <Link href="/quienes-somos">Conocer Zyteron</Link>
               </Button>
               <Link
                 href={WHATSAPP_BASE}
@@ -561,7 +561,7 @@ export default async function Home() {
 
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-              <Link href="/nosotros">Ver quién está detrás de Zyteron</Link>
+              <Link href="/quienes-somos">Ver quién está detrás de Zyteron</Link>
             </Button>
             <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
               <Link href="/contacto">Hablar con un especialista</Link>

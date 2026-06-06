@@ -74,7 +74,7 @@ const commonRelatedLinks: SeoServiceRelatedLink[] = [
   },
   {
     label: "Nosotros",
-    href: "/nosotros",
+    href: "/quienes-somos",
     description: "Conoce el enfoque, trayectoria y metodología de Zyteron.",
   },
   {

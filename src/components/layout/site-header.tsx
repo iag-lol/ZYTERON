@@ -23,8 +23,7 @@ const primaryNavItems = [
 ];
 
 const secondaryNavItems = [
-  { href: "/nosotros", label: "Nosotros" },
-  { href: "/quienes-somos", label: "Quiénes Somos" },
+  { href: "/quienes-somos", label: "Quiénes somos" },
   { href: "/casos-exito", label: "Casos" },
   { href: "/faq", label: "FAQ" },
 ];

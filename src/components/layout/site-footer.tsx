@@ -38,7 +38,6 @@ const footerColumns = [
   {
     title: "Empresa",
     items: [
-      { label: "Nosotros", href: "/nosotros" },
       { label: "Quiénes Somos", href: "/quienes-somos" },
       { label: "Contacto", href: "/contacto" },
       { label: "Política de privacidad", href: "/privacidad" },

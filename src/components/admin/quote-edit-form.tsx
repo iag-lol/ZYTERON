@@ -122,8 +122,9 @@ function getHoursBetween(startTime: string, endTime: string) {
   const [endH, endM] = endTime.split(":").map(Number);
   const startMinutes = startH * 60 + startM;
   const endMinutes = endH * 60 + endM;
-  const diff = endMinutes - startMinutes;
-  if (diff <= 0) return 0;
+  let diff = endMinutes - startMinutes;
+  if (diff < 0) diff += 24 * 60; // Overnight shift
+  if (diff === 0) return 0;
   return Math.round((diff / 60) * 100) / 100;
 }
 
@@ -272,7 +273,7 @@ export function QuoteEditForm({ quote }: Props) {
 
   const itemTotals = items.map((item) => {
     const hours = item.billingMode === "HOUR" ? getHoursBetween(item.startTime, item.endTime) : 0;
-    const effectiveQty = item.billingMode === "HOUR" ? hours : item.qty;
+    const effectiveQty = item.billingMode === "HOUR" ? hours * (item.qty || 1) : item.qty;
     const bruto = effectiveQty * item.unitPrice;
     const descuento = bruto * ((item.discountPct || 0) / 100);
     return { bruto, descuento, subtotal: bruto - descuento, hours, effectiveQty };
@@ -366,7 +367,7 @@ export function QuoteEditForm({ quote }: Props) {
     const hasInvalidItems = items.some((item) => {
       if (!item.description || item.unitPrice <= 0) return true;
       if (item.billingMode === "HOUR") {
-        return getHoursBetween(item.startTime, item.endTime) <= 0;
+        return getHoursBetween(item.startTime, item.endTime) <= 0 && item.startTime !== item.endTime;
       }
       return item.qty <= 0;
     });
@@ -672,7 +673,7 @@ export function QuoteEditForm({ quote }: Props) {
           <div className="mb-2 grid grid-cols-[3fr_1.6fr_0.8fr_1.2fr_1fr_1fr_auto] items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
             <span>Descripción</span>
             <span>Modo / Horario</span>
-            <span className="text-center">Cant./hrs</span>
+            <span className="text-center">Hrs x Cant.</span>
             <span className="text-right">Precio unit./hora</span>
             <span className="text-right">Descuento</span>
             <span className="text-right">Subtotal</span>
@@ -719,8 +720,8 @@ export function QuoteEditForm({ quote }: Props) {
                               ? {
                                   ...row,
                                   billingMode: nextMode,
-                                  unit: nextMode === "HOUR" ? "hora" : row.unit || "unidad",
-                                  qty: nextMode === "HOUR" ? row.qty : Math.max(1, row.qty),
+                                  unit: nextMode === "HOUR" ? "hrs" : row.unit || "unidad",
+                                  qty: Math.max(1, row.qty),
                                 }
                               : row,
                           ),
@@ -752,8 +753,8 @@ export function QuoteEditForm({ quote }: Props) {
                             className="text-[11px]"
                           />
                         </div>
-                        {hours <= 0 ? (
-                          <p className="text-[10px] text-rose-500">Ingresa rango válido (fin mayor a inicio)</p>
+                        {hours <= 0 && item.startTime && item.endTime ? (
+                          <p className="text-[10px] text-rose-500">Ingresa horario válido</p>
                         ) : null}
                       </div>
                     ) : (
@@ -768,9 +769,19 @@ export function QuoteEditForm({ quote }: Props) {
 
                   <div>
                     {item.billingMode === "HOUR" ? (
-                      <div className="rounded-lg border border-blue-100 bg-blue-50 px-2 py-2 text-center">
-                        <p className="text-[13px] font-bold text-blue-700">{hours > 0 ? hours.toFixed(2) : "0.00"} h</p>
-                        <p className="text-[10px] text-blue-500">auto</p>
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="flex w-full items-center gap-1 rounded-lg border border-blue-100 bg-blue-50 px-2 py-1">
+                          <Input
+                            type="number"
+                            min={1}
+                            value={item.qty}
+                            onChange={(e) => setItem(item.id, "qty", parseFloat(e.target.value) || 1)}
+                            className="h-6 w-12 border-0 bg-transparent p-0 text-center text-[12px] font-bold text-blue-700 shadow-none focus-visible:ring-0"
+                            title="Multiplicador (ej. días o personas)"
+                          />
+                          <span className="text-[11px] font-bold text-blue-700">x {hours > 0 ? hours.toFixed(2) : "0"}h</span>
+                        </div>
+                        <p className="text-[9px] font-bold text-slate-400">TOTAL: {(hours * (item.qty || 1)).toFixed(2)}h</p>
                       </div>
                     ) : (
                       <Input
