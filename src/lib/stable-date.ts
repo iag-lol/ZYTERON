@@ -1,4 +1,18 @@
 const SHORT_MONTHS_ES_CL = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sept", "oct", "nov", "dic"];
+const LONG_MONTHS_ES_CL = [
+  "enero",
+  "febrero",
+  "marzo",
+  "abril",
+  "mayo",
+  "junio",
+  "julio",
+  "agosto",
+  "septiembre",
+  "octubre",
+  "noviembre",
+  "diciembre",
+];
 
 function pad2(value: number) {
   return String(value).padStart(2, "0");
@@ -34,3 +48,9 @@ export function formatStableDateEsCl(value?: string | null, fallback = "Reciente
   return `${pad2(parts.day)} ${month} ${parts.year}`;
 }
 
+export function formatStableLongDateEsCl(value?: string | null, fallback = "Reciente") {
+  const parts = getDateParts(value);
+  if (!parts) return fallback;
+  const month = LONG_MONTHS_ES_CL[parts.monthIndex] ?? "";
+  return `${pad2(parts.day)} de ${month} de ${parts.year}`;
+}

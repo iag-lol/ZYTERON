@@ -12,6 +12,7 @@ import {
   buildWebPageJsonLd,
   createPageMetadata,
 } from "@/lib/seo";
+import { formatStableLongDateEsCl } from "@/lib/stable-date";
 
 type BlogDetailProps = {
   params: Promise<{
@@ -131,16 +132,8 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
     .slice(0, 3);
 
   const postPath = `/blog/${post.slug}`;
-  const publishedDate = new Date(post.publishedAt).toLocaleDateString("es-CL", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
-  const modifiedDate = new Date(post.updatedAt ?? post.publishedAt).toLocaleDateString("es-CL", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
+  const publishedDate = formatStableLongDateEsCl(post.publishedAt);
+  const modifiedDate = formatStableLongDateEsCl(post.updatedAt ?? post.publishedAt);
   const tableOfContents = post.sections.map((section) => ({
     heading: section.heading,
     id: section.heading

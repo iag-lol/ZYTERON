@@ -906,7 +906,7 @@ const plannedBlogPosts: BlogPostData[] = [
     secondaryKeywords: ["sistemas web a medida", "panel administrativo", "software pyme chile"],
     intent: "comercial",
     readingTime: "8 min",
-    publishedAt: "2026-06-10",
+    publishedAt: "2026-06-02",
     authorName: "Zyteron",
     sections: buildPracticalArticleSections({
       problem:
@@ -954,7 +954,7 @@ const plannedBlogPosts: BlogPostData[] = [
     secondaryKeywords: ["soporte TI empresas Chile", "mantención TI pymes", "asistencia tecnológica Santiago"],
     intent: "comercial",
     readingTime: "7 min",
-    publishedAt: "2026-06-17",
+    publishedAt: "2026-06-03",
     authorName: "Zyteron",
     sections: buildPracticalArticleSections({
       problem:
@@ -994,7 +994,7 @@ const plannedBlogPosts: BlogPostData[] = [
     secondaryKeywords: ["automatización para pymes", "whatsapp empresas chile", "flujos digitales"],
     intent: "comercial",
     readingTime: "7 min",
-    publishedAt: "2026-06-24",
+    publishedAt: "2026-06-04",
     authorName: "Zyteron",
     sections: buildPracticalArticleSections({
       problem:
@@ -1034,7 +1034,7 @@ const plannedBlogPosts: BlogPostData[] = [
     secondaryKeywords: ["tienda online para pymes", "catálogo digital chile", "ecommerce chile"],
     intent: "mixta",
     readingTime: "8 min",
-    publishedAt: "2026-07-01",
+    publishedAt: "2026-05-30",
     authorName: "Zyteron",
     sections: buildPracticalArticleSections({
       problem:
@@ -1083,7 +1083,7 @@ const plannedBlogPosts: BlogPostData[] = [
     secondaryKeywords: ["sistema gestión pyme chile", "panel administrativo empresa", "software a medida"],
     intent: "mixta",
     readingTime: "7 min",
-    publishedAt: "2026-07-08",
+    publishedAt: "2026-05-31",
     authorName: "Zyteron",
     sections: buildPracticalArticleSections({
       problem:
@@ -1132,7 +1132,7 @@ const plannedBlogPosts: BlogPostData[] = [
     secondaryKeywords: ["landing pages para empresas", "páginas web para pymes", "desarrollo web chile"],
     intent: "comercial",
     readingTime: "7 min",
-    publishedAt: "2026-07-15",
+    publishedAt: "2026-06-01",
     authorName: "Zyteron",
     sections: buildPracticalArticleSections({
       problem:
@@ -1181,7 +1181,7 @@ const plannedBlogPosts: BlogPostData[] = [
     secondaryKeywords: ["soporte TI empresas Chile", "mantención web chile", "continuidad operativa TI"],
     intent: "informativa",
     readingTime: "8 min",
-    publishedAt: "2026-07-22",
+    publishedAt: "2026-05-29",
     authorName: "Zyteron",
     sections: buildPracticalArticleSections({
       problem:
@@ -1231,7 +1231,7 @@ const plannedBlogPosts: BlogPostData[] = [
     secondaryKeywords: ["catálogo digital para empresas", "venta por WhatsApp", "tienda online para pymes"],
     intent: "mixta",
     readingTime: "7 min",
-    publishedAt: "2026-07-29",
+    publishedAt: "2026-06-05",
     authorName: "Zyteron",
     sections: buildPracticalArticleSections({
       problem:
@@ -1279,7 +1279,7 @@ const plannedBlogPosts: BlogPostData[] = [
     secondaryKeywords: ["empresa desarrollo web chile", "agencia diseño web chile", "cotización página web empresa"],
     intent: "comercial",
     readingTime: "8 min",
-    publishedAt: "2026-08-05",
+    publishedAt: "2026-06-06",
     authorName: "Zyteron",
     sections: buildPracticalArticleSections({
       problem:
@@ -1319,7 +1319,7 @@ const plannedBlogPosts: BlogPostData[] = [
     secondaryKeywords: ["conversiones web b2b", "leads desde página web", "analítica web empresas"],
     intent: "mixta",
     readingTime: "8 min",
-    publishedAt: "2026-08-12",
+    publishedAt: "2026-05-28",
     authorName: "Zyteron",
     sections: buildPracticalArticleSections({
       problem:

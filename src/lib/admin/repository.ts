@@ -1,5 +1,6 @@
 import { hash } from "bcrypt";
 import { randomUUID } from "node:crypto";
+import type { WorkOrder as PrismaWorkOrderModel } from "@prisma/client";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
@@ -379,6 +380,17 @@ function isClientReviewWriteFallbackError(error: unknown) {
   );
 }
 
+function shouldUseAnonWriteFallback(error: unknown) {
+  const message = toErrorMessage(error).toLowerCase();
+  return (
+    message.includes("row-level security") ||
+    message.includes("42501") ||
+    message.includes("supabase_url o keys válidas") ||
+    message.includes("supabase_url o keys validas") ||
+    message.includes("no configuradas en el servidor")
+  );
+}
+
 function normalizeSupabaseUrl(rawUrl: string) {
   const trimmed = rawUrl.trim().replace(/\/+$/, "");
   const suffixes = ["/rest/v1", "/auth/v1", "/storage/v1"];
@@ -552,6 +564,36 @@ export async function updateRows(table: string, payload: Record<string, unknown>
   }
 }
 
+export async function updateRowsWithFallback(
+  table: string,
+  payload: Record<string, unknown>,
+  filters: Record<string, string | number>,
+) {
+  try {
+    await updateRows(table, payload, filters);
+    return;
+  } catch (error) {
+    if (!shouldUseAnonWriteFallback(error)) {
+      throw error;
+    }
+  }
+
+  const supabase = createSupabaseAnonServerClient();
+  if (!supabase) {
+    throw new Error("No hay cliente anonimo de Supabase disponible para actualizar.");
+  }
+
+  let query = supabase.from(table).update(payload);
+  for (const [key, value] of Object.entries(filters)) {
+    query = query.eq(key, value);
+  }
+
+  const { error } = await query;
+  if (error) {
+    throw new Error(toErrorMessage(error));
+  }
+}
+
 export async function deleteRows(table: string, filters: Record<string, string | number>) {
   const { supabase } = createSupabaseServerClient();
   let query = supabase.schema("public").from(table).delete();
@@ -667,10 +709,14 @@ export async function getSales() {
   );
 }
 
-function mapWorkOrderFromPrisma(order: any): WorkOrder {
+function mapWorkOrderFromPrisma(order: PrismaWorkOrderModel): WorkOrder {
   return {
     ...order,
-    scope: Array.isArray(order.scope) ? order.scope : order.scope ? [order.scope] : null,
+    scope: Array.isArray(order.scope)
+      ? order.scope.filter((item): item is string => typeof item === "string")
+      : typeof order.scope === "string"
+        ? [order.scope]
+        : null,
     plannedDate: order.plannedDate?.toISOString() || null,
     dueDate: order.dueDate?.toISOString() || null,
     createdAt: order.createdAt?.toISOString() || null,

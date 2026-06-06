@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Check,
-  CircleDollarSign,
-} from "lucide-react";
+import { Fragment } from "react";
+import { ArrowRight, Check, CircleDollarSign } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -14,57 +11,182 @@ import {
   buildWebPageJsonLd,
   createPageMetadata,
 } from "@/lib/seo";
-import { OnlinePaymentLauncher } from "@/components/payments/online-payment-launcher";
-import { SERVICE_PAYMENT_ITEMS } from "@/lib/payments/service-catalog";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Planes flexibles para cada etapa de tu negocio",
   description:
-    "Planes y precios competitivos de ZYTERON para emprendedores, pymes, empresas e instituciones. Cotización formal según alcance real.",
+    "Planes base claros para web, ecommerce y sistemas en Chile. Desde una web básica de presentación hasta soluciones empresariales a medida.",
   path: "/planes",
 });
 
-const plans = [
+type ProjectTypeValue =
+  | "web-basica"
+  | "web-profesional"
+  | "tienda-online"
+  | "sistema-web";
+
+type PlanTone = "default" | "starter" | "featured" | "critical";
+
+type PlanCard = {
+  id: string;
+  name: string;
+  price: string;
+  priceNote?: string;
+  tag: string;
+  tone?: PlanTone;
+  audience: string;
+  description: string;
+  commercialCopy: string;
+  includes: string[];
+  excludes: string[];
+  notes?: string[];
+  ctaLabel: string;
+  projectType: ProjectTypeValue;
+  presetPlan: string;
+};
+
+type AdditionalCategory = {
+  title: string;
+  items: Array<{ name: string; price: string }>;
+};
+
+const WHATSAPP_URL =
+  "https://wa.me/56939526626?text=Hola%20ZYTERON%2C%20quiero%20orientaci%C3%B3n%20sobre%20sus%20planes";
+
+function buildQuoteHref(projectType: ProjectTypeValue, presetPlan: string) {
+  return `/paquetes?tipo=${projectType}&plan=${presetPlan}`;
+}
+
+function planToneClasses(tone: PlanTone = "default") {
+  if (tone === "starter") {
+    return {
+      card: "border-blue-200 bg-gradient-to-b from-blue-50 to-white shadow-blue-100/70",
+      badge: "border-blue-200 bg-white text-blue-700",
+      price: "text-blue-700",
+    };
+  }
+
+  if (tone === "featured") {
+    return {
+      card: "border-cyan-300 bg-gradient-to-b from-cyan-50 via-white to-white shadow-cyan-100/80 ring-1 ring-cyan-100",
+      badge: "border-cyan-200 bg-cyan-100 text-cyan-800",
+      price: "text-cyan-700",
+    };
+  }
+
+  if (tone === "critical") {
+    return {
+      card: "border-slate-300 bg-gradient-to-b from-slate-100 to-white shadow-slate-200/80",
+      badge: "border-slate-300 bg-slate-900 text-white",
+      price: "text-slate-900",
+    };
+  }
+
+  return {
+    card: "border-slate-200 bg-white shadow-slate-100/80",
+    badge: "border-slate-200 bg-slate-50 text-slate-700",
+    price: "text-blue-700",
+  };
+}
+
+const plans: PlanCard[] = [
   {
-    id: "emprendedor",
-    tag: "Para comenzar",
-    name: "Plan Emprendedor",
-    price: "Desde $59.990",
+    id: "web-basica",
+    name: "Web Básica de Presentación",
+    price: "$35.990 CLP",
+    priceNote: "pago único",
+    tag: "Ideal para comenzar",
+    tone: "starter",
     audience:
-      "Personas naturales, emprendedores, técnicos, servicios pequeños, barberías, negocios locales y profesionales independientes.",
-    copy:
-      "Ideal para comenzar con una presencia digital clara, profesional y lista para recibir contactos por WhatsApp o formulario.",
+      "Emprendedores, profesionales independientes y negocios pequeños que recién comienzan y necesitan presencia online seria sin una inversión alta.",
+    description:
+      "Una página simple, profesional y clara para mostrar tu negocio, generar confianza y recibir contactos por WhatsApp.",
+    commercialCopy:
+      "Pensado para quienes necesitan salir rápido con una presencia digital formal, clara y fácil de entender.",
     includes: [
-      "Landing page o sitio web simple",
-      "Diseño responsive para celular, tablet y computador",
+      "Una sola página tipo presentación",
+      "Diseño profesional en modo claro",
+      "Diseño responsivo para celular, tablet y computador",
+      "Sección de inicio",
+      "Sección de servicios o información del negocio",
+      "Sección de contacto",
       "Botón directo a WhatsApp",
-      "Secciones básicas",
-      "Formulario de contacto simple",
       "Enlaces a redes sociales",
+      "Formulario simple de contacto",
+      "SEO básico inicial",
       "Optimización básica de carga",
-      "SEO inicial básico",
-      "Asesoría inicial sobre estructura de contenido",
+      "Publicación inicial",
     ],
     excludes: [
-      "Panel administrativo avanzado",
+      "Dominio",
+      "Hosting externo pagado",
       "Tienda online",
-      "Integraciones de pago",
+      "Carrito de compras",
+      "Pasarela de pago",
+      "Panel administrativo",
+      "Blog",
+      "Login de usuarios",
+      "Sistemas internos",
+      "Automatizaciones avanzadas",
+      "Redacción completa de textos",
+      "Carga masiva de contenido",
+      "Mantención mensual",
+    ],
+    notes: [
+      "Dominio .cl o .com se cotiza aparte según disponibilidad.",
+      "Puedes comenzar con este plan y luego mejorar tu web cuando tu negocio crezca.",
+    ],
+    ctaLabel: "Solicitar web básica",
+    projectType: "web-basica",
+    presetPlan: "web-basica-presentacion",
+  },
+  {
+    id: "emprendedor",
+    name: "Plan Emprendedor",
+    price: "Desde $69.990",
+    tag: "Web inicial",
+    audience:
+      "Para emprendedores, técnicos, servicios pequeños, negocios locales y profesionales independientes que necesitan una web inicial más completa que una página básica.",
+    description:
+      "Una propuesta inicial con más estructura visual, más flexibilidad de secciones y mejor base comercial que la web básica.",
+    commercialCopy:
+      "Ideal cuando ya necesitas una landing más completa o un sitio simple con mejor presentación, claridad de servicios y llamado a la acción.",
+    includes: [
+      "Landing page más completa o sitio simple",
+      "Más estructura visual que la web básica",
+      "Secciones adicionales según alcance",
+      "Formulario de contacto",
+      "WhatsApp",
+      "Redes sociales",
+      "SEO inicial",
+      "Asesoría de estructura",
+      "Diseño responsive",
+      "Publicación inicial",
+    ],
+    excludes: [
+      "Tienda online",
+      "Panel administrativo",
       "Login de usuarios",
       "Sistemas internos",
       "Automatizaciones complejas",
+      "Pasarelas de pago",
     ],
-    primaryCta: { label: "Solicitar cotización", href: "/paquetes" },
-    secondaryCta: { label: "Reservar proyecto", href: "#pagos-online" },
+    ctaLabel: "Cotizar plan emprendedor",
+    projectType: "web-profesional",
+    presetPlan: "plan-emprendedor",
   },
   {
     id: "pyme",
-    tag: "Más solicitado",
     name: "Plan Pyme",
     price: "Desde $129.990",
+    tag: "Más solicitado",
+    tone: "featured",
     audience:
-      "Pymes, locales comerciales, pequeños negocios, servicios profesionales, tiendas pequeñas y emprendimientos en crecimiento.",
-    copy:
-      "Pensado para negocios que necesitan una web más completa, ordenada y enfocada en generar confianza y oportunidades de venta.",
+      "Para negocios que necesitan una web más completa, ordenada y enfocada en generar confianza, mostrar servicios, responder dudas y recibir consultas.",
+    description:
+      "Es el plan recomendado cuando la web ya debe cumplir un rol comercial claro y sostener la imagen del negocio.",
+    commercialCopy:
+      "Pensado para pymes que necesitan vender mejor, responder objeciones frecuentes y verse más confiables frente a clientes reales.",
     includes: [
       "Sitio web corporativo o comercial",
       "Varias secciones informativas",
@@ -80,35 +202,37 @@ const plans = [
     ],
     excludes: [
       "Panel administrativo completo",
-      "Pasarela de pago",
+      "Pasarela de pago incluida siempre",
       "Tienda online avanzada",
-      "Automatizaciones",
+      "Automatizaciones complejas",
       "Sistemas internos personalizados",
     ],
-    primaryCta: { label: "Solicitar cotización", href: "/paquetes" },
-    secondaryCta: { label: "Pagar abono aprobado", href: "#pagos-online" },
+    ctaLabel: "Cotizar plan pyme",
+    projectType: "web-profesional",
+    presetPlan: "plan-pyme",
   },
   {
     id: "empresa",
-    tag: "Para empresas",
     name: "Plan Empresa",
     price: "Desde $249.990",
+    tag: "Mayor estructura",
     audience:
-      "Empresas, colegios, instituciones, oficinas, clínicas, talleres, transportes, constructoras y servicios B2B.",
-    copy:
-      "Para organizaciones que necesitan una presencia digital seria, estructurada y preparada para comunicar confianza desde el primer contacto.",
+      "Para empresas, colegios, instituciones, oficinas, clínicas, talleres, transportes, constructoras y servicios B2B.",
+    description:
+      "Una presencia digital más seria, con mayor estructura, páginas internas y preparación para analítica y comunicación formal.",
+    commercialCopy:
+      "Pensado para organizaciones que deben proyectar más confianza, más orden y una base profesional de contenido.",
     includes: [
       "Web corporativa completa",
       "Páginas internas estructuradas",
-      "Secciones para servicios, equipo, contacto, FAQ y confianza",
+      "Secciones de confianza y respaldo",
       "Formularios más completos",
       "SEO inicial",
       "Optimización responsive",
-      "Enfoque comercial y corporativo",
       "Redacción base profesional",
       "Integración con WhatsApp y redes",
       "Preparación para analítica web",
-      "Capacitación básica de uso si corresponde",
+      "Capacitación básica si corresponde",
     ],
     excludes: [
       "Desarrollo de sistema a medida",
@@ -117,222 +241,212 @@ const plans = [
       "Flujos automatizados avanzados",
       "Integraciones complejas",
     ],
-    primaryCta: { label: "Solicitar propuesta formal", href: "/paquetes" },
-    secondaryCta: { label: "Agendar diagnóstico", href: "#pagos-online" },
+    ctaLabel: "Solicitar propuesta formal",
+    projectType: "web-profesional",
+    presetPlan: "plan-empresa",
   },
   {
     id: "tienda",
-    tag: "Venta digital",
     name: "Catálogo / Tienda Online",
     price: "Desde $299.990",
+    tag: "Venta digital",
     audience:
-      "Negocios que quieren mostrar productos, recibir pedidos, vender online o profesionalizar su catálogo digital.",
-    copy:
-      "Convierte tus productos en una experiencia digital clara, ordenada y fácil de cotizar o comprar.",
+      "Para negocios que venden productos o necesitan un catálogo digital claro, ordenado y preparado para escalar.",
+    description:
+      "Puede funcionar como catálogo por WhatsApp, tienda simple, tienda con carrito o tienda con pagos online según cotización.",
+    commercialCopy:
+      "Pensado para vender mejor sin prometer funcionalidades que dependen del alcance, volumen y medios de pago elegidos.",
     includes: [
-      "Catálogo de productos o tienda online base",
-      "Categorías",
-      "Fichas de productos",
+      "Catálogo por WhatsApp o tienda online base",
+      "Categorías y fichas de productos",
       "Diseño responsive",
       "Botón de compra o contacto",
       "Carga inicial limitada de productos",
       "Integración con WhatsApp",
       "Estructura SEO para productos",
-      "Preparación para medios de pago si corresponde",
+      "Preparación o integración de medios de pago según alcance",
     ],
     excludes: [
-      "Stock administrable (si no se contrata)",
-      "Panel administrativo completo",
       "Carga masiva de productos",
-      "Cupones o descuentos",
-      "Módulo de usuarios/clientes",
+      "Panel administrativo completo",
+      "Cupones o descuentos avanzados",
       "Facturación externa automática",
+      "Pasarela de pago incluida siempre",
     ],
-    primaryCta: { label: "Cotizar tienda online", href: "/paquetes" },
-    secondaryCta: { label: "Pagar abono aprobado", href: "#pagos-online" },
+    ctaLabel: "Cotizar tienda online",
+    projectType: "tienda-online",
+    presetPlan: "catalogo-tienda-online",
   },
   {
     id: "sistema",
-    tag: "A medida",
     name: "Sistema Web / Panel Administrativo",
     price: "Desde $399.990",
+    tag: "Procesos internos",
     audience:
-      "Empresas, pymes o instituciones que necesitan administrar información, usuarios, registros y procesos internos.",
-    copy:
-      "Cuando tu negocio necesita más que una página web: desarrollamos sistemas digitales para ordenar, controlar y automatizar procesos.",
+      "Para empresas, pymes o instituciones que necesitan paneles administrativos, usuarios, registros, reportes y control de procesos.",
+    description:
+      "Este plan aplica cuando ya no basta una web comercial y se necesita operar datos, roles, estados y documentos internos.",
+    commercialCopy:
+      "Adecuado para procesos con base de datos, exportaciones, paneles y necesidades de trazabilidad operacional.",
     includes: [
-      "Login de usuarios",
-      "Panel administrativo",
-      "Dashboard",
-      "Gestión de registros",
-      "Formularios internos",
-      "Roles de usuario",
-      "Estados de procesos",
-      "Generación de reportes",
-      "Generación de PDF",
+      "Paneles administrativos",
+      "Usuarios y roles",
+      "Registros y formularios internos",
+      "Reportes",
+      "PDF y Excel según alcance",
       "Base de datos",
+      "Estados de procesos",
       "Seguridad básica",
       "Capacitación de uso",
-      "Soporte inicial",
     ],
-    excludes: ["Se cotiza según requerimiento y alcance."],
-    primaryCta: { label: "Agendar diagnóstico", href: "#pagos-online" },
-    secondaryCta: { label: "Solicitar evaluación técnica", href: "/paquetes" },
+    excludes: [
+      "Integraciones complejas no definidas",
+      "Automatizaciones avanzadas fuera de alcance",
+      "Múltiples módulos críticos sin diagnóstico previo",
+    ],
+    ctaLabel: "Agendar diagnóstico",
+    projectType: "sistema-web",
+    presetPlan: "sistema-web-panel-administrativo",
   },
   {
     id: "avanzado",
-    tag: "Proyecto crítico",
     name: "Sistema Avanzado / Desarrollo a medida",
     price: "Desde $749.990",
+    tag: "Proyecto crítico",
+    tone: "critical",
     audience:
-      "Empresas que requieren soluciones complejas, múltiples usuarios, integraciones, automatizaciones y procesos críticos.",
-    copy:
-      "Desarrollamos soluciones a medida para empresas que necesitan centralizar información, reducir trabajo manual y mejorar control operativo.",
+      "Para empresas con procesos más complejos, múltiples módulos, integraciones, automatizaciones y operación crítica.",
+    description:
+      "Aquí hablamos de soluciones a medida con arquitectura más robusta, etapas de implementación y mayor análisis funcional.",
+    commercialCopy:
+      "Pensado para empresas que necesitan reducir trabajo manual, conectar sistemas y sostener una operación digital más sensible.",
     includes: [
       "Arquitectura personalizada",
       "Múltiples módulos",
       "Integraciones externas",
-      "Pasarelas de pago",
-      "Automatización WhatsApp",
+      "Automatizaciones",
       "Reportes avanzados",
       "Paneles por perfil de usuario",
-      "Historial de acciones",
       "Exportación Excel/PDF",
-      "Control de flota y combustible",
-      "Reservas",
-      "Cotizadores",
-      "Módulo de clientes y productos",
-      "Gestión documental",
-      "Notificaciones automáticas",
+      "Gestión documental y notificaciones",
+      "Roadmap por etapas según prioridad",
     ],
-    excludes: ["Implementación por etapas según alcance y prioridad."],
-    primaryCta: { label: "Solicitar propuesta formal", href: "/paquetes" },
-    secondaryCta: { label: "Agendar reunión", href: "#pagos-online" },
+    excludes: [
+      "Precio cerrado sin levantamiento técnico",
+      "Implementación total sin diagnóstico previo",
+    ],
+    ctaLabel: "Solicitar evaluación técnica",
+    projectType: "sistema-web",
+    presetPlan: "sistema-avanzado",
   },
 ];
 
-const referencePlans = [
+const additionalCategories: AdditionalCategory[] = [
   {
-    name: "Plan Básico",
-    range: "$59.990 - $189.990 CLP",
-    bestFor: "Presencia profesional inicial, landing o sitio pequeño con contacto directo.",
-    includes: "Estructura base, diseño responsive, formulario, WhatsApp, SEO inicial y publicación.",
+    title: "Funcionalidades para sitios web",
+    items: [
+      { name: "Sección adicional", price: "Desde $19.990" },
+      { name: "Página adicional", price: "Desde $29.990" },
+      { name: "Formulario avanzado", price: "Desde $39.990" },
+      { name: "Login de usuarios", price: "Desde $199.990" },
+    ],
   },
   {
-    name: "Plan Medio",
-    range: "$129.990 - $399.990 CLP",
-    bestFor: "Web corporativa más completa para pymes con servicios, FAQ, confianza y conversión.",
-    includes: "Más páginas, arquitectura comercial, optimización técnica, contenido base y soporte inicial.",
+    title: "Ecommerce",
+    items: [
+      { name: "Carga de productos hasta 20", price: "Desde $19.990" },
+      { name: "Carga de productos hasta 50", price: "Desde $49.990" },
+      { name: "Catálogo administrable", price: "Desde $99.990" },
+    ],
   },
   {
-    name: "Plan Avanzado",
-    range: "$450.000 - $850.000 CLP",
-    bestFor: "Empresas que requieren mayor alcance, integraciones, ecommerce o módulos personalizados.",
-    includes: "Arquitectura extendida, funciones avanzadas, automatizaciones, medición y acompañamiento.",
+    title: "Paneles y sistemas",
+    items: [
+      { name: "Mini panel administrativo", price: "Desde $149.990" },
+      { name: "Panel administrativo completo", price: "Desde $399.990" },
+      { name: "Sistema de reservas", price: "Desde $249.990" },
+    ],
   },
   {
-    name: "Plan Sistema",
-    range: "Desde $399.990 CLP",
-    bestFor: "Sistemas web, paneles administrativos, reportes, usuarios y procesos internos.",
-    includes: "Diagnóstico incluido, levantamiento funcional, primera etapa técnica y roadmap por módulos.",
+    title: "Integraciones",
+    items: [
+      { name: "Integración Flow, Webpay o Mercado Pago estándar", price: "Desde $89.990" },
+      { name: "Integración API personalizada", price: "Desde $199.990" },
+      { name: "Automatización WhatsApp", price: "Desde $99.990" },
+    ],
+  },
+  {
+    title: "SEO y reportes",
+    items: [
+      { name: "SEO inicial avanzado", price: "Desde $99.990" },
+      { name: "Generador de PDF", price: "Desde $149.990" },
+      { name: "Reportes o dashboard", price: "Desde $199.990" },
+      { name: "Exportación Excel/PDF", price: "Desde $49.990" },
+    ],
   },
 ];
 
-const additionalServicesByCategory = [
+const maintenancePlans = [
   {
-    title: "1. Funcionalidades para sitios web",
-    items: [
-      ["Página adicional", "Desde $29.990"],
-      ["Sección adicional", "Desde $19.990"],
-      ["Formulario avanzado", "Desde $39.990"],
-      ["Login de usuarios", "Desde $199.990"],
-    ],
+    name: "Mantención básica",
+    price: "Desde $29.990/mes",
+    description: "Para sitios simples que necesitan continuidad, ajustes menores y soporte base.",
   },
   {
-    title: "2. Ecommerce y productos",
-    items: [
-      ["Carga de productos hasta 20", "Desde $19.990"],
-      ["Carga de productos hasta 50", "Desde $49.990"],
-      ["Catálogo administrable", "Desde $99.990"],
-    ],
+    name: "Mantención profesional",
+    price: "Desde $59.990/mes",
+    description: "Para negocios que necesitan más seguimiento, mejoras y soporte técnico periódico.",
   },
   {
-    title: "3. Paneles administrativos y sistemas",
-    items: [
-      ["Mini panel administrativo", "Desde $149.990"],
-      ["Panel administrativo completo", "Desde $399.990"],
-      ["Sistema de reservas", "Desde $249.990"],
-    ],
+    name: "Mantención ecommerce o sistema web",
+    price: "Desde $99.990/mes",
+    description: "Para tiendas y plataformas con mayor complejidad, más riesgo operativo y más tareas técnicas.",
   },
   {
-    title: "4. Integraciones y automatización",
-    items: [
-      ["Integración Flow / Webpay / Mercado Pago (configuración estándar)", "Desde $89.990"],
-      ["Integración Flow / Webpay / Mercado Pago (API o desarrollo personalizado)", "Desde $199.990"],
-      ["Automatización WhatsApp", "Desde $99.990"],
-    ],
+    name: "Soporte prioritario",
+    price: "Desde $69.990/mes",
+    description: "Para empresas que necesitan atención más rápida y prioridad frente a incidencias.",
   },
-  {
-    title: "5. SEO, reportes y documentos",
-    items: [
-      ["Generador de PDF", "Desde $149.990"],
-      ["SEO inicial avanzado", "Desde $99.990"],
-      ["Reportes o dashboard", "Desde $199.990"],
-      ["Exportación Excel / PDF", "Desde $49.990"],
-    ],
-  },
-  {
-    title: "6. Mantención y soporte mensual",
-    items: [
-      ["Mantención básica", "Desde $29.990/mes"],
-      ["Mantención profesional", "Desde $59.990/mes"],
-      ["Mantención ecommerce o sistema web", "Desde $99.990/mes"],
-      ["Soporte prioritario", "Desde $69.990/mes"],
-      ["Correos corporativos", "Desde $19.990 configuración inicial"],
-    ],
-  },
+];
+
+const planGuide = [
+  "Si solo necesitas una página simple para mostrar tu negocio: Web Básica de Presentación.",
+  "Si quieres una web inicial más completa: Plan Emprendedor.",
+  "Si tienes una pyme y necesitas generar confianza: Plan Pyme.",
+  "Si representas una empresa, colegio o institución: Plan Empresa.",
+  "Si vendes productos o necesitas catálogo: Catálogo / Tienda Online.",
+  "Si necesitas usuarios, registros, reportes o procesos internos: Sistema Web.",
+  "Si necesitas integraciones, automatizaciones o múltiples módulos: Sistema Avanzado.",
 ];
 
 const priceFaqs = [
   {
-    q: "¿Los precios son finales?",
-    a: "No. Son valores base. El precio final depende del alcance, cantidad de secciones, funcionalidades, integraciones, contenido y soporte requerido.",
+    q: "¿Los precios publicados son finales?",
+    a: "No. Son valores base para proyectos referenciales. El precio final depende del alcance real, secciones, integraciones, contenido, soporte requerido y nivel de personalización.",
   },
   {
-    q: "¿Puedo pagar por etapas?",
-    a: "Sí. Según el tipo de proyecto, podemos definir pago inicial y pagos por avance o entrega.",
+    q: "¿La web básica incluye dominio?",
+    a: "No. El dominio .cl o .com se cotiza aparte según disponibilidad y necesidad del proyecto.",
   },
   {
-    q: "¿Qué pasa si necesito algo que no aparece en los planes?",
-    a: "Se cotiza como proyecto personalizado. ZYTERON adapta la solución según requerimiento.",
+    q: "¿El Plan Emprendedor es igual a la Web Básica?",
+    a: "No. La Web Básica es una sola página de entrada. El Plan Emprendedor permite una estructura más completa y mayor flexibilidad de secciones.",
   },
   {
-    q: "¿Una página web incluye panel administrativo?",
-    a: "No siempre. Los paneles administrativos se cotizan según la complejidad y funcionalidades requeridas.",
+    q: "¿La tienda online incluye pagos en línea siempre?",
+    a: "No siempre. La preparación o integración de medios de pago se define según alcance, proveedor y complejidad del proyecto.",
   },
   {
-    q: "¿Una tienda online incluye pagos en línea?",
-    a: "Puede incluirlos, pero la integración con pasarelas de pago se evalúa y cotiza según proveedor y alcance.",
+    q: "¿Un sitio web incluye panel administrativo?",
+    a: "No necesariamente. Los paneles, usuarios, reportes, bases de datos y procesos internos pertenecen a planes de sistema o se cotizan aparte.",
   },
   {
-    q: "¿Hacen sistemas para empresas?",
-    a: "Sí. Desarrollamos sistemas web, paneles administrativos, cotizadores, reportes, generación de PDF, reservas y soluciones a medida.",
+    q: "¿Puedo partir con un plan simple y luego crecer?",
+    a: "Sí. De hecho, la Web Básica y el Plan Emprendedor están pensados para comenzar con orden y luego evolucionar según el crecimiento del negocio.",
   },
   {
-    q: "¿Atienden solo empresas?",
-    a: "No. Trabajamos con personas, emprendedores, pymes, empresas, colegios, instituciones y negocios de distintos rubros.",
-  },
-  {
-    q: "¿Incluyen dominio y hosting?",
-    a: "Puede incluirse o gestionarse como adicional, según el plan y las necesidades del cliente.",
-  },
-  {
-    q: "¿Cuánto demora un proyecto?",
-    a: "Depende del alcance. Una web simple demora menos que un sistema con módulos personalizados. Los plazos se definen en cotización formal.",
-  },
-  {
-    q: "¿Qué necesito para comenzar?",
-    a: "Objetivo del negocio, información base, logo si existe, contenido disponible y una conversación inicial para definir alcance.",
+    q: "¿Trabajan con empresas y proyectos complejos?",
+    a: "Sí. ZYTERON desarrolla webs empresariales, sistemas internos, automatizaciones, paneles y soluciones a medida según diagnóstico técnico.",
   },
 ];
 
@@ -344,7 +458,8 @@ export default function PlanesPage() {
         data={buildWebPageJsonLd({
           path: "/planes",
           title: "Planes flexibles para cada etapa de tu negocio",
-          description: "Planes desde para web, ecommerce y sistemas. Cotización formal por alcance.",
+          description:
+            "Desde una web simple de presentación hasta un sistema completo, con valores base claros y cotización formal según alcance.",
           breadcrumbs: [
             { name: "Inicio", path: "/" },
             { name: "Planes", path: "/planes" },
@@ -368,25 +483,21 @@ export default function PlanesPage() {
             <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
             Planes y cotización profesional
           </div>
-          <h1 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">Planes flexibles para cada etapa de tu negocio</h1>
+          <h1 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">
+            Planes flexibles para cada etapa de tu negocio
+          </h1>
           <p className="mx-auto max-w-4xl text-base text-slate-600 sm:text-lg">
-            Desde una web inicial hasta un sistema completo, en ZYTERON trabajamos con valores competitivos para ganar
-            clientes sin cobrar funcionalidades que tu negocio no necesita.
+            Desde una web simple de presentación hasta un sistema completo, en ZYTERON trabajamos con valores base claros y cotización formal según el alcance real de cada proyecto.
           </p>
           <div className="mx-auto max-w-4xl rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-slate-700">
-            No todos los negocios necesitan lo mismo. Por eso trabajamos con valores base, levantamiento de
-            requerimientos y cotización formal antes de iniciar. Así sabes qué incluye tu proyecto, cuánto cuesta y qué
-            resultado recibirás.
+            Los valores publicados son referenciales para proyectos base. El precio final puede variar según secciones, funcionalidades, contenido, integraciones, soporte requerido y nivel de personalización.
           </div>
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
               <Link href="/paquetes">Cotizar ahora</Link>
             </Button>
             <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-              <Link href="/paquetes">Ver cotizador</Link>
-            </Button>
-            <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-              <a href="https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20mi%20proyecto" target="_blank" rel="noopener noreferrer">
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                 Hablar por WhatsApp
               </a>
             </Button>
@@ -394,326 +505,244 @@ export default function PlanesPage() {
         </Container>
       </section>
 
-      <section className="section-alt py-16">
+      <section className="bg-white py-16">
         <Container className="space-y-4">
-          <p className="text-sm text-slate-700">
-            Los valores publicados son referenciales y corresponden a proyectos base. El precio final puede variar según
-            cantidad de secciones, funcionalidades, carga de contenido, integraciones, panel administrativo, pasarela de
-            pago, automatizaciones, soporte requerido y nivel de personalización.
-          </p>
-          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
-            El valor final depende del alcance, secciones, formularios, integraciones y automatizaciones requeridas.
-          </p>
-          <p className="text-sm text-slate-700">
-            Cada proyecto se cotiza según su alcance real. Así evitamos cobros injustos, entregamos claridad desde el
-            inicio y aseguramos una solución adaptada a las necesidades de cada cliente.
-          </p>
-          <p className="text-sm text-slate-700">
-            Trabajamos con precios de entrada por debajo de rangos habituales de agencia porque optimizamos el
-            desarrollo con herramientas modernas, procesos claros y reutilización inteligente de componentes, sin
-            sacrificar calidad ni profesionalismo.
-          </p>
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Planes principales</p>
+            <h2 className="text-3xl font-extrabold text-slate-900">Elige una base clara para partir</h2>
+            <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              Ordenamos los planes para que sea más fácil distinguir una web de entrada, una web comercial más completa, una solución para empresa y un sistema interno.
+            </p>
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-3">
+            {plans.map((plan) => {
+              const tone = planToneClasses(plan.tone);
+              return (
+                <article
+                  key={plan.id}
+                  className={`flex h-full flex-col rounded-[2rem] border p-6 shadow-sm ${tone.card}`}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] ${tone.badge}`}
+                    >
+                      {plan.tag}
+                    </span>
+                  </div>
+
+                  <div className="mt-4">
+                    <h2 className="text-2xl font-extrabold text-slate-900">{plan.name}</h2>
+                    <div className="mt-2 flex flex-wrap items-end gap-2">
+                      <p className={`text-2xl font-extrabold ${tone.price}`}>{plan.price}</p>
+                      {plan.priceNote ? (
+                        <p className="text-sm font-semibold text-slate-500">{plan.priceNote}</p>
+                      ) : null}
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">{plan.description}</p>
+                    <p className="mt-3 text-sm font-medium leading-6 text-slate-700">{plan.commercialCopy}</p>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">{plan.audience}</p>
+                  </div>
+
+                  <div className="mt-5 hidden flex-1 grid-cols-1 gap-4 md:grid">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest text-emerald-700">Incluye</p>
+                      <div className="mt-2 space-y-2">
+                        {plan.includes.map((item) => (
+                          <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
+                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
+                            <span>{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest text-rose-700">No incluye</p>
+                      <div className="mt-2 space-y-2">
+                        {plan.excludes.map((item) => (
+                          <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
+                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-rose-600" />
+                            <span>{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 space-y-3 md:hidden">
+                    <details className="rounded-2xl border border-slate-200 bg-white/80 p-4" open>
+                      <summary className="cursor-pointer list-none text-sm font-bold text-emerald-700">
+                        Incluye
+                      </summary>
+                      <div className="mt-3 space-y-2">
+                        {plan.includes.map((item) => (
+                          <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
+                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
+                            <span>{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                    <details className="rounded-2xl border border-slate-200 bg-white/80 p-4">
+                      <summary className="cursor-pointer list-none text-sm font-bold text-rose-700">
+                        No incluye
+                      </summary>
+                      <div className="mt-3 space-y-2">
+                        {plan.excludes.map((item) => (
+                          <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
+                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-rose-600" />
+                            <span>{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  </div>
+
+                  {plan.notes?.length ? (
+                    <div className="mt-5 space-y-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                      {plan.notes.map((note) => (
+                        <p key={note}>{note}</p>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <div className="mt-5">
+                    <Button asChild className="w-full bg-blue-700 text-white hover:bg-blue-800">
+                      <Link href={buildQuoteHref(plan.projectType, plan.presetPlan)}>
+                        {plan.ctaLabel} <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+
+                  <p className="mt-3 text-xs text-slate-500">
+                    Valores base sujetos a evaluación comercial y técnica según el alcance final.
+                  </p>
+                </article>
+              );
+            })}
+          </div>
         </Container>
       </section>
 
-      <section className="bg-white py-16">
+      <section className="section-alt py-16">
         <Container className="space-y-6">
           <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Precios referenciales</p>
-            <h2 className="text-3xl font-extrabold text-slate-900">Rangos concretos para planificar inversión</h2>
-            <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Estos valores sirven como referencia inicial para empresas y pymes en Chile. El precio final puede variar
-              según alcance, cantidad de páginas, contenido, integraciones, urgencia, soporte, automatizaciones,
-              licencias externas y nivel de personalización.
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Adicionales</p>
+            <h2 className="text-3xl font-extrabold text-slate-900">Mejoras opcionales para tu proyecto</h2>
+            <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              Si tu proyecto necesita más alcance, estas mejoras se cotizan aparte según complejidad y volumen real.
             </p>
           </div>
-          <div className="overflow-x-auto rounded-2xl border border-slate-200">
-            <table className="w-full min-w-[840px] text-left text-sm">
-              <thead className="bg-slate-100 text-slate-700">
-                <tr>
-                  <th className="px-4 py-3 font-bold">Plan</th>
-                  <th className="px-4 py-3 font-bold">Rango referencial</th>
-                  <th className="px-4 py-3 font-bold">Ideal para</th>
-                  <th className="px-4 py-3 font-bold">Incluye base</th>
-                </tr>
-              </thead>
+
+          <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white md:block">
+            <table className="w-full text-left text-sm">
               <tbody>
-                {referencePlans.map((plan) => (
-                  <tr key={plan.name} className="border-t border-slate-200">
-                    <td className="px-4 py-3 font-bold text-slate-900">{plan.name}</td>
-                    <td className="px-4 py-3 font-extrabold text-blue-700">{plan.range}</td>
-                    <td className="px-4 py-3 text-slate-700">{plan.bestFor}</td>
-                    <td className="px-4 py-3 text-slate-700">{plan.includes}</td>
-                  </tr>
+                {additionalCategories.map((category) => (
+                  <Fragment key={category.title}>
+                    <tr key={`${category.title}-title`} className="border-t border-slate-200 first:border-t-0 bg-slate-100">
+                      <th colSpan={2} className="px-5 py-3 text-sm font-extrabold text-slate-900">
+                        {category.title}
+                      </th>
+                    </tr>
+                    {category.items.map((item) => (
+                      <tr key={item.name} className="border-t border-slate-100">
+                        <td className="px-5 py-3 text-slate-700">{item.name}</td>
+                        <td className="px-5 py-3 text-right font-bold text-blue-700">{item.price}</td>
+                      </tr>
+                    ))}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
-            Disclaimer: los rangos son referenciales y no reemplazan una cotización formal. Todo proyecto se confirma
-            por escrito después de revisar requerimientos, funcionalidades, contenidos, integraciones y condiciones de
-            entrega.
-          </p>
-        </Container>
-      </section>
 
-      <section className="bg-white py-16">
-        <Container className="grid gap-6 lg:auto-rows-fr lg:grid-cols-2">
-          {plans.map((plan) => (
-            <article key={plan.id} className="card-premium flex h-full flex-col p-6">
-              <div className="mb-3 inline-flex w-fit rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                {plan.tag}
-              </div>
-              <h2 className="text-2xl font-extrabold text-slate-900">{plan.name}</h2>
-              <p className="mt-1 text-xl font-bold text-blue-700">{plan.price}</p>
-              <p className="mt-2 text-sm text-slate-600">{plan.audience}</p>
-              <p className="mt-2 text-sm font-medium text-slate-700">{plan.copy}</p>
-
-              <div className="mt-4 grid flex-1 gap-4 md:grid-cols-2">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-emerald-700">Incluye</p>
-                  <div className="mt-2 space-y-1.5">
-                    {plan.includes.map((item) => (
-                      <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
-                        <span>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-rose-700">No incluye</p>
-                  <div className="mt-2 space-y-1.5">
-                    {plan.excludes.map((item) => (
-                      <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-rose-600" />
-                        <span>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-2 sm:grid-cols-2">
-                <Button asChild className="bg-blue-700 text-white hover:bg-blue-800">
-                  <Link href={plan.primaryCta.href}>{plan.primaryCta.label}</Link>
-                </Button>
-                <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-                  <Link href={plan.secondaryCta.href}>{plan.secondaryCta.label}</Link>
-                </Button>
-              </div>
-
-              <p className="mt-3 text-xs text-slate-500">
-                Cotización formal según requerimiento. Valores base sujetos a evaluación.
-              </p>
-            </article>
-          ))}
-        </Container>
-      </section>
-
-      <section className="section-alt py-16">
-        <Container className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <article className="card-premium p-6">
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-bold text-cyan-700">
-              <CircleDollarSign className="h-4 w-4" />
-              Opción mensual
-            </div>
-            <h2 className="text-2xl font-extrabold text-slate-900">Planes de mantención y soporte</h2>
-            <p className="mt-1 text-xl font-bold text-blue-700">Desde $29.990/mes</p>
-            <p className="mt-2 text-sm text-slate-600">
-              Modalidades escalables para mantener tu web, ecommerce o sistema actualizado, seguro y operativo.
-            </p>
-            <div className="mt-4 grid gap-2 md:grid-cols-2">
-              {[
-                "Mantención básica: desde $29.990/mes",
-                "Mantención profesional: desde $59.990/mes",
-                "Mantención ecommerce o sistema web: desde $99.990/mes",
-                "Soporte prioritario: desde $69.990/mes",
-                "Correcciones y ajustes por alcance",
-                "Monitoreo y continuidad operativa",
-                "Soporte técnico por prioridad",
-                "Evolución mensual según necesidad",
-              ].map((item) => (
-                <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              No incluye desarrollo de sistemas personalizados, rediseños completos, integraciones de pago, carga masiva
-              de productos, paneles administrativos avanzados ni automatizaciones complejas.
-            </div>
-            <p className="mt-3 text-xs text-slate-500">
-              Puede requerir permanencia mínima de 6 o 12 meses según el alcance inicial del proyecto.
-            </p>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              <Button asChild className="bg-blue-700 text-white hover:bg-blue-800">
-                <a href="#pagos-online">Contratar mensualidad</a>
-              </Button>
-              <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-                <Link href="/contacto">Consultar condiciones</Link>
-              </Button>
-            </div>
-          </article>
-
-          <article className="card-premium p-6">
-            <h3 className="text-xl font-extrabold text-slate-900">Abono inicial para iniciar tu proyecto</h3>
-            <p className="mt-2 text-sm text-slate-600">
-              Para iniciar un proyecto, ZYTERON puede solicitar un abono inicial. Este pago permite reservar el trabajo,
-              cubrir configuraciones iniciales y comenzar la preparación técnica del servicio contratado.
-            </p>
-            <p className="mt-2 text-sm text-slate-600">
-              El abono inicial se descuenta del total del proyecto y queda asociado a la cotización aprobada.
-            </p>
-            <div className="mt-4 space-y-2 text-sm text-slate-700">
-              <div className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 text-blue-700" />Proyectos pequeños: abono desde 40%</div>
-              <div className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 text-blue-700" />Proyectos medianos: abono desde 50%</div>
-              <div className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 text-blue-700" />Proyectos grandes: abono inicial + pagos por avance</div>
-              <div className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 text-blue-700" />Servicios mensuales: primer mes pagado al contratar</div>
-              <div className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 text-blue-700" />Servicios externos: pueden requerir pago previo</div>
-            </div>
-            <p className="mt-3 text-xs font-semibold text-slate-600">
-              No se inicia ningún desarrollo personalizado sin aprobación del alcance y pago del abono correspondiente.
-            </p>
-          </article>
-        </Container>
-      </section>
-
-      <section className="bg-white py-16">
-        <Container className="space-y-6">
-          <div className="space-y-2">
-            <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
-              Servicios adicionales y funcionalidades a medida
-            </h2>
-            <p className="max-w-4xl text-sm text-slate-600 sm:text-base">
-              Cada proyecto puede crecer según las necesidades del negocio. Estos valores son referenciales y permiten
-              agregar nuevas funcionalidades, integraciones, paneles administrativos, automatizaciones, ecommerce, SEO y
-              soporte técnico según el alcance requerido.
-            </p>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            {additionalServicesByCategory.map((category) => (
-              <article key={category.title} className="card-premium p-5">
+          <div className="grid gap-4 md:hidden">
+            {additionalCategories.map((category) => (
+              <article key={category.title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <h3 className="text-base font-extrabold text-slate-900">{category.title}</h3>
-                <div className="mt-3 overflow-hidden rounded-xl border border-slate-200">
-                  <table className="w-full text-left text-sm">
-                    <tbody>
-                      {category.items.map(([name, value]) => (
-                        <tr key={name} className="border-t border-slate-100 first:border-t-0">
-                          <td className="px-4 py-3 text-slate-700">{name}</td>
-                          <td className="px-4 py-3 text-right font-bold text-blue-700">{value}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="mt-3 space-y-2">
+                  {category.items.map((item) => (
+                    <div
+                      key={item.name}
+                      className="flex items-start justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
+                    >
+                      <span className="text-sm text-slate-700">{item.name}</span>
+                      <span className="text-sm font-bold text-blue-700">{item.price}</span>
+                    </div>
+                  ))}
                 </div>
               </article>
             ))}
           </div>
 
           <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
-            Valores referenciales. El precio final puede variar según complejidad, cantidad de vistas, integraciones,
-            funcionalidades, volumen de información y soporte requerido.
+            Valores referenciales. El precio final puede variar según complejidad, vistas, integraciones, volumen de contenido y soporte requerido.
           </p>
-
-          <div>
-            <Button asChild className="bg-blue-700 text-white hover:bg-blue-800">
-              <Link href="/paquetes">
-                Solicitar evaluación <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </Container>
-      </section>
-
-      <section id="pagos-online" className="section-alt py-16">
-        <Container className="space-y-6">
-          <h2 className="text-2xl font-extrabold text-slate-900">Formas de pago flexibles</h2>
-          <p className="text-sm text-slate-600">
-            En ZYTERON facilitamos el inicio de tu proyecto con opciones de pago adaptadas al tipo de servicio.
-          </p>
-          <div className="grid gap-3 md:grid-cols-2">
-            {[
-              "Pago único para servicios simples",
-              "Suscripción mensual para planes recurrentes",
-              "Abono inicial para proyectos personalizados",
-              "Pagos por etapa para desarrollos mayores",
-              "Pago de saldo contra entrega",
-              "Carro de compra para productos TI",
-              "Pago online mediante Flow",
-              "Transferencia bancaria si corresponde",
-            ].map((item) => (
-              <div key={item} className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
-                {item}
-              </div>
-            ))}
-          </div>
-
-          <OnlinePaymentLauncher items={SERVICE_PAYMENT_ITEMS} />
-
-          <div className="grid gap-5 lg:grid-cols-2">
-            <article className="card-premium p-5">
-              <h3 className="text-lg font-extrabold text-slate-900">Servicios disponibles para pago online</h3>
-              <div className="mt-3 space-y-1.5 text-sm text-slate-700">
-                {[
-                  "Diagnóstico inicial",
-                  "Reserva de proyecto",
-                  "Plan Web Administrada mensual",
-                  "Mantención mensual",
-                  "Soporte mensual",
-                  "Productos TI",
-                  "Servicios cerrados",
-                  "Abonos aprobados",
-                  "Pagos por etapa",
-                  "Saldos pendientes",
-                ].map((item) => (
-                  <div key={item} className="flex items-start gap-2">
-                    <Check className="mt-0.5 h-4 w-4 text-emerald-700" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </article>
-
-            <article className="card-premium p-5">
-              <h3 className="text-lg font-extrabold text-slate-900">Servicios que requieren cotización previa</h3>
-              <div className="mt-3 space-y-1.5 text-sm text-slate-700">
-                {[
-                  "Sistemas web",
-                  "Paneles administrativos",
-                  "Tiendas online personalizadas",
-                  "Automatizaciones",
-                  "Integraciones de pago",
-                  "Desarrollo a medida",
-                  "Proyectos para empresas, colegios o instituciones",
-                  "Funcionalidades especiales",
-                ].map((item) => (
-                  <div key={item} className="flex items-start gap-2">
-                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-blue-700" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </article>
-          </div>
         </Container>
       </section>
 
       <section className="bg-white py-16">
+        <Container className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+          <article className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.15em] text-cyan-700">
+              <CircleDollarSign className="h-4 w-4" />
+              Mantención mensual
+            </div>
+            <h2 className="text-2xl font-extrabold text-slate-900">Mantenciones mensuales claras y coherentes</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Evitamos precios contradictorios y dejamos una estructura simple para sitios, ecommerce y sistemas.
+            </p>
+            <div className="mt-5 grid gap-3">
+              {maintenancePlans.map((plan) => (
+                <div
+                  key={plan.name}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
+                >
+                  <div className="flex flex-wrap items-end justify-between gap-2">
+                    <h3 className="text-base font-extrabold text-slate-900">{plan.name}</h3>
+                    <p className="text-base font-extrabold text-blue-700">{plan.price}</p>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{plan.description}</p>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="rounded-[2rem] border border-slate-200 bg-slate-50 p-6 shadow-sm">
+            <h3 className="text-xl font-extrabold text-slate-900">Qué considerar antes de contratar mantención</h3>
+            <div className="mt-4 space-y-2 text-sm text-slate-700">
+              {[
+                "El alcance depende del tipo de proyecto y frecuencia de intervención.",
+                "No incluye rediseños completos ni desarrollo de nuevas plataformas.",
+                "Automatizaciones, integraciones complejas y nuevos módulos se cotizan aparte.",
+                "Puede incluir soporte técnico, continuidad operativa y mejoras menores según el plan.",
+              ].map((item) => (
+                <div key={item} className="flex items-start gap-2">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+              <Button asChild className="bg-blue-700 text-white hover:bg-blue-800">
+                <Link href="/paquetes?tipo=soporte-ti">Cotizar soporte</Link>
+              </Button>
+              <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-white">
+                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                  Consultar mantención
+                </a>
+              </Button>
+            </div>
+          </article>
+        </Container>
+      </section>
+
+      <section className="section-alt py-16">
         <Container className="space-y-6">
           <h2 className="text-2xl font-extrabold text-slate-900">¿Qué plan necesito?</h2>
           <div className="grid gap-3 md:grid-cols-2">
-            {[
-              "Si solo necesitas presencia online y contacto por WhatsApp: Plan Emprendedor.",
-              "Si tienes un negocio y necesitas mostrar servicios, generar confianza y recibir consultas: Plan Pyme.",
-              "Si representas una empresa, colegio o institución y necesitas una web más estructurada: Plan Empresa.",
-              "Si vendes productos o necesitas mostrar un catálogo: Catálogo / Tienda Online.",
-              "Si necesitas administrar información, usuarios, registros, reservas o reportes: Sistema Web.",
-              "Si necesitas integraciones, automatizaciones o módulos personalizados: Desarrollo a medida.",
-            ].map((item) => (
-              <div key={item} className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+            {planGuide.map((item) => (
+              <div key={item} className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-700">
                 {item}
               </div>
             ))}
@@ -721,49 +750,25 @@ export default function PlanesPage() {
 
           <article className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
             <h3 className="text-lg font-extrabold text-slate-900">¿No sabes qué plan elegir?</h3>
-            <p className="mt-2 text-sm text-slate-700">
-              Podemos revisar tu caso y recomendar una estructura según objetivo, presupuesto y funcionalidades
-              necesarias.
+            <p className="mt-2 text-sm leading-6 text-slate-700">
+              Podemos revisar tu caso y recomendar una estructura según objetivo, presupuesto y funcionalidades necesarias.
             </p>
             <Button asChild className="mt-4 bg-blue-700 text-white hover:bg-blue-800">
-              <Link href="/contacto">Solicitar orientación</Link>
+              <Link href="/paquetes?tipo=no-seguro">Solicitar orientación</Link>
             </Button>
           </article>
         </Container>
       </section>
 
-      <section className="section-alt py-16">
+      <section className="bg-white py-16">
         <Container className="space-y-5">
-          <h2 className="text-2xl font-extrabold text-slate-900">Preguntas frecuentes sobre precios</h2>
+          <h2 className="text-2xl font-extrabold text-slate-900">Preguntas frecuentes sobre planes y precios</h2>
           <div className="grid gap-4 md:grid-cols-2">
             {priceFaqs.map((item) => (
-              <article key={item.q} className="card-premium p-5">
+              <article key={item.q} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <h3 className="text-sm font-bold text-slate-900">{item.q}</h3>
-                <p className="mt-1 text-sm text-slate-600">{item.a}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{item.a}</p>
               </article>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      <section className="bg-white py-16">
-        <Container className="space-y-4">
-          <h2 className="text-2xl font-extrabold text-slate-900">Condiciones comerciales generales</h2>
-          <div className="grid gap-3 md:grid-cols-2">
-            {[
-              "Todo proyecto se inicia con alcance definido.",
-              "Los valores publicados son referenciales.",
-              "Funcionalidades adicionales se cotizan aparte.",
-              "El cliente debe entregar contenido, imágenes, accesos y antecedentes necesarios.",
-              "Cambios fuera del alcance pueden modificar plazo y valor.",
-              "Dominio, hosting, licencias o servicios externos pueden tener costos adicionales.",
-              "Integraciones con terceros dependen de disponibilidad y condiciones del proveedor.",
-              "El soporte incluido depende del plan contratado.",
-              "Para proyectos mayores se puede trabajar por etapas.",
-            ].map((line) => (
-              <div key={line} className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-                {line}
-              </div>
             ))}
           </div>
         </Container>
@@ -773,18 +778,21 @@ export default function PlanesPage() {
         <Container className="space-y-4 text-center">
           <h2 className="text-3xl font-extrabold">Solicita una propuesta formal</h2>
           <p className="mx-auto max-w-3xl text-sm text-blue-100 sm:text-base">
-            Si representas una empresa, colegio, institución o negocio con requerimientos específicos, podemos preparar
-            una propuesta formal adaptada a tus procesos, objetivos y presupuesto.
+            Si tu negocio necesita una web más clara, una tienda online o un sistema interno, podemos preparar una propuesta alineada con el alcance real.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild className="bg-white text-blue-800 hover:bg-blue-50">
               <Link href="/paquetes">
-                Solicitar propuesta formal <ArrowRight className="h-4 w-4" />
+                Ir al cotizador <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white">
-              <a href="https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20agendar%20diagn%C3%B3stico" target="_blank" rel="noopener noreferrer">
-                Agendar diagnóstico
+            <Button
+              asChild
+              variant="outline"
+              className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white"
+            >
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                Hablar por WhatsApp
               </a>
             </Button>
           </div>

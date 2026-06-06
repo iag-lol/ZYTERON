@@ -36,6 +36,46 @@ export type QuoteMeta = {
   pdfStoragePath?: string;
   pdfPublicUrl?: string;
   pdfGeneratedAt?: string;
+  kind?: string;
+  quoteCode?: string;
+  source?: string;
+  clientSubmissionId?: string;
+  projectType?: string;
+  projectTypeLabel?: string;
+  businessName?: string;
+  businessRubro?: string;
+  businessCity?: string;
+  hasWebsite?: string;
+  hasLogo?: string;
+  hasDomain?: string;
+  hasContent?: string;
+  projectSummary?: string;
+  projectAnswers?: Array<{ key: string; label: string; value: string }>;
+  projectComment?: string;
+  budgetRange?: string;
+  budgetRangeLabel?: string;
+  deadline?: string;
+  deadlineLabel?: string;
+  urgency?: string;
+  urgencyLabel?: string;
+  priority?: string;
+  contactName?: string;
+  contactWhatsapp?: string;
+  contactWhatsappE164?: string;
+  contactEmail?: string;
+  contactCompany?: string;
+  currentWebsite?: string;
+  additionalMessage?: string;
+  requestStage?: string;
+  shortSummary?: string;
+  emailStatus?: string;
+  whatsappStatus?: string;
+  adminStatus?: string;
+  resendMessageId?: string;
+  twilioMessageId?: string;
+  submittedFrom?: string;
+  submittedAt?: string;
+  errorLog?: string[];
 };
 
 type RawQuoteMessage = Partial<QuoteMeta> & {
@@ -89,11 +129,13 @@ export function parseQuoteMessage(message?: string | null): QuoteMeta {
     grandTotal: 0,
     includeIva: true,
     ivaRate: 0.19,
-    companyName: ZYTERON_COMPANY.legalName,
-    companyRut: ZYTERON_COMPANY.rut,
-    companyGiro: ZYTERON_COMPANY.businessLine,
-    terms: buildDefaultQuoteTerms(true),
-  };
+      companyName: ZYTERON_COMPANY.legalName,
+      companyRut: ZYTERON_COMPANY.rut,
+      companyGiro: ZYTERON_COMPANY.businessLine,
+      terms: buildDefaultQuoteTerms(true),
+      projectAnswers: [],
+      errorLog: [],
+    };
 
   if (!message) {
     return safeBase;
@@ -126,6 +168,57 @@ export function parseQuoteMessage(message?: string | null): QuoteMeta {
         typeof raw.terms === "string" && raw.terms.trim().length > 0
           ? raw.terms
           : buildDefaultQuoteTerms(raw.includeIva ?? true),
+      kind: typeof raw.kind === "string" ? raw.kind : undefined,
+      quoteCode: typeof raw.quoteCode === "string" ? raw.quoteCode : undefined,
+      source: typeof raw.source === "string" ? raw.source : undefined,
+      clientSubmissionId: typeof raw.clientSubmissionId === "string" ? raw.clientSubmissionId : undefined,
+      projectType: typeof raw.projectType === "string" ? raw.projectType : undefined,
+      projectTypeLabel: typeof raw.projectTypeLabel === "string" ? raw.projectTypeLabel : undefined,
+      businessName: typeof raw.businessName === "string" ? raw.businessName : undefined,
+      businessRubro: typeof raw.businessRubro === "string" ? raw.businessRubro : undefined,
+      businessCity: typeof raw.businessCity === "string" ? raw.businessCity : undefined,
+      hasWebsite: typeof raw.hasWebsite === "string" ? raw.hasWebsite : undefined,
+      hasLogo: typeof raw.hasLogo === "string" ? raw.hasLogo : undefined,
+      hasDomain: typeof raw.hasDomain === "string" ? raw.hasDomain : undefined,
+      hasContent: typeof raw.hasContent === "string" ? raw.hasContent : undefined,
+      projectSummary: typeof raw.projectSummary === "string" ? raw.projectSummary : undefined,
+      projectAnswers: Array.isArray(raw.projectAnswers)
+        ? raw.projectAnswers
+            .filter((item) => item && typeof item === "object")
+            .map((item) => ({
+              key: typeof item.key === "string" ? item.key : "",
+              label: typeof item.label === "string" ? item.label : "",
+              value: typeof item.value === "string" ? item.value : "",
+            }))
+            .filter((item) => item.key && item.label && item.value)
+        : [],
+      projectComment: typeof raw.projectComment === "string" ? raw.projectComment : undefined,
+      budgetRange: typeof raw.budgetRange === "string" ? raw.budgetRange : undefined,
+      budgetRangeLabel: typeof raw.budgetRangeLabel === "string" ? raw.budgetRangeLabel : undefined,
+      deadline: typeof raw.deadline === "string" ? raw.deadline : undefined,
+      deadlineLabel: typeof raw.deadlineLabel === "string" ? raw.deadlineLabel : undefined,
+      urgency: typeof raw.urgency === "string" ? raw.urgency : undefined,
+      urgencyLabel: typeof raw.urgencyLabel === "string" ? raw.urgencyLabel : undefined,
+      priority: typeof raw.priority === "string" ? raw.priority : undefined,
+      contactName: typeof raw.contactName === "string" ? raw.contactName : undefined,
+      contactWhatsapp: typeof raw.contactWhatsapp === "string" ? raw.contactWhatsapp : undefined,
+      contactWhatsappE164: typeof raw.contactWhatsappE164 === "string" ? raw.contactWhatsappE164 : undefined,
+      contactEmail: typeof raw.contactEmail === "string" ? raw.contactEmail : undefined,
+      contactCompany: typeof raw.contactCompany === "string" ? raw.contactCompany : undefined,
+      currentWebsite: typeof raw.currentWebsite === "string" ? raw.currentWebsite : undefined,
+      additionalMessage: typeof raw.additionalMessage === "string" ? raw.additionalMessage : undefined,
+      requestStage: typeof raw.requestStage === "string" ? raw.requestStage : undefined,
+      shortSummary: typeof raw.shortSummary === "string" ? raw.shortSummary : undefined,
+      emailStatus: typeof raw.emailStatus === "string" ? raw.emailStatus : undefined,
+      whatsappStatus: typeof raw.whatsappStatus === "string" ? raw.whatsappStatus : undefined,
+      adminStatus: typeof raw.adminStatus === "string" ? raw.adminStatus : undefined,
+      resendMessageId: typeof raw.resendMessageId === "string" ? raw.resendMessageId : undefined,
+      twilioMessageId: typeof raw.twilioMessageId === "string" ? raw.twilioMessageId : undefined,
+      submittedFrom: typeof raw.submittedFrom === "string" ? raw.submittedFrom : undefined,
+      submittedAt: typeof raw.submittedAt === "string" ? raw.submittedAt : undefined,
+      errorLog: Array.isArray(raw.errorLog)
+        ? raw.errorLog.filter((item) => typeof item === "string")
+        : [],
     };
   } catch {
     return safeBase;
@@ -142,7 +235,7 @@ export function enrichQuoteRecord(record: QuoteRecord) {
   return {
     ...record,
     meta,
-    displayNumber: meta.quoteNumber || `COT-${record.id.slice(0, 8).toUpperCase()}`,
+    displayNumber: meta.quoteCode || meta.quoteNumber || `COT-${record.id.slice(0, 8).toUpperCase()}`,
     issuedAt: meta.quoteDate || record.createdAt || new Date().toISOString(),
     totalAmount: typeof record.total === "number" ? record.total : meta.grandTotal,
     subtotalAmount: typeof record.subtotal === "number" ? record.subtotal : meta.subtotal,

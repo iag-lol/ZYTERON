@@ -7,15 +7,22 @@ import {
   Download,
   FileEdit,
   FileText,
+  Phone,
   Plus,
-  TrendingUp,
   Target,
   DollarSign,
 } from "lucide-react";
 import Link from "next/link";
 import { QuoteSendEmailButton } from "@/components/admin/quote-send-email-button";
+import { QuoteRequestIntegrationButton } from "@/components/admin/quote-request-integration-button";
 import { getWorkOrders } from "@/lib/admin/repository";
 import { isManualQuote } from "@/lib/admin/work-orders";
+import {
+  INTEGRATION_STATUS_LABELS,
+  isQuoteRequestMeta,
+  requestStageLabel,
+  whatsappPublicLink,
+} from "@/lib/quote-requests";
 
 type QuoteStatus = "PENDING" | "SENT" | "WON" | "LOST";
 type QuoteStatusFilter = "ALL" | QuoteStatus;
@@ -40,14 +47,20 @@ function initials(name?: string | null) {
 
 const statusConfig: Record<string, { label: string; dot: string; bg: string; text: string; ring: string }> = {
   PENDING: { label: "Pendiente", dot: "bg-amber-400", bg: "bg-amber-50", text: "text-amber-700", ring: "ring-amber-200" },
-  SENT:    { label: "Enviada",   dot: "bg-blue-400",  bg: "bg-blue-50",  text: "text-blue-700",  ring: "ring-blue-200"  },
-  WON:     { label: "Ganada",    dot: "bg-emerald-400",bg: "bg-emerald-50",text: "text-emerald-700",ring: "ring-emerald-200" },
-  LOST:    { label: "Pérdida",   dot: "bg-rose-400",  bg: "bg-rose-50",  text: "text-rose-700",  ring: "ring-rose-200"  },
+  SENT: { label: "Enviada", dot: "bg-blue-400", bg: "bg-blue-50", text: "text-blue-700", ring: "ring-blue-200" },
+  WON: { label: "Ganada", dot: "bg-emerald-400", bg: "bg-emerald-50", text: "text-emerald-700", ring: "ring-emerald-200" },
+  LOST: { label: "Pérdida", dot: "bg-rose-400", bg: "bg-rose-50", text: "text-rose-700", ring: "ring-rose-200" },
 };
 
 const avatarColors = [
-  "bg-blue-500", "bg-violet-500", "bg-emerald-500", "bg-amber-500",
-  "bg-rose-500", "bg-cyan-500", "bg-indigo-500", "bg-teal-500",
+  "bg-blue-500",
+  "bg-violet-500",
+  "bg-emerald-500",
+  "bg-amber-500",
+  "bg-rose-500",
+  "bg-cyan-500",
+  "bg-indigo-500",
+  "bg-teal-500",
 ];
 
 function normalizeQuoteStatus(status?: string | null): QuoteStatus {
@@ -62,10 +75,34 @@ function normalizeQuoteStatusFilter(status?: string | null): QuoteStatusFilter {
   return "ALL";
 }
 
+function buildReturnUrl(input: {
+  status: QuoteStatusFilter;
+  query: string;
+  projectType: string;
+  urgency: string;
+}) {
+  const params = new URLSearchParams();
+  if (input.status !== "ALL") params.set("status", input.status);
+  if (input.query) params.set("query", input.query);
+  if (input.projectType) params.set("project_type", input.projectType);
+  if (input.urgency) params.set("urgency", input.urgency);
+  const query = params.toString();
+  return query ? `/admin/cotizaciones?${query}` : "/admin/cotizaciones";
+}
+
+function matchesSearch(values: Array<string | null | undefined>, search: string) {
+  if (!search) return true;
+  const normalized = search.trim().toLowerCase();
+  return values.some((value) => String(value || "").toLowerCase().includes(normalized));
+}
+
 type PageProps = {
   searchParams?:
     | {
         status?: string;
+        query?: string;
+        project_type?: string;
+        urgency?: string;
         status_error?: string;
         email_sent?: string;
         email_error?: string;
@@ -81,6 +118,9 @@ type PageProps = {
       }
     | Promise<{
         status?: string;
+        query?: string;
+        project_type?: string;
+        urgency?: string;
         status_error?: string;
         email_sent?: string;
         email_error?: string;
@@ -99,6 +139,9 @@ type PageProps = {
 export default async function CotizacionesPage({ searchParams }: PageProps) {
   const query = await Promise.resolve(searchParams);
   const activeFilter = normalizeQuoteStatusFilter(query?.status);
+  const searchText = String(query?.query || "").trim();
+  const projectTypeFilter = String(query?.project_type || "").trim().toLowerCase();
+  const urgencyFilter = String(query?.urgency || "").trim().toLowerCase();
   const statusError = query?.status_error === "1";
   const emailSent = query?.email_sent === "1";
   const emailError = query?.email_error ? decodeURIComponent(query.email_error) : "";
@@ -117,6 +160,8 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
     .filter((quote) => isManualQuote(quote))
     .slice()
     .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  const requestQuotes = manualQuotes.filter((quote) => isQuoteRequestMeta(quote.meta));
+  const standardQuotes = manualQuotes.filter((quote) => !isQuoteRequestMeta(quote.meta));
 
   const workOrderByQuote = new Map(
     workOrders
@@ -125,9 +170,36 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
       .map((order) => [String(order.quoteId), order]),
   );
 
-  const quotes = activeFilter === "ALL"
-    ? manualQuotes
-    : manualQuotes.filter((q) => normalizeQuoteStatus(q.status) === activeFilter);
+  const quotes = manualQuotes.filter((q) => {
+    const statusMatch = activeFilter === "ALL" || normalizeQuoteStatus(q.status) === activeFilter;
+    if (!statusMatch) return false;
+
+    const meta = q.meta;
+    const request = isQuoteRequestMeta(meta);
+
+    if (projectTypeFilter) {
+      if (!request || String(meta.projectType || "").toLowerCase() !== projectTypeFilter) return false;
+    }
+
+    if (urgencyFilter) {
+      if (!request || String(meta.urgency || "").toLowerCase() !== urgencyFilter) return false;
+    }
+
+    return matchesSearch(
+      [
+        q.displayNumber,
+        q.name,
+        q.company,
+        q.email,
+        q.phone,
+        request ? meta.quoteCode : "",
+        request ? meta.projectTypeLabel : "",
+        request ? meta.contactCompany : "",
+        request ? meta.contactWhatsapp : "",
+      ],
+      searchText,
+    );
+  });
 
   const pipelineValue = manualQuotes.reduce((acc, q) => acc + (q.totalAmount || 0), 0);
   const wonValue = manualQuotes
@@ -142,24 +214,29 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
     .filter((q) => normalizeQuoteStatus(q.status) === "WON")
     .reduce((acc, q) => acc + (q.totalAmount || 0), 0);
   const winRate = manualQuotes.length ? Math.round((won / manualQuotes.length) * 100) : 0;
-  const returnTo = activeFilter === "ALL" ? "/admin/cotizaciones" : `/admin/cotizaciones?status=${activeFilter}`;
+  const returnTo = buildReturnUrl({
+    status: activeFilter,
+    query: searchText,
+    projectType: projectTypeFilter,
+    urgency: urgencyFilter,
+  });
 
   const stats = [
     {
       label: "Pipeline total",
       value: currency(pipelineValue),
-      sub: `${manualQuotes.length} cotizaciones activas`,
+      sub: `${manualQuotes.length} registros activos`,
       icon: BarChart2,
       iconBg: "bg-blue-500",
       shadow: "shadow-blue-500/30",
     },
     {
-      label: "Ingresos ganados",
-      value: currency(wonValue),
-      sub: `${won} cotizaciones WON`,
-      icon: DollarSign,
-      iconBg: "bg-emerald-500",
-      shadow: "shadow-emerald-500/30",
+      label: "Solicitudes web",
+      value: requestQuotes.length,
+      sub: `${standardQuotes.length} cotizaciones manuales`,
+      icon: ClipboardCheck,
+      iconBg: "bg-cyan-500",
+      shadow: "shadow-cyan-500/30",
     },
     {
       label: "Win Rate",
@@ -170,12 +247,12 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
       shadow: "shadow-violet-500/30",
     },
     {
-      label: "En proceso",
-      value: pending + sent,
-      sub: `${pending} pendientes · ${sent} enviadas`,
-      icon: TrendingUp,
-      iconBg: "bg-amber-500",
-      shadow: "shadow-amber-500/30",
+      label: "Ingresos ganados",
+      value: currency(wonValue),
+      sub: `${won} cotizaciones WON`,
+      icon: DollarSign,
+      iconBg: "bg-emerald-500",
+      shadow: "shadow-emerald-500/30",
     },
   ];
 
@@ -183,7 +260,7 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
     <div className="space-y-8">
       {statusError ? (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          No se pudo actualizar el estado de la cotización. Inténtalo nuevamente.
+          No se pudo actualizar el estado o etapa del registro. Inténtalo nuevamente.
         </div>
       ) : null}
       {emailSent ? (
@@ -227,15 +304,13 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
           No se pudo generar la orden de trabajo. Debe ser una cotización manual pendiente o enviada.
         </div>
       ) : null}
-      {/* Header */}
+
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
-            Pipeline comercial
-          </p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Pipeline comercial</p>
           <h1 className="mt-0.5 text-2xl font-extrabold text-slate-900">Cotizaciones</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {manualQuotes.length} cotizaciones manuales · {currency(pipelineValue)} en pipeline
+            {manualQuotes.length} registros · {requestQuotes.length} solicitudes web · {standardQuotes.length} cotizaciones manuales
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -256,7 +331,6 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((s) => (
           <div
@@ -275,7 +349,6 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
         ))}
       </div>
 
-      {/* Status distribution */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           { label: "Pendientes", count: pending, color: "border-amber-300 bg-amber-50", text: "text-amber-700" },
@@ -303,9 +376,12 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
             { key: "LOST", label: "Pérdida", count: lost },
           ].map((filter) => {
             const isActive = activeFilter === filter.key;
-            const href = filter.key === "ALL"
-              ? "/admin/cotizaciones"
-              : `/admin/cotizaciones?status=${filter.key}`;
+            const href = buildReturnUrl({
+              status: filter.key as QuoteStatusFilter,
+              query: searchText,
+              projectType: projectTypeFilter,
+              urgency: urgencyFilter,
+            });
             return (
               <Link
                 key={filter.key}
@@ -326,7 +402,48 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      {/* Quotes table */}
+      <form className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" method="get">
+        <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr_1fr_auto]">
+          <input type="hidden" name="status" value={activeFilter === "ALL" ? "" : activeFilter} />
+          <input
+            name="query"
+            defaultValue={searchText}
+            placeholder="Buscar por nombre, empresa, email, WhatsApp o código"
+            className="h-11 rounded-xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+          />
+          <select
+            name="project_type"
+            defaultValue={projectTypeFilter}
+            className="h-11 rounded-xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+          >
+            <option value="">Todos los tipos</option>
+            <option value="web-basica">Web básica</option>
+            <option value="web-profesional">Web profesional</option>
+            <option value="tienda-online">Tienda online</option>
+            <option value="sistema-web">Sistema web</option>
+            <option value="automatizacion">Automatización</option>
+            <option value="soporte-ti">Soporte TI</option>
+            <option value="no-seguro">No estoy seguro</option>
+          </select>
+          <select
+            name="urgency"
+            defaultValue={urgencyFilter}
+            className="h-11 rounded-xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+          >
+            <option value="">Todas las urgencias</option>
+            <option value="bajo">Bajo</option>
+            <option value="medio">Medio</option>
+            <option value="alto">Alto</option>
+          </select>
+          <button
+            type="submit"
+            className="inline-flex h-11 items-center justify-center rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+          >
+            Filtrar
+          </button>
+        </div>
+      </form>
+
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <div>
@@ -349,7 +466,7 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
             <p className="mt-3 text-base font-semibold text-slate-500">Sin cotizaciones</p>
             <p className="mt-1 text-sm text-slate-400">
               {activeFilter === "ALL"
-                ? "Crea la primera cotización para comenzar."
+                ? "Aún no hay registros para mostrar con esos filtros."
                 : "No hay cotizaciones para el estado seleccionado."}
             </p>
             <Link
@@ -362,139 +479,280 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
           </div>
         ) : (
           <>
-            {/* Table header */}
-            <div className="grid grid-cols-[2.2fr_1.4fr_1.8fr_1fr_auto] gap-4 border-b border-slate-100 bg-slate-50 px-6 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              <span>Cliente</span>
-              <span>Fecha</span>
-              <span>Estado</span>
-              <span>Total</span>
-              <span>Acciones</span>
-            </div>
+            <div className="divide-y divide-slate-100 md:hidden">
+              {quotes.map((q) => {
+                const meta = q.meta;
+                const isRequest = isQuoteRequestMeta(meta);
+                const displayStage = isRequest ? requestStageLabel(meta.requestStage) : statusConfig[normalizeQuoteStatus(q.status)].label;
 
-            <div className="divide-y divide-slate-100">
-              {quotes.map((q, idx) => {
-                const statusKey = normalizeQuoteStatus(q.status);
-                const cfg = statusConfig[statusKey];
-                const avatarBg = avatarColors[idx % avatarColors.length];
-                const existingOt = workOrderByQuote.get(q.id);
-                const canGenerateOt = statusKey === "PENDING" || statusKey === "SENT";
                 return (
-                  <div
-                    key={q.id}
-                    className="grid grid-cols-[2.2fr_1.4fr_1.8fr_1fr_auto] items-center gap-4 px-6 py-3.5 transition-colors hover:bg-slate-50"
-                  >
-                    {/* Client */}
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${avatarBg} text-[11px] font-bold text-white`}
-                      >
-                        {initials(q.name)}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-[13px] font-bold text-slate-900">
-                          {q.company || q.name || "Sin nombre"}
+                  <div key={q.id} className="space-y-4 px-5 py-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-extrabold text-slate-900">
+                          {isRequest ? meta.contactCompany || meta.businessName || q.company || q.name : q.company || q.name}
                         </p>
-                        <p className="truncate text-[11px] text-slate-400">
-                          {q.displayNumber} · {q.email}
+                        <p className="mt-1 text-xs text-slate-500">{meta.quoteCode || q.displayNumber} · {isRequest ? meta.contactEmail || q.email : q.email}</p>
+                      </div>
+                      <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-600">
+                        {displayStage}
+                      </span>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Solicitud</p>
+                        <p className="mt-1 text-sm font-semibold text-slate-900">{isRequest ? meta.projectTypeLabel || "Solicitud web" : "Cotización manual"}</p>
+                        <p className="mt-1 text-sm text-slate-500">{isRequest ? meta.budgetRangeLabel || "Sin presupuesto" : currency(q.totalAmount || 0)}</p>
+                      </div>
+                      <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Integraciones</p>
+                        <p className="mt-1 text-sm text-slate-700">
+                          Correo: {isRequest ? INTEGRATION_STATUS_LABELS[(meta.emailStatus as "pending" | "sent" | "failed") || "pending"] : "N/A"}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-700">
+                          WhatsApp: {isRequest ? INTEGRATION_STATUS_LABELS[(meta.whatsappStatus as "pending" | "sent" | "failed") || "pending"] : "N/A"}
                         </p>
                       </div>
                     </div>
 
-                    {/* Date */}
-                    <div>
-                      <p className="text-[13px] text-slate-600">
-                        {q.createdAt
-                          ? new Date(q.createdAt).toLocaleDateString("es-CL", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                            })
-                          : "—"}
-                      </p>
-                    </div>
-
-                    {/* Status */}
-                    <div>
-                      <form action={`/admin/cotizaciones/${q.id}/estado`} method="post" className="flex items-center gap-1.5">
-                        <select
-                          name="status"
-                          defaultValue={normalizeQuoteStatus(q.status)}
-                          className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                          aria-label={`Estado de ${q.displayNumber}`}
-                        >
-                          <option value="PENDING">Pendiente</option>
-                          <option value="SENT">Enviada</option>
-                          <option value="WON">Ganada</option>
-                          <option value="LOST">Pérdida</option>
-                        </select>
-                        <input type="hidden" name="redirectTo" value={returnTo} />
-                        <button
-                          type="submit"
-                          className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold ring-1 transition-colors ${cfg.bg} ${cfg.text} ${cfg.ring}`}
-                        >
-                          <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-                          Guardar
-                        </button>
-                      </form>
-                    </div>
-
-                    {/* Total */}
-                    <div>
-                      <p className="text-[13px] font-bold text-slate-900">{currency(q.totalAmount || 0)}</p>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-1.5">
-                      {existingOt ? (
-                        <Link
-                          href="/admin/ordenes-trabajo"
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-violet-200 bg-violet-50 text-violet-700 transition-colors hover:bg-violet-100"
-                          title={`OT ${existingOt.code}`}
-                        >
-                          <ClipboardCheck className="h-3.5 w-3.5" />
-                        </Link>
-                      ) : canGenerateOt ? (
-                        <form action="/admin/ordenes-trabajo/generar" method="post">
-                          <input type="hidden" name="quoteId" value={q.id} />
-                          <input type="hidden" name="source" value="MANUAL_QUOTE" />
-                          <input type="hidden" name="redirectTo" value={returnTo} />
-                          <button
-                            type="submit"
-                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-violet-200 bg-violet-50 text-violet-700 transition-colors hover:bg-violet-100"
-                            title="Generar orden de trabajo"
+                    <div className="flex flex-wrap gap-2">
+                      {isRequest ? (
+                        <>
+                          <a
+                            href={whatsappPublicLink(meta.contactWhatsappE164 || meta.contactWhatsapp || q.phone)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex h-10 items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-sm font-semibold text-emerald-700"
                           >
-                            <ClipboardPlus className="h-3.5 w-3.5" />
-                          </button>
-                        </form>
-                      ) : null}
-                      <a
-                        href={q.pdfUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
-                        title="Descargar PDF"
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                      </a>
-                      <QuoteSendEmailButton quoteId={q.id} hasEmail={Boolean(q.email)} compact />
-                      <Link
-                        href={`/admin/cotizaciones/${q.id}/editar`}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
-                        title="Editar cotización"
-                      >
-                        <FileEdit className="h-3.5 w-3.5" />
-                      </Link>
+                            <Phone className="h-4 w-4" />
+                            WhatsApp
+                          </a>
+                          <QuoteRequestIntegrationButton channel="email" quoteId={q.id} />
+                          <QuoteRequestIntegrationButton channel="whatsapp" quoteId={q.id} />
+                        </>
+                      ) : (
+                        <>
+                          <QuoteSendEmailButton quoteId={q.id} hasEmail={Boolean(q.email)} />
+                          <Link
+                            href={`/admin/cotizaciones/${q.id}/editar`}
+                            className="inline-flex h-10 items-center rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-700"
+                          >
+                            Editar
+                          </Link>
+                        </>
+                      )}
                       <Link
                         href={`/admin/cotizaciones/${q.id}`}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
-                        title="Ver cotización"
+                        className="inline-flex h-10 items-center rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-700"
                       >
-                        <ArrowUpRight className="h-3.5 w-3.5" />
+                        Ver detalle
                       </Link>
                     </div>
                   </div>
                 );
               })}
+            </div>
+
+            <div className="hidden md:block">
+              <div className="grid grid-cols-[2fr_1.6fr_1.3fr_1.1fr_auto] gap-4 border-b border-slate-100 bg-slate-50 px-6 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <span>Cliente</span>
+                <span>Solicitud</span>
+                <span>Seguimiento</span>
+                <span>Integraciones</span>
+                <span>Acciones</span>
+              </div>
+
+              <div className="divide-y divide-slate-100">
+                {quotes.map((q, idx) => {
+                  const statusKey = normalizeQuoteStatus(q.status);
+                  const cfg = statusConfig[statusKey];
+                  const avatarBg = avatarColors[idx % avatarColors.length];
+                  const existingOt = workOrderByQuote.get(q.id);
+                  const canGenerateOt = statusKey === "PENDING" || statusKey === "SENT";
+                  const meta = q.meta;
+                  const isRequest = isQuoteRequestMeta(meta);
+
+                  return (
+                    <div
+                      key={q.id}
+                      className="grid grid-cols-[2fr_1.6fr_1.3fr_1.1fr_auto] items-center gap-4 px-6 py-3.5 transition-colors hover:bg-slate-50"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${avatarBg} text-[11px] font-bold text-white`}
+                        >
+                          {initials(q.name)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-[13px] font-bold text-slate-900">
+                            {isRequest ? meta.contactCompany || meta.businessName || q.company || q.name || "Sin nombre" : q.company || q.name || "Sin nombre"}
+                          </p>
+                          <p className="truncate text-[11px] text-slate-400">
+                            {meta.quoteCode || q.displayNumber} · {isRequest ? meta.contactEmail || q.email : q.email}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-[13px] text-slate-600">
+                          {q.createdAt
+                            ? new Date(q.createdAt).toLocaleDateString("es-CL", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })
+                            : "—"}
+                        </p>
+                        <p className="mt-1 text-[12px] font-semibold text-slate-800">
+                          {isRequest ? meta.projectTypeLabel || "Solicitud web" : "Cotización manual"}
+                        </p>
+                        <p className="mt-1 text-[11px] text-slate-400">
+                          {isRequest ? `${meta.budgetRangeLabel || "Sin presupuesto"} · ${meta.urgencyLabel || "Sin urgencia"}` : currency(q.totalAmount || 0)}
+                        </p>
+                      </div>
+
+                      <div>
+                        {isRequest ? (
+                          <form action={`/admin/cotizaciones/${q.id}/workflow`} method="post" className="flex items-center gap-1.5">
+                            <select
+                              name="stage"
+                              defaultValue={meta.requestStage || "NUEVA"}
+                              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                              aria-label={`Etapa de ${meta.quoteCode || q.displayNumber}`}
+                            >
+                              <option value="NUEVA">Nueva</option>
+                              <option value="REVISADA">Revisada</option>
+                              <option value="CONTACTADO">Contactado</option>
+                              <option value="EN_PROPUESTA">En propuesta</option>
+                              <option value="CERRADA">Cerrada</option>
+                              <option value="PERDIDA">Perdida</option>
+                              <option value="ARCHIVADA">Archivada</option>
+                            </select>
+                            <input type="hidden" name="redirectTo" value={returnTo} />
+                            <button
+                              type="submit"
+                              className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 ring-1 ring-blue-200 transition-colors hover:bg-blue-100"
+                            >
+                              Guardar
+                            </button>
+                          </form>
+                        ) : (
+                          <form action={`/admin/cotizaciones/${q.id}/estado`} method="post" className="flex items-center gap-1.5">
+                            <select
+                              name="status"
+                              defaultValue={normalizeQuoteStatus(q.status)}
+                              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                              aria-label={`Estado de ${q.displayNumber}`}
+                            >
+                              <option value="PENDING">Pendiente</option>
+                              <option value="SENT">Enviada</option>
+                              <option value="WON">Ganada</option>
+                              <option value="LOST">Pérdida</option>
+                            </select>
+                            <input type="hidden" name="redirectTo" value={returnTo} />
+                            <button
+                              type="submit"
+                              className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold ring-1 transition-colors ${cfg.bg} ${cfg.text} ${cfg.ring}`}
+                            >
+                              <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
+                              Guardar
+                            </button>
+                          </form>
+                        )}
+                      </div>
+
+                      <div>
+                        {isRequest ? (
+                          <div className="space-y-1 text-[11px] text-slate-500">
+                            <p>
+                              Correo:{" "}
+                              <span className="font-semibold text-slate-700">
+                                {INTEGRATION_STATUS_LABELS[(meta.emailStatus as "pending" | "sent" | "failed") || "pending"]}
+                              </span>
+                            </p>
+                            <p>
+                              WhatsApp:{" "}
+                              <span className="font-semibold text-slate-700">
+                                {INTEGRATION_STATUS_LABELS[(meta.whatsappStatus as "pending" | "sent" | "failed") || "pending"]}
+                              </span>
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-[13px] font-bold text-slate-900">{currency(q.totalAmount || 0)}</p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        {isRequest ? (
+                          <>
+                            <a
+                              href={whatsappPublicLink(meta.contactWhatsappE164 || meta.contactWhatsapp || q.phone)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 transition-colors hover:bg-emerald-100"
+                              title="Abrir WhatsApp"
+                            >
+                              <Phone className="h-3.5 w-3.5" />
+                            </a>
+                            <QuoteRequestIntegrationButton channel="email" quoteId={q.id} compact />
+                            <QuoteRequestIntegrationButton channel="whatsapp" quoteId={q.id} compact />
+                          </>
+                        ) : existingOt ? (
+                          <Link
+                            href="/admin/ordenes-trabajo"
+                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-violet-200 bg-violet-50 text-violet-700 transition-colors hover:bg-violet-100"
+                            title={`OT ${existingOt.code}`}
+                          >
+                            <ClipboardCheck className="h-3.5 w-3.5" />
+                          </Link>
+                        ) : canGenerateOt ? (
+                          <form action="/admin/ordenes-trabajo/generar" method="post">
+                            <input type="hidden" name="quoteId" value={q.id} />
+                            <input type="hidden" name="source" value="MANUAL_QUOTE" />
+                            <input type="hidden" name="redirectTo" value={returnTo} />
+                            <button
+                              type="submit"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-violet-200 bg-violet-50 text-violet-700 transition-colors hover:bg-violet-100"
+                              title="Generar orden de trabajo"
+                            >
+                              <ClipboardPlus className="h-3.5 w-3.5" />
+                            </button>
+                          </form>
+                        ) : null}
+                        {!isRequest ? (
+                          <>
+                            <a
+                              href={q.pdfUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
+                              title="Descargar PDF"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                            </a>
+                            <QuoteSendEmailButton quoteId={q.id} hasEmail={Boolean(q.email)} compact />
+                            <Link
+                              href={`/admin/cotizaciones/${q.id}/editar`}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
+                              title="Editar cotización"
+                            >
+                              <FileEdit className="h-3.5 w-3.5" />
+                            </Link>
+                          </>
+                        ) : null}
+                        <Link
+                          href={`/admin/cotizaciones/${q.id}`}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
+                          title="Ver cotización"
+                        >
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="border-t border-slate-100 bg-slate-50 px-6 py-3">
