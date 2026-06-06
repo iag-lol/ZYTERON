@@ -295,60 +295,60 @@ export default async function CotizacionDetallePage({ params }: Params) {
           </section>
 
           {isRequestQuote ? (
-            <section className="rounded-3xl border border-slate-200 bg-slate-950 p-6 text-white shadow-sm">
+            <section className="rounded-3xl border border-blue-200 bg-blue-50 p-6 text-blue-900 shadow-sm">
               <h2 className="text-base font-bold">Seguimiento interno</h2>
               <div className="mt-5 space-y-3 text-sm">
-                <div className="flex items-center justify-between text-slate-300">
+                <div className="flex items-center justify-between text-blue-800">
                   <span>Etapa</span>
                   <span>{requestStageLabel(quote.meta.requestStage)}</span>
                 </div>
-                <div className="flex items-center justify-between text-slate-300">
+                <div className="flex items-center justify-between text-blue-800">
                   <span>Correo</span>
                   <span>{INTEGRATION_STATUS_LABELS[(quote.meta.emailStatus as "pending" | "sent" | "failed") || "pending"]}</span>
                 </div>
-                <div className="flex items-center justify-between text-slate-300">
+                <div className="flex items-center justify-between text-blue-800">
                   <span>WhatsApp</span>
                   <span>{INTEGRATION_STATUS_LABELS[(quote.meta.whatsappStatus as "pending" | "sent" | "failed") || "pending"]}</span>
                 </div>
-                <div className="flex items-center justify-between text-slate-300">
+                <div className="flex items-center justify-between text-blue-800">
                   <span>Prioridad</span>
                   <span>{quote.meta.priority || "Media"}</span>
                 </div>
               </div>
-              <div className="mt-5 rounded-2xl bg-white/5 p-4 text-sm text-slate-300">
+              <div className="mt-5 rounded-2xl bg-white p-4 text-sm text-blue-800">
                 <p className="flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4 text-blue-300" />
+                  <CalendarDays className="h-4 w-4 text-blue-600" />
                   Recibida {new Date(quote.meta.submittedAt || quote.issuedAt).toLocaleDateString("es-CL")}
                 </p>
                 <p className="mt-2">Presupuesto {quote.meta.budgetRangeLabel || "no definido"} · plazo {quote.meta.deadlineLabel || "no definido"}</p>
               </div>
             </section>
           ) : (
-            <section className="rounded-3xl border border-slate-200 bg-slate-950 p-6 text-white shadow-sm">
+            <section className="rounded-3xl border border-blue-200 bg-blue-50 p-6 text-blue-900 shadow-sm">
               <h2 className="text-base font-bold">Resumen financiero</h2>
               <div className="mt-5 space-y-3 text-sm">
-                <div className="flex items-center justify-between text-slate-300">
+                <div className="flex items-center justify-between text-blue-800">
                   <span>Subtotal</span>
                   <span>{currencyCLP(quote.meta.subtotal)}</span>
                 </div>
-                <div className="flex items-center justify-between text-slate-300">
+                <div className="flex items-center justify-between text-blue-800">
                   <span>Descuento</span>
                   <span>-{currencyCLP(quote.meta.totalDescuento)}</span>
                 </div>
-                <div className="flex items-center justify-between text-slate-300">
+                <div className="flex items-center justify-between text-blue-800">
                   <span>IVA</span>
                   <span>{currencyCLP(quote.meta.iva)}</span>
                 </div>
-                <div className="border-t border-white/10 pt-3 text-base font-bold text-white">
+                <div className="border-t border-blue-200 pt-3 text-base font-bold text-blue-900">
                   <div className="flex items-center justify-between">
                     <span>Total</span>
                     <span>{currencyCLP(quote.totalAmount)}</span>
                   </div>
                 </div>
               </div>
-              <div className="mt-5 rounded-2xl bg-white/5 p-4 text-sm text-slate-300">
+              <div className="mt-5 rounded-2xl bg-white p-4 text-sm text-blue-800">
                 <p className="flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4 text-blue-300" />
+                  <CalendarDays className="h-4 w-4 text-blue-600" />
                   Emisión {new Date(quote.issuedAt).toLocaleDateString("es-CL")}
                 </p>
                 <p className="mt-2">Validez {quote.meta.validityDays || "30 días"} · Pago {quote.meta.paymentMethod || "Transferencia"}</p>

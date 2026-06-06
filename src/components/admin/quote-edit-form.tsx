@@ -231,14 +231,23 @@ export function QuoteEditForm({ quote }: Props) {
     contact: quote.meta.clientContact || "",
   });
 
-  const [meta, setMeta] = useState({
-    quoteNumber: quote.meta.quoteNumber || quote.displayNumber,
-    date: toDateInput(quote.meta.quoteDate || quote.issuedAt || quote.createdAt),
-    validityDays: quote.meta.validityDays || "30 días",
-    paymentMethod: quote.meta.paymentMethod || "Transferencia bancaria",
-    paymentTerms: quote.meta.paymentTerms || "30 días",
-    status: quote.status || "PENDING",
-    includeIva: quote.meta.includeIva ?? true,
+  const [meta, setMeta] = useState(() => {
+    const d = toDateInput(quote.meta.quoteDate || quote.issuedAt || quote.createdAt) || new Date().toISOString().slice(0, 10);
+    const vd = quote.meta.validityDays || "30 días";
+    const vu = quote.meta.validUntil 
+      ? toDateInput(quote.meta.validUntil) 
+      : toDateInput(addDays(new Date(`${d}T00:00:00`), parseValidityDays(vd)).toISOString());
+
+    return {
+      quoteNumber: quote.meta.quoteNumber || quote.displayNumber,
+      date: d,
+      validUntil: vu,
+      validityDays: vd,
+      paymentMethod: quote.meta.paymentMethod || "Transferencia bancaria",
+      paymentTerms: quote.meta.paymentTerms || "30 días",
+      status: quote.status || "PENDING",
+      includeIva: quote.meta.includeIva ?? true,
+    };
   });
 
   const [items, setItems] = useState<LineItem[]>(() => {
@@ -259,13 +268,7 @@ export function QuoteEditForm({ quote }: Props) {
     return currentTerms !== defaultTerms;
   });
 
-  const quoteDate = useMemo(() => {
-    const base = meta.date ? new Date(`${meta.date}T00:00:00`) : new Date();
-    if (Number.isNaN(base.getTime())) return new Date();
-    return base;
-  }, [meta.date]);
-
-  const validUntil = useMemo(() => addDays(quoteDate, parseValidityDays(meta.validityDays)), [quoteDate, meta.validityDays]);
+  // Dates are managed in state to allow independent editing
 
   const itemTotals = items.map((item) => {
     const hours = item.billingMode === "HOUR" ? getHoursBetween(item.startTime, item.endTime) : 0;
@@ -416,7 +419,7 @@ export function QuoteEditForm({ quote }: Props) {
       clientContact: client.contact,
       quoteNumber: meta.quoteNumber,
       quoteDate: meta.date,
-      validUntil: validUntil.toISOString(),
+      validUntil: new Date(meta.validUntil + "T00:00:00").toISOString(),
       validityDays: meta.validityDays,
       paymentMethod: meta.paymentMethod,
       paymentTerms: meta.paymentTerms,
@@ -583,17 +586,38 @@ export function QuoteEditForm({ quote }: Props) {
               <Input value={meta.quoteNumber} onChange={(e) => setMeta((p) => ({ ...p, quoteNumber: e.target.value }))} />
             </Field>
             <Field label="Fecha emisión">
-              <Input type="date" value={meta.date} onChange={(e) => setMeta((p) => ({ ...p, date: e.target.value }))} />
+              <Input 
+                type="date" 
+                value={meta.date} 
+                onChange={(e) => {
+                  const newDate = e.target.value;
+                  const d = new Date(newDate + "T00:00:00");
+                  d.setDate(d.getDate() + parseValidityDays(meta.validityDays));
+                  setMeta((p) => ({ ...p, date: newDate, validUntil: d.toISOString().slice(0, 10) }));
+                }} 
+              />
             </Field>
             <Field label="Validez">
-              <Select value={meta.validityDays} onChange={(e) => setMeta((p) => ({ ...p, validityDays: e.target.value }))}>
+              <Select 
+                value={meta.validityDays} 
+                onChange={(e) => {
+                  const daysStr = e.target.value;
+                  const d = new Date(meta.date + "T00:00:00");
+                  d.setDate(d.getDate() + parseValidityDays(daysStr));
+                  setMeta((p) => ({ ...p, validityDays: daysStr, validUntil: d.toISOString().slice(0, 10) }));
+                }}
+              >
                 {VALIDITY_DAYS.map((d) => (
                   <option key={d}>{d}</option>
                 ))}
               </Select>
             </Field>
             <Field label="Válida hasta">
-              <Input value={toDateInput(validUntil.toISOString())} readOnly className="bg-slate-50" />
+              <Input 
+                type="date" 
+                value={meta.validUntil} 
+                onChange={(e) => setMeta((p) => ({ ...p, validUntil: e.target.value }))} 
+              />
             </Field>
           </div>
 

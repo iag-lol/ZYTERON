@@ -107,16 +107,17 @@ export function currencyCLP(value: number) {
 
 export function buildDefaultQuoteTerms(includeIva = true) {
   const ivaLine = includeIva
-    ? "Todos los valores indicados en esta cotización incluyen IVA (19%)."
-    : "Todos los valores indicados en esta cotización son netos y se les adicionará IVA (19%) al momento de facturar.";
+    ? "Todos los montos indicados incluyen IVA (19%)."
+    : "Todos los montos indicados son netos y se les adicionará IVA (19%) al momento de facturar.";
 
   return [
-    "1) Alcance: esta propuesta considera únicamente los servicios y entregables descritos en el detalle de ítems.",
-    "2) Cambios: cualquier solicitud fuera de alcance se evaluará y cotizará por separado antes de su ejecución.",
-    `3) Impuestos: ${ivaLine}`,
-    "4) Inicio de servicios: la ejecución comienza una vez confirmada la aceptación comercial y recibido el pago acordado.",
-    "5) Vigencia: la cotización mantiene validez por el plazo indicado en el documento.",
-    "6) Forma y plazo de pago: se aplican según lo indicado en el resumen comercial de esta cotización.",
+    "Alcance: Se incluye únicamente lo descrito en este documento. Requerimientos adicionales se cotizarán por separado.",
+    `Valores: ${ivaLine}`,
+    "Plazos de ejecución: El tiempo de desarrollo comienza a correr solo cuando se ha validado el abono inicial y el cliente ha entregado el 100% del material necesario (textos, logos, accesos).",
+    "Revisiones: El servicio incluye un máximo de dos (2) rondas de correcciones. Cambios estructurales posteriores tendrán costo extra.",
+    "Condición de Entrega: El saldo final del proyecto debe ser cancelado en su totalidad antes de la publicación oficial y la entrega de credenciales.",
+    "Garantía: Incluye 30 días de garantía técnica para corrección de errores de código. No incluye cambios de contenido ni reparaciones por mal uso.",
+    "Vigencia: Esta cotización es válida por el plazo indicado en la misma."
   ].join("\n");
 }
 

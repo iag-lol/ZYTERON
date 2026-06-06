@@ -179,12 +179,12 @@ export default function NuevoClientePage() {
         </div>
 
         <aside className="space-y-6">
-          <section className="rounded-3xl border border-slate-200 bg-slate-950 p-6 text-white shadow-sm">
-            <h2 className="text-base font-bold">Ficha que se crea</h2>
-            <div className="mt-5 space-y-3 text-sm text-slate-300">
-              <p className="flex items-center gap-2"><User className="h-4 w-4 text-blue-300" /> Cliente visible en CRM</p>
-              <p className="flex items-center gap-2"><Mail className="h-4 w-4 text-blue-300" /> Utilizable en cotizaciones y ventas</p>
-              <p className="flex items-center gap-2"><Building2 className="h-4 w-4 text-blue-300" /> Preparado para proyectos y solicitudes</p>
+          <section className="rounded-3xl border border-blue-200 bg-blue-50 p-6 text-blue-900 shadow-sm">
+            <h2 className="text-base font-bold text-blue-900">Ficha que se crea</h2>
+            <div className="mt-5 space-y-3 text-sm text-blue-800">
+              <p className="flex items-center gap-2"><User className="h-4 w-4 text-blue-600" /> Cliente visible en CRM</p>
+              <p className="flex items-center gap-2"><Mail className="h-4 w-4 text-blue-600" /> Utilizable en cotizaciones y ventas</p>
+              <p className="flex items-center gap-2"><Building2 className="h-4 w-4 text-blue-600" /> Preparado para proyectos y solicitudes</p>
             </div>
           </section>
 

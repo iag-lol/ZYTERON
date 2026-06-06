@@ -1,6 +1,5 @@
 import { getAdminSnapshot } from "@/lib/admin-data";
 import {
-  Activity,
   BarChart3,
   Target,
   DollarSign,
@@ -12,7 +11,11 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Minus,
+  TrendingUp,
+  CheckCircle2,
+  Activity,
 } from "lucide-react";
+import { AreaChart, BarChart, FunnelStep } from "@/components/admin/dashboard-chart";
 
 function currency(value: number) {
   return new Intl.NumberFormat("es-CL", {
@@ -39,138 +42,110 @@ export default async function ReportesPage() {
   const prevMonth = charts.revenueByMonth.at(-2)?.value ?? 0;
   const monthGrowth = prevMonth > 0 ? ((thisMonth - prevMonth) / prevMonth) * 100 : 0;
 
+  const lastUpdated = new Date(metrics.lastUpdated).toLocaleString("es-CL", {
+    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+  });
+
+  const conversionKpis = [
+    { label: "Leads → Cotizaciones", value: pct(metrics.conversion.quoteRate), sub: `${metrics.totals.quotes} de ${leadBaseCount}`, good: metrics.conversion.quoteRate >= 30, threshold: "≥ 30%" },
+    { label: "Cotizaciones → Visitas", value: pct(metrics.conversion.visitRate), sub: `${metrics.totals.visits} de ${metrics.totals.quotes} cotizaciones`, good: metrics.conversion.visitRate >= 40, threshold: "≥ 40%" },
+    { label: "Win Rate global", value: pct(metrics.conversion.winRate), sub: `${metrics.totals.sales} ventas / ${metrics.totals.quotes} cotizaciones`, good: metrics.conversion.winRate >= 20, threshold: "≥ 20%" },
+  ];
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-7">
       {/* Header */}
-      <div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
-          Analytics
-        </p>
-        <h1 className="mt-0.5 text-2xl font-extrabold text-slate-900">Reportes y análisis</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Métricas completas ·{" "}
-          <span className="font-medium">
-            Actualizado {new Date(metrics.lastUpdated).toLocaleString("es-CL", {
-              day: "2-digit",
-              month: "short",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </span>
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+            Análisis & Métricas
+          </p>
+          <h1 className="mt-0.5 text-2xl font-extrabold text-slate-900">Reportes y análisis</h1>
+          <p className="mt-1 text-[13px] text-slate-500">
+            Actualizado <span className="font-medium text-slate-700">{lastUpdated}</span>
+          </p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
+          <p className="text-[11px] text-slate-400">Este mes</p>
+          <p className="text-lg font-extrabold text-slate-900">{currency(thisMonth)}</p>
+          <div className="mt-1 flex items-center justify-end gap-1">
+            {monthGrowth > 0 ? (
+              <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600">
+                <ArrowUpRight className="h-3.5 w-3.5" />
+                +{monthGrowth.toFixed(1)}% vs anterior
+              </span>
+            ) : monthGrowth < 0 ? (
+              <span className="flex items-center gap-1 text-[11px] font-bold text-rose-600">
+                <ArrowDownRight className="h-3.5 w-3.5" />
+                {monthGrowth.toFixed(1)}% vs anterior
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-[11px] font-bold text-slate-400">
+                <Minus className="h-3.5 w-3.5" />
+                0% vs anterior
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Top-level KPIs */}
+      {/* Primary KPI cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          {
-            label: "Leads captados",
-            value: metrics.totals.leads,
-            icon: Users,
-            iconBg: "bg-blue-500",
-            shadow: "shadow-blue-500/30",
-          },
-          {
-            label: "Cotizaciones emitidas",
-            value: metrics.totals.quotes,
-            icon: FileText,
-            iconBg: "bg-violet-500",
-            shadow: "shadow-violet-500/30",
-          },
-          {
-            label: "Visitas realizadas",
-            value: metrics.totals.visits,
-            icon: CalendarClock,
-            iconBg: "bg-amber-500",
-            shadow: "shadow-amber-500/30",
-          },
-          {
-            label: "Ventas cerradas",
-            value: metrics.totals.sales,
-            icon: ShoppingCart,
-            iconBg: "bg-emerald-500",
-            shadow: "shadow-emerald-500/30",
-          },
+          { label: "Leads captados", value: metrics.totals.leads, icon: Users, iconBg: "bg-blue-500", accent: "text-blue-600", sub: "Fuentes de contacto" },
+          { label: "Cotizaciones emitidas", value: metrics.totals.quotes, icon: FileText, iconBg: "bg-violet-500", accent: "text-violet-600", sub: currency(metrics.money.pipelineValue) + " pipeline" },
+          { label: "Visitas realizadas", value: metrics.totals.visits, icon: CalendarClock, iconBg: "bg-amber-500", accent: "text-amber-600", sub: "Técnicas y comerciales" },
+          { label: "Ventas cerradas", value: metrics.totals.sales, icon: ShoppingCart, iconBg: "bg-emerald-500", accent: "text-emerald-600", sub: `Win rate ${pct(metrics.conversion.winRate)}` },
         ].map((kpi) => (
-          <div
-            key={kpi.label}
-            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-          >
-            <div
-              className={`flex h-10 w-10 items-center justify-center rounded-xl ${kpi.iconBg} shadow-lg ${kpi.shadow}`}
-            >
-              <kpi.icon className="h-5 w-5 text-white" />
+          <div key={kpi.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${kpi.iconBg} shadow-sm`}>
+                <kpi.icon className="h-5 w-5 text-white" />
+              </div>
+              <Activity className={`h-4 w-4 ${kpi.accent} opacity-30`} />
             </div>
-            <div className="mt-3">
-              <p className="text-3xl font-extrabold text-slate-900">{kpi.value}</p>
-              <p className="text-xs font-semibold text-slate-400">{kpi.label}</p>
+            <div className="mt-4">
+              <p className="text-4xl font-extrabold text-slate-900">{kpi.value}</p>
+              <p className="mt-0.5 text-[13px] font-semibold text-slate-600">{kpi.label}</p>
+              <p className="mt-0.5 text-[11px] text-slate-400">{kpi.sub}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Revenue + Funnel */}
-      <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
-        {/* Revenue chart */}
+      {/* Financial summary */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        {[
+          { label: "Pipeline (cotizaciones abiertas)", value: currency(metrics.money.pipelineValue), sub: `${metrics.totals.quotes} cotizaciones activas`, iconBg: "bg-blue-600", icon: BarChart3, bg: "bg-blue-600" },
+          { label: "Ingresos confirmados", value: currency(metrics.money.revenue), sub: `${metrics.totals.sales} ventas cerradas`, iconBg: "bg-emerald-600", icon: DollarSign, bg: "bg-emerald-600" },
+          { label: "Ticket promedio", value: currency(metrics.money.avgTicket), sub: "Por venta registrada", iconBg: "bg-violet-600", icon: Target, bg: "bg-violet-600" },
+        ].map((card) => (
+          <div key={card.label} className={`overflow-hidden rounded-2xl ${card.bg} p-6 text-white shadow-md`}>
+            <div className="flex items-start justify-between">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
+                <card.icon className="h-5 w-5 text-white" />
+              </div>
+            </div>
+            <div className="mt-5">
+              <p className="text-2xl font-extrabold">{card.value}</p>
+              <p className="mt-0.5 text-[12px] font-semibold text-white/70">{card.label}</p>
+              <p className="mt-1 text-[11px] text-white/40">{card.sub}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Area chart + Funnel */}
+      <div className="grid gap-5 lg:grid-cols-[3fr_2fr]">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-5 flex items-start justify-between">
             <div>
               <h2 className="text-base font-bold text-slate-900">Revenue mensual</h2>
-              <p className="text-xs text-slate-400">Ingresos de ventas registradas · últimos 6 meses</p>
+              <p className="mt-0.5 text-[12px] text-slate-400">Ingresos últimos 6 meses</p>
             </div>
-            <div className="text-right">
-              <p className="text-lg font-extrabold text-slate-900">{currency(totalRevenue)}</p>
-              <p className="text-[11px] text-slate-400">Total 6 meses</p>
-            </div>
+            <p className="text-lg font-extrabold text-slate-900">{currency(totalRevenue)}</p>
           </div>
-
-          {/* Bar chart */}
-          <div className="flex h-52 items-end gap-3">
-            {charts.revenueByMonth.map((item, idx) => {
-              const heightPct = Math.max(3, (item.value / maxRevenue) * 100);
-              const isLast = idx === charts.revenueByMonth.length - 1;
-              const isSecondLast = idx === charts.revenueByMonth.length - 2;
-              return (
-                <div
-                  key={item.label}
-                  className="group relative flex flex-1 flex-col items-center gap-2"
-                >
-                  {/* Value label on hover */}
-                  <div className="absolute bottom-[calc(100%+8px)] left-1/2 hidden -translate-x-1/2 rounded-lg bg-slate-900 px-2.5 py-1.5 text-center text-[11px] font-bold text-white shadow-xl group-hover:block whitespace-nowrap z-10">
-                    {currency(item.value)}
-                    <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
-                  </div>
-
-                  {/* Bar container */}
-                  <div className="flex w-full flex-col justify-end" style={{ height: "100%" }}>
-                    <div
-                      className={`w-full rounded-t-xl transition-all duration-300 group-hover:brightness-110 ${
-                        isLast
-                          ? "bg-gradient-to-t from-blue-700 to-blue-400 shadow-lg shadow-blue-500/20"
-                          : isSecondLast
-                          ? "bg-gradient-to-t from-slate-400 to-slate-300"
-                          : "bg-gradient-to-t from-slate-200 to-slate-100"
-                      }`}
-                      style={{ height: `${heightPct}%` }}
-                    />
-                  </div>
-
-                  {/* Month label */}
-                  <div className="text-center">
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wide ${
-                        isLast ? "text-blue-600" : "text-slate-400"
-                      }`}
-                    >
-                      {item.label}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Growth indicator */}
+          <AreaChart data={charts.revenueByMonth} height={180} formatType="currency" strokeColor="#2563eb" fillId="revenue-area-light" />
           <div className="mt-4 flex items-center gap-4 border-t border-slate-100 pt-4">
             <div className="flex items-center gap-2">
               {monthGrowth > 0 ? (
@@ -182,7 +157,7 @@ export default async function ReportesPage() {
                   <ArrowDownRight className="h-3.5 w-3.5" />{monthGrowth.toFixed(1)}%
                 </div>
               ) : (
-                <div className="flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1.5 text-[12px] font-bold text-slate-500">
+                <div className="flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1.5 text-[12px] font-bold text-slate-500">
                   <Minus className="h-3.5 w-3.5" />0%
                 </div>
               )}
@@ -190,286 +165,146 @@ export default async function ReportesPage() {
             </div>
             <div className="ml-auto text-right">
               <p className="text-[11px] text-slate-400">Este mes</p>
-              <p className="text-sm font-extrabold text-slate-900">{currency(thisMonth)}</p>
+              <p className="text-[13px] font-extrabold text-slate-900">{currency(thisMonth)}</p>
             </div>
           </div>
         </div>
 
-        {/* Funnel */}
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-5">
             <h2 className="text-base font-bold text-slate-900">Embudo de ventas</h2>
-            <p className="text-xs text-slate-400">Tasa de conversión por etapa</p>
+            <p className="mt-0.5 text-[12px] text-slate-400">Tasa de conversión por etapa</p>
           </div>
-
-          <div className="space-y-5">
-            {[
-              {
-                label: leadBaseEstimated ? "Base embudo" : "Leads",
-                count: leadBaseCount,
-                pct: leadBaseCount > 0 ? 100 : 0,
-                color: "bg-blue-500",
-                bgLight: "bg-blue-50",
-                textColor: "text-blue-700",
-              },
-              {
-                label: "Cotizaciones",
-                count: metrics.totals.quotes,
-                pct: metrics.conversion.quoteRate,
-                color: "bg-violet-500",
-                bgLight: "bg-violet-50",
-                textColor: "text-violet-700",
-                arrow: `${pct(metrics.conversion.quoteRate)} conversión`,
-              },
-              {
-                label: "Visitas técnicas",
-                count: metrics.totals.visits,
-                pct: metrics.conversion.visitRate,
-                color: "bg-amber-500",
-                bgLight: "bg-amber-50",
-                textColor: "text-amber-700",
-                arrow: `${pct(metrics.conversion.visitRate)} de cotizaciones`,
-              },
-              {
-                label: "Ventas cerradas",
-                count: metrics.totals.sales,
-                pct: metrics.conversion.winRate,
-                color: "bg-emerald-500",
-                bgLight: "bg-emerald-50",
-                textColor: "text-emerald-700",
-                arrow: `Win rate ${pct(metrics.conversion.winRate)}`,
-              },
-            ].map((step) => (
-              <div key={step.label} className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className={`h-2 w-2 rounded-full ${step.color}`} />
-                    <span className="text-[13px] font-semibold text-slate-700">{step.label}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${step.bgLight} ${step.textColor}`}>
-                      {step.count}
-                    </span>
-                    <span className="text-[11px] font-semibold text-slate-400">{pct(step.pct)}</span>
-                  </div>
-                </div>
-                <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className={`h-full rounded-full transition-all ${step.color}`}
-                    style={{ width: `${Math.max(2, step.pct)}%` }}
-                  />
-                </div>
-                {step.arrow && (
-                  <p className="text-[10px] text-slate-400 pl-4">{step.arrow}</p>
-                )}
-              </div>
-            ))}
+          <div className="space-y-4">
+            <FunnelStep label={leadBaseEstimated ? "Base embudo" : "Leads"} value={leadBaseCount} pct={leadBaseCount > 0 ? 100 : 0} color="bg-blue-500" bgColor="bg-blue-50" textColor="text-blue-700" />
+            <FunnelStep label="Cotizaciones" value={metrics.totals.quotes} pct={metrics.conversion.quoteRate} color="bg-violet-500" bgColor="bg-violet-50" textColor="text-violet-700" subLabel={`${pct(metrics.conversion.quoteRate)} conversión`} />
+            <FunnelStep label="Visitas técnicas" value={metrics.totals.visits} pct={metrics.conversion.visitRate} color="bg-amber-500" bgColor="bg-amber-50" textColor="text-amber-700" subLabel={`${pct(metrics.conversion.visitRate)} de cotizaciones`} />
+            <FunnelStep label="Ventas cerradas" value={metrics.totals.sales} pct={metrics.conversion.winRate} color="bg-emerald-500" bgColor="bg-emerald-50" textColor="text-emerald-700" subLabel={`Win rate ${pct(metrics.conversion.winRate)}`} />
+          </div>
+          <div className="mt-5 rounded-xl bg-slate-50 p-4">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-blue-500" />
+              <p className="text-[12px] font-semibold text-slate-600">Win Rate global</p>
+            </div>
+            <p className="mt-1.5 text-3xl font-extrabold text-slate-900">{pct(metrics.conversion.winRate)}</p>
+            <p className="mt-0.5 text-[11px] text-slate-400">{metrics.totals.sales} ventas / {metrics.totals.quotes} cotizaciones</p>
           </div>
         </div>
       </div>
 
-      {/* Financial summary */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        {[
-          {
-            label: "Pipeline (cotizaciones abiertas)",
-            value: currency(metrics.money.pipelineValue),
-            sub: `${metrics.totals.quotes} cotizaciones activas`,
-            icon: BarChart3,
-            gradient: "from-blue-500 to-blue-700",
-            shadow: "shadow-blue-500/20",
-          },
-          {
-            label: "Ingresos confirmados",
-            value: currency(metrics.money.revenue),
-            sub: `${metrics.totals.sales} ventas cerradas`,
-            icon: DollarSign,
-            gradient: "from-emerald-500 to-emerald-700",
-            shadow: "shadow-emerald-500/20",
-          },
-          {
-            label: "Ticket promedio",
-            value: currency(metrics.money.avgTicket),
-            sub: "Por venta registrada",
-            icon: Target,
-            gradient: "from-violet-500 to-violet-700",
-            shadow: "shadow-violet-500/20",
-          },
-        ].map((card) => (
-          <div
-            key={card.label}
-            className={`overflow-hidden rounded-2xl bg-gradient-to-br ${card.gradient} p-6 text-white shadow-lg ${card.shadow}`}
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
-                <card.icon className="h-5 w-5 text-white" />
-              </div>
-              <Activity className="h-4 w-4 text-white/50" />
-            </div>
-            <div className="mt-4">
-              <p className="text-2xl font-extrabold">{card.value}</p>
-              <p className="mt-0.5 text-[11px] font-semibold text-white/70">{card.label}</p>
-              <p className="mt-1 text-[11px] text-white/50">{card.sub}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Monthly detail table */}
+      {/* Monthly table */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 px-6 py-4">
-          <h2 className="text-base font-bold text-slate-900">Detalle mensual de ingresos</h2>
-          <p className="text-xs text-slate-400">Últimos 6 meses · basado en ventas Supabase</p>
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Detalle mensual de ingresos</h2>
+            <p className="mt-0.5 text-[12px] text-slate-400">Últimos 6 meses</p>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-[11px] font-semibold text-blue-700 ring-1 ring-blue-200">
+            <TrendingUp className="h-3.5 w-3.5" />
+            {currency(totalRevenue)} total
+          </div>
         </div>
-
         <div className="divide-y divide-slate-100">
           {[...charts.revenueByMonth].reverse().map((m) => {
             const isMax = m.value === maxRevenue && m.value > 0;
             const sharePct = totalRevenue > 0 ? (m.value / totalRevenue) * 100 : 0;
             return (
-              <div
-                key={m.label}
-                className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 px-6 py-4 transition-colors hover:bg-slate-50"
-              >
-                <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400 w-10">
-                  {m.label}
-                </span>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 max-w-xs">
+              <div key={m.label} className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 px-6 py-4 hover:bg-slate-50">
+                <span className="w-10 text-[11px] font-bold uppercase tracking-widest text-slate-400">{m.label}</span>
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex-1">
                     <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className={`h-full rounded-full ${isMax ? "bg-blue-500" : "bg-slate-300"}`}
-                        style={{ width: `${Math.max(1, sharePct)}%` }}
-                      />
+                      <div className={`h-full rounded-full ${isMax ? "bg-blue-500" : "bg-slate-300"}`} style={{ width: `${Math.max(1, sharePct)}%` }} />
                     </div>
                   </div>
-                  <span className="text-[11px] text-slate-400 w-10 text-right">
-                    {sharePct.toFixed(0)}%
-                  </span>
+                  <span className="w-10 shrink-0 text-right text-[11px] text-slate-400">{sharePct.toFixed(0)}%</span>
                 </div>
-                <p className={`text-[14px] font-extrabold ${m.value > 0 ? "text-slate-900" : "text-slate-300"}`}>
-                  {currency(m.value)}
-                </p>
-                {isMax && (
-                  <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                    máx.
-                  </span>
-                )}
-                {!isMax && <span className="w-10" />}
+                <p className={`text-[14px] font-extrabold ${m.value > 0 ? "text-slate-900" : "text-slate-300"}`}>{currency(m.value)}</p>
+                {isMax ? (
+                  <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-600 ring-1 ring-blue-200">máx.</span>
+                ) : <span className="w-12" />}
               </div>
             );
           })}
         </div>
-
-        <div className="border-t border-slate-100 bg-slate-50 px-6 py-3">
+        <div className="border-t border-slate-100 bg-slate-50 px-6 py-3.5">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] text-slate-400">Total 6 meses</p>
-            <p className="text-sm font-extrabold text-slate-900">{currency(totalRevenue)}</p>
+            <p className="text-[12px] text-slate-400">Total 6 meses</p>
+            <p className="text-[15px] font-extrabold text-slate-900">{currency(totalRevenue)}</p>
           </div>
         </div>
       </div>
 
       {/* Conversion KPIs */}
       <div className="grid gap-4 sm:grid-cols-3">
-        {[
-          {
-            label: "Leads → Cotizaciones",
-            value: pct(metrics.conversion.quoteRate),
-            sub: `${metrics.totals.quotes} de ${leadBaseCount} ${leadBaseEstimated ? "base estimada" : "leads"}`,
-            good: metrics.conversion.quoteRate >= 30,
-          },
-          {
-            label: "Cotizaciones → Visitas",
-            value: pct(metrics.conversion.visitRate),
-            sub: `${metrics.totals.visits} de ${metrics.totals.quotes} cotizaciones`,
-            good: metrics.conversion.visitRate >= 40,
-          },
-          {
-            label: "Win Rate global",
-            value: pct(metrics.conversion.winRate),
-            sub: `${metrics.totals.sales} ventas / ${metrics.totals.quotes} cotizaciones`,
-            good: metrics.conversion.winRate >= 20,
-          },
-        ].map((kpi) => (
-          <div
-            key={kpi.label}
-            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-          >
+        {conversionKpis.map((kpi) => (
+          <div key={kpi.label} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-start justify-between">
-              <p className="text-3xl font-extrabold text-slate-900">{kpi.value}</p>
+              <p className="text-4xl font-extrabold text-slate-900">{kpi.value}</p>
               {kpi.good ? (
-                <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-600">
-                  <ArrowUpRight className="h-3 w-3" />
-                  bueno
+                <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-200">
+                  <CheckCircle2 className="h-3.5 w-3.5" />bueno
                 </span>
               ) : (
-                <span className="flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-600">
-                  mejorar
-                </span>
+                <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 ring-1 ring-amber-200">mejorar</span>
               )}
             </div>
-            <p className="mt-1 text-xs font-bold text-slate-400">{kpi.label}</p>
-            <p className="mt-1.5 text-[11px] text-slate-500">{kpi.sub}</p>
+            <p className="mt-2 text-[12px] font-bold text-slate-600">{kpi.label}</p>
+            <p className="mt-1 text-[11px] text-slate-400">{kpi.sub}</p>
+            <div className="mt-2 flex items-center gap-1.5">
+              <span className="text-[10px] text-slate-400">Objetivo:</span>
+              <span className="text-[10px] font-semibold text-slate-500">{kpi.threshold}</span>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+              <div className={`h-full rounded-full ${kpi.good ? "bg-emerald-500" : "bg-amber-400"}`} style={{ width: `${Math.min(100, parseFloat(kpi.value))}%` }} />
+            </div>
           </div>
         ))}
+      </div>
+
+      {/* Bar chart comparison */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-5">
+          <h2 className="text-base font-bold text-slate-900">Comparativa mensual de ingresos</h2>
+          <p className="mt-0.5 text-[12px] text-slate-400">Últimos 6 meses</p>
+        </div>
+        <BarChart
+          data={charts.revenueByMonth}
+          height={200}
+          formatType="currency"
+          accentClass="from-blue-600 to-blue-400"
+          dimClass="from-slate-200 to-slate-100"
+          highlightLast={true}
+        />
       </div>
 
       {/* Supabase checklist */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
-          <ShieldCheck className="h-5 w-5 text-emerald-500" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100">
+            <ShieldCheck className="h-4 w-4 text-emerald-600" />
+          </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Estado de conexión Supabase</h2>
-            <p className="text-[11px] text-slate-400">Requisitos para el panel admin</p>
+            <h2 className="text-[13px] font-bold text-slate-900">Estado de conexión Supabase</h2>
+            <p className="text-[11px] text-slate-400">Requisitos del panel admin verificados</p>
           </div>
         </div>
-        <div className="grid gap-4 p-6 sm:grid-cols-2">
+        <div className="grid gap-3 p-6 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            {
-              title: "Variables de entorno",
-              desc: "SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY definidas en el servidor",
-              ok: true,
-            },
-            {
-              title: "Tabla Lead",
-              desc: "Política RLS con acceso service_role para leer leads del formulario",
-              ok: true,
-            },
-            {
-              title: "Tabla Quote",
-              desc: "Política RLS permite INSERT y SELECT con service_role",
-              ok: true,
-            },
-            {
-              title: "Tabla Visit",
-              desc: "Agenda de visitas con INSERT y SELECT habilitados",
-              ok: true,
-            },
-            {
-              title: "Tabla Sale",
-              desc: "Registro de ventas con INSERT y SELECT para service_role",
-              ok: true,
-            },
-            {
-              title: "Tabla User",
-              desc: "Directorio de clientes con SELECT habilitado",
-              ok: true,
-            },
+            { title: "Variables de entorno", desc: "SUPABASE_URL y SERVICE_ROLE_KEY definidas", ok: true },
+            { title: "Tabla Lead", desc: "RLS con acceso service_role para leads", ok: true },
+            { title: "Tabla Quote", desc: "INSERT y SELECT habilitados", ok: true },
+            { title: "Tabla Visit", desc: "Agenda con INSERT y SELECT", ok: true },
+            { title: "Tabla Sale", desc: "Registro de ventas habilitado", ok: true },
+            { title: "Tabla User", desc: "Directorio de clientes con SELECT", ok: true },
           ].map((item) => (
-            <div
-              key={item.title}
-              className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3"
-            >
-              <div
-                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
-                  item.ok ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"
-                }`}
-              >
-                <ShieldCheck className="h-3 w-3" />
+            <div key={item.title} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 hover:bg-white transition-colors">
+              <div className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${item.ok ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"}`}>
+                <ShieldCheck className="h-3.5 w-3.5" />
               </div>
               <div>
-                <p className="text-[12px] font-bold text-slate-700">{item.title}</p>
-                <p className="text-[11px] text-slate-500">{item.desc}</p>
+                <p className="text-[12px] font-bold text-slate-800">{item.title}</p>
+                <p className="mt-0.5 text-[11px] text-slate-500">{item.desc}</p>
               </div>
             </div>
           ))}

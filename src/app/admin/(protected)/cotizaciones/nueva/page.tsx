@@ -228,6 +228,11 @@ export default function NuevaCotizacion() {
     paymentTerms: "30 días",
     status: "PENDING",
     date: today.toISOString().slice(0, 10),
+    validUntil: (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 30);
+      return d.toISOString().slice(0, 10);
+    })()
   });
 
   /* Line items */
@@ -258,10 +263,7 @@ export default function NuevaCotizacion() {
   const iva = includeIva ? subtotal * IVA_RATE : 0;
   const grandTotal = subtotal + iva;
 
-  const validUntil = (() => {
-    const days = parseInt(meta.validityDays) || 30;
-    return addDays(today, days);
-  })();
+  const validUntilStr = meta.validUntil;
 
   /* ─── Item handlers ─── */
   const setItem = useCallback((id: string, field: keyof LineItem, value: string | number) => {
@@ -386,7 +388,7 @@ export default function NuevaCotizacion() {
         clientContact: client.contact,
         quoteNumber,
         quoteDate: meta.date,
-        validUntil: validUntil.toISOString(),
+        validUntil: new Date(meta.validUntil + "T00:00:00").toISOString(),
         validityDays: meta.validityDays,
         paymentMethod: meta.paymentMethod,
         paymentTerms: meta.paymentTerms,
@@ -498,17 +500,17 @@ export default function NuevaCotizacion() {
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
         {/* Document header: Company + Quote metadata */}
-        <div className="grid grid-cols-[1fr_auto] gap-6 border-b border-slate-100 bg-gradient-to-br from-slate-900 to-slate-800 p-6 text-white">
+        <div className="grid grid-cols-[1fr_auto] gap-6 border-b border-slate-100 bg-slate-50 p-6 text-slate-900">
           {/* Company info */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-xl font-extrabold shadow-lg shadow-blue-500/30">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-xl font-extrabold text-white shadow-lg shadow-blue-500/30">
               {COMPANY.logo}
             </div>
             <div>
               <h2 className="text-lg font-extrabold tracking-tight">{COMPANY.name}</h2>
-              <p className="text-[11px] text-slate-300">RUT: {COMPANY.rut}</p>
-              <p className="mt-0.5 text-[11px] text-slate-400">{COMPANY.giro}</p>
-              <div className="mt-2 space-y-0.5 text-[11px] text-slate-300">
+              <p className="text-[11px] text-slate-500">RUT: {COMPANY.rut}</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">{COMPANY.giro}</p>
+              <div className="mt-2 space-y-0.5 text-[11px] text-slate-500">
                 <p className="flex items-center gap-1.5">
                   <MapPin className="h-3 w-3 text-slate-400" />
                   {COMPANY.address}, {COMPANY.city}
@@ -535,29 +537,49 @@ export default function NuevaCotizacion() {
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Cotización
               </p>
-              <p className="font-mono text-xl font-extrabold">{quoteNumber}</p>
+              <p className="font-mono text-xl font-extrabold text-blue-600">{quoteNumber}</p>
             </div>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[12px]">
-              <div className="text-left">
-                <p className="text-[10px] text-slate-400">Fecha emisión</p>
-                <p className="font-semibold">{formatDateCL(today)}</p>
+            <div className="flex flex-col gap-2 mt-2">
+              <div className="flex items-center justify-end gap-2">
+                <label className="text-[11px] text-slate-500 w-24">Fecha emisión:</label>
+                <input
+                  type="date"
+                  value={meta.date}
+                  onChange={(e) => {
+                    const newDate = e.target.value;
+                    const d = new Date(newDate + "T00:00:00");
+                    d.setDate(d.getDate() + (parseInt(meta.validityDays) || 30));
+                    setMeta((p) => ({ ...p, date: newDate, validUntil: d.toISOString().slice(0, 10) }));
+                  }}
+                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
               </div>
-              <div className="text-left">
-                <p className="text-[10px] text-slate-400">Válida hasta</p>
-                <p className="font-semibold">{formatDateCL(validUntil)}</p>
+              <div className="flex items-center justify-end gap-2">
+                <label className="text-[11px] text-slate-500 w-24">Válida hasta:</label>
+                <input
+                  type="date"
+                  value={meta.validUntil}
+                  onChange={(e) => setMeta((p) => ({ ...p, validUntil: e.target.value }))}
+                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-[11px] text-slate-300">Validez:</label>
-              <select
-                value={meta.validityDays}
-                onChange={(e) => setMeta((p) => ({ ...p, validityDays: e.target.value }))}
-                className="rounded-lg border border-slate-600 bg-slate-700 px-2 py-1 text-[11px] text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-              >
-                {VALIDITY_DAYS.map((d) => (
-                  <option key={d}>{d}</option>
-                ))}
-              </select>
+              <div className="flex items-center justify-end gap-2">
+                <label className="text-[11px] text-slate-500 w-24">Validez:</label>
+                <select
+                  value={meta.validityDays}
+                  onChange={(e) => {
+                    const daysStr = e.target.value;
+                    const d = new Date(meta.date + "T00:00:00");
+                    d.setDate(d.getDate() + (parseInt(daysStr) || 30));
+                    setMeta((p) => ({ ...p, validityDays: daysStr, validUntil: d.toISOString().slice(0, 10) }));
+                  }}
+                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  {VALIDITY_DAYS.map((d) => (
+                    <option key={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -1021,7 +1043,7 @@ export default function NuevaCotizacion() {
               </div>
               <div className="flex justify-between text-[11px]">
                 <span className="text-slate-500">Válida hasta</span>
-                <span className="font-semibold text-slate-700">{formatDateCL(validUntil)}</span>
+                <span className="font-semibold text-slate-700">{formatDateCL(new Date(meta.validUntil))}</span>
               </div>
               <div className="flex justify-between text-[11px]">
                 <span className="text-slate-500">Ítems</span>

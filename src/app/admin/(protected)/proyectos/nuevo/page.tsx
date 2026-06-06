@@ -142,9 +142,9 @@ export default function NuevoProyectoPage() {
         </div>
 
         <aside className="space-y-6">
-          <section className="rounded-3xl border border-slate-200 bg-slate-950 p-6 text-white shadow-sm">
-            <h2 className="flex items-center gap-2 text-base font-bold"><ShieldCheck className="h-4 w-4 text-blue-300" />Control de proyecto</h2>
-            <div className="mt-5 space-y-3 text-sm text-slate-300">
+          <section className="rounded-3xl border border-blue-200 bg-blue-50 p-6 text-blue-900 shadow-sm">
+            <h2 className="flex items-center gap-2 text-base font-bold"><ShieldCheck className="h-4 w-4 text-blue-600" />Control de proyecto</h2>
+            <div className="mt-5 space-y-3 text-sm text-blue-800">
               <p>Tarifa estimada: {new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(computedCharge)}</p>
               <p>Inicio: {form.startDate || "—"} {form.startTime || ""}</p>
               <p>Término: {form.endDate || "Pendiente"} {form.endTime || ""}</p>
