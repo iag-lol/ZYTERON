@@ -23,6 +23,7 @@ import {
   requestStageLabel,
   whatsappPublicLink,
 } from "@/lib/quote-requests";
+import { AutoSubmitSelect } from "@/components/admin/auto-submit-select";
 
 type QuoteStatus = "PENDING" | "SENT" | "WON" | "LOST";
 type QuoteStatusFilter = "ALL" | QuoteStatus;
@@ -615,7 +616,7 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
                       <div>
                         {isRequest ? (
                           <form action={`/admin/cotizaciones/${q.id}/workflow`} method="post" className="flex items-center gap-1.5">
-                            <select
+                            <AutoSubmitSelect
                               name="stage"
                               defaultValue={meta.requestStage || "NUEVA"}
                               className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
@@ -628,36 +629,23 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
                               <option value="CERRADA">Cerrada</option>
                               <option value="PERDIDA">Perdida</option>
                               <option value="ARCHIVADA">Archivada</option>
-                            </select>
+                            </AutoSubmitSelect>
                             <input type="hidden" name="redirectTo" value={returnTo} />
-                            <button
-                              type="submit"
-                              className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 ring-1 ring-blue-200 transition-colors hover:bg-blue-100"
-                            >
-                              Guardar
-                            </button>
                           </form>
                         ) : (
                           <form action={`/admin/cotizaciones/${q.id}/estado`} method="post" className="flex items-center gap-1.5">
-                            <select
+                            <AutoSubmitSelect
                               name="status"
                               defaultValue={normalizeQuoteStatus(q.status)}
-                              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                              className={`rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 ${cfg.bg} ${cfg.text} ${cfg.ring} focus:border-blue-400 focus:ring-blue-100`}
                               aria-label={`Estado de ${q.displayNumber}`}
                             >
                               <option value="PENDING">Pendiente</option>
                               <option value="SENT">Enviada</option>
                               <option value="WON">Ganada</option>
                               <option value="LOST">Pérdida</option>
-                            </select>
+                            </AutoSubmitSelect>
                             <input type="hidden" name="redirectTo" value={returnTo} />
-                            <button
-                              type="submit"
-                              className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold ring-1 transition-colors ${cfg.bg} ${cfg.text} ${cfg.ring}`}
-                            >
-                              <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-                              Guardar
-                            </button>
                           </form>
                         )}
                       </div>

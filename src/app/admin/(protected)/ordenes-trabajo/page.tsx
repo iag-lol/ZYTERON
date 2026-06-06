@@ -9,6 +9,7 @@ import {
   workOrderStatusLabel,
   workOrderStatusStyles,
 } from "@/lib/admin/work-orders";
+import { AutoSubmitSelect } from "@/components/admin/auto-submit-select";
 
 type StatusFilter = "ALL" | "ACTIVE" | "COMPLETED" | "CLOSED" | "CANCELLED";
 
@@ -333,7 +334,7 @@ export default async function OrdenesTrabajoPage({ searchParams }: PageProps) {
 
                     <div>
                       <form action={`/admin/ordenes-trabajo/${order.id}/estado`} method="post" className="flex items-center gap-1.5">
-                        <select
+                        <AutoSubmitSelect
                           name="status"
                           defaultValue={status}
                           className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
@@ -343,14 +344,8 @@ export default async function OrdenesTrabajoPage({ searchParams }: PageProps) {
                           <option value="COMPLETED">Terminada</option>
                           <option value="CLOSED">Cerrada</option>
                           <option value="CANCELLED">Cancelada</option>
-                        </select>
+                        </AutoSubmitSelect>
                         <input type="hidden" name="redirectTo" value={activeFilter === "ALL" ? "/admin/ordenes-trabajo" : `/admin/ordenes-trabajo?status=${activeFilter}`} />
-                        <button
-                          type="submit"
-                          className={`rounded-lg border px-2 py-1 text-[11px] font-semibold ${workOrderStatusStyles(status)}`}
-                        >
-                          {workOrderStatusLabel(status)}
-                        </button>
                       </form>
                     </div>
 
