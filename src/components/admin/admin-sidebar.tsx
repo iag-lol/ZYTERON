@@ -29,6 +29,7 @@ import {
   ChevronRight,
   ExternalLink,
   TrendingUp,
+  Calculator,
 } from "lucide-react";
 
 interface NavItem {
@@ -80,6 +81,7 @@ const navGroups: NavGroup[] = [
   {
     label: "Finanzas",
     items: [
+      { href: "/admin/contador-auditor", label: "Contador Auditor", icon: Calculator, color: "blue" },
       { href: "/admin/gastos", label: "Gastos", icon: WalletCards, color: "red" },
       { href: "/admin/sii", label: "Centro SII", icon: Landmark, color: "yellow" },
     ],
