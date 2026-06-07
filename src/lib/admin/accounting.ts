@@ -1,4 +1,4 @@
-import { getProjects, safeSelect, type Project } from "@/lib/admin/repository";
+import { getProjects, getWorkOrders, safeSelect, type Project, type WorkOrder } from "@/lib/admin/repository";
 
 export type AccountingTaxPeriod = {
   id: string;
@@ -261,8 +261,8 @@ function buildFallbackAlerts(period: string, transactions: AccountingTransaction
   return alerts.sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
 }
 
-function buildFallbackProjects(projects: Project[]): AccountingProjectTraceability[] {
-  return projects.map((project) => ({
+function buildFallbackProjects(projects: Project[], workOrders: WorkOrder[]): AccountingProjectTraceability[] {
+  const projectRows = projects.map((project) => ({
     project_id: project.id,
     quote_id: project.quoteId || null,
     ot_number: null,
@@ -279,6 +279,33 @@ function buildFallbackProjects(projects: Project[]): AccountingProjectTraceabili
     last_tax_period: null,
     created_at: project.createdAt || null,
   }));
+
+  const workOrderRows = workOrders.map((order) => ({
+    project_id: order.id,
+    quote_id: order.quoteId || null,
+    ot_number: order.code,
+    client_id: order.clientId || null,
+    client_name: null,
+    client_rut: null,
+    project_name: order.title,
+    project_status: order.status || "ACTIVE",
+    estimated_total: toNumber(order.budget),
+    invoiced_total: 0,
+    paid_total: 0,
+    expected_invoice_date: order.dueDate || order.plannedDate || null,
+    accounting_transactions: 0,
+    last_tax_period: null,
+    created_at: order.createdAt || null,
+  }));
+
+  const merged = new Map<string, AccountingProjectTraceability>();
+  for (const row of [...projectRows, ...workOrderRows]) {
+    if (!merged.has(row.project_id)) {
+      merged.set(row.project_id, row);
+    }
+  }
+
+  return Array.from(merged.values()).sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
 }
 
 export async function getAccountingDashboardData(requestedPeriod?: string | null): Promise<AccountingDashboardData> {
@@ -291,6 +318,7 @@ export async function getAccountingDashboardData(requestedPeriod?: string | null
     projectTraceability,
     alerts,
     projectsFallback,
+    workOrdersFallback,
   ] = await Promise.all([
     safeSelect<AccountingTaxPeriod>(
       "tax_periods",
@@ -328,6 +356,7 @@ export async function getAccountingDashboardData(requestedPeriod?: string | null
       { orderBy: "created_at", ascending: false },
     ),
     getProjects(),
+    getWorkOrders(),
   ]);
 
   const availablePeriods = Array.from(
@@ -359,7 +388,9 @@ export async function getAccountingDashboardData(requestedPeriod?: string | null
       transactions.length > 0 ||
       documents.length > 0 ||
       summaries.length > 0 ||
-      alerts.length > 0,
+      alerts.length > 0 ||
+      projectsFallback.length > 0 ||
+      workOrdersFallback.length > 0,
     periods,
     companies,
     transactions: filteredTransactions,
@@ -367,7 +398,7 @@ export async function getAccountingDashboardData(requestedPeriod?: string | null
     projectTraceability:
       projectTraceability.length > 0
         ? projectTraceability
-        : buildFallbackProjects(projectsFallback),
+        : buildFallbackProjects(projectsFallback, workOrdersFallback),
     alerts: filteredAlerts.length > 0 ? filteredAlerts : buildFallbackAlerts(selectedPeriod, filteredTransactions, periods),
     summary,
   };
