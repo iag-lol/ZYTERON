@@ -24,6 +24,7 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
+import { trackQuoteRequestConversion } from "@/lib/analytics/google-ads";
 
 type SubmitState =
   | { status: "idle" }
@@ -928,6 +929,10 @@ export function CommercialQuoteBuilder({ initialPlanLabel, initialProjectType }:
         return;
       }
 
+      trackQuoteRequestConversion({
+        page_path: window.location.pathname,
+        project_type: form.projectType ? projectTypeLabels[form.projectType] : "Cotización comercial",
+      });
       setSubmitState({
         status: "success",
         reference: result.reference,

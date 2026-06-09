@@ -1,4 +1,4 @@
-const CONTACT_FORM_CONVERSION_EVENT = "ads_conversion_Contactar_1";
+import { analyticsConfig } from "@/config/analytics";
 
 type GoogleAdsEventParams = Record<string, string | number | boolean | null | undefined>;
 
@@ -13,6 +13,9 @@ export function trackGoogleAdsEvent(eventName: string, eventParams?: GoogleAdsEv
   }
 }
 
-export function trackContactFormConversion(params?: GoogleAdsEventParams) {
-  trackGoogleAdsEvent(CONTACT_FORM_CONVERSION_EVENT, params);
+export function trackQuoteRequestConversion(params?: GoogleAdsEventParams) {
+  trackGoogleAdsEvent("conversion", {
+    send_to: analyticsConfig.googleAdsQuoteRequestSendTo,
+    ...params,
+  });
 }

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { trackQuoteRequestConversion } from "@/lib/analytics/google-ads";
 import { formatStableDateEsCl } from "@/lib/stable-date";
 import type { PublicDiscount, PublicExtra, PublicPlan, PublicReview } from "@/lib/web-control-types";
 
@@ -384,6 +385,10 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
       return;
     }
 
+    trackQuoteRequestConversion({
+      page_path: window.location.pathname,
+      project_type: form.projectType.trim() || selectedPlan.name,
+    });
     setSubmitState({ status: "success", reference: payload.reference || "RECIBIDO" });
     setSubmitting(false);
     setForm({

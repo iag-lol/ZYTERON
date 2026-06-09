@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { trackContactFormConversion } from "@/lib/analytics/google-ads";
+import { trackQuoteRequestConversion } from "@/lib/analytics/google-ads";
 
 const contactLeadSchema = z.object({
   name: z.string().trim().min(2, "Ingresa tu nombre completo").max(120, "Nombre demasiado largo"),
@@ -69,13 +69,6 @@ export function ContactLeadForm() {
   const onSubmit = handleSubmit(async (values) => {
     setSubmitState({ status: "idle" });
 
-    trackContactFormConversion({
-      event_category: "lead",
-      event_label: "contact_form_submit",
-      page_path: window.location.pathname,
-      project_type: values.projectType,
-    });
-
     const response = await fetch("/api/contacto", {
       method: "POST",
       headers: {
@@ -101,6 +94,10 @@ export function ContactLeadForm() {
       return;
     }
 
+    trackQuoteRequestConversion({
+      page_path: window.location.pathname,
+      project_type: values.projectType,
+    });
     reset();
     setSubmitState({ status: "success", reference: payload.reference || "RECIBIDO" });
   });
