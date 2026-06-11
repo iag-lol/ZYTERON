@@ -35,11 +35,13 @@ export async function middleware(req: NextRequest) {
 
   const isPortalAuthApi = pathname.startsWith("/api/portal/auth");
   const isPortalDiagApi = pathname === "/api/portal/diag";
+  const isPortalAdminApi = pathname.startsWith("/api/portal/admin");
   const isPortalApi = pathname.startsWith("/api/portal");
   const isPortalPrivatePage =
     pathname.startsWith("/portal-clientes/panel") || pathname.startsWith("/portal-clientes/admin");
 
-  if (!isPortalAuthApi && !isPortalDiagApi && (isPortalApi || isPortalPrivatePage)) {
+  // Allow admin APIs to pass through (they handle their own auth checking both legacy cookie and NextAuth)
+  if (!isPortalAuthApi && !isPortalDiagApi && !isPortalAdminApi && (isPortalApi || isPortalPrivatePage)) {
     return protectPortalRequest(req);
   }
 
