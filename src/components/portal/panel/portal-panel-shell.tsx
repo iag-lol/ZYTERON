@@ -150,7 +150,7 @@ export function PortalPanelShell({
     <div className="min-h-screen bg-slate-950">
       <div className="grid min-h-screen md:grid-cols-[280px_1fr]">
         <aside
-          className={`fixed inset-y-0 left-0 z-40 w-[280px] border-r border-white/10 bg-slate-950/95 px-4 py-5 backdrop-blur-xl transition-transform md:static md:translate-x-0 ${
+          className={`fixed inset-y-0 left-0 z-40 w-[280px] border-r border-white/10 bg-slate-950/95 px-4 py-5 backdrop-blur-xl transition-transform md:sticky md:top-0 md:h-screen md:overflow-y-auto md:translate-x-0 scrollbar-none ${
             open ? "translate-x-0" : "-translate-x-full"
           }`}
         >
