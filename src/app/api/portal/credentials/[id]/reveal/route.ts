@@ -63,7 +63,7 @@ export async function POST(req: Request, { params }: Context) {
     // Verificar contraseña del usuario actual
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { passwordHash: true, authProvider: true },
+      select: { passwordHash: true, authProvider: true, email: true },
     });
 
     if (!user) {
@@ -82,10 +82,17 @@ export async function POST(req: Request, { params }: Context) {
       return NextResponse.json({ error: "Contraseña incorrecta." }, { status: 401 });
     }
 
-    // Verificar Código 2FA
-    const unconsumedCodes = await prisma.credentialRevealCode.findMany({
+    // Verificar Código 2FA usando el mismo sistema que el login (EmailVerificationCode)
+    const { hashOtpCode } = await import("@/lib/security/secret-crypto");
+    
+    if (!user.email) {
+      return NextResponse.json({ error: "Usuario sin correo registrado." }, { status: 400 });
+    }
+
+    const unconsumedCodes = await prisma.emailVerificationCode.findMany({
       where: {
         userId: session.user.id,
+        email: user.email,
         consumedAt: null,
         expiresAt: { gt: new Date() },
       },
@@ -94,21 +101,19 @@ export async function POST(req: Request, { params }: Context) {
     });
 
     let matchedCodeId: string | null = null;
-    let anyAttemptIncremented = false;
 
     for (const record of unconsumedCodes) {
       if (record.attempts >= 5) continue;
       
-      const isValid = await compare(code, record.codeHash);
+      const isValid = hashOtpCode(code.trim()) === record.codeHash;
       if (isValid) {
         matchedCodeId = record.id;
         break;
       } else {
-        await prisma.credentialRevealCode.update({
+        await prisma.emailVerificationCode.update({
           where: { id: record.id },
           data: { attempts: { increment: 1 } },
         });
-        anyAttemptIncremented = true;
       }
     }
 
@@ -120,7 +125,7 @@ export async function POST(req: Request, { params }: Context) {
     }
 
     // Marcar código como consumido
-    await prisma.credentialRevealCode.update({
+    await prisma.emailVerificationCode.update({
       where: { id: matchedCodeId },
       data: { consumedAt: new Date() },
     });

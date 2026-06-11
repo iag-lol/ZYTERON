@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { hash } from "bcrypt";
 import { z } from "zod";
 import { portalAuthOptions } from "@/lib/auth/portal-auth";
 import { prisma } from "@/lib/prisma";
 import { sendPortalCredentialRevealCodeEmail } from "@/lib/notifications/portal-email";
-import crypto from "crypto";
+import { createEmailVerificationCode } from "@/lib/auth/portal-codes";
 
 const schema = z.object({
   credentialId: z.string().min(1, "ID de credencial requerido"),
@@ -49,41 +48,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Usuario sin correo registrado." }, { status: 400 });
     }
 
-    // Rate Limiting preventivo (ej. máximo 5 envíos en los últimos 15 min)
-    const recentCodes = await prisma.credentialRevealCode.count({
-      where: {
+    // Generar código usando el mismo sistema del login (EmailVerificationCode)
+    // Esto ya incluye rate limiting preventivo y creación en DB.
+    let code: string;
+    let expiresMinutes: number;
+    try {
+      const result = await createEmailVerificationCode({
         userId: session.user.id,
-        createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) },
-      },
-    });
-
-    if (recentCodes >= 5) {
-      return NextResponse.json(
-        { error: "Has solicitado demasiados códigos. Intenta más tarde." },
-        { status: 429 }
-      );
+        email: user.email,
+      });
+      code = result.code;
+      expiresMinutes = result.expiresMinutes;
+    } catch (e: any) {
+      return NextResponse.json({ error: e.message || "No se pudo generar el código." }, { status: 429 });
     }
-
-    // Generate 6 digit code
-    const rawCode = crypto.randomInt(100000, 999999).toString();
-    const codeHash = await hash(rawCode, 10);
-    const expiresMinutes = 10;
-    const expiresAt = new Date(Date.now() + expiresMinutes * 60 * 1000);
-
-    // Save to DB
-    await prisma.credentialRevealCode.create({
-      data: {
-        userId: session.user.id,
-        codeHash,
-        expiresAt,
-      },
-    });
 
     // Send email
     const emailResult = await sendPortalCredentialRevealCodeEmail({
       to: user.email,
       fullName: user.name,
-      code: rawCode,
+      code: code,
       serviceName: credential.serviceName,
       expiresMinutes,
     });
