@@ -39,10 +39,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No autorizado." }, { status: 403 });
     }
 
-    // Verificar si el usuario tiene correo (algunos OAuth podrían no tener si falló algo)
+    // Verificar si el usuario tiene correo
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { email: true, fullName: true },
+      select: { email: true, name: true },
     });
 
     if (!user?.email) {
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     const recentCodes = await prisma.credentialRevealCode.count({
       where: {
         userId: session.user.id,
-        lastSentAt: { gte: new Date(Date.now() - 15 * 60 * 1000) },
+        createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) },
       },
     });
 
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
     // Send email
     const emailResult = await sendPortalCredentialRevealCodeEmail({
       to: user.email,
-      fullName: user.fullName,
+      fullName: user.name,
       code: rawCode,
       serviceName: credential.serviceName,
       expiresMinutes,
