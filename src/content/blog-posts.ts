@@ -42,9 +42,9 @@ export const blogPosts: BlogPostData[] = [
       "Si vas a cotizar una web corporativa en Chile, esta guía te ayuda a separar precio de valor y a definir un alcance que sí genere resultados comerciales.",
     primaryKeyword: "precio página web empresa Chile",
     secondaryKeywords: [
-      "creacion de sitios web para empresas",
-      "cotizacion pagina web empresa",
-      "paginas corporativas",
+      "creación de sitios web orientados a negocio",
+      "cómo cotizar una web corporativa con criterio",
+      "estructura comercial para una página empresarial",
     ],
     intent: "comercial",
     readingTime: "8 min",
@@ -114,7 +114,11 @@ export const blogPosts: BlogPostData[] = [
     excerpt:
       "Las plantillas pueden ser útiles en etapas tempranas, pero no siempre resuelven necesidades de posicionamiento y ventas en empresas B2B.",
     primaryKeyword: "diseño web chile",
-    secondaryKeywords: ["agencia diseño web chile", "paginas web para pymes", "paginas corporativas"],
+    secondaryKeywords: [
+      "servicio de diseño web con enfoque consultivo",
+      "sitios claros para pymes y empresas",
+      "web corporativa adaptada a objetivos comerciales",
+    ],
     intent: "mixta",
     readingTime: "7 min",
     publishedAt: "2026-04-18",
@@ -174,7 +178,11 @@ export const blogPosts: BlogPostData[] = [
     excerpt:
       "Antes de firmar con una agencia web, revisa este checklist para evitar sobrecostos, atrasos y soluciones genéricas que no convierten.",
     primaryKeyword: "agencia diseño web chile",
-    secondaryKeywords: ["desarrollo web chile", "diseño web santiago", "paginas web para empresas"],
+    secondaryKeywords: [
+      "evaluación técnica de proveedores web",
+      "criterios para elegir una agencia en Chile",
+      "sitios profesionales para empresas",
+    ],
     intent: "comercial",
     readingTime: "9 min",
     publishedAt: "2026-04-18",
@@ -236,7 +244,11 @@ export const blogPosts: BlogPostData[] = [
     excerpt:
       "Si quieres crecer en orgánico sin improvisar, esta hoja de ruta te muestra qué priorizar en 30, 60 y 90 días.",
     primaryKeyword: "SEO para empresas chile",
-    secondaryKeywords: ["seo tecnico chile", "desarrollo web chile", "diseno web chile"],
+    secondaryKeywords: [
+      "SEO técnico para empresas en crecimiento",
+      "base web preparada para posicionar mejor",
+      "mejoras de estructura y rendimiento",
+    ],
     intent: "mixta",
     readingTime: "8 min",
     publishedAt: "2026-04-18",
@@ -291,7 +303,11 @@ export const blogPosts: BlogPostData[] = [
     excerpt:
       "Una landing efectiva no es solo diseño bonito. Este checklist te ayuda a construir una página enfocada en resultados comerciales.",
     primaryKeyword: "landing pages para empresas",
-    secondaryKeywords: ["diseño web santiago", "paginas web para pymes", "agencia diseño web chile"],
+    secondaryKeywords: [
+      "estructura de landing enfocada en conversión",
+      "páginas comerciales para captar contactos",
+      "diseño orientado a campañas y leads",
+    ],
     intent: "comercial",
     readingTime: "6 min",
     publishedAt: "2026-04-18",

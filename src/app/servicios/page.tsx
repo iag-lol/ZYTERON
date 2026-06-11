@@ -4,11 +4,12 @@ import { ArrowRight, Check, MessageCircle, MonitorSmartphone, Settings, ShieldCh
 import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
+import { siteConfig } from "@/config/site";
 import { buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 import { seoServicePages } from "@/content/seo-service-pages";
 
 const WHATSAPP_URL =
-  "https://wa.me/56984752936?text=Hola%20Zyteron%2C%20quiero%20orientaci%C3%B3n%20sobre%20un%20servicio%20digital%20para%20mi%20empresa.";
+  `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20orientaci%C3%B3n%20sobre%20un%20servicio%20digital%20para%20mi%20empresa.`;
 
 export const metadata: Metadata = createPageMetadata({
   title: "Servicios digitales para empresas en Chile",

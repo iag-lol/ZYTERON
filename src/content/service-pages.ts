@@ -28,7 +28,11 @@ export const servicePages: ServicePageData[] = [
     metaDescription:
       "Diseñamos páginas web para empresas en Chile con foco en generación de leads, credibilidad comercial y conversión B2B.",
     primaryKeyword: "paginas web para empresas",
-    secondaryKeywords: ["paginas corporativas", "sitio web corporativo chile", "web empresarial b2b"],
+    secondaryKeywords: [
+      "sitios corporativos para empresas en Chile",
+      "presencia digital profesional para equipos comerciales",
+      "web orientada a generar oportunidades B2B",
+    ],
     heroTitle: "Páginas web para empresas que venden, no solo muestran información",
     heroDescription:
       "Creamos sitios corporativos orientados a captación comercial: propuesta de valor clara, estructura SEO y llamados a la acción para generar reuniones.",
@@ -204,7 +208,11 @@ export const servicePages: ServicePageData[] = [
     metaDescription:
       "Servicio de diseño web en Santiago: sitios corporativos y landing pages para empresas que buscan más leads en la Región Metropolitana.",
     primaryKeyword: "diseño web santiago",
-    secondaryKeywords: ["agencia web santiago", "diseño paginas web santiago", "web para empresas rm"],
+    secondaryKeywords: [
+      "diseño de sitios para empresas en Santiago",
+      "presencia digital local en la Región Metropolitana",
+      "landing comercial para atención en Santiago",
+    ],
     heroTitle: "Diseño web en Santiago para competir mejor en búsquedas locales",
     heroDescription:
       "Estrategia local para empresas de la Región Metropolitana: contenido geográfico, mensajes comerciales y estructura de conversión.",
@@ -424,7 +432,11 @@ export const servicePages: ServicePageData[] = [
     metaDescription:
       "Servicio de SEO para empresas en Chile: estrategia, arquitectura, contenido y optimización técnica para aumentar tráfico calificado y leads.",
     primaryKeyword: "SEO para empresas chile",
-    secondaryKeywords: ["seo b2b chile", "seo tecnico chile", "posicionamiento web empresas"],
+    secondaryKeywords: [
+      "SEO técnico para sitios corporativos",
+      "visibilidad orgánica para empresas en Chile",
+      "optimización web enfocada en leads",
+    ],
     heroTitle: "SEO para empresas en Chile con foco en intención comercial",
     heroDescription:
       "Planificamos y ejecutamos SEO con enfoque en revenue: arquitectura de servicios, contenidos útiles y optimización técnica medible.",

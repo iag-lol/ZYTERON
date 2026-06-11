@@ -5,12 +5,13 @@ import { useEffect, useRef, useState } from "react";
 import { Menu, X, ArrowRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
+import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { Container } from "./container";
 import { PortalAccessLink } from "./portal-access-link";
 
 const WHATSAPP_URL =
-  "https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.";
+  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.`;
 
 const primaryNavItems = [
   { href: "/", label: "Inicio" },

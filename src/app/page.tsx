@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
+import { siteConfig } from "@/config/site";
 import {
   buildFaqJsonLd,
   buildServicesListJsonLd,
@@ -32,20 +33,13 @@ import { softBlueBlurDataUrl } from "@/lib/image-placeholders";
 export const revalidate = 300;
 
 const WHATSAPP_BASE =
-  "https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.";
+  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.`;
 
 export const metadata: Metadata = createPageMetadata({
   title: "Desarrollo web y sistemas para empresas en Chile",
   description:
     "Desarrollamos sitios web, sistemas, ecommerce, automatización y soporte TI para empresas en Chile con foco en ventas, claridad y continuidad operativa.",
   path: "/",
-  keywords: [
-    "desarrollo web Chile",
-    "sistemas web a medida",
-    "tiendas online para pymes",
-    "automatización de procesos",
-    "soporte TI para pymes",
-  ],
 });
 
 const trustPoints = [

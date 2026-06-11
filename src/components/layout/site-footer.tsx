@@ -6,7 +6,7 @@ import { blogPosts } from "@/content/blog-posts";
 import { siteConfig } from "@/config/site";
 
 const WHATSAPP_URL =
-  "https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.";
+  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.`;
 
 const COPYRIGHT_YEAR = 2026;
 
@@ -101,15 +101,24 @@ export function SiteFooter() {
           </p>
 
           <div className="space-y-2.5 text-sm">
-            <a
-              href={WHATSAPP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-[#4ade80] transition-opacity hover:opacity-80"
-            >
-              <WhatsAppIcon className="h-4 w-4" />
-              +56 9 8475 2936
-            </a>
+            <div className="space-y-1">
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-[#4ade80] transition-opacity hover:opacity-80"
+              >
+                <WhatsAppIcon className="h-4 w-4" />
+                WhatsApp: {siteConfig.contact.phoneDisplay}
+              </a>
+              <a
+                href={`tel:${siteConfig.contact.phone}`}
+                className="flex items-center gap-2 text-slate-300 transition-colors hover:text-white"
+              >
+                <Phone className="h-4 w-4" />
+                Llamadas: {siteConfig.contact.phoneDisplay}
+              </a>
+            </div>
             <a
               href={`mailto:${siteConfig.contact.email}`}
               className="flex items-center gap-2 text-slate-300 transition-colors hover:text-white"

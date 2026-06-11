@@ -22,6 +22,24 @@ export const defaultJsonLdOrganization = {
   url: `${siteConfig.url}/`,
   logo: `${siteConfig.url}/logo.svg`,
   description: siteConfig.description,
+  telephone: siteConfig.contact.phone,
+  email: siteConfig.contact.email,
+  contactPoint: [
+    {
+      "@type": "ContactPoint",
+      contactType: "sales",
+      telephone: siteConfig.contact.phone,
+      email: siteConfig.contact.email,
+      areaServed: siteConfig.business.areaServed,
+      availableLanguage: ["es-CL", "es"],
+    },
+  ],
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: siteConfig.address.city,
+    addressRegion: siteConfig.address.region,
+    addressCountry: siteConfig.address.countryCode,
+  },
   founder: {
     "@type": "Person",
     name: siteConfig.representative.name,

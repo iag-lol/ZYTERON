@@ -6,6 +6,7 @@ import { servicePages, getServicePageBySlug } from "@/content/service-pages";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
+import { siteConfig } from "@/config/site";
 import {
   buildFaqJsonLd,
   buildProfessionalServiceJsonLd,
@@ -20,7 +21,7 @@ type ServicePageProps = {
   }>;
 };
 
-const WHATSAPP_BASE = "https://wa.me/56984752936";
+const WHATSAPP_BASE = siteConfig.social.whatsapp;
 
 const serviceExamplesBySlug: Record<
   string,
@@ -250,6 +251,9 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
               <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-4 w-4" /> Hablar por WhatsApp
               </a>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-slate-300 font-semibold text-slate-800 hover:bg-slate-50">
+              <a href={`tel:${siteConfig.contact.phone}`}>Llamar al {siteConfig.contact.phoneDisplay}</a>
             </Button>
           </div>
         </Container>

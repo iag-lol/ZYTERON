@@ -3,6 +3,7 @@ import { ArrowRight, CheckCircle2, MessageCircle } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
+import { siteConfig } from "@/config/site";
 import type { PriorityServicePage } from "@/content/priority-service-pages";
 import {
   buildFaqJsonLd,
@@ -12,7 +13,7 @@ import {
 } from "@/lib/seo";
 
 const WHATSAPP_URL =
-  "https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.";
+  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.`;
 
 type Props = {
   page: PriorityServicePage;

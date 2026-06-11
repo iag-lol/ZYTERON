@@ -113,7 +113,6 @@ export async function generateMetadata({ params }: BlogDetailProps): Promise<Met
     path: `/blog/${post.slug}`,
     ogImagePath: `/blog/${post.slug}/opengraph-image`,
     ogImageAlt: `${post.title} | ZYTERON`,
-    keywords: [post.primaryKeyword, ...post.secondaryKeywords],
   });
 }
 

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { siteConfig } from "@/config/site";
 import { trackQuoteRequestConversion } from "@/lib/analytics/google-ads";
 import { formatStableDateEsCl } from "@/lib/stable-date";
 import type { PublicDiscount, PublicExtra, PublicPlan, PublicReview } from "@/lib/web-control-types";
@@ -307,7 +308,7 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
       }),
     [appliedDiscounts, discountTotal, form, iva, selectedExtras, selectedPlan, subtotal, total],
   );
-  const whatsappHref = `https://wa.me/56984752936?text=${encodeURIComponent(whatsappMessage)}`;
+  const whatsappHref = `${siteConfig.social.whatsapp}?text=${encodeURIComponent(whatsappMessage)}`;
 
   const updateQty = (extraId: string, next: number) => {
     setExtraQtyById((prev) => {

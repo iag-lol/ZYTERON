@@ -5,6 +5,7 @@ import { ArrowRight, Check, CircleDollarSign } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
+import { siteConfig } from "@/config/site";
 import {
   buildFaqJsonLd,
   buildPlanPriceSpecificationJsonLd,
@@ -36,9 +37,9 @@ type PlanCard = {
   tone?: PlanTone;
   audience: string;
   description: string;
-  commercialCopy: string;
   includes: string[];
   excludes: string[];
+  availableAddons?: string[];
   notes?: string[];
   ctaLabel: string;
   projectType: ProjectTypeValue;
@@ -51,7 +52,7 @@ type AdditionalCategory = {
 };
 
 const WHATSAPP_URL =
-  "https://wa.me/56939526626?text=Hola%20ZYTERON%2C%20quiero%20orientaci%C3%B3n%20sobre%20sus%20planes";
+  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20orientaci%C3%B3n%20sobre%20sus%20planes`;
 
 function buildQuoteHref(projectType: ProjectTypeValue, presetPlan: string) {
   return `/cotizador?tipo=${projectType}&plan=${presetPlan}`;
@@ -101,8 +102,6 @@ const plans: PlanCard[] = [
       "Emprendedores, profesionales independientes y negocios pequeños que recién comienzan y necesitan presencia online seria sin una inversión alta.",
     description:
       "Una página simple, profesional y clara para mostrar tu negocio, generar confianza y recibir contactos por WhatsApp.",
-    commercialCopy:
-      "Pensado para quienes necesitan salir rápido con una presencia digital formal, clara y fácil de entender.",
     includes: [
       "Una sola página tipo presentación",
       "Diseño profesional en modo claro",
@@ -136,6 +135,7 @@ const plans: PlanCard[] = [
       "Dominio .cl o .com se cotiza aparte según disponibilidad.",
       "Puedes comenzar con este plan y luego mejorar tu web cuando tu negocio crezca.",
     ],
+    availableAddons: ["Dominio y hosting", "Secciones adicionales", "Formulario avanzado"],
     ctaLabel: "Solicitar web básica",
     projectType: "web-basica",
     presetPlan: "web-basica-presentacion",
@@ -149,8 +149,6 @@ const plans: PlanCard[] = [
       "Para emprendedores, técnicos, servicios pequeños, negocios locales y profesionales independientes que necesitan una web inicial más completa que una página básica.",
     description:
       "Una propuesta inicial con más estructura visual, más flexibilidad de secciones y mejor base comercial que la web básica.",
-    commercialCopy:
-      "Ideal cuando ya necesitas una landing más completa o un sitio simple con mejor presentación, claridad de servicios y llamado a la acción.",
     includes: [
       "Landing page más completa o sitio simple",
       "Más estructura visual que la web básica",
@@ -171,6 +169,7 @@ const plans: PlanCard[] = [
       "Automatizaciones complejas",
       "Pasarelas de pago",
     ],
+    availableAddons: ["Secciones extra", "SEO inicial avanzado", "Dominio y correos corporativos"],
     ctaLabel: "Cotizar plan emprendedor",
     projectType: "web-profesional",
     presetPlan: "plan-emprendedor",
@@ -185,8 +184,6 @@ const plans: PlanCard[] = [
       "Para negocios que necesitan una web más completa, ordenada y enfocada en generar confianza, mostrar servicios, responder dudas y recibir consultas.",
     description:
       "Es el plan recomendado cuando la web ya debe cumplir un rol comercial claro y sostener la imagen del negocio.",
-    commercialCopy:
-      "Pensado para pymes que necesitan vender mejor, responder objeciones frecuentes y verse más confiables frente a clientes reales.",
     includes: [
       "Sitio web corporativo o comercial",
       "Varias secciones informativas",
@@ -207,6 +204,7 @@ const plans: PlanCard[] = [
       "Automatizaciones complejas",
       "Sistemas internos personalizados",
     ],
+    availableAddons: ["Catálogo administrable", "Integración de pagos", "Reportes o dashboard"],
     ctaLabel: "Cotizar plan pyme",
     projectType: "web-profesional",
     presetPlan: "plan-pyme",
@@ -220,8 +218,6 @@ const plans: PlanCard[] = [
       "Para empresas, colegios, instituciones, oficinas, clínicas, talleres, transportes, constructoras y servicios B2B.",
     description:
       "Una presencia digital más seria, con mayor estructura, páginas internas y preparación para analítica y comunicación formal.",
-    commercialCopy:
-      "Pensado para organizaciones que deben proyectar más confianza, más orden y una base profesional de contenido.",
     includes: [
       "Web corporativa completa",
       "Páginas internas estructuradas",
@@ -241,6 +237,7 @@ const plans: PlanCard[] = [
       "Flujos automatizados avanzados",
       "Integraciones complejas",
     ],
+    availableAddons: ["Panel administrativo", "Automatización de formularios", "Integraciones API"],
     ctaLabel: "Solicitar propuesta formal",
     projectType: "web-profesional",
     presetPlan: "plan-empresa",
@@ -254,8 +251,6 @@ const plans: PlanCard[] = [
       "Para negocios que venden productos o necesitan un catálogo digital claro, ordenado y preparado para escalar.",
     description:
       "Puede funcionar como catálogo por WhatsApp, tienda simple, tienda con carrito o tienda con pagos online según cotización.",
-    commercialCopy:
-      "Pensado para vender mejor sin prometer funcionalidades que dependen del alcance, volumen y medios de pago elegidos.",
     includes: [
       "Catálogo por WhatsApp o tienda online base",
       "Categorías y fichas de productos",
@@ -273,6 +268,7 @@ const plans: PlanCard[] = [
       "Facturación externa automática",
       "Pasarela de pago incluida siempre",
     ],
+    availableAddons: ["Carga adicional de productos", "Catálogo administrable", "Medios de pago en línea"],
     ctaLabel: "Cotizar tienda online",
     projectType: "tienda-online",
     presetPlan: "catalogo-tienda-online",
@@ -286,8 +282,6 @@ const plans: PlanCard[] = [
       "Para empresas, pymes o instituciones que necesitan paneles administrativos, usuarios, registros, reportes y control de procesos.",
     description:
       "Este plan aplica cuando ya no basta una web comercial y se necesita operar datos, roles, estados y documentos internos.",
-    commercialCopy:
-      "Adecuado para procesos con base de datos, exportaciones, paneles y necesidades de trazabilidad operacional.",
     includes: [
       "Paneles administrativos",
       "Usuarios y roles",
@@ -304,6 +298,7 @@ const plans: PlanCard[] = [
       "Automatizaciones avanzadas fuera de alcance",
       "Múltiples módulos críticos sin diagnóstico previo",
     ],
+    availableAddons: ["Exportación Excel/PDF", "Roles avanzados", "Mini paneles adicionales"],
     ctaLabel: "Agendar diagnóstico",
     projectType: "sistema-web",
     presetPlan: "sistema-web-panel-administrativo",
@@ -318,8 +313,6 @@ const plans: PlanCard[] = [
       "Para empresas con procesos más complejos, múltiples módulos, integraciones, automatizaciones y operación crítica.",
     description:
       "Aquí hablamos de soluciones a medida con arquitectura más robusta, etapas de implementación y mayor análisis funcional.",
-    commercialCopy:
-      "Pensado para empresas que necesitan reducir trabajo manual, conectar sistemas y sostener una operación digital más sensible.",
     includes: [
       "Arquitectura personalizada",
       "Múltiples módulos",
@@ -335,6 +328,7 @@ const plans: PlanCard[] = [
       "Precio cerrado sin levantamiento técnico",
       "Implementación total sin diagnóstico previo",
     ],
+    availableAddons: ["Fases por módulo", "Integraciones externas", "Notificaciones y documentos automáticos"],
     ctaLabel: "Solicitar evaluación técnica",
     projectType: "sistema-web",
     presetPlan: "sistema-avanzado",
@@ -569,6 +563,19 @@ export default function PlanesPage() {
                         ))}
                       </div>
                     </div>
+                    {plan.availableAddons?.length ? (
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Adicionales disponibles</p>
+                        <div className="mt-2 space-y-2">
+                          {plan.availableAddons.map((item) => (
+                            <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
+                              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" />
+                              <span>{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="mt-5 space-y-3 md:hidden">
@@ -598,6 +605,21 @@ export default function PlanesPage() {
                         ))}
                       </div>
                     </details>
+                    {plan.availableAddons?.length ? (
+                      <details className="rounded-2xl border border-slate-200 bg-white/80 p-4">
+                        <summary className="cursor-pointer list-none text-sm font-bold text-blue-700">
+                          Adicionales disponibles
+                        </summary>
+                        <div className="mt-3 space-y-2">
+                          {plan.availableAddons.map((item) => (
+                            <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
+                              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" />
+                              <span>{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    ) : null}
                   </div>
 
                   {plan.notes?.length ? (

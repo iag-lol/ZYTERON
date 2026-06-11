@@ -15,7 +15,6 @@ export const metadata: Metadata = createPageMetadata({
   title: seoServicePage.metaTitle,
   description: seoServicePage.metaDescription,
   path: seoServicePage.path,
-  keywords: [seoServicePage.primaryKeyword, ...seoServicePage.secondaryKeywords],
 });
 
 export default function SeoServiceRoutePage() {

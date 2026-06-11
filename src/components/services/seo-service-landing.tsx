@@ -3,6 +3,7 @@ import { ArrowRight, CheckCircle2, MessageCircle, SearchCheck } from "lucide-rea
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
+import { siteConfig } from "@/config/site";
 import type { SeoServicePage } from "@/content/seo-service-pages";
 import { caseStudies } from "@/content/case-studies";
 import {
@@ -12,7 +13,7 @@ import {
   buildWebPageJsonLd,
 } from "@/lib/seo";
 
-const WHATSAPP_PHONE = "56984752936";
+const WHATSAPP_PHONE = "56939526626";
 
 type DeepServiceContent = {
   serviceLabel: string;
@@ -342,6 +343,12 @@ export function SeoServiceLanding({ page }: Props) {
                   Solicitar orientación comercial
                 </Link>
               </div>
+              <a
+                href={`tel:${siteConfig.contact.phone}`}
+                className="mt-4 inline-flex text-sm font-semibold text-blue-700 hover:text-blue-800"
+              >
+                Llamar al {siteConfig.contact.phoneDisplay}
+              </a>
             </aside>
           </div>
         </Container>

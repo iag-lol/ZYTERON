@@ -4,6 +4,7 @@ import { ArrowRight, Boxes, PackageCheck, ShieldCheck, Tag } from "lucide-react"
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
+import { siteConfig } from "@/config/site";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 import { getWebPricingSnapshot } from "@/lib/web-control";
 import { PublicProductsCatalog } from "@/components/forms/public-products-catalog";
@@ -96,7 +97,10 @@ export default async function ProductosPage() {
 
       <section id="catalogo-compra" className="bg-white py-16">
         <Container>
-          <PublicProductsCatalog products={products} whatsappNumber="56984752936" />
+          <PublicProductsCatalog
+            products={products}
+            whatsappNumber={siteConfig.contact.whatsapp.replace(/^\+/, "")}
+          />
         </Container>
       </section>
     </main>

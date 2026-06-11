@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Container } from "@/components/layout/container";
 import { ContactLeadForm } from "@/components/forms/contact-lead-form";
-import { Mail, MapPin, Clock, FileText } from "lucide-react";
+import { Mail, MapPin, Clock, FileText, PhoneCall } from "lucide-react";
 import { JsonLd } from "@/components/seo/json-ld";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { siteConfig } from "@/config/site";
@@ -15,18 +15,28 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 const WHATSAPP_URL =
-  "https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20solicitar%20una%20cotizaci%C3%B3n%20formal.";
+  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20solicitar%20una%20cotizaci%C3%B3n%20formal.`;
 
 const contactInfo = [
   {
     icon: <WhatsAppIcon className="h-5 w-5" />,
-    label: "Teléfono / WhatsApp",
-    value: "+56 9 8475 2936",
-    sub: "Canal recomendado para contacto rápido",
+    label: "WhatsApp comercial",
+    value: siteConfig.contact.phoneDisplay,
+    sub: "Canal rápido para orientación y solicitudes comerciales",
     href: WHATSAPP_URL,
     classes: "border-[#25d366]/30 bg-[#25d366]/5 hover:bg-[#25d366]/10",
     iconClasses: "bg-[#25d366]/10 text-[#18a34d]",
     external: true,
+  },
+  {
+    icon: <PhoneCall className="h-5 w-5" />,
+    label: "Llamadas comerciales",
+    value: siteConfig.contact.phoneDisplay,
+    sub: "Atención telefónica directa en horario laboral",
+    href: `tel:${siteConfig.contact.phone}`,
+    classes: "border-sky-200 bg-sky-50 hover:bg-sky-100/70",
+    iconClasses: "bg-sky-100 text-sky-700",
+    external: false,
   },
   {
     icon: <Mail className="h-5 w-5" />,
@@ -67,7 +77,7 @@ export default function ContactoPage() {
         id="contacto-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/contacto",
-          title: "Contacto | Cotiza tu Página Web o Sistema Digital",
+          title: "Contacto comercial para tu proyecto digital",
           description: "Página de contacto comercial para solicitar cotización formal.",
           breadcrumbs: [
             { name: "Inicio", path: "/" },

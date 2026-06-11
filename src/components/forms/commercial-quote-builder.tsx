@@ -24,6 +24,7 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
+import { siteConfig } from "@/config/site";
 import { trackQuoteRequestConversion } from "@/lib/analytics/google-ads";
 
 type SubmitState =
@@ -107,7 +108,7 @@ type FormState = {
 };
 
 const TOTAL_STEPS = 6;
-const DIRECT_WHATSAPP_URL = "https://wa.me/56939526626";
+const DIRECT_WHATSAPP_URL = siteConfig.social.whatsapp;
 const CHILE_WHATSAPP_REGEX = /^(?:\+?56)?(?:\s?9)?(?:[\s-]?\d){8}$/;
 
 const projectCards: ProjectCard[] = [

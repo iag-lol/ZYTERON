@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
+import { siteConfig } from "@/config/site";
 
 const WHATSAPP_URL =
-  "https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.";
+  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.`;
 
 export function WhatsAppButton() {
   return (

@@ -14,9 +14,10 @@ export const siteConfig = {
     countryCode: "CL",
   },
   contact: {
-    phone: "+56 9 8475 2936",
+    phone: "+56939526626",
+    phoneDisplay: "+56 9 3952 6626",
     email: "contacto@zyteron.cl",
-    whatsapp: "+56 9 8475 2936",
+    whatsapp: "+56939526626",
   },
   business: {
     priceRange: "$$",
@@ -34,7 +35,7 @@ export const siteConfig = {
   },
   social: {
     linkedin: "https://www.linkedin.com/company/zyteron",
-    whatsapp: "https://wa.me/56984752936",
+    whatsapp: "https://wa.me/56939526626",
   },
   representative: {
     name: "Eduardo Ávila",
