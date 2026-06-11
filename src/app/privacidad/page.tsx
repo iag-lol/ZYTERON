@@ -10,7 +10,10 @@ export const metadata: Metadata = createPageMetadata({
   noIndex: true,
 });
 
-const sections = [
+export const privacyIntro =
+  "ZYTERON utiliza la información entregada por los usuarios únicamente para responder solicitudes, preparar cotizaciones, gestionar servicios, procesar pagos, coordinar proyectos y mantener comunicación comercial relacionada.";
+
+export const privacySections = [
   {
     title: "1. Datos recopilados",
     points: [
@@ -76,19 +79,19 @@ const sections = [
   },
 ];
 
+export const privacyLastUpdated = "11 de mayo de 2026";
+
 export default function PrivacidadPage() {
   return (
     <main className="bg-white py-16">
       <Container className="max-w-4xl space-y-6">
         <h1 className="text-3xl font-extrabold text-slate-900">Política de privacidad</h1>
         <p className="text-sm leading-relaxed text-slate-600">
-          ZYTERON utiliza la información entregada por los usuarios únicamente para responder solicitudes, preparar
-          cotizaciones, gestionar servicios, procesar pagos, coordinar proyectos y mantener comunicación comercial
-          relacionada.
+          {privacyIntro}
         </p>
 
         <div className="space-y-5">
-          {sections.map((section) => (
+          {privacySections.map((section) => (
             <section key={section.title} className="card-premium p-5">
               <h2 className="text-lg font-bold text-slate-900">{section.title}</h2>
               <div className="mt-2 space-y-2 text-sm text-slate-600">
@@ -100,7 +103,7 @@ export default function PrivacidadPage() {
           ))}
         </div>
 
-        <p className="text-xs text-slate-500">Última actualización: 11 de mayo de 2026.</p>
+        <p className="text-xs text-slate-500">Última actualización: {privacyLastUpdated}.</p>
       </Container>
     </main>
   );

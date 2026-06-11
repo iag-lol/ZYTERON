@@ -16,7 +16,17 @@ type PolicySection = {
   points: ReactNode[];
 };
 
-const sections: PolicySection[] = [
+export const termsIntro =
+  "Este documento regula la prestación de servicios de desarrollo web, software, soporte técnico y proyectos digitales de ZYTERON SpA, buscando una relación comercial clara, ordenada y profesional.";
+
+export const termsCompanyInfo = [
+  { label: "Razón social", value: "ZYTERON SpA" },
+  { label: "RUT", value: "78.398.774-0" },
+  { label: "Correo oficial", value: "contacto@zyteron.cl" },
+  { label: "Canales formales", value: "Correo y WhatsApp corporativo" },
+] as const;
+
+export const termsSections: PolicySection[] = [
   {
     title: "1. Alcance del servicio",
     points: [
@@ -214,12 +224,14 @@ const sections: PolicySection[] = [
   },
 ];
 
-const extraNotes = [
+export const termsExtraNotes = [
   "Los servicios se atienden por correo y WhatsApp corporativo.",
   "Horario de atención regular: lunes a sábado.",
   "El soporte de emergencias críticas fuera de horario se evalúa según disponibilidad operativa y gravedad del incidente.",
   "Estas condiciones se complementan con la cotización, propuesta, orden de trabajo y correos de aprobación de cada proyecto.",
 ];
+
+export const termsLastUpdated = "06 de junio de 2026";
 
 export default function TerminosPage() {
   return (
@@ -234,34 +246,28 @@ export default function TerminosPage() {
             Políticas y condiciones de servicio
           </h1>
           <p className="max-w-4xl text-sm leading-7 text-slate-600 sm:text-base">
-            Este documento regula la prestación de servicios de desarrollo web, software, soporte técnico y proyectos
-            digitales de <strong>ZYTERON SpA</strong>, buscando una relación comercial clara, ordenada y profesional.
+            {termsIntro.split("ZYTERON SpA").map((part, index, array) => (
+              <span key={index}>
+                {part}
+                {index < array.length - 1 ? <strong>ZYTERON SpA</strong> : null}
+              </span>
+            ))}
           </p>
         </div>
 
         <section className="rounded-[2rem] border border-slate-200 bg-slate-50 p-6 shadow-sm">
           <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Razón social</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">ZYTERON SpA</p>
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">RUT</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">78.398.774-0</p>
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Correo oficial</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">contacto@zyteron.cl</p>
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Canales formales</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">Correo y WhatsApp corporativo</p>
-            </div>
+            {termsCompanyInfo.map((item) => (
+              <div key={item.label}>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{item.label}</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">{item.value}</p>
+              </div>
+            ))}
           </div>
         </section>
 
         <div className="space-y-5">
-          {sections.map((section) => (
+          {termsSections.map((section) => (
             <section key={section.title} className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-xl font-extrabold text-slate-900">{section.title}</h2>
               <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
@@ -279,7 +285,7 @@ export default function TerminosPage() {
         <section className="rounded-[2rem] border border-blue-200 bg-blue-50 p-6 shadow-sm">
           <h2 className="text-lg font-extrabold text-slate-900">Notas operativas complementarias</h2>
           <div className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
-            {extraNotes.map((note) => (
+            {termsExtraNotes.map((note) => (
               <div key={note} className="flex items-start gap-3">
                 <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-blue-600" />
                 <p>{note}</p>
@@ -288,7 +294,7 @@ export default function TerminosPage() {
           </div>
         </section>
 
-        <p className="text-xs text-slate-500">Última actualización: 06 de junio de 2026.</p>
+        <p className="text-xs text-slate-500">Última actualización: {termsLastUpdated}.</p>
       </Container>
     </main>
   );

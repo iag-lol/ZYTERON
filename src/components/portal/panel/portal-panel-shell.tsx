@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Sparkles,
   Ticket,
+  Scale,
 } from "lucide-react";
 
 const navItems = [
@@ -35,6 +36,7 @@ const navItems = [
   { href: "/portal-clientes/panel/credenciales", label: "Credenciales", icon: ShieldCheck },
   { href: "/portal-clientes/panel/comunicacion", label: "Comunicación", icon: MessageCircle },
   { href: "/portal-clientes/panel/solicitudes", label: "Solicitudes", icon: Ticket },
+  { href: "/portal-clientes/panel/informaciones-zyteron", label: "INFORMACIONES ZYTERON", icon: Scale },
 ];
 
 function isActivePath(current: string, href: string, exact?: boolean) {
