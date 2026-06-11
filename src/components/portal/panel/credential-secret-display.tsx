@@ -91,9 +91,9 @@ export function CredentialSecretDisplay({
 
   function handleCopy() {
     if (!revealedSecret) return;
-    const textToCopy = `Usuario: ${username || "—"}\nSecreto: ${revealedSecret}`;
+    const textToCopy = revealedSecret || "";
     navigator.clipboard.writeText(textToCopy);
-    alert("Credencial copiada al portapapeles");
+    alert("Contraseña copiada al portapapeles");
   }
 
   if (!secretMasked) {
@@ -129,7 +129,7 @@ export function CredentialSecretDisplay({
                 Ocultando en {timeLeft}s
               </span>
               <Button size="sm" variant="default" className="h-7 text-[10px] gap-1 bg-blue-600" onClick={handleCopy}>
-                <Copy className="h-3 w-3" /> Copiar todo
+                <Copy className="h-3 w-3" /> Copiar contraseña
               </Button>
             </>
           ) : (
