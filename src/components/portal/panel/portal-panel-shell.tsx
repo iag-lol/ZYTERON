@@ -176,7 +176,6 @@ export function PortalPanelShell({
           <nav className="mt-6 space-y-1">
             {navItems.map((item) => {
               const active = isActivePath(pathname, item.href, item.exact);
-              const isCommunication = item.href.includes("comunicacion");
               return (
                 <Link
                   key={item.href}
@@ -190,9 +189,6 @@ export function PortalPanelShell({
                 >
                   <item.icon className={`h-4 w-4 ${active ? "text-blue-300" : "text-slate-500 group-hover:text-slate-200"}`} />
                   <span className="flex-1">{item.label}</span>
-                  {isCommunication && unreadCount > 0 ? (
-                    <span className="notification-dot" />
-                  ) : null}
                 </Link>
               );
             })}
