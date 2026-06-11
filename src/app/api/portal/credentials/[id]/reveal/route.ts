@@ -70,7 +70,7 @@ export async function POST(req: Request, { params }: Context) {
       return NextResponse.json({ error: "Usuario no encontrado." }, { status: 404 });
     }
 
-    if (user.authProvider !== "CREDENTIALS" || !user.passwordHash) {
+    if (user.authProvider !== "LOCAL" || !user.passwordHash) {
       return NextResponse.json(
         { error: "No puedes usar esta función con autenticación de Google u otro proveedor por ahora." },
         { status: 400 }
