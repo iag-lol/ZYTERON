@@ -193,3 +193,30 @@ export async function sendPortalPasswordResetCodeEmail(input: {
     text: `Código de recuperación: ${input.code}. Expira en ${input.expiresMinutes} minutos.`,
   });
 }
+
+export async function sendPortalCredentialRevealCodeEmail(input: {
+  to: string;
+  fullName: string;
+  code: string;
+  serviceName: string;
+  expiresMinutes: number;
+}) {
+  const html = renderEmailShell({
+    eyebrow: "Seguridad de Credenciales",
+    title: "Autorización requerida",
+    intro: `Hola ${input.fullName}, recibimos una solicitud para visualizar la contraseña del servicio: ${input.serviceName}.`,
+    contentHtml: `<div style="padding:16px;border:1px solid #fef08a;background:#fef9c3;border-radius:10px;text-align:center;">
+      <p style="margin:0;font-size:12px;color:#a16207;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">Código de seguridad</p>
+      <p style="margin:10px 0 0;font-size:34px;font-weight:800;letter-spacing:0.2em;color:#0f172a;">${escapeHtml(input.code)}</p>
+      <p style="margin:10px 0 0;font-size:12px;color:#475569;">Expira en ${input.expiresMinutes} minutos.</p>
+    </div>`,
+  });
+
+  return sendResendEmail({
+    to: input.to,
+    subject: `Zyteron | Código de seguridad para ${input.serviceName}`,
+    html,
+    text: `Código de seguridad: ${input.code}. Expira en ${input.expiresMinutes} minutos.`,
+  });
+}
+

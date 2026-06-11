@@ -48,6 +48,7 @@ model User {
   workOrders  WorkOrder[]
   verificationCodes EmailVerificationCode[]
   passwordResetCodes PasswordResetCode[]
+  credentialRevealCodes CredentialRevealCode[]
   documents ClientDocument[] @relation("ClientDocuments")
   uploadedDocuments ClientDocument[] @relation("ClientDocUploadedBy")
   supportTickets SupportTicket[] @relation("ClientSupportTickets")
@@ -634,3 +635,16 @@ enum SettingType {
   JSON
   BOOLEAN
 }
+
+model CredentialRevealCode {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash    String
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  attempts    Int      @default(0)
+  sentCount   Int      @default(1)
+  lastSentAt  DateTime @default(now())
+}
+

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AlertTriangle, ExternalLink, KeyRound, Lock, Shield, ShieldCheck } from "lucide-react";
-import { CredentialRevealButton } from "@/components/portal/panel/credential-reveal-button";
+import { CredentialSecretDisplay } from "@/components/portal/panel/credential-secret-display";
 import { requirePortalSession } from "@/lib/auth/portal-session";
 import { getClientPortalSnapshot } from "@/lib/portal/data";
 
@@ -85,10 +85,12 @@ export default async function PortalCredencialesPage() {
                     <span className="font-semibold text-slate-700">Usuario</span>
                     <span className="font-mono text-slate-600">{credential.username || "—"}</span>
                   </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-slate-700">Secreto</span>
-                    <span className="font-mono text-slate-600">{credential.secretMasked || "No registrado"}</span>
-                  </div>
+                  {/* The secret row is now handled completely by CredentialSecretDisplay */}
+                  <CredentialSecretDisplay 
+                    credentialId={credential.id}
+                    secretMasked={credential.secretMasked}
+                    username={credential.username}
+                  />
                   {credential.url ? (
                     <Link
                       href={credential.url}
@@ -106,9 +108,6 @@ export default async function PortalCredencialesPage() {
                   <p className="text-[11px] text-slate-400">
                     Actualizado: {formatDate(credential.updatedAt)}
                   </p>
-                  {credential.secretMasked ? (
-                    <CredentialRevealButton credentialId={credential.id} />
-                  ) : null}
                 </div>
               </div>
 
