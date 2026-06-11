@@ -74,7 +74,7 @@ export function PriorityServicePageTemplate({ page }: Props) {
           </p>
           <div className="flex flex-wrap gap-3">
             <Button asChild size="lg" className="bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/paquetes">
+              <Link href="/cotizador">
                 {page.primaryCta} <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -193,7 +193,7 @@ export function PriorityServicePageTemplate({ page }: Props) {
           <p className="mx-auto mt-3 max-w-3xl text-sm text-blue-100 sm:text-base">{page.finalCtaCopy}</p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Button asChild className="bg-white font-bold text-blue-800 hover:bg-blue-50">
-              <Link href="/paquetes">
+              <Link href="/cotizador">
                 Solicitar cotización <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>

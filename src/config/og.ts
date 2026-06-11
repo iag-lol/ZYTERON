@@ -7,6 +7,7 @@ const ogImageByPath: Record<string, string> = {
   "/blog": "/og/blog.png",
   "/casos-exito": "/og/casos-exito.png",
   "/contacto": "/og/contacto.png",
+  "/cotizador": "/og/planes.png",
   "/demos": "/og/demos.png",
   "/desarrollo-web": "/og/desarrollo-web.png",
   "/desarrollo-web-santiago": "/og/desarrollo-web.png",

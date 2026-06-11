@@ -59,7 +59,7 @@ export default async function ProductosPage() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50 font-semibold">
-                <Link href="/paquetes">Ir al cotizador de servicios</Link>
+                <Link href="/cotizador">Ir al cotizador de servicios</Link>
               </Button>
             </div>
           </div>

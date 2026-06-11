@@ -280,6 +280,9 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
                 <Button asChild variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
                   <Link href="/desarrollo-web">Ver desarrollo web</Link>
                 </Button>
+                <Button asChild variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
+                  <Link href="/cotizador">Ir al cotizador</Link>
+                </Button>
               </div>
             </section>
           </div>
@@ -339,6 +342,9 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
                 <Link href="/contacto">
                   Solicitar diagnóstico <ArrowRight className="h-4 w-4" />
                 </Link>
+              </Button>
+              <Button asChild variant="outline" className="mt-3 w-full border-slate-300 font-semibold text-slate-800 hover:bg-slate-50">
+                <Link href="/cotizador">Cotizar mi proyecto</Link>
               </Button>
             </div>
           </aside>

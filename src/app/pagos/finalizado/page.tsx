@@ -101,7 +101,7 @@ export default async function PaymentFinalizedPage({
               <Link href="/planes">Volver a planes</Link>
             </Button>
             <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-              <Link href="/paquetes">Volver al cotizador</Link>
+              <Link href="/cotizador">Volver al cotizador</Link>
             </Button>
             <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
               <Link href="/contacto">Contactar soporte</Link>

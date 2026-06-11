@@ -3,3 +3,6 @@ Allow: /
 Sitemap: https://www.zyteron.cl/sitemap.xml
 Disallow: /api/
 Disallow: /admin/
+Disallow: /portal-clientes/
+Disallow: /checkout/
+Disallow: /pagos/

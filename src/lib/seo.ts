@@ -257,7 +257,7 @@ export function buildProfessionalServiceJsonLd({
     "@id": `${pageUrl}#professionalservice`,
     name: siteConfig.name,
     legalName: siteConfig.legalName,
-    url: siteConfig.url,
+    url: pageUrl,
     logo: `${siteConfig.url}/logo.svg`,
     image: getAbsoluteOgImageUrl(path),
     description,
@@ -442,7 +442,7 @@ export function buildArticleJsonLd({
 
   return {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "BlogPosting",
     "@id": `${pageUrl}#article`,
     headline: title,
     description,
@@ -483,45 +483,72 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
     itemListElement: [
       {
         "@type": "Offer",
-        name: "Plan Básico",
+        name: "Web Básica de Presentación",
         priceCurrency: "CLP",
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 59990,
-          maxPrice: 189990,
+          minPrice: 35990,
         },
       },
       {
         "@type": "Offer",
-        name: "Plan Medio",
+        name: "Plan Emprendedor",
+        priceCurrency: "CLP",
+        priceSpecification: {
+          "@type": "PriceSpecification",
+          priceCurrency: "CLP",
+          minPrice: 69990,
+        },
+      },
+      {
+        "@type": "Offer",
+        name: "Plan Pyme",
         priceCurrency: "CLP",
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
           minPrice: 129990,
-          maxPrice: 399990,
         },
       },
       {
         "@type": "Offer",
-        name: "Plan Avanzado",
+        name: "Plan Empresa",
         priceCurrency: "CLP",
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 450000,
-          maxPrice: 850000,
+          minPrice: 249990,
         },
       },
       {
         "@type": "Offer",
-        name: "Plan Sistema",
+        name: "Catálogo / Tienda Online",
+        priceCurrency: "CLP",
+        priceSpecification: {
+          "@type": "PriceSpecification",
+          priceCurrency: "CLP",
+          minPrice: 299990,
+        },
+      },
+      {
+        "@type": "Offer",
+        name: "Sistema Web / Panel Administrativo",
         priceCurrency: "CLP",
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
           minPrice: 399990,
+        },
+      },
+      {
+        "@type": "Offer",
+        name: "Sistema Avanzado / Desarrollo a medida",
+        priceCurrency: "CLP",
+        priceSpecification: {
+          "@type": "PriceSpecification",
+          priceCurrency: "CLP",
+          minPrice: 749990,
         },
       },
     ],

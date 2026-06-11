@@ -6,20 +6,13 @@ import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { blogPosts } from "@/content/blog-posts";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import { formatStableDateEsCl } from "@/lib/stable-date";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Blog de Desarrollo Web | ZYTERON · Chile",
+  title: "Blog para empresas sobre web, sistemas y SEO",
   description:
-    "Guías para empresas chilenas sobre desarrollo web, sistemas, soporte TI, ecommerce, automatización y SEO técnico. Conoce nuestra metodología hoy.",
+    "Guías prácticas sobre desarrollo web, sistemas, soporte TI, ecommerce y SEO para empresas que necesitan decidir con mejor criterio.",
   path: "/blog",
-  keywords: [
-    "desarrollo web Chile",
-    "sistemas web para pymes",
-    "soporte TI Santiago",
-    "tiendas online Chile",
-    "automatización WhatsApp empresas",
-    "precio página web empresa Chile",
-  ],
 });
 
 const categories = [
@@ -33,15 +26,37 @@ const categories = [
 ];
 
 const suggestedArticles = [
-  "Cuánto cuesta una página web para pyme en Chile",
-  "Qué debe tener una web profesional para vender",
-  "Página web vs sistema web: diferencias",
-  "Cómo automatizar reservas por WhatsApp",
-  "Qué es un panel administrativo para empresas",
-  "Errores al contratar desarrollo web en Chile",
-  "Tienda online para pyme: qué necesitas antes de empezar",
-  "Cómo elegir una empresa de desarrollo web en Santiago",
+  {
+    title: "¿Cuánto cuesta una página web para empresa en Chile en 2026?",
+    href: "/blog/cuanto-cuesta-pagina-web-empresa-chile",
+  },
+  {
+    title: "¿Qué debe tener una web profesional para vender?",
+    href: "/blog/que-debe-tener-pagina-web-profesional-pyme",
+  },
+  {
+    title: "Página web vs sistema web: diferencias",
+    href: "/blog/diferencia-pagina-web-tienda-online-sistema-web",
+  },
+  {
+    title: "Automatización de WhatsApp para empresas",
+    href: "/blog/automatizacion-whatsapp-empresas-casos-reales-chile",
+  },
+  {
+    title: "Qué es un sistema web a medida",
+    href: "/blog/que-es-sistema-web-a-medida",
+  },
+  {
+    title: "Errores al contratar desarrollo web en Chile",
+    href: "/blog/errores-criticos-contratar-desarrollo-web-chile",
+  },
 ];
+
+const intentLabels = {
+  comercial: "Guía comercial",
+  informativa: "Guía informativa",
+  mixta: "Análisis aplicado",
+} as const;
 
 export default function BlogPage() {
   return (
@@ -87,7 +102,9 @@ export default function BlogPage() {
           <div className="grid gap-4 md:grid-cols-2">
             {blogPosts.map((post) => (
               <article key={post.slug} className="card-premium flex flex-col p-6">
-                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">{post.primaryKeyword}</p>
+                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">
+                  {intentLabels[post.intent]}
+                </p>
                 <h2 className="mb-2 text-xl font-extrabold text-slate-900">{post.title}</h2>
                 <p className="mb-4 text-sm leading-relaxed text-slate-600">{post.excerpt}</p>
                 <div className="mb-5 flex flex-wrap gap-2 text-xs text-slate-500">
@@ -95,8 +112,8 @@ export default function BlogPage() {
                     <Clock3 className="h-3.5 w-3.5" />
                     {post.readingTime}
                   </span>
-                  <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-semibold capitalize">
-                    {post.intent}
+                  <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-semibold">
+                    Actualizado {formatStableDateEsCl(post.updatedAt ?? post.publishedAt)}
                   </span>
                 </div>
                 <Button asChild variant="outline" className="mt-auto border-slate-300 text-slate-800 hover:bg-slate-50">
@@ -115,10 +132,14 @@ export default function BlogPage() {
             </p>
             <div className="mt-4 grid gap-2 md:grid-cols-2">
               {suggestedArticles.map((article) => (
-                <div key={article} className="flex items-start gap-2 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm text-slate-700">
+                <Link
+                  key={article.href}
+                  href={article.href}
+                  className="flex items-start gap-2 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm text-slate-700 transition-colors hover:border-blue-200 hover:bg-white"
+                >
                   <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" />
-                  <span>{article}</span>
-                </div>
+                  <span>{article.title}</span>
+                </Link>
               ))}
             </div>
           </section>
@@ -131,6 +152,9 @@ export default function BlogPage() {
             </Button>
             <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
               <Link href="/servicios">Ver servicios principales</Link>
+            </Button>
+            <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+              <Link href="/cotizador">Ir al cotizador</Link>
             </Button>
           </div>
         </Container>

@@ -32,7 +32,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: "Zyteron | Desarrollo Web, Sistemas y Soluciones Digitales para Empresas",
+    default: "Zyteron | Desarrollo web y sistemas para empresas",
     template: "%s | Zyteron",
   },
   description: siteConfig.description,
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: siteConfig.locale,
     url: siteConfig.url,
-    title: "Zyteron | Desarrollo Web, Sistemas y Soluciones Digitales para Empresas",
+    title: "Zyteron | Desarrollo web y sistemas para empresas",
     description: siteConfig.description,
     siteName: siteConfig.name,
     images: [
@@ -51,13 +51,13 @@ export const metadata: Metadata = {
         url: buildPrimaryOgImageUrl(),
         width: 1200,
         height: 630,
-        alt: "ZYTERON - Webs, sistemas y soporte TI para empresas",
+        alt: "Zyteron - Desarrollo web, sistemas y soporte TI para empresas",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Zyteron | Desarrollo Web, Sistemas y Soluciones Digitales para Empresas",
+    title: "Zyteron | Desarrollo web y sistemas para empresas",
     description: siteConfig.description,
     images: [buildPrimaryOgImageUrl()],
   },

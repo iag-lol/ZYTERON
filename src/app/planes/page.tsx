@@ -13,9 +13,9 @@ import {
 } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Planes flexibles para cada etapa de tu negocio",
+  title: "Planes web, ecommerce y sistemas para empresas",
   description:
-    "Planes base claros para web, ecommerce y sistemas en Chile. Desde una web básica de presentación hasta soluciones empresariales a medida.",
+    "Revisa planes y precios referenciales para páginas web, ecommerce, sistemas y soporte, con alcance claro para cada etapa del negocio.",
   path: "/planes",
 });
 
@@ -54,7 +54,7 @@ const WHATSAPP_URL =
   "https://wa.me/56939526626?text=Hola%20ZYTERON%2C%20quiero%20orientaci%C3%B3n%20sobre%20sus%20planes";
 
 function buildQuoteHref(projectType: ProjectTypeValue, presetPlan: string) {
-  return `/paquetes?tipo=${projectType}&plan=${presetPlan}`;
+  return `/cotizador?tipo=${projectType}&plan=${presetPlan}`;
 }
 
 function planToneClasses(tone: PlanTone = "default") {
@@ -494,7 +494,7 @@ export default function PlanesPage() {
           </div>
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/paquetes">Cotizar ahora</Link>
+              <Link href="/cotizador">Cotizar ahora</Link>
             </Button>
             <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
@@ -540,8 +540,10 @@ export default function PlanesPage() {
                       ) : null}
                     </div>
                     <p className="mt-3 text-sm leading-6 text-slate-600">{plan.description}</p>
-                    <p className="mt-3 text-sm font-medium leading-6 text-slate-700">{plan.commercialCopy}</p>
-                    <p className="mt-3 text-sm leading-6 text-slate-600">{plan.audience}</p>
+                    <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white/70 p-4">
+                      <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Ideal para</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-700">{plan.audience}</p>
+                    </div>
                   </div>
 
                   <div className="mt-5 hidden flex-1 grid-cols-1 gap-4 md:grid">
@@ -614,13 +616,14 @@ export default function PlanesPage() {
                     </Button>
                   </div>
 
-                  <p className="mt-3 text-xs text-slate-500">
-                    Valores base sujetos a evaluación comercial y técnica según el alcance final.
-                  </p>
                 </article>
               );
             })}
           </div>
+
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            Cada valor es referencial y se confirma según alcance, contenido, integraciones, soporte y complejidad real del proyecto.
+          </p>
         </Container>
       </section>
 
@@ -628,7 +631,7 @@ export default function PlanesPage() {
         <Container className="space-y-6">
           <div className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Adicionales</p>
-            <h2 className="text-3xl font-extrabold text-slate-900">Mejoras opcionales para tu proyecto</h2>
+            <h2 className="text-3xl font-extrabold text-slate-900">Funcionalidades y servicios opcionales</h2>
             <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
               Si tu proyecto necesita más alcance, estas mejoras se cotizan aparte según complejidad y volumen real.
             </p>
@@ -725,7 +728,7 @@ export default function PlanesPage() {
             </div>
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
               <Button asChild className="bg-blue-700 text-white hover:bg-blue-800">
-                <Link href="/paquetes?tipo=soporte-ti">Cotizar soporte</Link>
+                <Link href="/cotizador?tipo=soporte-ti">Cotizar soporte</Link>
               </Button>
               <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-white">
                 <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
@@ -754,7 +757,7 @@ export default function PlanesPage() {
               Podemos revisar tu caso y recomendar una estructura según objetivo, presupuesto y funcionalidades necesarias.
             </p>
             <Button asChild className="mt-4 bg-blue-700 text-white hover:bg-blue-800">
-              <Link href="/paquetes?tipo=no-seguro">Solicitar orientación</Link>
+              <Link href="/cotizador?tipo=no-seguro">Solicitar orientación</Link>
             </Button>
           </article>
         </Container>
@@ -782,7 +785,7 @@ export default function PlanesPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild className="bg-white text-blue-800 hover:bg-blue-50">
-              <Link href="/paquetes">
+              <Link href="/cotizador">
                 Ir al cotizador <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>

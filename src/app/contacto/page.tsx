@@ -8,11 +8,10 @@ import { siteConfig } from "@/config/site";
 import { buildContactPageJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Contacto | Cotiza tu Página Web o Sistema Digital",
+  title: "Contacto comercial para tu proyecto digital",
   description:
-    "Contáctanos para cotizar páginas web, tiendas online, sistemas internos, automatizaciones y soluciones digitales para tu empresa.",
+    "Habla con Zyteron para cotizar desarrollo web, sistemas, automatización y soporte TI para tu empresa en Chile.",
   path: "/contacto",
-  noIndex: true,
 });
 
 const WHATSAPP_URL =

@@ -127,7 +127,7 @@ export default function DemosPage() {
             Revisamos tus requerimientos y te proponemos una implementación por etapas, con cotización formal.
           </p>
           <Button asChild size="lg" className="mt-5 bg-white font-bold text-blue-800 hover:bg-blue-50">
-            <Link href="/paquetes">
+            <Link href="/cotizador">
               Solicitar cotización <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>

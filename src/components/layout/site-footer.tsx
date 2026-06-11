@@ -29,7 +29,7 @@ const footerColumns = [
       { label: "Demos funcionales", href: "/demos" },
       { label: "Productos TI", href: "/productos" },
       { label: "Planes y precios", href: "/planes" },
-      { label: "Cotizador", href: "/paquetes" },
+      { label: "Cotizador", href: "/cotizador" },
       { label: "Casos de éxito", href: "/casos-exito" },
       { label: "Preguntas frecuentes", href: "/faq" },
       { label: "Blog", href: "/blog" },

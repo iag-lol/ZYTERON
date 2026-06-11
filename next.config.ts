@@ -81,6 +81,22 @@ const nextConfig: NextConfig = {
         has: [
           {
             type: "host",
+            value: "www.zyteron.cl",
+          },
+          {
+            type: "header",
+            key: "x-forwarded-proto",
+            value: "http",
+          },
+        ],
+        destination: "https://www.zyteron.cl/:path*",
+        permanent: true,
+      },
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
             value: "zyteron.cl",
           },
         ],

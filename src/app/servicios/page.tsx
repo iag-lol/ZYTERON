@@ -11,9 +11,9 @@ const WHATSAPP_URL =
   "https://wa.me/56984752936?text=Hola%20Zyteron%2C%20quiero%20orientaci%C3%B3n%20sobre%20un%20servicio%20digital%20para%20mi%20empresa.";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Servicios digitales para empresas y pymes",
+  title: "Servicios digitales para empresas en Chile",
   description:
-    "Servicios de ZYTERON en Chile: desarrollo web, sistemas internos, automatización, soporte TI y soluciones tecnológicas para negocios.",
+    "Explora los servicios de Zyteron: desarrollo web, ecommerce, sistemas internos, automatización y soporte TI para empresas en Chile.",
   path: "/servicios",
 });
 
@@ -227,7 +227,7 @@ export default function ServiciosPage() {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {seoServicePages.map((service) => (
               <Link key={service.path} href={service.path} className="card-premium p-5 transition-colors hover:border-blue-200">
-                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">{service.primaryKeyword}</p>
+                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">Servicio específico</p>
                 <h3 className="text-lg font-extrabold text-slate-900">{service.navLabel}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">{service.metaDescription}</p>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
@@ -314,7 +314,7 @@ export default function ServiciosPage() {
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" className="bg-white font-bold text-blue-800 hover:bg-blue-50">
-              <Link href="/paquetes">
+              <Link href="/cotizador">
                 Solicitar cotización <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>

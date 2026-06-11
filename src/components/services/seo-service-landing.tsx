@@ -315,18 +315,33 @@ export function SeoServiceLanding({ page }: Props) {
             <aside className="card-premium p-6">
               <p className="mb-3 flex items-center gap-2 text-sm font-extrabold text-slate-900">
                 <SearchCheck className="h-5 w-5 text-blue-700" />
-                Enfoque del servicio
+                Qué priorizamos en este servicio
               </p>
-              <div className="flex flex-wrap gap-2">
-                {[page.primaryKeyword, ...page.secondaryKeywords].map((keyword) => (
-                  <span key={keyword} className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                    {keyword}
-                  </span>
+              <div className="space-y-2">
+                {page.benefits.slice(0, 3).map((benefit) => (
+                  <div key={benefit} className="flex items-start gap-2 text-sm text-slate-700">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-700" />
+                    <span>{benefit}</span>
+                  </div>
                 ))}
               </div>
               <p className="mt-4 text-sm leading-relaxed text-slate-600">
                 Atendemos proyectos para pymes, emprendedores y empresas de Santiago, Región Metropolitana y distintas regiones de Chile.
               </p>
+              <div className="mt-4 grid gap-2">
+                <Link
+                  href="/cotizador"
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-blue-200 hover:bg-white"
+                >
+                  Ir al cotizador
+                </Link>
+                <Link
+                  href="/contacto"
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-blue-200 hover:bg-white"
+                >
+                  Solicitar orientación comercial
+                </Link>
+              </div>
             </aside>
           </div>
         </Container>

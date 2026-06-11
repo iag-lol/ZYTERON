@@ -18,7 +18,7 @@ const primaryNavItems = [
   { href: "/productos", label: "Productos TI" },
   { href: "/planes", label: "Planes" },
   { href: "/blog", label: "Blog" },
-  { href: "/paquetes", label: "Cotizar" },
+  { href: "/cotizador", label: "Cotizar" },
   { href: "/contacto", label: "Contacto" },
 ];
 
@@ -103,7 +103,7 @@ export function SiteHeader() {
                 WhatsApp
               </Link>
               <Button asChild size="sm" className="bg-blue-700 px-3 font-bold text-white hover:bg-blue-800">
-                <Link href="/paquetes">Cotizar</Link>
+                <Link href="/cotizador">Cotizar</Link>
               </Button>
             </div>
 
@@ -123,7 +123,7 @@ export function SiteHeader() {
                 size="sm"
                 className="btn-primary-glow gap-2 bg-blue-700 font-bold text-white shadow-md shadow-blue-700/25 hover:bg-blue-800"
               >
-                <Link href="/paquetes">
+                <Link href="/cotizador">
                   Solicitar cotización <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </Button>
@@ -343,7 +343,7 @@ export function SiteHeader() {
                 Hablar por WhatsApp
               </Link>
               <Button asChild className="w-full rounded-xl bg-blue-700 py-6 text-base font-bold text-white shadow-md shadow-blue-700/20 hover:bg-blue-800 hover:shadow-lg hover:shadow-blue-700/30">
-                <Link href="/paquetes" onClick={() => setOpen(false)}>
+                <Link href="/cotizador" onClick={() => setOpen(false)}>
                   Cotizar mi proyecto <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>

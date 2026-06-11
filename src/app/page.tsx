@@ -35,9 +35,9 @@ const WHATSAPP_BASE =
   "https://wa.me/56984752936?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Desarrollo Web y Sistemas Digitales | ZYTERON · Santiago, Chile",
+  title: "Desarrollo web y sistemas para empresas en Chile",
   description:
-    "Creamos desarrollo web, sistemas digitales, tiendas online, automatización y soporte TI para empresas en Chile. Cotiza sin compromiso con Zyteron.",
+    "Desarrollamos sitios web, sistemas, ecommerce, automatización y soporte TI para empresas en Chile con foco en ventas, claridad y continuidad operativa.",
   path: "/",
   keywords: [
     "desarrollo web Chile",
@@ -344,9 +344,9 @@ export default async function Home() {
         id="home-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/",
-          title: "Zyteron | Desarrollo Web, Sistemas y Soluciones Digitales para Empresas",
+          title: "Zyteron | Desarrollo web y sistemas para empresas",
           description:
-            "Creamos páginas web, tiendas online, sistemas web y soluciones digitales para empresas, pymes y emprendedores en Chile.",
+            "Desarrollamos sitios web, ecommerce, sistemas y soporte TI para empresas en Chile con foco en claridad comercial y continuidad operativa.",
           breadcrumbs: [{ name: "Inicio", path: "/" }],
         })}
       />
@@ -363,7 +363,7 @@ export default async function Home() {
         id="home-services-list-schema"
         data={buildServicesListJsonLd({
           path: "/",
-          title: "Servicios principales ZYTERON",
+          title: "Servicios principales Zyteron",
           services: [
             {
               name: "Desarrollo web",
@@ -419,7 +419,7 @@ export default async function Home() {
 
             <div className="flex flex-wrap items-center gap-3">
               <Button asChild size="lg" className="btn-primary-glow gap-2 bg-blue-700 px-6 font-bold text-white hover:bg-blue-800">
-                <Link href="/paquetes">
+                <Link href="/cotizador">
                   Solicitar cotización <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
@@ -850,7 +850,7 @@ export default async function Home() {
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Button asChild size="lg" className="bg-white font-bold text-blue-800 hover:bg-blue-50">
-              <Link href="/paquetes">Cotizar una web para mi empresa</Link>
+              <Link href="/cotizador">Cotizar una web para mi empresa</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
               <Link href="/demos">Ver demos</Link>

@@ -1,12 +1,12 @@
 export const siteConfig = {
-  name: "ZYTERON",
-  legalName: "ZYTERON SpA",
+  name: "Zyteron",
+  legalName: "Zyteron SpA",
   taxId: "78.398.774-0",
   domain: "zyteron.cl",
   url: "https://www.zyteron.cl",
   locale: "es-CL",
   description:
-    "Creamos páginas web profesionales, tiendas online, sistemas web, automatizaciones y soluciones digitales para empresas, pymes y emprendedores en Chile.",
+    "Desarrollamos sitios web, sistemas digitales, automatizaciones y soporte TI para empresas en Chile con foco en claridad comercial y operación estable.",
   address: {
     city: "Santiago",
     region: "Región Metropolitana",
