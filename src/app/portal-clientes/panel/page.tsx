@@ -364,13 +364,15 @@ export default async function PortalDashboardPage() {
                   contacto@zyteron.cl
                 </a>
                 <a
-                  href="https://wa.me/56944699939"
+                  href="https://wa.me/56939526626"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
                 >
                   <Phone className="h-4 w-4" />
-                  +56 9 4469 9939 (WhatsApp)
+                  <span className="text-xs font-semibold text-emerald-700">
+                    +56 9 3952 6626 (WhatsApp)
+                  </span>
                 </a>
               </div>
               <Link
