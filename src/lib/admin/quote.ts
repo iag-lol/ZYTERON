@@ -13,6 +13,9 @@ export type QuoteLineItem = {
 export type QuotePaymentChannel = "FLOW" | "TRANSFER";
 export type QuotePaymentPlanMode = "FULL" | "DELIVERY" | "SPLIT";
 export type QuotePaymentStageKey = "FULL" | "DELIVERY" | "INITIAL" | "FINAL";
+export type QuotePaymentBillingType = "ONE_TIME" | "SUBSCRIPTION";
+export type QuoteSubscriptionInterval = "MONTHLY";
+export type QuoteSubscriptionStatus = "PENDING" | "ACTIVE" | "FAILED";
 export type QuotePaymentStageStatus =
   | "PENDING"
   | "READY"
@@ -63,6 +66,7 @@ export type QuotePaymentStage = {
 
 export type QuotePaymentConfig = {
   enabled?: boolean;
+  billingType?: QuotePaymentBillingType;
   planMode?: QuotePaymentPlanMode;
   defaultChannel?: QuotePaymentChannel;
   channelConfigured?: boolean;
@@ -75,6 +79,23 @@ export type QuotePaymentConfig = {
   customerAssignedAt?: string;
   contractEmailSentAt?: string;
   internalEmailSentAt?: string;
+  subscription?: {
+    interval?: QuoteSubscriptionInterval;
+    amount?: number;
+    planId?: string;
+    planName?: string;
+    customerId?: string;
+    subscriptionId?: string;
+    registerToken?: string;
+    registerUrl?: string;
+    status?: QuoteSubscriptionStatus;
+    activatedAt?: string;
+    nextInvoiceDate?: string;
+    updatedAt?: string;
+    lastError?: string;
+    lastPaymentAt?: string;
+    lastPaymentStatus?: string;
+  };
   stages?: QuotePaymentStage[];
 };
 

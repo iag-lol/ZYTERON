@@ -54,9 +54,14 @@ type LineItem = {
 const IVA_RATE = 0.19;
 const FLOW_PAYMENT_METHOD = "Flow online";
 const TRANSFER_PAYMENT_METHOD = "Transferencia bancaria";
+const SUBSCRIPTION_PAYMENT_TERM = "Suscripción mensual";
 const PAYMENT_METHODS = [FLOW_PAYMENT_METHOD, TRANSFER_PAYMENT_METHOD, "Cheque", "Efectivo", "Tarjeta de crédito", "Débito automático"];
-const PAYMENT_TERMS = ["Pago inmediato", "15 días", "30 días", "45 días", "60 días", "Contra entrega"];
+const PAYMENT_TERMS = [SUBSCRIPTION_PAYMENT_TERM, "Pago inmediato", "15 días", "30 días", "45 días", "60 días", "Contra entrega"];
 const VALIDITY_DAYS = ["15 días", "30 días", "45 días", "60 días", "90 días"];
+const PAYMENT_BILLING_TYPES = [
+  { value: "ONE_TIME", label: "Pago único" },
+  { value: "SUBSCRIPTION", label: "Suscripción mensual" },
+];
 const PAYMENT_CHANNELS = [
   { value: "FLOW", label: "Flow online" },
   { value: "TRANSFER", label: "Transferencia bancaria" },
@@ -144,6 +149,42 @@ function syncPaymentMethodForChannel(method: string, channel: "FLOW" | "TRANSFER
     return channel === "TRANSFER" ? TRANSFER_PAYMENT_METHOD : FLOW_PAYMENT_METHOD;
   }
   return method;
+}
+
+function applyBillingTypeToPaymentMeta<
+  T extends {
+    paymentMethod: string;
+    paymentTerms: string;
+    paymentChannel: string;
+    paymentPlanMode: string;
+    splitPercentInitial: string;
+    paymentBillingType: string;
+  },
+>(
+  current: T,
+  billingType: "ONE_TIME" | "SUBSCRIPTION",
+) {
+  if (billingType === "SUBSCRIPTION") {
+    return {
+      ...current,
+      paymentBillingType: billingType,
+      paymentMethod: FLOW_PAYMENT_METHOD,
+      paymentTerms: SUBSCRIPTION_PAYMENT_TERM,
+      paymentChannel: "FLOW",
+      paymentPlanMode: "FULL",
+      splitPercentInitial: "50",
+    };
+  }
+
+  return {
+    ...current,
+    paymentBillingType: billingType,
+    paymentMethod:
+      current.paymentMethod === FLOW_PAYMENT_METHOD || current.paymentMethod === TRANSFER_PAYMENT_METHOD
+        ? FLOW_PAYMENT_METHOD
+        : current.paymentMethod,
+    paymentTerms: current.paymentTerms === SUBSCRIPTION_PAYMENT_TERM ? "30 días" : current.paymentTerms,
+  };
 }
 
 function inferLineItem(raw: EnrichedQuote["meta"]["items"][number], index: number): LineItem {
@@ -266,6 +307,7 @@ export function QuoteEditForm({ quote }: Props) {
         quote.meta.paymentMethod ||
         (quote.meta.payment?.defaultChannel === "TRANSFER" ? TRANSFER_PAYMENT_METHOD : FLOW_PAYMENT_METHOD),
       paymentTerms: quote.meta.paymentTerms || "30 días",
+      paymentBillingType: quote.meta.payment?.billingType || "ONE_TIME",
       paymentChannel: quote.meta.payment?.defaultChannel || "FLOW",
       paymentPlanMode: quote.meta.payment?.planMode || "FULL",
       splitPercentInitial: String(quote.meta.payment?.splitPercentInitial || 50),
@@ -447,6 +489,7 @@ export function QuoteEditForm({ quote }: Props) {
       validityDays: meta.validityDays,
       paymentMethod: meta.paymentMethod,
       paymentTerms: meta.paymentTerms,
+      paymentBillingType: meta.paymentBillingType,
       paymentChannel: meta.paymentChannel,
       paymentPlanMode: meta.paymentPlanMode,
       splitPercentInitial: Math.max(1, Math.min(99, Number(meta.splitPercentInitial) || 50)),
@@ -648,16 +691,38 @@ export function QuoteEditForm({ quote }: Props) {
             </Field>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Field label="Modalidad de cobro">
+              <Select
+                value={meta.paymentBillingType}
+                onChange={(e) =>
+                  setMeta((p) => applyBillingTypeToPaymentMeta(p, e.target.value as "ONE_TIME" | "SUBSCRIPTION"))
+                }
+              >
+                {PAYMENT_BILLING_TYPES.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
             <Field label="Forma de pago">
-              <Select value={meta.paymentMethod} onChange={(e) => setMeta((p) => ({ ...p, paymentMethod: e.target.value }))}>
+              <Select
+                value={meta.paymentMethod}
+                onChange={(e) => setMeta((p) => ({ ...p, paymentMethod: e.target.value }))}
+                disabled={meta.paymentBillingType === "SUBSCRIPTION"}
+              >
                 {PAYMENT_METHODS.map((m) => (
                   <option key={m}>{m}</option>
                 ))}
               </Select>
             </Field>
             <Field label="Plazo de pago">
-              <Select value={meta.paymentTerms} onChange={(e) => setMeta((p) => ({ ...p, paymentTerms: e.target.value }))}>
+              <Select
+                value={meta.paymentTerms}
+                onChange={(e) => setMeta((p) => ({ ...p, paymentTerms: e.target.value }))}
+                disabled={meta.paymentBillingType === "SUBSCRIPTION"}
+              >
                 {PAYMENT_TERMS.map((t) => (
                   <option key={t}>{t}</option>
                 ))}
@@ -674,6 +739,7 @@ export function QuoteEditForm({ quote }: Props) {
                     paymentMethod: syncPaymentMethodForChannel(p.paymentMethod, nextChannel),
                   }));
                 }}
+                disabled={meta.paymentBillingType === "SUBSCRIPTION"}
               >
                 {PAYMENT_CHANNELS.map((item) => (
                   <option key={item.value} value={item.value}>
@@ -688,6 +754,7 @@ export function QuoteEditForm({ quote }: Props) {
                 onChange={(e) =>
                   setMeta((p) => ({ ...p, paymentPlanMode: e.target.value as "FULL" | "DELIVERY" | "SPLIT" }))
                 }
+                disabled={meta.paymentBillingType === "SUBSCRIPTION"}
               >
                 {PAYMENT_PLAN_MODES.map((item) => (
                   <option key={item.value} value={item.value}>
@@ -696,7 +763,12 @@ export function QuoteEditForm({ quote }: Props) {
                 ))}
               </Select>
             </Field>
-            {meta.paymentPlanMode === "SPLIT" ? (
+            {meta.paymentBillingType === "SUBSCRIPTION" ? (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] text-blue-900 lg:col-span-2">
+                La cotización se cobrará como suscripción mensual por el total completo vía Flow. El cliente activará el enrolamiento de tarjeta y los cobros recurrentes desde su portal.
+              </div>
+            ) : null}
+            {meta.paymentBillingType !== "SUBSCRIPTION" && meta.paymentPlanMode === "SPLIT" ? (
               <Field label="% al inicio">
                 <Input
                   type="number"
@@ -707,7 +779,7 @@ export function QuoteEditForm({ quote }: Props) {
                 />
               </Field>
             ) : null}
-            {meta.paymentPlanMode === "SPLIT" ? (
+            {meta.paymentBillingType !== "SUBSCRIPTION" && meta.paymentPlanMode === "SPLIT" ? (
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
                 El porcentaje restante se cobrará como pago final. La suma siempre se ajusta al total completo de la cotización.
               </div>

@@ -28,6 +28,7 @@ type QuoteUpdateBody = {
   validityDays?: string;
   paymentMethod?: string;
   paymentTerms?: string;
+  paymentBillingType?: "ONE_TIME" | "SUBSCRIPTION";
   paymentChannel?: "FLOW" | "TRANSFER";
   paymentPlanMode?: "FULL" | "DELIVERY" | "SPLIT";
   splitPercentInitial?: number;
@@ -138,6 +139,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       console.error("[quote-edit] client sync failed:", getErrorMessage(error));
     }
 
+    const paymentBillingType = body.paymentBillingType || current.meta.payment?.billingType;
+    const paymentBase =
+      paymentBillingType && paymentBillingType !== current.meta.payment?.billingType ? {} : current.meta.payment;
     const meta = normalizeQuoteMetaPayment(
       buildQuoteMeta({
       ...parseQuoteMessage(current.message),
@@ -161,10 +165,17 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       notes: text(body.notes) || current.meta.notes,
       terms: providedTerms || undefined,
       payment: {
-        ...current.meta.payment,
-        defaultChannel: body.paymentChannel || current.meta.payment?.defaultChannel,
-        channelConfigured: Boolean(body.paymentChannel || current.meta.payment?.channelConfigured),
-        planMode: body.paymentPlanMode || current.meta.payment?.planMode,
+        ...paymentBase,
+        billingType: paymentBillingType,
+        defaultChannel:
+          paymentBillingType === "SUBSCRIPTION"
+            ? "FLOW"
+            : body.paymentChannel || current.meta.payment?.defaultChannel,
+        channelConfigured:
+          paymentBillingType === "SUBSCRIPTION"
+            ? true
+            : Boolean(body.paymentChannel || current.meta.payment?.channelConfigured),
+        planMode: paymentBillingType === "SUBSCRIPTION" ? "FULL" : body.paymentPlanMode || current.meta.payment?.planMode,
         splitPercentInitial:
           typeof body.splitPercentInitial === "number"
             ? body.splitPercentInitial

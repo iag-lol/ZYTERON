@@ -4,10 +4,22 @@ import { enrichQuoteRecord, serializeQuoteMessage, type QuoteRecord } from "@/li
 import { syncWonQuoteById } from "@/lib/admin/repository";
 import { ZYTERON_COMPANY } from "@/lib/company";
 import { sendQuotePaymentReadyEmail, sendQuotePaymentStatusEmail, sendQuoteTransferProofAlertEmail } from "@/lib/notifications/quote-payment";
-import { createFlowPayment, getFlowPaymentStatus, isFlowApproved, isFlowRejected, mapFlowStatusLabel } from "@/lib/payments/flow";
+import {
+  createFlowCustomer,
+  createFlowPayment,
+  createFlowPlan,
+  createFlowSubscription,
+  getFlowCustomerRegisterStatus,
+  getFlowPaymentStatus,
+  isFlowApproved,
+  isFlowRejected,
+  mapFlowStatusLabel,
+  registerFlowCustomerCard,
+} from "@/lib/payments/flow";
 import {
   appendTransferProof,
   buildFlowCommerceOrder,
+  buildFlowSubscriptionPlanId,
   getPayableQuoteStage,
   markQuoteStagePaid,
   markQuoteStageReady,
@@ -103,6 +115,31 @@ async function saveQuotePaymentMeta(input: {
       total: input.meta.grandTotal,
       subtotal: input.meta.subtotal,
       discount: input.meta.totalDescuento,
+    },
+  });
+}
+
+function buildPortalQuotePaymentsUrl(baseUrl: string, params?: Record<string, string>) {
+  const url = new URL("/portal-clientes/panel/cotizaciones", baseUrl);
+  for (const [key, value] of Object.entries(params || {})) {
+    if (!value) continue;
+    url.searchParams.set(key, value);
+  }
+  return url.toString();
+}
+
+function mergeQuotePaymentSubscription(
+  meta: QuoteMeta,
+  patch: Partial<NonNullable<NonNullable<QuoteMeta["payment"]>["subscription"]>>,
+) {
+  return normalizeQuoteMetaPayment({
+    ...meta,
+    payment: {
+      ...(meta.payment || {}),
+      subscription: {
+        ...(meta.payment?.subscription || {}),
+        ...patch,
+      },
     },
   });
 }
@@ -255,6 +292,9 @@ export async function createQuoteFlowCheckout(input: {
   if (!stage) {
     throw new Error("No hay un pago habilitado para esta cotización.");
   }
+  if (quote.meta.payment?.billingType === "SUBSCRIPTION") {
+    throw new Error("Esta cotización debe activarse como suscripción mensual.");
+  }
   if (stage.paymentChannel !== "FLOW") {
     throw new Error("Esta etapa está configurada para transferencia bancaria.");
   }
@@ -303,6 +343,88 @@ export async function createQuoteFlowCheckout(input: {
     stageKey: stage.key,
     amount: stage.amount,
     checkoutUrl: `${flow.url}?token=${encodeURIComponent(flow.token)}`,
+  };
+}
+
+export async function createQuoteFlowSubscriptionStart(input: {
+  quoteId: string;
+  userId: string;
+  email: string;
+  req: Request;
+}) {
+  const quote = await getQuoteWithPayment(input.quoteId);
+  if (!quote) throw new Error("Cotización no encontrada.");
+  if (quote.userId && quote.userId !== input.userId) {
+    throw new Error("Esta cotización no pertenece a tu cuenta.");
+  }
+
+  const quoteEmail = String(quote.email || "").trim();
+  if (!quoteEmail || quoteEmail.toLowerCase() !== input.email.toLowerCase()) {
+    throw new Error("La cotización no está vinculada a tu correo activo.");
+  }
+
+  const payment = quote.meta.payment;
+  const stage = getPayableQuoteStage(payment);
+  if (!payment || payment.billingType !== "SUBSCRIPTION" || !stage) {
+    throw new Error("Esta cotización no está configurada para suscripción mensual.");
+  }
+  if (payment.subscription?.status === "ACTIVE") {
+    throw new Error("La suscripción mensual de esta cotización ya está activa.");
+  }
+
+  const baseUrl = resolveBaseUrl(input.req);
+  const planId = payment.subscription?.planId || buildFlowSubscriptionPlanId(quote.id);
+  const planName = payment.subscription?.planName || `${quote.displayNumber} mensual`;
+
+  if (!payment.subscription?.planId) {
+    await createFlowPlan({
+      planId,
+      name: planName,
+      amount: quote.totalAmount,
+      interval: 3,
+      intervalCount: 1,
+      urlCallback: `${baseUrl}/api/portal/payments/quotes/subscription/confirmation?quoteId=${encodeURIComponent(quote.id)}`,
+    });
+  }
+
+  const customerId =
+    payment.subscription?.customerId ||
+    (
+      await createFlowCustomer({
+        name: quote.name || "Cliente",
+        email: quoteEmail,
+        externalId: `qsub-${quote.id.slice(0, 8)}-${Date.now().toString(36)}`,
+      })
+    ).customerId;
+
+  const returnUrl = `${baseUrl}/api/portal/payments/quotes/subscription/return?quoteId=${encodeURIComponent(quote.id)}`;
+  const register = await registerFlowCustomerCard({
+    customerId,
+    urlReturn: returnUrl,
+  });
+
+  const nextMeta = mergeQuotePaymentSubscription(quote.meta, {
+    interval: "MONTHLY",
+    amount: quote.totalAmount,
+    planId,
+    planName,
+    customerId,
+    registerToken: register.token,
+    registerUrl: `${register.url}?token=${encodeURIComponent(register.token)}`,
+    status: "PENDING",
+    updatedAt: new Date().toISOString(),
+    lastError: undefined,
+  });
+
+  await saveQuotePaymentMeta({
+    quote,
+    meta: nextMeta,
+    status: quote.status === "PENDING" ? "SENT" : (quote.status as "SENT" | "WON" | "LOST" | undefined) || "SENT",
+  });
+
+  return {
+    quoteId: quote.id,
+    redirectUrl: `${register.url}?token=${encodeURIComponent(register.token)}`,
   };
 }
 
@@ -426,6 +548,182 @@ export async function processQuoteFlowPaymentToken(token: string, req?: Request)
     flowLabel: mapFlowStatusLabel(status.status),
     quoteStatus: quote.status,
   };
+}
+
+export async function activateQuoteFlowSubscriptionFromToken(input: {
+  quoteId: string;
+  token: string;
+  req?: Request;
+}) {
+  const quote = await getQuoteWithPayment(input.quoteId);
+  if (!quote) throw new Error("Cotización no encontrada.");
+
+  const currentStage = (quote.meta.payment?.stages || []).find((stage) => stage.key === "FULL");
+  if (!quote.meta.payment || quote.meta.payment.billingType !== "SUBSCRIPTION" || !currentStage) {
+    throw new Error("La cotización no está configurada para suscripción mensual.");
+  }
+
+  const baseUrl = resolveBaseUrl(input.req);
+  if (quote.meta.payment.subscription?.status === "ACTIVE" && quote.meta.payment.subscription?.subscriptionId) {
+    return {
+      ok: true as const,
+      redirectUrl: buildPortalQuotePaymentsUrl(baseUrl, {
+        payment_result: "paid",
+        payment_label: "Suscripción activa",
+        payment_message: "La suscripción mensual ya estaba activa.",
+      }),
+    };
+  }
+
+  const registerStatus = await getFlowCustomerRegisterStatus(input.token);
+  const customerId = String(registerStatus.customerId || "").trim();
+  const registerCode = Number.parseInt(String(registerStatus.status || "0"), 10);
+
+  if (!customerId || registerCode !== 1) {
+    const failedMeta = mergeQuotePaymentSubscription(quote.meta, {
+      status: "FAILED",
+      customerId: customerId || quote.meta.payment.subscription?.customerId,
+      updatedAt: new Date().toISOString(),
+      lastError: "No se confirmó el registro de tarjeta para la suscripción mensual.",
+    });
+
+    await saveQuotePaymentMeta({
+      quote,
+      meta: failedMeta,
+      status: quote.status === "WON" ? "WON" : (quote.status as "PENDING" | "SENT" | "LOST" | undefined) || "SENT",
+    });
+
+    return {
+      ok: false as const,
+      redirectUrl: buildPortalQuotePaymentsUrl(baseUrl, {
+        payment_result: "error",
+        payment_message: "No se confirmó el registro de tarjeta. Puedes intentarlo nuevamente.",
+        payment_label: "Suscripción mensual",
+      }),
+    };
+  }
+
+  const planId = quote.meta.payment.subscription?.planId || buildFlowSubscriptionPlanId(quote.id);
+  const planName = quote.meta.payment.subscription?.planName || `${quote.displayNumber} mensual`;
+  if (!quote.meta.payment.subscription?.planId) {
+    await createFlowPlan({
+      planId,
+      name: planName,
+      amount: quote.totalAmount,
+      interval: 3,
+      intervalCount: 1,
+      urlCallback: `${baseUrl}/api/portal/payments/quotes/subscription/confirmation?quoteId=${encodeURIComponent(quote.id)}`,
+    });
+  }
+
+  const subscription = await createFlowSubscription({
+    planId,
+    customerId,
+  });
+
+  const payment = markQuoteStagePaid(quote.meta.payment, "FULL", {
+    approvedAt: new Date().toISOString(),
+    paidAt: new Date().toISOString(),
+  });
+  const nextMeta = normalizeQuoteMetaPayment({
+    ...quote.meta,
+    payment: {
+      ...payment,
+      subscription: {
+        ...(payment.subscription || {}),
+        interval: "MONTHLY",
+        amount: quote.totalAmount,
+        planId: subscription.planId,
+        planName,
+        customerId: subscription.customerId,
+        subscriptionId: subscription.subscriptionId,
+        status: "ACTIVE",
+        activatedAt: new Date().toISOString(),
+        nextInvoiceDate: subscription.nextInvoiceDate,
+        updatedAt: new Date().toISOString(),
+        registerToken: undefined,
+        registerUrl: undefined,
+        lastError: undefined,
+        lastPaymentAt: new Date().toISOString(),
+        lastPaymentStatus: "SUSCRIPCION_ACTIVA",
+      },
+    },
+  });
+
+  await saveQuotePaymentMeta({
+    quote,
+    meta: nextMeta,
+    status: "WON",
+  });
+  await syncWonQuoteById(quote.id);
+
+  const paidStage = (nextMeta.payment?.stages || []).find((stage) => stage.key === "FULL") || currentStage;
+  await notifyStageStatus({
+    quote,
+    stage: paidStage,
+    title: "Suscripción activa",
+    intro: "tu suscripción mensual fue activada correctamente y Flow realizará el cobro del total de la cotización cada mes.",
+    type: "SUCCESS",
+    baseUrl,
+  });
+
+  return {
+    ok: true as const,
+    redirectUrl: buildPortalQuotePaymentsUrl(baseUrl, {
+      payment_result: "paid",
+      payment_label: "Suscripción activa",
+      payment_message: "La suscripción mensual quedó activada correctamente.",
+    }),
+  };
+}
+
+export async function processQuoteSubscriptionChargeConfirmation(input: {
+  quoteId: string;
+  token: string;
+  req?: Request;
+}) {
+  const quote = await getQuoteWithPayment(input.quoteId);
+  if (!quote || !quote.meta.payment || quote.meta.payment.billingType !== "SUBSCRIPTION") {
+    throw new Error("Cotización de suscripción no encontrada.");
+  }
+
+  const status = await getFlowPaymentStatus(input.token);
+  const payment = normalizeQuoteMetaPayment({
+    ...quote.meta,
+    payment: {
+      ...(quote.meta.payment || {}),
+      subscription: {
+        ...(quote.meta.payment?.subscription || {}),
+        status: quote.meta.payment?.subscription?.status === "ACTIVE" ? "ACTIVE" : quote.meta.payment?.subscription?.status,
+        updatedAt: new Date().toISOString(),
+        lastPaymentAt: new Date().toISOString(),
+        lastPaymentStatus: mapFlowStatusLabel(status.status),
+        lastError:
+          isFlowRejected(status.status) && typeof status.lastError === "object" && status.lastError
+            ? JSON.stringify(status.lastError)
+            : undefined,
+      },
+    },
+  }).payment;
+
+  await saveQuotePaymentMeta({
+    quote,
+    meta: {
+      ...quote.meta,
+      payment,
+    },
+    status: quote.status === "LOST" ? "LOST" : "WON",
+  });
+
+  if (isFlowRejected(status.status)) {
+    await createPortalNotification({
+      userId: quote.userId,
+      title: "Cobro mensual observado",
+      body: `${quote.displayNumber} registró un intento de cobro mensual no aprobado en Flow.`,
+      type: "WARNING",
+      link: "/portal-clientes/panel/cotizaciones",
+    });
+  }
 }
 
 export async function submitQuoteTransferProof(input: {

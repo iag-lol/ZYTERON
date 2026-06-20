@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { AlertCircle, CheckCircle2, CreditCard, Download, Landmark, Loader2, UploadCloud } from "lucide-react";
 import { ZYTERON_COMPANY } from "@/lib/company";
-import { quotePaymentIsMarkedPaidInAdmin, quotePaymentRequiresPortalAction } from "@/lib/payments/quote-payments";
+import { quotePaymentIsMarkedPaidInAdmin, quotePaymentVisibleInPortal } from "@/lib/payments/quote-payments";
 
 type QuoteStage = {
   key: "FULL" | "DELIVERY" | "INITIAL" | "FINAL";
@@ -31,9 +31,17 @@ type QuoteItem = {
   totalAmount: number;
   pdfUrl: string;
   payment?: {
+    billingType?: "ONE_TIME" | "SUBSCRIPTION";
     totalPaid?: number;
     totalPending?: number;
     alertStatus?: "PENDING" | "PAID" | "TRANSFER_REVIEW";
+    subscription?: {
+      interval?: "MONTHLY";
+      amount?: number;
+      status?: "PENDING" | "ACTIVE" | "FAILED";
+      nextInvoiceDate?: string;
+      lastError?: string;
+    };
     stages?: QuoteStage[];
   };
 };
@@ -102,7 +110,7 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
   const [transferState, setTransferState] = useState<Record<string, { transferDate: string; reference: string; note: string; file: File | null }>>({});
 
   const actionableQuotes = useMemo(
-    () => quotes.filter((quote) => quotePaymentRequiresPortalAction(quote.status, quote.payment)),
+    () => quotes.filter((quote) => quotePaymentVisibleInPortal(quote.status, quote.payment)),
     [quotes],
   );
 
@@ -122,6 +130,24 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
     }
 
     window.location.assign(payload.checkoutUrl);
+  }
+
+  async function startSubscriptionPayment(quoteId: string) {
+    setFeedback(null);
+    setActiveStage(`${quoteId}:SUBSCRIPTION`);
+
+    const response = await fetch(`/api/portal/payments/quotes/${quoteId}/subscription/start`, {
+      method: "POST",
+    });
+    const payload = (await response.json().catch(() => ({}))) as { redirectUrl?: string; error?: string };
+
+    if (!response.ok || !payload.redirectUrl) {
+      setFeedback(payload.error || "No se pudo iniciar la suscripción mensual.");
+      setActiveStage(null);
+      return;
+    }
+
+    window.location.assign(payload.redirectUrl);
   }
 
   async function submitTransfer(quoteId: string, stage: QuoteStage) {
@@ -185,10 +211,16 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
 
       {actionableQuotes.map((quote) => {
         const settledByAdmin = quotePaymentIsMarkedPaidInAdmin(quote.status);
+        const isSubscriptionQuote = quote.payment?.billingType === "SUBSCRIPTION";
+        const subscriptionActive = quote.payment?.subscription?.status === "ACTIVE";
         const quoteBadge = settledByAdmin
-          ? "Pagada"
+          ? isSubscriptionQuote && subscriptionActive
+            ? "Suscripción activa"
+            : "Pagada"
           : quote.payment?.alertStatus === "TRANSFER_REVIEW"
             ? "Pago en revisión"
+            : isSubscriptionQuote
+              ? "Suscripción pendiente"
             : "Pago pendiente";
 
         return (
@@ -215,7 +247,7 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                 note: "",
                 file: null,
               };
-              const isBusy = pending && activeStage === key;
+              const isBusy = pending && (activeStage === key || activeStage === `${quote.id}:SUBSCRIPTION`);
 
               return (
                 <div key={stage.key} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -231,9 +263,23 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
 
                   <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
                     <span className="font-semibold text-slate-900">{currency(stage.amount)}</span>
-                    <span>{stage.paymentChannel === "FLOW" ? "Pago online con tarjeta" : "Transferencia bancaria"}</span>
+                    <span>
+                      {isSubscriptionQuote
+                        ? "Suscripción mensual por Flow"
+                        : stage.paymentChannel === "FLOW"
+                          ? "Pago online con tarjeta"
+                          : "Transferencia bancaria"}
+                    </span>
                     {stage.paidAt ? <span>Pagado</span> : null}
                   </div>
+
+                  {isSubscriptionQuote ? (
+                    <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+                      {subscriptionActive
+                        ? `Suscripción mensual activa por ${currency(quote.payment?.subscription?.amount || stage.amount)}${quote.payment?.subscription?.nextInvoiceDate ? ` · próximo cobro ${quote.payment.subscription.nextInvoiceDate}` : ""}.`
+                        : `Esta cotización se activará como suscripción mensual por ${currency(quote.payment?.subscription?.amount || stage.amount)}.`}
+                    </div>
+                  ) : null}
 
                   <div className="mt-3">
                     <a
@@ -266,21 +312,24 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                       {canShowFlowPayment(stage) ? (
                         <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
                           <p className="text-sm font-semibold text-blue-900">
-                            Realiza el pago online con las tarjetas activas disponibles en la pasarela.
+                            {isSubscriptionQuote
+                              ? "Activa la suscripción mensual con las tarjetas disponibles en Flow. El cobro usará el total completo de la cotización cada mes."
+                              : "Realiza el pago online con las tarjetas activas disponibles en la pasarela."}
                           </p>
-                          {stage.status === "PROCESSING" ? (
-                            <p className="mt-2 text-xs text-blue-700">
-                              Tu intento anterior sigue sin confirmaci&oacute;n. Puedes volver a abrir el pago mientras Flow no lo apruebe.
-                            </p>
-                          ) : null}
                           <button
                             type="button"
                             disabled={pending}
-                            onClick={() => startTransition(() => void startFlowPayment(quote.id, stage.key))}
+                            onClick={() =>
+                              startTransition(() =>
+                                isSubscriptionQuote
+                                  ? void startSubscriptionPayment(quote.id)
+                                  : void startFlowPayment(quote.id, stage.key),
+                              )
+                            }
                             className="mt-3 inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:opacity-60"
                           >
                             {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                            Pagar cotizaci&oacute;n
+                            {isSubscriptionQuote ? "Activar suscripci&oacute;n mensual" : "Pagar cotizaci&oacute;n"}
                           </button>
                         </div>
                       ) : (

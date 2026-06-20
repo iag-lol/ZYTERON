@@ -17,6 +17,7 @@ type QuoteBody = {
   discount?: number;
   total?: number;
   status?: string;
+  paymentBillingType?: "ONE_TIME" | "SUBSCRIPTION";
   paymentChannel?: "FLOW" | "TRANSFER";
   paymentPlanMode?: "FULL" | "DELIVERY" | "SPLIT";
   splitPercentInitial?: number;
@@ -64,14 +65,22 @@ export async function POST(req: Request) {
     }
 
     const rawMeta = parseQuoteMessage(message);
+    const paymentBillingType = body.paymentBillingType || rawMeta.payment?.billingType;
     const meta = normalizeQuoteMetaPayment(
       buildQuoteMeta({
         ...rawMeta,
         payment: {
           ...rawMeta.payment,
-          defaultChannel: body.paymentChannel || rawMeta.payment?.defaultChannel,
-          channelConfigured: Boolean(body.paymentChannel || rawMeta.payment?.channelConfigured),
-          planMode: body.paymentPlanMode || rawMeta.payment?.planMode,
+          billingType: paymentBillingType,
+          defaultChannel:
+            paymentBillingType === "SUBSCRIPTION"
+              ? "FLOW"
+              : body.paymentChannel || rawMeta.payment?.defaultChannel,
+          channelConfigured:
+            paymentBillingType === "SUBSCRIPTION"
+              ? true
+              : Boolean(body.paymentChannel || rawMeta.payment?.channelConfigured),
+          planMode: paymentBillingType === "SUBSCRIPTION" ? "FULL" : body.paymentPlanMode || rawMeta.payment?.planMode,
           splitPercentInitial:
             typeof body.splitPercentInitial === "number"
               ? body.splitPercentInitial

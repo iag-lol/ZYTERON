@@ -61,6 +61,27 @@ export type FlowSubscriptionCreateInput = {
   periodsNumber?: number;
 };
 
+export type FlowPlanCreateInput = {
+  planId: string;
+  name: string;
+  amount: number;
+  interval: 1 | 2 | 3 | 4;
+  intervalCount?: number;
+  urlCallback?: string;
+  periodsNumber?: number;
+  trialPeriodDays?: number;
+  daysUntilDue?: number;
+};
+
+export type FlowPlanCreateResult = {
+  planId: string;
+  name: string;
+  amount: number;
+  interval: number;
+  intervalCount?: number;
+  created?: string;
+};
+
 export type FlowSubscriptionCreateResult = {
   subscriptionId: string;
   planId: string;
@@ -287,6 +308,48 @@ export async function createFlowCustomer(input: {
     name: typeof body.name === "string" ? body.name : undefined,
     externalId: typeof body.externalId === "string" ? body.externalId : undefined,
     status: typeof body.status === "string" ? body.status : undefined,
+  };
+}
+
+export async function createFlowPlan(input: FlowPlanCreateInput): Promise<FlowPlanCreateResult> {
+  const body = await flowPost("/plans/create", {
+    planId: input.planId,
+    name: input.name,
+    currency: "CLP",
+    amount: Math.max(0, Math.round(input.amount)),
+    interval: input.interval,
+    interval_count:
+      typeof input.intervalCount === "number" && Number.isFinite(input.intervalCount)
+        ? Math.max(1, Math.round(input.intervalCount))
+        : 1,
+    urlCallback: input.urlCallback,
+    periods_number:
+      typeof input.periodsNumber === "number" && Number.isFinite(input.periodsNumber)
+        ? Math.max(0, Math.round(input.periodsNumber))
+        : undefined,
+    trial_period_days:
+      typeof input.trialPeriodDays === "number" && Number.isFinite(input.trialPeriodDays)
+        ? Math.max(0, Math.round(input.trialPeriodDays))
+        : undefined,
+    days_until_due:
+      typeof input.daysUntilDue === "number" && Number.isFinite(input.daysUntilDue)
+        ? Math.max(0, Math.round(input.daysUntilDue))
+        : undefined,
+  });
+
+  const planId = String(body.planId || "").trim();
+  const name = String(body.name || "").trim();
+  if (!planId || !name) {
+    throw new Error("Flow no devolvió datos completos del plan de suscripción.");
+  }
+
+  return {
+    planId,
+    name,
+    amount: Number(body.amount || 0),
+    interval: Number(body.interval || 0),
+    intervalCount: typeof body.interval_count === "number" ? body.interval_count : undefined,
+    created: typeof body.created === "string" ? body.created : undefined,
   };
 }
 

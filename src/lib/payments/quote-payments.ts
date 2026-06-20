@@ -1,11 +1,13 @@
 import type {
   QuoteMeta,
+  QuotePaymentBillingType,
   QuotePaymentChannel,
   QuotePaymentConfig,
   QuotePaymentPlanMode,
   QuotePaymentProof,
   QuotePaymentStage,
   QuotePaymentStageKey,
+  QuoteSubscriptionStatus,
 } from "@/lib/admin/quote";
 
 type NormalizeInput = {
@@ -26,6 +28,8 @@ type StageFlowData = {
   lastError?: string;
 };
 
+type QuotePaymentSubscriptionData = NonNullable<QuotePaymentConfig["subscription"]>;
+
 function roundAmount(value: number) {
   return Math.max(0, Math.round(Number.isFinite(value) ? value : 0));
 }
@@ -41,6 +45,16 @@ function asRecord(value: unknown) {
 
 function normalizeChannel(value?: string | null): QuotePaymentChannel {
   return String(value || "").trim().toUpperCase() === "TRANSFER" ? "TRANSFER" : "FLOW";
+}
+
+function normalizeBillingType(value?: string | null): QuotePaymentBillingType {
+  return String(value || "").trim().toUpperCase() === "SUBSCRIPTION" ? "SUBSCRIPTION" : "ONE_TIME";
+}
+
+function normalizeSubscriptionStatus(value?: string | null): QuoteSubscriptionStatus {
+  const normalized = String(value || "").trim().toUpperCase();
+  if (normalized === "ACTIVE" || normalized === "FAILED") return normalized;
+  return "PENDING";
 }
 
 function inferDefaultChannel(value?: string | null): QuotePaymentChannel {
@@ -72,6 +86,29 @@ function normalizeCommercialQuoteStatus(value?: string | null) {
   const normalized = String(value || "").trim().toUpperCase();
   if (normalized === "WON" || normalized === "LOST" || normalized === "SENT") return normalized;
   return "PENDING" as const;
+}
+
+function normalizeSubscription(raw: QuotePaymentConfig["subscription"], totalQuoted: number) {
+  const subscription = asRecord(raw);
+  if (!subscription) return undefined;
+
+  return {
+    interval: "MONTHLY" as const,
+    amount: roundAmount(Number(subscription.amount || totalQuoted)),
+    planId: typeof subscription.planId === "string" ? subscription.planId : undefined,
+    planName: typeof subscription.planName === "string" ? subscription.planName : undefined,
+    customerId: typeof subscription.customerId === "string" ? subscription.customerId : undefined,
+    subscriptionId: typeof subscription.subscriptionId === "string" ? subscription.subscriptionId : undefined,
+    registerToken: typeof subscription.registerToken === "string" ? subscription.registerToken : undefined,
+    registerUrl: typeof subscription.registerUrl === "string" ? subscription.registerUrl : undefined,
+    status: normalizeSubscriptionStatus(typeof subscription.status === "string" ? subscription.status : undefined),
+    activatedAt: typeof subscription.activatedAt === "string" ? subscription.activatedAt : undefined,
+    nextInvoiceDate: typeof subscription.nextInvoiceDate === "string" ? subscription.nextInvoiceDate : undefined,
+    updatedAt: typeof subscription.updatedAt === "string" ? subscription.updatedAt : undefined,
+    lastError: typeof subscription.lastError === "string" ? subscription.lastError : undefined,
+    lastPaymentAt: typeof subscription.lastPaymentAt === "string" ? subscription.lastPaymentAt : undefined,
+    lastPaymentStatus: typeof subscription.lastPaymentStatus === "string" ? subscription.lastPaymentStatus : undefined,
+  } satisfies QuotePaymentSubscriptionData;
 }
 
 function normalizePlanMode(value?: string | null, fallbackTerms?: string | null): QuotePaymentPlanMode {
@@ -172,8 +209,11 @@ function buildStage(input: {
 export function normalizeQuotePaymentConfig(input: NormalizeInput): QuotePaymentConfig {
   const totalQuoted = roundAmount(input.totalQuoted);
   const raw = input.raw || {};
-  const defaultChannel = resolveDefaultChannel(raw, input.fallbackMethod);
-  const planMode = normalizePlanMode(raw.planMode, input.fallbackTerms);
+  const billingType = normalizeBillingType(raw.billingType);
+  const subscription = normalizeSubscription(raw.subscription, totalQuoted);
+  const isSubscription = billingType === "SUBSCRIPTION";
+  const defaultChannel = isSubscription ? "FLOW" : resolveDefaultChannel(raw, input.fallbackMethod);
+  const planMode = isSubscription ? "FULL" : normalizePlanMode(raw.planMode, input.fallbackTerms);
   const splitPercentInitial = clampPercent(Number(raw.splitPercentInitial || 50), 50);
   const splitPercentFinal = Math.max(1, 100 - splitPercentInitial);
   const existingStages = Array.isArray(raw.stages) ? raw.stages : [];
@@ -187,7 +227,39 @@ export function normalizeQuotePaymentConfig(input: NormalizeInput): QuotePayment
   const finalAmount = Math.max(0, totalQuoted - initialAmount);
 
   const stages: QuotePaymentStage[] =
-    planMode === "SPLIT"
+    isSubscription
+      ? [
+          (() => {
+            const baseStage = buildStage({
+              key: "FULL",
+              label: "Suscripción mensual",
+              percentage: 100,
+              amount: totalQuoted,
+              paymentChannel: "FLOW",
+              dueEnabled: subscription?.status !== "ACTIVE",
+              dueLabel:
+                subscription?.status === "ACTIVE"
+                  ? "Suscripción activa con cobro mensual del total de la cotización"
+                  : "Activa un cobro mensual recurrente por el total de la cotización",
+              existing: stageByKey.get("FULL"),
+            });
+
+            return subscription?.status === "ACTIVE"
+              ? {
+                  ...baseStage,
+                  status: "PAID" as const,
+                  dueEnabled: false,
+                  paidAt: baseStage.paidAt || subscription.activatedAt,
+                  approvedAt: baseStage.approvedAt || subscription.activatedAt,
+                }
+              : {
+                  ...baseStage,
+                  status: baseStage.status === "PAID" ? ("READY" as const) : baseStage.status,
+                  dueEnabled: true,
+                };
+          })(),
+        ]
+      : planMode === "SPLIT"
       ? [
           buildStage({
             key: "INITIAL",
@@ -236,12 +308,20 @@ export function normalizeQuotePaymentConfig(input: NormalizeInput): QuotePayment
             }),
           ];
 
-  const totalPaid = roundAmount(
-    stages
-      .filter((stage) => stage.status === "PAID")
-      .reduce((acc, stage) => acc + stage.amount, 0),
-  );
-  const totalPending = Math.max(0, totalQuoted - totalPaid);
+  const totalPaid = isSubscription
+    ? subscription?.status === "ACTIVE"
+      ? totalQuoted
+      : 0
+    : roundAmount(
+        stages
+          .filter((stage) => stage.status === "PAID")
+          .reduce((acc, stage) => acc + stage.amount, 0),
+      );
+  const totalPending = isSubscription
+    ? subscription?.status === "ACTIVE"
+      ? 0
+      : totalQuoted
+    : Math.max(0, totalQuoted - totalPaid);
   const alertStatus = stages.some((stage) => stage.status === "PENDING_TRANSFER_REVIEW")
     ? "TRANSFER_REVIEW"
     : totalPending === 0
@@ -250,6 +330,7 @@ export function normalizeQuotePaymentConfig(input: NormalizeInput): QuotePayment
 
   return {
     enabled: raw.enabled ?? totalQuoted > 0,
+    billingType,
     planMode,
     defaultChannel,
     channelConfigured: raw.channelConfigured === true,
@@ -262,6 +343,7 @@ export function normalizeQuotePaymentConfig(input: NormalizeInput): QuotePayment
     customerAssignedAt: raw.customerAssignedAt,
     contractEmailSentAt: raw.contractEmailSentAt,
     internalEmailSentAt: raw.internalEmailSentAt,
+    subscription,
     stages,
   };
 }
@@ -294,6 +376,10 @@ export function getPayableQuoteStage(payment?: QuotePaymentConfig | null) {
 export function getPendingQuoteStage(payment?: QuotePaymentConfig | null) {
   const stages = Array.isArray(payment?.stages) ? payment.stages : [];
   return stages.find((stage) => stage.status !== "PAID") || null;
+}
+
+export function buildFlowSubscriptionPlanId(quoteId: string) {
+  return `qsub${compactQuoteIdForFlow(quoteId)}`.slice(0, 40);
 }
 
 const FLOW_STAGE_CODE_BY_KEY: Record<QuotePaymentStageKey, string> = {
@@ -524,9 +610,14 @@ export function paymentRequiresAttention(payment?: QuotePaymentConfig | null) {
 
 export function quotePaymentRequiresPortalAction(
   status?: string | null,
-  payment?: { stages?: Array<unknown> } | null,
+  payment?: { stages?: Array<unknown>; billingType?: string | null; subscription?: { status?: string | null } | null } | null,
 ) {
   const commercialStatus = normalizeCommercialQuoteStatus(status);
+  const billingType = normalizeBillingType(payment?.billingType);
+  const subscriptionStatus = normalizeSubscriptionStatus(payment?.subscription?.status);
+  if (billingType === "SUBSCRIPTION") {
+    return commercialStatus !== "LOST" && subscriptionStatus !== "ACTIVE";
+  }
   if (commercialStatus === "WON" || commercialStatus === "LOST") {
     return false;
   }
@@ -535,4 +626,16 @@ export function quotePaymentRequiresPortalAction(
 
 export function quotePaymentIsMarkedPaidInAdmin(status?: string | null) {
   return normalizeCommercialQuoteStatus(status) === "WON";
+}
+
+export function quotePaymentVisibleInPortal(
+  status?: string | null,
+  payment?: { stages?: Array<unknown>; billingType?: string | null } | null,
+) {
+  const commercialStatus = normalizeCommercialQuoteStatus(status);
+  if (commercialStatus === "LOST") return false;
+  if (normalizeBillingType(payment?.billingType) === "SUBSCRIPTION") {
+    return Boolean(payment && Array.isArray(payment.stages) && payment.stages.length > 0);
+  }
+  return commercialStatus !== "WON" && Boolean(payment && Array.isArray(payment.stages) && payment.stages.length > 0);
 }

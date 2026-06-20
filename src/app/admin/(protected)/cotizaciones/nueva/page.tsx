@@ -37,9 +37,14 @@ const COMPANY = {
 const IVA_RATE = 0.19;
 const FLOW_PAYMENT_METHOD = "Flow online";
 const TRANSFER_PAYMENT_METHOD = "Transferencia bancaria";
+const SUBSCRIPTION_PAYMENT_TERM = "Suscripción mensual";
 const PAYMENT_METHODS = [FLOW_PAYMENT_METHOD, TRANSFER_PAYMENT_METHOD, "Cheque", "Efectivo", "Tarjeta de crédito", "Débito automático"];
-const PAYMENT_TERMS = ["Pago inmediato", "15 días", "30 días", "45 días", "60 días", "Contra entrega"];
+const PAYMENT_TERMS = [SUBSCRIPTION_PAYMENT_TERM, "Pago inmediato", "15 días", "30 días", "45 días", "60 días", "Contra entrega"];
 const VALIDITY_DAYS = ["15 días", "30 días", "45 días", "60 días", "90 días"];
+const PAYMENT_BILLING_TYPES = [
+  { value: "ONE_TIME", label: "Pago único" },
+  { value: "SUBSCRIPTION", label: "Suscripción mensual" },
+];
 const PAYMENT_CHANNELS = [
   { value: "FLOW", label: "Flow online" },
   { value: "TRANSFER", label: "Transferencia bancaria" },
@@ -128,6 +133,42 @@ function syncPaymentMethodForChannel(method: string, channel: "FLOW" | "TRANSFER
     return channel === "TRANSFER" ? TRANSFER_PAYMENT_METHOD : FLOW_PAYMENT_METHOD;
   }
   return method;
+}
+
+function applyBillingTypeToPaymentMeta<
+  T extends {
+    paymentMethod: string;
+    paymentTerms: string;
+    paymentChannel: string;
+    paymentPlanMode: string;
+    splitPercentInitial: string;
+    paymentBillingType: string;
+  },
+>(
+  current: T,
+  billingType: "ONE_TIME" | "SUBSCRIPTION",
+) {
+  if (billingType === "SUBSCRIPTION") {
+    return {
+      ...current,
+      paymentBillingType: billingType,
+      paymentMethod: FLOW_PAYMENT_METHOD,
+      paymentTerms: SUBSCRIPTION_PAYMENT_TERM,
+      paymentChannel: "FLOW",
+      paymentPlanMode: "FULL",
+      splitPercentInitial: "50",
+    };
+  }
+
+  return {
+    ...current,
+    paymentBillingType: billingType,
+    paymentMethod:
+      current.paymentMethod === FLOW_PAYMENT_METHOD || current.paymentMethod === TRANSFER_PAYMENT_METHOD
+        ? FLOW_PAYMENT_METHOD
+        : current.paymentMethod,
+    paymentTerms: current.paymentTerms === SUBSCRIPTION_PAYMENT_TERM ? "30 días" : current.paymentTerms,
+  };
 }
 
 const today = new Date();
@@ -239,6 +280,7 @@ export default function NuevaCotizacion() {
     validityDays: "30 días",
     paymentMethod: FLOW_PAYMENT_METHOD,
     paymentTerms: "30 días",
+    paymentBillingType: "ONE_TIME",
     paymentChannel: "FLOW",
     paymentPlanMode: "FULL",
     splitPercentInitial: "50",
@@ -395,6 +437,12 @@ export default function NuevaCotizacion() {
       discount: Math.round(totalDescuento),
       total: Math.round(grandTotal),
       status: meta.status,
+      paymentMethod: meta.paymentMethod,
+      paymentTerms: meta.paymentTerms,
+      paymentBillingType: meta.paymentBillingType,
+      paymentChannel: meta.paymentChannel,
+      paymentPlanMode: meta.paymentPlanMode,
+      splitPercentInitial: Math.max(1, Math.min(99, Number(meta.splitPercentInitial) || 50)),
       message: JSON.stringify({
         clientRut: client.rut,
         clientAddress: client.address,
@@ -406,6 +454,7 @@ export default function NuevaCotizacion() {
         validityDays: meta.validityDays,
         paymentMethod: meta.paymentMethod,
         paymentTerms: meta.paymentTerms,
+        paymentBillingType: meta.paymentBillingType,
         paymentChannel: meta.paymentChannel,
         paymentPlanMode: meta.paymentPlanMode,
         splitPercentInitial: Math.max(1, Math.min(99, Number(meta.splitPercentInitial) || 50)),
@@ -948,10 +997,25 @@ export default function NuevaCotizacion() {
                 Condiciones de pago
               </h3>
               <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Modalidad de cobro">
+                  <Select
+                    value={meta.paymentBillingType}
+                    onChange={(e) =>
+                      setMeta((p) => applyBillingTypeToPaymentMeta(p, e.target.value as "ONE_TIME" | "SUBSCRIPTION"))
+                    }
+                  >
+                    {PAYMENT_BILLING_TYPES.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
                 <Field label="Forma de pago">
                   <Select
                     value={meta.paymentMethod}
                     onChange={(e) => setMeta((p) => ({ ...p, paymentMethod: e.target.value }))}
+                    disabled={meta.paymentBillingType === "SUBSCRIPTION"}
                   >
                     {PAYMENT_METHODS.map((m) => (
                       <option key={m}>{m}</option>
@@ -969,6 +1033,7 @@ export default function NuevaCotizacion() {
                         paymentMethod: syncPaymentMethodForChannel(p.paymentMethod, nextChannel),
                       }));
                     }}
+                    disabled={meta.paymentBillingType === "SUBSCRIPTION"}
                   >
                     {PAYMENT_CHANNELS.map((item) => (
                       <option key={item.value} value={item.value}>
@@ -981,6 +1046,7 @@ export default function NuevaCotizacion() {
                   <Select
                     value={meta.paymentTerms}
                     onChange={(e) => setMeta((p) => ({ ...p, paymentTerms: e.target.value }))}
+                    disabled={meta.paymentBillingType === "SUBSCRIPTION"}
                   >
                     {PAYMENT_TERMS.map((t) => (
                       <option key={t}>{t}</option>
@@ -991,6 +1057,7 @@ export default function NuevaCotizacion() {
                   <Select
                     value={meta.paymentPlanMode}
                     onChange={(e) => setMeta((p) => ({ ...p, paymentPlanMode: e.target.value }))}
+                    disabled={meta.paymentBillingType === "SUBSCRIPTION"}
                   >
                     {PAYMENT_PLAN_MODES.map((item) => (
                       <option key={item.value} value={item.value}>
@@ -999,7 +1066,12 @@ export default function NuevaCotizacion() {
                     ))}
                   </Select>
                 </Field>
-                {meta.paymentPlanMode === "SPLIT" ? (
+                {meta.paymentBillingType === "SUBSCRIPTION" ? (
+                  <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] text-blue-900 sm:col-span-2">
+                    La cotización se cobrará como suscripción mensual por el total completo vía Flow. El cliente activará el enrolamiento de tarjeta y los cobros recurrentes desde su portal.
+                  </div>
+                ) : null}
+                {meta.paymentBillingType !== "SUBSCRIPTION" && meta.paymentPlanMode === "SPLIT" ? (
                   <Field label="% al inicio">
                     <Input
                       type="number"
@@ -1010,7 +1082,7 @@ export default function NuevaCotizacion() {
                     />
                   </Field>
                 ) : null}
-                {meta.paymentPlanMode === "SPLIT" ? (
+                {meta.paymentBillingType !== "SUBSCRIPTION" && meta.paymentPlanMode === "SPLIT" ? (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800 sm:col-span-2">
                     El porcentaje restante se cobrará al finalizar. El sistema ajusta ambas etapas para cobrar el total completo de la cotización.
                   </div>
@@ -1108,6 +1180,12 @@ export default function NuevaCotizacion() {
 
             <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50 p-3 space-y-1.5">
               <div className="flex justify-between text-[11px]">
+                <span className="text-slate-500">Modalidad</span>
+                <span className="font-semibold text-slate-700">
+                  {meta.paymentBillingType === "SUBSCRIPTION" ? "Suscripción mensual" : "Pago único"}
+                </span>
+              </div>
+              <div className="flex justify-between text-[11px]">
                 <span className="text-slate-500">Forma de pago</span>
                 <span className="font-semibold text-slate-700">{meta.paymentMethod}</span>
               </div>
@@ -1124,7 +1202,9 @@ export default function NuevaCotizacion() {
               <div className="flex justify-between text-[11px]">
                 <span className="text-slate-500">Esquema</span>
                 <span className="font-semibold text-slate-700">
-                  {meta.paymentPlanMode === "FULL"
+                  {meta.paymentBillingType === "SUBSCRIPTION"
+                    ? "Cobro mensual recurrente"
+                    : meta.paymentPlanMode === "FULL"
                     ? "Pago completo"
                     : meta.paymentPlanMode === "DELIVERY"
                       ? "Contraentrega"

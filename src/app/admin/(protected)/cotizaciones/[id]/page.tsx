@@ -363,6 +363,12 @@ export default async function CotizacionDetallePage({ params }: Params) {
                 </div>
                 <div className="mt-4 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
                   <div className="flex items-center justify-between">
+                    <span>Modalidad</span>
+                    <span className="font-semibold">
+                      {quote.meta.payment?.billingType === "SUBSCRIPTION" ? "Suscripción mensual" : "Pago único"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
                     <span>Canal</span>
                     <span className="font-semibold">
                       {quote.meta.payment?.defaultChannel === "TRANSFER" ? "Transferencia bancaria" : "Flow online"}
@@ -371,13 +377,27 @@ export default async function CotizacionDetallePage({ params }: Params) {
                   <div className="flex items-center justify-between">
                     <span>Esquema</span>
                     <span className="font-semibold">
-                      {quote.meta.payment?.planMode === "DELIVERY"
+                      {quote.meta.payment?.billingType === "SUBSCRIPTION"
+                        ? "Cobro mensual recurrente"
+                        : quote.meta.payment?.planMode === "DELIVERY"
                         ? "Contraentrega"
                         : quote.meta.payment?.planMode === "SPLIT"
                           ? `${quote.meta.payment?.splitPercentInitial || 50}% inicio / ${quote.meta.payment?.splitPercentFinal || 50}% final`
                           : "Pago completo"}
                     </span>
                   </div>
+                  {quote.meta.payment?.billingType === "SUBSCRIPTION" ? (
+                    <div className="flex items-center justify-between">
+                      <span>Estado suscripción</span>
+                      <span className="font-semibold">{quote.meta.payment?.subscription?.status || "PENDING"}</span>
+                    </div>
+                  ) : null}
+                  {quote.meta.payment?.billingType === "SUBSCRIPTION" && quote.meta.payment?.subscription?.nextInvoiceDate ? (
+                    <div className="flex items-center justify-between">
+                      <span>Próximo cobro</span>
+                      <span className="font-semibold">{quote.meta.payment.subscription.nextInvoiceDate}</span>
+                    </div>
+                  ) : null}
                   <div className="flex items-center justify-between">
                     <span>Pagado</span>
                     <span className="font-semibold">{currencyCLP(quote.meta.payment?.totalPaid || 0)}</span>
