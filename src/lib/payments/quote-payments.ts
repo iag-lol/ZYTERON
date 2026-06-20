@@ -290,16 +290,60 @@ export function getPendingQuoteStage(payment?: QuotePaymentConfig | null) {
   return stages.find((stage) => stage.status !== "PAID") || null;
 }
 
+const FLOW_STAGE_CODE_BY_KEY: Record<QuotePaymentStageKey, string> = {
+  FULL: "F",
+  DELIVERY: "D",
+  INITIAL: "I",
+  FINAL: "N",
+};
+
+const FLOW_STAGE_KEY_BY_CODE: Record<string, QuotePaymentStageKey> = {
+  F: "FULL",
+  D: "DELIVERY",
+  I: "INITIAL",
+  N: "FINAL",
+};
+
+function compactQuoteIdForFlow(quoteId: string) {
+  return String(quoteId || "").replace(/-/g, "").trim().toLowerCase();
+}
+
+function expandCompactQuoteId(compactId: string) {
+  if (!/^[a-f0-9]{32}$/i.test(compactId)) return compactId;
+  return `${compactId.slice(0, 8)}-${compactId.slice(8, 12)}-${compactId.slice(12, 16)}-${compactId.slice(16, 20)}-${compactId.slice(20)}`;
+}
+
+function normalizeLegacyStageKey(stageKey: string) {
+  const normalizedStage = String(stageKey || "").trim().toUpperCase() as QuotePaymentStageKey;
+  if (!["FULL", "DELIVERY", "INITIAL", "FINAL"].includes(normalizedStage)) return null;
+  return normalizedStage;
+}
+
 export function buildFlowCommerceOrder(quoteId: string, stageKey: QuotePaymentStageKey) {
-  return `QPAY-${quoteId}-${stageKey}-${Date.now()}`;
+  const compactId = compactQuoteIdForFlow(quoteId);
+  const stageCode = FLOW_STAGE_CODE_BY_KEY[stageKey];
+  const nonce = Date.now().toString(36);
+  return `Q${compactId}${stageCode}${nonce}`.slice(0, 45);
 }
 
 export function parseFlowCommerceOrder(order: string) {
-  const match = String(order || "").trim().match(/^QPAY-([a-z0-9]+)-([A-Z]+)-(\d{10,})$/i);
-  if (!match) return null;
-  const [, quoteId, stageKey] = match;
-  const normalizedStage = String(stageKey).toUpperCase() as QuotePaymentStageKey;
-  if (!["FULL", "DELIVERY", "INITIAL", "FINAL"].includes(normalizedStage)) return null;
+  const normalizedOrder = String(order || "").trim();
+  const compactMatch = normalizedOrder.match(/^Q([a-f0-9]{32})([FDIN])([a-z0-9]{6,})$/i);
+  if (compactMatch) {
+    const [, compactId, stageCode] = compactMatch;
+    const stageKey = FLOW_STAGE_KEY_BY_CODE[String(stageCode).toUpperCase()];
+    if (!stageKey) return null;
+    return {
+      quoteId: expandCompactQuoteId(compactId.toLowerCase()),
+      stageKey,
+    };
+  }
+
+  const legacyMatch = normalizedOrder.match(/^QPAY-([a-z0-9-]+)-([A-Z]+)(?:-(\d{10,}))?$/i);
+  if (!legacyMatch) return null;
+  const [, quoteId, stageKey] = legacyMatch;
+  const normalizedStage = normalizeLegacyStageKey(stageKey);
+  if (!normalizedStage) return null;
   return {
     quoteId,
     stageKey: normalizedStage,

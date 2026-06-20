@@ -223,7 +223,7 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
 
                   <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
                     <span className="font-semibold text-slate-900">{currency(stage.amount)}</span>
-                    <span>{stage.paymentChannel === "FLOW" ? "Pago online Flow" : "Transferencia bancaria"}</span>
+                    <span>{stage.paymentChannel === "FLOW" ? "Pago online con tarjeta" : "Transferencia bancaria"}</span>
                     {stage.paidAt ? <span>Pagado</span> : null}
                   </div>
 
@@ -258,7 +258,7 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                       {stage.paymentChannel === "FLOW" ? (
                         <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
                           <p className="text-sm font-semibold text-blue-900">
-                            El pago principal se realiza con Flow usando las tarjetas activas disponibles en la pasarela.
+                            Realiza el pago online con las tarjetas activas disponibles en la pasarela.
                           </p>
                           <button
                             type="button"
@@ -267,7 +267,7 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                             className="mt-3 inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:opacity-60"
                           >
                             {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                            Pagar con Flow
+                            Pagar cotizaci&oacute;n
                           </button>
                         </div>
                       ) : (
