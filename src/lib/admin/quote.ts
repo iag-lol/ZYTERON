@@ -65,6 +65,7 @@ export type QuotePaymentConfig = {
   enabled?: boolean;
   planMode?: QuotePaymentPlanMode;
   defaultChannel?: QuotePaymentChannel;
+  channelConfigured?: boolean;
   splitPercentInitial?: number;
   splitPercentFinal?: number;
   alertStatus?: "PENDING" | "PAID" | "TRANSFER_REVIEW";

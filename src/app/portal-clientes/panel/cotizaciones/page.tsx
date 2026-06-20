@@ -2,7 +2,7 @@ import Link from "next/link";
 import { FileDigit } from "lucide-react";
 import { requirePortalSession } from "@/lib/auth/portal-session";
 import { enrichQuoteRecord } from "@/lib/admin/quote";
-import { normalizeQuoteMetaPayment } from "@/lib/payments/quote-payments";
+import { normalizeQuoteMetaPayment, quotePaymentRequiresPortalAction } from "@/lib/payments/quote-payments";
 import { QuotePaymentActions } from "@/components/portal/panel/quote-payment-actions";
 import { prisma } from "@/lib/prisma";
 import { currencyCLP } from "@/lib/portal/data";
@@ -59,7 +59,7 @@ export default async function PortalCotizacionesPage({ searchParams }: PageProps
       meta: normalizeQuoteMetaPayment(enriched.meta),
     };
   });
-  const actionableQuotes = quotes.filter((quote) => (quote.meta.payment?.stages || []).length > 0);
+  const actionableQuotes = quotes.filter((quote) => quotePaymentRequiresPortalAction(quote.status, quote.meta.payment));
 
   return (
     <section className="space-y-4">

@@ -163,6 +163,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       payment: {
         ...current.meta.payment,
         defaultChannel: body.paymentChannel || current.meta.payment?.defaultChannel,
+        channelConfigured: Boolean(body.paymentChannel || current.meta.payment?.channelConfigured),
         planMode: body.paymentPlanMode || current.meta.payment?.planMode,
         splitPercentInitial:
           typeof body.splitPercentInitial === "number"

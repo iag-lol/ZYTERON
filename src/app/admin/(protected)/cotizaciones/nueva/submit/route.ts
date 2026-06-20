@@ -70,6 +70,7 @@ export async function POST(req: Request) {
         payment: {
           ...rawMeta.payment,
           defaultChannel: body.paymentChannel || rawMeta.payment?.defaultChannel,
+          channelConfigured: Boolean(body.paymentChannel || rawMeta.payment?.channelConfigured),
           planMode: body.paymentPlanMode || rawMeta.payment?.planMode,
           splitPercentInitial:
             typeof body.splitPercentInitial === "number"

@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { AlertCircle, CheckCircle2, CreditCard, Download, Landmark, Loader2, UploadCloud } from "lucide-react";
 import { ZYTERON_COMPANY } from "@/lib/company";
+import { quotePaymentIsMarkedPaidInAdmin, quotePaymentRequiresPortalAction } from "@/lib/payments/quote-payments";
 
 type QuoteStage = {
   key: "FULL" | "DELIVERY" | "INITIAL" | "FINAL";
@@ -93,7 +94,7 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
   const [transferState, setTransferState] = useState<Record<string, { transferDate: string; reference: string; note: string; file: File | null }>>({});
 
   const actionableQuotes = useMemo(
-    () => quotes.filter((quote) => Array.isArray(quote.payment?.stages) && quote.payment?.stages?.length),
+    () => quotes.filter((quote) => quotePaymentRequiresPortalAction(quote.status, quote.payment)),
     [quotes],
   );
 
@@ -174,7 +175,15 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
         </div>
       ) : null}
 
-      {actionableQuotes.map((quote) => (
+      {actionableQuotes.map((quote) => {
+        const settledByAdmin = quotePaymentIsMarkedPaidInAdmin(quote.status);
+        const quoteBadge = settledByAdmin
+          ? "Pagada"
+          : quote.payment?.alertStatus === "TRANSFER_REVIEW"
+            ? "Pago en revisión"
+            : "Pago pendiente";
+
+        return (
         <article key={quote.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -185,11 +194,7 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
               </p>
             </div>
             <div className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-              {quote.payment?.alertStatus === "PAID"
-                ? "Sin saldo pendiente"
-                : quote.payment?.alertStatus === "TRANSFER_REVIEW"
-                  ? "Pago en revisión"
-                  : "Pago pendiente"}
+              {quoteBadge}
             </div>
           </div>
 
@@ -387,7 +392,8 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
             })}
           </div>
         </article>
-      ))}
+        );
+      })}
     </div>
   );
 }

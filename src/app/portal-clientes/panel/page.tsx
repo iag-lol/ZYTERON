@@ -20,7 +20,7 @@ import {
 import { parseQuoteMessage } from "@/lib/admin/quote";
 import { requirePortalSession } from "@/lib/auth/portal-session";
 import { currencyCLP, getClientPortalSnapshot } from "@/lib/portal/data";
-import { normalizeQuoteMetaPayment, paymentRequiresAttention } from "@/lib/payments/quote-payments";
+import { normalizeQuoteMetaPayment, quotePaymentRequiresPortalAction } from "@/lib/payments/quote-payments";
 import { getWebPricingSnapshot } from "@/lib/web-control";
 import { PortalStore } from "@/components/portal/panel/portal-store";
 
@@ -121,7 +121,7 @@ export default async function PortalDashboardPage() {
       ...quote,
       paymentMeta: normalizeQuoteMetaPayment(parseQuoteMessage(quote.message)).payment,
     }))
-    .filter((quote) => paymentRequiresAttention(quote.paymentMeta));
+    .filter((quote) => quotePaymentRequiresPortalAction(quote.status, quote.paymentMeta));
   const activeProjects = snapshot.projects.filter((p) => {
     const s = String(p.status || "").toUpperCase();
     return s === "ACTIVE" || s === "IN_PROGRESS" || s === "EN_CURSO";

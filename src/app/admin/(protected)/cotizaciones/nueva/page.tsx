@@ -35,7 +35,9 @@ const COMPANY = {
 };
 
 const IVA_RATE = 0.19;
-const PAYMENT_METHODS = ["Transferencia bancaria", "Cheque", "Efectivo", "Tarjeta de crédito", "Débito automático"];
+const FLOW_PAYMENT_METHOD = "Flow online";
+const TRANSFER_PAYMENT_METHOD = "Transferencia bancaria";
+const PAYMENT_METHODS = [FLOW_PAYMENT_METHOD, TRANSFER_PAYMENT_METHOD, "Cheque", "Efectivo", "Tarjeta de crédito", "Débito automático"];
 const PAYMENT_TERMS = ["Pago inmediato", "15 días", "30 días", "45 días", "60 días", "Contra entrega"];
 const VALIDITY_DAYS = ["15 días", "30 días", "45 días", "60 días", "90 días"];
 const PAYMENT_CHANNELS = [
@@ -119,6 +121,13 @@ function getHoursBetween(startTime: string, endTime: string) {
   if (diff < 0) diff += 24 * 60; // Overnight shift
   if (diff === 0) return 0;
   return Math.round((diff / 60) * 100) / 100;
+}
+
+function syncPaymentMethodForChannel(method: string, channel: "FLOW" | "TRANSFER") {
+  if (method === FLOW_PAYMENT_METHOD || method === TRANSFER_PAYMENT_METHOD) {
+    return channel === "TRANSFER" ? TRANSFER_PAYMENT_METHOD : FLOW_PAYMENT_METHOD;
+  }
+  return method;
 }
 
 const today = new Date();
@@ -228,7 +237,7 @@ export default function NuevaCotizacion() {
   /* Quote meta */
   const [meta, setMeta] = useState({
     validityDays: "30 días",
-    paymentMethod: "Transferencia bancaria",
+    paymentMethod: FLOW_PAYMENT_METHOD,
     paymentTerms: "30 días",
     paymentChannel: "FLOW",
     paymentPlanMode: "FULL",
@@ -952,7 +961,14 @@ export default function NuevaCotizacion() {
                 <Field label="Canal de cobro">
                   <Select
                     value={meta.paymentChannel}
-                    onChange={(e) => setMeta((p) => ({ ...p, paymentChannel: e.target.value }))}
+                    onChange={(e) => {
+                      const nextChannel = e.target.value as "FLOW" | "TRANSFER";
+                      setMeta((p) => ({
+                        ...p,
+                        paymentChannel: nextChannel,
+                        paymentMethod: syncPaymentMethodForChannel(p.paymentMethod, nextChannel),
+                      }));
+                    }}
                   >
                     {PAYMENT_CHANNELS.map((item) => (
                       <option key={item.value} value={item.value}>

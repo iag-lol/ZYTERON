@@ -48,6 +48,32 @@ function inferDefaultChannel(value?: string | null): QuotePaymentChannel {
   return "FLOW";
 }
 
+function shouldPreserveTransferChannel(raw?: QuotePaymentConfig) {
+  const stages = Array.isArray(raw?.stages) ? raw.stages : [];
+  return stages.some(
+    (stage) =>
+      stage?.paymentChannel === "TRANSFER" &&
+      ((stage.transferProofs?.length || 0) > 0 || stage.status === "PENDING_TRANSFER_REVIEW" || stage.status === "PAID"),
+  );
+}
+
+function resolveDefaultChannel(raw: QuotePaymentConfig, fallbackMethod?: string | null) {
+  const inferred = inferDefaultChannel(fallbackMethod);
+  if (raw.channelConfigured === true) {
+    return normalizeChannel(raw.defaultChannel || inferred);
+  }
+  if (shouldPreserveTransferChannel(raw)) {
+    return "TRANSFER" as const;
+  }
+  return inferred;
+}
+
+function normalizeCommercialQuoteStatus(value?: string | null) {
+  const normalized = String(value || "").trim().toUpperCase();
+  if (normalized === "WON" || normalized === "LOST" || normalized === "SENT") return normalized;
+  return "PENDING" as const;
+}
+
 function normalizePlanMode(value?: string | null, fallbackTerms?: string | null): QuotePaymentPlanMode {
   const normalized = String(value || "").trim().toUpperCase();
   if (normalized === "DELIVERY" || normalized === "SPLIT") return normalized;
@@ -146,7 +172,7 @@ function buildStage(input: {
 export function normalizeQuotePaymentConfig(input: NormalizeInput): QuotePaymentConfig {
   const totalQuoted = roundAmount(input.totalQuoted);
   const raw = input.raw || {};
-  const defaultChannel = normalizeChannel(raw.defaultChannel || inferDefaultChannel(input.fallbackMethod));
+  const defaultChannel = resolveDefaultChannel(raw, input.fallbackMethod);
   const planMode = normalizePlanMode(raw.planMode, input.fallbackTerms);
   const splitPercentInitial = clampPercent(Number(raw.splitPercentInitial || 50), 50);
   const splitPercentFinal = Math.max(1, 100 - splitPercentInitial);
@@ -226,6 +252,7 @@ export function normalizeQuotePaymentConfig(input: NormalizeInput): QuotePayment
     enabled: raw.enabled ?? totalQuoted > 0,
     planMode,
     defaultChannel,
+    channelConfigured: raw.channelConfigured === true,
     splitPercentInitial: planMode === "SPLIT" ? splitPercentInitial : undefined,
     splitPercentFinal: planMode === "SPLIT" ? splitPercentFinal : undefined,
     alertStatus,
@@ -443,4 +470,19 @@ export function appendTransferProof(
 
 export function paymentRequiresAttention(payment?: QuotePaymentConfig | null) {
   return Boolean(payment && (payment.totalPending || 0) > 0);
+}
+
+export function quotePaymentRequiresPortalAction(
+  status?: string | null,
+  payment?: { stages?: Array<unknown> } | null,
+) {
+  const commercialStatus = normalizeCommercialQuoteStatus(status);
+  if (commercialStatus === "WON" || commercialStatus === "LOST") {
+    return false;
+  }
+  return Boolean(payment && Array.isArray(payment.stages) && payment.stages.length > 0);
+}
+
+export function quotePaymentIsMarkedPaidInAdmin(status?: string | null) {
+  return normalizeCommercialQuoteStatus(status) === "WON";
 }
