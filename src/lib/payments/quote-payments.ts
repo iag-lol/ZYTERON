@@ -44,8 +44,8 @@ function normalizeChannel(value?: string | null): QuotePaymentChannel {
 }
 
 function inferDefaultChannel(value?: string | null): QuotePaymentChannel {
-  const normalized = String(value || "").trim().toLowerCase();
-  return normalized.includes("transfer") ? "TRANSFER" : "FLOW";
+  void value;
+  return "FLOW";
 }
 
 function normalizePlanMode(value?: string | null, fallbackTerms?: string | null): QuotePaymentPlanMode {

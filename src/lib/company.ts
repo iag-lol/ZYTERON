@@ -15,6 +15,10 @@ export const ZYTERON_COMPANY = {
   secondary: "#0F766E",
   neutral: "#0F172A",
   light: "#F8FAFC",
+  transferBank: "Banco BCI",
+  transferAccountType: "Cuenta corriente",
+  transferAccountNumber: "14500679",
+  transferAccountEmail: "contacto@zyteron.cl",
 } as const;
 
 export const ZYTERON_SII = {

@@ -433,7 +433,6 @@ export async function submitQuoteTransferProof(input: {
   userId: string;
   email: string;
   stageKey: QuotePaymentStageKey;
-  amount: number;
   transferDate?: string;
   reference?: string;
   note?: string;
@@ -492,7 +491,7 @@ export async function submitQuoteTransferProof(input: {
 
   const proof: QuotePaymentProof = {
     id: randomUUID(),
-    amount: Math.max(0, Math.round(input.amount)),
+    amount: Math.max(0, Math.round(stage.amount)),
     uploadedAt: new Date().toISOString(),
     transferDate: input.transferDate,
     reference: input.reference,

@@ -77,6 +77,7 @@ export default async function PortalCotizacionesPage({ searchParams }: PageProps
             displayNumber: quote.displayNumber,
             status: quote.status || "PENDING",
             totalAmount: quote.totalAmount,
+            pdfUrl: quote.pdfUrl,
             payment: quote.meta.payment,
           }))}
           paymentResult={

@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { AlertCircle, CheckCircle2, CreditCard, Landmark, Loader2, UploadCloud } from "lucide-react";
+import { AlertCircle, CheckCircle2, CreditCard, Download, Landmark, Loader2, UploadCloud } from "lucide-react";
+import { ZYTERON_COMPANY } from "@/lib/company";
 
 type QuoteStage = {
   key: "FULL" | "DELIVERY" | "INITIAL" | "FINAL";
@@ -27,6 +28,7 @@ type QuoteItem = {
   displayNumber: string;
   status: string;
   totalAmount: number;
+  pdfUrl: string;
   payment?: {
     totalPaid?: number;
     totalPending?: number;
@@ -88,7 +90,7 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<string | null>(paymentMessage || null);
   const [activeStage, setActiveStage] = useState<string | null>(null);
-  const [transferState, setTransferState] = useState<Record<string, { amount: string; transferDate: string; reference: string; note: string; file: File | null }>>({});
+  const [transferState, setTransferState] = useState<Record<string, { transferDate: string; reference: string; note: string; file: File | null }>>({});
 
   const actionableQuotes = useMemo(
     () => quotes.filter((quote) => Array.isArray(quote.payment?.stages) && quote.payment?.stages?.length),
@@ -116,7 +118,6 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
   async function submitTransfer(quoteId: string, stage: QuoteStage) {
     const key = `${quoteId}:${stage.key}`;
     const current = transferState[key] || {
-      amount: String(stage.amount),
       transferDate: "",
       reference: "",
       note: "",
@@ -128,7 +129,6 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
 
     const body = new FormData();
     body.set("stageKey", stage.key);
-    body.set("amount", current.amount || String(stage.amount));
     if (current.transferDate) body.set("transferDate", current.transferDate);
     if (current.reference) body.set("reference", current.reference);
     if (current.note) body.set("note", current.note);
@@ -197,7 +197,6 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
             {(quote.payment?.stages || []).map((stage) => {
               const key = `${quote.id}:${stage.key}`;
               const transferForm = transferState[key] || {
-                amount: String(stage.amount),
                 transferDate: "",
                 reference: "",
                 note: "",
@@ -223,6 +222,18 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                     {stage.paidAt ? <span>Pagado</span> : null}
                   </div>
 
+                  <div className="mt-3">
+                    <a
+                      href={quote.pdfUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    >
+                      <Download className="h-4 w-4" />
+                      Descargar cotización PDF
+                    </a>
+                  </div>
+
                   {stage.status === "PAID" ? (
                     <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
                       <CheckCircle2 className="h-4 w-4" />
@@ -240,33 +251,55 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                   {(stage.status === "READY" || stage.status === "REJECTED") && stage.dueEnabled ? (
                     <div className="mt-4 space-y-3">
                       {stage.paymentChannel === "FLOW" ? (
-                        <button
-                          type="button"
-                          disabled={pending}
-                          onClick={() => startTransition(() => void startFlowPayment(quote.id, stage.key))}
-                          className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:opacity-60"
-                        >
-                          {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                          Pagar con Flow
-                        </button>
+                        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                          <p className="text-sm font-semibold text-blue-900">
+                            El pago principal se realiza con Flow usando las tarjetas activas disponibles en la pasarela.
+                          </p>
+                          <button
+                            type="button"
+                            disabled={pending}
+                            onClick={() => startTransition(() => void startFlowPayment(quote.id, stage.key))}
+                            className="mt-3 inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:opacity-60"
+                          >
+                            {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                            Pagar con Flow
+                          </button>
+                        </div>
                       ) : (
                         <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-3">
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <p className="text-sm font-bold text-slate-900">Datos para transferencia</p>
+                            <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                              <div className="grid grid-cols-[1.3fr_1fr] border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+                                <span className="font-semibold text-slate-700">Banco</span>
+                                <span className="text-right font-semibold text-slate-900">{ZYTERON_COMPANY.transferBank}</span>
+                              </div>
+                              <div className="grid grid-cols-[1.3fr_1fr] border-b border-slate-200 px-4 py-3 text-sm">
+                                <span className="font-semibold text-slate-700">RUT</span>
+                                <span className="text-right font-semibold text-slate-900">{ZYTERON_COMPANY.rut}</span>
+                              </div>
+                              <div className="grid grid-cols-[1.3fr_1fr] border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+                                <span className="font-semibold text-slate-700">Razón social</span>
+                                <span className="text-right font-semibold text-slate-900">Zyteron Spa</span>
+                              </div>
+                              <div className="grid grid-cols-[1.3fr_1fr] border-b border-slate-200 px-4 py-3 text-sm">
+                                <span className="font-semibold text-slate-700">Correo electrónico</span>
+                                <span className="text-right font-semibold text-blue-700">{ZYTERON_COMPANY.transferAccountEmail}</span>
+                              </div>
+                              <div className="grid grid-cols-[1.3fr_1fr] border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+                                <span className="font-semibold text-slate-700">Tipo de cuenta</span>
+                                <span className="text-right font-semibold text-slate-900">{ZYTERON_COMPANY.transferAccountType}</span>
+                              </div>
+                              <div className="grid grid-cols-[1.3fr_1fr] px-4 py-3 text-sm">
+                                <span className="font-semibold text-slate-700">Número de cuenta</span>
+                                <span className="text-right font-semibold text-slate-900">{ZYTERON_COMPANY.transferAccountNumber}</span>
+                              </div>
+                            </div>
+                            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                              Monto exacto a transferir: <span className="font-bold">{currency(stage.amount)}</span>
+                            </div>
+                          </div>
                           <div className="grid gap-3 sm:grid-cols-2">
-                            <label className="space-y-1 text-xs font-semibold text-slate-600">
-                              Monto transferido
-                              <input
-                                type="number"
-                                min={1}
-                                value={transferForm.amount}
-                                onChange={(event) =>
-                                  setTransferState((prev) => ({
-                                    ...prev,
-                                    [key]: { ...transferForm, amount: event.target.value },
-                                  }))
-                                }
-                                className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm"
-                              />
-                            </label>
                             <label className="space-y-1 text-xs font-semibold text-slate-600">
                               Fecha de transferencia
                               <input
@@ -336,7 +369,7 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                           <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
                             <div className="flex items-center gap-2">
                               <Landmark className="h-4 w-4 text-slate-400" />
-                              El comprobante se envía al equipo comercial para validación.
+                              El comprobante se envía al equipo comercial para validación contra el monto oficial de la cotización.
                             </div>
                           </div>
                         </div>
