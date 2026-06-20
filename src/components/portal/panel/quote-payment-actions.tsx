@@ -329,7 +329,7 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                             className="mt-3 inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:opacity-60"
                           >
                             {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                            {isSubscriptionQuote ? "Activar suscripci&oacute;n mensual" : "Pagar cotizaci&oacute;n"}
+                            {isSubscriptionQuote ? "Activar suscripción mensual" : "Pagar cotización"}
                           </button>
                         </div>
                       ) : (
