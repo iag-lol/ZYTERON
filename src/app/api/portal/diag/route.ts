@@ -4,7 +4,7 @@ function safeString(value: unknown) {
   return String(value ?? "").trim();
 }
 
-function summarizeDatabaseUrl(rawUrl: string) {
+function summarizeDatabaseUrl(rawUrl?: string) {
   const value = safeString(rawUrl);
   if (!value) {
     return { configured: false, host: "", port: "", hasPlaceholder: false };

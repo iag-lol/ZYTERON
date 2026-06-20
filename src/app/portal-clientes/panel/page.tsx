@@ -4,7 +4,6 @@ import {
   Bell,
   BriefcaseBusiness,
   Clock,
-  FileDigit,
   FileText,
   FolderOpen,
   Headphones,
@@ -12,19 +11,18 @@ import {
   Mail,
   MessageCircle,
   Phone,
-  ReceiptText,
   Shield,
   ShieldCheck,
   Sparkles,
   Ticket,
   TrendingUp,
 } from "lucide-react";
-import { PortalMetricCard } from "@/components/portal/panel/metric-card";
+import { parseQuoteMessage } from "@/lib/admin/quote";
 import { requirePortalSession } from "@/lib/auth/portal-session";
 import { currencyCLP, getClientPortalSnapshot } from "@/lib/portal/data";
+import { normalizeQuoteMetaPayment, paymentRequiresAttention } from "@/lib/payments/quote-payments";
 import { getWebPricingSnapshot } from "@/lib/web-control";
 import { PortalStore } from "@/components/portal/panel/portal-store";
-import { prisma } from "@/lib/prisma";
 
 function formatDate(value?: Date | null) {
   if (!value) return "—";
@@ -116,15 +114,14 @@ export default async function PortalDashboardPage() {
   const snapshot = await getClientPortalSnapshot(session.user.id);
   const pricingSnapshot = await getWebPricingSnapshot();
 
-  const auditLogs = await prisma.clientAuditLog.findMany({
-    where: { targetUserId: session.user.id },
-    orderBy: { createdAt: "desc" },
-    take: 10,
-    select: { id: true, action: true, entityType: true, createdAt: true },
-  });
-
   const totalSales = snapshot.sales.reduce((acc, sale) => acc + (sale.total || 0), 0);
   const pendingQuotes = snapshot.quotes.filter((q) => String(q.status).toUpperCase() === "PENDING").length;
+  const quotesWithPaymentPending = snapshot.quotes
+    .map((quote) => ({
+      ...quote,
+      paymentMeta: normalizeQuoteMetaPayment(parseQuoteMessage(quote.message)).payment,
+    }))
+    .filter((quote) => paymentRequiresAttention(quote.paymentMeta));
   const activeProjects = snapshot.projects.filter((p) => {
     const s = String(p.status || "").toUpperCase();
     return s === "ACTIVE" || s === "IN_PROGRESS" || s === "EN_CURSO";
@@ -224,6 +221,27 @@ export default async function PortalDashboardPage() {
           </div>
         </div>
       </section>
+
+      {quotesWithPaymentPending.length > 0 ? (
+        <section className="rounded-3xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-amber-700">Alerta de pago</p>
+              <h3 className="mt-1 text-lg font-extrabold text-amber-900">Tienes pagos pendientes por validar</h3>
+              <p className="mt-1 text-sm text-amber-800">
+                Revisa tus cotizaciones con saldo pendiente y completa el pago o envía el comprobante correspondiente.
+              </p>
+            </div>
+            <Link
+              href="/portal-clientes/panel/cotizaciones"
+              className="inline-flex items-center gap-2 rounded-xl bg-amber-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-950"
+            >
+              Ir a cotizaciones
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </section>
+      ) : null}
 
       {/* ── Metric Cards with Progress Rings ── */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

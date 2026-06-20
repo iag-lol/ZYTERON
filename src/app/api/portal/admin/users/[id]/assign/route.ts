@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
 import { logPortalAdminAction } from "@/lib/portal/audit";
+import { notifyQuotePaymentIfReady } from "@/lib/payments/quote-payment-workflow";
 import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
@@ -34,6 +35,7 @@ export async function POST(req: Request, { params }: Context) {
           where: { id: parsed.data.entityId },
           data: { userId: id, email: client.email },
         });
+        await notifyQuotePaymentIfReady(parsed.data.entityId);
         break;
       case "PROJECT":
         await prisma.project.update({

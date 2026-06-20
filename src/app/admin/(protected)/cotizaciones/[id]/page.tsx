@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, ClipboardCheck, ClipboardPlus, Download, ExternalLink, FileEdit, Mail, MapPin, Phone, ReceiptText } from "lucide-react";
+import { ArrowLeft, Banknote, CalendarDays, CheckCircle2, CircleAlert, ClipboardCheck, ClipboardPlus, Download, ExternalLink, FileEdit, Mail, MapPin, Phone, ReceiptText } from "lucide-react";
 import { currencyCLP } from "@/lib/admin/quote";
 import { getQuoteById, getWorkOrderByQuoteId } from "@/lib/admin/repository";
 import { QuoteSendEmailButton } from "@/components/admin/quote-send-email-button";
@@ -324,36 +324,151 @@ export default async function CotizacionDetallePage({ params }: Params) {
               </div>
             </section>
           ) : (
-            <section className="rounded-3xl border border-blue-200 bg-blue-50 p-6 text-blue-900 shadow-sm">
-              <h2 className="text-base font-bold">Resumen financiero</h2>
-              <div className="mt-5 space-y-3 text-sm">
-                <div className="flex items-center justify-between text-blue-800">
-                  <span>Subtotal</span>
-                  <span>{currencyCLP(quote.meta.subtotal)}</span>
-                </div>
-                <div className="flex items-center justify-between text-blue-800">
-                  <span>Descuento</span>
-                  <span>-{currencyCLP(quote.meta.totalDescuento)}</span>
-                </div>
-                <div className="flex items-center justify-between text-blue-800">
-                  <span>IVA</span>
-                  <span>{currencyCLP(quote.meta.iva)}</span>
-                </div>
-                <div className="border-t border-blue-200 pt-3 text-base font-bold text-blue-900">
-                  <div className="flex items-center justify-between">
-                    <span>Total</span>
-                    <span>{currencyCLP(quote.totalAmount)}</span>
+            <div className="space-y-6">
+              <section className="rounded-3xl border border-blue-200 bg-blue-50 p-6 text-blue-900 shadow-sm">
+                <h2 className="text-base font-bold">Resumen financiero</h2>
+                <div className="mt-5 space-y-3 text-sm">
+                  <div className="flex items-center justify-between text-blue-800">
+                    <span>Subtotal</span>
+                    <span>{currencyCLP(quote.meta.subtotal)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-blue-800">
+                    <span>Descuento</span>
+                    <span>-{currencyCLP(quote.meta.totalDescuento)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-blue-800">
+                    <span>IVA</span>
+                    <span>{currencyCLP(quote.meta.iva)}</span>
+                  </div>
+                  <div className="border-t border-blue-200 pt-3 text-base font-bold text-blue-900">
+                    <div className="flex items-center justify-between">
+                      <span>Total</span>
+                      <span>{currencyCLP(quote.totalAmount)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="mt-5 rounded-2xl bg-white p-4 text-sm text-blue-800">
-                <p className="flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4 text-blue-600" />
-                  Emisión {new Date(quote.issuedAt).toLocaleDateString("es-CL")}
-                </p>
-                <p className="mt-2">Validez {quote.meta.validityDays || "30 días"} · Pago {quote.meta.paymentMethod || "Transferencia"}</p>
-              </div>
-            </section>
+                <div className="mt-5 rounded-2xl bg-white p-4 text-sm text-blue-800">
+                  <p className="flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4 text-blue-600" />
+                    Emisión {new Date(quote.issuedAt).toLocaleDateString("es-CL")}
+                  </p>
+                  <p className="mt-2">Validez {quote.meta.validityDays || "30 días"} · Pago {quote.meta.paymentMethod || "Transferencia"}</p>
+                </div>
+              </section>
+
+              <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Banknote className="h-4 w-4 text-slate-500" />
+                  <h2 className="text-base font-bold text-slate-900">Plan de cobro</h2>
+                </div>
+                <div className="mt-4 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                  <div className="flex items-center justify-between">
+                    <span>Canal</span>
+                    <span className="font-semibold">
+                      {quote.meta.payment?.defaultChannel === "TRANSFER" ? "Transferencia bancaria" : "Flow online"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Esquema</span>
+                    <span className="font-semibold">
+                      {quote.meta.payment?.planMode === "DELIVERY"
+                        ? "Contraentrega"
+                        : quote.meta.payment?.planMode === "SPLIT"
+                          ? `${quote.meta.payment?.splitPercentInitial || 50}% inicio / ${quote.meta.payment?.splitPercentFinal || 50}% final`
+                          : "Pago completo"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Pagado</span>
+                    <span className="font-semibold">{currencyCLP(quote.meta.payment?.totalPaid || 0)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Pendiente</span>
+                    <span className="font-semibold">{currencyCLP(quote.meta.payment?.totalPending || 0)}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {(quote.meta.payment?.stages || []).map((stage) => (
+                    <div key={stage.key} className="rounded-2xl border border-slate-200 p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">{stage.label}</p>
+                          <p className="text-xs text-slate-500">{stage.dueLabel || "Etapa de cobro"}</p>
+                        </div>
+                        <div className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
+                          {stage.status}
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid gap-2 text-sm text-slate-600">
+                        <div className="flex items-center justify-between">
+                          <span>Monto</span>
+                          <span className="font-semibold text-slate-900">{currencyCLP(stage.amount)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span>Canal</span>
+                          <span>{stage.paymentChannel === "TRANSFER" ? "Transferencia" : "Flow"}</span>
+                        </div>
+                        {stage.paidAt ? (
+                          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700">
+                            <CheckCircle2 className="h-4 w-4" />
+                            Pago validado
+                          </div>
+                        ) : null}
+                        {!stage.dueEnabled && stage.status === "PENDING" ? (
+                          <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700">
+                            <CircleAlert className="h-4 w-4" />
+                            Etapa aún no habilitada para el cliente.
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {!stage.dueEnabled && stage.status !== "PAID" ? (
+                          <form action={`/admin/cotizaciones/${quote.id}/payments/enable`} method="post">
+                            <input type="hidden" name="stageKey" value={stage.key} />
+                            <input type="hidden" name="redirectTo" value={`/admin/cotizaciones/${quote.id}`} />
+                            <button
+                              type="submit"
+                              className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                            >
+                              Habilitar cobro
+                            </button>
+                          </form>
+                        ) : null}
+                        {stage.status === "PENDING_TRANSFER_REVIEW" ? (
+                          <>
+                            <form action={`/admin/cotizaciones/${quote.id}/payments/review`} method="post">
+                              <input type="hidden" name="stageKey" value={stage.key} />
+                              <input type="hidden" name="action" value="APPROVE" />
+                              <input type="hidden" name="redirectTo" value={`/admin/cotizaciones/${quote.id}`} />
+                              <button
+                                type="submit"
+                                className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                              >
+                                Aprobar transferencia
+                              </button>
+                            </form>
+                            <form action={`/admin/cotizaciones/${quote.id}/payments/review`} method="post">
+                              <input type="hidden" name="stageKey" value={stage.key} />
+                              <input type="hidden" name="action" value="REJECT" />
+                              <input type="hidden" name="redirectTo" value={`/admin/cotizaciones/${quote.id}`} />
+                              <button
+                                type="submit"
+                                className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                              >
+                                Rechazar comprobante
+                              </button>
+                            </form>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
           )}
 
           {isRequestQuote && quote.meta.errorLog?.length ? (

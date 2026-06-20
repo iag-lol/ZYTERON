@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState, useTransition, useEffect } from "react";
+import { useCallback, useState, useTransition, useEffect } from "react";
 import {
   Briefcase,
   Calculator,
@@ -55,6 +55,15 @@ const IVA_RATE = 0.19;
 const PAYMENT_METHODS = ["Transferencia bancaria", "Cheque", "Efectivo", "Tarjeta de crédito", "Débito automático"];
 const PAYMENT_TERMS = ["Pago inmediato", "15 días", "30 días", "45 días", "60 días", "Contra entrega"];
 const VALIDITY_DAYS = ["15 días", "30 días", "45 días", "60 días", "90 días"];
+const PAYMENT_CHANNELS = [
+  { value: "FLOW", label: "Flow online" },
+  { value: "TRANSFER", label: "Transferencia bancaria" },
+];
+const PAYMENT_PLAN_MODES = [
+  { value: "FULL", label: "Pago completo" },
+  { value: "DELIVERY", label: "Contraentrega" },
+  { value: "SPLIT", label: "Porcentaje inicio / final" },
+];
 
 function generateId() {
   return Math.random().toString(36).slice(2, 9);
@@ -246,6 +255,9 @@ export function QuoteEditForm({ quote }: Props) {
       validityDays: vd,
       paymentMethod: quote.meta.paymentMethod || "Transferencia bancaria",
       paymentTerms: quote.meta.paymentTerms || "30 días",
+      paymentChannel: quote.meta.payment?.defaultChannel || "FLOW",
+      paymentPlanMode: quote.meta.payment?.planMode || "FULL",
+      splitPercentInitial: String(quote.meta.payment?.splitPercentInitial || 50),
       status: quote.status || "PENDING",
       includeIva: quote.meta.includeIva ?? true,
     };
@@ -424,6 +436,9 @@ export function QuoteEditForm({ quote }: Props) {
       validityDays: meta.validityDays,
       paymentMethod: meta.paymentMethod,
       paymentTerms: meta.paymentTerms,
+      paymentChannel: meta.paymentChannel,
+      paymentPlanMode: meta.paymentPlanMode,
+      splitPercentInitial: Math.max(1, Math.min(99, Number(meta.splitPercentInitial) || 50)),
       status: meta.status,
       includeIva: meta.includeIva,
       ivaRate: IVA_RATE,
@@ -637,6 +652,48 @@ export function QuoteEditForm({ quote }: Props) {
                 ))}
               </Select>
             </Field>
+            <Field label="Canal de cobro">
+              <Select
+                value={meta.paymentChannel}
+                onChange={(e) => setMeta((p) => ({ ...p, paymentChannel: e.target.value as "FLOW" | "TRANSFER" }))}
+              >
+                {PAYMENT_CHANNELS.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Esquema de cobro">
+              <Select
+                value={meta.paymentPlanMode}
+                onChange={(e) =>
+                  setMeta((p) => ({ ...p, paymentPlanMode: e.target.value as "FULL" | "DELIVERY" | "SPLIT" }))
+                }
+              >
+                {PAYMENT_PLAN_MODES.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            {meta.paymentPlanMode === "SPLIT" ? (
+              <Field label="% al inicio">
+                <Input
+                  type="number"
+                  min={1}
+                  max={99}
+                  value={meta.splitPercentInitial}
+                  onChange={(e) => setMeta((p) => ({ ...p, splitPercentInitial: e.target.value }))}
+                />
+              </Field>
+            ) : null}
+            {meta.paymentPlanMode === "SPLIT" ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
+                El porcentaje restante se cobrará como pago final. La suma siempre se ajusta al total completo de la cotización.
+              </div>
+            ) : null}
             <div className="sm:col-span-2 lg:col-span-2">
               <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                 <label className="flex items-center gap-2 text-sm font-semibold text-slate-600">

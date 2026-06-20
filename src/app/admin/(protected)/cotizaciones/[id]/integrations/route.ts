@@ -34,7 +34,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       return NextResponse.json({ ok: false, error: "La solicitud no existe." }, { status: 404 });
     }
 
-    let updatedMeta = { ...meta };
+    let updatedMeta: typeof meta = { ...meta };
 
     if (channel === "email") {
       const result = await sendQuoteRequestEmail(updatedMeta, id);
@@ -48,11 +48,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         updatedMeta = appendQuoteRequestError(
           {
             ...updatedMeta,
+            payment: updatedMeta.payment,
             emailStatus: "failed",
           },
           "email",
           result.error,
-        );
+        ) as typeof meta;
       }
     }
 
@@ -68,11 +69,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         updatedMeta = appendQuoteRequestError(
           {
             ...updatedMeta,
+            payment: updatedMeta.payment,
             whatsappStatus: "failed",
           },
           "whatsapp",
           result.error,
-        );
+        ) as typeof meta;
       }
     }
 

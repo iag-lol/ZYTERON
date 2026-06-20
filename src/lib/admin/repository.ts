@@ -5,6 +5,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { buildQuoteMeta, enrichQuoteRecord, parseQuoteMessage, serializeQuoteMessage, type QuoteMeta, type QuoteRecord } from "@/lib/admin/quote";
+import { normalizeQuoteMetaPayment } from "@/lib/payments/quote-payments";
 
 export type Lead = {
   id: string;
@@ -615,7 +616,13 @@ export async function getQuotes() {
     { orderBy: "createdAt" },
   );
 
-  return rows.map((row) => enrichQuoteRecord(row));
+  return rows.map((row) => {
+    const quote = enrichQuoteRecord(row);
+    return {
+      ...quote,
+      meta: normalizeQuoteMetaPayment(quote.meta),
+    };
+  });
 }
 
 export async function getQuoteById(id: string) {
@@ -625,7 +632,12 @@ export async function getQuoteById(id: string) {
     { id },
   );
 
-  return row ? enrichQuoteRecord(row) : null;
+  if (!row) return null;
+  const quote = enrichQuoteRecord(row);
+  return {
+    ...quote,
+    meta: normalizeQuoteMetaPayment(quote.meta),
+  };
 }
 
 export async function getClients() {

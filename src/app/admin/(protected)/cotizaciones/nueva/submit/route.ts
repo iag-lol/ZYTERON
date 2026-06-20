@@ -4,6 +4,7 @@ import { buildQuoteMeta, parseQuoteMessage, serializeQuoteMessage } from "@/lib/
 import { generateQuotePdf } from "@/lib/admin/quote-pdf";
 import { findOrCreateClientByEmail, insertRow, safeSelectSingle, updateRows } from "@/lib/admin/repository";
 import { ZYTERON_QUOTE_BUCKET } from "@/lib/company";
+import { normalizeQuoteMetaPayment } from "@/lib/payments/quote-payments";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type QuoteBody = {
@@ -16,6 +17,9 @@ type QuoteBody = {
   discount?: number;
   total?: number;
   status?: string;
+  paymentChannel?: "FLOW" | "TRANSFER";
+  paymentPlanMode?: "FULL" | "DELIVERY" | "SPLIT";
+  splitPercentInitial?: number;
 };
 
 function getErrorMessage(error: unknown) {
@@ -59,7 +63,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Total invalido" }, { status: 400 });
     }
 
-    const meta = buildQuoteMeta(parseQuoteMessage(message));
+    const rawMeta = parseQuoteMessage(message);
+    const meta = normalizeQuoteMetaPayment(
+      buildQuoteMeta({
+        ...rawMeta,
+        payment: {
+          ...rawMeta.payment,
+          defaultChannel: body.paymentChannel || rawMeta.payment?.defaultChannel,
+          planMode: body.paymentPlanMode || rawMeta.payment?.planMode,
+          splitPercentInitial:
+            typeof body.splitPercentInitial === "number"
+              ? body.splitPercentInitial
+              : rawMeta.payment?.splitPercentInitial,
+        },
+      }),
+    );
     let clientId: string | null = null;
     try {
       clientId = await findOrCreateClientByEmail({
@@ -141,12 +159,14 @@ export async function POST(req: Request) {
       console.error("[quote-submit] pdf generation failed for quote", data.id);
     }
 
-    const nextMeta = buildQuoteMeta({
+    const nextMeta = normalizeQuoteMetaPayment(
+      buildQuoteMeta({
       ...meta,
       pdfStoragePath,
       pdfPublicUrl: pdfUrl,
       pdfGeneratedAt: new Date().toISOString(),
-    });
+      }),
+    );
 
     try {
       await updateRows(

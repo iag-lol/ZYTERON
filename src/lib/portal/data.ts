@@ -40,6 +40,8 @@ export async function getClientPortalSnapshot(userId: string) {
         email: true,
         company: true,
         phone: true,
+        address: true,
+        rut: true,
         role: true,
         accountStatus: true,
         emailVerifiedAt: true,
@@ -58,6 +60,7 @@ export async function getClientPortalSnapshot(userId: string) {
         createdAt: true,
         name: true,
         company: true,
+        message: true,
       },
     }),
     prisma.project.findMany({

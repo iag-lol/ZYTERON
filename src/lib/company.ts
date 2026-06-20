@@ -28,3 +28,4 @@ export const ZYTERON_SII = {
 export const ZYTERON_QUOTE_BUCKET = process.env.SUPABASE_QUOTE_BUCKET || "quote-documents";
 export const ZYTERON_EXPENSE_BUCKET = process.env.SUPABASE_EXPENSE_BUCKET || "expense-documents";
 export const ZYTERON_PRODUCT_BUCKET = process.env.SUPABASE_PRODUCT_BUCKET || "product-images";
+export const ZYTERON_PAYMENT_PROOF_BUCKET = process.env.SUPABASE_PAYMENT_PROOF_BUCKET || "payment-proofs";

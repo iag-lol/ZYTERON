@@ -10,6 +10,73 @@ export type QuoteLineItem = {
   discountPct?: number;
 };
 
+export type QuotePaymentChannel = "FLOW" | "TRANSFER";
+export type QuotePaymentPlanMode = "FULL" | "DELIVERY" | "SPLIT";
+export type QuotePaymentStageKey = "FULL" | "DELIVERY" | "INITIAL" | "FINAL";
+export type QuotePaymentStageStatus =
+  | "PENDING"
+  | "READY"
+  | "PROCESSING"
+  | "PAID"
+  | "PENDING_TRANSFER_REVIEW"
+  | "REJECTED";
+
+export type QuotePaymentProof = {
+  id: string;
+  amount: number;
+  uploadedAt: string;
+  transferDate?: string;
+  reference?: string;
+  note?: string;
+  fileUrl?: string;
+  fileName?: string;
+  status?: "PENDING" | "APPROVED" | "REJECTED";
+  reviewedAt?: string;
+  reviewedBy?: string;
+  reviewNote?: string;
+};
+
+export type QuotePaymentStage = {
+  key: QuotePaymentStageKey;
+  label: string;
+  percentage: number;
+  amount: number;
+  paymentChannel: QuotePaymentChannel;
+  status: QuotePaymentStageStatus;
+  dueEnabled?: boolean;
+  dueLabel?: string;
+  lastRequestedAt?: string;
+  paidAt?: string;
+  approvedAt?: string;
+  flow?: {
+    commerceOrder?: string;
+    token?: string;
+    checkoutUrl?: string;
+    flowOrder?: number;
+    status?: number;
+    statusLabel?: string;
+    updatedAt?: string;
+    lastError?: string;
+  };
+  transferProofs?: QuotePaymentProof[];
+};
+
+export type QuotePaymentConfig = {
+  enabled?: boolean;
+  planMode?: QuotePaymentPlanMode;
+  defaultChannel?: QuotePaymentChannel;
+  splitPercentInitial?: number;
+  splitPercentFinal?: number;
+  alertStatus?: "PENDING" | "PAID" | "TRANSFER_REVIEW";
+  totalQuoted?: number;
+  totalPaid?: number;
+  totalPending?: number;
+  customerAssignedAt?: string;
+  contractEmailSentAt?: string;
+  internalEmailSentAt?: string;
+  stages?: QuotePaymentStage[];
+};
+
 export type QuoteMeta = {
   clientRut?: string;
   clientAddress?: string;
@@ -76,6 +143,7 @@ export type QuoteMeta = {
   submittedFrom?: string;
   submittedAt?: string;
   errorLog?: string[];
+  payment?: QuotePaymentConfig;
 };
 
 type RawQuoteMessage = Partial<QuoteMeta> & {
@@ -220,6 +288,7 @@ export function parseQuoteMessage(message?: string | null): QuoteMeta {
       errorLog: Array.isArray(raw.errorLog)
         ? raw.errorLog.filter((item) => typeof item === "string")
         : [],
+      payment: raw.payment && typeof raw.payment === "object" ? (raw.payment as QuotePaymentConfig) : undefined,
     };
   } catch {
     return safeBase;
@@ -273,6 +342,7 @@ export function buildQuoteMeta(input: Partial<QuoteMeta>): QuoteMeta {
     pdfPublicUrl: input.pdfPublicUrl,
     pdfStoragePath: input.pdfStoragePath,
     pdfGeneratedAt: input.pdfGeneratedAt,
+    payment: input.payment,
   };
 
   return meta;

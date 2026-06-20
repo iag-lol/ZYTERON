@@ -9,6 +9,7 @@ import {
   updateRows,
 } from "@/lib/admin/repository";
 import { ZYTERON_QUOTE_BUCKET } from "@/lib/company";
+import { normalizeQuoteMetaPayment } from "@/lib/payments/quote-payments";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type QuoteUpdateBody = {
@@ -27,6 +28,9 @@ type QuoteUpdateBody = {
   validityDays?: string;
   paymentMethod?: string;
   paymentTerms?: string;
+  paymentChannel?: "FLOW" | "TRANSFER";
+  paymentPlanMode?: "FULL" | "DELIVERY" | "SPLIT";
+  splitPercentInitial?: number;
   includeIva?: boolean;
   ivaRate?: number;
   notes?: string;
@@ -134,7 +138,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       console.error("[quote-edit] client sync failed:", getErrorMessage(error));
     }
 
-    const meta = buildQuoteMeta({
+    const meta = normalizeQuoteMetaPayment(
+      buildQuoteMeta({
       ...parseQuoteMessage(current.message),
       clientRut: text(body.clientRut) || current.meta.clientRut,
       clientAddress: text(body.clientAddress) || current.meta.clientAddress,
@@ -155,7 +160,17 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       grandTotal: Math.max(0, Math.round(grandTotal)),
       notes: text(body.notes) || current.meta.notes,
       terms: providedTerms || undefined,
-    });
+      payment: {
+        ...current.meta.payment,
+        defaultChannel: body.paymentChannel || current.meta.payment?.defaultChannel,
+        planMode: body.paymentPlanMode || current.meta.payment?.planMode,
+        splitPercentInitial:
+          typeof body.splitPercentInitial === "number"
+            ? body.splitPercentInitial
+            : current.meta.payment?.splitPercentInitial,
+      },
+      }),
+    );
 
     await updateRows(
       "Quote",
@@ -211,12 +226,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       console.error("[quote-edit] pdf generation failed:", getErrorMessage(error));
     }
 
-    const metaWithPdf = buildQuoteMeta({
+    const metaWithPdf = normalizeQuoteMetaPayment(
+      buildQuoteMeta({
       ...meta,
       pdfStoragePath,
       pdfPublicUrl: pdfUrl,
       pdfGeneratedAt: new Date().toISOString(),
-    });
+      }),
+    );
 
     await updateRows(
       "Quote",
