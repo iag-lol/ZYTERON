@@ -87,6 +87,14 @@ function stageStatusLabel(status: QuoteStage["status"]) {
   }
 }
 
+function canShowFlowPayment(stage: QuoteStage) {
+  return stage.paymentChannel === "FLOW" && stage.dueEnabled && ["READY", "REJECTED", "PROCESSING"].includes(stage.status);
+}
+
+function canShowTransferPayment(stage: QuoteStage) {
+  return stage.paymentChannel === "TRANSFER" && stage.dueEnabled && ["READY", "REJECTED"].includes(stage.status);
+}
+
 export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, paymentLabel }: Props) {
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<string | null>(paymentMessage || null);
@@ -253,13 +261,18 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                     </div>
                   ) : null}
 
-                  {(stage.status === "READY" || stage.status === "REJECTED") && stage.dueEnabled ? (
+                  {(canShowFlowPayment(stage) || canShowTransferPayment(stage)) ? (
                     <div className="mt-4 space-y-3">
-                      {stage.paymentChannel === "FLOW" ? (
+                      {canShowFlowPayment(stage) ? (
                         <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
                           <p className="text-sm font-semibold text-blue-900">
                             Realiza el pago online con las tarjetas activas disponibles en la pasarela.
                           </p>
+                          {stage.status === "PROCESSING" ? (
+                            <p className="mt-2 text-xs text-blue-700">
+                              Tu intento anterior sigue sin confirmaci&oacute;n. Puedes volver a abrir el pago mientras Flow no lo apruebe.
+                            </p>
+                          ) : null}
                           <button
                             type="button"
                             disabled={pending}

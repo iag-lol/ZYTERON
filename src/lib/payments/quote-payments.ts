@@ -281,7 +281,13 @@ export function normalizeQuoteMetaPayment(meta: QuoteMeta) {
 export function getPayableQuoteStage(payment?: QuotePaymentConfig | null) {
   const stages = Array.isArray(payment?.stages) ? payment.stages : [];
   return (
-    stages.find((stage) => stage.dueEnabled && (stage.status === "READY" || stage.status === "REJECTED")) || null
+    stages.find(
+      (stage) =>
+        stage.dueEnabled &&
+        (stage.status === "READY" ||
+          stage.status === "REJECTED" ||
+          (stage.status === "PROCESSING" && stage.paymentChannel === "FLOW")),
+    ) || null
   );
 }
 
@@ -364,7 +370,7 @@ export function setQuoteStageFlowMeta(
     stage.key === stageKey
       ? {
           ...stage,
-          status: stage.status === "PAID" ? "PAID" : "PROCESSING",
+          status: stage.status === "PAID" ? "PAID" : stage.status,
           lastRequestedAt: new Date().toISOString(),
           flow: {
             ...stage.flow,
