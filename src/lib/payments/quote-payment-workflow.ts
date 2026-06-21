@@ -36,6 +36,11 @@ type QuoteWithPayment = ReturnType<typeof enrichQuoteRecord> & {
   meta: QuoteMeta;
 };
 
+type PortalQuoteLegalAcceptance = {
+  acceptTerms: true;
+  acceptPrivacy: true;
+};
+
 function toQuoteRecord(quote: {
   id: string;
   userId: string | null;
@@ -139,6 +144,39 @@ function mergeQuotePaymentSubscription(
       subscription: {
         ...(meta.payment?.subscription || {}),
         ...patch,
+      },
+    },
+  });
+}
+
+function assertPortalQuoteLegalAcceptance(input?: PortalQuoteLegalAcceptance) {
+  if (input?.acceptTerms !== true || input.acceptPrivacy !== true) {
+    throw new Error("Debes aceptar los términos y condiciones y la política de privacidad antes de continuar.");
+  }
+}
+
+function attachPortalQuoteLegalAcceptance(
+  meta: QuoteMeta,
+  input: {
+    userId: string;
+    email: string;
+    stageKey: QuotePaymentStageKey;
+    mode: "FLOW" | "SUBSCRIPTION";
+  },
+) {
+  return normalizeQuoteMetaPayment({
+    ...meta,
+    payment: {
+      ...(meta.payment || {}),
+      legalAcceptance: {
+        acceptedAt: new Date().toISOString(),
+        acceptedByUserId: input.userId,
+        acceptedByEmail: input.email,
+        stageKey: input.stageKey,
+        mode: input.mode,
+        source: "PORTAL_QUOTE_MODAL",
+        termsUrl: "/terminos",
+        privacyUrl: "/privacidad",
       },
     },
   });
@@ -273,7 +311,10 @@ export async function createQuoteFlowCheckout(input: {
   userId: string;
   email: string;
   req: Request;
+  legalAcceptance: PortalQuoteLegalAcceptance;
 }) {
+  assertPortalQuoteLegalAcceptance(input.legalAcceptance);
+
   const quote = await getQuoteWithPayment(input.quoteId);
   if (!quote) {
     throw new Error("Cotización no encontrada.");
@@ -301,6 +342,12 @@ export async function createQuoteFlowCheckout(input: {
 
   const baseUrl = resolveBaseUrl(input.req);
   const commerceOrder = buildFlowCommerceOrder(quote.id, stage.key);
+  const acceptedMeta = attachPortalQuoteLegalAcceptance(quote.meta, {
+    userId: input.userId,
+    email: input.email,
+    stageKey: stage.key,
+    mode: "FLOW",
+  });
   const flow = await createFlowPayment({
       commerceOrder,
       subject: `${quote.displayNumber} · ${stage.label}`,
@@ -320,8 +367,8 @@ export async function createQuoteFlowCheckout(input: {
   });
 
   const nextMeta = {
-    ...quote.meta,
-    payment: setQuoteStageFlowMeta(quote.meta.payment || {}, stage.key, {
+    ...acceptedMeta,
+    payment: setQuoteStageFlowMeta(acceptedMeta.payment || {}, stage.key, {
       commerceOrder,
       token: flow.token,
       checkoutUrl: `${flow.url}?token=${encodeURIComponent(flow.token)}`,
@@ -351,7 +398,10 @@ export async function createQuoteFlowSubscriptionStart(input: {
   userId: string;
   email: string;
   req: Request;
+  legalAcceptance: PortalQuoteLegalAcceptance;
 }) {
+  assertPortalQuoteLegalAcceptance(input.legalAcceptance);
+
   const quote = await getQuoteWithPayment(input.quoteId);
   if (!quote) throw new Error("Cotización no encontrada.");
   if (quote.userId && quote.userId !== input.userId) {
@@ -403,7 +453,14 @@ export async function createQuoteFlowSubscriptionStart(input: {
     urlReturn: returnUrl,
   });
 
-  const nextMeta = mergeQuotePaymentSubscription(quote.meta, {
+  const acceptedMeta = attachPortalQuoteLegalAcceptance(quote.meta, {
+    userId: input.userId,
+    email: input.email,
+    stageKey: stage.key,
+    mode: "SUBSCRIPTION",
+  });
+
+  const nextMeta = mergeQuotePaymentSubscription(acceptedMeta, {
     interval: "MONTHLY",
     amount: quote.totalAmount,
     planId,

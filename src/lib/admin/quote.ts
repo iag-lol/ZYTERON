@@ -79,6 +79,16 @@ export type QuotePaymentConfig = {
   customerAssignedAt?: string;
   contractEmailSentAt?: string;
   internalEmailSentAt?: string;
+  legalAcceptance?: {
+    acceptedAt?: string;
+    acceptedByUserId?: string;
+    acceptedByEmail?: string;
+    stageKey?: QuotePaymentStageKey;
+    mode?: "FLOW" | "SUBSCRIPTION";
+    source?: "PORTAL_QUOTE_MODAL";
+    termsUrl?: string;
+    privacyUrl?: string;
+  };
   subscription?: {
     interval?: QuoteSubscriptionInterval;
     amount?: number;

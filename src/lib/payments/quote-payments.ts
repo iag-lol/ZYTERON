@@ -30,6 +30,14 @@ type StageFlowData = {
 
 type QuotePaymentSubscriptionData = NonNullable<QuotePaymentConfig["subscription"]>;
 
+function normalizeStageKey(value?: string | null) {
+  const normalized = String(value || "").trim().toUpperCase();
+  if (normalized === "FULL" || normalized === "DELIVERY" || normalized === "INITIAL" || normalized === "FINAL") {
+    return normalized as QuotePaymentStageKey;
+  }
+  return undefined;
+}
+
 function roundAmount(value: number) {
   return Math.max(0, Math.round(Number.isFinite(value) ? value : 0));
 }
@@ -109,6 +117,25 @@ function normalizeSubscription(raw: QuotePaymentConfig["subscription"], totalQuo
     lastPaymentAt: typeof subscription.lastPaymentAt === "string" ? subscription.lastPaymentAt : undefined,
     lastPaymentStatus: typeof subscription.lastPaymentStatus === "string" ? subscription.lastPaymentStatus : undefined,
   } satisfies QuotePaymentSubscriptionData;
+}
+
+function normalizeLegalAcceptance(raw: QuotePaymentConfig["legalAcceptance"]) {
+  const legalAcceptance = asRecord(raw);
+  if (!legalAcceptance) return undefined;
+
+  return {
+    acceptedAt: typeof legalAcceptance.acceptedAt === "string" ? legalAcceptance.acceptedAt : undefined,
+    acceptedByUserId: typeof legalAcceptance.acceptedByUserId === "string" ? legalAcceptance.acceptedByUserId : undefined,
+    acceptedByEmail: typeof legalAcceptance.acceptedByEmail === "string" ? legalAcceptance.acceptedByEmail : undefined,
+    stageKey: normalizeStageKey(typeof legalAcceptance.stageKey === "string" ? legalAcceptance.stageKey : undefined),
+    mode:
+      legalAcceptance.mode === "SUBSCRIPTION" || legalAcceptance.mode === "FLOW"
+        ? legalAcceptance.mode
+        : undefined,
+    source: legalAcceptance.source === "PORTAL_QUOTE_MODAL" ? "PORTAL_QUOTE_MODAL" : undefined,
+    termsUrl: typeof legalAcceptance.termsUrl === "string" ? legalAcceptance.termsUrl : undefined,
+    privacyUrl: typeof legalAcceptance.privacyUrl === "string" ? legalAcceptance.privacyUrl : undefined,
+  } satisfies NonNullable<QuotePaymentConfig["legalAcceptance"]>;
 }
 
 function normalizePlanMode(value?: string | null, fallbackTerms?: string | null): QuotePaymentPlanMode {
@@ -343,6 +370,7 @@ export function normalizeQuotePaymentConfig(input: NormalizeInput): QuotePayment
     customerAssignedAt: raw.customerAssignedAt,
     contractEmailSentAt: raw.contractEmailSentAt,
     internalEmailSentAt: raw.internalEmailSentAt,
+    legalAcceptance: normalizeLegalAcceptance(raw.legalAcceptance),
     subscription,
     stages,
   };
