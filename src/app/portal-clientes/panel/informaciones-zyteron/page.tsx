@@ -1,18 +1,16 @@
 import Link from "next/link";
 import { ExternalLink, FileText, Scale, ShieldCheck } from "lucide-react";
-import { requirePortalSession } from "@/lib/auth/portal-session";
 import {
   privacyIntro,
   privacyLastUpdated,
   privacySections,
-} from "@/app/privacidad/page";
-import {
   termsCompanyInfo,
   termsExtraNotes,
   termsIntro,
   termsLastUpdated,
   termsSections,
-} from "@/app/terminos/page";
+} from "@/content/legal-documents";
+import { requirePortalSession } from "@/lib/auth/portal-session";
 
 export default async function PortalInformacionesZyteronPage() {
   await requirePortalSession();
@@ -67,8 +65,8 @@ export default async function PortalInformacionesZyteronPage() {
               <section key={section.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <h3 className="text-sm font-extrabold text-slate-900">{section.title}</h3>
                 <div className="mt-3 space-y-2">
-                  {section.points.map((point) => (
-                    <div key={point} className="flex items-start gap-2 text-sm leading-6 text-slate-600">
+                  {section.points.map((point, index) => (
+                    <div key={index} className="flex items-start gap-2 text-sm leading-6 text-slate-600">
                       <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" />
                       <p>{point}</p>
                     </div>

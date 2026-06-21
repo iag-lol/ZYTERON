@@ -17,6 +17,16 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ZYTERON_COMPANY } from "@/lib/company";
+import {
+  privacyIntro,
+  privacyLastUpdated,
+  privacySections,
+  termsCompanyInfo,
+  termsExtraNotes,
+  termsIntro,
+  termsLastUpdated,
+  termsSections,
+} from "@/content/legal-documents";
 import { quotePaymentIsMarkedPaidInAdmin, quotePaymentVisibleInPortal } from "@/lib/payments/quote-payments";
 
 type QuoteStage = {
@@ -142,77 +152,6 @@ function createEmptyLegalState() {
   };
 }
 
-const LEGAL_DIALOG_CONTENT = {
-  terms: {
-    title: "Términos y condiciones del servicio",
-    intro: "Resumen legal interno aplicado a la contratación vinculada a esta cotización.",
-    sections: [
-      {
-        title: "Alcance contratado",
-        points: [
-          "Pagas únicamente lo aprobado en la cotización asociada.",
-          "Cambios fuera de alcance, nuevas funciones o ampliaciones se cotizan aparte.",
-        ],
-      },
-      {
-        title: "Pago y activación",
-        points: [
-          "La ejecución o habilitación de la etapa depende de la validación del pago.",
-          "La publicación final, entrega o liberación puede quedar sujeta al saldo pendiente según la cotización.",
-        ],
-      },
-      {
-        title: "Revisiones y garantía",
-        points: [
-          "Las correcciones incluidas cubren ajustes dentro del alcance aprobado.",
-          "La garantía técnica cubre errores atribuibles al servicio entregado, no cambios nuevos o terceros.",
-        ],
-      },
-      {
-        title: "Propiedad y uso",
-        points: [
-          "La titularidad de entregables pagados se consolida al completar el pago comprometido.",
-          "ZYTERON mantiene metodologías, componentes base y herramientas reutilizables de su operación.",
-        ],
-      },
-    ],
-  },
-  privacy: {
-    title: "Política de privacidad",
-    intro: "Resumen interno del tratamiento de datos utilizado para gestionar esta cotización y su pago.",
-    sections: [
-      {
-        title: "Datos utilizados",
-        points: [
-          "Se usan datos de contacto, antecedentes comerciales, facturación y pago asociados a tu cuenta.",
-          "También se usan los datos necesarios para soporte, seguimiento y documentación tributaria.",
-        ],
-      },
-      {
-        title: "Finalidad",
-        points: [
-          "Procesar el pago, validar el cobro y mantener trazabilidad de la cotización.",
-          "Gestionar servicio, soporte, comunicaciones y documentación comercial relacionada.",
-        ],
-      },
-      {
-        title: "Pasarela externa",
-        points: [
-          "El pago online se completa mediante Flow como proveedor externo habilitado.",
-          "ZYTERON no almacena datos sensibles de tarjeta fuera del proveedor de pago.",
-        ],
-      },
-      {
-        title: "Protección y derechos",
-        points: [
-          "El acceso interno a tus datos se limita a finalidades operativas y comerciales del servicio.",
-          "Puedes solicitar actualización o eliminación de datos conforme a obligaciones legales aplicables.",
-        ],
-      },
-    ],
-  },
-} as const;
-
 function paymentContextLabel(stage: QuoteStage, isSubscriptionQuote: boolean) {
   if (isSubscriptionQuote) return "Activación del cobro mensual recurrente";
   if (stage.key === "INITIAL") return "Abono inicial del proyecto";
@@ -250,8 +189,6 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
         : null,
     [modalQuote, paymentModal],
   );
-
-  const legalDialogContent = legalDocument ? LEGAL_DIALOG_CONTENT[legalDocument] : null;
 
   const isModalBusy = Boolean(
     paymentModal &&
@@ -875,8 +812,8 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
       </Dialog>
 
       <Dialog open={Boolean(legalDocument)} onOpenChange={(open) => (!open ? setLegalDocument(null) : null)}>
-        <DialogContent className="max-h-[88vh] overflow-y-auto border-0 bg-white p-0 md:max-w-3xl">
-          {legalDialogContent ? (
+        <DialogContent className="max-h-[88vh] overflow-y-auto border-0 bg-white p-0 md:max-w-4xl">
+          {legalDocument ? (
             <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white">
               <div className="border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_55%,#eef4ff_100%)] px-6 py-5">
                 <DialogHeader className="space-y-2">
@@ -884,22 +821,89 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                     <ShieldCheck className="h-3.5 w-3.5" />
                     Información legal interna
                   </div>
-                  <DialogTitle className="text-2xl font-extrabold text-slate-950">{legalDialogContent.title}</DialogTitle>
-                  <DialogDescription className="text-sm text-slate-600">{legalDialogContent.intro}</DialogDescription>
+                  <DialogTitle className="text-2xl font-extrabold text-slate-950">
+                    {legalDocument === "terms" ? "Términos y condiciones del servicio" : "Política de privacidad"}
+                  </DialogTitle>
+                  <DialogDescription className="text-sm text-slate-600">
+                    {legalDocument === "terms"
+                      ? "Documento completo aplicable a la contratación y al cobro asociado a esta cotización."
+                      : "Documento completo sobre el tratamiento de datos asociado al pago y a la gestión del servicio."}
+                  </DialogDescription>
                 </DialogHeader>
               </div>
 
-              <div className="grid gap-4 p-6 md:grid-cols-2">
-                {legalDialogContent.sections.map((section) => (
-                  <section key={section.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <h3 className="text-sm font-extrabold text-slate-950">{section.title}</h3>
-                    <div className="mt-3 space-y-2 text-sm text-slate-700">
-                      {section.points.map((point) => (
-                        <p key={point}>• {point}</p>
-                      ))}
+              <div className="p-6">
+                {legalDocument === "terms" ? (
+                  <article className="mx-auto max-w-3xl space-y-8">
+                    <div className="space-y-3 border-b border-slate-200 pb-6">
+                      <p className="text-sm leading-7 text-slate-700">
+                        {termsIntro.split("ZYTERON SpA").map((part, index, array) => (
+                          <span key={index}>
+                            {part}
+                            {index < array.length - 1 ? <strong>ZYTERON SpA</strong> : null}
+                          </span>
+                        ))}
+                      </p>
+                      <div className="grid gap-x-8 gap-y-3 pt-2 sm:grid-cols-2">
+                        {termsCompanyInfo.map((item) => (
+                          <div key={item.label}>
+                            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{item.label}</p>
+                            <p className="mt-1 text-sm font-semibold text-slate-900">{item.value}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </section>
-                ))}
+
+                    {termsSections.map((section) => (
+                      <section key={section.title} className="border-b border-slate-200 pb-6 last:border-b-0 last:pb-0">
+                        <h3 className="text-xl font-extrabold text-slate-950">{section.title}</h3>
+                        <div className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
+                          {section.points.map((point, index) => (
+                            <p key={index}>
+                              <span className="mr-2 font-bold text-blue-700">•</span>
+                              {point}
+                            </p>
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+
+                    <section className="border-t border-slate-200 pt-6">
+                      <h3 className="text-lg font-extrabold text-slate-950">Notas operativas complementarias</h3>
+                      <div className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
+                        {termsExtraNotes.map((note) => (
+                          <p key={note}>
+                            <span className="mr-2 font-bold text-blue-700">•</span>
+                            {note}
+                          </p>
+                        ))}
+                      </div>
+                      <p className="mt-6 text-xs text-slate-500">Última actualización: {termsLastUpdated}.</p>
+                    </section>
+                  </article>
+                ) : (
+                  <article className="mx-auto max-w-3xl space-y-8">
+                    <div className="space-y-3 border-b border-slate-200 pb-6">
+                      <p className="text-sm leading-7 text-slate-700">{privacyIntro}</p>
+                    </div>
+
+                    {privacySections.map((section) => (
+                      <section key={section.title} className="border-b border-slate-200 pb-6 last:border-b-0 last:pb-0">
+                        <h3 className="text-xl font-extrabold text-slate-950">{section.title}</h3>
+                        <div className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
+                          {section.points.map((point, index) => (
+                            <p key={index}>
+                              <span className="mr-2 font-bold text-blue-700">•</span>
+                              {point}
+                            </p>
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+
+                    <p className="text-xs text-slate-500">Última actualización: {privacyLastUpdated}.</p>
+                  </article>
+                )}
               </div>
             </div>
           ) : null}
