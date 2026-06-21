@@ -3,18 +3,19 @@
 import { useMemo, useState, useTransition } from "react";
 import {
   AlertCircle,
+  Check,
   CheckCircle2,
   CreditCard,
   Download,
+  Eye,
   FileText,
   Landmark,
   Loader2,
+  ScrollText,
   ShieldCheck,
   UploadCloud,
 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { ZYTERON_COMPANY } from "@/lib/company";
 import { quotePaymentIsMarkedPaidInAdmin, quotePaymentVisibleInPortal } from "@/lib/payments/quote-payments";
 
@@ -76,6 +77,8 @@ type PaymentModalState = {
   stageKey: QuoteStage["key"];
   mode: "FLOW" | "SUBSCRIPTION";
 } | null;
+
+type LegalDocument = "terms" | "privacy" | null;
 
 function currency(value: number) {
   return new Intl.NumberFormat("es-CL", {
@@ -139,11 +142,91 @@ function createEmptyLegalState() {
   };
 }
 
+const LEGAL_DIALOG_CONTENT = {
+  terms: {
+    title: "Términos y condiciones del servicio",
+    intro: "Resumen legal interno aplicado a la contratación vinculada a esta cotización.",
+    sections: [
+      {
+        title: "Alcance contratado",
+        points: [
+          "Pagas únicamente lo aprobado en la cotización asociada.",
+          "Cambios fuera de alcance, nuevas funciones o ampliaciones se cotizan aparte.",
+        ],
+      },
+      {
+        title: "Pago y activación",
+        points: [
+          "La ejecución o habilitación de la etapa depende de la validación del pago.",
+          "La publicación final, entrega o liberación puede quedar sujeta al saldo pendiente según la cotización.",
+        ],
+      },
+      {
+        title: "Revisiones y garantía",
+        points: [
+          "Las correcciones incluidas cubren ajustes dentro del alcance aprobado.",
+          "La garantía técnica cubre errores atribuibles al servicio entregado, no cambios nuevos o terceros.",
+        ],
+      },
+      {
+        title: "Propiedad y uso",
+        points: [
+          "La titularidad de entregables pagados se consolida al completar el pago comprometido.",
+          "ZYTERON mantiene metodologías, componentes base y herramientas reutilizables de su operación.",
+        ],
+      },
+    ],
+  },
+  privacy: {
+    title: "Política de privacidad",
+    intro: "Resumen interno del tratamiento de datos utilizado para gestionar esta cotización y su pago.",
+    sections: [
+      {
+        title: "Datos utilizados",
+        points: [
+          "Se usan datos de contacto, antecedentes comerciales, facturación y pago asociados a tu cuenta.",
+          "También se usan los datos necesarios para soporte, seguimiento y documentación tributaria.",
+        ],
+      },
+      {
+        title: "Finalidad",
+        points: [
+          "Procesar el pago, validar el cobro y mantener trazabilidad de la cotización.",
+          "Gestionar servicio, soporte, comunicaciones y documentación comercial relacionada.",
+        ],
+      },
+      {
+        title: "Pasarela externa",
+        points: [
+          "El pago online se completa mediante Flow como proveedor externo habilitado.",
+          "ZYTERON no almacena datos sensibles de tarjeta fuera del proveedor de pago.",
+        ],
+      },
+      {
+        title: "Protección y derechos",
+        points: [
+          "El acceso interno a tus datos se limita a finalidades operativas y comerciales del servicio.",
+          "Puedes solicitar actualización o eliminación de datos conforme a obligaciones legales aplicables.",
+        ],
+      },
+    ],
+  },
+} as const;
+
+function paymentContextLabel(stage: QuoteStage, isSubscriptionQuote: boolean) {
+  if (isSubscriptionQuote) return "Activación del cobro mensual recurrente";
+  if (stage.key === "INITIAL") return "Abono inicial del proyecto";
+  if (stage.key === "FINAL") return "Saldo final del proyecto";
+  if (stage.key === "DELIVERY") return "Pago contraentrega";
+  return "Pago completo de la cotización";
+}
+
 export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, paymentLabel }: Props) {
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<string | null>(paymentMessage || null);
   const [activeStage, setActiveStage] = useState<string | null>(null);
   const [paymentModal, setPaymentModal] = useState<PaymentModalState>(null);
+  const [legalDocument, setLegalDocument] = useState<LegalDocument>(null);
   const [modalError, setModalError] = useState<string | null>(null);
   const [legalState, setLegalState] = useState(createEmptyLegalState);
   const [transferState, setTransferState] = useState<
@@ -168,6 +251,8 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
     [modalQuote, paymentModal],
   );
 
+  const legalDialogContent = legalDocument ? LEGAL_DIALOG_CONTENT[legalDocument] : null;
+
   const isModalBusy = Boolean(
     paymentModal &&
       pending &&
@@ -177,6 +262,7 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
 
   function closePaymentModal() {
     setPaymentModal(null);
+    setLegalDocument(null);
     setModalError(null);
     setLegalState(createEmptyLegalState());
   }
@@ -553,181 +639,222 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
       })}
 
       <Dialog open={Boolean(paymentModal)} onOpenChange={(open) => (!open ? closePaymentModal() : null)}>
-        <DialogContent className="max-h-[92vh] overflow-y-auto border-0 bg-white p-0 sm:max-w-2xl">
+        <DialogContent className="max-h-[92vh] overflow-y-auto border-0 bg-white p-0 md:max-h-none md:max-w-[1120px] md:overflow-visible">
           {modalQuote && modalStage ? (
-            <div className="overflow-hidden rounded-[28px]">
-              <div className="relative border-b border-blue-100 bg-[linear-gradient(135deg,#eff6ff_0%,#ffffff_55%,#f8fafc_100%)] px-6 py-6">
-                <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-blue-200/30 blur-3xl" />
-                <DialogHeader className="relative space-y-3">
-                  <div className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-200 bg-white/90 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-blue-700">
-                    <ShieldCheck className="h-3.5 w-3.5" />
-                    Confirmación segura
-                  </div>
-                  <DialogTitle className="text-2xl font-extrabold text-slate-950">
-                    {paymentModal?.mode === "SUBSCRIPTION" ? "Activa tu suscripción mensual" : "Confirma tu pago online"}
-                  </DialogTitle>
-                  <DialogDescription className="max-w-2xl text-sm leading-relaxed text-slate-600">
-                    Revisa la información del cobro antes de salir a Flow. Esta validación deja aceptación obligatoria de términos y política de privacidad.
-                  </DialogDescription>
-                </DialogHeader>
+            <div className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-2xl shadow-slate-900/10">
+              <div className="border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_48%,#eef4ff_100%)] px-6 py-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <DialogHeader className="max-w-3xl space-y-2">
+                    <div className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-blue-700 shadow-sm">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      Pago protegido
+                    </div>
+                    <DialogTitle className="text-3xl font-extrabold tracking-tight text-slate-950">
+                      {paymentModal?.mode === "SUBSCRIPTION" ? "Confirmar suscripción mensual" : "Confirmar pago de cotización"}
+                    </DialogTitle>
+                    <DialogDescription className="text-base text-slate-600">
+                      Estás pagando <span className="font-semibold text-slate-900">{modalStage.label}</span> de la cotización{" "}
+                      <span className="font-semibold text-slate-900">{modalQuote.displayNumber}</span>.
+                    </DialogDescription>
+                  </DialogHeader>
 
-                <div className="relative mt-5 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
+                  <div className="min-w-[220px] rounded-3xl bg-blue-600 px-5 py-4 text-white shadow-lg shadow-blue-600/20">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-100">Cargo de hoy</p>
+                    <p className="mt-2 text-4xl font-black leading-none">{currency(modalStage.amount)}</p>
+                    <p className="mt-2 text-sm text-blue-100">{paymentContextLabel(modalStage, modalQuote.payment?.billingType === "SUBSCRIPTION")}</p>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-3 md:grid-cols-4">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                     <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Cotización</p>
-                    <p className="mt-2 text-lg font-extrabold text-slate-900">{modalQuote.displayNumber}</p>
-                    <p className="mt-1 text-xs text-slate-500">Documento comercial asociado al cobro.</p>
+                    <p className="mt-2 text-xl font-extrabold text-slate-900">{modalQuote.displayNumber}</p>
                   </div>
-                  <div className="rounded-2xl border border-blue-200 bg-blue-600 p-4 text-white shadow-sm">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-100">Monto a pagar</p>
-                    <p className="mt-2 text-2xl font-black">{currency(modalStage.amount)}</p>
-                    <p className="mt-1 text-xs text-blue-100">{modalStage.label}</p>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Qué pagas</p>
+                    <p className="mt-2 text-lg font-bold text-slate-900">{modalStage.label}</p>
                   </div>
-                  <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Modalidad</p>
-                    <p className="mt-2 text-sm font-bold text-slate-900">{paymentChannelLabel(modalQuote.payment?.billingType === "SUBSCRIPTION", modalStage)}</p>
-                    <p className="mt-1 text-xs text-slate-500">{modalStage.dueLabel || "Cobro habilitado para esta etapa."}</p>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Método</p>
+                    <p className="mt-2 text-lg font-bold text-slate-900">
+                      {paymentChannelLabel(modalQuote.payment?.billingType === "SUBSCRIPTION", modalStage)}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Pendiente luego</p>
+                    <p className="mt-2 text-xl font-extrabold text-slate-900">
+                      {currency(Math.max(0, (modalQuote.payment?.totalPending || 0) - modalStage.amount))}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-5 p-6">
-                {modalError ? (
-                  <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
-                    {modalError}
+              <div className="grid gap-5 px-6 py-5 lg:grid-cols-[1.25fr_0.95fr]">
+                <section className="space-y-4">
+                  {modalError ? (
+                    <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+                      {modalError}
+                    </div>
+                  ) : null}
+
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Monto exacto</p>
+                      <p className="mt-2 text-2xl font-black text-slate-950">{currency(modalStage.amount)}</p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Total cotización</p>
+                      <p className="mt-2 text-2xl font-black text-slate-950">{currency(modalQuote.totalAmount)}</p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Estado</p>
+                      <p className="mt-2 text-lg font-bold text-slate-950">{stageStatusLabel(modalStage.status)}</p>
+                    </div>
                   </div>
-                ) : null}
 
-                <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-                  <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div className="flex items-center gap-2 text-slate-900">
-                      <CreditCard className="h-5 w-5 text-blue-700" />
-                      <p className="text-sm font-bold">Resumen del cobro</p>
-                    </div>
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cobro actual</p>
-                        <p className="mt-1 text-base font-extrabold text-slate-900">{modalStage.label}</p>
-                        <p className="mt-1 text-sm text-slate-600">{currency(modalStage.amount)}</p>
+                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">Documentación y validación</p>
+                        <p className="mt-1 text-sm text-slate-600">Abre el respaldo comercial y revisa las políticas sin salir del portal.</p>
                       </div>
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pendiente total</p>
-                        <p className="mt-1 text-base font-extrabold text-slate-900">{currency(modalQuote.payment?.totalPending || 0)}</p>
-                        <p className="mt-1 text-sm text-slate-600">Total cotización {currency(modalQuote.totalAmount)}</p>
-                      </div>
+                      <a
+                        href={modalQuote.pdfUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                      >
+                        <Download className="h-4 w-4" />
+                        Ver cotización PDF
+                      </a>
                     </div>
-                    <div className="mt-4 space-y-3">
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Qué pasará ahora</p>
-                        <div className="mt-3 space-y-2 text-sm text-slate-700">
-                          <p>1. Confirmarás este cobro y saldrás a la pasarela segura de Flow.</p>
-                          <p>2. Completarás el pago con los medios habilitados por el proveedor.</p>
-                          <p>3. Volverás al portal con el estado actualizado de la cotización.</p>
+
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={() => setLegalDocument("terms")}
+                        className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:border-blue-300 hover:bg-blue-50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="rounded-xl bg-white p-2 shadow-sm">
+                            <ScrollText className="h-4 w-4 text-blue-700" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-900">Ver términos</p>
+                            <p className="text-xs text-slate-500">Condiciones del servicio y del cobro</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
-                        La etapa quedará vinculada a tu cuenta y al documento comercial descargable desde este mismo portal.
-                      </div>
-                    </div>
-                  </section>
+                        <Eye className="h-4 w-4 text-slate-400" />
+                      </button>
 
-                  <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                    <div className="flex items-center gap-2 text-slate-900">
-                      <FileText className="h-5 w-5 text-slate-700" />
-                      <p className="text-sm font-bold">Respaldo y seguridad</p>
+                      <button
+                        type="button"
+                        onClick={() => setLegalDocument("privacy")}
+                        className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:border-blue-300 hover:bg-blue-50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="rounded-xl bg-white p-2 shadow-sm">
+                            <FileText className="h-4 w-4 text-blue-700" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-900">Ver privacidad</p>
+                            <p className="text-xs text-slate-500">Tratamiento de datos y pago</p>
+                          </div>
+                        </div>
+                        <Eye className="h-4 w-4 text-slate-400" />
+                      </button>
                     </div>
-                    <a
-                      href={modalQuote.pdfUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                    >
-                      <Download className="h-4 w-4" />
-                      Descargar cotización PDF
-                    </a>
-                    <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-                      <div className="flex items-center gap-2 font-semibold">
-                        <ShieldCheck className="h-4 w-4" />
-                        Validación previa obligatoria
-                      </div>
-                      <p className="mt-2 text-blue-800">
-                        Antes de continuar debes aceptar los términos legales y la política de privacidad del servicio.
-                      </p>
-                    </div>
-                  </section>
-                </div>
+                  </div>
+                </section>
 
-                <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-2xl bg-white p-2 shadow-sm">
-                      <ShieldCheck className="h-5 w-5 text-blue-700" />
+                <section className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] p-5 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-2xl bg-blue-600 p-2.5 text-white shadow-lg shadow-blue-600/20">
+                      <ShieldCheck className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-900">Aceptación legal previa al pago</p>
-                      <p className="mt-1 text-sm text-slate-600">
-                        Esta confirmación es obligatoria y queda registrada antes de iniciar el checkout.
-                      </p>
+                      <p className="text-lg font-extrabold text-slate-950">Aceptación legal</p>
+                      <p className="text-sm text-slate-600">Marca ambas confirmaciones para continuar al pago.</p>
                     </div>
                   </div>
 
                   <div className="mt-4 space-y-3">
-                    <div className="rounded-xl border border-slate-200 bg-white p-4">
-                      <Label htmlFor="quote-accept-terms" className="items-start gap-3 leading-relaxed text-slate-700">
-                        <Checkbox
-                          id="quote-accept-terms"
-                          checked={legalState.acceptTerms}
-                          onCheckedChange={(checked) =>
-                            setLegalState((current) => ({
-                              ...current,
-                              acceptTerms: checked === true,
-                            }))
-                          }
-                          className="mt-0.5"
-                        />
-                        <span>
-                          Acepto los{" "}
-                          <a href="/terminos" target="_blank" rel="noreferrer" className="font-semibold text-blue-700 underline underline-offset-2">
-                            términos y condiciones
-                          </a>{" "}
-                          aplicables a esta contratación y a la ejecución del servicio cotizado.
-                        </span>
-                      </Label>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setLegalState((current) => ({
+                          ...current,
+                          acceptTerms: !current.acceptTerms,
+                        }))
+                      }
+                      className={`w-full rounded-2xl border-2 p-4 text-left transition ${
+                        legalState.acceptTerms
+                          ? "border-blue-600 bg-blue-50 shadow-lg shadow-blue-600/10"
+                          : "border-slate-300 bg-white hover:border-blue-300"
+                      }`}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div
+                          className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border-2 ${
+                            legalState.acceptTerms
+                              ? "border-blue-600 bg-blue-600 text-white"
+                              : "border-slate-300 bg-white text-transparent"
+                          }`}
+                        >
+                          <Check className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-extrabold text-slate-950">Acepto los términos y condiciones</p>
+                          <p className="mt-1 text-sm text-slate-600">Confirmo las condiciones comerciales, de alcance, pago, garantía y entrega asociadas a esta cotización.</p>
+                        </div>
+                      </div>
+                    </button>
 
-                    <div className="rounded-xl border border-slate-200 bg-white p-4">
-                      <Label htmlFor="quote-accept-privacy" className="items-start gap-3 leading-relaxed text-slate-700">
-                        <Checkbox
-                          id="quote-accept-privacy"
-                          checked={legalState.acceptPrivacy}
-                          onCheckedChange={(checked) =>
-                            setLegalState((current) => ({
-                              ...current,
-                              acceptPrivacy: checked === true,
-                            }))
-                          }
-                          className="mt-0.5"
-                        />
-                        <span>
-                          Acepto la{" "}
-                          <a href="/privacidad" target="_blank" rel="noreferrer" className="font-semibold text-blue-700 underline underline-offset-2">
-                            política de privacidad
-                          </a>{" "}
-                          y el tratamiento de datos necesario para procesar el pago y gestionar esta cotización.
-                        </span>
-                      </Label>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setLegalState((current) => ({
+                          ...current,
+                          acceptPrivacy: !current.acceptPrivacy,
+                        }))
+                      }
+                      className={`w-full rounded-2xl border-2 p-4 text-left transition ${
+                        legalState.acceptPrivacy
+                          ? "border-blue-600 bg-blue-50 shadow-lg shadow-blue-600/10"
+                          : "border-slate-300 bg-white hover:border-blue-300"
+                      }`}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div
+                          className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border-2 ${
+                            legalState.acceptPrivacy
+                              ? "border-blue-600 bg-blue-600 text-white"
+                              : "border-slate-300 bg-white text-transparent"
+                          }`}
+                        >
+                          <Check className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-extrabold text-slate-950">Acepto la política de privacidad</p>
+                          <p className="mt-1 text-sm text-slate-600">Autorizo el tratamiento de datos necesario para validar el pago, documentar el cobro y gestionar el servicio.</p>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    El registro de aceptación queda guardado antes de salir a Flow.
                   </div>
                 </section>
               </div>
 
-              <div className="flex flex-col gap-3 border-t border-slate-200 bg-white px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs text-slate-500">
-                  Al continuar saldrás del portal momentáneamente para completar el proceso en Flow.
-                </p>
+              <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 md:flex-row md:items-center md:justify-between">
+                <p className="text-sm text-slate-500">Al continuar se abrirá la pasarela segura de Flow para completar este cobro.</p>
                 <div className="flex flex-col-reverse gap-3 sm:flex-row">
                   <button
                     type="button"
                     onClick={closePaymentModal}
-                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                   >
                     Cancelar
                   </button>
@@ -738,9 +865,41 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:opacity-60"
                   >
                     {isModalBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                    {paymentModal?.mode === "SUBSCRIPTION" ? "Aceptar y activar suscripción" : "Aceptar y continuar al pago"}
+                    {paymentModal?.mode === "SUBSCRIPTION" ? "Confirmar y activar suscripción" : "Confirmar y continuar a Flow"}
                   </button>
                 </div>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(legalDocument)} onOpenChange={(open) => (!open ? setLegalDocument(null) : null)}>
+        <DialogContent className="max-h-[88vh] overflow-y-auto border-0 bg-white p-0 md:max-w-3xl">
+          {legalDialogContent ? (
+            <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_55%,#eef4ff_100%)] px-6 py-5">
+                <DialogHeader className="space-y-2">
+                  <div className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-blue-700">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Información legal interna
+                  </div>
+                  <DialogTitle className="text-2xl font-extrabold text-slate-950">{legalDialogContent.title}</DialogTitle>
+                  <DialogDescription className="text-sm text-slate-600">{legalDialogContent.intro}</DialogDescription>
+                </DialogHeader>
+              </div>
+
+              <div className="grid gap-4 p-6 md:grid-cols-2">
+                {legalDialogContent.sections.map((section) => (
+                  <section key={section.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <h3 className="text-sm font-extrabold text-slate-950">{section.title}</h3>
+                    <div className="mt-3 space-y-2 text-sm text-slate-700">
+                      {section.points.map((point) => (
+                        <p key={point}>• {point}</p>
+                      ))}
+                    </div>
+                  </section>
+                ))}
               </div>
             </div>
           ) : null}
