@@ -235,7 +235,7 @@ export async function generateWorkOrderPdf(input: WorkOrderPdfInput) {
 
   const col1X = MARGIN + 15;
   const col2X = MARGIN + CONTENT_WIDTH / 2 + 15;
-  let boxY = y - 18;
+  const boxY = y - 18;
 
   // Col 1: Client Info
   page.drawText("Datos del Cliente", { x: col1X, y: boxY, size: 9, font: bold, color: C_DARK });

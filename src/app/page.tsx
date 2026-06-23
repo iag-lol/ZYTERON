@@ -43,7 +43,7 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 const trustPoints = [
-  "Más de 7 años de experiencia ligada a tecnología, procesos y soluciones digitales.",
+  "Experiencia práctica ligada a tecnología, procesos y soluciones digitales.",
   "Cotización formal antes de iniciar.",
   "Proceso de trabajo ordenado y documentado.",
   "Entrega por etapas con revisión del cliente.",

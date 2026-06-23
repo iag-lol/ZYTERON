@@ -77,6 +77,16 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/nosotros",
+        destination: "/quienes-somos",
+        permanent: true,
+      },
+      {
+        source: "/nosotros/:path*",
+        destination: "/quienes-somos",
+        permanent: true,
+      },
+      {
         source: "/:path*",
         has: [
           {

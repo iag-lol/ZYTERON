@@ -5,6 +5,7 @@ import { AlertTriangle, ArrowRight, Check, CreditCard, Minus, Plus, Search, Shop
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatRut, isValidRut } from "@/lib/checkout/rut";
 import { formatStableDateEsCl } from "@/lib/stable-date";
+import { trackBeginCheckout } from "@/lib/analytics/google-ads";
 import type { PublicProduct } from "@/lib/web-control-types";
 
 type Props = {
@@ -273,6 +274,13 @@ export function PublicProductsCatalog({ products }: Props) {
 
     setIsCreatingPayment(true);
     setCheckoutError(null);
+    trackBeginCheckout({
+      page_path: window.location.pathname,
+      items_count: cartItems.length,
+      value: summary.total,
+      currency: "CLP",
+      checkout_type: "public_products",
+    });
 
     try {
       const response = await fetch("/api/checkout/flow/create", {

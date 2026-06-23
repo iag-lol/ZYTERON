@@ -31,6 +31,20 @@ const payloadSchema = z.object({
   }),
 });
 
+type PurchasableItem = {
+  id: string;
+  slug: string;
+  name: string;
+  price: number;
+  discountPct?: number;
+  finalPrice?: number;
+  discountActive?: boolean;
+  discountStartsAt?: string | null;
+  discountEndsAt?: string | null;
+  published?: boolean | null;
+  stock?: number;
+};
+
 function normalizeOptional(value?: string) {
   const normalized = value?.trim();
   return normalized ? normalized : null;
@@ -145,11 +159,8 @@ export async function POST(req: Request) {
     }
 
     const { products, plans, extras } = await getWebPricingSnapshot();
-    const byId = new Map([
-      ...products.map((p) => [p.id, p]),
-      ...plans.map((p) => [p.id, p]),
-      ...extras.map((e) => [e.id, e]),
-    ] as [string, any][]);
+    const purchasableItems: PurchasableItem[] = [...products, ...plans, ...extras];
+    const byId = new Map(purchasableItems.map((item) => [item.id, item]));
 
     const checkoutItems: CheckoutItem[] = [];
 

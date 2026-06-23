@@ -1,4 +1,4 @@
-import { CheckCircle, Clock, LifeBuoy, AlertCircle } from "lucide-react";
+import { CheckCircle, Clock, LifeBuoy } from "lucide-react";
 import { SupportTicketCenter } from "@/components/portal/panel/support-ticket-center";
 import { requirePortalSession } from "@/lib/auth/portal-session";
 import { prisma } from "@/lib/prisma";

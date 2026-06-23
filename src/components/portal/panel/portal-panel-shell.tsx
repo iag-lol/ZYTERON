@@ -116,9 +116,16 @@ export function PortalPanelShell({
   }, []);
 
   useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 20000);
-    return () => clearInterval(interval);
+    const initialTimer = window.setTimeout(() => {
+      void fetchNotifications();
+    }, 0);
+    const interval = window.setInterval(() => {
+      void fetchNotifications();
+    }, 20000);
+    return () => {
+      window.clearTimeout(initialTimer);
+      window.clearInterval(interval);
+    };
   }, [fetchNotifications]);
 
   // Close dropdown on click outside

@@ -124,12 +124,14 @@ export function AdminCommunicationsCenter({
     refreshComms();
   }
 
-  // Auto scroll
+  const activeThreadKey = activeThread?.key ?? "";
+  const activeThreadMessageCount = activeThread?.messages.length ?? 0;
+
   useEffect(() => {
-    if (activeThread && messagesEndRef.current) {
+    if (activeThreadMessageCount > 0 && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [activeThread?.messages.length]);
+  }, [activeThreadKey, activeThreadMessageCount]);
 
   return (
     <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr] min-h-[500px]">
@@ -253,7 +255,7 @@ export function AdminCommunicationsCenter({
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/30">
-              {activeThread.messages.map((msg, idx) => {
+              {activeThread.messages.map((msg) => {
                 const isClient = msg.direction === "INBOUND";
                 // Admin point of view: 
                 // Client = INBOUND (left, gray)

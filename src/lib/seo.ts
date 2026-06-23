@@ -82,8 +82,17 @@ function normalizePath(path: string) {
 
 function normalizeMetadataTitle(rawTitle: string) {
   const escapedBrand = siteConfig.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const brandSuffix = new RegExp(`\\s*[|\\-–—]\\s*${escapedBrand}\\s*$`, "i");
+  const brandSuffix = new RegExp(
+    `\\s*[|\\-–—]\\s*${escapedBrand}(?:\\.cl|\\s+SpA)?(?:\\s*[|·\\-–—].*)?$`,
+    "i",
+  );
   return rawTitle.replace(brandSuffix, "").trim();
+}
+
+function formatMetadataTitle(rawTitle: string) {
+  const title = normalizeMetadataTitle(rawTitle);
+  if (!title || title.toLowerCase() === siteConfig.name.toLowerCase()) return siteConfig.name;
+  return `${title} | ${siteConfig.name}`;
 }
 
 export function buildAbsoluteUrl(path: string) {
@@ -109,7 +118,7 @@ export function createPageMetadata({
 }: SeoMetadataInput): Metadata {
   const url = buildAbsoluteUrl(path);
   const socialImage = ogImagePath ? buildAbsoluteUrl(ogImagePath) : getAbsoluteOgImageUrl(path);
-  const title = normalizeMetadataTitle(rawTitle);
+  const title = formatMetadataTitle(rawTitle);
 
   return {
     title: {
@@ -191,10 +200,6 @@ function buildContactPoint() {
 }
 
 export function buildOrganizationGraph() {
-  const sameAs = [siteConfig.social.linkedin, siteConfig.social.whatsapp].filter(Boolean);
-  const servedAreas = buildServedAreas();
-  const [salesContactPoint] = buildContactPoint();
-
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -209,37 +214,6 @@ export function buildOrganizationGraph() {
           "@id": `${siteConfig.url}/#organization`,
         },
       },
-      {
-        "@type": "LocalBusiness",
-        "@id": `${siteConfig.url}/#localbusiness`,
-        name: siteConfig.name,
-        legalName: siteConfig.legalName,
-        taxID: siteConfig.taxId,
-        url: `${siteConfig.url}/`,
-        image: `${siteConfig.url}/logo.svg`,
-        logo: `${siteConfig.url}/logo.svg`,
-        telephone: siteConfig.contact.phone,
-        email: siteConfig.contact.email,
-        description: siteConfig.description,
-        openingHoursSpecification: [
-          {
-            "@type": "OpeningHoursSpecification",
-            dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-            opens: "09:00",
-            closes: "18:00",
-          },
-        ],
-        priceRange: siteConfig.business.priceRange,
-        areaServed: servedAreas,
-        contactPoint: salesContactPoint,
-        address: {
-          "@type": "PostalAddress",
-          addressLocality: siteConfig.address.city,
-          addressRegion: siteConfig.address.region,
-          addressCountry: siteConfig.address.countryCode,
-        },
-        sameAs,
-      },
     ],
   };
 }
@@ -249,7 +223,7 @@ export function buildProfessionalServiceJsonLd({
   description = siteConfig.description,
 }: ProfessionalServiceJsonLdInput) {
   const pageUrl = buildAbsoluteUrl(path);
-  const sameAs = [siteConfig.social.linkedin, siteConfig.social.whatsapp].filter(Boolean);
+  const sameAs = [siteConfig.social.linkedin].filter(Boolean);
 
   return {
     "@context": "https://schema.org",

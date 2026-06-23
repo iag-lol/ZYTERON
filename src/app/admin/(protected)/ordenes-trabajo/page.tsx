@@ -6,8 +6,6 @@ import {
   isWebCheckoutQuote,
   normalizeWorkOrderStatus,
   workOrderDisplayClient,
-  workOrderStatusLabel,
-  workOrderStatusStyles,
 } from "@/lib/admin/work-orders";
 import { AutoSubmitSelect } from "@/components/admin/auto-submit-select";
 

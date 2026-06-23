@@ -35,6 +35,7 @@ export async function generateMetadata({ params }: LocalPageProps): Promise<Meta
     title: cityPage.metaTitle,
     description: cityPage.metaDescription,
     path: `/ciudades/${cityPage.slug}`,
+    noIndex: true,
   });
 }
 

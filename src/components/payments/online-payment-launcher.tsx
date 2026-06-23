@@ -5,6 +5,7 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { trackBeginCheckout } from "@/lib/analytics/google-ads";
 import type { ServicePaymentItem } from "@/lib/payments/service-catalog";
 
 type SubmitState =
@@ -32,6 +33,11 @@ export function OnlinePaymentLauncher({ items }: Props) {
 
     setSubmitState({ status: "idle" });
     setLoadingKey(item.key);
+    trackBeginCheckout({
+      page_path: window.location.pathname,
+      service_key: item.key,
+      checkout_type: item.mode,
+    });
 
     const endpoint =
       item.mode === "subscription"

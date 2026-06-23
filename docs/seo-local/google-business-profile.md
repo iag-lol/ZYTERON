@@ -52,7 +52,7 @@ Esta acción no se resuelve por código. Debe ejecutarse desde una cuenta Google
 ## Checklist externo antes de publicar cambios finales
 
 - Google Search Console: sitemap enviado y sin errores de cobertura.
-- Rich Results Test: FAQPage, LocalBusiness, Review, Service y Article sin errores.
+- Rich Results Test: Organization, WebSite, Service, FAQPage y Article sin errores. No usar LocalBusiness ni Review hasta tener datos públicos verificables.
 - PageSpeed Insights mobile: LCP menor a 2.5s, CLS menor a 0.1, INP/FID dentro de rango bueno.
 - Screaming Frog o Ahrefs: cero títulos duplicados y canonicals correctos.
 - GA4: conversiones activas para clic WhatsApp, envío de formulario y clic cotizar.

@@ -59,8 +59,9 @@ export async function POST(req: Request) {
       });
       code = result.code;
       expiresMinutes = result.expiresMinutes;
-    } catch (e: any) {
-      return NextResponse.json({ error: e.message || "No se pudo generar el código." }, { status: 429 });
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : "No se pudo generar el código.";
+      return NextResponse.json({ error: errorMessage }, { status: 429 });
     }
 
     // Send email

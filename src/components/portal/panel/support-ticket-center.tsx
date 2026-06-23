@@ -292,7 +292,7 @@ export function SupportTicketCenter({
                     ) : null}
 
                     <div className="max-h-[320px] overflow-y-auto p-4 space-y-2.5">
-                      {ticket.messages.map((msg, idx) => {
+                      {ticket.messages.map((msg) => {
                         const isClient = msg.authorRole === "CLIENT";
                         return (
                           <div

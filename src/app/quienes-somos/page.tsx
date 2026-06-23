@@ -2,18 +2,15 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowRight,
   CheckCircle2,
   Building2,
   Cpu,
-  Mail,
   MonitorSmartphone,
   ShoppingCart,
   LayoutDashboard,
   Zap,
   LifeBuoy,
   TrendingUp,
-  Target,
   Users,
   Workflow,
   Sparkles,

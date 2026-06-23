@@ -17,11 +17,9 @@ import { Copy, Eye, Mail, ShieldAlert, KeyRound } from "lucide-react";
 export function CredentialSecretDisplay({
   credentialId,
   secretMasked,
-  username,
 }: {
   credentialId: string;
   secretMasked: string | null;
-  username: string | null;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [password, setPassword] = useState("");
@@ -34,20 +32,20 @@ export function CredentialSecretDisplay({
   const [timeLeft, setTimeLeft] = useState(0);
   const [message, setMessage] = useState<{ text: string; type: "error" | "success" } | null>(null);
 
-  // Countdown timer
   useEffect(() => {
-    if (timeLeft <= 0) {
-      if (isRevealed) {
-        setIsRevealed(false);
-        setRevealedSecret(null);
-      }
-      return;
-    }
-    const timerId = setInterval(() => {
-      setTimeLeft((t) => t - 1);
+    if (timeLeft <= 0) return;
+    const timerId = window.setTimeout(() => {
+      setTimeLeft((current) => {
+        const next = Math.max(0, current - 1);
+        if (next === 0) {
+          setIsRevealed(false);
+          setRevealedSecret(null);
+        }
+        return next;
+      });
     }, 1000);
-    return () => clearInterval(timerId);
-  }, [timeLeft, isRevealed]);
+    return () => window.clearTimeout(timerId);
+  }, [timeLeft]);
 
   async function handleSendCode() {
     startCodeTransition(async () => {

@@ -25,7 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { siteConfig } from "@/config/site";
-import { trackQuoteRequestConversion } from "@/lib/analytics/google-ads";
+import { trackQuoteRequestConversion, trackQuoteRequestSubmit } from "@/lib/analytics/google-ads";
 
 type SubmitState =
   | { status: "idle" }
@@ -930,10 +930,12 @@ export function CommercialQuoteBuilder({ initialPlanLabel, initialProjectType }:
         return;
       }
 
-      trackQuoteRequestConversion({
+      const eventParams = {
         page_path: window.location.pathname,
         project_type: form.projectType ? projectTypeLabels[form.projectType] : "Cotización comercial",
-      });
+      };
+      trackQuoteRequestSubmit(eventParams);
+      trackQuoteRequestConversion(eventParams);
       setSubmitState({
         status: "success",
         reference: result.reference,

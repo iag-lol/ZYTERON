@@ -89,7 +89,6 @@ export default async function PortalCredencialesPage() {
                   <CredentialSecretDisplay 
                     credentialId={credential.id}
                     secretMasked={credential.secretMasked}
-                    username={credential.username}
                   />
                   {credential.url ? (
                     <Link

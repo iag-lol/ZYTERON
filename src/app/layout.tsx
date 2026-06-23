@@ -5,6 +5,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { analyticsConfig } from "@/config/analytics";
 import { GoogleAdsTag } from "@/components/analytics/google-ads-tag";
+import { ConversionEventTracker } from "@/components/analytics/conversion-event-tracker";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { siteConfig } from "@/config/site";
 import { AppShell } from "@/components/layout/app-shell";
@@ -65,6 +66,11 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  verification: analyticsConfig.googleSiteVerification
+    ? {
+        google: analyticsConfig.googleSiteVerification,
+      }
+    : undefined,
   icons: {
     icon: [{ url: "/logo.svg", type: "image/svg+xml" }],
     shortcut: ["/logo.svg"],
@@ -110,6 +116,7 @@ export default function RootLayout({
           <IconSprite />
           <JsonLd id="zyteron-organization-schema" data={buildOrganizationGraph()} />
           <WebVisitTracker />
+          <ConversionEventTracker />
           <AppShell>{children}</AppShell>
         </TooltipProvider>
       </body>

@@ -13,7 +13,6 @@ import {
   type WebDiscount,
 } from "@/lib/admin/repository";
 import type { PublicDiscount, PublicExtra, PublicPlan, PublicProduct, PublicReview } from "@/lib/web-control-types";
-import { placeholderReviews } from "@/content/reviews";
 
 function readEnvValue(...names: string[]) {
   for (const name of names) {
@@ -522,7 +521,7 @@ export async function getWebPricingSnapshot() {
 export async function getApprovedReviewsSnapshot() {
   const reviewsRaw = await getClientReviews("APPROVED");
   const reviews = reviewsRaw.map(normalizeReview).filter((item): item is PublicReview => Boolean(item));
-  return reviews.length > 0 ? reviews : placeholderReviews;
+  return reviews;
 }
 
 export const WEB_CONTROL_FALLBACK = {

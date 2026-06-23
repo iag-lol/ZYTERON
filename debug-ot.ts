@@ -25,9 +25,9 @@ async function debug() {
     });
     console.log("Success");
     await prisma.workOrder.delete({ where: { id } });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating WorkOrder:");
-    console.error(error.message);
+    console.error(error instanceof Error ? error.message : String(error));
   }
 }
 debug();

@@ -12,6 +12,7 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Páginas locales de diseño y desarrollo web para empresas en Chile, con foco en Región Metropolitana y principales ciudades del país.",
   path: "/ciudades",
+  noIndex: true,
 });
 
 export default function CiudadesPage() {

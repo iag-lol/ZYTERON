@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { MessageSquare, ArrowRight, UserRound, Search, SendHorizontal, Inbox } from "lucide-react";
+import { MessageSquare, ArrowRight, Search, SendHorizontal, Inbox } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";

@@ -7,7 +7,6 @@ import {
   MessageCircle,
   RefreshCw,
   Send,
-  Sparkles,
   User,
   Zap,
 } from "lucide-react";
@@ -51,7 +50,6 @@ export function CommunicationsCenter({
   initialCommunications: CommunicationItem[];
 }) {
   const [communications, setCommunications] = useState(initialCommunications);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -79,8 +77,6 @@ export function CommunicationsCenter({
     const interval = setInterval(refreshComms, 15000);
     return () => clearInterval(interval);
   }, [refreshComms]);
-
-  const selected = selectedId ? communications.find((c) => c.id === selectedId) : null;
 
   // Group communications as "threads" by subject
   const threadMap = new Map<string, CommunicationItem[]>();

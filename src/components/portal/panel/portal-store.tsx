@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import type { PublicPlan, PublicExtra, PublicProduct } from "@/lib/web-control-types";
 import { formatRut } from "@/lib/checkout/rut";
+import { trackBeginCheckout } from "@/lib/analytics/google-ads";
 
 type CartItem = {
   id: string;
@@ -77,6 +78,13 @@ export function PortalStore({
     setErrorMsg("");
 
     if (cart.length === 0) return;
+    trackBeginCheckout({
+      page_path: window.location.pathname,
+      items_count: cart.length,
+      value: cartTotal,
+      currency: "CLP",
+      checkout_type: "portal_store",
+    });
 
     startTransition(async () => {
       try {
@@ -102,7 +110,7 @@ export function PortalStore({
         if (data.checkoutUrl) {
           window.location.href = data.checkoutUrl;
         }
-      } catch (err) {
+      } catch {
         setErrorMsg("Error de conexión al iniciar el pago.");
       }
     });

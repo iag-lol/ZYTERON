@@ -1,7 +1,6 @@
 "use client";
 
 import { SelectHTMLAttributes, useTransition } from "react";
-import { useRouter } from "next/navigation";
 
 export function AutoSubmitSelect(props: SelectHTMLAttributes<HTMLSelectElement>) {
   const [isPending, startTransition] = useTransition();

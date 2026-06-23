@@ -1,3 +1,13 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
+};
+
 export default function PortalClientesRootLayout({
   children,
 }: {
@@ -5,4 +15,3 @@ export default function PortalClientesRootLayout({
 }) {
   return <div className="min-h-screen bg-slate-950">{children}</div>;
 }
-

@@ -26,6 +26,14 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
+type AccountStatus = "ACTIVE" | "PENDING" | "DISABLED";
+
+const accountStatuses: AccountStatus[] = ["ACTIVE", "PENDING", "DISABLED"];
+
+function isAccountStatus(value: string): value is AccountStatus {
+  return accountStatuses.includes(value as AccountStatus);
+}
+
 export function PortalClientAdminActions({
   userId,
   initial,
@@ -37,7 +45,7 @@ export function PortalClientAdminActions({
     company: string;
     phone: string;
     notes: string;
-    accountStatus: "ACTIVE" | "PENDING" | "DISABLED";
+    accountStatus: AccountStatus;
   };
 }) {
   const router = useRouter();
@@ -180,7 +188,11 @@ export function PortalClientAdminActions({
                   <select 
                     className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
                     value={profile.accountStatus} 
-                    onChange={(e) => setProfile({ ...profile, accountStatus: e.target.value as any })}
+                    onChange={(e) => {
+                      if (isAccountStatus(e.target.value)) {
+                        setProfile({ ...profile, accountStatus: e.target.value });
+                      }
+                    }}
                   >
                     <option value="ACTIVE">Activa (Acceso Permitido)</option>
                     <option value="PENDING">Pendiente (Verificación)</option>
