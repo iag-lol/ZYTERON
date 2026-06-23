@@ -13,7 +13,7 @@ import {
   buildWebPageJsonLd,
 } from "@/lib/seo";
 
-const WHATSAPP_PHONE = "56939526626";
+const WHATSAPP_PHONE = siteConfig.contact.phone.replace(/\D/g, "");
 
 type DeepServiceContent = {
   serviceLabel: string;

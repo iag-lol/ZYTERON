@@ -1351,7 +1351,7 @@ export function CommercialQuoteBuilder({ initialPlanLabel, initialProjectType }:
                   <input
                     value={form.contactWhatsapp}
                     onChange={(event) => updateField("contactWhatsapp", event.target.value)}
-                    placeholder="+56 9 1234 5678"
+                    placeholder="+56939526626"
                     className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   />
                   {errors.contactWhatsapp ? <p className="text-sm font-medium text-rose-600">{errors.contactWhatsapp}</p> : null}

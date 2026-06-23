@@ -54,7 +54,7 @@ export async function sendPurchaseWhatsappNotification(input: PurchaseWhatsappIn
   const accountSid = normalizeText(process.env.TWILIO_ACCOUNT_SID);
   const authToken = normalizeText(process.env.TWILIO_AUTH_TOKEN);
   const from = normalizeWhatsappAddress(
-    normalizeText(process.env.TWILIO_WHATSAPP_FROM) || "whatsapp:+14155238886",
+    normalizeText(process.env.TWILIO_WHATSAPP_FROM) || `whatsapp:${ZYTERON_COMPANY.phone}`,
   );
   const recipients = parseWhatsappRecipients(
     normalizeText(process.env.TWILIO_WHATSAPP_TO) || normalizeText(process.env.WHATSAPP_NOTIFY_TO),

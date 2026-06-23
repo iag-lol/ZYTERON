@@ -153,7 +153,7 @@ export function ContactLeadForm() {
             <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wide text-slate-500">
               WhatsApp
             </Label>
-            <Input id="phone" placeholder="+56 9..." className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("phone")} />
+            <Input id="phone" placeholder="+56939526626" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("phone")} />
             {errors.phone ? <p className="text-xs text-rose-600">{errors.phone.message}</p> : null}
           </div>
 

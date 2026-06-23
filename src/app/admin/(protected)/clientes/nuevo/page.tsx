@@ -130,7 +130,7 @@ export default function NuevoClientePage() {
                 <Input value={form.contactName} onChange={(e) => set("contactName", e.target.value)} placeholder="Encargado comercial / TI" />
               </Field>
               <Field label="Teléfono">
-                <Input value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+56 9 1234 5678" />
+                <Input value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+56939526626" />
               </Field>
               <Field label="RUT">
                 <Input value={form.rut} onChange={(e) => set("rut", e.target.value)} placeholder="12.345.678-9" />

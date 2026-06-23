@@ -641,7 +641,7 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
                 id="builder-phone"
                 value={form.phone}
                 onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))}
-                placeholder="+56 9..."
+                placeholder="+56939526626"
               />
             </div>
             <div className="space-y-1.5">

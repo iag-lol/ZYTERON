@@ -113,7 +113,7 @@ export function OnlinePaymentLauncher({ items }: Props) {
           id="payer-phone"
           value={phone}
           onChange={(event) => setPhone(event.target.value)}
-          placeholder="+56 9..."
+          placeholder="+56939526626"
         />
       </div>
 

@@ -3,8 +3,8 @@ import { siteConfig } from "@/config/site";
 import { buildQuoteMeta, parseQuoteMessage, serializeQuoteMessage, type QuoteMeta } from "@/lib/admin/quote";
 
 export const QUOTE_REQUEST_KIND = "WEB_QUOTE_REQUEST";
-export const QUOTE_REQUEST_WHATSAPP_E164 = "+56939526626";
-export const QUOTE_REQUEST_WHATSAPP_PUBLIC = "https://wa.me/56939526626";
+export const QUOTE_REQUEST_WHATSAPP_E164 = siteConfig.contact.whatsapp;
+export const QUOTE_REQUEST_WHATSAPP_PUBLIC = siteConfig.social.whatsapp;
 
 export type ProjectTypeValue =
   | "web-basica"
@@ -599,9 +599,9 @@ export async function sendQuoteRequestEmail(meta: QuoteRequestMeta, quoteId: str
 export async function sendQuoteRequestWhatsapp(meta: QuoteRequestMeta, quoteId: string) {
   const accountSid = cleanText(process.env.TWILIO_ACCOUNT_SID);
   const authToken = cleanText(process.env.TWILIO_AUTH_TOKEN);
-  const from = cleanText(process.env.TWILIO_WHATSAPP_FROM) || "whatsapp:+14155238886";
+  const from = cleanText(process.env.TWILIO_WHATSAPP_FROM) || `whatsapp:${QUOTE_REQUEST_WHATSAPP_E164}`;
   const recipients = parseWhatsappRecipients(
-    cleanText(process.env.WHATSAPP_NOTIFY_TO) || cleanText(process.env.TWILIO_WHATSAPP_TO) || "whatsapp:+56939526626",
+    cleanText(process.env.WHATSAPP_NOTIFY_TO) || cleanText(process.env.TWILIO_WHATSAPP_TO) || `whatsapp:${QUOTE_REQUEST_WHATSAPP_E164}`,
   );
   const to = recipients[0] || "";
 

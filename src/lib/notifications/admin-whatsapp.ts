@@ -1,3 +1,5 @@
+import { siteConfig } from "@/config/site";
+
 function normalizeText(value?: string | null) {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -24,7 +26,7 @@ export async function sendAdminWhatsappNotification(messageText: string) {
   const accountSid = normalizeText(process.env.TWILIO_ACCOUNT_SID);
   const authToken = normalizeText(process.env.TWILIO_AUTH_TOKEN);
   const from = normalizeWhatsappAddress(
-    normalizeText(process.env.TWILIO_WHATSAPP_FROM) || "whatsapp:+14155238886",
+    normalizeText(process.env.TWILIO_WHATSAPP_FROM) || `whatsapp:${siteConfig.contact.whatsapp}`,
   );
   // Enviar al Admin (usando WHATSAPP_NOTIFY_TO o TWILIO_WHATSAPP_TO)
   const recipients = parseWhatsappRecipients(

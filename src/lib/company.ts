@@ -5,7 +5,7 @@ export const ZYTERON_COMPANY = {
   businessLine: "Desarrollo web, soporte TI y soluciones tecnológicas empresariales",
   email: "contacto@zyteron.cl",
   salesEmail: "contacto@zyteron.cl",
-  phone: "+56 9 3952 6626",
+  phone: "+56939526626",
   website: "https://www.zyteron.cl",
   location: "Santiago, Chile",
   addressLine: "Operación comercial y soporte técnico en Santiago y regiones",

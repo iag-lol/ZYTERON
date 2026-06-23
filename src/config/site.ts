@@ -1,3 +1,6 @@
+const ZYTERON_PHONE_E164 = "+56939526626";
+const ZYTERON_WHATSAPP_URL = `https://wa.me/${ZYTERON_PHONE_E164.replace(/\D/g, "")}`;
+
 export const siteConfig = {
   name: "Zyteron",
   legalName: "Zyteron SpA",
@@ -14,10 +17,10 @@ export const siteConfig = {
     countryCode: "CL",
   },
   contact: {
-    phone: "+56939526626",
-    phoneDisplay: "+56 9 3952 6626",
+    phone: ZYTERON_PHONE_E164,
+    phoneDisplay: ZYTERON_PHONE_E164,
     email: "contacto@zyteron.cl",
-    whatsapp: "+56939526626",
+    whatsapp: ZYTERON_PHONE_E164,
   },
   business: {
     priceRange: "$$",
@@ -35,7 +38,7 @@ export const siteConfig = {
   },
   social: {
     linkedin: "https://www.linkedin.com/company/zyteron",
-    whatsapp: "https://wa.me/56939526626",
+    whatsapp: ZYTERON_WHATSAPP_URL,
   },
   representative: {
     name: "Eduardo Ávila",

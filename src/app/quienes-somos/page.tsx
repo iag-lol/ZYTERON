@@ -24,6 +24,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 import { softBlueBlurDataUrl } from "@/lib/image-placeholders";
 import { Button } from "@/components/ui/button";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Quiénes somos | Zyteron SpA - Desarrollo web y soluciones digitales en Chile",
@@ -31,6 +32,10 @@ export const metadata: Metadata = createPageMetadata({
     "Conoce Zyteron SpA, empresa chilena de desarrollo web, sistemas digitales, automatización y soporte tecnológico para pymes, emprendedores y negocios en Chile.",
   path: "/quienes-somos",
 });
+
+const WHATSAPP_ADVISORY_URL = `${siteConfig.social.whatsapp}?text=${encodeURIComponent(
+  "Hola, vengo de la página de Zyteron y necesito asesoría para un proyecto digital",
+)}`;
 
 const leaderExpertise = [
   { icon: Cpu, label: "Tecnología" },
@@ -157,7 +162,7 @@ export default function QuienesSomosPage() {
               <Link href="/contacto">Solicitar cotización</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-              <Link href="https://wa.me/56939526626?text=Hola,%20vengo%20de%20la%20página%20de%20Zyteron%20y%20necesito%20asesoría%20para%20un%20proyecto%20digital" target="_blank" rel="noopener">
+              <Link href={WHATSAPP_ADVISORY_URL} target="_blank" rel="noopener">
                 <MessageCircle className="mr-2 h-4 w-4" />
                 Hablar por WhatsApp
               </Link>
@@ -366,7 +371,7 @@ export default function QuienesSomosPage() {
               <Link href="/contacto">Solicitar cotización</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-slate-300 bg-white text-slate-800 hover:bg-slate-50">
-              <Link href="https://wa.me/56939526626?text=Hola,%20vengo%20de%20la%20página%20de%20Zyteron%20y%20necesito%20asesoría%20para%20un%20proyecto%20digital" target="_blank" rel="noopener">
+              <Link href={WHATSAPP_ADVISORY_URL} target="_blank" rel="noopener">
                 <MessageCircle className="mr-2 h-4 w-4" /> Hablar por WhatsApp
               </Link>
             </Button>

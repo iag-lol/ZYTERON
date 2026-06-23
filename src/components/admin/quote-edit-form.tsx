@@ -609,7 +609,7 @@ export function QuoteEditForm({ quote }: Props) {
               <Input
                 value={client.phone}
                 onChange={(e) => setClient((p) => ({ ...p, phone: e.target.value }))}
-                placeholder="+56 9 8765 4321"
+                placeholder="+56939526626"
               />
             </Field>
             <Field label="RUT cliente" icon={Hash}>

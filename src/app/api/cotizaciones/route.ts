@@ -8,6 +8,7 @@ import { sendAdminWhatsappNotification } from "@/lib/notifications/admin-whatsap
 import { prisma } from "@/lib/prisma";
 import {
   BINARY_CHOICE_LABELS,
+  QUOTE_REQUEST_WHATSAPP_PUBLIC,
   appendQuoteRequestError,
   buildQuoteRequestMeta,
   buildQuoteRequestSummary,
@@ -343,7 +344,7 @@ export async function POST(req: Request) {
         ok: true,
         reference: "filtered",
         quoteId: "filtered",
-        whatsappUrl: "https://wa.me/56939526626",
+        whatsappUrl: QUOTE_REQUEST_WHATSAPP_PUBLIC,
       });
     }
 
@@ -360,7 +361,7 @@ export async function POST(req: Request) {
         {
           error: "Has enviado demasiadas solicitudes. Intenta nuevamente en unos segundos.",
           retryAfterSec: rateLimit.retryAfterSec,
-          whatsappUrl: "https://wa.me/56939526626",
+          whatsappUrl: QUOTE_REQUEST_WHATSAPP_PUBLIC,
         },
         {
           status: 429,
@@ -428,7 +429,7 @@ export async function POST(req: Request) {
       ok: true as const,
       reference: quoteCode,
       quoteId,
-      whatsappUrl: "https://wa.me/56939526626",
+      whatsappUrl: QUOTE_REQUEST_WHATSAPP_PUBLIC,
     };
     idempotencyStore.set(idempotencyKey, {
       createdAt: Date.now(),
@@ -530,7 +531,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         error: "No pudimos registrar tu solicitud. Intenta nuevamente o escribenos por WhatsApp.",
-        whatsappUrl: "https://wa.me/56939526626",
+        whatsappUrl: QUOTE_REQUEST_WHATSAPP_PUBLIC,
       },
       { status: 500 },
     );

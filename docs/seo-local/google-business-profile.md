@@ -7,7 +7,7 @@ Esta acción no se resuelve por código. Debe ejecutarse desde una cuenta Google
 - Nombre: ZYTERON
 - Razón social: ZYTERON SpA
 - Sitio web: https://www.zyteron.cl
-- Teléfono: +56 9 8475 2936
+- Teléfono: +56939526626
 - Categoría primaria: Empresa de desarrollo de software
 - Categorías secundarias:
   - Empresa de TI
