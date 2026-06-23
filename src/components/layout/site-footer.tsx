@@ -191,6 +191,9 @@ export function SiteFooter() {
         <Container className="flex flex-wrap items-center justify-between gap-3 py-4 text-xs text-slate-500">
           <p>© {COPYRIGHT_YEAR} ZYTERON.CL. Todos los derechos reservados.</p>
           <div className="flex gap-5">
+            <Link href={siteConfig.url} className="transition-colors hover:text-slate-300">
+              Desarrollado por Zyteron
+            </Link>
             <Link href="/privacidad" className="transition-colors hover:text-slate-300">
               Privacidad
             </Link>
