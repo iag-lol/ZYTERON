@@ -527,7 +527,7 @@ export const blogPosts: BlogPostData[] = [
       {
         heading: "Estructura recomendada",
         paragraphs: [
-          "Una estructura simple puede funcionar muy bien si está ordenada. Lo recomendable es partir con home, servicios, nosotros, preguntas frecuentes, blog o recursos y contacto.",
+          "Una estructura simple puede funcionar muy bien si está ordenada. Lo recomendable es partir con home, servicios, quiénes somos, preguntas frecuentes, blog o recursos y contacto.",
           "Si la pyme vende productos, puede sumar catálogo o tienda online. Si gestiona procesos internos, puede evolucionar hacia panel administrativo."
         ]
       },
@@ -588,7 +588,7 @@ export const blogPosts: BlogPostData[] = [
           "Una página web o sitio corporativo presenta una empresa, sus servicios, beneficios, equipo, preguntas frecuentes y canales de contacto.",
           "Su objetivo principal suele ser generar confianza, captar consultas y permitir que el cliente entienda qué hace el negocio."
         ],
-        bullets: ["Home", "Servicios", "Nosotros", "FAQ", "Blog o recursos", "Contacto"]
+        bullets: ["Home", "Servicios", "Quiénes somos", "FAQ", "Blog o recursos", "Contacto"]
       },
       {
         heading: "Qué es una tienda online",

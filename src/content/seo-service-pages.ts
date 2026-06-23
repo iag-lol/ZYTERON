@@ -73,7 +73,7 @@ const commonRelatedLinks: SeoServiceRelatedLink[] = [
     description: "Revisa valores referenciales y formas de trabajo por etapa de negocio.",
   },
   {
-    label: "Nosotros",
+    label: "Quiénes somos",
     href: "/quienes-somos",
     description: "Conoce el enfoque, trayectoria y metodología de Zyteron.",
   },

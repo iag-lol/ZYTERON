@@ -54,7 +54,7 @@
 
 ### SEO tecnico
 - Dominio canonico corregido a `.cl` en configuracion central.
-- Metadata por pagina en Home, Servicios, Servicios/slug, Contacto, Nosotros, Planes, Paquetes, Productos, Privacidad, Terminos.
+- Metadata por pagina en Home, Servicios, Servicios/slug, Contacto, Quiénes somos, Planes, Paquetes, Productos, Privacidad, Terminos.
 - `robots.txt` actualizado con host/sitemap correctos y exclusiones de `/admin` y `/api`.
 - `sitemap.xml` actualizado con URLs reales + cluster de servicios.
 - `admin/*` marcado `noindex`.

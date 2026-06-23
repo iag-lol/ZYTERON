@@ -283,7 +283,7 @@ export const servicePages: ServicePageData[] = [
       {
         question: "¿Qué debe tener listo mi empresa para empezar?",
         answer:
-          "Solo objetivos comerciales, servicios principales y referencias. Nosotros guiamos estructura y ejecución.",
+          "Solo objetivos comerciales, servicios principales y referencias. Zyteron guía estructura y ejecución.",
       },
       {
         question: "¿La web queda preparada para agregar blog o nuevas páginas?",

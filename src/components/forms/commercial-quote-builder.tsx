@@ -975,7 +975,7 @@ export function CommercialQuoteBuilder({ initialPlanLabel, initialProjectType }:
               <div className="grid gap-3 sm:grid-cols-3">
                 {[
                   { icon: CircleHelp, text: "No necesitas saber detalles técnicos." },
-                  { icon: Sparkles, text: "Nosotros revisamos tu caso y te orientamos." },
+                  { icon: Sparkles, text: "El equipo revisa tu caso y te orienta." },
                   { icon: ShieldCheck, text: "Tus datos se usarán solo para responder tu solicitud." },
                 ].map((item) => (
                   <div key={item.text} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -1098,7 +1098,7 @@ export function CommercialQuoteBuilder({ initialPlanLabel, initialProjectType }:
               ) : null}
                 <h1 className="text-2xl font-extrabold leading-tight text-slate-900 sm:text-4xl">Cuéntanos qué necesitas y prepararemos una propuesta clara para tu negocio.</h1>
               <p className="max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-                Responde unas preguntas rápidas. No necesitas saber detalles técnicos, nosotros te orientamos.
+                Responde unas preguntas rápidas. No necesitas saber detalles técnicos, el equipo te orienta.
               </p>
             </div>
             <StepIndicator step={step} />
@@ -1564,7 +1564,7 @@ export function CommercialQuoteBuilder({ initialPlanLabel, initialProjectType }:
               {[
                 { icon: ShieldCheck, title: "Solicitud segura", text: "Tus datos se usan solo para responderte y no se envían desde el navegador a servicios externos." },
                 { icon: Clock3, title: "Proceso claro", text: "Guardamos tu solicitud aunque falle el correo o WhatsApp, para no perder tu caso." },
-                { icon: MessageCircle, title: "Atención humana", text: "Si prefieres, también puedes hablar con nosotros por WhatsApp en cualquier momento." },
+                { icon: MessageCircle, title: "Atención humana", text: "Si prefieres, también puedes hablar con Zyteron por WhatsApp en cualquier momento." },
               ].map((item) => (
                 <div key={item.title} className="rounded-2xl border border-slate-200 bg-white p-4">
                   <item.icon className="h-5 w-5 text-blue-600" />
