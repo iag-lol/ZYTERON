@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Container } from "./container";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
-import { blogPosts } from "@/content/blog-posts";
 import { siteConfig } from "@/config/site";
 
 const WHATSAPP_URL =
@@ -46,17 +45,11 @@ const footerColumns = [
   },
 ];
 
-const recentArticles = [...blogPosts]
-  .sort(
-    (a, b) =>
-      new Date(b.updatedAt ?? b.publishedAt).getTime() -
-      new Date(a.updatedAt ?? a.publishedAt).getTime(),
-  )
-  .slice(0, 3)
-  .map((post) => ({
-    label: post.title,
-    href: `/blog/${post.slug}`,
-  }));
+const footerResources = [
+  { label: "Blog para empresas", href: "/blog" },
+  { label: "Casos de éxito", href: "/casos-exito" },
+  { label: "Planes y precios", href: "/planes" },
+];
 
 export function SiteFooter() {
   return (
@@ -160,9 +153,9 @@ export function SiteFooter() {
           </div>
         ))}
         <div className="space-y-4">
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-300">Artículos recientes</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-300">Recursos</p>
           <ul className="space-y-3 text-sm">
-            {recentArticles.map((item) => (
+            {footerResources.map((item) => (
               <li key={item.href}>
                 <Link href={item.href} className="text-slate-400 transition-colors hover:text-white">
                   {item.label}

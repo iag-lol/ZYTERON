@@ -14,8 +14,9 @@ export const metadata: Metadata = createPageMetadata({
   path: "/casos-exito",
 });
 
-// Red de seguridad: revalida cada hora aunque no haya publicación on-demand.
-export const revalidate = 3600;
+// Lee siempre el contenido fresco desde Supabase (sin caché estática) para que
+// los casos publicados desde el admin aparezcan de inmediato.
+export const dynamic = "force-dynamic";
 
 function buildCaseStudiesItemListJsonLd(items: CaseListItem[]) {
   return {
@@ -120,39 +121,47 @@ export default async function CasosExitoPage() {
             </p>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {items.map((item) => (
-              <article key={item.slug} className="card-premium flex flex-col p-6">
-                <div className="mb-3 flex flex-wrap gap-2">
-                  <span className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                    {item.badgePrimary}
-                  </span>
-                  {item.badgeSecondary ? (
-                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">
-                      {item.badgeSecondary}
+          {items.length === 0 ? (
+            <div className="card-premium p-8 text-center">
+              <p className="text-sm text-slate-600">
+                Pronto publicaremos casos de éxito documentados de empresas reales.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {items.map((item) => (
+                <article key={item.slug} className="card-premium flex flex-col p-6">
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    <span className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                      {item.badgePrimary}
                     </span>
-                  ) : null}
-                </div>
-                <h3 className="text-lg font-extrabold leading-snug text-slate-900">{item.heading}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{item.summary}</p>
-                {item.highlights.length > 0 ? (
-                  <div className="mt-4 space-y-2">
-                    {item.highlights.map((highlight) => (
-                      <div key={highlight} className="flex items-start gap-2 text-sm text-slate-700">
-                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
-                        <span>{highlight}</span>
-                      </div>
-                    ))}
+                    {item.badgeSecondary ? (
+                      <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">
+                        {item.badgeSecondary}
+                      </span>
+                    ) : null}
                   </div>
-                ) : null}
-                <Button asChild variant="outline" className="mt-5 border-slate-300 text-slate-800 hover:bg-slate-50">
-                  <Link href={`/casos-exito/${item.slug}`}>
-                    Ver caso documentado <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </article>
-            ))}
-          </div>
+                  <h3 className="text-lg font-extrabold leading-snug text-slate-900">{item.heading}</h3>
+                  <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{item.summary}</p>
+                  {item.highlights.length > 0 ? (
+                    <div className="mt-4 space-y-2">
+                      {item.highlights.map((highlight) => (
+                        <div key={highlight} className="flex items-start gap-2 text-sm text-slate-700">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
+                          <span>{highlight}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                  <Button asChild variant="outline" className="mt-5 border-slate-300 text-slate-800 hover:bg-slate-50">
+                    <Link href={`/casos-exito/${item.slug}`}>
+                      Ver caso documentado <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </article>
+              ))}
+            </div>
+          )}
         </Container>
       </section>
 

@@ -59,11 +59,13 @@ export type DbCaseStudy = {
 const BLOG_TABLE = "BlogPost";
 const CASE_TABLE = "CaseStudy";
 
+// PostgREST/supabase-js usan los nombres de columna tal cual (camelCase) SIN comillas
+// dobles en el string de select. Igual que el resto del repositorio (ej. createdAt).
 const BLOG_COLUMNS =
-  'id, slug, title, excerpt, content, "coverImageUrl", "coverImageAlt", category, tags, "readMinutes", author, status, "metaTitle", "metaDescription", keywords, "ogImageUrl", "publishedAt", "createdAt", "updatedAt"';
+  "id, slug, title, excerpt, content, coverImageUrl, coverImageAlt, category, tags, readMinutes, author, status, metaTitle, metaDescription, keywords, ogImageUrl, publishedAt, createdAt, updatedAt";
 
 const CASE_COLUMNS =
-  'id, slug, "companyName", industry, problem, solution, results, technologies, "projectDuration", "clientQuote", "imageUrl", "imageAlt", featured, "sortOrder", status, "metaTitle", "metaDescription", "publishedAt", "createdAt", "updatedAt"';
+  "id, slug, companyName, industry, problem, solution, results, technologies, projectDuration, clientQuote, imageUrl, imageAlt, featured, sortOrder, status, metaTitle, metaDescription, publishedAt, createdAt, updatedAt";
 
 // =========================================================
 // Utilidades

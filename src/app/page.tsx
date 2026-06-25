@@ -27,7 +27,7 @@ import {
 } from "@/lib/seo";
 import { getApprovedReviewsSnapshot } from "@/lib/web-control";
 import { ClientReviewsSection } from "@/components/home/client-reviews-section";
-import { caseStudies } from "@/content/case-studies";
+import { getFeaturedCaseItems } from "@/lib/content/cases-merge";
 import { softBlueBlurDataUrl } from "@/lib/image-placeholders";
 
 export const revalidate = 300;
@@ -331,6 +331,7 @@ const localSignals = [
 
 export default async function Home() {
   const reviews = await getApprovedReviewsSnapshot();
+  const featuredCases = await getFeaturedCaseItems(4);
 
   return (
     <main className="overflow-hidden bg-white">
@@ -776,37 +777,39 @@ export default async function Home() {
 
       <ClientReviewsSection reviews={reviews} />
 
-      <section className="bg-white py-16">
-        <Container className="space-y-8">
-          <div className="flex flex-col gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
-            <div className="space-y-2">
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Casos documentados</p>
-              <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
-                Pruebas comerciales de soluciones aplicadas
-              </h2>
-              <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-                Casos anónimos de sistemas, automatizaciones, ecommerce y SEO implementados para resolver problemas reales de operación y presencia digital.
-              </p>
+      {featuredCases.length > 0 ? (
+        <section className="bg-white py-16">
+          <Container className="space-y-8">
+            <div className="flex flex-col gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Casos documentados</p>
+                <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+                  Pruebas comerciales de soluciones aplicadas
+                </h2>
+                <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
+                  Casos de empresas reales en sistemas, automatizaciones, ecommerce y SEO implementados para resolver problemas de operación y presencia digital.
+                </p>
+              </div>
+              <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+                <Link href="/casos-exito">Ver todos los casos</Link>
+              </Button>
             </div>
-            <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-              <Link href="/casos-exito">Ver todos los casos</Link>
-            </Button>
-          </div>
 
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {caseStudies.slice(0, 4).map((caseStudy) => (
-              <Link key={caseStudy.slug} href={`/casos-exito/${caseStudy.slug}`} className="card-premium p-5 transition-colors hover:border-blue-200">
-                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">{caseStudy.industry}</p>
-                <h3 className="text-base font-extrabold leading-snug text-slate-900">{caseStudy.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{caseStudy.summary}</p>
-                <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
-                  Ver caso <ArrowRight className="h-4 w-4" />
-                </span>
-              </Link>
-            ))}
-          </div>
-        </Container>
-      </section>
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+              {featuredCases.map((caseItem) => (
+                <Link key={caseItem.slug} href={`/casos-exito/${caseItem.slug}`} className="card-premium p-5 transition-colors hover:border-blue-200">
+                  <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">{caseItem.badgePrimary}</p>
+                  <h3 className="text-base font-extrabold leading-snug text-slate-900">{caseItem.heading}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{caseItem.summary}</p>
+                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
+                    Ver caso <ArrowRight className="h-4 w-4" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </Container>
+        </section>
+      ) : null}
 
       <section className="section-alt py-20">
         <Container className="space-y-10">
