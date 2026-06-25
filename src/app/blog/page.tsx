@@ -14,8 +14,9 @@ export const metadata: Metadata = createPageMetadata({
   path: "/blog",
 });
 
-// Red de seguridad: revalida cada hora aunque no haya publicación on-demand.
-export const revalidate = 3600;
+// Lee siempre el contenido fresco desde Supabase (sin caché estática) para que
+// los artículos publicados desde el admin aparezcan de inmediato.
+export const dynamic = "force-dynamic";
 
 const categories = [
   "Desarrollo web",

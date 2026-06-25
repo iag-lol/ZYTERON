@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { siteConfig } from "@/config/site";
 import type { SeoServicePage } from "@/content/seo-service-pages";
-import { caseStudies } from "@/content/case-studies";
 import {
   buildFaqJsonLd,
   buildProfessionalServiceJsonLd,
@@ -226,11 +225,8 @@ type Props = {
 export function SeoServiceLanding({ page }: Props) {
   const deepContent = deepContentBySlug[page.slug];
   const serviceLabel = deepContent?.serviceLabel ?? page.navLabel.toLowerCase();
-  const relatedCaseStudies = deepContent
-    ? deepContent.caseStudySlugs
-        .map((slug) => caseStudies.find((caseStudy) => caseStudy.slug === slug))
-        .filter((caseStudy): caseStudy is NonNullable<typeof caseStudy> => Boolean(caseStudy))
-    : [];
+  // El contenido curado se eliminó; los casos reales viven en /casos-exito (Supabase).
+  const relatedCaseStudies: { slug: string; industry: string; title: string; summary: string }[] = [];
   const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(
     `Hola Zyteron, quiero cotizar ${page.navLabel} para mi empresa.`,
   )}`;
@@ -514,14 +510,14 @@ export function SeoServiceLanding({ page }: Props) {
             </Container>
           </section>
 
+          {relatedCaseStudies.length > 0 ? (
           <section className="bg-white py-16">
             <Container className="space-y-8">
               <div className="space-y-2">
                 <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Aplicaciones reales</p>
                 <h2 className="text-3xl font-extrabold text-slate-900">Casos de uso reales</h2>
                 <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-                  Usamos casos anónimos documentados para mostrar problemas frecuentes sin exponer datos de clientes,
-                  métricas confidenciales ni información operativa sensible.
+                  Documentamos casos de empresas reales para mostrar problemas frecuentes y cómo se resolvieron.
                 </p>
               </div>
               <div className="grid gap-5 md:grid-cols-3">
@@ -542,6 +538,7 @@ export function SeoServiceLanding({ page }: Props) {
               </div>
             </Container>
           </section>
+          ) : null}
         </>
       ) : null}
 

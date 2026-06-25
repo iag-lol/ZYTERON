@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import { generateZyteronOgImage, ogImageSize } from "@/lib/og-image";
-import { getBlogPostBySlug } from "@/content/blog-posts";
+import { getDbBlogPost } from "@/lib/content/blog-merge";
 
 export const size = ogImageSize;
 export const contentType = "image/png";
+export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{
@@ -13,7 +14,7 @@ type Props = {
 
 export default async function BlogPostOpenGraphImage({ params }: Props) {
   const { slug } = await params;
-  const post = getBlogPostBySlug(slug);
+  const post = await getDbBlogPost(slug);
 
   if (!post) {
     notFound();
@@ -21,7 +22,7 @@ export default async function BlogPostOpenGraphImage({ params }: Props) {
 
   return generateZyteronOgImage({
     title: post.title,
-    subtitle: post.excerpt,
-    tag: post.primaryKeyword,
+    subtitle: post.excerpt ?? undefined,
+    tag: post.category ?? post.keywords ?? undefined,
   });
 }
