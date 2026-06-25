@@ -226,6 +226,66 @@
   box-shadow: 0 8px 32px rgba(30, 58, 138, 0.35);
 }
 
+/* ── Contenido del blog renderizado desde Markdown (artículos de BD) ── */
+.blog-content {
+  color: #334155;
+  font-size: 0.975rem;
+  line-height: 1.75;
+}
+.blog-content h2 {
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+.blog-content h3 {
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+.blog-content p {
+  margin-bottom: 1rem;
+}
+.blog-content ul,
+.blog-content ol {
+  margin: 0 0 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.blog-content ul { list-style: disc; }
+.blog-content ol { list-style: decimal; }
+.blog-content a {
+  color: #1d4ed8;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.blog-content a:hover { color: #1e3a8a; }
+.blog-content strong { color: #0f172a; }
+.blog-content blockquote {
+  margin: 1rem 0;
+  border-left: 3px solid #bfdbfe;
+  background: #f8fafc;
+  padding: 0.75rem 1rem;
+  color: #475569;
+  font-style: italic;
+}
+.blog-content code {
+  background: #f1f5f9;
+  border-radius: 0.3rem;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.85em;
+}
+.blog-content hr {
+  margin: 1.75rem 0;
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+}
+
 /* ── Buttons ── */
 .btn-primary-glow {
   box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);

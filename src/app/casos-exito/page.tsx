@@ -4,7 +4,7 @@ import { ArrowRight, BarChart3, CheckCircle2, ShieldCheck } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
-import { caseStudies } from "@/content/case-studies";
+import { getCaseListItems, type CaseListItem } from "@/lib/content/cases-merge";
 import { buildAbsoluteUrl, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
@@ -14,23 +14,24 @@ export const metadata: Metadata = createPageMetadata({
   path: "/casos-exito",
 });
 
-function buildCaseStudiesItemListJsonLd() {
+// Red de seguridad: revalida cada hora aunque no haya publicación on-demand.
+export const revalidate = 3600;
+
+function buildCaseStudiesItemListJsonLd(items: CaseListItem[]) {
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
     "@id": `${buildAbsoluteUrl("/casos-exito")}#case-studies`,
-    name: "Casos anónimos de soluciones digitales Zyteron",
-    itemListElement: caseStudies.map((caseStudy, index) => ({
+    name: "Casos documentados de soluciones digitales Zyteron",
+    itemListElement: items.map((item, index) => ({
       "@type": "ListItem",
       position: index + 1,
       item: {
         "@type": "Article",
-        name: caseStudy.title,
-        headline: caseStudy.title,
-        description: caseStudy.summary,
-        url: buildAbsoluteUrl(`/casos-exito/${caseStudy.slug}`),
-        datePublished: caseStudy.publishedAt,
-        dateModified: caseStudy.updatedAt ?? caseStudy.publishedAt,
+        name: item.heading,
+        headline: item.heading,
+        description: item.summary,
+        url: buildAbsoluteUrl(`/casos-exito/${item.slug}`),
       },
     })),
   };
@@ -43,7 +44,9 @@ const businessSignals = [
   "No se publican métricas confidenciales ni nombres de clientes sin autorización.",
 ];
 
-export default function CasosExitoPage() {
+export default async function CasosExitoPage() {
+  const items = await getCaseListItems();
+
   return (
     <main className="bg-white">
       <JsonLd
@@ -59,7 +62,7 @@ export default function CasosExitoPage() {
           ],
         })}
       />
-      <JsonLd id="casos-exito-itemlist-schema" data={buildCaseStudiesItemListJsonLd()} />
+      <JsonLd id="casos-exito-itemlist-schema" data={buildCaseStudiesItemListJsonLd(items)} />
 
       <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-20">
         <Container className="space-y-5 text-center">
@@ -118,28 +121,32 @@ export default function CasosExitoPage() {
           </div>
 
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {caseStudies.map((caseStudy) => (
-              <article key={caseStudy.slug} className="card-premium flex flex-col p-6">
+            {items.map((item) => (
+              <article key={item.slug} className="card-premium flex flex-col p-6">
                 <div className="mb-3 flex flex-wrap gap-2">
                   <span className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                    {caseStudy.industry}
+                    {item.badgePrimary}
                   </span>
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">
-                    {caseStudy.location}
-                  </span>
+                  {item.badgeSecondary ? (
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">
+                      {item.badgeSecondary}
+                    </span>
+                  ) : null}
                 </div>
-                <h3 className="text-lg font-extrabold leading-snug text-slate-900">{caseStudy.title}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{caseStudy.summary}</p>
-                <div className="mt-4 space-y-2">
-                  {caseStudy.outcomes.slice(0, 2).map((outcome) => (
-                    <div key={outcome} className="flex items-start gap-2 text-sm text-slate-700">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
-                      <span>{outcome}</span>
-                    </div>
-                  ))}
-                </div>
+                <h3 className="text-lg font-extrabold leading-snug text-slate-900">{item.heading}</h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{item.summary}</p>
+                {item.highlights.length > 0 ? (
+                  <div className="mt-4 space-y-2">
+                    {item.highlights.map((highlight) => (
+                      <div key={highlight} className="flex items-start gap-2 text-sm text-slate-700">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
+                        <span>{highlight}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
                 <Button asChild variant="outline" className="mt-5 border-slate-300 text-slate-800 hover:bg-slate-50">
-                  <Link href={`/casos-exito/${caseStudy.slug}`}>
+                  <Link href={`/casos-exito/${item.slug}`}>
                     Ver caso documentado <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>

@@ -4,6 +4,7 @@ import { caseStudies } from "@/content/case-studies";
 import { priorityServicePages } from "@/content/priority-service-pages";
 import { servicePages } from "@/content/service-pages";
 import { seoServicePages } from "@/content/seo-service-pages";
+import { getPublishedBlogPosts, getPublishedCaseStudies } from "@/lib/admin/blog-cases-repository";
 import type { MetadataRoute } from "next";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -49,19 +50,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }));
 
-  const blogRoutes = blogPosts.map((post) => ({
-    url: `${base}/blog/${post.slug}`,
-    lastModified: new Date(post.updatedAt ?? post.publishedAt),
-    changeFrequency: "monthly" as const,
-    priority: 0.8,
-  }));
+  // Combina artículos/casos publicados en Supabase con los curados (la BD gana por slug).
+  const [dbPosts, dbCases] = await Promise.all([getPublishedBlogPosts(), getPublishedCaseStudies()]);
+  const dbPostSlugs = new Set(dbPosts.map((p) => p.slug));
+  const dbCaseSlugs = new Set(dbCases.map((c) => c.slug));
 
-  const caseStudyRoutes = caseStudies.map((caseStudy) => ({
-    url: `${base}/casos-exito/${caseStudy.slug}`,
-    lastModified: new Date(caseStudy.updatedAt ?? caseStudy.publishedAt),
-    changeFrequency: "monthly" as const,
-    priority: 0.6,
-  }));
+  const blogRoutes = [
+    ...dbPosts.map((post) => ({
+      url: `${base}/blog/${post.slug}`,
+      lastModified: new Date(post.updatedAt ?? post.publishedAt ?? post.createdAt ?? Date.now()),
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    })),
+    ...blogPosts
+      .filter((post) => !dbPostSlugs.has(post.slug))
+      .map((post) => ({
+        url: `${base}/blog/${post.slug}`,
+        lastModified: new Date(post.updatedAt ?? post.publishedAt),
+        changeFrequency: "monthly" as const,
+        priority: 0.8,
+      })),
+  ];
+
+  const caseStudyRoutes = [
+    ...dbCases.map((caseStudy) => ({
+      url: `${base}/casos-exito/${caseStudy.slug}`,
+      lastModified: new Date(caseStudy.updatedAt ?? caseStudy.publishedAt ?? caseStudy.createdAt ?? Date.now()),
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    })),
+    ...caseStudies
+      .filter((caseStudy) => !dbCaseSlugs.has(caseStudy.slug))
+      .map((caseStudy) => ({
+        url: `${base}/casos-exito/${caseStudy.slug}`,
+        lastModified: new Date(caseStudy.updatedAt ?? caseStudy.publishedAt),
+        changeFrequency: "monthly" as const,
+        priority: 0.6,
+      })),
+  ];
 
   return [
     ...staticRoutes,

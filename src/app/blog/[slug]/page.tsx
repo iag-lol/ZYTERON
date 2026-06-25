@@ -6,6 +6,8 @@ import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { blogPosts, getBlogPostBySlug } from "@/content/blog-posts";
+import { resolveBlogPost, getAllBlogSlugs } from "@/lib/content/blog-merge";
+import { DbBlogArticle } from "@/components/blog/db-blog-article";
 import {
   buildArticleJsonLd,
   buildFaqJsonLd,
@@ -90,15 +92,18 @@ function getBlogServiceLinks(post: NonNullable<ReturnType<typeof getBlogPostBySl
   return mainServiceLinks.filter((service) => selected.has(service.key));
 }
 
-export function generateStaticParams() {
-  return blogPosts.map((post) => ({ slug: post.slug }));
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  const slugs = await getAllBlogSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: BlogDetailProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = getBlogPostBySlug(slug);
+  const resolved = await resolveBlogPost(slug);
 
-  if (!post) {
+  if (!resolved) {
     return createPageMetadata({
       title: "Artículo no encontrado",
       description: "El artículo solicitado no existe.",
@@ -107,6 +112,18 @@ export async function generateMetadata({ params }: BlogDetailProps): Promise<Met
     });
   }
 
+  if (resolved.source === "db") {
+    const dbPost = resolved.db;
+    return createPageMetadata({
+      title: dbPost.metaTitle || dbPost.title,
+      description: dbPost.metaDescription || dbPost.excerpt || "",
+      path: `/blog/${dbPost.slug}`,
+      ogImagePath: dbPost.ogImageUrl || dbPost.coverImageUrl || undefined,
+      ogImageAlt: dbPost.coverImageAlt || `${dbPost.title} | Zyteron`,
+    });
+  }
+
+  const post = resolved.curated;
   return createPageMetadata({
     title: post.metaTitle,
     description: post.metaDescription,
@@ -118,12 +135,50 @@ export async function generateMetadata({ params }: BlogDetailProps): Promise<Met
 
 export default async function BlogDetailPage({ params }: BlogDetailProps) {
   const { slug } = await params;
-  const post = getBlogPostBySlug(slug);
+  const resolved = await resolveBlogPost(slug);
 
-  if (!post) {
+  if (!resolved) {
     notFound();
   }
 
+  // Artículo administrado desde Supabase (contenido Markdown).
+  if (resolved.source === "db") {
+    const dbPost = resolved.db;
+    const dbPath = `/blog/${dbPost.slug}`;
+    return (
+      <>
+        <JsonLd
+          id={`blog-webpage-schema-${dbPost.slug}`}
+          data={buildWebPageJsonLd({
+            path: dbPath,
+            title: dbPost.metaTitle || dbPost.title,
+            description: dbPost.metaDescription || dbPost.excerpt || "",
+            breadcrumbs: [
+              { name: "Inicio", path: "/" },
+              { name: "Blog", path: "/blog" },
+              { name: dbPost.title, path: dbPath },
+            ],
+          })}
+        />
+        <JsonLd
+          id={`blog-article-schema-${dbPost.slug}`}
+          data={buildArticleJsonLd({
+            path: dbPath,
+            title: dbPost.title,
+            description: dbPost.excerpt || dbPost.metaDescription || "",
+            datePublished: dbPost.publishedAt ?? dbPost.createdAt ?? new Date().toISOString(),
+            dateModified: dbPost.updatedAt ?? undefined,
+            image: dbPost.ogImageUrl || dbPost.coverImageUrl || `/blog/${dbPost.slug}/opengraph-image`,
+            authorName: dbPost.author ?? "Zyteron",
+          })}
+        />
+        <DbBlogArticle post={dbPost} />
+      </>
+    );
+  }
+
+  // Artículo curado (secciones estructuradas).
+  const post = resolved.curated;
   const relatedServiceLinks = getBlogServiceLinks(post);
 
   const relatedPosts = blogPosts

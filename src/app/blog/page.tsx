@@ -4,9 +4,8 @@ import { ArrowRight, Clock3, Tag } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
-import { blogPosts } from "@/content/blog-posts";
+import { getBlogListItems } from "@/lib/content/blog-merge";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
-import { formatStableDateEsCl } from "@/lib/stable-date";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Blog para empresas sobre web, sistemas y SEO",
@@ -14,6 +13,9 @@ export const metadata: Metadata = createPageMetadata({
     "Guías prácticas sobre desarrollo web, sistemas, soporte TI, ecommerce y SEO para empresas que necesitan decidir con mejor criterio.",
   path: "/blog",
 });
+
+// Red de seguridad: revalida cada hora aunque no haya publicación on-demand.
+export const revalidate = 3600;
 
 const categories = [
   "Desarrollo web",
@@ -52,13 +54,9 @@ const suggestedArticles = [
   },
 ];
 
-const intentLabels = {
-  comercial: "Guía comercial",
-  informativa: "Guía informativa",
-  mixta: "Análisis aplicado",
-} as const;
+export default async function BlogPage() {
+  const posts = await getBlogListItems();
 
-export default function BlogPage() {
   return (
     <main className="bg-white">
       <JsonLd
@@ -99,31 +97,39 @@ export default function BlogPage() {
 
       <section className="py-16">
         <Container className="space-y-8">
-          <div className="grid gap-4 md:grid-cols-2">
-            {blogPosts.map((post) => (
-              <article key={post.slug} className="card-premium flex flex-col p-6">
-                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">
-                  {intentLabels[post.intent]}
-                </p>
-                <h2 className="mb-2 text-xl font-extrabold text-slate-900">{post.title}</h2>
-                <p className="mb-4 text-sm leading-relaxed text-slate-600">{post.excerpt}</p>
-                <div className="mb-5 flex flex-wrap gap-2 text-xs text-slate-500">
-                  <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-semibold">
-                    <Clock3 className="h-3.5 w-3.5" />
-                    {post.readingTime}
-                  </span>
-                  <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-semibold">
-                    Actualizado {formatStableDateEsCl(post.updatedAt ?? post.publishedAt)}
-                  </span>
-                </div>
-                <Button asChild variant="outline" className="mt-auto border-slate-300 text-slate-800 hover:bg-slate-50">
-                  <Link href={`/blog/${post.slug}`}>
-                    Leer artículo <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </article>
-            ))}
-          </div>
+          {posts.length === 0 ? (
+            <div className="card-premium p-8 text-center">
+              <p className="text-sm text-slate-600">
+                Aún no hay artículos publicados. Vuelve pronto para nuevas guías.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {posts.map((post) => (
+                <article key={post.slug} className="card-premium flex flex-col p-6">
+                  <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">
+                    {post.label}
+                  </p>
+                  <h2 className="mb-2 text-xl font-extrabold text-slate-900">{post.title}</h2>
+                  <p className="mb-4 text-sm leading-relaxed text-slate-600">{post.excerpt}</p>
+                  <div className="mb-5 flex flex-wrap gap-2 text-xs text-slate-500">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-semibold">
+                      <Clock3 className="h-3.5 w-3.5" />
+                      {post.readingTime}
+                    </span>
+                    <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-semibold">
+                      Actualizado {post.updatedLabel}
+                    </span>
+                  </div>
+                  <Button asChild variant="outline" className="mt-auto border-slate-300 text-slate-800 hover:bg-slate-50">
+                    <Link href={`/blog/${post.slug}`}>
+                      Leer artículo <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </article>
+              ))}
+            </div>
+          )}
 
           <section className="card-premium p-6">
             <h2 className="text-2xl font-extrabold text-slate-900">Rutas de aprendizaje recomendadas</h2>

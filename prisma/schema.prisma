@@ -263,6 +263,54 @@ model ClientReview {
   approvedAt DateTime?
 }
 
+// Blog dinámico administrado desde /admin/blog. El contenido es markdown.
+// status usa 'draft' | 'published' (check en la tabla SQL, no enum Prisma).
+model BlogPost {
+  id              String    @id @default(cuid())
+  slug            String    @unique
+  title           String
+  excerpt         String?
+  content         String
+  coverImageUrl   String?
+  coverImageAlt   String?
+  category        String?
+  tags            String[]  @default([])
+  readMinutes     Int       @default(5)
+  author          String    @default("Zyteron")
+  status          String    @default("draft")
+  metaTitle       String?
+  metaDescription String?
+  keywords        String?
+  ogImageUrl      String?
+  publishedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Casos de éxito administrados desde /admin/casos.
+model CaseStudy {
+  id              String    @id @default(cuid())
+  slug            String    @unique
+  companyName     String
+  industry        String?
+  problem         String
+  solution        String
+  results         String?
+  technologies    String[]  @default([])
+  projectDuration String?
+  clientQuote     String?
+  imageUrl        String?
+  imageAlt        String?
+  featured        Boolean   @default(false)
+  sortOrder       Int       @default(0)
+  status          String    @default("draft")
+  metaTitle       String?
+  metaDescription String?
+  publishedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
 model Visit {
   id        String   @id @default(cuid())
   clientId  String?

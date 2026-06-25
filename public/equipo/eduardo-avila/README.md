@@ -2,4 +2,4 @@
 
 Fundador y líder de proyectos en Zyteron.
 
-Contacto: eduardo.avila@zyteron.cl
+Contacto: contacto@zyteron.cl
