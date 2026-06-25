@@ -133,7 +133,26 @@ export type BlogPostWriteInput = {
   metaDescription?: string | null;
   keywords?: string | null;
   ogImageUrl?: string | null;
+  // Fechas opcionales en ISO. Si no se entregan, se calculan automáticamente.
+  publishedAt?: string | null;
+  updatedAt?: string | null;
 };
+
+/**
+ * Resuelve la fecha de publicación final:
+ * - Si el admin entregó una fecha explícita, manda esa (permite agendar/retroceder).
+ * - Si está publicado y no hay fecha, usa la actual o now().
+ * - Si está en borrador, queda null (salvo fecha explícita).
+ */
+function resolvePublishedAt(
+  explicit: string | null | undefined,
+  isPublished: boolean,
+  current: string | null = null,
+): string | null {
+  if (explicit) return explicit;
+  if (isPublished) return current ?? new Date().toISOString();
+  return null;
+}
 
 function buildBlogPayload(input: BlogPostWriteInput) {
   const isPublished = input.status === "published";
@@ -161,7 +180,12 @@ export async function createBlogPost(input: BlogPostWriteInput): Promise<DbBlogP
   const { isPublished, ...payload } = buildBlogPayload(input);
   return insertRow<DbBlogPost>(
     BLOG_TABLE,
-    { ...payload, publishedAt: isPublished ? new Date().toISOString() : null },
+    {
+      ...payload,
+      publishedAt: resolvePublishedAt(input.publishedAt, isPublished),
+      // Sólo se fija updatedAt si el admin lo eligió; si no, la columna usa now() por defecto.
+      ...(input.updatedAt ? { updatedAt: input.updatedAt } : {}),
+    },
     BLOG_COLUMNS,
   );
 }
@@ -172,9 +196,16 @@ export async function updateBlogPost(
   currentPublishedAt: string | null,
 ): Promise<void> {
   const { isPublished, ...payload } = buildBlogPayload(input);
-  // Al publicar por primera vez fija publishedAt; al despublicar lo limpia.
-  const publishedAt = isPublished ? currentPublishedAt ?? new Date().toISOString() : null;
-  await updateRows(BLOG_TABLE, { ...payload, publishedAt }, { id });
+  await updateRows(
+    BLOG_TABLE,
+    {
+      ...payload,
+      publishedAt: resolvePublishedAt(input.publishedAt, isPublished, currentPublishedAt),
+      // Si el admin entregó updatedAt, el trigger lo respeta; si no, lo omitimos y el trigger pone now().
+      ...(input.updatedAt ? { updatedAt: input.updatedAt } : {}),
+    },
+    { id },
+  );
 }
 
 export async function deleteBlogPost(id: string): Promise<void> {
@@ -235,6 +266,9 @@ export type CaseStudyWriteInput = {
   status: "draft" | "published";
   metaTitle?: string | null;
   metaDescription?: string | null;
+  // Fechas opcionales en ISO. Si no se entregan, se calculan automáticamente.
+  publishedAt?: string | null;
+  updatedAt?: string | null;
 };
 
 function buildCasePayload(input: CaseStudyWriteInput) {
@@ -266,7 +300,11 @@ export async function createCaseStudy(input: CaseStudyWriteInput): Promise<DbCas
   const { payload, isPublished } = buildCasePayload(input);
   return insertRow<DbCaseStudy>(
     CASE_TABLE,
-    { ...payload, publishedAt: isPublished ? new Date().toISOString() : null },
+    {
+      ...payload,
+      publishedAt: resolvePublishedAt(input.publishedAt, isPublished),
+      ...(input.updatedAt ? { updatedAt: input.updatedAt } : {}),
+    },
     CASE_COLUMNS,
   );
 }
@@ -277,8 +315,15 @@ export async function updateCaseStudy(
   currentPublishedAt: string | null,
 ): Promise<void> {
   const { payload, isPublished } = buildCasePayload(input);
-  const publishedAt = isPublished ? currentPublishedAt ?? new Date().toISOString() : null;
-  await updateRows(CASE_TABLE, { ...payload, publishedAt }, { id });
+  await updateRows(
+    CASE_TABLE,
+    {
+      ...payload,
+      publishedAt: resolvePublishedAt(input.publishedAt, isPublished, currentPublishedAt),
+      ...(input.updatedAt ? { updatedAt: input.updatedAt } : {}),
+    },
+    { id },
+  );
 }
 
 export async function deleteCaseStudy(id: string): Promise<void> {

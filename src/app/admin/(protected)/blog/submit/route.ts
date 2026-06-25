@@ -38,6 +38,20 @@ function intValue(value: unknown, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? Math.round(n) : fallback;
 }
 
+/**
+ * Normaliza una fecha del formulario a ISO.
+ * - Acepta "YYYY-MM-DD" (input date) y la guarda a mediodía UTC para evitar
+ *   desfases de día al mostrarla.
+ * - Devuelve null si viene vacía, o "invalid" si no es una fecha válida.
+ */
+function parseDateInput(value: unknown): string | null | "invalid" {
+  const s = text(value);
+  if (!s) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return `${s}T12:00:00.000Z`;
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? "invalid" : d.toISOString();
+}
+
 /** Revalida todas las superficies públicas afectadas por un post. */
 function revalidateBlog(slug?: string | null) {
   revalidatePath("/admin/blog");
@@ -84,6 +98,12 @@ export async function POST(request: Request) {
     const status: "draft" | "published" =
       text(data.status).toLowerCase() === "published" ? "published" : "draft";
 
+    const publishedAt = parseDateInput(data.publishedAt);
+    const updatedAt = parseDateInput(data.updatedAt);
+    if (publishedAt === "invalid" || updatedAt === "invalid") {
+      return NextResponse.json({ ok: false, error: "Fecha inválida." }, { status: 400 });
+    }
+
     const input: BlogPostWriteInput = {
       slug,
       title,
@@ -100,6 +120,8 @@ export async function POST(request: Request) {
       metaDescription: text(data.metaDescription) || null,
       keywords: text(data.keywords) || null,
       ogImageUrl: text(data.ogImageUrl) || null,
+      publishedAt,
+      updatedAt,
     };
 
     // Verifica unicidad de slug (excluyendo el propio registro al editar).

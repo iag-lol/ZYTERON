@@ -46,6 +46,18 @@ function intValue(value: unknown, fallback: number): number {
   return Number.isFinite(n) ? Math.round(n) : fallback;
 }
 
+/**
+ * Normaliza una fecha del formulario a ISO (mediodía UTC para "YYYY-MM-DD").
+ * Devuelve null si viene vacía, o "invalid" si no es válida.
+ */
+function parseDateInput(value: unknown): string | null | "invalid" {
+  const s = text(value);
+  if (!s) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return `${s}T12:00:00.000Z`;
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? "invalid" : d.toISOString();
+}
+
 function revalidateCases(slug?: string | null) {
   revalidatePath("/admin/casos");
   revalidatePath("/casos-exito");
@@ -96,6 +108,12 @@ export async function POST(request: Request) {
     const status: "draft" | "published" =
       text(data.status).toLowerCase() === "published" ? "published" : "draft";
 
+    const publishedAt = parseDateInput(data.publishedAt);
+    const updatedAt = parseDateInput(data.updatedAt);
+    if (publishedAt === "invalid" || updatedAt === "invalid") {
+      return NextResponse.json({ ok: false, error: "Fecha inválida." }, { status: 400 });
+    }
+
     const input: CaseStudyWriteInput = {
       slug,
       companyName,
@@ -113,6 +131,8 @@ export async function POST(request: Request) {
       status,
       metaTitle: text(data.metaTitle) || null,
       metaDescription: text(data.metaDescription) || null,
+      publishedAt,
+      updatedAt,
     };
 
     const slugOwner = await getCaseStudyBySlug(slug);

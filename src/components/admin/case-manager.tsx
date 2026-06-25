@@ -21,6 +21,7 @@ export type CaseStudyRow = {
   status: string;
   metaTitle: string | null;
   metaDescription: string | null;
+  publishedAt: string | null;
   updatedAt: string | null;
 };
 
@@ -43,9 +44,17 @@ type FormState = {
   status: "draft" | "published";
   metaTitle: string;
   metaDescription: string;
+  publishedAt: string;
+  updatedAt: string;
 };
 
 type Alert = { type: "idle" } | { type: "success" | "error"; message: string };
+
+/** ISO almacenado (mediodía UTC) -> valor "YYYY-MM-DD" para un input date. */
+function toDateInput(iso: string | null): string {
+  if (!iso) return "";
+  return iso.slice(0, 10);
+}
 
 function localSlugify(input: string): string {
   return input
@@ -76,6 +85,8 @@ const EMPTY_FORM: FormState = {
   status: "draft",
   metaTitle: "",
   metaDescription: "",
+  publishedAt: "",
+  updatedAt: "",
 };
 
 export function CaseManager({ cases }: { cases: CaseStudyRow[] }) {
@@ -111,6 +122,8 @@ export function CaseManager({ cases }: { cases: CaseStudyRow[] }) {
       status: item.status === "published" ? "published" : "draft",
       metaTitle: item.metaTitle ?? "",
       metaDescription: item.metaDescription ?? "",
+      publishedAt: toDateInput(item.publishedAt),
+      updatedAt: toDateInput(item.updatedAt),
     });
     setAlert({ type: "idle" });
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
@@ -174,6 +187,8 @@ export function CaseManager({ cases }: { cases: CaseStudyRow[] }) {
               status,
               metaTitle: form.metaTitle,
               metaDescription: form.metaDescription,
+              publishedAt: form.publishedAt,
+              updatedAt: form.updatedAt,
             },
           }),
         });
@@ -395,6 +410,34 @@ export function CaseManager({ cases }: { cases: CaseStudyRow[] }) {
             <label htmlFor="featured" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-700">
               <Star className="h-4 w-4 text-amber-500" /> Destacado en la home
             </label>
+          </div>
+
+          {/* Fechas de publicación */}
+          <div className="md:col-span-2 rounded-xl border border-slate-100 bg-slate-50 p-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Fechas</p>
+            <p className="mt-1 text-[11px] text-slate-400">
+              Opcional. Si las dejas vacías, al publicar se usa la fecha de hoy. Útil si olvidaste publicar un día: elige la fecha que corresponde.
+            </p>
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
+              <div>
+                <label className={labelClass}>Fecha de publicación</label>
+                <input
+                  type="date"
+                  className={inputClass}
+                  value={form.publishedAt}
+                  onChange={(e) => setForm((p) => ({ ...p, publishedAt: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Fecha de actualización</label>
+                <input
+                  type="date"
+                  className={inputClass}
+                  value={form.updatedAt}
+                  onChange={(e) => setForm((p) => ({ ...p, updatedAt: e.target.value }))}
+                />
+              </div>
+            </div>
           </div>
 
           {/* SEO */}

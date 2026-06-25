@@ -10,12 +10,17 @@
 create extension if not exists pgcrypto;
 
 -- ---------------------------------------------------------
--- Trigger genérico de updatedAt (idempotente)
+-- Trigger de updatedAt para blog/casos (idempotente).
+-- Función DEDICADA (no colisiona con otras del proyecto).
+-- "Inteligente": si el admin entrega un updatedAt explícito, lo respeta;
+-- si no cambió, lo pone a now(). Esto permite fijar la fecha a mano.
 -- ---------------------------------------------------------
-create or replace function public.set_updated_at()
+create or replace function public.blog_cases_set_updated_at()
 returns trigger as $$
 begin
-  new."updatedAt" = now();
+  if new."updatedAt" is not distinct from old."updatedAt" then
+    new."updatedAt" = now();
+  end if;
   return new;
 end;
 $$ language plpgsql;
@@ -51,7 +56,7 @@ create index if not exists idx_blogpost_status_published
 drop trigger if exists blogpost_set_updated_at on public."BlogPost";
 create trigger blogpost_set_updated_at
   before update on public."BlogPost"
-  for each row execute function public.set_updated_at();
+  for each row execute function public.blog_cases_set_updated_at();
 
 -- =========================================================
 -- TABLA: CaseStudy
@@ -85,7 +90,7 @@ create index if not exists idx_casestudy_status_published
 drop trigger if exists casestudy_set_updated_at on public."CaseStudy";
 create trigger casestudy_set_updated_at
   before update on public."CaseStudy"
-  for each row execute function public.set_updated_at();
+  for each row execute function public.blog_cases_set_updated_at();
 
 -- ---------------------------------------------------------
 -- Grants y RLS: lectura pública SÓLO de lo publicado.
