@@ -240,7 +240,7 @@ function buildSnapshot(base: {
 
   const topPaths = usingWebFallback
     ? [
-        { path: "/paquetes", visits: quotes.length, uniqueIps: 0 },
+        { path: "/cotizador", visits: quotes.length, uniqueIps: 0 },
         { path: "/contacto", visits: leads.length, uniqueIps: 0 },
       ].filter((item) => item.visits > 0)
     : (() => {
@@ -268,7 +268,7 @@ function buildSnapshot(base: {
     ? [...quotes]
         .slice(0, 8)
         .map((quote) => ({
-          path: "/paquetes",
+          path: "/cotizador",
           createdAt: quote.createdAt || null,
           ip: null,
           ipHash: null,

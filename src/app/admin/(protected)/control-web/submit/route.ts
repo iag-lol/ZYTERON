@@ -84,7 +84,7 @@ export async function POST(request: Request) {
           await deleteRows("Setting", { key: `plan_not_included_${slug}` });
         }
         revalidatePath("/planes");
-        revalidatePath("/paquetes");
+        revalidatePath("/cotizador");
         revalidatePath("/");
         return NextResponse.json({ ok: true });
       }
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
       }
 
       revalidatePath("/planes");
-      revalidatePath("/paquetes");
+      revalidatePath("/cotizador");
       revalidatePath("/");
       return NextResponse.json({ ok: true });
     }
@@ -151,7 +151,7 @@ export async function POST(request: Request) {
       if (action === "delete") {
         if (!id) return NextResponse.json({ error: "ID requerido" }, { status: 400 });
         await deleteRows("Extra", { id });
-        revalidatePath("/paquetes");
+        revalidatePath("/cotizador");
         return NextResponse.json({ ok: true });
       }
 
@@ -187,7 +187,7 @@ export async function POST(request: Request) {
         );
       }
 
-      revalidatePath("/paquetes");
+      revalidatePath("/cotizador");
       return NextResponse.json({ ok: true });
     }
 
@@ -200,7 +200,7 @@ export async function POST(request: Request) {
           await deleteProductPublicMetaBySlug(slug);
         }
         revalidatePath("/productos");
-        revalidatePath("/paquetes");
+        revalidatePath("/cotizador");
         revalidatePath("/planes");
         return NextResponse.json({ ok: true });
       }
@@ -273,7 +273,7 @@ export async function POST(request: Request) {
       }
 
       revalidatePath("/productos");
-      revalidatePath("/paquetes");
+      revalidatePath("/cotizador");
       revalidatePath("/planes");
       revalidatePath("/");
       return NextResponse.json({ ok: true });
@@ -283,7 +283,7 @@ export async function POST(request: Request) {
       if (action === "delete") {
         if (!id) return NextResponse.json({ error: "ID requerido" }, { status: 400 });
         await deleteRows("WebDiscount", { id });
-        revalidatePath("/paquetes");
+        revalidatePath("/cotizador");
         return NextResponse.json({ ok: true });
       }
 
@@ -336,7 +336,7 @@ export async function POST(request: Request) {
         );
       }
 
-      revalidatePath("/paquetes");
+      revalidatePath("/cotizador");
       return NextResponse.json({ ok: true });
     }
 

@@ -92,6 +92,17 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        // /paquetes ya no existe: se unifica en /cotizador para no competir.
+        source: "/paquetes",
+        destination: "/cotizador",
+        permanent: true,
+      },
+      {
+        source: "/paquetes/:path*",
+        destination: "/cotizador",
+        permanent: true,
+      },
+      {
         source: "/:path*",
         has: [
           {

@@ -110,7 +110,7 @@ function revalidateAll() {
   revalidatePath("/admin/productos");
   revalidatePath("/admin/control-web");
   revalidatePath("/productos");
-  revalidatePath("/paquetes");
+  revalidatePath("/cotizador");
   revalidatePath("/");
 }
 
