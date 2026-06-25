@@ -24,7 +24,7 @@ export async function getBlogListItems(): Promise<BlogListItem[]> {
       excerpt: p.excerpt ?? "",
       label: p.category?.trim() || "Artículo",
       readingTime: `${p.readMinutes ?? 5} min de lectura`,
-      updatedLabel: formatStableDateEsCl(p.publishedAt ?? p.createdAt ?? new Date().toISOString()),
+      updatedLabel: formatStableDateEsCl(p.updatedAt ?? p.publishedAt ?? p.createdAt ?? new Date().toISOString()),
     }));
 }
 

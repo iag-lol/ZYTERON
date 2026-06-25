@@ -23,6 +23,7 @@ export default async function AdminCasosPage() {
     status: c.status,
     metaTitle: c.metaTitle,
     metaDescription: c.metaDescription,
+    publishedAt: c.publishedAt,
     updatedAt: c.updatedAt,
   }));
 

@@ -42,9 +42,17 @@ type FormState = {
   metaDescription: string;
   keywords: string;
   ogImageUrl: string;
+  publishedAt: string;
+  updatedAt: string;
 };
 
 type Alert = { type: "idle" } | { type: "success" | "error"; message: string };
+
+/** ISO almacenado (mediodía UTC) -> valor "YYYY-MM-DD" para un input date. */
+function toDateInput(iso: string | null): string {
+  if (!iso) return "";
+  return iso.slice(0, 10);
+}
 
 function localSlugify(input: string): string {
   return input
@@ -73,6 +81,8 @@ const EMPTY_FORM: FormState = {
   metaDescription: "",
   keywords: "",
   ogImageUrl: "",
+  publishedAt: "",
+  updatedAt: "",
 };
 
 export function BlogManager({ posts }: { posts: BlogPostRow[] }) {
@@ -109,6 +119,8 @@ export function BlogManager({ posts }: { posts: BlogPostRow[] }) {
       metaDescription: post.metaDescription ?? "",
       keywords: post.keywords ?? "",
       ogImageUrl: post.ogImageUrl ?? "",
+      publishedAt: toDateInput(post.publishedAt),
+      updatedAt: toDateInput(post.updatedAt),
     });
     setAlert({ type: "idle" });
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
@@ -170,6 +182,8 @@ export function BlogManager({ posts }: { posts: BlogPostRow[] }) {
               metaDescription: form.metaDescription,
               keywords: form.keywords,
               ogImageUrl: form.ogImageUrl,
+              publishedAt: form.publishedAt,
+              updatedAt: form.updatedAt,
             },
           }),
         });
@@ -371,6 +385,34 @@ export function BlogManager({ posts }: { posts: BlogPostRow[] }) {
               value={form.author}
               onChange={(e) => setForm((p) => ({ ...p, author: e.target.value }))}
             />
+          </div>
+
+          {/* Fechas de publicación */}
+          <div className="md:col-span-2 rounded-xl border border-slate-100 bg-slate-50 p-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Fechas</p>
+            <p className="mt-1 text-[11px] text-slate-400">
+              Opcional. Si las dejas vacías, al publicar se usa la fecha de hoy. Útil si olvidaste publicar un día: elige la fecha que corresponde.
+            </p>
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
+              <div>
+                <label className={labelClass}>Fecha de publicación</label>
+                <input
+                  type="date"
+                  className={inputClass}
+                  value={form.publishedAt}
+                  onChange={(e) => setForm((p) => ({ ...p, publishedAt: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Fecha de actualización</label>
+                <input
+                  type="date"
+                  className={inputClass}
+                  value={form.updatedAt}
+                  onChange={(e) => setForm((p) => ({ ...p, updatedAt: e.target.value }))}
+                />
+              </div>
+            </div>
           </div>
 
           {/* SEO */}
