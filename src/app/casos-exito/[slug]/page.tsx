@@ -5,8 +5,9 @@ import { ArrowRight, BarChart3, CheckCircle2, LockKeyhole, Target } from "lucide
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
-import { caseStudies, getCaseStudyBySlug } from "@/content/case-studies";
 import { getServicePageBySlug } from "@/content/service-pages";
+import { resolveCaseStudy, getAllCaseSlugs } from "@/lib/content/cases-merge";
+import { DbCaseArticle } from "@/components/casos/db-case-article";
 import {
   buildArticleJsonLd,
   buildWebPageJsonLd,
@@ -19,15 +20,18 @@ type CaseDetailProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return caseStudies.map((caseStudy) => ({ slug: caseStudy.slug }));
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  const slugs = await getAllCaseSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: CaseDetailProps): Promise<Metadata> {
   const { slug } = await params;
-  const caseStudy = getCaseStudyBySlug(slug);
+  const resolved = await resolveCaseStudy(slug);
 
-  if (!caseStudy) {
+  if (!resolved) {
     return createPageMetadata({
       title: "Caso no encontrado",
       description: "El caso solicitado no está disponible.",
@@ -36,6 +40,18 @@ export async function generateMetadata({ params }: CaseDetailProps): Promise<Met
     });
   }
 
+  if (resolved.source === "db") {
+    const item = resolved.db;
+    return createPageMetadata({
+      title: item.metaTitle || `${item.companyName} | Caso de éxito`,
+      description: item.metaDescription || item.results || item.problem,
+      path: `/casos-exito/${item.slug}`,
+      ogImagePath: item.imageUrl || undefined,
+      ogImageAlt: item.imageAlt || `Caso de éxito: ${item.companyName}`,
+    });
+  }
+
+  const caseStudy = resolved.curated;
   return createPageMetadata({
     title: caseStudy.metaTitle,
     description: caseStudy.metaDescription,
@@ -45,12 +61,50 @@ export async function generateMetadata({ params }: CaseDetailProps): Promise<Met
 
 export default async function CaseDetailPage({ params }: CaseDetailProps) {
   const { slug } = await params;
-  const caseStudy = getCaseStudyBySlug(slug);
+  const resolved = await resolveCaseStudy(slug);
 
-  if (!caseStudy) {
+  if (!resolved) {
     notFound();
   }
 
+  // Caso administrado desde Supabase.
+  if (resolved.source === "db") {
+    const item = resolved.db;
+    const itemPath = `/casos-exito/${item.slug}`;
+    return (
+      <>
+        <JsonLd
+          id={`${item.slug}-webpage-schema`}
+          data={buildWebPageJsonLd({
+            path: itemPath,
+            title: item.metaTitle || `${item.companyName} | Caso de éxito`,
+            description: item.metaDescription || item.results || item.problem,
+            breadcrumbs: [
+              { name: "Inicio", path: "/" },
+              { name: "Casos de éxito", path: "/casos-exito" },
+              { name: item.companyName, path: itemPath },
+            ],
+          })}
+        />
+        <JsonLd
+          id={`${item.slug}-article-schema`}
+          data={buildArticleJsonLd({
+            path: itemPath,
+            title: item.companyName,
+            description: item.results || item.problem,
+            datePublished: item.publishedAt ?? item.createdAt ?? new Date().toISOString(),
+            dateModified: item.updatedAt ?? undefined,
+            image: item.imageUrl || undefined,
+            authorName: "Equipo Zyteron",
+          })}
+        />
+        <DbCaseArticle item={item} />
+      </>
+    );
+  }
+
+  // Caso curado (estructurado).
+  const caseStudy = resolved.curated;
   const casePath = `/casos-exito/${caseStudy.slug}`;
   const relatedServices = caseStudy.relatedServices
     .map((serviceSlug) => getServicePageBySlug(serviceSlug))

@@ -48,7 +48,8 @@ const teamMembers = [
     role: "Fundador y líder de proyectos",
     photo: "/equipo/eduardo-avila/perfil-web.png",
     bio: "Con experiencia en tecnología, análisis de procesos, liderazgo operativo y desarrollo de soluciones digitales para empresas, lidera Zyteron con una visión práctica: crear herramientas claras, profesionales y útiles para negocios reales.",
-    contact: "eduardo.avila@zyteron.cl",
+    // NAP unificado: usamos el correo oficial centralizado en siteConfig en vez de un correo personal.
+    contact: siteConfig.contact.email,
   },
   {
     name: "Víctor",

@@ -72,6 +72,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "cdnx.jumpseller.com",
       },
+      {
+        // Imágenes subidas al Storage de Supabase (portadas de blog e imágenes de casos)
+        protocol: "https",
+        hostname: "*.supabase.co",
+      },
     ],
   },
   async redirects() {

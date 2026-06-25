@@ -30,6 +30,8 @@ import {
   ExternalLink,
   TrendingUp,
   Calculator,
+  Newspaper,
+  Trophy,
 } from "lucide-react";
 
 interface NavItem {
@@ -90,6 +92,13 @@ const navGroups: NavGroup[] = [
     label: "Catálogo",
     items: [
       { href: "/admin/productos", label: "Productos", icon: Boxes, color: "indigo" },
+    ],
+  },
+  {
+    label: "Contenido",
+    items: [
+      { href: "/admin/blog", label: "Blog", icon: Newspaper, color: "orange" },
+      { href: "/admin/casos", label: "Casos de éxito", icon: Trophy, color: "amber" },
     ],
   },
   {
