@@ -433,24 +433,33 @@ export const servicePages: ServicePageData[] = [
       "Servicio de SEO para empresas en Chile: estrategia, arquitectura, contenido y optimización técnica para aumentar tráfico calificado y leads.",
     primaryKeyword: "SEO para empresas chile",
     secondaryKeywords: [
-      "SEO técnico para sitios corporativos",
-      "visibilidad orgánica para empresas en Chile",
-      "optimización web enfocada en leads",
+      "SEO Chile",
+      "posicionamiento web Chile",
+      "posicionamiento SEO Chile",
+      "agencia SEO Chile",
+      "SEO para pymes",
+      "SEO local Chile",
+      "auditoría SEO",
+      "aparecer en Google",
+      "posicionar página web en Google",
+      "Google Business Profile Chile",
     ],
-    heroTitle: "SEO para empresas en Chile con foco en intención comercial",
+    heroTitle: "SEO y posicionamiento web para empresas en Chile con foco en intención comercial",
     heroDescription:
-      "Planificamos y ejecutamos SEO con enfoque en revenue: arquitectura de servicios, contenidos útiles y optimización técnica medible.",
+      "Como agencia SEO en Chile, planificamos y ejecutamos posicionamiento web con enfoque en revenue: arquitectura de servicios, contenidos útiles y optimización técnica medible para posicionar tu página web en Google y aparecer en búsquedas de alta intención.",
     summary:
-      "Servicio para empresas que quieren crecer en tráfico orgánico no-marca y convertir búsquedas de alta intención en oportunidades.",
+      "Servicio de SEO y posicionamiento web en Chile para empresas y pymes que quieren crecer en tráfico orgánico no-marca y convertir búsquedas de alta intención en oportunidades.",
     idealFor: [
       "Sitios con tráfico pero baja conversión comercial.",
       "Empresas que dependen excesivamente de pauta paga.",
+      "Pymes que buscan SEO para pymes y posicionamiento local en Chile.",
       "Equipos de marketing que necesitan estructura SEO escalable.",
     ],
     deliverables: [
-      "Auditoría técnica + plan de arquitectura por intención.",
+      "Auditoría SEO técnica + plan de arquitectura por intención.",
       "Cluster de contenidos comerciales e informativos útiles.",
-      "Optimización on-page, schema y enlazado interno.",
+      "Optimización SEO on-page, schema y enlazado interno.",
+      "Configuración y optimización de la ficha de Google del negocio (Google Business Profile).",
       "Roadmap 30/60/90 con foco en impacto de negocio.",
     ],
     process: [
@@ -464,6 +473,21 @@ export const servicePages: ServicePageData[] = [
         question: "¿En cuánto tiempo se ven resultados en SEO?",
         answer:
           "Depende del punto de partida y competencia, pero los primeros cambios suelen observarse entre 8 y 16 semanas.",
+      },
+      {
+        question: "¿Cómo puedo aparecer en Google con mi empresa?",
+        answer:
+          "Para aparecer en Google trabajamos tres frentes: una base técnica indexable, contenido por intención de búsqueda y autoridad. Así ayudamos a posicionar tu página web en Google de forma sostenible en lugar de depender solo de pauta paga.",
+      },
+      {
+        question: "¿Optimizan la ficha de Google del negocio (Google Business Profile)?",
+        answer:
+          "Sí. Configuramos y optimizamos tu Google Business Profile en Chile (la ficha de Google del negocio) para mejorar el SEO local, las búsquedas con intención cercana y la aparición en el mapa.",
+      },
+      {
+        question: "¿Hacen SEO local en Chile para pymes?",
+        answer:
+          "Sí. Hacemos SEO local en Chile y SEO para pymes, optimizando páginas por ciudad o servicio, la ficha de Google y las señales locales para captar clientes de tu zona.",
       },
       {
         question: "¿Incluyen contenido y optimización técnica?",

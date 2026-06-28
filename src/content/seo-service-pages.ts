@@ -106,7 +106,7 @@ export const seoServicePages: SeoServicePage[] = [
     ],
     heroTitle: "Desarrollo web en Chile para empresas que necesitan una presencia digital profesional",
     heroDescription:
-      "Creamos sitios web modernos, rápidos y claros para empresas, pymes y emprendedores que necesitan mostrar sus servicios con confianza, captar consultas y crecer con una base técnica escalable.",
+      "Hacemos diseño de páginas web y desarrollo web para crear una página web profesional, moderna y rápida para empresas, pymes y emprendedores que necesitan mostrar sus servicios con confianza, captar consultas y crecer con una base técnica escalable.",
     problemTitle: "Una web profesional debe vender confianza, no solo verse bien",
     problemDescription:
       "Muchas empresas tienen sitios lentos, desordenados o genéricos que no explican bien sus servicios. En Zyteron trabajamos estructura, copy, diseño responsive, SEO base y rutas de conversión para que la web ayude al negocio desde el primer contacto.",
@@ -128,15 +128,20 @@ export const seoServicePages: SeoServicePage[] = [
     audience: [
       "Empresas que necesitan renovar una web antigua o poco confiable.",
       "Pymes que quieren captar clientes desde Google y redes sociales.",
-      "Emprendedores que necesitan una imagen profesional para vender servicios.",
+      "Emprendedores que necesitan una página web para emprendedores con imagen profesional.",
       "Negocios B2B que requieren explicar una oferta compleja de forma simple.",
     ],
     process: baseProcess,
     faqs: [
       {
-        question: "¿Cuánto cuesta una página web profesional?",
+        question: "¿Cómo puedo crear una página web profesional para mi empresa?",
         answer:
-          "Depende del alcance, cantidad de páginas, contenido, integraciones y nivel de personalización. Trabajamos con valores referenciales y cotización formal antes de iniciar.",
+          "Para crear una página web partimos con un diagnóstico de tus objetivos, definimos estructura y contenido, y nos encargamos del diseño de páginas web, el desarrollo, la base SEO y la publicación. Tú solo entregas la información del negocio.",
+      },
+      {
+        question: "¿Cuánto cuesta hacer una página web profesional?",
+        answer:
+          "Hacer una página web depende del alcance, cantidad de páginas, contenido, integraciones y nivel de personalización. Trabajamos con valores referenciales y cotización formal antes de iniciar.",
       },
       {
         question: "¿La web queda adaptada a celular?",
@@ -253,7 +258,7 @@ export const seoServicePages: SeoServicePage[] = [
     secondaryKeywords: ["sitios corporativos", "UX para empresas", "diseño web corporativo Chile"],
     heroTitle: "Diseño web para empresas que necesitan comunicar confianza desde el primer clic",
     heroDescription:
-      "Diseñamos sitios corporativos con estructura visual limpia, mensajes claros y experiencia de usuario orientada a que un visitante entienda tu valor y avance hacia contacto.",
+      "Como empresa de diseño web en Chile, diseñamos sitios corporativos con estructura visual limpia, mensajes claros y experiencia de usuario orientada a que un visitante entienda tu valor y avance hacia contacto.",
     problemTitle: "El diseño corporativo debe ordenar la decisión del cliente",
     problemDescription:
       "Una empresa puede tener buenos servicios y aun así perder oportunidades si su web se ve antigua, confusa o poco confiable. Trabajamos jerarquía, contenido, navegación, CTA y señales de confianza para mejorar la experiencia completa.",
@@ -321,10 +326,22 @@ export const seoServicePages: SeoServicePage[] = [
     metaDescription:
       "Crea una tienda online profesional para vender en Chile con catálogo, pagos, WhatsApp y base SEO lista para crecer. Cotiza sin compromiso para pymes.",
     primaryKeyword: "tiendas online para pymes",
-    secondaryKeywords: ["ecommerce Chile", "tienda online administrable", "catálogo digital para empresas"],
+    secondaryKeywords: [
+      "ecommerce Chile",
+      "crear tienda online",
+      "crear tienda online en Chile",
+      "diseño y desarrollo de tienda online",
+      "tienda virtual Chile",
+      "catálogo online",
+      "tienda online con Webpay",
+      "tienda online con Flow",
+      "tienda online con Mercado Pago",
+      "página web con tienda online",
+      "catálogo digital para empresas",
+    ],
     heroTitle: "Tiendas online para pymes y empresas que quieren vender con orden",
     heroDescription:
-      "Desarrollamos tiendas online, catálogos digitales y flujos de compra o cotización para negocios que necesitan mostrar productos, recibir pedidos y vender con una experiencia profesional.",
+      "Hacemos diseño y desarrollo de tiendas online para crear tu tienda virtual en Chile: catálogo online administrable, fichas de producto y flujos de compra o cotización para mostrar productos, recibir pedidos y vender con una experiencia profesional.",
     problemTitle: "Vender online requiere más que subir productos",
     problemDescription:
       "Una tienda efectiva necesita categorías claras, fichas útiles, confianza, contacto, rendimiento móvil y un flujo de compra coherente con la operación real del negocio.",
@@ -333,21 +350,22 @@ export const seoServicePages: SeoServicePage[] = [
       "Experiencia responsive para usuarios que compran desde celular.",
       "Opciones de compra, cotización o contacto por WhatsApp según modelo comercial.",
       "Base SEO para productos, categorías y búsquedas comerciales.",
+      "Integración con medios de pago como Webpay, Flow o Mercado Pago según tu operación.",
       "Escalabilidad hacia pagos online, stock o panel administrativo.",
     ],
     includes: [
-      "Estructura de categorías y fichas de producto.",
+      "Catálogo online administrable con categorías, fichas de producto y buscador.",
       "Diseño visual adaptado a marca, rubro y tipo de catálogo.",
       "Carrito o flujo de pedido según alcance.",
       "Integración con WhatsApp y formulario de consulta.",
-      "Preparación para pasarela de pago cuando corresponde.",
+      "Preparación para pasarela de pago (Webpay, Flow o Mercado Pago) cuando corresponde.",
       "Capacitación básica para operación inicial.",
     ],
     audience: [
       "Pymes que venden productos físicos o servicios paquetizados.",
-      "Marcas que venden por redes y necesitan canal propio.",
-      "Empresas que requieren catálogo ordenado para clientes y vendedores.",
-      "Negocios que quieren iniciar ecommerce por etapas.",
+      "Marcas que venden por redes y necesitan crear una tienda online propia.",
+      "Empresas que requieren catálogo online ordenado para clientes y vendedores.",
+      "Negocios que quieren crear un ecommerce o tienda virtual por etapas.",
     ],
     process: baseProcess,
     faqs: [
@@ -367,14 +385,24 @@ export const seoServicePages: SeoServicePage[] = [
           "Sí. Podemos integrar botones y flujos para venta asistida por WhatsApp.",
       },
       {
-        question: "¿Pueden integrar pagos online?",
+        question: "¿Pueden integrar pagos online con Webpay, Flow o Mercado Pago?",
         answer:
-          "Sí, evaluamos integración con pasarelas según proveedor, requisitos técnicos y alcance del proyecto.",
+          "Sí. Evaluamos tu tienda online con Webpay, Flow o Mercado Pago según el rubro, el volumen de ventas y los requisitos de cada pasarela, y dejamos el flujo de cobro probado antes de publicar.",
+      },
+      {
+        question: "¿Cuánto cuesta crear una tienda online en Chile?",
+        answer:
+          "El valor de crear una tienda online en Chile depende de la cantidad de productos, las pasarelas de pago, el diseño y la administración requerida. Entregamos un rango referencial y una cotización formal antes de iniciar.",
+      },
+      {
+        question: "¿Pueden agregar una tienda online a mi página web actual?",
+        answer:
+          "Sí. Podemos convertir tu sitio en una página web con tienda online integrada o crear una tienda virtual nueva, según cómo prefieras operar.",
       },
       {
         question: "¿La tienda puede partir como catálogo sin pago online?",
         answer:
-          "Sí. Muchas pymes parten con catálogo y venta asistida por WhatsApp, y luego incorporan carrito, pagos o stock según avance comercial.",
+          "Sí. Muchas pymes parten con un catálogo online y venta asistida por WhatsApp, y luego incorporan carrito, pagos o stock según avance comercial.",
       },
     ],
     relatedLinks: [
@@ -397,10 +425,21 @@ export const seoServicePages: SeoServicePage[] = [
     metaDescription:
       "Ordena procesos con sistemas web a medida para pymes y empresas en Chile: paneles, reportes, permisos y automatización. Conoce nuestra metodología.",
     primaryKeyword: "sistemas web a medida",
-    secondaryKeywords: ["software a medida", "panel administrativo", "plataformas administrativas para empresas"],
+    secondaryKeywords: [
+      "software a medida en Chile",
+      "desarrollo de software a medida",
+      "software para pymes en Chile",
+      "panel administrativo web",
+      "aplicaciones web",
+      "sistema de gestión para empresas",
+      "sistema de inventario",
+      "sistema de cotizaciones",
+      "sistema de control de flota",
+      "plataformas administrativas para empresas",
+    ],
     heroTitle: "Sistemas web a medida para empresas que necesitan ordenar su operación",
     heroDescription:
-      "Creamos plataformas administrativas, paneles de gestión y sistemas internos para controlar datos, usuarios, documentos, clientes, reportes y flujos críticos del negocio.",
+      "Hacemos desarrollo de software a medida en Chile: plataformas administrativas, aplicaciones web y paneles de gestión para controlar datos, usuarios, documentos, clientes, reportes y flujos críticos del negocio.",
     problemTitle: "Cuando la operación crece, las planillas dejan de ser suficientes",
     problemDescription:
       "Los sistemas web permiten centralizar información, reducir errores, controlar estados y entregar trazabilidad. Desarrollamos soluciones por etapas para resolver primero el proceso de mayor impacto.",
@@ -414,19 +453,24 @@ export const seoServicePages: SeoServicePage[] = [
     includes: [
       "Levantamiento funcional del proceso actual.",
       "Diseño de módulos, permisos y flujos principales.",
-      "Panel administrativo responsive.",
+      "Panel administrativo web responsive y aplicaciones web internas.",
       "Formularios, registros, estados y filtros según alcance.",
       "Reportes, documentos o exportaciones si corresponde.",
       "Pruebas, capacitación y soporte inicial.",
     ],
     audience: [
-      "Empresas que gestionan clientes, pedidos, cotizaciones o proyectos.",
-      "Pymes que trabajan con planillas dispersas y tareas repetitivas.",
-      "Equipos que necesitan trazabilidad y reportes internos.",
-      "Negocios que requieren software propio en vez de herramientas genéricas.",
+      "Empresas que necesitan un sistema de gestión para clientes, pedidos, cotizaciones o proyectos.",
+      "Pymes que trabajan con planillas dispersas y buscan software para pymes en Chile.",
+      "Equipos que requieren sistema de inventario, control de asistencia o control de flota.",
+      "Negocios que requieren software a medida propio en vez de herramientas genéricas.",
     ],
     process: baseProcess,
     faqs: [
+      {
+        question: "¿Qué tipos de sistemas web y software a medida desarrollan?",
+        answer:
+          "Desarrollamos software a medida en Chile como sistema de inventario, sistema de cotizaciones, control de asistencia, control de flota, sistema de gestión para empresas y paneles administrativos web, según el proceso que necesites ordenar.",
+      },
       {
         question: "¿Desarrollan sistemas internos para empresas?",
         answer:
@@ -473,10 +517,21 @@ export const seoServicePages: SeoServicePage[] = [
     metaDescription:
       "Automatiza tareas, formularios y WhatsApp para tu empresa en Chile con flujos medibles, alertas y soporte técnico. Conoce nuestra metodología hoy.",
     primaryKeyword: "automatización de procesos para empresas",
-    secondaryKeywords: ["automatización para pymes", "flujos digitales", "automatización WhatsApp empresas"],
+    secondaryKeywords: [
+      "automatización de procesos en Chile",
+      "automatización para pymes",
+      "digitalización de procesos",
+      "digitalización de empresas",
+      "chatbot para empresas",
+      "chatbot de WhatsApp en Chile",
+      "formularios automatizados",
+      "sistema de cotización online",
+      "automatización de tareas administrativas",
+      "automatización WhatsApp empresas",
+    ],
     heroTitle: "Automatización de procesos para empresas que quieren operar con menos fricción",
     heroDescription:
-      "Diseñamos flujos digitales para reducir tareas repetitivas, ordenar solicitudes, conectar formularios, activar notificaciones y mejorar tiempos de respuesta.",
+      "Diseñamos la digitalización de procesos con flujos automatizados para reducir tareas administrativas repetitivas, ordenar solicitudes, conectar formularios automatizados, activar notificaciones y mejorar tiempos de respuesta.",
     problemTitle: "Automatizar no es complicar: es eliminar tareas que consumen tiempo",
     problemDescription:
       "Muchas empresas pierden horas en copiar datos, responder lo mismo, revisar solicitudes manualmente o enviar avisos repetitivos. La automatización permite crear procesos más claros y trazables.",
@@ -490,8 +545,8 @@ export const seoServicePages: SeoServicePage[] = [
     includes: [
       "Diagnóstico del flujo actual y puntos de pérdida de tiempo.",
       "Diseño de reglas, estados y mensajes automáticos.",
-      "Formularios, notificaciones y derivaciones según necesidad.",
-      "Integración con WhatsApp, correo o sistema interno cuando aplica.",
+      "Formularios automatizados, sistema de cotización online, notificaciones y derivaciones según necesidad.",
+      "Integración con WhatsApp, chatbot, correo o sistema interno cuando aplica.",
       "Pruebas de escenarios reales antes de publicar.",
       "Documentación básica para el equipo.",
     ],
@@ -512,6 +567,16 @@ export const seoServicePages: SeoServicePage[] = [
         question: "¿Pueden integrar WhatsApp?",
         answer:
           "Sí. Podemos diseñar flujos de WhatsApp o rutas de contacto según el objetivo comercial y técnico.",
+      },
+      {
+        question: "¿Pueden implementar un chatbot de WhatsApp para empresas?",
+        answer:
+          "Sí. Implementamos chatbot para empresas y flujos de WhatsApp en Chile que responden preguntas frecuentes, derivan solicitudes y ordenan la primera atención antes de pasar a una persona del equipo.",
+      },
+      {
+        question: "¿La automatización ayuda a digitalizar la empresa?",
+        answer:
+          "Sí. La automatización es parte de la digitalización de empresas y procesos: conecta formularios, datos y comunicación para reemplazar tareas administrativas manuales por flujos ordenados y medibles.",
       },
       {
         question: "¿Reemplaza al equipo humano?",
@@ -549,10 +614,20 @@ export const seoServicePages: SeoServicePage[] = [
     metaDescription:
       "Soporte TI para pymes y empresas en Santiago: correos, equipos, mantención, seguridad básica y continuidad operativa. Cotiza atención técnica clara.",
     primaryKeyword: "soporte TI para pymes",
-    secondaryKeywords: ["soporte TI empresas Chile", "asistencia tecnológica", "mantención TI para pymes"],
+    secondaryKeywords: [
+      "soporte TI en Chile",
+      "soporte informático para empresas",
+      "soporte técnico para empresas",
+      "soporte técnico remoto",
+      "servicio técnico computacional para empresas",
+      "mantención computacional para empresas",
+      "correo corporativo para empresas",
+      "hosting en Chile",
+      "mantención TI para pymes",
+    ],
     heroTitle: "Soporte TI para pymes y empresas que necesitan continuidad operativa",
     heroDescription:
-      "Apoyamos a negocios que requieren asistencia técnica, configuración, mantención, orientación tecnológica y soporte para mantener su operación diaria estable.",
+      "Damos soporte TI y soporte informático en Chile: asistencia técnica, soporte técnico remoto, configuración, mantención computacional, correo corporativo, hosting y orientación tecnológica para mantener tu operación diaria estable.",
     problemTitle: "Un problema técnico pequeño puede frenar ventas, atención y productividad",
     problemDescription:
       "El soporte TI debe resolver incidentes, pero también prevenir problemas repetidos. Trabajamos con diagnóstico, prioridad y recomendaciones concretas para empresas que no siempre tienen equipo técnico interno.",
@@ -565,8 +640,9 @@ export const seoServicePages: SeoServicePage[] = [
     ],
     includes: [
       "Evaluación inicial del requerimiento o situación técnica.",
-      "Soporte remoto y coordinación según tipo de necesidad.",
-      "Configuración de herramientas, correos o entornos básicos.",
+      "Soporte técnico remoto y coordinación según tipo de necesidad.",
+      "Configuración de correo corporativo, hosting, dominios y herramientas.",
+      "Mantención computacional y servicio técnico computacional para empresas.",
       "Orientación para continuidad, respaldo o seguridad operativa.",
       "Registro de acciones y recomendaciones de mejora.",
       "Opciones de soporte recurrente según carga y prioridad.",
@@ -588,6 +664,11 @@ export const seoServicePages: SeoServicePage[] = [
         question: "¿El soporte TI es solo para páginas web?",
         answer:
           "No. También apoyamos configuración, correos, herramientas, equipos, sistemas y continuidad operativa.",
+      },
+      {
+        question: "¿Ofrecen correo corporativo, hosting y soporte informático?",
+        answer:
+          "Sí. Configuramos correo corporativo para empresas, gestionamos hosting en Chile y entregamos soporte informático y servicio técnico computacional, ya sea de forma remota o coordinada según el requerimiento.",
       },
       {
         question: "¿Atienden fuera de Santiago?",

@@ -99,7 +99,7 @@ export const priorityServicePages: PriorityServicePage[] = [
       "Desarrollo de tiendas online en Chile para pymes y empresas: catálogo, carrito, integración comercial y acompañamiento para vender con orden.",
     heroTitle: "Tiendas online en Chile para vender con estructura y confianza",
     heroDescription:
-      "Creamos tiendas online orientadas a operación real: catálogo bien organizado, experiencia de compra clara y rutas de contacto para cerrar ventas por web o WhatsApp.",
+      "Te ayudamos a crear tu tienda online en Chile (o tienda virtual) orientada a operación real: catálogo online bien organizado, experiencia de compra clara, pagos con Webpay, Flow o Mercado Pago y rutas de contacto para cerrar ventas por web o WhatsApp.",
     context: [
       "Muchas pymes quieren vender online, pero se frenan por desorden en catálogo, falta de flujo comercial o problemas de mantención. Nuestra propuesta es construir una tienda que puedas operar sin fricción y que escale por etapas.",
       "No trabajamos con promesas vacías. Definimos qué incluye tu implementación: tipos de productos, cantidad inicial, forma de pago, envíos, reglas comerciales y soporte posterior.",
@@ -135,9 +135,9 @@ export const priorityServicePages: PriorityServicePage[] = [
     ],
     faqs: [
       {
-        question: "¿Incluye integración de pagos en línea?",
+        question: "¿Incluye integración de pagos en línea con Webpay, Flow o Mercado Pago?",
         answer:
-          "Puede incluirse según alcance. La integración se define por proveedor, requisitos técnicos y flujo comercial de tu negocio.",
+          "Puede incluirse según alcance. Integramos tu tienda online con Webpay, Flow o Mercado Pago según proveedor, requisitos técnicos y flujo comercial de tu negocio.",
       },
       {
         question: "¿Puedo comenzar con un catálogo pequeño?",
@@ -165,7 +165,7 @@ export const priorityServicePages: PriorityServicePage[] = [
       "Desarrollo de sistemas web a medida para empresas en Chile: paneles administrativos, control de procesos, generación de reportes y automatización.",
     heroTitle: "Sistemas web a medida para ordenar procesos y escalar operación",
     heroDescription:
-      "Cuando una planilla ya no alcanza, desarrollamos sistemas web personalizados para controlar información, usuarios, flujos internos y trazabilidad operativa.",
+      "Cuando una planilla ya no alcanza, hacemos desarrollo de software a medida en Chile: sistemas web y aplicaciones web personalizadas para controlar información, usuarios, flujos internos y trazabilidad operativa.",
     context: [
       "Los sistemas a medida permiten transformar tareas manuales en procesos controlados. En vez de adaptar tu negocio a una herramienta genérica, construimos una solución alineada a tu flujo real de trabajo.",
       "Nuestro enfoque parte por prioridades: qué duele hoy, qué proceso consume más tiempo y qué resultado esperas al digitalizar. Con eso definimos módulos, tiempos y una implementación por etapas.",
@@ -188,8 +188,8 @@ export const priorityServicePages: PriorityServicePage[] = [
     ],
     audience: [
       "Empresas que gestionan múltiples registros o flujos internos.",
-      "Pymes con crecimiento que requieren control por roles.",
-      "Equipos operativos que hoy trabajan con planillas dispersas.",
+      "Pymes que buscan software para pymes en Chile con control por roles.",
+      "Equipos que necesitan sistema de inventario, cotizaciones o control de flota.",
       "Negocios que buscan automatizar cotizaciones y documentos.",
     ],
     process: [
@@ -231,7 +231,7 @@ export const priorityServicePages: PriorityServicePage[] = [
       "Implementamos automatización de WhatsApp para pymes y empresas en Chile: respuestas, derivaciones, formularios e integración con procesos comerciales.",
     heroTitle: "Automatización de WhatsApp para responder mejor y vender con orden",
     heroDescription:
-      "Diseñamos flujos de WhatsApp para empresas que necesitan responder más rápido, filtrar solicitudes y conectar conversaciones con su proceso comercial interno.",
+      "Diseñamos flujos y chatbot de WhatsApp para empresas en Chile que necesitan responder más rápido, filtrar solicitudes y conectar conversaciones con su proceso comercial interno.",
     context: [
       "WhatsApp suele ser el canal con más consultas, pero también el más desordenado cuando no existe un flujo definido. Automatizar no significa deshumanizar: significa responder con lógica, priorizar mejor y evitar pérdidas de oportunidad.",
       "En ZYTERON configuramos automatizaciones según tipo de negocio: filtros iniciales, rutas por servicio, captura de datos clave y derivación al equipo correcto.",
@@ -270,6 +270,11 @@ export const priorityServicePages: PriorityServicePage[] = [
         question: "¿Reemplaza al equipo comercial?",
         answer:
           "No. La automatización apoya al equipo, filtra mejor y acelera respuestas iniciales para que los ejecutivos se enfoquen en cierres.",
+      },
+      {
+        question: "¿Implementan un chatbot de WhatsApp para empresas?",
+        answer:
+          "Sí. Implementamos chatbot para empresas y flujos de chatbot de WhatsApp en Chile que responden preguntas frecuentes, capturan datos y derivan cada consulta al área correcta antes de pasar a una persona.",
       },
       {
         question: "¿Se puede integrar con formularios web?",
@@ -363,7 +368,7 @@ export const priorityServicePages: PriorityServicePage[] = [
       "Servicio de soporte TI para pymes en Santiago: continuidad operativa, asistencia técnica, configuración de equipos y acompañamiento preventivo.",
     heroTitle: "Soporte TI para pymes en Santiago con foco en continuidad",
     heroDescription:
-      "Entregamos soporte técnico para pymes que necesitan mantener su operación estable, resolver incidentes con rapidez y prevenir caídas que impactan ventas y productividad.",
+      "Entregamos soporte TI y soporte informático para pymes en Santiago y el resto de Chile: soporte técnico remoto, mantención computacional, correo corporativo y hosting para mantener tu operación estable, resolver incidentes con rapidez y prevenir caídas que impactan ventas y productividad.",
     context: [
       "Una pyme no siempre tiene equipo TI interno, pero sí necesita estabilidad diaria para trabajar. Nuestro servicio cubre soporte operativo y acciones preventivas para reducir interrupciones.",
       "Trabajamos con enfoque práctico: diagnóstico rápido, resolución ordenada y recomendaciones concretas para fortalecer continuidad. Si el problema escala, definimos plan de acción por prioridad.",
@@ -378,7 +383,9 @@ export const priorityServicePages: PriorityServicePage[] = [
     ],
     includes: [
       "Evaluación inicial de situación técnica actual.",
-      "Soporte para incidentes de operación y configuración.",
+      "Soporte técnico remoto para incidentes de operación y configuración.",
+      "Configuración de correo corporativo, hosting y dominios.",
+      "Mantención computacional y servicio técnico computacional para empresas.",
       "Asistencia en equipos, redes y herramientas clave.",
       "Recomendaciones preventivas para evitar fallas repetidas.",
       "Coordinación de mejoras según prioridad y presupuesto.",
