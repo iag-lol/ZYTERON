@@ -3,7 +3,13 @@ import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getDbBlogPost } from "@/lib/content/blog-merge";
 import { DbBlogArticle } from "@/components/blog/db-blog-article";
-import { buildArticleJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import type { DbBlogPost } from "@/lib/admin/blog-cases-repository";
+import {
+  buildArticleJsonLd,
+  buildWebPageJsonLd,
+  createPageMetadata,
+  isLikelySocialImagePath,
+} from "@/lib/seo";
 
 type BlogDetailProps = {
   params: Promise<{
@@ -13,6 +19,17 @@ type BlogDetailProps = {
 
 // Solo contenido publicado desde Supabase, siempre fresco.
 export const dynamic = "force-dynamic";
+
+/**
+ * Imagen para compartir del artículo: usa og/portada sólo si son URLs de
+ * imagen válidas; si el campo trae texto basura o está vacío, cae a la imagen
+ * OG dinámica del propio artículo (siempre resuelve con 200).
+ */
+function resolveArticleSocialImage(post: DbBlogPost): string {
+  if (isLikelySocialImagePath(post.ogImageUrl)) return post.ogImageUrl as string;
+  if (isLikelySocialImagePath(post.coverImageUrl)) return post.coverImageUrl as string;
+  return `/blog/${post.slug}/opengraph-image`;
+}
 
 export async function generateMetadata({ params }: BlogDetailProps): Promise<Metadata> {
   const { slug } = await params;
@@ -31,7 +48,7 @@ export async function generateMetadata({ params }: BlogDetailProps): Promise<Met
     title: post.metaTitle || post.title,
     description: post.metaDescription || post.excerpt || "",
     path: `/blog/${post.slug}`,
-    ogImagePath: post.ogImageUrl || post.coverImageUrl || undefined,
+    ogImagePath: resolveArticleSocialImage(post),
     ogImageAlt: post.coverImageAlt || `${post.title} | Zyteron`,
   });
 }
@@ -69,7 +86,7 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
           description: post.excerpt || post.metaDescription || "",
           datePublished: post.publishedAt ?? post.createdAt ?? new Date().toISOString(),
           dateModified: post.updatedAt ?? undefined,
-          image: post.ogImageUrl || post.coverImageUrl || `/blog/${post.slug}/opengraph-image`,
+          image: resolveArticleSocialImage(post),
           authorName: post.author ?? "Zyteron",
         })}
       />

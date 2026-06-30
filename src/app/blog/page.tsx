@@ -4,7 +4,7 @@ import { ArrowRight, Clock3, Tag } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
-import { getBlogListItems } from "@/lib/content/blog-merge";
+import { getBlogListItems, pickRecommendedFromPublished } from "@/lib/content/blog-merge";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
@@ -28,35 +28,10 @@ const categories = [
   "Consejos para empresas",
 ];
 
-const suggestedArticles = [
-  {
-    title: "¿Cuánto cuesta una página web para empresa en Chile en 2026?",
-    href: "/blog/cuanto-cuesta-pagina-web-empresa-chile",
-  },
-  {
-    title: "¿Qué debe tener una web profesional para vender?",
-    href: "/blog/que-debe-tener-pagina-web-profesional-pyme",
-  },
-  {
-    title: "Página web vs sistema web: diferencias",
-    href: "/blog/diferencia-pagina-web-tienda-online-sistema-web",
-  },
-  {
-    title: "Automatización de WhatsApp para empresas",
-    href: "/blog/automatizacion-whatsapp-empresas-casos-reales-chile",
-  },
-  {
-    title: "Qué es un sistema web a medida",
-    href: "/blog/que-es-sistema-web-a-medida",
-  },
-  {
-    title: "Errores al contratar desarrollo web en Chile",
-    href: "/blog/errores-criticos-contratar-desarrollo-web-chile",
-  },
-];
-
 export default async function BlogPage() {
   const posts = await getBlogListItems();
+  // Recomendados dinámicos: sólo artículos realmente publicados (nunca un 404).
+  const suggestedArticles = pickRecommendedFromPublished(posts);
 
   return (
     <main className="bg-white">
@@ -132,24 +107,26 @@ export default async function BlogPage() {
             </div>
           )}
 
-          <section className="card-premium p-6">
-            <h2 className="text-2xl font-extrabold text-slate-900">Rutas de aprendizaje recomendadas</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Temas clave para empresas y pymes que quieren cotizar, mejorar o planificar su presencia digital.
-            </p>
-            <div className="mt-4 grid gap-2 md:grid-cols-2">
-              {suggestedArticles.map((article) => (
-                <Link
-                  key={article.href}
-                  href={article.href}
-                  className="flex items-start gap-2 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm text-slate-700 transition-colors hover:border-blue-200 hover:bg-white"
-                >
-                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" />
-                  <span>{article.title}</span>
-                </Link>
-              ))}
-            </div>
-          </section>
+          {suggestedArticles.length > 0 ? (
+            <section className="card-premium p-6">
+              <h2 className="text-2xl font-extrabold text-slate-900">Rutas de aprendizaje recomendadas</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Temas clave para empresas y pymes que quieren cotizar, mejorar o planificar su presencia digital.
+              </p>
+              <div className="mt-4 grid gap-2 md:grid-cols-2">
+                {suggestedArticles.map((article) => (
+                  <Link
+                    key={article.slug}
+                    href={`/blog/${article.slug}`}
+                    className="flex items-start gap-2 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm text-slate-700 transition-colors hover:border-blue-200 hover:bg-white"
+                  >
+                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" />
+                    <span>{article.title}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           <div className="flex flex-wrap gap-3">
             <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">

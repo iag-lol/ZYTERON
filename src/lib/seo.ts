@@ -107,6 +107,40 @@ export function buildPrimaryOgImageUrl() {
   return getAbsoluteOgImageUrl("/");
 }
 
+const IMAGE_EXTENSION_RE = /\.(png|jpe?g|webp|gif|avif|svg)$/i;
+
+/**
+ * Valida que un valor sea una URL/ruta de imagen usable para og:image y
+ * twitter:image. Rechaza el texto de ayuda del CMS guardado por error en el
+ * campo (frases con espacios y sin extensión de imagen) que de otro modo se
+ * emitiría como og:image roto y rompería la miniatura al compartir.
+ */
+export function isLikelySocialImagePath(value: string | null | undefined): boolean {
+  if (typeof value !== "string") return false;
+  const candidate = value.trim();
+  if (!candidate) return false;
+  // El texto de ayuda del editor trae espacios/saltos: nunca es una URL válida.
+  if (/\s/.test(candidate)) return false;
+
+  // Ruta interna de Next que genera una imagen dinámica (opengraph-image).
+  if (candidate.endsWith("/opengraph-image")) return true;
+
+  let pathname: string;
+  if (/^https?:\/\//i.test(candidate)) {
+    try {
+      pathname = new URL(candidate).pathname;
+    } catch {
+      return false;
+    }
+  } else if (candidate.startsWith("/")) {
+    pathname = candidate.split(/[?#]/)[0] ?? "";
+  } else {
+    return false;
+  }
+
+  return IMAGE_EXTENSION_RE.test(pathname);
+}
+
 export function createPageMetadata({
   title: rawTitle,
   description,
@@ -117,7 +151,12 @@ export function createPageMetadata({
   noIndex = false,
 }: SeoMetadataInput): Metadata {
   const url = buildAbsoluteUrl(path);
-  const socialImage = ogImagePath ? buildAbsoluteUrl(ogImagePath) : getAbsoluteOgImageUrl(path);
+  // Sólo se confía en ogImagePath si es realmente una imagen; si viene vacío o
+  // con texto basura (ej. instructivo del CMS) se usa el OG por defecto válido.
+  const socialImage =
+    ogImagePath && isLikelySocialImagePath(ogImagePath)
+      ? buildAbsoluteUrl(ogImagePath)
+      : getAbsoluteOgImageUrl(path);
   const title = formatMetadataTitle(rawTitle);
 
   return {
@@ -422,7 +461,10 @@ export function buildArticleJsonLd({
     description,
     inLanguage: siteConfig.locale,
     url: pageUrl,
-    image: image ? [buildAbsoluteUrl(image)] : [buildPrimaryOgImageUrl()],
+    image:
+      image && isLikelySocialImagePath(image)
+        ? [buildAbsoluteUrl(image)]
+        : [buildPrimaryOgImageUrl()],
     datePublished,
     dateModified: dateModified ?? datePublished,
     author: {
