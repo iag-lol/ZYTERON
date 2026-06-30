@@ -37,7 +37,7 @@ export default async function BasesPage() {
             Última actualización: {campaign ? new Date(campaign.updated_at).toLocaleDateString('es-CL') : 'No disponible'}
           </p>
           <div className="mt-4 flex gap-4">
-            <button className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={() => {/* En el frontend real usar window.print() pero acá en server component podemos usar un helper client side, o dejar un script tag simple */}}>
+            <button className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 print-bases-btn">
               Imprimir Bases
             </button>
           </div>
@@ -69,7 +69,7 @@ export default async function BasesPage() {
         </div>
       </Container>
       <script dangerouslySetInnerHTML={{ __html: `
-        document.querySelector('button')?.addEventListener('click', function() {
+        document.querySelector('.print-bases-btn')?.addEventListener('click', function() {
           window.print();
         });
       `}} />
