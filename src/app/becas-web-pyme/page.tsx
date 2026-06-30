@@ -11,17 +11,22 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 async function getActiveCampaign() {
-  const supabase = getBecasSupabaseClient();
-  const { data, error } = await supabase
-    .from("scholarship_campaigns")
-    .select("*")
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
+  try {
+    const supabase = getBecasSupabaseClient();
+    const { data, error } = await supabase
+      .from("scholarship_campaigns")
+      .select("*")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
 
-  if (error || !data) return null;
-  return data;
+    if (error || !data) return null;
+    return data;
+  } catch (error) {
+    console.warn("No se pudo conectar a Supabase para obtener la campaña", error);
+    return null;
+  }
 }
 
 export default async function BecasWebPymePage() {
@@ -75,7 +80,7 @@ export default async function BecasWebPymePage() {
               <h3 className="mb-6 text-xl font-bold text-blue-900">El beneficio incluye</h3>
               <ul className="space-y-3 text-slate-700">
                 {(campaign?.included_items || [
-                  "Landing page profesional de hasta 6 secciones.",
+                  "Landing page profesional de hasta 3 secciones.",
                   "Diseño responsive para computador y celular.",
                   "Mini panel administrativo para editar productos, servicios o precios.",
                   "Carga inicial de hasta 20 productos o servicios.",

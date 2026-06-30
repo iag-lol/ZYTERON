@@ -32,6 +32,7 @@ import {
   Calculator,
   Newspaper,
   Trophy,
+  Award,
 } from "lucide-react";
 
 interface NavItem {
@@ -99,6 +100,12 @@ const navGroups: NavGroup[] = [
     items: [
       { href: "/admin/blog", label: "Blog", icon: Newspaper, color: "orange" },
       { href: "/admin/casos", label: "Casos de éxito", icon: Trophy, color: "amber" },
+    ],
+  },
+  {
+    label: "Programas Sociales",
+    items: [
+      { href: "/admin/becas", label: "Becas Web Pyme", icon: Award, color: "blue" },
     ],
   },
   {

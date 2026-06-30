@@ -11,14 +11,22 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function BasesPage() {
-  const supabase = getBecasSupabaseClient();
-  
-  const { data: campaign } = await supabase
-    .from("scholarship_campaigns")
-    .select("*")
-    .eq("status", "active")
-    .limit(1)
-    .single();
+  let campaign = null;
+
+  try {
+    const supabase = getBecasSupabaseClient();
+    
+    const { data } = await supabase
+      .from("scholarship_campaigns")
+      .select("*")
+      .eq("status", "active")
+      .limit(1)
+      .single();
+      
+    campaign = data;
+  } catch (error) {
+    console.warn("No se pudo conectar a Supabase para obtener las bases", error);
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 py-20">
