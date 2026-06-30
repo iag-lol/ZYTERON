@@ -16,9 +16,9 @@ export default async function AdminCampanasPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Campañas de Becas</h1>
-        <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
+        <Link href="/admin/becas/campanas/nueva" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
           Nueva Campaña
-        </button>
+        </Link>
       </div>
 
       <div className="rounded-xl border bg-white shadow-sm">
@@ -44,7 +44,7 @@ export default async function AdminCampanasPage() {
                 </td>
                 <td className="px-6 py-4">{c.benefits_quantity}</td>
                 <td className="px-6 py-4">
-                  <button className="text-blue-600 hover:underline">Editar</button>
+                  <Link href={`/admin/becas/campanas/${c.id}`} className="text-blue-600 hover:underline">Editar</Link>
                 </td>
               </tr>
             ))}
