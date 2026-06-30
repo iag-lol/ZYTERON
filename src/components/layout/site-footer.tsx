@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Container } from "./container";
-import { Mail, MapPin, Phone, Linkedin, Instagram } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { siteConfig } from "@/config/site";
 
@@ -182,7 +182,21 @@ export function SiteFooter() {
                 className="flex items-center justify-center rounded-full bg-white/5 p-2 text-slate-400 transition-all hover:bg-[#0a66c2] hover:text-white"
                 aria-label="LinkedIn"
               >
-                <Linkedin className="h-5 w-5" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+                  <rect width="4" height="12" x="2" y="9" />
+                  <circle cx="4" cy="4" r="2" />
+                </svg>
               </a>
               <a
                 href="https://www.instagram.com/zyteron.cl/"
@@ -191,7 +205,21 @@ export function SiteFooter() {
                 className="flex items-center justify-center rounded-full bg-white/5 p-2 text-slate-400 transition-all hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] hover:text-white"
                 aria-label="Instagram"
               >
-                <Instagram className="h-5 w-5" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                  <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                </svg>
               </a>
             </div>
           </div>
