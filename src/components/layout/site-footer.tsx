@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Container } from "./container";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { Mail, MapPin, Phone, Linkedin, Instagram } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { siteConfig } from "@/config/site";
 
@@ -127,14 +127,7 @@ export function SiteFooter() {
               <Phone className="h-4 w-4" />
               Atención comercial: Lun-Vie 09:00 a 18:00
             </div>
-            <a
-              href="https://www.linkedin.com/company/zyteron"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-slate-300 transition-colors hover:text-white"
-            >
-              LinkedIn ZYTERON
-            </a>
+
           </div>
         </div>
 
@@ -167,15 +160,40 @@ export function SiteFooter() {
       </Container>
 
       <div className="border-y border-white/[0.07] bg-slate-900/60">
-        <Container className="py-5">
-          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">Identidad comercial</p>
-          <div className="grid gap-2 text-xs text-slate-300 md:grid-cols-2">
-            <p>Nombre comercial: ZYTERON</p>
-            <p>Razón social: ZYTERON SpA</p>
-            <p>RUT: 78.398.774-0</p>
-            <p>Giro: Servicios informáticos, desarrollo web, soporte TI y soluciones digitales</p>
-            <p>Ubicación: Santiago, Chile</p>
-            <p>Atención: Empresas, pymes y emprendedores</p>
+        <Container className="flex flex-col gap-6 py-5 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">Identidad comercial</p>
+            <div className="grid gap-2 text-xs text-slate-300 md:grid-cols-2">
+              <p>Nombre comercial: ZYTERON</p>
+              <p>Razón social: ZYTERON SpA</p>
+              <p>RUT: 78.398.774-0</p>
+              <p>Giro: Servicios informáticos, desarrollo web, soporte TI y soluciones digitales</p>
+              <p>Ubicación: Santiago, Chile</p>
+              <p>Atención: Empresas, pymes y emprendedores</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Síguenos</p>
+            <div className="flex gap-4">
+              <a
+                href="https://www.linkedin.com/company/zyteron-spa/?viewAsMember=true"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center rounded-full bg-white/5 p-2 text-slate-400 transition-all hover:bg-[#0a66c2] hover:text-white"
+                aria-label="LinkedIn"
+              >
+                <Linkedin className="h-5 w-5" />
+              </a>
+              <a
+                href="https://www.instagram.com/zyteron.cl/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center rounded-full bg-white/5 p-2 text-slate-400 transition-all hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] hover:text-white"
+                aria-label="Instagram"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+            </div>
           </div>
         </Container>
       </div>
