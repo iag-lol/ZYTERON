@@ -7,10 +7,18 @@ import { ApplicationForm } from "./application-form";
 interface ApplicationModalProps {
   campaignId: string;
   officialInstagram: string;
+  termsVersion?: string;
+  privacyVersion?: string;
   variant?: "default" | "large";
 }
 
-export function ApplicationModal({ campaignId, officialInstagram, variant = "default" }: ApplicationModalProps) {
+export function ApplicationModal({
+  campaignId,
+  officialInstagram,
+  termsVersion = "v1.0",
+  privacyVersion = "v1.0",
+  variant = "default",
+}: ApplicationModalProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -36,6 +44,8 @@ export function ApplicationModal({ campaignId, officialInstagram, variant = "def
         <ApplicationForm 
           campaignId={campaignId} 
           officialInstagram={officialInstagram} 
+          termsVersion={termsVersion}
+          privacyVersion={privacyVersion}
           onSuccess={() => {
             // Optional: Handle close or success logic
           }} 

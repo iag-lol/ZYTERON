@@ -49,7 +49,12 @@ export default async function BecasWebPymePage() {
 
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             {campaign ? (
-              <ApplicationModal campaignId={campaign.id} officialInstagram={campaign.official_instagram_handle} />
+              <ApplicationModal 
+                campaignId={campaign.id} 
+                officialInstagram={campaign.official_instagram_handle} 
+                termsVersion={campaign.terms_version || "v1.0"}
+                privacyVersion={campaign.privacy_version || "v1.0"}
+              />
             ) : (
               <button disabled className="rounded-xl bg-slate-700 px-8 py-4 font-bold text-slate-400 opacity-50">
                 Postulaciones Cerradas
@@ -182,7 +187,13 @@ export default async function BecasWebPymePage() {
         <Container>
           <h2 className="mb-8 text-3xl font-bold sm:text-4xl">Tu negocio puede ser el próximo proyecto que mostremos con orgullo.</h2>
           {campaign ? (
-            <ApplicationModal campaignId={campaign.id} officialInstagram={campaign.official_instagram_handle} variant="large" />
+            <ApplicationModal 
+              campaignId={campaign.id} 
+              officialInstagram={campaign.official_instagram_handle} 
+              termsVersion={campaign.terms_version || "v1.0"}
+              privacyVersion={campaign.privacy_version || "v1.0"}
+              variant="large" 
+            />
           ) : null}
           <p className="mt-6 text-sm text-slate-400">Revisa las bases, condiciones y política de privacidad antes de enviar tu postulación.</p>
         </Container>

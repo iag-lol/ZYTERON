@@ -8,10 +8,12 @@ import { scholarshipApplicationSchema, ScholarshipApplication } from "@/lib/beca
 interface Props {
   campaignId: string;
   officialInstagram: string;
+  termsVersion?: string;
+  privacyVersion?: string;
   onSuccess: () => void;
 }
 
-export function ApplicationForm({ campaignId, officialInstagram, onSuccess }: Props) {
+export function ApplicationForm({ campaignId, officialInstagram, termsVersion = "v1.0", privacyVersion = "v1.0", onSuccess }: Props) {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successCode, setSuccessCode] = useState<string | null>(null);
@@ -332,54 +334,108 @@ export function ApplicationForm({ campaignId, officialInstagram, onSuccess }: Pr
 
       {/* Step 5: Consentimientos */}
       <div className={step === 5 ? 'block' : 'hidden'}>
-        <h3 className="mb-4 text-lg font-bold">Paso 5: Vitrina y Autorizaciones</h3>
+        <h3 className="mb-4 text-lg font-bold">Paso 5: Consentimientos y Autorizaciones</h3>
+        <p className="mb-4 text-xs text-slate-500">
+          Por favor revisa y marca cada uno de los consentimientos obligatorios y las opciones voluntarias. Todos están sin marcar por defecto.
+        </p>
         <div className="space-y-6">
-          <div className="space-y-3">
-            <h4 className="font-semibold">Consentimientos Obligatorios</h4>
-            <label className="flex items-start gap-3">
-              <input type="checkbox" {...register("termsAccepted")} className="mt-1" />
-              <span className="text-sm">He leído y acepto las Bases de Becas Web Pyme Zyteron.</span>
-            </label>
-            <label className="flex items-start gap-3">
-              <input type="checkbox" {...register("privacyAccepted")} className="mt-1" />
-              <span className="text-sm">He leído y acepto la Política de Privacidad para el tratamiento de mis datos.</span>
-            </label>
-            <label className="flex items-start gap-3">
-              <input type="checkbox" {...register("truthfulnessConfirmed")} className="mt-1" />
-              <span className="text-sm">Declaro que la información entregada es verdadera y actualizada.</span>
-            </label>
-            <label className="flex items-start gap-3">
-              <input type="checkbox" {...register("winnerCaseStudyAcknowledged")} className="mt-1" />
-              <span className="text-sm">Entiendo que si soy seleccionado, deberé firmar un acuerdo de caso de éxito.</span>
-            </label>
-          </div>
-
-          <div className="space-y-3 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
-            <h4 className="font-semibold text-blue-900">Vitrina Pública (Opcional)</h4>
-            <label className="flex items-start gap-3">
-              <input type="checkbox" {...register("publicGalleryConsent")} className="mt-1" />
-              <span className="text-sm text-blue-800">Autorizo a publicar mi negocio en la Vitrina Pública de Postulantes.</span>
-            </label>
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h4 className="font-bold text-slate-900 text-sm border-b pb-2">Consentimientos Obligatorios</h4>
             
-            {publicGalleryConsent && (
-              <div className="ml-6 space-y-3">
-                <label className="block text-sm">
-                  Presentación pública breve (máx 160 caracteres):
-                  <textarea {...register("publicDescription")} className="mt-1 w-full rounded-md border p-2" rows={2} />
-                  {errors.publicDescription && <p className="text-xs text-red-500">{errors.publicDescription.message}</p>}
-                </label>
-                <label className="flex items-start gap-2">
-                  <input type="checkbox" {...register("publicInstagramConsent")} className="mt-1" />
-                  <span className="text-sm">Mostrar mi Instagram públicamente.</span>
-                </label>
-              </div>
-            )}
+            <label className="flex items-start gap-3 pt-1 cursor-pointer">
+              <input type="checkbox" {...register("termsAccepted")} className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+              <span className="text-xs text-slate-700 leading-relaxed font-medium">
+                1. Aceptación de bases: &ldquo;He leído y acepto las Bases Oficiales de Becas Web Pyme Zyteron, versión {termsVersion}.&rdquo;
+              </span>
+            </label>
+            {errors.termsAccepted && <p className="text-[11px] text-red-500 ml-7">{errors.termsAccepted.message}</p>}
+
+            <label className="flex items-start gap-3 pt-1 cursor-pointer">
+              <input type="checkbox" {...register("privacyAccepted")} className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+              <span className="text-xs text-slate-700 leading-relaxed font-medium">
+                2. Aceptación de privacidad: &ldquo;He leído y acepto la Política de Privacidad de Becas Web Pyme Zyteron, versión {privacyVersion}, para gestionar mi postulación.&rdquo;
+              </span>
+            </label>
+            {errors.privacyAccepted && <p className="text-[11px] text-red-500 ml-7">{errors.privacyAccepted.message}</p>}
+
+            <label className="flex items-start gap-3 pt-1 cursor-pointer">
+              <input type="checkbox" {...register("truthfulnessConfirmed")} className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+              <span className="text-xs text-slate-700 leading-relaxed font-medium">
+                3. Veracidad: &ldquo;Declaro que la información entregada es verdadera, actualizada y que tengo autorización para postular este negocio.&rdquo;
+              </span>
+            </label>
+            {errors.truthfulnessConfirmed && <p className="text-[11px] text-red-500 ml-7">{errors.truthfulnessConfirmed.message}</p>}
+
+            <label className="flex items-start gap-3 pt-1 cursor-pointer">
+              <input type="checkbox" {...register("logoRightsConfirmed")} className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+              <span className="text-xs text-slate-700 leading-relaxed font-medium">
+                4. Derechos sobre imagen: &ldquo;Declaro que soy titular o cuento con autorización para utilizar el logo o imagen que estoy subiendo.&rdquo;
+              </span>
+            </label>
+            {errors.logoRightsConfirmed && <p className="text-[11px] text-red-500 ml-7">{errors.logoRightsConfirmed.message}</p>}
+
+            <label className="flex items-start gap-3 pt-1 cursor-pointer">
+              <input type="checkbox" {...register("followsOfficialInstagramDeclared")} className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+              <span className="text-xs text-slate-700 leading-relaxed font-medium">
+                5. Requisito de Instagram: &ldquo;Confirmo que sigo la cuenta oficial @{officialInstagram} en Instagram y entiendo que este requisito podrá ser verificado antes de confirmar el beneficio.&rdquo;
+              </span>
+            </label>
+            {errors.followsOfficialInstagramDeclared && <p className="text-[11px] text-red-500 ml-7">{errors.followsOfficialInstagramDeclared.message}</p>}
+
+            <label className="flex items-start gap-3 pt-1 cursor-pointer">
+              <input type="checkbox" {...register("winnerCaseStudyAcknowledged")} className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+              <span className="text-xs text-slate-700 leading-relaxed font-medium">
+                6. Caso de éxito: &ldquo;Entiendo y acepto que en caso de ser seleccionado, deberé firmar un acuerdo de autorización de caso de éxito para el inicio del proyecto.&rdquo;
+              </span>
+            </label>
+            {errors.winnerCaseStudyAcknowledged && <p className="text-[11px] text-red-500 ml-7">{errors.winnerCaseStudyAcknowledged.message}</p>}
           </div>
 
-          <label className="flex items-start gap-3">
-            <input type="checkbox" {...register("marketingConsent")} className="mt-1" />
-            <span className="text-sm">Autorizo a Zyteron a contactarme con información, diagnósticos o promociones.</span>
-          </label>
+          <div className="space-y-4 rounded-xl border border-blue-200 bg-blue-50/60 p-4 shadow-sm">
+            <h4 className="font-bold text-blue-950 text-sm border-b border-blue-200 pb-2 flex items-center justify-between">
+              <span>🌟 Autorizaciones Opcionales (No afectan tu selección)</span>
+            </h4>
+            
+            <div className="space-y-3">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" {...register("publicGalleryConsent")} className="mt-1 h-4 w-4 rounded border-blue-300 text-blue-600 focus:ring-blue-500" />
+                <span className="text-xs text-blue-900 leading-relaxed font-medium">
+                  7. Vitrina: &ldquo;Autorizo voluntariamente a Zyteron a publicar información básica de mi negocio en la Vitrina de Pymes y Empresas Postulantes.&rdquo;
+                </span>
+              </label>
+              
+              {publicGalleryConsent && (
+                <div className="ml-7 space-y-3 rounded-lg bg-white p-3 border border-blue-100">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Descripción pública de máximo 160 caracteres:
+                    </label>
+                    <textarea 
+                      {...register("publicDescription")} 
+                      maxLength={160}
+                      placeholder="Breve presentación de lo que hace tu negocio..."
+                      className="w-full rounded-md border p-2 text-xs" 
+                      rows={2} 
+                    />
+                    {errors.publicDescription && <p className="text-[11px] text-red-500 mt-1">{errors.publicDescription.message}</p>}
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" {...register("publicInstagramConsent")} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                    <span className="text-xs font-medium text-slate-700">Permitir mostrar mi Instagram públicamente en la Vitrina.</span>
+                  </label>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2 border-t border-blue-200">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" {...register("marketingConsent")} className="mt-1 h-4 w-4 rounded border-blue-300 text-blue-600 focus:ring-blue-500" />
+                <span className="text-xs text-blue-900 leading-relaxed font-medium">
+                  8. Marketing: &ldquo;Autorizo a Zyteron a contactarme por correo o WhatsApp con información, diagnósticos, servicios, promociones y futuras Becas Web Pyme.&rdquo;
+                </span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 

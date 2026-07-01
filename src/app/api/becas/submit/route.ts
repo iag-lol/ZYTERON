@@ -160,7 +160,10 @@ export async function POST(req: Request) {
         privacy_accepted_at: new Date().toISOString(),
         
         truthfulness_confirmed: data.truthfulnessConfirmed,
+        truthfulness_confirmed_at: data.truthfulnessConfirmed ? new Date().toISOString() : null,
         winner_case_study_acknowledged: data.winnerCaseStudyAcknowledged,
+        logo_rights_confirmed_at: data.logoRightsConfirmed ? new Date().toISOString() : null,
+        instagram_confirmed_at: data.followsOfficialInstagramDeclared ? new Date().toISOString() : null,
         
         public_gallery_consent: data.publicGalleryConsent,
         public_gallery_consent_at: data.publicGalleryConsent ? new Date().toISOString() : null,
@@ -180,13 +183,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No se pudo guardar la postulación" }, { status: 500 });
     }
 
-    // 6. Record Audit Log
+    // 6. Record Audit Log with hashed IP
+    const ipRaw = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+    const ipHash = crypto.createHash('sha256').update(ipRaw).digest('hex');
+
     await supabase.from("scholarship_audit_logs").insert({
       action_type: "application_submitted",
       entity_type: "scholarship_applications",
       entity_id: application.id,
       campaign_id: data.campaignId,
-      metadata: { application_code: applicationCode }
+      metadata: { application_code: applicationCode, ip_hash: ipHash, terms_version: campaign.terms_version, privacy_version: campaign.privacy_version }
     });
 
     // 7. If public gallery consent is true, insert pending profile

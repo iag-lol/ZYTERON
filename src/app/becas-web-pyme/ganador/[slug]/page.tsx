@@ -4,10 +4,36 @@ import { getBecasSupabaseClient } from "@/lib/becas/supabase-client";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 
-export const metadata: Metadata = {
-  title: "Ganador | Becas Web Pyme Zyteron",
-  description: "Conoce a la Pyme ganadora de la Beca Web Zyteron.",
-};
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const supabase = getBecasSupabaseClient();
+  const { data: campaign } = await supabase
+    .from("scholarship_campaigns")
+    .select("id, title")
+    .eq("slug", params.slug)
+    .maybeSingle();
+
+  if (!campaign) {
+    return { title: "No encontrado | Becas Web Pyme" };
+  }
+
+  const { data: winner } = await supabase
+    .from("scholarship_winners")
+    .select("winner_published_at")
+    .eq("campaign_id", campaign.id)
+    .not("winner_published_at", "is", null)
+    .maybeSingle();
+
+  const isPublished = !!winner?.winner_published_at;
+
+  return {
+    title: `Ganador: ${campaign.title} | Becas Web Pyme Zyteron`,
+    description: "Conoce al emprendimiento seleccionado para la Beca Web Pyme de Zyteron.",
+    robots: {
+      index: isPublished,
+      follow: true,
+    },
+  };
+}
 
 export const dynamic = "force-dynamic";
 
