@@ -34,7 +34,6 @@ export async function saveCampaign(formData: FormData) {
     delivery_deadline_description: formData.get("delivery_deadline_description")?.toString() || null,
     official_instagram_handle: formData.get("official_instagram_handle")?.toString() || null,
     organizer_legal_name: formData.get("organizer_legal_name")?.toString() || null,
-    organizer_trade_name: formData.get("organizer_trade_name")?.toString() || null,
     organizer_rut: formData.get("organizer_rut")?.toString() || null,
     organizer_address: formData.get("organizer_address")?.toString() || null,
     organizer_contact_email: formData.get("organizer_contact_email")?.toString() || null,
@@ -43,10 +42,6 @@ export async function saveCampaign(formData: FormData) {
     benefit_description: formData.get("benefit_description")?.toString() || null,
     benefit_value_clp: parseInt(formData.get("benefit_value_clp")?.toString() || "0"),
     benefits_quantity: parseInt(formData.get("benefits_quantity")?.toString() || "1"),
-    winner_response_days: parseInt(formData.get("winner_response_days")?.toString() || "5"),
-    estimated_implementation_time: formData.get("estimated_implementation_time")?.toString() || null,
-    intellectual_property_policy: formData.get("intellectual_property_policy")?.toString() || null,
-    withdrawal_procedure_policy: formData.get("withdrawal_procedure_policy")?.toString() || null,
     included_items: parseJSONField(formData.get("included_items")?.toString()),
     excluded_items: parseJSONField(formData.get("excluded_items")?.toString()),
     instagram_disclaimer: formData.get("instagram_disclaimer")?.toString() || null,
@@ -59,8 +54,7 @@ export async function saveCampaign(formData: FormData) {
       "title", "slug", "starts_at", "ends_at", "selection_starts_at",
       "announcement_at", "official_instagram_handle", "organizer_legal_name",
       "organizer_rut", "organizer_address", "organizer_contact_email",
-      "privacy_contact_email", "benefit_title", "estimated_implementation_time",
-      "intellectual_property_policy", "withdrawal_procedure_policy"
+      "privacy_contact_email", "benefit_title"
     ];
 
     for (const field of requiredTexts) {
@@ -89,13 +83,13 @@ export async function saveCampaign(formData: FormData) {
     if (id) {
       const { data: existingCamp } = await supabase
         .from("scholarship_campaigns")
-        .select("current_terms_version_id, current_privacy_version_id, current_gallery_terms_version_id, terms_content, privacy_content, public_gallery_terms_content")
+        .select("terms_version, privacy_version, terms_content, privacy_content, public_gallery_terms_content")
         .eq("id", id)
         .single();
 
-      const hasTerms = existingCamp?.current_terms_version_id || existingCamp?.terms_content;
-      const hasPrivacy = existingCamp?.current_privacy_version_id || existingCamp?.privacy_content;
-      const hasGallery = existingCamp?.current_gallery_terms_version_id || existingCamp?.public_gallery_terms_content;
+      const hasTerms = existingCamp?.terms_version || existingCamp?.terms_content;
+      const hasPrivacy = existingCamp?.privacy_version || existingCamp?.privacy_content;
+      const hasGallery = existingCamp?.public_gallery_terms_content;
 
       if (!hasTerms || !hasPrivacy || !hasGallery) {
         throw new Error("No se puede activar la campaña: Debe publicar primero las Bases Oficiales, Política de Privacidad y Condiciones de Vitrina en la pestaña Legal.");

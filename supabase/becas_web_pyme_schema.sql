@@ -6,23 +6,35 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 1. ENUMS
-CREATE TYPE scholarship_campaign_status AS ENUM (
-  'draft', 'scheduled', 'active', 'paused', 'closed', 
-  'reviewing', 'winner_pending_acceptance', 'winner_published', 'archived'
-);
+DO $$ BEGIN
+    CREATE TYPE scholarship_campaign_status AS ENUM (
+      'draft', 'scheduled', 'active', 'paused', 'closed', 
+      'reviewing', 'winner_pending_acceptance', 'winner_published', 'archived'
+    );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE scholarship_application_status AS ENUM (
-  'draft', 'submitted', 'reviewing', 'validated', 'observed', 
-  'rejected', 'withdrawn', 'selected', 'winner', 'not_selected'
-);
+DO $$ BEGIN
+    CREATE TYPE scholarship_application_status AS ENUM (
+      'draft', 'submitted', 'reviewing', 'validated', 'observed', 
+      'rejected', 'withdrawn', 'selected', 'winner', 'not_selected'
+    );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE scholarship_public_profile_status AS ENUM (
-  'hidden', 'pending_approval', 'published', 'removed'
-);
+DO $$ BEGIN
+    CREATE TYPE scholarship_public_profile_status AS ENUM (
+      'hidden', 'pending_approval', 'published', 'removed'
+    );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE scholarship_winner_acceptance_status AS ENUM (
-  'pending', 'accepted', 'declined', 'expired'
-);
+DO $$ BEGIN
+    CREATE TYPE scholarship_winner_acceptance_status AS ENUM (
+      'pending', 'accepted', 'declined', 'expired'
+    );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- 2. TABLES
 
@@ -161,10 +173,10 @@ CREATE TABLE IF NOT EXISTS scholarship_applications (
 );
 
 -- Indice único para evitar duplicados en la misma campaña
-CREATE UNIQUE INDEX idx_applications_campaign_email ON scholarship_applications(campaign_id, email_normalized);
-CREATE UNIQUE INDEX idx_applications_campaign_whatsapp ON scholarship_applications(campaign_id, whatsapp_normalized);
-CREATE UNIQUE INDEX idx_applications_campaign_instagram ON scholarship_applications(campaign_id, instagram_normalized);
-CREATE UNIQUE INDEX idx_applications_campaign_rut ON scholarship_applications(campaign_id, business_rut) WHERE business_rut IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_applications_campaign_email ON scholarship_applications(campaign_id, email_normalized);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_applications_campaign_whatsapp ON scholarship_applications(campaign_id, whatsapp_normalized);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_applications_campaign_instagram ON scholarship_applications(campaign_id, instagram_normalized);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_applications_campaign_rut ON scholarship_applications(campaign_id, business_rut) WHERE business_rut IS NOT NULL;
 
 -- Table: scholarship_public_profiles
 CREATE TABLE IF NOT EXISTS scholarship_public_profiles (
@@ -258,34 +270,45 @@ ALTER TABLE scholarship_audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- scholarship_campaigns
 -- Lectura pública para todas las campañas (necesario para ver landing y bases)
+DROP POLICY IF EXISTS "Campañas visibles para todos" ON scholarship_campaigns;
 CREATE POLICY "Campañas visibles para todos" ON scholarship_campaigns
   FOR SELECT USING (true);
 
 -- Administradores pueden gestionar todo (suponiendo service_role o verificación en backend)
+DROP POLICY IF EXISTS "Admins pueden gestionar campañas" ON scholarship_campaigns;
 CREATE POLICY "Admins pueden gestionar campañas" ON scholarship_campaigns
   FOR ALL USING (auth.role() = 'service_role' OR auth.role() = 'authenticated'); -- Idealmente filtrar por rol de admin
 
 -- scholarship_applications
 -- Sólo inserciones mediante API, sin lectura pública directa
+DROP POLICY IF EXISTS "No lectura pública de postulaciones" ON scholarship_applications;
 CREATE POLICY "No lectura pública de postulaciones" ON scholarship_applications
   FOR SELECT USING (auth.role() = 'service_role' OR auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Solo backend inserta postulaciones" ON scholarship_applications;
 CREATE POLICY "Solo backend inserta postulaciones" ON scholarship_applications
   FOR INSERT WITH CHECK (auth.role() = 'service_role' OR auth.role() = 'anon'); 
   -- Preferiblemente solo permitir inserción a través de Service Role en API Routes para máxima seguridad y anon si fuera un insert directo. Para API Route, usaremos client con service_role, así que podemos dejarlo cerrado y solo `service_role` puede insertar.
   
 -- scholarship_public_profiles
 -- Solo lectura pública de los que están 'published'
+DROP POLICY IF EXISTS "Perfiles publicados visibles" ON scholarship_public_profiles;
 CREATE POLICY "Perfiles publicados visibles" ON scholarship_public_profiles
   FOR SELECT USING (status = 'published');
 
+DROP POLICY IF EXISTS "Admins gestionan perfiles" ON scholarship_public_profiles;
 CREATE POLICY "Admins gestionan perfiles" ON scholarship_public_profiles
   FOR ALL USING (auth.role() = 'service_role' OR auth.role() = 'authenticated');
 
 -- scholarship_reviews, scholarship_winners, scholarship_audit_logs
 -- Todo restringido a admin / backend (service_role)
+DROP POLICY IF EXISTS "Acceso restringido para reviews" ON scholarship_reviews;
 CREATE POLICY "Acceso restringido para reviews" ON scholarship_reviews FOR ALL USING (auth.role() = 'service_role' OR auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Acceso restringido para winners" ON scholarship_winners;
 CREATE POLICY "Acceso restringido para winners" ON scholarship_winners FOR ALL USING (auth.role() = 'service_role' OR auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Acceso restringido para audit" ON scholarship_audit_logs;
 CREATE POLICY "Acceso restringido para audit" ON scholarship_audit_logs FOR ALL USING (auth.role() = 'service_role' OR auth.role() = 'authenticated');
 
 
@@ -300,6 +323,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Políticas de Storage
 -- Solo administradores y service_role pueden acceder al bucket entero de manera nativa.
+DROP POLICY IF EXISTS "Admins full access to becas assets" ON storage.objects;
 CREATE POLICY "Admins full access to becas assets" ON storage.objects
   FOR ALL USING (bucket_id = 'becas-web-pyme-assets' AND (auth.role() = 'service_role' OR auth.role() = 'authenticated'));
 
