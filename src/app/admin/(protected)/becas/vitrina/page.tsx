@@ -4,6 +4,7 @@ import { InstagramIcon } from "@/components/ui/instagram-icon";
 import { getBecasSupabaseClient } from "@/lib/becas/supabase-client";
 import { BecasHeader } from "../_components/becas-nav";
 import { ScholarshipStatusBadge } from "../_components/status-badge";
+import { VitrinaModerationActions } from "../_components/vitrina-moderation-actions";
 
 export const metadata: Metadata = {
   title: "Vitrina | Becas Web Pyme",
@@ -116,6 +117,11 @@ export default async function AdminVitrinaPage() {
                   <span>Publicado {dateFmt.format(new Date(profile.published_at))}</span>
                 ) : null}
               </div>
+
+              <VitrinaModerationActions
+                profileId={profile.id}
+                currentStatus={profile.status}
+              />
             </article>
           ))}
         </div>
