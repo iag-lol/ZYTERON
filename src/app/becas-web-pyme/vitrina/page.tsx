@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { MapPin, Store, Instagram, ArrowLeft, Sparkles } from "lucide-react";
+import { MapPin, Store, AtSign, ArrowLeft, Sparkles } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { getBecasSupabaseClient } from "@/lib/becas/supabase-client";
 
@@ -228,7 +228,7 @@ export default async function VitrinaPage() {
                             rel="noopener noreferrer"
                             className="flex items-center gap-1.5 text-xs font-semibold text-pink-400 transition-colors hover:text-pink-300"
                           >
-                            <Instagram className="h-3.5 w-3.5 shrink-0" />
+                            <AtSign className="h-3.5 w-3.5 shrink-0" />
                             @{igHandle}
                           </a>
                         )}
