@@ -260,7 +260,7 @@ export function ContactLeadForm() {
         ) : null}
 
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-          Respuesta dentro de horario laboral. No se inicia ningún trabajo sin definir alcance y condiciones.
+          Te respondemos dentro del horario laboral con una propuesta clara: sabrás exactamente qué incluye tu proyecto antes de comenzar.
         </div>
 
         <p className="text-center text-xs text-slate-400">

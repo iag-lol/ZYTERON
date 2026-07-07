@@ -1,12 +1,15 @@
 import { Metadata } from "next";
 import { Container } from "@/components/layout/container";
 import { getBecasSupabaseClient } from "@/lib/becas/supabase-client";
+import { createPageMetadata } from "@/lib/seo";
 import { ApplicationModal } from "./_components/application-modal";
 
-export const metadata: Metadata = {
-  title: "Becas Web Pyme Zyteron | Apoyo Digital para Negocios en Chile",
-  description: "En Zyteron apoyamos a emprendedores y empresas chilenas a dar el siguiente paso digital con una presencia web profesional.",
-};
+export const metadata: Metadata = createPageMetadata({
+  title: "Becas Web Pyme: apoyo digital para negocios en Chile",
+  description:
+    "Postula a las Becas Web Pyme de Zyteron: un programa de apoyo para que emprendedores y pymes en Chile accedan a una presencia web profesional.",
+  path: "/becas-web-pyme",
+});
 
 export const dynamic = "force-dynamic";
 

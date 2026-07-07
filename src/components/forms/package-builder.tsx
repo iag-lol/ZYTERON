@@ -753,13 +753,13 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
               </>
             ) : (
               <>
-                  Enviar al admin <Send className="h-4 w-4" />
+                  Enviar solicitud <Send className="h-4 w-4" />
                 </>
               )}
           </Button>
 
           <p className="text-center text-xs text-slate-500">
-            Cotización formal según requerimiento. No se inicia ningún trabajo sin definir alcance y condiciones.
+            Recibirás una cotización formal con alcance, entregables y condiciones claras para decidir con confianza.
           </p>
 
           {submitState.status === "success" ? (

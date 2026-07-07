@@ -7,7 +7,8 @@ import type { MetadataRoute } from "next";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteConfig.url;
-  const now = new Date();
+  // Sin lastModified en rutas estáticas: emitir new Date() en cada build le
+  // señala a Google cambios falsos y degrada la confianza en el sitemap.
   const staticRoutes = [
     { path: "", priority: 1, changeFrequency: "weekly" as const },
     { path: "/servicios", priority: 0.9, changeFrequency: "monthly" as const },
@@ -15,35 +16,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/contacto", priority: 0.8, changeFrequency: "monthly" as const },
     { path: "/cotizador", priority: 0.8, changeFrequency: "monthly" as const },
     { path: "/demos", priority: 0.6, changeFrequency: "monthly" as const },
-    { path: "/blog", priority: 0.8, changeFrequency: "monthly" as const },
+    { path: "/blog", priority: 0.8, changeFrequency: "weekly" as const },
     { path: "/casos-exito", priority: 0.6, changeFrequency: "monthly" as const },
     { path: "/faq", priority: 0.6, changeFrequency: "monthly" as const },
     { path: "/productos", priority: 0.6, changeFrequency: "monthly" as const },
     { path: "/quienes-somos", priority: 0.6, changeFrequency: "monthly" as const },
-  ].map(({ path, priority }) => ({
+    { path: "/becas-web-pyme", priority: 0.5, changeFrequency: "monthly" as const },
+  ].map(({ path, priority, changeFrequency }) => ({
     url: `${base}${path}`,
-    lastModified: now,
-    changeFrequency: path === "" ? ("weekly" as const) : ("monthly" as const),
+    changeFrequency,
     priority,
   }));
 
   const priorityServiceRoutes = priorityServicePages.map((servicePage) => ({
     url: `${base}${servicePage.path}`,
-    lastModified: now,
     changeFrequency: "monthly" as const,
     priority: 0.9,
   }));
 
   const seoServiceRoutes = seoServicePages.map((servicePage) => ({
     url: `${base}${servicePage.path}`,
-    lastModified: now,
     changeFrequency: "monthly" as const,
     priority: 0.9,
   }));
 
   const serviceRoutes = servicePages.map((service) => ({
     url: `${base}/servicios/${service.slug}`,
-    lastModified: now,
     changeFrequency: "monthly" as const,
     priority: 0.9,
   }));
