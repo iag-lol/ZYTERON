@@ -208,10 +208,14 @@ export default function LegalManager({
   campaign: any;
   versions: any[];
 }) {
+  // Buscamos la última versión de terms para el estado inicial
+  const initialTermsVersions = versions.filter((v) => v.document_type === "terms");
+  const latestTerms = initialTermsVersions.length > 0 ? initialTermsVersions[0] : null;
+
   const [docType, setDocType] = useState("terms");
-  const [title, setTitle] = useState("Bases Oficiales v1.0");
-  const [versionNumber, setVersionNumber] = useState("v1.0");
-  const [content, setContent] = useState(OFFICIAL_TERMS_TEMPLATE);
+  const [title, setTitle] = useState(latestTerms?.title || "Bases Oficiales v1.0");
+  const [versionNumber, setVersionNumber] = useState(latestTerms?.version_number || "v1.0");
+  const [content, setContent] = useState(latestTerms?.content_markdown || OFFICIAL_TERMS_TEMPLATE);
   const [updateSummary, setUpdateSummary] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -224,22 +228,33 @@ export default function LegalManager({
     setDocType(type);
     setError(null);
     setSuccess(null);
-    if (type === "terms") {
-      setTitle("Bases Oficiales v1.0");
-      setVersionNumber("v1.0");
-      setContent(OFFICIAL_TERMS_TEMPLATE);
-    } else if (type === "privacy") {
-      setTitle("Política de Privacidad y Vitrina v1.0");
-      setVersionNumber("v1.0");
-      setContent(OFFICIAL_PRIVACY_TEMPLATE);
-    } else if (type === "gallery_terms") {
-      setTitle("Condiciones de Vitrina v1.0");
-      setVersionNumber("v1.0");
-      setContent("Condiciones y reglas de publicación en la Vitrina Pública de Pymes...");
+    
+    // Auto-load latest version if exists
+    const typeVersions = versions.filter((v) => v.document_type === type);
+    const latestVersion = typeVersions.length > 0 ? typeVersions[0] : null;
+
+    if (latestVersion) {
+      setTitle(latestVersion.title);
+      setVersionNumber(latestVersion.version_number);
+      setContent(latestVersion.content_markdown);
     } else {
-      setTitle("Acuerdo del Ganador v1.0");
-      setVersionNumber("v1.0");
-      setContent("Términos y condiciones de entrega del proyecto y liberación de propiedad intelectual...");
+      if (type === "terms") {
+        setTitle("Bases Oficiales v1.0");
+        setVersionNumber("v1.0");
+        setContent(OFFICIAL_TERMS_TEMPLATE);
+      } else if (type === "privacy") {
+        setTitle("Política de Privacidad y Vitrina v1.0");
+        setVersionNumber("v1.0");
+        setContent(OFFICIAL_PRIVACY_TEMPLATE);
+      } else if (type === "gallery_terms") {
+        setTitle("Condiciones de Vitrina v1.0");
+        setVersionNumber("v1.0");
+        setContent("Condiciones y reglas de publicación en la Vitrina Pública de Pymes...");
+      } else {
+        setTitle("Acuerdo del Ganador v1.0");
+        setVersionNumber("v1.0");
+        setContent("Términos y condiciones de entrega del proyecto y liberación de propiedad intelectual...");
+      }
     }
   };
 
