@@ -37,6 +37,28 @@ function generateApplicationCode() {
   return `BWP-${year}-${randomStr.substring(0, 6)}`;
 }
 
+function buildSafeLogoFileName(fileName: string, mimeType: string) {
+  const cleanedBase = fileName
+    .replace(/\.[^.]+$/, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9-_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .toLowerCase();
+
+  const extensionFromName = fileName.split(".").pop()?.toLowerCase();
+  const extensionFromMime =
+    mimeType === "image/png" ? "png" :
+    mimeType === "image/webp" ? "webp" :
+    "jpg";
+  const extension = extensionFromName && ["jpg", "jpeg", "png", "webp"].includes(extensionFromName)
+    ? extensionFromName
+    : extensionFromMime;
+
+  return `${cleanedBase || "logo"}-${crypto.randomUUID()}.${extension}`;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -92,7 +114,8 @@ export async function POST(req: Request) {
 
     // 4. Move Logo from Temp to Final Path
     // The logo is currently at `campaigns/${campaignId}/temp/${fileName}`
-    const finalLogoPath = `campaigns/${data.campaignId}/applications/${crypto.randomUUID()}/${data.logoFileName}`;
+    const finalLogoFileName = buildSafeLogoFileName(data.logoFileName, data.logoMimeType);
+    const finalLogoPath = `campaigns/${data.campaignId}/applications/${crypto.randomUUID()}/${finalLogoFileName}`;
     
     const { error: moveError } = await supabase
       .storage

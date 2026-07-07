@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import type { FieldPath } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { scholarshipApplicationSchema, ScholarshipApplication } from "@/lib/becas/validation";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 interface Props {
   campaignId: string;
@@ -16,10 +18,11 @@ interface Props {
 export function ApplicationForm({ campaignId, officialInstagram, termsVersion = "v1.0", privacyVersion = "v1.0", onSuccess }: Props) {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [successCode, setSuccessCode] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const { register, handleSubmit, trigger, watch, setValue, formState: { errors } } = useForm<ScholarshipApplication>({
+  const { register, handleSubmit, trigger, watch, setValue, setError, clearErrors, formState: { errors } } = useForm<ScholarshipApplication>({
     resolver: zodResolver(scholarshipApplicationSchema),
     defaultValues: {
       campaignId,
@@ -40,9 +43,15 @@ export function ApplicationForm({ campaignId, officialInstagram, termsVersion = 
   const businessRutExists = watch("businessRutExists");
   const publicGalleryConsent = watch("publicGalleryConsent");
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const logoStoragePath = watch("logoStoragePath");
 
-  const nextStep = async (fieldsToValidate: any[]) => {
-    const isStepValid = await trigger(fieldsToValidate as any);
+  const nextStep = async (fieldsToValidate: FieldPath<ScholarshipApplication>[]) => {
+    if (step === 4 && isUploadingLogo) {
+      setErrorMsg("Espera a que termine la subida del logo antes de continuar.");
+      return;
+    }
+
+    const isStepValid = await trigger(fieldsToValidate);
     if (isStepValid) {
       setStep((prev) => prev + 1);
     }
@@ -54,8 +63,11 @@ export function ApplicationForm({ campaignId, officialInstagram, termsVersion = 
 
   const handleFileUpload = async (file: File) => {
     if (!file) return false;
-    
-    // Simulate getting a signed URL and uploading
+
+    setIsUploadingLogo(true);
+    setErrorMsg(null);
+    clearErrors(["logoStoragePath", "logoFileName", "logoMimeType", "logoSizeBytes"]);
+
     try {
       const res = await fetch("/api/becas/upload-logo", {
         method: "POST",
@@ -70,27 +82,43 @@ export function ApplicationForm({ campaignId, officialInstagram, termsVersion = 
 
       if (!res.ok) throw new Error("Error al preparar subida");
 
-      const { signedUrl, path } = await res.json();
-      
-      // Upload actual file to Supabase via signedUrl
-      const uploadRes = await fetch(signedUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type }
-      });
+      const { path, token } = (await res.json()) as { path?: string; token?: string };
 
-      if (!uploadRes.ok) throw new Error("Error al subir archivo");
+      if (!path || !token) {
+        throw new Error("Respuesta de subida incompleta");
+      }
 
-      setValue("logoStoragePath", path);
-      setValue("logoFileName", file.name);
-      setValue("logoMimeType", file.type);
-      setValue("logoSizeBytes", file.size);
+      const supabase = createSupabaseBrowserClient();
+      const { error: uploadError } = await supabase.storage
+        .from("becas-web-pyme-assets")
+        .uploadToSignedUrl(path, token, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type,
+        });
+
+      if (uploadError) throw uploadError;
+
+      setValue("logoStoragePath", path, { shouldValidate: true });
+      setValue("logoFileName", file.name, { shouldValidate: true });
+      setValue("logoMimeType", file.type, { shouldValidate: true });
+      setValue("logoSizeBytes", file.size, { shouldValidate: true });
       
       return true;
     } catch (err) {
       console.error(err);
+      setValue("logoStoragePath", "", { shouldValidate: true });
+      setValue("logoFileName", "", { shouldValidate: true });
+      setValue("logoMimeType", "", { shouldValidate: true });
+      setValue("logoSizeBytes", 0, { shouldValidate: true });
+      setError("logoStoragePath", {
+        type: "manual",
+        message: "No se pudo subir el logo. Intenta nuevamente con JPG, PNG o WEBP.",
+      });
       setErrorMsg("Error al subir el logo. Verifica el formato y tamaño.");
       return false;
+    } finally {
+      setIsUploadingLogo(false);
     }
   };
 
@@ -99,8 +127,17 @@ export function ApplicationForm({ campaignId, officialInstagram, termsVersion = 
     setErrorMsg(null);
 
     try {
-      // If logo changed, upload it first
-      if (logoFile) {
+      if (!logoStoragePath || !logoFile) {
+        setError("logoStoragePath", {
+          type: "manual",
+          message: "Debes subir un logo o imagen representativa antes de enviar.",
+        });
+        setErrorMsg("Debes subir el logo antes de enviar la postulación.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (logoStoragePath === "pending") {
         const uploadSuccess = await handleFileUpload(logoFile);
         if (!uploadSuccess) {
           setIsSubmitting(false);
@@ -109,7 +146,13 @@ export function ApplicationForm({ campaignId, officialInstagram, termsVersion = 
       }
 
       // We need to fetch the updated values since setValue doesn't instantly update the `data` passed to onSubmit
-      const finalData = { ...data, logoStoragePath: watch("logoStoragePath"), logoFileName: watch("logoFileName"), logoMimeType: watch("logoMimeType"), logoSizeBytes: watch("logoSizeBytes") };
+      const finalData = {
+        ...data,
+        logoStoragePath: watch("logoStoragePath"),
+        logoFileName: watch("logoFileName"),
+        logoMimeType: watch("logoMimeType"),
+        logoSizeBytes: watch("logoSizeBytes"),
+      };
 
       const res = await fetch("/api/becas/submit", {
         method: "POST",
@@ -123,6 +166,7 @@ export function ApplicationForm({ campaignId, officialInstagram, termsVersion = 
         setErrorMsg(resData.error || "Ocurrió un error al enviar tu postulación.");
       } else {
         setSuccessCode(resData.applicationCode);
+        onSuccess();
       }
     } catch (err) {
       console.error(err);
@@ -308,18 +352,27 @@ export function ApplicationForm({ campaignId, officialInstagram, termsVersion = 
           <input 
             type="file" 
             accept="image/jpeg,image/png,image/webp"
-            onChange={(e) => {
-              if (e.target.files && e.target.files.length > 0) {
-                setLogoFile(e.target.files[0]);
-                // Clear validation errors for logo since we will upload on submit
-                setValue("logoStoragePath", "pending");
-                setValue("logoFileName", e.target.files[0].name);
-                setValue("logoMimeType", e.target.files[0].type);
-                setValue("logoSizeBytes", e.target.files[0].size);
+            onChange={async (e) => {
+              const selectedFile = e.target.files?.[0];
+              if (selectedFile) {
+                setLogoFile(selectedFile);
+                setValue("logoStoragePath", "pending", { shouldValidate: true });
+                setValue("logoFileName", selectedFile.name, { shouldValidate: true });
+                setValue("logoMimeType", selectedFile.type, { shouldValidate: true });
+                setValue("logoSizeBytes", selectedFile.size, { shouldValidate: true });
+                await handleFileUpload(selectedFile);
               }
             }}
             className="w-full rounded-md border p-2" 
+            required
           />
+          <p className="text-xs text-slate-500">
+            {isUploadingLogo
+              ? "Subiendo logo..."
+              : logoStoragePath && logoStoragePath !== "pending"
+                ? "Logo subido correctamente."
+                : "La imagen del logo es obligatoria para completar la postulación."}
+          </p>
           {errors.logoStoragePath && <p className="text-xs text-red-500">{errors.logoStoragePath.message}</p>}
           
           <div className="flex items-start gap-2">
