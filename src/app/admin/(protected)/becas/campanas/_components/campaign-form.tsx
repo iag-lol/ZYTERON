@@ -108,20 +108,48 @@ export default function CampaignForm({ initialData = null }: { initialData?: any
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700">Nombre Legal Organizador</label>
+          <label className="block text-sm font-medium text-slate-700">Nombre Legal Organizador *</label>
           <input type="text" name="organizer_legal_name" defaultValue={initialData?.organizer_legal_name} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Instagram Oficial (sin @)</label>
+          <label className="block text-sm font-medium text-slate-700">RUT Organizador *</label>
+          <input type="text" name="organizer_rut" defaultValue={initialData?.organizer_rut} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+        </div>
+        <div className="col-span-1 md:col-span-2">
+          <label className="block text-sm font-medium text-slate-700">Dirección Organizador *</label>
+          <input type="text" name="organizer_address" defaultValue={initialData?.organizer_address} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700">Correo de Contacto *</label>
+          <input type="email" name="organizer_contact_email" defaultValue={initialData?.organizer_contact_email} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700">Correo de Privacidad *</label>
+          <input type="email" name="privacy_contact_email" defaultValue={initialData?.privacy_contact_email} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700">Instagram Oficial (sin @) *</label>
           <input type="text" name="official_instagram_handle" defaultValue={initialData?.official_instagram_handle} placeholder="zyteron.cl" className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Título del Beneficio</label>
+          <label className="block text-sm font-medium text-slate-700">Título del Beneficio *</label>
           <input type="text" name="benefit_title" defaultValue={initialData?.benefit_title} placeholder="1 Página Web Profesional" className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Valor Referencial (CLP)</label>
+          <label className="block text-sm font-medium text-slate-700">Valor Referencial (CLP) *</label>
           <input type="number" name="benefit_value_clp" defaultValue={initialData?.benefit_value_clp || 0} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700">Cantidad de Beneficios *</label>
+          <input type="number" name="benefits_quantity" defaultValue={initialData?.benefits_quantity || 1} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+        </div>
+        <div className="col-span-1 md:col-span-2">
+          <label className="block text-sm font-medium text-slate-700">Elementos Incluidos (uno por línea) *</label>
+          <textarea name="included_items" rows={3} defaultValue={Array.isArray(initialData?.included_items) ? initialData.included_items.join("\n") : ""} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="Hosting anual&#10;Dominio .cl"></textarea>
+        </div>
+        <div className="col-span-1 md:col-span-2">
+          <label className="block text-sm font-medium text-slate-700">Elementos Excluidos (uno por línea) *</label>
+          <textarea name="excluded_items" rows={3} defaultValue={Array.isArray(initialData?.excluded_items) ? initialData.excluded_items.join("\n") : ""} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="Mantenimiento mensual&#10;Creación de logos"></textarea>
         </div>
 
       </div>
