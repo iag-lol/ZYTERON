@@ -20,7 +20,13 @@ export default function CampaignForm({ initialData = null }: { initialData?: any
     setError(null);
     try {
       const formData = new FormData(e.currentTarget);
-      await saveCampaign(formData);
+      const res = await saveCampaign(formData);
+      if (res?.error) {
+        setError(res.error);
+        setLoading(false);
+      } else if (res?.success) {
+        window.location.href = "/admin/becas/campanas";
+      }
     } catch (err: any) {
       setError(err.message || "Ocurrió un error al guardar la campaña.");
       setLoading(false);

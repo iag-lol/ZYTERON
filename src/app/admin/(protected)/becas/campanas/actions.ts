@@ -5,10 +5,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function saveCampaign(formData: FormData) {
-  const supabase = getBecasSupabaseClient();
-  
-  const id = formData.get("id")?.toString();
-  const status = formData.get("status")?.toString() || "draft";
+  try {
+    const supabase = getBecasSupabaseClient();
+    
+    const id = formData.get("id")?.toString();
+    const status = formData.get("status")?.toString() || "draft";
   
   const parseJSONField = (val?: string) => {
     if (!val) return null;
@@ -99,21 +100,24 @@ export async function saveCampaign(formData: FormData) {
     }
   }
 
-  let errorMsg = null;
+    let errorMsg = null;
 
-  if (id) {
-    const { error } = await supabase.from("scholarship_campaigns").update(payload).eq("id", id);
-    if (error) errorMsg = error.message;
-  } else {
-    const { error } = await supabase.from("scholarship_campaigns").insert(payload);
-    if (error) errorMsg = error.message;
+    if (id) {
+      const { error } = await supabase.from("scholarship_campaigns").update(payload).eq("id", id);
+      if (error) errorMsg = error.message;
+    } else {
+      const { error } = await supabase.from("scholarship_campaigns").insert(payload);
+      if (error) errorMsg = error.message;
+    }
+
+    if (errorMsg) {
+      return { error: errorMsg };
+    }
+
+    revalidatePath("/admin/becas/campanas");
+    revalidatePath("/becas-web-pyme");
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message || "Ocurrió un error inesperado al procesar la solicitud." };
   }
-
-  if (errorMsg) {
-    throw new Error(errorMsg);
-  }
-
-  revalidatePath("/admin/becas/campanas");
-  revalidatePath("/becas-web-pyme");
-  redirect("/admin/becas/campanas");
 }
