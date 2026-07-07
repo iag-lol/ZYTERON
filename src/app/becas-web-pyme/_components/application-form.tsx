@@ -367,7 +367,12 @@ export function ApplicationForm({ campaignId, officialInstagram, termsVersion = 
             {errors.truthfulnessConfirmed && <p className="text-[11px] text-red-500 ml-7">{errors.truthfulnessConfirmed.message}</p>}
 
             <label className="flex items-start gap-3 pt-1 cursor-pointer">
-              <input type="checkbox" {...register("logoRightsConfirmed")} className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+              <input
+                type="checkbox"
+                checked={!!watch("logoRightsConfirmed")}
+                onChange={(e) => setValue("logoRightsConfirmed", e.target.checked, { shouldValidate: true })}
+                className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              />
               <span className="text-xs text-slate-700 leading-relaxed font-medium">
                 4. Derechos sobre imagen: &ldquo;Declaro que soy titular o cuento con autorización para utilizar el logo o imagen que estoy subiendo.&rdquo;
               </span>
@@ -375,7 +380,12 @@ export function ApplicationForm({ campaignId, officialInstagram, termsVersion = 
             {errors.logoRightsConfirmed && <p className="text-[11px] text-red-500 ml-7">{errors.logoRightsConfirmed.message}</p>}
 
             <label className="flex items-start gap-3 pt-1 cursor-pointer">
-              <input type="checkbox" {...register("followsOfficialInstagramDeclared")} className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+              <input
+                type="checkbox"
+                checked={!!watch("followsOfficialInstagramDeclared")}
+                onChange={(e) => setValue("followsOfficialInstagramDeclared", e.target.checked, { shouldValidate: true })}
+                className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              />
               <span className="text-xs text-slate-700 leading-relaxed font-medium">
                 5. Requisito de Instagram: &ldquo;Confirmo que sigo la cuenta oficial @{officialInstagram} en Instagram y entiendo que este requisito podrá ser verificado antes de confirmar el beneficio.&rdquo;
               </span>
