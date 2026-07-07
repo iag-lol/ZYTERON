@@ -29,6 +29,8 @@ import { getApprovedReviewsSnapshot } from "@/lib/web-control";
 import { ClientReviewsSection } from "@/components/home/client-reviews-section";
 import { getFeaturedCaseItems } from "@/lib/content/cases-merge";
 import { softBlueBlurDataUrl } from "@/lib/image-placeholders";
+import { getPublishedScholarshipProfiles } from "@/lib/becas/public-profiles";
+import { PublicShowcaseCarousel } from "@/components/becas/public-showcase-carousel";
 
 export const revalidate = 300;
 
@@ -332,6 +334,7 @@ const localSignals = [
 export default async function Home() {
   const reviews = await getApprovedReviewsSnapshot();
   const featuredCases = await getFeaturedCaseItems(4);
+  const publishedScholarshipProfiles = await getPublishedScholarshipProfiles(5);
 
   return (
     <main className="overflow-hidden bg-white">
@@ -686,6 +689,21 @@ export default async function Home() {
           </div>
         </Container>
       </section>
+
+      {publishedScholarshipProfiles.length > 0 ? (
+        <section className="bg-white py-20">
+          <Container>
+            <PublicShowcaseCarousel
+              profiles={publishedScholarshipProfiles}
+              badge="Becas Web Pyme"
+              title="Una vitrina profesional para negocios que quieren crecer"
+              description="Además de la vitrina completa, en la portada destacamos automáticamente algunos emprendimientos publicados para reforzar confianza y movimiento real dentro del programa."
+              ctaHref="/becas-web-pyme"
+              ctaLabel="Ver programa completo"
+            />
+          </Container>
+        </section>
+      ) : null}
 
       <section className="bg-white py-20">
         <Container className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">

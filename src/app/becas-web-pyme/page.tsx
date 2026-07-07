@@ -1,8 +1,11 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import { ArrowRight, Store } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { getBecasSupabaseClient } from "@/lib/becas/supabase-client";
+import { getPublishedScholarshipProfiles } from "@/lib/becas/public-profiles";
 import { createPageMetadata } from "@/lib/seo";
+import { PublicShowcaseCarousel } from "@/components/becas/public-showcase-carousel";
 import { ApplicationModal } from "./_components/application-modal";
 
 export const metadata: Metadata = createPageMetadata({
@@ -13,6 +16,11 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 export const dynamic = "force-dynamic";
+
+type SelectionCriterion = {
+  weight: string;
+  description: string;
+};
 
 async function getActiveCampaign() {
   try {
@@ -35,19 +43,28 @@ async function getActiveCampaign() {
 
 export default async function BecasWebPymePage() {
   const campaign = await getActiveCampaign();
+  const publishedProfiles = await getPublishedScholarshipProfiles(6);
 
   return (
     <main className="min-h-screen bg-slate-50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-blue-900 to-slate-900 py-20 text-white">
+      <section className="relative overflow-hidden bg-[linear-gradient(180deg,#eff6ff_0%,#ffffff_45%,#f8fafc_100%)] py-20 text-slate-950">
+        <div
+          aria-hidden
+          className="absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.22),transparent_68%)]"
+        />
         <Container className="text-center">
+          <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white/85 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-blue-700 shadow-sm">
+            <Store className="h-4 w-4" />
+            Programa Becas Web Pyme
+          </span>
           <h1 className="mb-6 text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
             {campaign?.title || "Becas Web Pyme Zyteron"}
           </h1>
-          <p className="mx-auto mb-8 max-w-2xl text-lg text-blue-100 sm:text-xl">
+          <p className="mx-auto mb-8 max-w-2xl text-lg text-slate-700 sm:text-xl">
             {campaign?.subtitle || "En Zyteron apoyamos a emprendedores y empresas chilenas a dar el siguiente paso digital con una presencia web profesional."}
           </p>
-          <p className="mx-auto mb-10 max-w-3xl text-slate-300">
+          <p className="mx-auto mb-10 max-w-3xl text-slate-600">
             {campaign?.description || "Postula tu negocio, cuéntanos tu historia y participa en nuestro proceso de selección para recibir una solución web diseñada para impulsar tu presencia digital."}
           </p>
 
@@ -64,24 +81,38 @@ export default async function BecasWebPymePage() {
                 Postulaciones Cerradas
               </button>
             )}
-            <a href="#que-incluye" className="rounded-xl border border-white/20 px-8 py-4 font-bold text-white transition-colors hover:bg-white/10">
+            <a href="#que-incluye" className="rounded-xl border border-slate-300 bg-white px-8 py-4 font-bold text-slate-900 transition-colors hover:bg-slate-50">
               Ver qué incluye
             </a>
-            <Link href="/becas-web-pyme/vitrina" className="rounded-xl border border-blue-400/40 bg-blue-500/10 px-8 py-4 font-bold text-blue-300 transition-colors hover:bg-blue-500/20">
-              🏪 Ver vitrina de postulantes
+            <Link href="/becas-web-pyme/vitrina" className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-8 py-4 font-bold text-blue-800 transition-colors hover:bg-blue-100">
+              <Store className="h-5 w-5" />
+              Ver vitrina de postulantes
             </Link>
-            <a href="/becas-web-pyme/bases" className="text-sm font-semibold text-blue-300 underline-offset-4 hover:underline">
+            <a href="/becas-web-pyme/bases" className="text-sm font-semibold text-blue-700 underline-offset-4 hover:underline">
               Leer bases
             </a>
           </div>
 
           {campaign && campaign.ends_at && (
-            <p className="mt-8 text-sm font-semibold tracking-wide text-blue-300">
+            <p className="mt-8 text-sm font-semibold tracking-wide text-blue-700">
               Edición {new Date(campaign.starts_at).getFullYear()} · Postulaciones abiertas hasta el {new Date(campaign.ends_at).toLocaleDateString('es-CL')}
             </p>
           )}
         </Container>
       </section>
+
+      {publishedProfiles.length > 0 ? (
+        <section className="pb-8">
+          <Container>
+            <PublicShowcaseCarousel
+              profiles={publishedProfiles}
+              badge="Vitrina pública"
+              title="Negocios reales ya se están mostrando con una presencia más seria"
+              description="Este carrusel avanza automáticamente y destaca emprendimientos que ya autorizaron su publicación en la vitrina de Becas Web Pyme."
+            />
+          </Container>
+        </section>
+      ) : null}
 
       {/* Qué incluye */}
       <section id="que-incluye" className="py-20">
@@ -167,25 +198,26 @@ export default async function BecasWebPymePage() {
       </section>
 
       {/* Vitrina de postulantes */}
-      <section className="bg-gradient-to-b from-blue-950 to-slate-900 py-20 text-white">
+      <section className="bg-white py-20">
         <Container>
           <div className="mb-10 flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-between sm:text-left">
             <div>
-              <span className="mb-2 inline-block rounded-full bg-blue-500/20 px-3 py-1 text-xs font-bold uppercase tracking-widest text-blue-300">Vitrina pública</span>
-              <h2 className="mt-2 text-3xl font-extrabold tracking-tight">Emprendimientos que participan</h2>
-              <p className="mt-2 max-w-xl text-slate-400">Negocios reales que autorizaron aparecer aquí mientras postulan a nuestra beca.</p>
+              <span className="mb-2 inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-bold uppercase tracking-widest text-blue-700">Vitrina pública</span>
+              <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">Emprendimientos que participan</h2>
+              <p className="mt-2 max-w-xl text-slate-600">Negocios reales que autorizaron aparecer aquí mientras postulan a nuestra beca.</p>
             </div>
             <Link
               href="/becas-web-pyme/vitrina"
-              className="shrink-0 rounded-xl border border-blue-400/30 bg-blue-500/10 px-6 py-3 text-sm font-bold text-blue-300 transition-colors hover:bg-blue-500/20"
+              className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-6 py-3 text-sm font-bold text-blue-800 transition-colors hover:bg-blue-100"
             >
-              Ver todos →
+              Ver todos
+              <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-sm">
-            <p className="text-slate-400">
+          <div className="rounded-[1.75rem] border border-slate-200 bg-[linear-gradient(135deg,#ffffff,#eff6ff)] p-8 text-center shadow-[0_20px_45px_-35px_rgba(59,130,246,0.45)]">
+            <p className="text-slate-600">
               ¿Ya postulaste y autorizaste la vitrina?{" "}
-              <Link href="/becas-web-pyme/vitrina" className="font-bold text-blue-400 hover:text-blue-300 underline underline-offset-4">
+              <Link href="/becas-web-pyme/vitrina" className="font-bold text-blue-700 hover:text-blue-800 underline underline-offset-4">
                 Haz click aquí para verte publicado
               </Link>
             </p>
@@ -203,7 +235,7 @@ export default async function BecasWebPymePage() {
               { weight: "25%", description: "Claridad y completitud de la postulación." },
               { weight: "20%", description: "Factibilidad de desarrollo del proyecto." },
               { weight: "15%", description: "Potencial de impacto para el negocio." }
-            ]).map((crit: any, i: number) => (
+            ] as SelectionCriterion[]).map((crit, i: number) => (
               <div key={i} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <span className="font-medium text-slate-800">{crit.description}</span>
                 <span className="rounded bg-blue-100 px-3 py-1 font-bold text-blue-900">{crit.weight}</span>
@@ -217,7 +249,7 @@ export default async function BecasWebPymePage() {
       </section>
 
       {/* CTA Final */}
-      <section className="bg-slate-900 py-24 text-center text-white">
+      <section className="bg-[linear-gradient(180deg,#eff6ff_0%,#dbeafe_100%)] py-24 text-center text-slate-950">
         <Container>
           <h2 className="mb-8 text-3xl font-bold sm:text-4xl">Tu negocio puede ser el próximo proyecto que mostremos con orgullo.</h2>
           {campaign ? (
@@ -229,7 +261,7 @@ export default async function BecasWebPymePage() {
               variant="large" 
             />
           ) : null}
-          <p className="mt-6 text-sm text-slate-400">Revisa las bases, condiciones y política de privacidad antes de enviar tu postulación.</p>
+          <p className="mt-6 text-sm text-slate-600">Revisa las bases, condiciones y política de privacidad antes de enviar tu postulación.</p>
         </Container>
       </section>
     </main>
