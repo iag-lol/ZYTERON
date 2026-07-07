@@ -102,7 +102,7 @@ export const priorityServicePages: PriorityServicePage[] = [
       "Te ayudamos a crear tu tienda online en Chile (o tienda virtual) orientada a operación real: catálogo online bien organizado, experiencia de compra clara, pagos con Webpay, Flow o Mercado Pago y rutas de contacto para cerrar ventas por web o WhatsApp.",
     context: [
       "Muchas pymes quieren vender online, pero se frenan por desorden en catálogo, falta de flujo comercial o problemas de mantención. Nuestra propuesta es construir una tienda que puedas operar sin fricción y que escale por etapas.",
-      "No trabajamos con promesas vacías. Definimos qué incluye tu implementación: tipos de productos, cantidad inicial, forma de pago, envíos, reglas comerciales y soporte posterior.",
+      "Trabajamos con compromisos concretos: definimos junto a ti qué incluye tu implementación —tipos de productos, cantidad inicial, forma de pago, envíos, reglas comerciales y soporte posterior— para que sepas exactamente qué recibirás.",
       "La meta no es solo publicar productos. La meta es que tu tienda genere consultas, pedidos o ventas con una experiencia profesional que aumente confianza en tu marca.",
     ],
     benefits: [

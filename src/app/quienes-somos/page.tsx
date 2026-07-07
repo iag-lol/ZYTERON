@@ -194,9 +194,9 @@ export default function QuienesSomosPage() {
           <div className="rounded-3xl border border-slate-200 bg-slate-50 p-8 shadow-sm">
             <h3 className="mb-4 text-xl font-extrabold text-slate-900">Nuestro compromiso</h3>
             <p className="text-sm leading-relaxed text-slate-600">
-              No prometemos resultados mágicos, no usamos frases vacías y no vendemos humo. Nuestro compromiso es entregar
-              soluciones útiles, responsables y funcionales. Cuidamos los detalles y respetamos los tiempos acordados
-              porque sabemos que detrás de cada proyecto hay un negocio que busca crecer, verse mejor y vender más.
+              Hablamos claro y cumplimos lo que prometemos: soluciones útiles, responsables y funcionales. Cuidamos los
+              detalles y respetamos los tiempos acordados porque sabemos que detrás de cada proyecto hay un negocio que
+              busca crecer, verse mejor y vender más.
             </p>
           </div>
         </Container>

@@ -44,14 +44,14 @@ export const metadata: Metadata = createPageMetadata({
 
 const trustPoints = [
   "Experiencia práctica ligada a tecnología, procesos y soluciones digitales.",
-  "Cotización formal antes de iniciar.",
+  "Cotización formal y sin compromiso antes de iniciar.",
   "Proceso de trabajo ordenado y documentado.",
   "Entrega por etapas con revisión del cliente.",
-  "Soporte post-entrega según alcance contratado.",
+  "Soporte post-entrega para que tu solución siga funcionando.",
   "Comunicación directa durante todo el proyecto.",
   "Soluciones adaptadas al tamaño de cada negocio.",
   "Desarrollo enfocado en resultados, no solo diseño.",
-  "Posibilidad de emitir documento tributario cuando corresponde.",
+  "Emitimos boleta o factura según el servicio contratado.",
   "Atención a empresas, pymes y emprendedores en Chile.",
 ];
 
@@ -436,10 +436,10 @@ export default async function Home() {
             </div>
 
             <div className="grid gap-2 text-xs text-slate-500 sm:grid-cols-2">
-              <p>Respuesta dentro de horario laboral.</p>
-              <p>Cotización formal según requerimiento.</p>
+              <p>Te respondemos dentro del horario laboral.</p>
+              <p>Cotización formal y sin compromiso.</p>
               <p>Atención a empresas, pymes y emprendedores.</p>
-              <p>No iniciamos trabajo sin definir alcance y condiciones.</p>
+              <p>Sabrás exactamente qué incluye tu proyecto antes de comenzar.</p>
             </div>
           </div>
 
@@ -636,7 +636,7 @@ export default async function Home() {
                 Demos funcionales para evaluar antes de contratar
               </h2>
               <p className="mt-2 max-w-3xl text-sm text-slate-600 sm:text-base">
-                Estos ejemplos son demos funcionales de referencia. No representan clientes reales si no se indica explícitamente.
+                Demos funcionales creados por nuestro equipo para que evalúes calidad, estructura y estilo antes de cotizar tu proyecto.
               </p>
             </div>
             <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
@@ -696,7 +696,7 @@ export default async function Home() {
             </h2>
             <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
               Desarrollamos paneles y sistemas internos para que tu empresa gestione su información en tiempo real.
-              La idea es simple: no dependas de terceros para actualizar tu información.
+              La idea es simple: que actualices tu información cuando lo necesites, sin depender de terceros.
             </p>
             <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-slate-700">
               Dashboard con métricas, reportes y control operacional adaptado al tamaño de tu empresa.
@@ -864,10 +864,10 @@ export default async function Home() {
           </div>
 
           <div className="mt-4 grid gap-2 text-xs text-blue-100 sm:grid-cols-2 lg:grid-cols-4">
-            <p>Cotización formal antes de iniciar.</p>
+            <p>Cotización formal y sin compromiso.</p>
             <p>Atención a empresas, pymes y emprendedores.</p>
-            <p>Proceso por etapas con revisión.</p>
-            <p>Soporte post-entrega según alcance.</p>
+            <p>Avanzamos por etapas y revisas cada entrega.</p>
+            <p>Te acompañamos después de la entrega.</p>
           </div>
         </Container>
       </section>

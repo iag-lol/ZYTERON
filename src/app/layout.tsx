@@ -65,6 +65,13 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
   },
   verification: analyticsConfig.googleSiteVerification
     ? {
@@ -90,8 +97,6 @@ export default function RootLayout({
     >
       <head>
         <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="" />
-        <link rel="preconnect" href="https://wa.me" />
-        <link rel="preconnect" href="https://www.linkedin.com" />
       </head>
       <body className="min-h-full bg-white text-slate-900">
         <GoogleAdsTag />
