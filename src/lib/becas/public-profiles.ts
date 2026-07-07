@@ -49,23 +49,43 @@ export async function getPublishedScholarshipProfiles(limit?: number) {
       return [] as PublishedScholarshipProfile[];
     }
 
-    return (data as RawProfileRow[]).map((row) => {
-      const logoUrl = row.public_logo_path
-        ? supabase.storage.from("becas-web-pyme-assets").getPublicUrl(row.public_logo_path).data.publicUrl
-        : null;
+    const rows = data as RawProfileRow[];
+    const signedLogoEntries = await Promise.all(
+      rows.map(async (row) => {
+        if (!row.public_logo_path) {
+          return [row.id, null] as const;
+        }
 
-      return {
-        id: row.id,
-        businessName: row.business_name,
-        industry: row.industry,
-        region: row.region,
-        comuna: row.comuna,
-        publicDescription: row.public_description,
-        publicInstagramHandle: row.public_instagram_handle,
-        publicLogoUrl: logoUrl,
-        publishedAt: row.published_at,
-      };
-    });
+        const { data: signedData, error: signedError } = await supabase.storage
+          .from("becas-web-pyme-assets")
+          .createSignedUrl(row.public_logo_path, 60 * 60);
+
+        if (signedError || !signedData?.signedUrl) {
+          console.warn("No se pudo firmar el logo de vitrina", {
+            profileId: row.id,
+            path: row.public_logo_path,
+            error: signedError,
+          });
+          return [row.id, null] as const;
+        }
+
+        return [row.id, signedData.signedUrl] as const;
+      }),
+    );
+
+    const signedLogoMap = new Map<string, string | null>(signedLogoEntries);
+
+    return rows.map((row) => ({
+      id: row.id,
+      businessName: row.business_name,
+      industry: row.industry,
+      region: row.region,
+      comuna: row.comuna,
+      publicDescription: row.public_description,
+      publicInstagramHandle: row.public_instagram_handle,
+      publicLogoUrl: signedLogoMap.get(row.id) ?? null,
+      publishedAt: row.published_at,
+    }));
   } catch (error) {
     console.warn("No se pudo consultar la vitrina pública de becas", error);
     return [] as PublishedScholarshipProfile[];
