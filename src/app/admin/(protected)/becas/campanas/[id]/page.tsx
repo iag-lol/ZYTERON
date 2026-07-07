@@ -9,12 +9,13 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function EditarCampanaPage({ params }: { params: { id: string } }) {
+export default async function EditarCampanaPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = getBecasSupabaseClient();
   const { data: campaign } = await supabase
     .from("scholarship_campaigns")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (!campaign) {

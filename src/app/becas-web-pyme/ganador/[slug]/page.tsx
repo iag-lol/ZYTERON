@@ -4,12 +4,13 @@ import { getBecasSupabaseClient } from "@/lib/becas/supabase-client";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
   const supabase = getBecasSupabaseClient();
   const { data: campaign } = await supabase
     .from("scholarship_campaigns")
     .select("id, title")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .maybeSingle();
 
   if (!campaign) {
@@ -37,14 +38,15 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 export const dynamic = "force-dynamic";
 
-export default async function WinnerPage({ params }: { params: { slug: string } }) {
+export default async function WinnerPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const supabase = getBecasSupabaseClient();
   
   // En un caso real, el slug correspondería al campaign.slug o a un id
   const { data: campaign } = await supabase
     .from("scholarship_campaigns")
     .select("id, title")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .single();
 
   if (!campaign) {
