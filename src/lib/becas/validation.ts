@@ -9,8 +9,8 @@ export const scholarshipApplicationSchema = z.object({
   region: z.string().min(1, "Debes seleccionar una región"),
   comuna: z.string().min(1, "Debes ingresar una comuna"),
   instagramHandle: z.string().min(2, "Debes ingresar tu usuario de Instagram"),
-  followsOfficialInstagramDeclared: z.literal(true, {
-    errorMap: () => ({ message: "Debes confirmar que sigues la cuenta oficial" }),
+  followsOfficialInstagramDeclared: z.boolean().refine((val) => val === true, {
+    message: "Debes confirmar que sigues la cuenta oficial",
   }),
 
   // Paso 2: Datos del Negocio
@@ -39,22 +39,22 @@ export const scholarshipApplicationSchema = z.object({
   logoFileName: z.string().min(1, "Falta el nombre del archivo"),
   logoMimeType: z.string().min(1, "Falta el formato del archivo"),
   logoSizeBytes: z.number().positive(),
-  logoRightsConfirmed: z.literal(true, {
-    errorMap: () => ({ message: "Debes confirmar que tienes los derechos de la imagen" }),
+  logoRightsConfirmed: z.boolean().refine((val) => val === true, {
+    message: "Debes confirmar que tienes los derechos de la imagen",
   }),
 
   // Paso 5: Consentimientos
-  termsAccepted: z.literal(true, {
-    errorMap: () => ({ message: "Debes aceptar las bases" }),
+  termsAccepted: z.boolean().refine((val) => val === true, {
+    message: "Debes aceptar las bases",
   }),
-  privacyAccepted: z.literal(true, {
-    errorMap: () => ({ message: "Debes aceptar la política de privacidad" }),
+  privacyAccepted: z.boolean().refine((val) => val === true, {
+    message: "Debes aceptar la política de privacidad",
   }),
-  truthfulnessConfirmed: z.literal(true, {
-    errorMap: () => ({ message: "Debes declarar que la información es verdadera" }),
+  truthfulnessConfirmed: z.boolean().refine((val) => val === true, {
+    message: "Debes declarar que la información es verdadera",
   }),
-  winnerCaseStudyAcknowledged: z.literal(true, {
-    errorMap: () => ({ message: "Debes confirmar que entiendes este requisito en caso de ganar" }),
+  winnerCaseStudyAcknowledged: z.boolean().refine((val) => val === true, {
+    message: "Debes confirmar que entiendes este requisito en caso de ganar",
   }),
 
   // Consentimientos opcionales
