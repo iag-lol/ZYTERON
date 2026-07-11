@@ -13,8 +13,12 @@ type RevealProps = {
 
 /**
  * Revela su contenido con fade + translate cuando entra al viewport.
- * El ocultamiento inicial vive en CSS bajo `@media (scripting: enabled)`,
- * por lo que sin JS el contenido queda siempre visible e indexable.
+ *
+ * A prueba de fallos: el contenido NUNCA se oculta por CSS estático. El
+ * ocultamiento (`reveal-hidden`) lo aplica este efecto justo al crear el
+ * IntersectionObserver, y sólo para elementos bajo el pliegue. Si el JS no
+ * carga, falla la hidratación o el navegador no soporta IO, la página queda
+ * completa y visible — sólo se pierde la animación.
  */
 export function Reveal({ children, className, delay = 0, as: Tag = "div" }: RevealProps) {
   const ref = useRef<HTMLElement | null>(null);
@@ -22,17 +26,19 @@ export function Reveal({ children, className, delay = 0, as: Tag = "div" }: Reve
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
+    if (!("IntersectionObserver" in window)) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    if (!("IntersectionObserver" in window)) {
-      node.classList.add("is-visible");
-      return;
-    }
+    // Los elementos ya visibles en el primer viewport quedan intactos para
+    // evitar parpadeos; sólo se anima lo que entra después con scroll.
+    const initiallyVisible = node.getBoundingClientRect().top < window.innerHeight * 0.96;
+    if (initiallyVisible) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
+            entry.target.classList.remove("reveal-hidden");
             observer.unobserve(entry.target);
           }
         }
@@ -40,8 +46,13 @@ export function Reveal({ children, className, delay = 0, as: Tag = "div" }: Reve
       { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
     );
 
+    node.classList.add("reveal-hidden");
     observer.observe(node);
-    return () => observer.disconnect();
+
+    return () => {
+      observer.disconnect();
+      node.classList.remove("reveal-hidden");
+    };
   }, []);
 
   return (

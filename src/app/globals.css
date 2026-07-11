@@ -168,26 +168,19 @@
 }
 
 /* ── Scroll reveal (home) ──
-   Los elementos sólo se ocultan cuando hay JS habilitado, así el contenido
-   siempre queda visible/indexable para crawlers y navegadores sin script. */
+   El contenido NUNCA se oculta por CSS estático: la clase reveal-hidden la
+   agrega el JS del componente Reveal al activar su IntersectionObserver.
+   Sin JS activo (crawler, script bloqueado, hidratación caída) la página
+   queda completa y visible; sólo se pierde la animación. */
 .reveal {
   transition:
     opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
     transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@media (scripting: enabled) {
-  .reveal:not(.is-visible) {
-    opacity: 0;
-    transform: translateY(22px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .reveal:not(.is-visible) {
-    opacity: 1;
-    transform: none;
-  }
+.reveal.reveal-hidden {
+  opacity: 0;
+  transform: translateY(22px);
 }
 
 /* ── Barra de progreso de scroll ── */
@@ -234,6 +227,10 @@
 @keyframes marquee-scroll {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
+}
+
+.marquee-track-logos {
+  animation-duration: 34s;
 }
 
 /* ── FAQ acordeón (details/summary nativo) ── */
