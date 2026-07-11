@@ -5,15 +5,18 @@ import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { localPages } from "@/content/local-pages";
+import { ubicaciones } from "@/data/ubicaciones";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Diseño web por ciudad en Chile",
+  title: "Ciudades y comunas de Chile con cobertura local",
   description:
-    "Páginas locales de diseño y desarrollo web para empresas en Chile, con foco en Región Metropolitana y principales ciudades del país.",
+    "Hub local de Zyteron con comunas de Santiago y ciudades de Chile enlazadas a páginas activas de desarrollo web, sistemas, soporte TI y soluciones digitales.",
   path: "/ciudades",
-  noIndex: true,
 });
+
+const regionMetropolitana = ubicaciones.filter((ubicacion) => ubicacion.region === "Región Metropolitana");
+const ciudadesChile = ubicaciones.filter((ubicacion) => ubicacion.region !== "Región Metropolitana");
 
 export default function CiudadesPage() {
   return (
@@ -22,9 +25,9 @@ export default function CiudadesPage() {
         id="ciudades-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/ciudades",
-          title: "Diseño web por ciudad en Chile",
+          title: "Ciudades y comunas de Chile con cobertura local",
           description:
-            "Hub de páginas locales de Zyteron para posicionamiento comercial por ciudad en Chile.",
+            "Hub de páginas locales de Zyteron para posicionamiento comercial por comuna y ciudad en Chile.",
           breadcrumbs: [
             { name: "Inicio", path: "/" },
             { name: "Ciudades", path: "/ciudades" },
@@ -38,13 +41,98 @@ export default function CiudadesPage() {
             SEO local Chile
           </div>
           <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
-            Diseño web por ciudad para captar demanda local de alto valor
+            Comunas y ciudades de Chile con páginas locales activas
           </h1>
           <p className="max-w-3xl text-lg text-slate-600">
-            No creamos landings masivas sin diferenciación. Priorizamos ciudades con demanda real y
-            contenido local útil para evitar páginas doorway y canibalización. Incluimos una página
-            específica para Región Metropolitana y cobertura de ciudades estratégicas en todo Chile.
+            Esta pestaña concentra el enlazado interno hacia ubicaciones activas de Zyteron para que
+            Google y los usuarios encuentren cobertura local real. Aquí reunimos comunas de Santiago y
+            ciudades estratégicas del país con acceso directo a páginas locales de servicio.
           </p>
+        </Container>
+      </section>
+
+      <section className="section-alt py-16">
+        <Container className="space-y-8">
+          <div className="max-w-3xl space-y-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Cobertura indexable</p>
+            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              Explora todas las comunas y ciudades activas
+            </h2>
+            <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
+              Cada botón abre una landing local activa de desarrollo web. Desde esas páginas también se
+              puede derivar a diseño web, páginas para pymes, soporte TI y sistemas web según la necesidad
+              del negocio.
+            </p>
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-2">
+            <article className="card-premium p-6">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Región Metropolitana</p>
+                  <h3 className="text-2xl font-extrabold text-slate-900">Comunas y Santiago</h3>
+                </div>
+                <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                  {regionMetropolitana.length} ubicaciones
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                {regionMetropolitana.map((ubicacion) => (
+                  <Button
+                    key={ubicacion.slug}
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="h-auto rounded-full border-slate-200 bg-white px-3 py-2 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800"
+                  >
+                    <Link href={`/desarrollo-web/${ubicacion.slug}`}>
+                      <MapPin className="h-3.5 w-3.5" />
+                      {ubicacion.nombre}
+                    </Link>
+                  </Button>
+                ))}
+              </div>
+            </article>
+
+            <article className="card-premium p-6">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Cobertura nacional</p>
+                  <h3 className="text-2xl font-extrabold text-slate-900">Ciudades de Chile</h3>
+                </div>
+                <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                  {ciudadesChile.length} ubicaciones
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                {ciudadesChile.map((ubicacion) => (
+                  <Button
+                    key={ubicacion.slug}
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="h-auto rounded-full border-slate-200 bg-white px-3 py-2 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800"
+                  >
+                    <Link href={`/desarrollo-web/${ubicacion.slug}`}>
+                      <MapPin className="h-3.5 w-3.5" />
+                      {ubicacion.nombre}
+                    </Link>
+                  </Button>
+                ))}
+              </div>
+            </article>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Button asChild className="gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800">
+              <Link href="/desarrollo-web">
+                Ver servicio base <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+              <Link href="/contacto">Solicitar cobertura para otra ubicación</Link>
+            </Button>
+          </div>
         </Container>
       </section>
 
