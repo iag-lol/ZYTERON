@@ -1,7 +1,23 @@
 import type { Metadata } from "next";
-import { defaultJsonLdOrganization, defaultOpenGraph, defaultTwitter } from "@/config/seo";
+import { defaultOpenGraph, defaultTwitter } from "@/config/seo";
 import { siteConfig } from "@/config/site";
 import { getAbsoluteOgImageUrl } from "@/config/og";
+import {
+  buildAbsoluteUrl as buildAbsoluteUrlFromSchema,
+  buildPrimaryOgImageUrl as buildPrimaryOgImageUrlFromSchema,
+  computeAggregateRatingFromReviews,
+  getAggregateRatingSchema,
+  getBlogPostingSchema,
+  getBreadcrumbSchema,
+  getFAQSchema,
+  getLocalBusinessSchema,
+  getLocalLandingSchema,
+  getOrganizationSchema,
+  getPersonSchema,
+  getServiceSchema,
+  getWebPageSchema,
+} from "@/lib/schema";
+import type { PublicReview } from "@/lib/web-control-types";
 
 type SeoMetadataInput = {
   title: string;
@@ -51,6 +67,9 @@ type ArticleJsonLdInput = {
   dateModified?: string;
   image?: string;
   authorName?: string;
+  authorType?: "Person" | "Organization";
+  authorUrl?: string;
+  authorId?: string;
 };
 
 type ServicesListJsonLdInput = {
@@ -68,18 +87,6 @@ type ProfessionalServiceJsonLdInput = {
   description?: string;
 };
 
-function normalizePath(path: string) {
-  if (!path) return "/";
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    const parsed = new URL(path);
-    return parsed.pathname === "/" ? "/" : parsed.pathname.replace(/\/$/, "");
-  }
-  if (path === "/") return "/";
-  const withoutQuery = path.split("?")[0]?.split("#")[0] || "/";
-  const normalized = withoutQuery.startsWith("/") ? withoutQuery : `/${withoutQuery}`;
-  return normalized === "/" ? "/" : normalized.replace(/\/$/, "");
-}
-
 function normalizeMetadataTitle(rawTitle: string) {
   const escapedBrand = siteConfig.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const brandSuffix = new RegExp(
@@ -96,15 +103,11 @@ function formatMetadataTitle(rawTitle: string) {
 }
 
 export function buildAbsoluteUrl(path: string) {
-  const normalized = normalizePath(path);
-  if (normalized.startsWith("http://") || normalized.startsWith("https://")) {
-    return normalized;
-  }
-  return normalized === "/" ? siteConfig.url : `${siteConfig.url}${normalized}`;
+  return buildAbsoluteUrlFromSchema(path);
 }
 
 export function buildPrimaryOgImageUrl() {
-  return getAbsoluteOgImageUrl("/");
+  return buildPrimaryOgImageUrlFromSchema();
 }
 
 const IMAGE_EXTENSION_RE = /\.(png|jpe?g|webp|gif|avif|svg)$/i;
@@ -239,22 +242,7 @@ function buildContactPoint() {
 }
 
 export function buildOrganizationGraph() {
-  return {
-    "@context": "https://schema.org",
-    "@graph": [
-      defaultJsonLdOrganization,
-      {
-        "@type": "WebSite",
-        "@id": `${siteConfig.url}/#website`,
-        url: `${siteConfig.url}/`,
-        name: siteConfig.name,
-        inLanguage: siteConfig.locale,
-        publisher: {
-          "@id": `${siteConfig.url}/#organization`,
-        },
-      },
-    ],
-  };
+  return getOrganizationSchema();
 }
 
 export function buildProfessionalServiceJsonLd({
@@ -262,7 +250,7 @@ export function buildProfessionalServiceJsonLd({
   description = siteConfig.description,
 }: ProfessionalServiceJsonLdInput) {
   const pageUrl = buildAbsoluteUrl(path);
-  const sameAs = [siteConfig.social.linkedin].filter(Boolean);
+  const sameAs = [siteConfig.social.linkedin, siteConfig.social.instagram].filter(Boolean);
 
   return {
     "@context": "https://schema.org",
@@ -292,33 +280,7 @@ export function buildWebPageJsonLd({
   description,
   breadcrumbs = [],
 }: WebPageJsonLdInput) {
-  const pageUrl = buildAbsoluteUrl(path);
-
-  const graph: Record<string, unknown>[] = [
-    {
-      "@type": "WebPage",
-      "@id": `${pageUrl}#webpage`,
-      url: pageUrl,
-      name: title,
-      description,
-      inLanguage: siteConfig.locale,
-      isPartOf: {
-        "@id": `${siteConfig.url}/#website`,
-      },
-      about: {
-        "@id": `${siteConfig.url}/#organization`,
-      },
-    },
-  ];
-
-  if (breadcrumbs.length) {
-    graph.push(buildBreadcrumbJsonLd(breadcrumbs));
-  }
-
-  return {
-    "@context": "https://schema.org",
-    "@graph": graph,
-  };
+  return getWebPageSchema({ path, title, description, breadcrumbs });
 }
 
 export function buildServiceJsonLd({
@@ -328,48 +290,7 @@ export function buildServiceJsonLd({
   serviceType,
   offers,
 }: ServiceJsonLdInput) {
-  const pageUrl = buildAbsoluteUrl(path);
-  const areaServed = buildServedAreas();
-
-  return {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    "@id": `${pageUrl}#service`,
-    serviceType,
-    name,
-    description,
-    url: pageUrl,
-    areaServed,
-    provider: {
-      "@id": `${siteConfig.url}/#organization`,
-      name: siteConfig.name,
-      url: siteConfig.url,
-      logo: `${siteConfig.url}/logo.svg`,
-    },
-    offers: offers?.length
-      ? {
-          "@type": "OfferCatalog",
-          name: `Ofertas referenciales de ${name}`,
-          itemListElement: offers.map((offer) => ({
-            "@type": "Offer",
-            name: offer.name,
-            description: offer.description,
-            priceCurrency: "CLP",
-            priceSpecification: {
-              "@type": "PriceSpecification",
-              priceCurrency: "CLP",
-              minPrice: offer.lowPrice,
-              ...(offer.highPrice ? { maxPrice: offer.highPrice } : {}),
-            },
-            availability: "https://schema.org/InStock",
-            url: pageUrl,
-            seller: {
-              "@id": `${siteConfig.url}/#organization`,
-            },
-          })),
-        }
-      : undefined,
-  };
+  return getServiceSchema({ path, name, description, serviceType, offers });
 }
 
 export function buildServicesListJsonLd({ path, title, services }: ServicesListJsonLdInput) {
@@ -397,49 +318,78 @@ export function buildServicesListJsonLd({ path, title, services }: ServicesListJ
 }
 
 export function buildBreadcrumbJsonLd(items: BreadcrumbItem[]) {
-  return {
-    "@type": "BreadcrumbList",
-    itemListElement: items.map((item, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      name: item.name,
-      item: buildAbsoluteUrl(item.path),
-    })),
-  };
+  return getBreadcrumbSchema(items);
 }
 
 export function buildFaqJsonLd(faqs: FaqItem[]) {
+  return getFAQSchema(faqs);
+}
+
+type AboutPageJsonLdInput = {
+  path: string;
+  title: string;
+  description: string;
+  team: Array<{
+    id: string;
+    name: string;
+    role: string;
+    description?: string;
+    photoPath?: string;
+  }>;
+  breadcrumbs?: BreadcrumbItem[];
+};
+
+/**
+ * Schema para /quienes-somos: AboutPage + Person por cada integrante visible
+ * del equipo, enlazados a la Organization. Los @id de las personas deben
+ * calzar con los usados en defaultJsonLdOrganization (founder) para que
+ * Google consolide la entidad en un solo grafo.
+ */
+export function buildAboutPageJsonLd({
+  path,
+  title,
+  description,
+  team,
+  breadcrumbs = [],
+}: AboutPageJsonLdInput) {
+  const pageUrl = buildAbsoluteUrl(path);
+
+  const graph: Record<string, unknown>[] = [
+    ...(getWebPageSchema({
+      path,
+      title,
+      description,
+      pageType: "AboutPage",
+    })["@graph"] as Record<string, unknown>[]),
+    ...team.map((member) =>
+      getPersonSchema({
+        id: `${pageUrl}#${member.id}`,
+        name: member.name,
+        jobTitle: member.role,
+        description: member.description,
+        image: member.photoPath,
+        url: pageUrl,
+      }),
+    ),
+  ];
+
+  if (breadcrumbs.length) {
+    graph.push(buildBreadcrumbJsonLd(breadcrumbs));
+  }
+
   return {
     "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((faq) => ({
-      "@type": "Question",
-      name: faq.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: faq.answer,
-      },
-    })),
+    "@graph": graph,
   };
 }
 
 export function buildContactPageJsonLd(path: string, description: string) {
-  const pageUrl = buildAbsoluteUrl(path);
-
-  return {
-    "@context": "https://schema.org",
-    "@type": "ContactPage",
-    "@id": `${pageUrl}#contactpage`,
-    url: pageUrl,
-    name: "Contacto ZYTERON",
+  return getWebPageSchema({
+    path,
+    title: "Contacto ZYTERON",
     description,
-    isPartOf: {
-      "@id": `${siteConfig.url}/#website`,
-    },
-    about: {
-      "@id": `${siteConfig.url}/#organization`,
-    },
-  };
+    pageType: "ContactPage",
+  });
 }
 
 export function buildArticleJsonLd({
@@ -450,41 +400,42 @@ export function buildArticleJsonLd({
   dateModified,
   image,
   authorName,
+  authorType,
+  authorUrl,
+  authorId,
 }: ArticleJsonLdInput) {
-  const pageUrl = buildAbsoluteUrl(path);
-
-  return {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    "@id": `${pageUrl}#article`,
-    headline: title,
+  return getBlogPostingSchema({
+    path,
+    title,
     description,
-    inLanguage: siteConfig.locale,
-    url: pageUrl,
-    image:
-      image && isLikelySocialImagePath(image)
-        ? [buildAbsoluteUrl(image)]
-        : [buildPrimaryOgImageUrl()],
     datePublished,
-    dateModified: dateModified ?? datePublished,
-    author: {
-      "@type": "Organization",
-      name: authorName ?? siteConfig.name,
-      url: siteConfig.url,
-    },
-    publisher: {
-      "@type": "Organization",
-      "@id": `${siteConfig.url}/#organization`,
-      name: siteConfig.name,
-      logo: {
-        "@type": "ImageObject",
-        url: `${siteConfig.url}/logo.svg`,
-      },
-    },
-    mainEntityOfPage: {
-      "@id": `${pageUrl}#webpage`,
-    },
-  };
+    dateModified,
+    image: image && isLikelySocialImagePath(image) ? image : buildPrimaryOgImageUrl(),
+    authorName,
+    authorType,
+    authorUrl,
+    authorId,
+  });
+}
+
+export function buildLocalBusinessJsonLd(path = "/", description = siteConfig.description) {
+  return getLocalBusinessSchema({ path, description });
+}
+
+export function buildAggregateRatingJsonLd(reviews: PublicReview[], itemUrl = "/") {
+  const aggregate = computeAggregateRatingFromReviews(reviews);
+  if (!aggregate) return null;
+  return getAggregateRatingSchema({
+    ratingValue: aggregate.ratingValue,
+    reviewCount: aggregate.reviewCount,
+    itemName: siteConfig.legalName,
+    itemType: "Organization",
+    itemUrl,
+  });
+}
+
+export function buildLocalLandingJsonLd(input: Parameters<typeof getLocalLandingSchema>[0]) {
+  return getLocalLandingSchema(input);
 }
 
 export function buildPlanPriceSpecificationJsonLd(path: string) {

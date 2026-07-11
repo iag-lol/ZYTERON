@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { getDbBlogPost } from "@/lib/content/blog-merge";
 import { DbBlogArticle } from "@/components/blog/db-blog-article";
 import type { DbBlogPost } from "@/lib/admin/blog-cases-repository";
+import { siteConfig } from "@/config/site";
 import {
   buildArticleJsonLd,
   buildWebPageJsonLd,
@@ -44,13 +45,32 @@ export async function generateMetadata({ params }: BlogDetailProps): Promise<Met
     });
   }
 
-  return createPageMetadata({
+  const baseMetadata = createPageMetadata({
     title: post.metaTitle || post.title,
     description: post.metaDescription || post.excerpt || "",
     path: `/blog/${post.slug}`,
     ogImagePath: resolveArticleSocialImage(post),
     ogImageAlt: post.coverImageAlt || `${post.title} | Zyteron`,
   });
+
+  return {
+    ...baseMetadata,
+    openGraph: {
+      ...baseMetadata.openGraph,
+      type: "article",
+      publishedTime: post.publishedAt ?? post.createdAt ?? undefined,
+      modifiedTime: post.updatedAt ?? post.publishedAt ?? post.createdAt ?? undefined,
+      authors: [`${siteConfig.url}/quienes-somos`],
+      section: post.category ?? "Blog",
+      tags: post.tags ?? undefined,
+    },
+    other: {
+      "article:published_time": post.publishedAt ?? post.createdAt ?? "",
+      "article:modified_time": post.updatedAt ?? post.publishedAt ?? post.createdAt ?? "",
+      "article:author": `${siteConfig.url}/quienes-somos`,
+      "article:section": post.category ?? "Blog",
+    },
+  };
 }
 
 export default async function BlogDetailPage({ params }: BlogDetailProps) {
@@ -87,7 +107,10 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
           datePublished: post.publishedAt ?? post.createdAt ?? new Date().toISOString(),
           dateModified: post.updatedAt ?? undefined,
           image: resolveArticleSocialImage(post),
-          authorName: post.author ?? "Zyteron",
+          authorName: post.author ?? siteConfig.representative.name,
+          authorType: "Person",
+          authorUrl: `${siteConfig.url}/quienes-somos`,
+          authorId: `${siteConfig.url}/quienes-somos#eduardo-avila`,
         })}
       />
       <DbBlogArticle post={post} />

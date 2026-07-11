@@ -70,7 +70,7 @@ export function DemosGrid({ demos }: DemosGridProps) {
                     <div key={src} className="relative">
                       <Image
                         src={src}
-                        alt={`Captura ${index + 1} de ${demo.title} para revisar diseño web responsive`}
+                        alt={`Captura ${index + 1} de ${demo.title} para pymes y empresas en Chile`}
                         fill
                         sizes="(max-width: 768px) 45vw, (max-width: 1280px) 260px, 300px"
                         quality={80}
@@ -151,7 +151,7 @@ export function DemosGrid({ demos }: DemosGridProps) {
                   <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
                     <Image
                       src={activeImageSrc}
-                      alt={`Imagen principal de ${activeDemo?.title ?? "demo web"} con vista de diseño y experiencia responsive`}
+                      alt={`${activeDemo?.title ?? "Demo web para empresas en Chile"} con diseño responsive y enfoque comercial`}
                       fill
                       sizes="(max-width: 1024px) 90vw, 800px"
                       quality={80}
@@ -176,7 +176,7 @@ export function DemosGrid({ demos }: DemosGridProps) {
                         >
                           <Image
                             src={src}
-                            alt={`Miniatura ${index + 1} de ${activeDemo?.title ?? "demo web"}`}
+                            alt={`Miniatura ${index + 1} de ${activeDemo?.title ?? "demo web para empresas en Chile"}`}
                             fill
                             sizes="120px"
                             quality={80}

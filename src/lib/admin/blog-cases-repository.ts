@@ -1,5 +1,6 @@
 // Sólo debe importarse desde el servidor: usa el cliente service-role de Supabase
 // vía los helpers de @/lib/admin/repository (mismo patrón que el resto del admin).
+import { siteConfig } from "@/config/site";
 import {
   safeSelect,
   safeSelectSingle,
@@ -166,7 +167,7 @@ function buildBlogPayload(input: BlogPostWriteInput) {
     category: input.category ?? null,
     tags: input.tags ?? [],
     readMinutes: input.readMinutes ?? estimateReadMinutes(input.content),
-    author: input.author?.trim() || "Zyteron",
+    author: input.author?.trim() || siteConfig.representative.name,
     status: input.status,
     metaTitle: input.metaTitle ?? null,
     metaDescription: input.metaDescription ?? null,

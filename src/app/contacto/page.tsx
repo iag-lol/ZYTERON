@@ -5,7 +5,7 @@ import { Mail, MapPin, Clock, FileText, PhoneCall } from "lucide-react";
 import { JsonLd } from "@/components/seo/json-ld";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { siteConfig } from "@/config/site";
-import { buildContactPageJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import { buildContactPageJsonLd, buildLocalBusinessJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Contacto comercial para tu proyecto digital",
@@ -51,7 +51,7 @@ const contactInfo = [
   {
     icon: <MapPin className="h-5 w-5" />,
     label: "Ubicación",
-    value: "Santiago, Chile",
+    value: siteConfig.address.display,
     sub: "Atención a todo Chile",
     href: null,
     classes: "border-violet-200 bg-violet-50",
@@ -61,7 +61,7 @@ const contactInfo = [
   {
     icon: <Clock className="h-5 w-5" />,
     label: "Horario comercial",
-    value: "Lun-Vie 09:00-18:00",
+    value: siteConfig.business.hoursDisplay,
     sub: "Respuesta dentro de horario laboral",
     href: null,
     classes: "border-amber-200 bg-amber-50",
@@ -90,6 +90,13 @@ export default function ContactoPage() {
         data={buildContactPageJsonLd(
           "/contacto",
           "Página de contacto para solicitudes de cotización de empresas, pymes y emprendedores en Chile.",
+        )}
+      />
+      <JsonLd
+        id="contacto-localbusiness-schema"
+        data={buildLocalBusinessJsonLd(
+          "/contacto",
+          "Contacto comercial de Zyteron para desarrollo web, sistemas digitales, automatización y soporte TI en Chile.",
         )}
       />
 

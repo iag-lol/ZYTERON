@@ -8,7 +8,7 @@ import { getCaseListItems, type CaseListItem } from "@/lib/content/cases-merge";
 import { buildAbsoluteUrl, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Casos de Éxito Anónimos | Sistemas Web, SEO y Soluciones Digitales",
+  title: "Casos de éxito en sistemas web y desarrollo digital",
   description:
     "Casos anónimos de Zyteron: sistemas web, control de flota, asistencia, inventario, tickets, cotizaciones PDF, tiendas online y SEO para empresas en Chile.",
   path: "/casos-exito",

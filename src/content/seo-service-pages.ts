@@ -94,7 +94,7 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "desarrollo-web",
     path: "/desarrollo-web",
     navLabel: "Desarrollo web",
-    metaTitle: "Desarrollo Web para Empresas | ZYTERON · Santiago, Chile",
+    metaTitle: "Desarrollo web para empresas en Chile | Zyteron",
     metaDescription:
       "Desarrolla una web profesional para captar clientes en Chile, con SEO base, diseño responsive y rutas de contacto claras. Cotiza sin compromiso hoy.",
     primaryKeyword: "desarrollo web en Chile",

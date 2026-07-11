@@ -18,13 +18,13 @@ import {
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
-import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import { buildAboutPageJsonLd, createPageMetadata } from "@/lib/seo";
 import { softBlueBlurDataUrl } from "@/lib/image-placeholders";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Quiénes somos | Zyteron SpA - Desarrollo web y soluciones digitales en Chile",
+  title: "Empresa de desarrollo web en Santiago | Zyteron SpA",
   description:
     "Conoce Zyteron SpA, empresa chilena de desarrollo web, sistemas digitales, automatización y soporte tecnológico para pymes, emprendedores y negocios en Chile.",
   path: "/quienes-somos",
@@ -44,20 +44,23 @@ const leaderExpertise = [
 
 const teamMembers = [
   {
+    id: "eduardo-avila",
     name: "Eduardo Ávila",
     role: "Fundador y líder de proyectos",
     photo: "/equipo/eduardo-avila/perfil-web.png",
-    bio: "Con experiencia en tecnología, análisis de procesos, liderazgo operativo y desarrollo de soluciones digitales para empresas, lidera Zyteron con una visión práctica: crear herramientas claras, profesionales y útiles para negocios reales.",
+    bio: `Con más de ${siteConfig.business.experienceYears} años de experiencia en tecnología, análisis de procesos, liderazgo operativo y desarrollo de soluciones digitales para empresas, lidera Zyteron con una visión práctica: crear herramientas claras, profesionales y útiles para negocios reales.`,
     // NAP unificado: usamos el correo oficial centralizado en siteConfig en vez de un correo personal.
     contact: siteConfig.contact.email,
   },
   {
+    id: "victor",
     name: "Víctor",
     role: "Desarrollo y soporte TI",
     photo: "/equipo/victor/perfil-web.png",
     bio: "Profesional enfocado en desarrollo web, soporte técnico, mantenimiento de sistemas e implementación TI.",
   },
   {
+    id: "leonel",
     name: "Leonel",
     role: "Análisis, desarrollo y calidad",
     photo: "/equipo/leonel/perfil-web.png",
@@ -125,11 +128,18 @@ export default function QuienesSomosPage() {
     <main className="bg-white">
       <JsonLd
         id="quienes-somos-webpage-schema"
-        data={buildWebPageJsonLd({
+        data={buildAboutPageJsonLd({
           path: "/quienes-somos",
-          title: "Quiénes somos | Zyteron SpA",
+          title: "Empresa de desarrollo web en Santiago | Zyteron SpA",
           description:
             "Conoce Zyteron SpA, empresa chilena de desarrollo web, sistemas digitales, automatización y soporte tecnológico.",
+          team: teamMembers.map((member) => ({
+            id: member.id,
+            name: member.name,
+            role: member.role,
+            description: member.bio,
+            photoPath: member.photo,
+          })),
           breadcrumbs: [
             { name: "Inicio", path: "/" },
             { name: "Quiénes somos", path: "/quienes-somos" },
@@ -143,16 +153,16 @@ export default function QuienesSomosPage() {
         <Container className="relative space-y-6 text-center">
           <div className="mx-auto flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700">
             <Sparkles className="h-4 w-4" />
-            Empresa chilena de tecnología
+            Empresa chilena de tecnología · Más de {siteConfig.business.experienceYears} años en el rubro
           </div>
 
           <h1 className="mx-auto max-w-4xl text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
-            Soluciones digitales profesionales para empresas, pymes y emprendedores en Chile.
+            Zyteron SpA — Empresa de desarrollo web y sistemas digitales en Santiago, Chile
           </h1>
 
           <p className="mx-auto max-w-3xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            No solo creamos páginas web. Desarrollamos herramientas, tiendas y sistemas pensados para que tu negocio
-            tenga una presencia formal, capte clientes y automatice sus procesos de venta.
+            Creamos páginas web, herramientas, tiendas y sistemas pensados para que tu negocio tenga una
+            presencia formal, capte clientes y automatice sus procesos de venta.
           </p>
 
           <div className="mt-8 flex flex-wrap justify-center gap-4">
@@ -177,7 +187,8 @@ export default function QuienesSomosPage() {
             <div className="space-y-4 text-base leading-relaxed text-slate-600">
               <p>
                 Somos <strong>Zyteron SpA</strong>, una empresa tecnológica chilena dedicada al desarrollo web,
-                creación de sistemas digitales, automatización operativa y soporte tecnológico.
+                creación de sistemas digitales, automatización operativa y soporte tecnológico, con un equipo que
+                suma <strong>más de {siteConfig.business.experienceYears} años de experiencia en el rubro</strong>.
               </p>
               <p>
                 Nacimos para ayudar a emprendedores, profesionales independientes y pymes a profesionalizar su presencia
@@ -219,7 +230,7 @@ export default function QuienesSomosPage() {
               <div className="relative w-full overflow-hidden bg-slate-100 aspect-[4/5] sm:aspect-auto">
                 <Image
                   src={leader.photo}
-                  alt={`Foto profesional de ${leader.name}, ${leader.role}`}
+                  alt="Eduardo Ávila, fundador de Zyteron SpA, empresa de desarrollo web en Santiago Chile"
                   fill
                   sizes="(max-width: 768px) 100vw, 40vw"
                   quality={95}
@@ -260,10 +271,10 @@ export default function QuienesSomosPage() {
                 className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="relative aspect-square w-full overflow-hidden bg-slate-100">
-                  <Image
-                    src={member.photo}
-                    alt={`Foto de ${member.name}, ${member.role}`}
-                    fill
+                    <Image
+                      src={member.photo}
+                      alt={`${member.name}, ${member.role} en Zyteron SpA, empresa de desarrollo web en Santiago Chile`}
+                      fill
                     sizes="(max-width: 640px) 100vw, 50vw"
                     quality={85}
                     loading="lazy"
@@ -333,7 +344,7 @@ export default function QuienesSomosPage() {
           <div className="space-y-6">
             <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Por qué elegir Zyteron</h2>
             <p className="text-base text-slate-600">
-              No somos una agencia más, somos tu aliado tecnológico.
+              Un aliado tecnológico que conoce tu negocio y responde cuando lo necesitas.
             </p>
             <ul className="space-y-4">
               {reasons.map((reason, idx) => (
@@ -347,6 +358,7 @@ export default function QuienesSomosPage() {
           <div className="rounded-3xl border border-slate-200 bg-slate-900 p-8 text-white sm:p-12">
             <h3 className="text-2xl font-extrabold text-white">Respaldo y Formalidad</h3>
             <ul className="mt-8 space-y-4 text-slate-300">
+              <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-blue-400" /> Equipo con más de {siteConfig.business.experienceYears} años de experiencia en el rubro tecnológico.</li>
               <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-blue-400" /> Empresa formalmente constituida (ZYTERON SpA).</li>
               <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-blue-400" /> Facturación electrónica en todos nuestros servicios.</li>
               <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-blue-400" /> Atención oficial por correo corporativo.</li>

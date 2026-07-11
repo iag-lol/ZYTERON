@@ -419,7 +419,7 @@ export const blogPosts: BlogPostData[] = [
     intent: "mixta",
     readingTime: "10 min",
     publishedAt: "2026-05-19",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: [
       {
         heading: "Precios referenciales por tipo de proyecto",
@@ -507,7 +507,7 @@ export const blogPosts: BlogPostData[] = [
     intent: "informativa",
     readingTime: "8 min",
     publishedAt: "2026-05-19",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: [
       {
         heading: "Checklist esencial para una web de pyme",
@@ -580,7 +580,7 @@ export const blogPosts: BlogPostData[] = [
     intent: "informativa",
     readingTime: "7 min",
     publishedAt: "2026-05-19",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: [
       {
         heading: "Qué es una página web",
@@ -646,7 +646,7 @@ export const blogPosts: BlogPostData[] = [
     intent: "informativa",
     readingTime: "7 min",
     publishedAt: "2026-05-19",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: [
       {
         heading: "Confianza antes del primer contacto",
@@ -704,7 +704,7 @@ export const blogPosts: BlogPostData[] = [
     intent: "informativa",
     readingTime: "8 min",
     publishedAt: "2026-05-19",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: [
       {
         heading: "Definición simple",
@@ -768,7 +768,7 @@ export const blogPosts: BlogPostData[] = [
     intent: "informativa",
     readingTime: "9 min",
     publishedAt: "2026-05-19",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: [
       {
         heading: "SEO local: partir por intención real",
@@ -875,7 +875,7 @@ const plannedBlogPosts: BlogPostData[] = [
     intent: "mixta",
     readingTime: "8 min",
     publishedAt: "2026-06-03",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: buildPracticalArticleSections({
       problem:
         "Muchas empresas eligen plataforma mirando solo precio inicial o moda técnica. Esa decisión puede limitar SEO, velocidad, integraciones o crecimiento cuando el sitio empieza a generar más demanda.",
@@ -923,7 +923,7 @@ const plannedBlogPosts: BlogPostData[] = [
     intent: "comercial",
     readingTime: "8 min",
     publishedAt: "2026-06-02",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: buildPracticalArticleSections({
       problem:
         "Muchas pymes gestionan clientes, ventas, asistencia, inventario o solicitudes con planillas, papel y mensajes. El problema aparece cuando no existe historial confiable, responsables claros ni reportes oportunos.",
@@ -971,7 +971,7 @@ const plannedBlogPosts: BlogPostData[] = [
     intent: "comercial",
     readingTime: "7 min",
     publishedAt: "2026-06-03",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: buildPracticalArticleSections({
       problem:
         "Muchas pymes buscan soporte solo cuando algo falla: correo caído, web lenta, equipo mal configurado o herramienta bloqueada. Eso resuelve la urgencia, pero no evita recurrencias.",
@@ -1011,7 +1011,7 @@ const plannedBlogPosts: BlogPostData[] = [
     intent: "comercial",
     readingTime: "7 min",
     publishedAt: "2026-06-04",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: buildPracticalArticleSections({
       problem:
         "WhatsApp es cercano, pero puede convertirse en una bandeja desordenada con solicitudes incompletas, respuestas repetidas y seguimiento manual.",
@@ -1051,7 +1051,7 @@ const plannedBlogPosts: BlogPostData[] = [
     intent: "mixta",
     readingTime: "8 min",
     publishedAt: "2026-05-30",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: buildPracticalArticleSections({
       problem:
         "Algunas pymes pagan una plataforma antes de ordenar productos, fotos, precios, despacho y atención. Eso puede elevar costos sin resolver la operación base.",
@@ -1100,7 +1100,7 @@ const plannedBlogPosts: BlogPostData[] = [
     intent: "mixta",
     readingTime: "7 min",
     publishedAt: "2026-05-31",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: buildPracticalArticleSections({
       problem:
         "Excel es flexible y barato, pero se vuelve frágil cuando muchas personas editan información, existen versiones distintas o se requiere historial de cambios.",
@@ -1149,7 +1149,7 @@ const plannedBlogPosts: BlogPostData[] = [
     intent: "comercial",
     readingTime: "7 min",
     publishedAt: "2026-06-01",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: buildPracticalArticleSections({
       problem:
         "Una landing page concentra el mensaje en una acción. Un sitio completo organiza varias páginas, servicios, recursos y señales de confianza.",
@@ -1198,7 +1198,7 @@ const plannedBlogPosts: BlogPostData[] = [
     intent: "informativa",
     readingTime: "8 min",
     publishedAt: "2026-05-29",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: buildPracticalArticleSections({
       problem:
         "Muchas pymes revisan seguridad solo después de perder acceso, sufrir una caída o detectar correos comprometidos. Reaccionar tarde suele salir más caro.",
@@ -1248,7 +1248,7 @@ const plannedBlogPosts: BlogPostData[] = [
     intent: "mixta",
     readingTime: "7 min",
     publishedAt: "2026-06-05",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: buildPracticalArticleSections({
       problem:
         "Si vendes productos personalizados, bajo pedido o con stock variable, una tienda tradicional puede quedar sobredimensionada al inicio.",
@@ -1296,7 +1296,7 @@ const plannedBlogPosts: BlogPostData[] = [
     intent: "comercial",
     readingTime: "8 min",
     publishedAt: "2026-06-06",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: buildPracticalArticleSections({
       problem:
         "Dos propuestas pueden llamarse desarrollo web y tener alcances totalmente distintos. Comparar solo precio deja fuera SEO, soporte, propiedad y medición.",
@@ -1336,7 +1336,7 @@ const plannedBlogPosts: BlogPostData[] = [
     intent: "mixta",
     readingTime: "8 min",
     publishedAt: "2026-05-28",
-    authorName: "Zyteron",
+    authorName: "Eduardo Ávila",
     sections: buildPracticalArticleSections({
       problem:
         "Una empresa B2B puede tener pocas visitas y aun así generar oportunidades de alto valor. Medir solo tráfico no muestra retorno real.",

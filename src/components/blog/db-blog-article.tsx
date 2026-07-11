@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { renderMarkdown } from "@/lib/markdown";
 import { formatStableLongDateEsCl } from "@/lib/stable-date";
 import type { DbBlogPost } from "@/lib/admin/blog-cases-repository";
+import { siteConfig } from "@/config/site";
 
 /**
  * Renderiza un artículo del blog administrado en Supabase (contenido Markdown).
@@ -16,6 +17,7 @@ export function DbBlogArticle({ post }: { post: DbBlogPost }) {
   const html = renderMarkdown(post.content);
   const publishedDate = formatStableLongDateEsCl(post.publishedAt ?? post.createdAt ?? "");
   const modifiedDate = formatStableLongDateEsCl(post.updatedAt ?? post.publishedAt ?? post.createdAt ?? "");
+  const authorName = post.author?.trim() || siteConfig.representative.name;
 
   return (
     <main className="bg-white">
@@ -41,7 +43,10 @@ export function DbBlogArticle({ post }: { post: DbBlogPost }) {
               {post.readMinutes ?? 5} min de lectura
             </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-semibold">
-              Autor: {post.author ?? "Zyteron"}
+              Por{" "}
+              <Link href="/quienes-somos" className="text-blue-700 hover:text-blue-900">
+                {authorName}
+              </Link>
             </span>
           </div>
         </Container>

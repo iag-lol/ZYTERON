@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { siteConfig } from "@/config/site";
 import {
   createBlogPost,
   updateBlogPost,
@@ -114,7 +115,7 @@ export async function POST(request: Request) {
       category: text(data.category) || null,
       tags: tagList(data.tags),
       readMinutes: intValue(data.readMinutes, estimateReadMinutes(content)),
-      author: text(data.author) || "Zyteron",
+      author: text(data.author) || siteConfig.representative.name,
       status,
       metaTitle: text(data.metaTitle) || null,
       metaDescription: text(data.metaDescription) || null,

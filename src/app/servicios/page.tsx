@@ -5,8 +5,9 @@ import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
-import { buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import { buildAggregateRatingJsonLd, buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 import { seoServicePages } from "@/content/seo-service-pages";
+import { getApprovedReviewsSnapshot } from "@/lib/web-control";
 
 const WHATSAPP_URL =
   `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20orientaci%C3%B3n%20sobre%20un%20servicio%20digital%20para%20mi%20empresa.`;
@@ -126,7 +127,12 @@ const serviceSelector = [
   "Si necesitas ayuda tecnológica continua, configuración o mantención operativa, revisemos soporte TI.",
 ];
 
-export default function ServiciosPage() {
+export const revalidate = 300;
+
+export default async function ServiciosPage() {
+  const reviews = await getApprovedReviewsSnapshot();
+  const aggregateRatingSchema = buildAggregateRatingJsonLd(reviews, "/servicios");
+
   return (
     <main className="bg-white">
       <JsonLd
@@ -180,6 +186,9 @@ export default function ServiciosPage() {
           ],
         })}
       />
+      {aggregateRatingSchema ? (
+        <JsonLd id="servicios-aggregate-rating-schema" data={aggregateRatingSchema} />
+      ) : null}
 
       <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-20">
         <Container className="space-y-5 text-center">

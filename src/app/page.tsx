@@ -20,7 +20,9 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { siteConfig } from "@/config/site";
 import {
+  buildAggregateRatingJsonLd,
   buildFaqJsonLd,
+  buildLocalBusinessJsonLd,
   buildServicesListJsonLd,
   buildWebPageJsonLd,
   createPageMetadata,
@@ -45,7 +47,7 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 const trustPoints = [
-  "Experiencia práctica ligada a tecnología, procesos y soluciones digitales.",
+  `Más de ${siteConfig.business.experienceYears} años de experiencia en tecnología, procesos y soluciones digitales.`,
   "Cotización formal y sin compromiso antes de iniciar.",
   "Proceso de trabajo ordenado y documentado.",
   "Entrega por etapas con revisión del cliente.",
@@ -335,6 +337,7 @@ export default async function Home() {
   const reviews = await getApprovedReviewsSnapshot();
   const featuredCases = await getFeaturedCaseItems(4);
   const publishedScholarshipProfiles = await getPublishedScholarshipProfiles(5);
+  const aggregateRatingSchema = buildAggregateRatingJsonLd(reviews, "/");
 
   return (
     <main className="overflow-hidden bg-white">
@@ -348,6 +351,14 @@ export default async function Home() {
           breadcrumbs: [{ name: "Inicio", path: "/" }],
         })}
       />
+      <JsonLd
+        id="home-localbusiness-schema"
+        data={buildLocalBusinessJsonLd(
+          "/",
+          "Desarrollo web, sistemas digitales, tiendas online, automatización y soporte TI para empresas, pymes y emprendedores en Chile.",
+        )}
+      />
+      {aggregateRatingSchema ? <JsonLd id="home-aggregate-rating-schema" data={aggregateRatingSchema} /> : null}
       <JsonLd
         id="home-faq-schema"
         data={buildFaqJsonLd(
@@ -656,7 +667,7 @@ export default async function Home() {
                       <div key={src} className="relative">
                         <Image
                           src={src}
-                          alt={`Captura ${index + 1} de ${demo.name} para evaluar desarrollo web y tienda online`}
+                          alt={`Captura ${index + 1} de ${demo.name} para pymes en Chile y evaluación de desarrollo web`}
                           fill
                           sizes="(max-width: 768px) 45vw, (max-width: 1280px) 260px, 300px"
                           quality={80}

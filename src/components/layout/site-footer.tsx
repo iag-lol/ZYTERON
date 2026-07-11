@@ -121,11 +121,11 @@ export function SiteFooter() {
             </a>
             <div className="flex items-center gap-2 text-slate-300">
               <MapPin className="h-4 w-4" />
-              Santiago, Chile
+              {siteConfig.address.display}
             </div>
             <div className="flex items-center gap-2 text-slate-300">
               <Phone className="h-4 w-4" />
-              Atención comercial: Lun-Vie 09:00 a 18:00
+              Atención comercial: {siteConfig.business.hoursDisplay}
             </div>
 
           </div>
@@ -168,7 +168,7 @@ export function SiteFooter() {
               <p>Razón social: ZYTERON SpA</p>
               <p>RUT: 78.398.774-0</p>
               <p>Giro: Servicios informáticos, desarrollo web, soporte TI y soluciones digitales</p>
-              <p>Ubicación: Santiago, Chile</p>
+              <p>Ubicación: {siteConfig.address.display}</p>
               <p>Atención: Empresas, pymes y emprendedores</p>
             </div>
           </div>
@@ -176,7 +176,7 @@ export function SiteFooter() {
             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Síguenos</p>
             <div className="flex gap-4">
               <a
-                href="https://www.linkedin.com/company/zyteron-spa/?viewAsMember=true"
+                href={siteConfig.social.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center rounded-full bg-white/5 p-2 text-slate-400 transition-all hover:bg-[#0a66c2] hover:text-white"
@@ -199,7 +199,7 @@ export function SiteFooter() {
                 </svg>
               </a>
               <a
-                href="https://www.instagram.com/zyteron.cl/"
+                href={siteConfig.social.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center rounded-full bg-white/5 p-2 text-slate-400 transition-all hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] hover:text-white"
