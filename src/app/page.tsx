@@ -3,16 +3,15 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
-  BadgeCheck,
   Briefcase,
   Check,
-  FileText,
+  Globe,
   LayoutDashboard,
   MonitorSmartphone,
+  Search,
   Settings,
   ShieldCheck,
-  Users,
-  Workflow,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
@@ -32,6 +31,11 @@ import { getFeaturedCaseItems } from "@/lib/content/cases-merge";
 import { softBlueBlurDataUrl } from "@/lib/image-placeholders";
 import { getPublishedScholarshipProfiles } from "@/lib/becas/public-profiles";
 import { PublicShowcaseCarousel } from "@/components/becas/public-showcase-carousel";
+import { Reveal } from "@/components/home/reveal";
+import { CountUp } from "@/components/home/count-up";
+import { ScrollProgress } from "@/components/home/scroll-progress";
+import { CoverageMarquee } from "@/components/home/coverage-marquee";
+import { HomeFaqAccordion } from "@/components/home/home-faq";
 
 export const revalidate = 300;
 
@@ -39,11 +43,68 @@ const WHATSAPP_BASE =
   `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.`;
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Desarrollo web y sistemas para empresas en Chile",
+  title: "Diseño de páginas web en Chile para empresas y pymes",
   description:
-    "Desarrollamos sitios web, sistemas, ecommerce, automatización y soporte TI para empresas en Chile con foco en ventas, claridad y continuidad operativa.",
+    "Diseño de páginas web profesionales para empresas y pymes en todo Chile. Sitios rápidos, responsivos y con SEO real para captar clientes. Cotiza gratis hoy.",
   path: "/",
 });
+
+const heroAnchors = [
+  { label: "Servicios", href: "#servicios" },
+  { label: "Cobertura", href: "#cobertura" },
+  { label: "Planes", href: "#planes" },
+  { label: "Proceso", href: "#proceso" },
+  { label: "Preguntas frecuentes", href: "#preguntas-frecuentes" },
+];
+
+const heroTrustSignals = [
+  "Te respondemos dentro del horario laboral.",
+  "Cotización formal y sin compromiso.",
+  "Diseño responsivo para celular, tablet y computador.",
+  "Sabrás exactamente qué incluye tu proyecto antes de comenzar.",
+];
+
+const processSteps = [
+  "Diagnóstico inicial",
+  "Levantamiento de requerimientos",
+  "Cotización formal",
+  "Diseño y estructura",
+  "Desarrollo web o sistema",
+  "Revisión con el cliente",
+  "Ajustes finales",
+  "Entrega del proyecto",
+  "Soporte post-entrega",
+];
+
+const heroStats = [
+  {
+    value: siteConfig.business.experienceYears,
+    suffix: "+",
+    label: "Años de experiencia en tecnología y desarrollo",
+  },
+  {
+    value: 16,
+    suffix: "",
+    label: "Regiones de Chile con atención remota",
+  },
+  {
+    value: 100,
+    suffix: "%",
+    label: "Proyectos entregados con diseño responsivo",
+  },
+  {
+    value: processSteps.length,
+    suffix: "",
+    label: "Etapas documentadas, de cotización a post-entrega",
+  },
+];
+
+const coverageSignals = [
+  "Atendemos empresas, pymes y emprendedores en todas las regiones de Chile con trabajo remoto y reuniones online.",
+  "Base operativa en Santiago para proyectos que requieren contexto local en la Región Metropolitana.",
+  "Seguimiento por etapas y comunicación directa para avanzar con tu proyecto estés donde estés.",
+  "Cada web se entrega con base SEO técnica para que tu negocio aparezca en las búsquedas de tu ciudad y rubro.",
+];
 
 const trustPoints = [
   `Más de ${siteConfig.business.experienceYears} años de experiencia en tecnología, procesos y soluciones digitales.`,
@@ -64,7 +125,7 @@ const serviceGroups = [
     icon: <MonitorSmartphone className="h-5 w-5" />,
     href: "/desarrollo-web",
     description:
-      "Sitios profesionales para presentar, posicionar y vender tus servicios o productos.",
+      "Diseño de páginas web profesionales para presentar, posicionar y vender tus servicios o productos.",
     items: [
       "Sitios web corporativos",
       "Landing pages",
@@ -146,18 +207,6 @@ const adminPanelFeatures = [
   "Dashboard con métricas",
 ];
 
-const processSteps = [
-  "Diagnóstico inicial",
-  "Levantamiento de requerimientos",
-  "Cotización formal",
-  "Diseño y estructura",
-  "Desarrollo web o sistema",
-  "Revisión con el cliente",
-  "Ajustes finales",
-  "Entrega del proyecto",
-  "Soporte post-entrega",
-];
-
 const planCards = [
   {
     name: "Plan Básico",
@@ -203,7 +252,7 @@ const planCards = [
 
 const homeFaqs = [
   {
-    q: "¿Cuánto cuesta una página web profesional?",
+    q: "¿Cuánto cuesta el diseño de una página web profesional?",
     a: "Depende del alcance, cantidad de secciones, contenido, integraciones y soporte. Publicamos valores referenciales y siempre entregamos cotización formal antes de iniciar.",
   },
   {
@@ -247,8 +296,8 @@ const homeFaqs = [
     a: "Sí. Incluimos soporte post-entrega y planes de continuidad según necesidad.",
   },
   {
-    q: "¿Trabajan con empresas fuera de Santiago?",
-    a: "Sí. Atendemos proyectos para pymes, emprendedores y empresas de distintas regiones de Chile mediante atención remota.",
+    q: "¿Diseñan páginas web para empresas de todo Chile?",
+    a: "Sí. Trabajamos con pymes, emprendedores y empresas de todas las regiones de Chile, de Arica a Punta Arenas, con atención remota, reuniones online y seguimiento por etapas.",
   },
   {
     q: "¿Emiten factura o boleta?",
@@ -325,13 +374,6 @@ const clientTypes = [
   },
 ];
 
-const localSignals = [
-  "Atendemos proyectos para pymes, emprendedores y empresas de distintas regiones de Chile.",
-  "Base operativa en Santiago y foco en empresas de la Región Metropolitana cuando el proyecto requiere contexto local.",
-  "Trabajo remoto, seguimiento por etapas y comunicación directa para avanzar sin depender de reuniones innecesarias.",
-  "Enfoque comercial, técnico y operativo para que la solución no sea solo diseño, sino una herramienta útil para el negocio.",
-];
-
 export default async function Home() {
   const reviews = await getApprovedReviewsSnapshot();
   const featuredCases = await getFeaturedCaseItems(4);
@@ -339,13 +381,14 @@ export default async function Home() {
 
   return (
     <main className="overflow-hidden bg-white">
+      <ScrollProgress />
       <JsonLd
         id="home-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/",
-          title: "Zyteron | Desarrollo web y sistemas para empresas",
+          title: "Zyteron | Diseño de páginas web en Chile para empresas y pymes",
           description:
-            "Desarrollamos sitios web, ecommerce, sistemas y soporte TI para empresas en Chile con foco en claridad comercial y continuidad operativa.",
+            "Diseño de páginas web profesionales, tiendas online, sistemas y soporte TI para empresas y pymes en todo Chile, con SEO técnico y foco comercial.",
           breadcrumbs: [{ name: "Inicio", path: "/" }],
         })}
       />
@@ -353,7 +396,7 @@ export default async function Home() {
         id="home-localbusiness-schema"
         data={buildLocalBusinessJsonLd(
           "/",
-          "Desarrollo web, sistemas digitales, tiendas online, automatización y soporte TI para empresas, pymes y emprendedores en Chile.",
+          "Diseño de páginas web, desarrollo web, tiendas online, sistemas, automatización y soporte TI para empresas, pymes y emprendedores en todo Chile.",
         )}
       />
       <JsonLd
@@ -373,7 +416,7 @@ export default async function Home() {
           services: [
             {
               name: "Desarrollo web",
-              description: "Páginas web profesionales para empresas y pymes en Chile.",
+              description: "Diseño de páginas web profesionales para empresas y pymes en Chile.",
               path: "/desarrollo-web",
             },
             {
@@ -405,245 +448,347 @@ export default async function Home() {
         })}
       />
 
+      {/* ── Hero ── */}
       <section className="relative overflow-hidden bg-hero-pattern">
-        <Container className="relative z-10 grid items-center gap-12 py-20 lg:grid-cols-[1.15fr_0.85fr] lg:py-24">
+        <Container className="relative z-10 grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
           <div className="space-y-6">
             <div className="badge-blue">
               <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
-              Empresas · Pymes · Emprendedores · Chile
+              Empresas · Pymes · Emprendedores · Todo Chile
             </div>
 
-            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl">
-              Desarrollo web, sistemas digitales y soluciones tecnológicas para empresas en Chile
+            <h1 className="text-balance text-[2rem] font-extrabold leading-[1.12] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.3rem]">
+              Diseño de{" "}
+              <span className="text-gradient-hero animate-gradient">páginas web profesionales</span>{" "}
+              para empresas en todo Chile
             </h1>
 
             <p className="max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
-              En Zyteron creamos páginas web profesionales, tiendas online, sistemas internos,
-              automatizaciones y soluciones digitales para pymes, empresas y emprendedores que buscan
-              crecer con tecnología seria, clara y escalable.
+              Creamos páginas web, tiendas online, sistemas internos y automatizaciones para pymes,
+              empresas y emprendedores de Arica a Punta Arenas: diseño moderno, base SEO real y una
+              estructura pensada para convertir visitas en clientes.
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
-              <Button asChild size="lg" className="btn-primary-glow gap-2 bg-blue-700 px-6 font-bold text-white hover:bg-blue-800">
+              <Button
+                asChild
+                size="lg"
+                className="btn-primary-glow w-full gap-2 bg-blue-700 px-6 font-bold text-white hover:bg-blue-800 sm:w-auto"
+              >
                 <Link href="/cotizador">
                   Solicitar cotización <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="w-full border-slate-300 text-slate-800 hover:bg-slate-50 sm:w-auto"
+              >
                 <Link href="/desarrollo-web">Ver desarrollo web</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-                <Link href="/quienes-somos">Conocer Zyteron</Link>
               </Button>
               <Link
                 href={WHATSAPP_BASE}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl border border-[#25d366]/35 bg-[#25d366]/10 px-5 py-2.5 text-sm font-bold text-[#18a34d] hover:bg-[#25d366]/20"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#25d366]/35 bg-[#25d366]/10 px-5 py-2.5 text-sm font-bold text-[#18a34d] transition-colors hover:bg-[#25d366]/20 sm:w-auto"
               >
                 <WhatsAppIcon className="h-5 w-5" />
                 Hablar por WhatsApp
               </Link>
             </div>
 
-            <div className="grid gap-2 text-xs text-slate-500 sm:grid-cols-2">
-              <p>Te respondemos dentro del horario laboral.</p>
-              <p>Cotización formal y sin compromiso.</p>
-              <p>Atención a empresas, pymes y emprendedores.</p>
-              <p>Sabrás exactamente qué incluye tu proyecto antes de comenzar.</p>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/70">
-            <p className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-500">
-              Qué resuelve ZYTERON
-            </p>
-            <div className="space-y-3">
-              {[
-                "Presencia digital profesional para vender servicios reales.",
-                "Sistemas internos para ordenar procesos y datos.",
-                "Automatizaciones y soporte TI para continuidad operativa.",
-                "Acompañamiento desde cotización hasta post-entrega.",
-              ].map((item) => (
-                <div key={item} className="flex items-start gap-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
-                  <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" />
-                  <p className="text-sm text-slate-700">{item}</p>
-                </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {heroTrustSignals.map((signal) => (
+                <p key={signal} className="flex items-start gap-2 text-xs text-slate-600">
+                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
+                  {signal}
+                </p>
               ))}
             </div>
-            <p className="mt-4 text-xs text-slate-500">
-              Desarrollo responsivo para computador, tablet y celular.
-            </p>
+
+            <nav aria-label="Secciones destacadas" className="flex flex-wrap gap-2 pt-1">
+              {heroAnchors.map((anchor) => (
+                <a
+                  key={anchor.href}
+                  href={anchor.href}
+                  className="rounded-full border border-blue-100 bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-blue-800 transition-colors hover:border-blue-300 hover:bg-blue-50"
+                >
+                  {anchor.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+
+          {/* Mockup de navegador con chips flotantes */}
+          <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+            <div className="hero-blob -right-8 -top-10 h-44 w-44 bg-sky-300/50" aria-hidden="true" />
+            <div className="hero-blob -bottom-12 -left-10 h-56 w-56 bg-blue-400/30" aria-hidden="true" />
+
+            <div className="animate-float relative z-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-blue-900/15">
+              <div className="flex items-center gap-1.5 border-b border-slate-100 bg-slate-50 px-4 py-3">
+                <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
+                <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                <span className="ml-3 flex-1 truncate rounded-md border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold tracking-wide text-slate-500">
+                  https://www.tu-empresa.cl
+                </span>
+              </div>
+
+              <div className="space-y-4 p-5 sm:p-6">
+                <span className="badge-blue">Tu nueva página web</span>
+                <div className="space-y-2">
+                  <div className="animate-shimmer h-4 w-11/12 rounded-full" />
+                  <div className="h-4 w-3/5 rounded-full bg-slate-200" />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex h-9 items-center rounded-lg bg-blue-700 px-4 text-[11px] font-bold text-white shadow-md shadow-blue-700/30">
+                    Cotizar ahora
+                  </span>
+                  <span className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-4 text-[11px] font-bold text-slate-600">
+                    WhatsApp
+                  </span>
+                </div>
+                <div className="bg-grid-light flex h-24 items-center justify-center rounded-xl border border-slate-200 sm:h-28">
+                  <MonitorSmartphone className="h-8 w-8 text-blue-300" />
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {["Rápida", "Responsiva", "SEO real"].map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-lg border border-blue-100 bg-blue-50 py-2 text-center text-[11px] font-bold text-blue-800"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="animate-float-delayed absolute -right-2 top-20 z-20 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-lg shadow-blue-900/10 sm:-right-4">
+              <span className="rounded-lg bg-blue-50 p-1.5 text-blue-700">
+                <Search className="h-4 w-4" />
+              </span>
+              <span>
+                <span className="block text-[11px] font-extrabold text-slate-900">SEO real</span>
+                <span className="block text-[10px] text-slate-500">Listo para Google</span>
+              </span>
+            </div>
+            <div className="animate-float-delayed absolute -bottom-4 left-0 z-20 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-lg shadow-blue-900/10 sm:-left-4">
+              <span className="rounded-lg bg-emerald-50 p-1.5 text-emerald-600">
+                <TrendingUp className="h-4 w-4" />
+              </span>
+              <span>
+                <span className="block text-[11px] font-extrabold text-slate-900">Más consultas</span>
+                <span className="block text-[10px] text-slate-500">Web enfocada en convertir</span>
+              </span>
+            </div>
           </div>
         </Container>
       </section>
 
+      {/* ── Cifras ── */}
       <section className="border-y border-slate-200 bg-white py-10">
-        <Container className="grid gap-4 md:grid-cols-3">
-          {[
-            {
-              icon: <FileText className="h-5 w-5 text-blue-700" />,
-              title: "Cotización y alcance claros",
-              desc: "Definimos condiciones, entregables y etapas antes de comenzar.",
-            },
-            {
-              icon: <Workflow className="h-5 w-5 text-blue-700" />,
-              title: "Proceso ordenado",
-              desc: "Ejecución por hitos con revisión del cliente en cada etapa clave.",
-            },
-            {
-              icon: <Users className="h-5 w-5 text-blue-700" />,
-              title: "Comunicación directa",
-              desc: "Canales activos para resolver avances, dudas y ajustes del proyecto.",
-            },
-          ].map((item) => (
-            <div key={item.title} className="card-premium p-5">
-              <div className="mb-3 inline-flex rounded-lg bg-blue-50 p-2">{item.icon}</div>
-              <h2 className="text-base font-bold text-slate-900">{item.title}</h2>
-              <p className="mt-1 text-sm text-slate-600">{item.desc}</p>
-            </div>
-          ))}
+        <Container>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-8 text-center lg:grid-cols-4">
+            {heroStats.map((stat, index) => (
+              <Reveal key={stat.label} delay={index * 80}>
+                <p className="text-4xl font-extrabold tracking-tight sm:text-5xl">
+                  <CountUp value={stat.value} suffix={stat.suffix} className="text-gradient-blue" />
+                </p>
+                <p className="mx-auto mt-2 max-w-[220px] text-xs font-semibold leading-relaxed text-slate-500 sm:text-sm">
+                  {stat.label}
+                </p>
+              </Reveal>
+            ))}
+          </div>
         </Container>
       </section>
 
-      <section className="section-alt py-20">
+      {/* ── Cobertura nacional ── */}
+      <section id="cobertura" className="section-alt scroll-mt-24 py-20">
         <Container className="space-y-10">
-          <div className="space-y-2 text-center">
+          <Reveal className="space-y-3 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Cobertura nacional</p>
+            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              Diseño de páginas web para todo Chile
+            </h2>
+            <p className="mx-auto max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              De Arica a Punta Arenas: trabajamos 100% online con reuniones, avances por etapas y
+              comunicación directa, para que tu empresa tenga una web profesional sin importar la región
+              donde opere.
+            </p>
+          </Reveal>
+
+          <Reveal>
+            <CoverageMarquee />
+          </Reveal>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {coverageSignals.map((signal, index) => (
+              <Reveal key={signal} delay={(index % 2) * 90} className="h-full">
+                <div className="card-premium flex h-full items-start gap-3 p-5">
+                  <span className="rounded-lg bg-blue-50 p-2 text-blue-700">
+                    <Globe className="h-4 w-4" />
+                  </span>
+                  <p className="text-sm leading-relaxed text-slate-700">{signal}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          <Reveal className="text-center">
+            <Button asChild className="btn-primary-glow bg-blue-700 font-bold text-white hover:bg-blue-800">
+              <Link href="/cotizador">Cotizar mi página web ahora</Link>
+            </Button>
+          </Reveal>
+        </Container>
+      </section>
+
+      {/* ── Servicios ── */}
+      <section id="servicios" className="scroll-mt-24 bg-white py-20">
+        <Container className="space-y-10">
+          <Reveal className="space-y-2 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Servicios</p>
-            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Servicios organizados para decidir mejor
+            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              Diseño web, sistemas y soporte organizados para decidir mejor
             </h2>
             <p className="mx-auto max-w-3xl text-sm text-slate-600 sm:text-base">
               Separamos cada línea de trabajo para que puedas cotizar exactamente lo que tu negocio necesita.
             </p>
-          </div>
+          </Reveal>
 
           <div className="grid gap-5 lg:grid-cols-3">
-            {serviceGroups.map((group) => (
-              <article key={group.title} className="card-premium p-6">
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                  {group.icon}
-                  {group.title}
-                </div>
-                <p className="mb-4 text-sm text-slate-600">{group.description}</p>
-                <div className="space-y-2">
-                  {group.items.map((item) => (
-                    <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-                <Button asChild variant="outline" className="mt-5 w-full border-slate-300 text-slate-800 hover:bg-slate-50">
-                  <Link href={group.href}>Ver {group.title.toLowerCase()}</Link>
-                </Button>
-              </article>
+            {serviceGroups.map((group, index) => (
+              <Reveal key={group.title} delay={index * 100} className="h-full">
+                <article className="card-premium flex h-full flex-col p-6">
+                  <div className="mb-3 inline-flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                    {group.icon}
+                    {group.title}
+                  </div>
+                  <p className="mb-4 text-sm text-slate-600">{group.description}</p>
+                  <div className="flex-1 space-y-2">
+                    {group.items.map((item) => (
+                      <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Button asChild variant="outline" className="mt-5 w-full border-slate-300 text-slate-800 hover:bg-slate-50">
+                    <Link href={group.href}>Ver {group.title.toLowerCase()}</Link>
+                  </Button>
+                </article>
+              </Reveal>
             ))}
           </div>
 
-          <div className="text-center">
+          <Reveal className="text-center">
             <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
               <Link href="/desarrollo-web">Ver desarrollo web detallado</Link>
             </Button>
-          </div>
+          </Reveal>
         </Container>
       </section>
 
-      <section className="border-y border-slate-200 bg-white py-20">
-        <Container className="space-y-10">
-          <div className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Confianza empresarial</p>
-            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Por qué confiar en ZYTERON</h2>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {trustPoints.map((point) => (
-              <div key={point} className="card-premium flex items-start gap-3 p-4">
-                <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" />
-                <p className="text-sm text-slate-700">{point}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-3">
-            <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-              <Link href="/quienes-somos">Ver quién está detrás de Zyteron</Link>
-            </Button>
-            <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/contacto">Hablar con un especialista</Link>
-            </Button>
-          </div>
-        </Container>
-      </section>
-
+      {/* ── Soluciones según necesidad ── */}
       <section className="section-alt py-20">
         <Container className="space-y-10">
-          <div className="space-y-2 text-center">
+          <Reveal className="space-y-2 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Soluciones según necesidad</p>
-            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
               Qué necesitas resolver hoy
             </h2>
-          </div>
+          </Reveal>
 
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {solutionsByNeed.map((solution) => (
-              <article key={solution.title} className="card-premium flex flex-col p-6">
-                <h3 className="text-lg font-bold text-slate-900">{solution.title}</h3>
-                <p className="mt-2 flex-1 text-sm text-slate-600">{solution.description}</p>
-                <Button asChild variant="outline" className="mt-4 border-slate-300 text-slate-800 hover:bg-slate-50">
-                  <Link href={solution.href}>{solution.cta}</Link>
-                </Button>
-              </article>
+            {solutionsByNeed.map((solution, index) => (
+              <Reveal key={solution.title} delay={(index % 3) * 90} className="h-full">
+                <article className="card-premium flex h-full flex-col p-6">
+                  <h3 className="text-lg font-bold text-slate-900">{solution.title}</h3>
+                  <p className="mt-2 flex-1 text-sm text-slate-600">{solution.description}</p>
+                  <Button asChild variant="outline" className="mt-4 border-slate-300 text-slate-800 hover:bg-slate-50">
+                    <Link href={solution.href}>{solution.cta}</Link>
+                  </Button>
+                </article>
+              </Reveal>
             ))}
           </div>
         </Container>
       </section>
 
+      {/* ── Tipo de cliente ── */}
       <section className="bg-white py-20">
         <Container className="space-y-10">
-          <div className="space-y-2 text-center">
+          <Reveal className="space-y-2 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Tipo de cliente</p>
-            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
               Soluciones digitales para empresas en Chile
             </h2>
             <p className="mx-auto max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
               Atendemos proyectos para pymes, emprendedores y empresas de distintas regiones de Chile, con foco
               en soluciones claras, escalables y alineadas a la etapa real del negocio.
             </p>
-          </div>
+          </Reveal>
 
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {clientTypes.map((client) => (
-              <Link key={client.title} href={client.href} className="card-premium p-6 transition-colors hover:border-blue-200">
-                <h3 className="text-lg font-extrabold text-slate-900">{client.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{client.description}</p>
-                <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
-                  Ver solución <ArrowRight className="h-4 w-4" />
-                </span>
-              </Link>
+            {clientTypes.map((client, index) => (
+              <Reveal key={client.title} delay={(index % 4) * 80} className="h-full">
+                <Link
+                  href={client.href}
+                  className="card-premium block h-full p-6 transition-colors hover:border-blue-200"
+                >
+                  <h3 className="text-lg font-extrabold text-slate-900">{client.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{client.description}</p>
+                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
+                    Ver solución <ArrowRight className="h-4 w-4" />
+                  </span>
+                </Link>
+              </Reveal>
             ))}
-          </div>
-
-          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6">
-            <h2 className="text-xl font-extrabold text-slate-900">Cobertura local y forma de trabajo</h2>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {localSignals.map((item) => (
-                <div key={item} className="flex items-start gap-2 text-sm leading-relaxed text-slate-700">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
           </div>
         </Container>
       </section>
 
+      {/* ── Confianza ── */}
       <section className="section-alt py-20">
         <Container className="space-y-10">
-          <div className="flex flex-col gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
+          <Reveal className="space-y-2 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Confianza empresarial</p>
+            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              Por qué confiar en ZYTERON
+            </h2>
+          </Reveal>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {trustPoints.map((point, index) => (
+              <Reveal key={point} delay={(index % 2) * 90} className="h-full">
+                <div className="card-premium flex h-full items-start gap-3 p-4">
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" />
+                  <p className="text-sm text-slate-700">{point}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          <Reveal className="flex flex-wrap justify-center gap-3">
+            <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+              <Link href="/quienes-somos">Ver quién está detrás de Zyteron</Link>
+            </Button>
+            <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
+              <Link href="/contacto">Hablar con un especialista</Link>
+            </Button>
+          </Reveal>
+        </Container>
+      </section>
+
+      {/* ── Demos ── */}
+      <section className="bg-white py-20">
+        <Container className="space-y-10">
+          <Reveal className="flex flex-col gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Portafolio y demos</p>
-              <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
                 Demos funcionales para evaluar antes de contratar
               </h2>
               <p className="mt-2 max-w-3xl text-sm text-slate-600 sm:text-base">
@@ -653,53 +798,55 @@ export default async function Home() {
             <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
               <Link href="/demos">Ver todos los demos</Link>
             </Button>
-          </div>
+          </Reveal>
 
           <div className="grid gap-5 sm:grid-cols-2">
-            {demoCards.map((demo) => (
-              <article key={demo.name} className="card-premium overflow-hidden">
-                <div className="bg-grid-light border-b border-slate-200 p-5">
-                  <div className="grid aspect-[16/9] grid-cols-2 gap-1 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                    {demo.gallery.slice(0, 4).map((src, index) => (
-                      <div key={src} className="relative">
-                        <Image
-                          src={src}
-                          alt={`Captura ${index + 1} de ${demo.name} para pymes en Chile y evaluación de desarrollo web`}
-                          fill
-                          sizes="(max-width: 768px) 45vw, (max-width: 1280px) 260px, 300px"
-                          quality={80}
-                          loading="lazy"
-                          placeholder="blur"
-                          blurDataURL={softBlueBlurDataUrl}
-                          className="object-cover"
-                        />
-                      </div>
-                    ))}
+            {demoCards.map((demo, index) => (
+              <Reveal key={demo.name} delay={index * 110} className="h-full">
+                <article className="card-premium h-full overflow-hidden">
+                  <div className="bg-grid-light border-b border-slate-200 p-5">
+                    <div className="grid aspect-[16/9] grid-cols-2 gap-1 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                      {demo.gallery.slice(0, 4).map((src, imageIndex) => (
+                        <div key={src} className="relative">
+                          <Image
+                            src={src}
+                            alt={`Captura ${imageIndex + 1} de ${demo.name} para pymes en Chile y evaluación de desarrollo web`}
+                            fill
+                            sizes="(max-width: 768px) 45vw, (max-width: 1280px) 260px, 300px"
+                            quality={80}
+                            loading="lazy"
+                            placeholder="blur"
+                            blurDataURL={softBlueBlurDataUrl}
+                            className="object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-3 p-5">
-                  <h3 className="text-base font-bold text-slate-900">{demo.name}</h3>
-                  <p className="text-sm text-slate-600">{demo.desc}</p>
-                  <p className="text-xs text-slate-500">{demo.tech}</p>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    <Button asChild size="sm" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-                      <Link href="/demos">Ver demo</Link>
-                    </Button>
-                    <Button asChild size="sm" className="bg-blue-700 text-white hover:bg-blue-800">
-                      <Link href={`/contacto?origen=demo&item=${encodeURIComponent(demo.name)}`}>
-                        Cotizar algo similar
-                      </Link>
-                    </Button>
+                  <div className="space-y-3 p-5">
+                    <h3 className="text-base font-bold text-slate-900">{demo.name}</h3>
+                    <p className="text-sm text-slate-600">{demo.desc}</p>
+                    <p className="text-xs text-slate-500">{demo.tech}</p>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Button asChild size="sm" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+                        <Link href="/demos">Ver demo</Link>
+                      </Button>
+                      <Button asChild size="sm" className="bg-blue-700 text-white hover:bg-blue-800">
+                        <Link href={`/contacto?origen=demo&item=${encodeURIComponent(demo.name)}`}>
+                          Cotizar algo similar
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </article>
+                </article>
+              </Reveal>
             ))}
           </div>
         </Container>
       </section>
 
       {publishedScholarshipProfiles.length > 0 ? (
-        <section className="bg-white py-20">
+        <section className="section-alt py-20">
           <Container>
             <PublicShowcaseCarousel
               profiles={publishedScholarshipProfiles}
@@ -713,11 +860,12 @@ export default async function Home() {
         </section>
       ) : null}
 
+      {/* ── Panel administrativo ── */}
       <section className="bg-white py-20">
         <Container className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-          <div className="space-y-4">
+          <Reveal className="space-y-4">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Panel administrativo</p>
-            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
               Paneles administrativos para que controles tu negocio
             </h2>
             <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
@@ -727,53 +875,60 @@ export default async function Home() {
             <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-slate-700">
               Dashboard con métricas, reportes y control operacional adaptado al tamaño de tu empresa.
             </div>
-          </div>
+          </Reveal>
 
-          <div className="card-premium p-6">
-            <div className="mb-4 flex items-center gap-2">
-              <LayoutDashboard className="h-5 w-5 text-blue-700" />
-              <h3 className="text-lg font-bold text-slate-900">Capacidades frecuentes</h3>
+          <Reveal delay={120}>
+            <div className="card-premium p-6">
+              <div className="mb-4 flex items-center gap-2">
+                <LayoutDashboard className="h-5 w-5 text-blue-700" />
+                <h3 className="text-lg font-bold text-slate-900">Capacidades frecuentes</h3>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {adminPanelFeatures.map((feature) => (
+                  <div key={feature} className="flex items-start gap-2 text-sm text-slate-700">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+                    <span>{feature}</span>
+                  </div>
+                ))}
+              </div>
+              <Button asChild className="mt-5 w-full bg-blue-700 font-bold text-white hover:bg-blue-800">
+                <Link href="/contacto?tipo=sistema">Cotizar un sistema</Link>
+              </Button>
             </div>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {adminPanelFeatures.map((feature) => (
-                <div key={feature} className="flex items-start gap-2 text-sm text-slate-700">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
-                  <span>{feature}</span>
-                </div>
-              ))}
-            </div>
-            <Button asChild className="mt-5 w-full bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/contacto?tipo=sistema">Cotizar un sistema</Link>
-            </Button>
-          </div>
+          </Reveal>
         </Container>
       </section>
 
-      <section className="section-alt py-20">
+      {/* ── Planes ── */}
+      <section id="planes" className="section-alt scroll-mt-24 py-20">
         <Container className="space-y-10">
-          <div className="space-y-2 text-center">
+          <Reveal className="space-y-2 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Planes y precios</p>
-            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Planes claros para distintos niveles de necesidad</h2>
-          </div>
+            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              Planes claros para distintos niveles de necesidad
+            </h2>
+          </Reveal>
 
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {planCards.map((plan) => (
-              <article key={plan.name} className="card-premium flex flex-col p-6">
-                <h3 className="text-lg font-extrabold text-slate-900">{plan.name}</h3>
-                <p className="mt-1 text-sm text-slate-600">{plan.target}</p>
-                <div className="my-4 h-px bg-slate-200" />
-                <div className="flex-1 space-y-2">
-                  {plan.includes.map((item) => (
-                    <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-                <Button asChild className="mt-5 bg-blue-700 text-white hover:bg-blue-800">
-                  <Link href="/planes">Ver planes</Link>
-                </Button>
-              </article>
+            {planCards.map((plan, index) => (
+              <Reveal key={plan.name} delay={(index % 4) * 80} className="h-full">
+                <article className="card-premium flex h-full flex-col p-6">
+                  <h3 className="text-lg font-extrabold text-slate-900">{plan.name}</h3>
+                  <p className="mt-1 text-sm text-slate-600">{plan.target}</p>
+                  <div className="my-4 h-px bg-slate-200" />
+                  <div className="flex-1 space-y-2">
+                    {plan.includes.map((item) => (
+                      <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Button asChild className="mt-5 bg-blue-700 text-white hover:bg-blue-800">
+                    <Link href="/planes">Ver planes</Link>
+                  </Button>
+                </article>
+              </Reveal>
             ))}
           </div>
 
@@ -783,21 +938,28 @@ export default async function Home() {
         </Container>
       </section>
 
-      <section className="bg-white py-20">
+      {/* ── Proceso ── */}
+      <section id="proceso" className="scroll-mt-24 bg-white py-20">
         <Container className="space-y-10">
-          <div className="space-y-2 text-center">
+          <Reveal className="space-y-2 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Cómo trabajamos</p>
-            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Proceso claro de inicio a entrega</h2>
-          </div>
+            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              Proceso claro de inicio a entrega
+            </h2>
+          </Reveal>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {processSteps.map((step, index) => (
-              <article key={step} className="card-premium border-t-4 border-t-blue-200 p-5">
-                <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Etapa {index + 1}</p>
-                <h3 className="mt-1 text-base font-bold text-slate-900">{step}</h3>
-              </article>
+              <Reveal key={step} as="li" delay={(index % 3) * 90} className="h-full">
+                <article className="card-premium flex h-full items-center gap-4 p-5">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-700 text-sm font-extrabold text-white shadow-md shadow-blue-700/30">
+                    {index + 1}
+                  </span>
+                  <h3 className="text-base font-bold text-slate-900">{step}</h3>
+                </article>
+              </Reveal>
             ))}
-          </div>
+          </ol>
         </Container>
       </section>
 
@@ -806,10 +968,10 @@ export default async function Home() {
       {featuredCases.length > 0 ? (
         <section className="bg-white py-16">
           <Container className="space-y-8">
-            <div className="flex flex-col gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
+            <Reveal className="flex flex-col gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
               <div className="space-y-2">
                 <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Casos documentados</p>
-                <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+                <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
                   Pruebas comerciales de soluciones aplicadas
                 </h2>
                 <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
@@ -819,82 +981,91 @@ export default async function Home() {
               <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
                 <Link href="/casos-exito">Ver todos los casos</Link>
               </Button>
-            </div>
+            </Reveal>
 
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-              {featuredCases.map((caseItem) => (
-                <Link key={caseItem.slug} href={`/casos-exito/${caseItem.slug}`} className="card-premium p-5 transition-colors hover:border-blue-200">
-                  <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">{caseItem.badgePrimary}</p>
-                  <h3 className="text-base font-extrabold leading-snug text-slate-900">{caseItem.heading}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{caseItem.summary}</p>
-                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
-                    Ver caso <ArrowRight className="h-4 w-4" />
-                  </span>
-                </Link>
+              {featuredCases.map((caseItem, index) => (
+                <Reveal key={caseItem.slug} delay={(index % 4) * 80} className="h-full">
+                  <Link
+                    href={`/casos-exito/${caseItem.slug}`}
+                    className="card-premium block h-full p-5 transition-colors hover:border-blue-200"
+                  >
+                    <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">{caseItem.badgePrimary}</p>
+                    <h3 className="text-base font-extrabold leading-snug text-slate-900">{caseItem.heading}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{caseItem.summary}</p>
+                    <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
+                      Ver caso <ArrowRight className="h-4 w-4" />
+                    </span>
+                  </Link>
+                </Reveal>
               ))}
             </div>
           </Container>
         </section>
       ) : null}
 
-      <section className="section-alt py-20">
+      {/* ── FAQ ── */}
+      <section id="preguntas-frecuentes" className="section-alt scroll-mt-24 py-20">
         <Container className="space-y-10">
-          <div className="space-y-2 text-center">
+          <Reveal className="space-y-2 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Preguntas frecuentes</p>
-            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Respuestas para cotizar con claridad</h2>
-          </div>
+            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              Respuestas para cotizar con claridad
+            </h2>
+          </Reveal>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            {homeFaqs.map((faq) => (
-              <article key={faq.q} className="card-premium p-6">
-                <h3 className="mb-2 text-sm font-bold text-slate-900">{faq.q}</h3>
-                <p className="text-sm text-slate-600">{faq.a}</p>
-              </article>
-            ))}
-          </div>
-          <div className="text-center">
+          <Reveal>
+            <HomeFaqAccordion faqs={homeFaqs} />
+          </Reveal>
+
+          <Reveal className="text-center">
             <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
               <Link href="/faq">Ver todas las preguntas frecuentes</Link>
             </Button>
-          </div>
+          </Reveal>
         </Container>
       </section>
 
+      {/* ── CTA final ── */}
       <section className="relative overflow-hidden bg-white py-20">
-        <Container className="relative z-10 rounded-3xl section-blue p-8 text-center text-white md:p-12">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15">
-            <Briefcase className="h-7 w-7 text-white" />
-          </div>
-          <h2 className="text-3xl font-extrabold">¿Listo para cotizar tu proyecto?</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm text-blue-100 sm:text-base">
-            Si necesitas una web corporativa, una tienda online o un sistema interno, conversemos y preparamos
-            una propuesta concreta para tu negocio.
-          </p>
+        <Container>
+          <Reveal>
+            <div className="section-blue relative z-10 rounded-3xl p-8 text-center text-white md:p-12">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15">
+                <Briefcase className="h-7 w-7 text-white" />
+              </div>
+              <h2 className="text-balance text-3xl font-extrabold">¿Listo para cotizar tu proyecto?</h2>
+              <p className="mx-auto mt-3 max-w-2xl text-sm text-blue-100 sm:text-base">
+                Si necesitas una web corporativa, una tienda online o un sistema interno, conversemos y preparamos
+                una propuesta concreta para tu negocio, estés en la región que estés.
+              </p>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Button asChild size="lg" className="bg-white font-bold text-blue-800 hover:bg-blue-50">
-              <Link href="/cotizador">Cotizar una web para mi empresa</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
-              <Link href="/demos">Ver demos</Link>
-            </Button>
-            <Link
-              href={WHATSAPP_BASE}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/35 bg-white/10 px-5 py-3 text-sm font-bold text-white hover:bg-white/20"
-            >
-              <WhatsAppIcon className="h-5 w-5" />
-              Hablar por WhatsApp
-            </Link>
-          </div>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <Button asChild size="lg" className="bg-white font-bold text-blue-800 hover:bg-blue-50">
+                  <Link href="/cotizador">Cotizar una web para mi empresa</Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
+                  <Link href="/demos">Ver demos</Link>
+                </Button>
+                <Link
+                  href={WHATSAPP_BASE}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/35 bg-white/10 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-white/20"
+                >
+                  <WhatsAppIcon className="h-5 w-5" />
+                  Hablar por WhatsApp
+                </Link>
+              </div>
 
-          <div className="mt-4 grid gap-2 text-xs text-blue-100 sm:grid-cols-2 lg:grid-cols-4">
-            <p>Cotización formal y sin compromiso.</p>
-            <p>Atención a empresas, pymes y emprendedores.</p>
-            <p>Avanzamos por etapas y revisas cada entrega.</p>
-            <p>Te acompañamos después de la entrega.</p>
-          </div>
+              <div className="mt-4 grid gap-2 text-xs text-blue-100 sm:grid-cols-2 lg:grid-cols-4">
+                <p>Cotización formal y sin compromiso.</p>
+                <p>Atención a empresas, pymes y emprendedores.</p>
+                <p>Avanzamos por etapas y revisas cada entrega.</p>
+                <p>Te acompañamos después de la entrega.</p>
+              </div>
+            </div>
+          </Reveal>
         </Container>
       </section>
     </main>

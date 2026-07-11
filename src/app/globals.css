@@ -167,6 +167,129 @@
   contain-intrinsic-size: 1px 800px;
 }
 
+/* ── Scroll reveal (home) ──
+   Los elementos sólo se ocultan cuando hay JS habilitado, así el contenido
+   siempre queda visible/indexable para crawlers y navegadores sin script. */
+.reveal {
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (scripting: enabled) {
+  .reveal:not(.is-visible) {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal:not(.is-visible) {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Barra de progreso de scroll ── */
+.scroll-progress {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 35;
+  height: 3px;
+  pointer-events: none;
+}
+
+.scroll-progress-bar {
+  height: 100%;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 55%, #0ea5e9 100%);
+}
+
+/* ── Marquee de cobertura nacional ── */
+.marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 48s linear infinite;
+}
+
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+.marquee-group {
+  display: flex;
+  gap: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ── FAQ acordeón (details/summary nativo) ── */
+.faq-item {
+  interpolate-size: allow-keywords;
+}
+
+.faq-item summary {
+  list-style: none;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item::details-content {
+  opacity: 0;
+  block-size: 0;
+  overflow-y: clip;
+  transition:
+    content-visibility 0.35s allow-discrete,
+    opacity 0.35s ease,
+    block-size 0.35s ease;
+}
+
+.faq-item[open]::details-content {
+  opacity: 1;
+  block-size: auto;
+}
+
+.faq-chevron {
+  transition: transform 0.3s ease;
+}
+
+.faq-item[open] .faq-chevron {
+  transform: rotate(180deg);
+}
+
+/* ── Variantes de flotado para el hero ── */
+.animate-float-delayed {
+  animation: float 7s ease-in-out 1.2s infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f8fafc 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer-slide 2.6s linear infinite;
+}
+
+.hero-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  pointer-events: none;
+}
+
 /* ── Text gradients ── */
 .text-gradient-blue {
   background: linear-gradient(135deg, #1e40af 0%, #0ea5e9 100%);
