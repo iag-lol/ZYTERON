@@ -20,7 +20,6 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { siteConfig } from "@/config/site";
 import {
-  buildAggregateRatingJsonLd,
   buildFaqJsonLd,
   buildLocalBusinessJsonLd,
   buildServicesListJsonLd,
@@ -337,7 +336,6 @@ export default async function Home() {
   const reviews = await getApprovedReviewsSnapshot();
   const featuredCases = await getFeaturedCaseItems(4);
   const publishedScholarshipProfiles = await getPublishedScholarshipProfiles(5);
-  const aggregateRatingSchema = buildAggregateRatingJsonLd(reviews, "/");
 
   return (
     <main className="overflow-hidden bg-white">
@@ -358,7 +356,6 @@ export default async function Home() {
           "Desarrollo web, sistemas digitales, tiendas online, automatización y soporte TI para empresas, pymes y emprendedores en Chile.",
         )}
       />
-      {aggregateRatingSchema ? <JsonLd id="home-aggregate-rating-schema" data={aggregateRatingSchema} /> : null}
       <JsonLd
         id="home-faq-schema"
         data={buildFaqJsonLd(

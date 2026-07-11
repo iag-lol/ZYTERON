@@ -73,6 +73,21 @@ export default async function BlogPage() {
 
       <section className="py-16">
         <Container className="space-y-8">
+          <article className="rounded-2xl border border-blue-200 bg-blue-50 p-6 sm:p-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Recurso destacado</p>
+            <h2 className="mt-2 text-2xl font-extrabold text-slate-900">
+              Checklist SEO para pymes en Chile: 25 controles
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
+              Revisa indexación, contenido, enlazado, autoridad, datos estructurados y medición con una lista práctica.
+            </p>
+            <Button asChild className="mt-5 bg-blue-700 font-bold text-white hover:bg-blue-800">
+              <Link href="/recursos/checklist-seo-pymes-chile">
+                Abrir checklist <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </article>
+
           {posts.length === 0 ? (
             <div className="card-premium p-8 text-center">
               <p className="text-sm text-slate-600">

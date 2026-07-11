@@ -21,6 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/faq", priority: 0.6, changeFrequency: "monthly" as const },
     { path: "/productos", priority: 0.6, changeFrequency: "monthly" as const },
     { path: "/quienes-somos", priority: 0.6, changeFrequency: "monthly" as const },
+    { path: "/recursos/checklist-seo-pymes-chile", priority: 0.8, changeFrequency: "monthly" as const },
     { path: "/becas-web-pyme", priority: 0.5, changeFrequency: "monthly" as const },
   ].map(({ path, priority, changeFrequency }) => ({
     url: `${base}${path}`,
@@ -40,7 +41,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }));
 
-  const serviceRoutes = servicePages.map((service) => ({
+  const consolidatedServiceSlugs = new Set([
+    "desarrollo-web-chile",
+    "paginas-web-para-empresas",
+    "creacion-de-sitios-web-para-empresas",
+    "paginas-web-para-pymes",
+    "diseno-web-chile",
+    "agencia-diseno-web-chile",
+  ]);
+
+  const serviceRoutes = servicePages.filter((service) => !consolidatedServiceSlugs.has(service.slug)).map((service) => ({
     url: `${base}/servicios/${service.slug}`,
     changeFrequency: "monthly" as const,
     priority: 0.9,

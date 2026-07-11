@@ -34,6 +34,7 @@ export const siteConfig = {
     whatsapp: ZYTERON_PHONE_E164,
   },
   business: {
+    hasPublicOffice: false,
     priceRange: "$$",
     hours: ["Mo-Fr 09:00-18:00"],
     hoursDisplay: ZYTERON_BUSINESS_HOURS_DISPLAY,
@@ -54,6 +55,7 @@ export const siteConfig = {
     // cualquier mención, sin parámetros de query, para consolidar la entidad.
     linkedin: "https://www.linkedin.com/company/zyteron-spa/",
     instagram: "https://www.instagram.com/zyteron.cl/",
+    facebook: "https://www.facebook.com/people/Zyteron-Cl/61588716751111/",
     whatsapp: ZYTERON_WHATSAPP_URL,
   },
   representative: {

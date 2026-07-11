@@ -32,6 +32,25 @@ function resolveArticleSocialImage(post: DbBlogPost): string {
   return `/blog/${post.slug}/opengraph-image`;
 }
 
+function resolveArticleAuthor(author: string | null) {
+  const normalized = author?.trim();
+  const isBrandAuthor = !normalized || /^(zyteron|equipo zyteron)$/i.test(normalized);
+
+  return isBrandAuthor
+    ? {
+        name: siteConfig.legalName,
+        type: "Organization" as const,
+        url: siteConfig.url,
+        id: `${siteConfig.url}/#organization`,
+      }
+    : {
+        name: normalized,
+        type: "Person" as const,
+        url: `${siteConfig.url}/quienes-somos`,
+        id: `${siteConfig.url}/quienes-somos#eduardo-avila`,
+      };
+}
+
 export async function generateMetadata({ params }: BlogDetailProps): Promise<Metadata> {
   const { slug } = await params;
   const post = await getDbBlogPost(slug);
@@ -82,6 +101,7 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
   }
 
   const path = `/blog/${post.slug}`;
+  const author = resolveArticleAuthor(post.author);
 
   return (
     <>
@@ -107,10 +127,10 @@ export default async function BlogDetailPage({ params }: BlogDetailProps) {
           datePublished: post.publishedAt ?? post.createdAt ?? new Date().toISOString(),
           dateModified: post.updatedAt ?? undefined,
           image: resolveArticleSocialImage(post),
-          authorName: post.author ?? siteConfig.representative.name,
-          authorType: "Person",
-          authorUrl: `${siteConfig.url}/quienes-somos`,
-          authorId: `${siteConfig.url}/quienes-somos#eduardo-avila`,
+          authorName: author.name,
+          authorType: author.type,
+          authorUrl: author.url,
+          authorId: author.id,
         })}
       />
       <DbBlogArticle post={post} />

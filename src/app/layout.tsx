@@ -12,7 +12,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { JsonLd } from "@/components/seo/json-ld";
 import { IconSprite } from "@/components/ui/icon-sprite";
 import { WebVisitTracker } from "@/components/analytics/web-visit-tracker";
-import { buildLocalBusinessJsonLd, buildOrganizationGraph, buildPrimaryOgImageUrl } from "@/lib/seo";
+import { buildOrganizationGraph, buildPrimaryOgImageUrl } from "@/lib/seo";
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -120,7 +120,6 @@ export default function RootLayout({
         <TooltipProvider>
           <IconSprite />
           <JsonLd id="zyteron-organization-schema" data={buildOrganizationGraph()} />
-          <JsonLd id="zyteron-localbusiness-schema" data={buildLocalBusinessJsonLd("/")} />
           <WebVisitTracker />
           <ConversionEventTracker />
           <AppShell>{children}</AppShell>

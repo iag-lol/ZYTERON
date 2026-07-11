@@ -81,6 +81,49 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Consolidación SEO: estas URLs antiguas o duplicadas ya compiten con
+      // páginas principales. Los redirects permanentes concentran sus señales
+      // y evitan que Google siga rastreando versiones equivalentes.
+      {
+        source: "/blog/diferencia-pagina-web-tienda-online-sistema-web",
+        destination: "/blog/pagina-web-tienda-online-o-sistema-web-cual-necesita-tu-empresa",
+        permanent: true,
+      },
+      {
+        source: "/blog/seo-para-pymes-chile",
+        destination: "/servicios/seo-para-empresas-chile",
+        permanent: true,
+      },
+      {
+        source: "/servicios/desarrollo-web-chile",
+        destination: "/desarrollo-web",
+        permanent: true,
+      },
+      {
+        source: "/servicios/paginas-web-para-empresas",
+        destination: "/desarrollo-web",
+        permanent: true,
+      },
+      {
+        source: "/servicios/creacion-de-sitios-web-para-empresas",
+        destination: "/desarrollo-web",
+        permanent: true,
+      },
+      {
+        source: "/servicios/paginas-web-para-pymes",
+        destination: "/paginas-web-para-pymes",
+        permanent: true,
+      },
+      {
+        source: "/servicios/diseno-web-chile",
+        destination: "/diseno-web-empresas",
+        permanent: true,
+      },
+      {
+        source: "/servicios/agencia-diseno-web-chile",
+        destination: "/diseno-web-empresas",
+        permanent: true,
+      },
       {
         source: "/nosotros",
         destination: "/quienes-somos",

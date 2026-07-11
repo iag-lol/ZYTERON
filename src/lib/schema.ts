@@ -210,7 +210,7 @@ export function getOrganizationSchema() {
           jobTitle: siteConfig.representative.role,
           url: `${siteConfig.url}/quienes-somos`,
         },
-        sameAs: [siteConfig.social.linkedin, siteConfig.social.instagram].filter(Boolean),
+        sameAs: [siteConfig.social.linkedin, siteConfig.social.instagram, siteConfig.social.facebook].filter(Boolean),
         contactPoint: [buildContactPoint()],
       },
       {
@@ -236,6 +236,31 @@ export function getLocalBusinessSchema({
 } = {}) {
   const pageUrl = buildAbsoluteUrl(path);
 
+  const publicLocation = siteConfig.business.hasPublicOffice
+    ? {
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: siteConfig.address.streetAddress,
+          addressLocality: siteConfig.address.city,
+          addressRegion: siteConfig.address.region,
+          postalCode: siteConfig.address.postalCode,
+          addressCountry: siteConfig.address.countryCode,
+        },
+        geo: {
+          "@type": "GeoCoordinates",
+          latitude: siteConfig.geo.latitude,
+          longitude: siteConfig.geo.longitude,
+        },
+      }
+    : {
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: siteConfig.address.city,
+          addressRegion: siteConfig.address.region,
+          addressCountry: siteConfig.address.countryCode,
+        },
+      };
+
   return {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
@@ -248,19 +273,7 @@ export function getLocalBusinessSchema({
     email: siteConfig.contact.email,
     priceRange: siteConfig.business.priceRange,
     foundingDate: siteConfig.foundingDate,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: siteConfig.address.streetAddress,
-      addressLocality: siteConfig.address.city,
-      addressRegion: siteConfig.address.region,
-      postalCode: siteConfig.address.postalCode,
-      addressCountry: siteConfig.address.countryCode,
-    },
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: siteConfig.geo.latitude,
-      longitude: siteConfig.geo.longitude,
-    },
+    ...publicLocation,
     openingHoursSpecification: [
       {
         "@type": "OpeningHoursSpecification",
@@ -274,7 +287,7 @@ export function getLocalBusinessSchema({
       name: siteConfig.business.areaServed,
     },
     contactPoint: [buildContactPoint()],
-    sameAs: [siteConfig.social.linkedin, siteConfig.social.instagram].filter(Boolean),
+    sameAs: [siteConfig.social.linkedin, siteConfig.social.instagram, siteConfig.social.facebook].filter(Boolean),
     parentOrganization: {
       "@id": getOrganizationId(),
     },

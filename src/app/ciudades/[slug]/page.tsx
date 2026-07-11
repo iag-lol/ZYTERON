@@ -133,7 +133,7 @@ export default async function CiudadDetallePage({ params }: LocalPageProps) {
               </Link>
             </Button>
             <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-              <Link href="/servicios/diseno-web-chile">Ver servicio de diseño web</Link>
+              <Link href="/diseno-web-empresas">Ver servicio de diseño web</Link>
             </Button>
           </div>
         </Container>

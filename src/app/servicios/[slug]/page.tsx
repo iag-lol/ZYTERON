@@ -23,6 +23,15 @@ type ServicePageProps = {
 
 const WHATSAPP_BASE = siteConfig.social.whatsapp;
 
+const CANONICAL_SERVICE_PATHS: Record<string, string> = {
+  "desarrollo-web-chile": "/desarrollo-web",
+  "paginas-web-para-empresas": "/desarrollo-web",
+  "creacion-de-sitios-web-para-empresas": "/desarrollo-web",
+  "paginas-web-para-pymes": "/paginas-web-para-pymes",
+  "diseno-web-chile": "/diseno-web-empresas",
+  "agencia-diseno-web-chile": "/diseno-web-empresas",
+};
+
 const serviceExamplesBySlug: Record<
   string,
   {
@@ -395,7 +404,7 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
             {relatedServices.map((related) => (
               <Link
                 key={related.slug}
-                href={`/servicios/${related.slug}`}
+                href={CANONICAL_SERVICE_PATHS[related.slug] ?? `/servicios/${related.slug}`}
                 className="card-premium p-5 transition-colors hover:border-blue-200"
               >
                 <h3 className="mb-2 text-base font-bold text-slate-900">{related.navLabel}</h3>
