@@ -129,7 +129,7 @@ export default function CampaignForm({ initialData = null }: { initialData?: any
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700">Instagram Oficial (sin @) *</label>
-          <input type="text" name="official_instagram_handle" defaultValue={initialData?.official_instagram_handle} placeholder="zyteron.cl" className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+          <input type="text" name="official_instagram_handle" defaultValue={initialData?.official_instagram_handle} placeholder="zyteron.spa" className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700">Título del Beneficio *</label>

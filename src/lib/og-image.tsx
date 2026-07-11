@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { siteConfig } from "@/config/site";
 
 export const ogImageSize = {
   width: 1200,
@@ -77,8 +78,8 @@ export function generateZyteronOgImage({ title, subtitle, tag }: GenerateOgImage
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 26, opacity: 0.96 }}>
-          <span>Santiago, Chile</span>
-          <span>www.zyteron.cl</span>
+          <span>{siteConfig.address.display}</span>
+          <span>{siteConfig.domain}</span>
         </div>
       </div>
     ),

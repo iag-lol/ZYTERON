@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { siteConfig } from "@/config/site";
 import {
   LayoutDashboard,
   Users,
@@ -271,7 +272,7 @@ export function AdminSidebar() {
           {!collapsed && (
             <div className="min-w-0 flex-1">
               <p className="truncate text-[12px] font-bold text-slate-800">Zyteron Admin</p>
-              <p className="truncate text-[10px] text-slate-400">contacto@zyteron.cl</p>
+              <p className="truncate text-[10px] text-slate-400">{siteConfig.contact.email}</p>
             </div>
           )}
         </div>

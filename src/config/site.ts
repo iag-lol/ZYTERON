@@ -54,7 +54,7 @@ export const siteConfig = {
     // URLs canónicas de perfiles: deben ser idénticas en footer, schemas y
     // cualquier mención, sin parámetros de query, para consolidar la entidad.
     linkedin: "https://www.linkedin.com/company/zyteron-spa/",
-    instagram: "https://www.instagram.com/zyteron.cl/",
+    instagram: "https://www.instagram.com/zyteron.spa",
     facebook: "https://www.facebook.com/people/Zyteron-Cl/61588716751111/",
     whatsapp: ZYTERON_WHATSAPP_URL,
   },

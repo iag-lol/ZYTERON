@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { Container } from "@/components/layout/container";
+import { siteConfig } from "@/config/site";
 import { getBecasSupabaseClient } from "@/lib/becas/supabase-client";
 import ReactMarkdown from "react-markdown";
 import PrintButton from "../_components/print-button";
@@ -96,15 +97,15 @@ export default async function BasesPage({
       .replace(/{{CAMPAIGN_NAME}}/g, campaign.title || "Edición 2026")
       .replace(/{{ORGANIZER_LEGAL_NAME}}/g, campaign.organizer_legal_name || "Zyteron SpA")
       .replace(/{{ORGANIZER_RUT}}/g, campaign.organizer_rut || "No informado")
-      .replace(/{{ORGANIZER_ADDRESS}}/g, campaign.organizer_address || "Santiago, Chile")
-      .replace(/{{CONTACT_EMAIL}}/g, campaign.organizer_contact_email || "contacto@zyteron.cl")
+      .replace(/{{ORGANIZER_ADDRESS}}/g, campaign.organizer_address || siteConfig.address.display)
+      .replace(/{{CONTACT_EMAIL}}/g, campaign.organizer_contact_email || siteConfig.contact.email)
       .replace(/{{PRIVACY_EMAIL}}/g, campaign.privacy_contact_email || "privacidad@zyteron.cl")
       .replace(/{{START_DATE}}/g, campaign.starts_at ? new Date(campaign.starts_at).toLocaleDateString('es-CL') : "Por definir")
       .replace(/{{START_TIME}}/g, campaign.starts_at ? new Date(campaign.starts_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : "00:00")
       .replace(/{{END_DATE}}/g, campaign.ends_at ? new Date(campaign.ends_at).toLocaleDateString('es-CL') : "Por definir")
       .replace(/{{END_TIME}}/g, campaign.ends_at ? new Date(campaign.ends_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : "23:59")
       .replace(/{{APPLICATION_URL}}/g, "https://zyteron.cl/becas-web-pyme")
-      .replace(/{{OFFICIAL_INSTAGRAM_HANDLE}}/g, campaign.official_instagram_handle ? `@${campaign.official_instagram_handle}` : "@zyteron.cl")
+      .replace(/{{OFFICIAL_INSTAGRAM_HANDLE}}/g, campaign.official_instagram_handle ? `@${campaign.official_instagram_handle}` : "@zyteron.spa")
       .replace(/{{BENEFITS_QUANTITY}}/g, (campaign.benefits_quantity || 1).toString())
       .replace(/{{BENEFIT_TITLE}}/g, campaign.benefit_title || "Página Web Profesional")
       .replace(/{{BENEFIT_VALUE_CLP}}/g, campaign.benefit_value_clp ? campaign.benefit_value_clp.toLocaleString('es-CL') : "0")
@@ -195,7 +196,7 @@ export default async function BasesPage({
             <div>
               <p className="font-bold text-slate-900">{campaign.organizer_legal_name || "Zyteron SpA"}</p>
               <p className="text-xs text-slate-500">RUT: {campaign.organizer_rut || "No informado"}</p>
-              <p className="text-xs text-slate-500">Contacto Legal: {campaign.organizer_contact_email || "contacto@zyteron.cl"}</p>
+              <p className="text-xs text-slate-500">Contacto Legal: {campaign.organizer_contact_email || siteConfig.contact.email}</p>
             </div>
             <div className="hidden print:block text-right text-xs text-slate-400">
               <p>Impreso el {new Date().toLocaleDateString('es-CL')} - Versión {versionNum}</p>

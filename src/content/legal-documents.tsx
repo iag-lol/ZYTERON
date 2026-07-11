@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { siteConfig } from "@/config/site";
 
 export type LegalPolicySection = {
   title: string;
@@ -9,9 +10,9 @@ export const termsIntro =
   "Este documento regula la prestación de servicios de desarrollo web, software, soporte técnico y proyectos digitales de ZYTERON SpA, buscando una relación comercial clara, ordenada y profesional.";
 
 export const termsCompanyInfo = [
-  { label: "Razón social", value: "ZYTERON SpA" },
-  { label: "RUT", value: "78.398.774-0" },
-  { label: "Correo oficial", value: "contacto@zyteron.cl" },
+  { label: "Razón social", value: siteConfig.legalName },
+  { label: "RUT", value: siteConfig.taxId },
+  { label: "Correo oficial", value: siteConfig.contact.email },
   { label: "Canales formales", value: "Correo y WhatsApp corporativo" },
 ] as const;
 
@@ -285,7 +286,7 @@ export const privacySections: LegalPolicySection[] = [
   {
     title: "7. Derechos de actualización o eliminación",
     points: [
-      "Puedes solicitar actualización, rectificación o eliminación de tus datos escribiendo a contacto@zyteron.cl.",
+      `Puedes solicitar actualización, rectificación o eliminación de tus datos escribiendo a ${siteConfig.contact.email}.`,
       "La solicitud será revisada conforme a obligaciones legales, tributarias y contractuales aplicables.",
     ],
   },

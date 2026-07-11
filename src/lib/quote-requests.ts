@@ -490,7 +490,7 @@ export async function sendQuoteRequestEmail(meta: QuoteRequestMeta, quoteId: str
     cleanText(process.env.RESEND_TO_EMAIL) ||
     cleanText(process.env.RESEND_LEAD_TO_EMAIL) ||
     cleanText(process.env.RESEND_REPLY_TO) ||
-    "contacto@zyteron.cl";
+    siteConfig.contact.email;
   const replyTo =
     normalizeReplyToAddress(process.env.RESEND_REPLY_TO) ||
     normalizeReplyToAddress(meta.contactEmail) ||

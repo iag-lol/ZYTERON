@@ -1,13 +1,15 @@
+import { siteConfig } from "@/config/site";
+
 export const ZYTERON_COMPANY = {
   brandName: "Zyteron",
-  legalName: "Zyteron SpA",
-  rut: "78.398.774-0",
+  legalName: siteConfig.legalName,
+  rut: siteConfig.taxId,
   businessLine: "Desarrollo web, soporte TI y soluciones tecnológicas empresariales",
-  email: "contacto@zyteron.cl",
-  salesEmail: "contacto@zyteron.cl",
-  phone: "+56939526626",
-  website: "https://www.zyteron.cl",
-  location: "Santiago, Chile",
+  email: siteConfig.contact.email,
+  salesEmail: siteConfig.contact.email,
+  phone: siteConfig.contact.phone,
+  website: siteConfig.url,
+  location: siteConfig.address.display,
   addressLine: "Operación comercial y soporte técnico en Santiago y regiones",
   taxActivity: "Servicios de informática, desarrollo de software y comercialización de soluciones TI",
   accent: "#0F5FFF",
@@ -18,7 +20,7 @@ export const ZYTERON_COMPANY = {
   transferBank: "Banco BCI",
   transferAccountType: "Cuenta corriente",
   transferAccountNumber: "14500679",
-  transferAccountEmail: "contacto@zyteron.cl",
+  transferAccountEmail: siteConfig.contact.email,
 } as const;
 
 export const ZYTERON_SII = {

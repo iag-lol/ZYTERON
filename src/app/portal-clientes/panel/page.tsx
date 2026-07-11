@@ -376,11 +376,11 @@ export default async function PortalDashboardPage() {
               </div>
               <div className="space-y-2">
                 <a
-                  href="mailto:contacto@zyteron.cl"
+                  href={`mailto:${siteConfig.contact.email}`}
                   className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200"
                 >
                   <Mail className="h-4 w-4" />
-                  contacto@zyteron.cl
+                  {siteConfig.contact.email}
                 </a>
                 <a
                   href={siteConfig.social.whatsapp}

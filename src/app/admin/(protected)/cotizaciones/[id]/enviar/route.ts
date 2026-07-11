@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getQuoteById, updateRows } from "@/lib/admin/repository";
 import { generateQuotePdf } from "@/lib/admin/quote-pdf";
 import { currencyCLP } from "@/lib/admin/quote";
+import { siteConfig } from "@/config/site";
 import { ZYTERON_COMPANY } from "@/lib/company";
 
 type ResendResponse = {
@@ -20,7 +21,7 @@ type ResendEmailDetail = {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FROM_WITH_NAME_REGEX = /^[^<>]+<[^<>@\s]+@[^<>@\s]+\.[^<>@\s]+>$/;
-const QUOTE_INTERNAL_COPY_EMAIL = "contacto@zyteron.cl";
+const QUOTE_INTERNAL_COPY_EMAIL = siteConfig.contact.email;
 
 function safeRedirectPath(value: unknown) {
   const path = typeof value === "string" ? value.trim() : "";

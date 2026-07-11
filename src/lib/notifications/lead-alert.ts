@@ -1,3 +1,4 @@
+import { siteConfig } from "@/config/site";
 import { ZYTERON_COMPANY } from "@/lib/company";
 
 type CartLine = {
@@ -257,7 +258,7 @@ export async function sendLeadAlertEmail(input: LeadAlertInput) {
     return { sent: false as const, reason: "missing_api_key" as const };
   }
 
-  const toEmail = normalizeText(process.env.RESEND_LEAD_TO_EMAIL) || "contacto@zyteron.cl";
+  const toEmail = normalizeText(process.env.RESEND_LEAD_TO_EMAIL) || siteConfig.contact.email;
   const from = normalizeFromAddress(process.env.RESEND_FROM_EMAIL, ZYTERON_COMPANY.brandName);
   const replyTo = normalizeText(process.env.RESEND_REPLY_TO) || ZYTERON_COMPANY.salesEmail;
   const bcc = normalizeText(process.env.RESEND_BCC_EMAIL);
@@ -295,4 +296,3 @@ export async function sendLeadAlertEmail(input: LeadAlertInput) {
     id: body.id,
   };
 }
-

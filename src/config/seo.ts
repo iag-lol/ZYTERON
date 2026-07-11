@@ -1,6 +1,6 @@
 import { siteConfig } from "@/config/site";
 
-const sameAs = [siteConfig.social.linkedin].filter(Boolean);
+const sameAs = [siteConfig.social.linkedin, siteConfig.social.instagram].filter(Boolean);
 
 export const defaultOpenGraph = {
   type: "website",
@@ -42,8 +42,13 @@ export const defaultJsonLdOrganization = {
   },
   founder: {
     "@type": "Person",
+    "@id": `${siteConfig.url}/quienes-somos#eduardo-avila`,
     name: siteConfig.representative.name,
     jobTitle: siteConfig.representative.role,
+    description: siteConfig.representative.description,
+    worksFor: {
+      "@id": `${siteConfig.url}/#organization`,
+    },
   },
   knowsAbout: siteConfig.business.serviceTypes,
   sameAs,
