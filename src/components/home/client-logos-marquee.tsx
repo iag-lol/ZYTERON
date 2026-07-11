@@ -3,15 +3,20 @@ import Image from "next/image";
 type ClientLogo = {
   name: string;
   src: string;
+  width: number;
+  height: number;
 };
 
+// Dimensiones reales de los PNG en public/clientes (fondo blanco puro,
+// recortados al contenido del logo). Si agregas uno nuevo, procesa la imagen
+// igual: fondo blanco, sin márgenes muertos, alto 220px.
 const clientLogos: ClientLogo[] = [
-  { name: "Asiss", src: "/clientes/asiss.png" },
-  { name: "New Mini Check", src: "/clientes/new-mini-check.png" },
-  { name: "RedLog", src: "/clientes/redlog.png" },
-  { name: "TurnoERnoc", src: "/clientes/turnoernoc.png" },
-  { name: "Fenice SpA", src: "/clientes/fenice.png" },
-  { name: "Eliana Negocios", src: "/clientes/eliana.png" },
+  { name: "Asiss", src: "/clientes/asiss.png", width: 552, height: 220 },
+  { name: "New Mini Check", src: "/clientes/new-mini-check.png", width: 746, height: 220 },
+  { name: "RedLog", src: "/clientes/redlog.png", width: 656, height: 220 },
+  { name: "TurnoERnoc", src: "/clientes/turnoernoc.png", width: 759, height: 220 },
+  { name: "Fenice SpA", src: "/clientes/fenice.png", width: 702, height: 220 },
+  { name: "Eliana Negocios", src: "/clientes/eliana.png", width: 751, height: 220 },
 ];
 
 /**
@@ -19,22 +24,25 @@ const clientLogos: ClientLogo[] = [
  * CSS puro (misma técnica del marquee de cobertura): la lista se repite dos
  * veces por mitad para cubrir monitores anchos sin huecos, y la segunda mitad
  * va con aria-hidden para no duplicar contenido accesible.
+ *
+ * Las imágenes van `unoptimized` (son PNG livianos ya procesados): se sirven
+ * tal cual desde /public, sin depender del optimizador de imágenes.
  */
 export function ClientLogosMarquee() {
   const logoCard = (logo: ClientLogo, hidden: boolean, copy: number) => (
     <span
       key={`${logo.name}-${copy}`}
       role={hidden ? undefined : "listitem"}
-      className="flex h-20 w-40 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 shadow-sm transition-shadow hover:shadow-md sm:h-24 sm:w-48"
+      className="flex h-20 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3 shadow-sm transition-shadow hover:shadow-md sm:h-24 sm:px-8 sm:py-4"
     >
       <Image
         src={logo.src}
         alt={hidden ? "" : `Logo de ${logo.name}, empresa que trabajó con Zyteron`}
-        width={140}
-        height={99}
-        quality={90}
-        loading="lazy"
-        className="h-full w-auto object-contain"
+        width={logo.width}
+        height={logo.height}
+        unoptimized
+        loading="eager"
+        className="h-12 w-auto max-w-none sm:h-16"
       />
     </span>
   );
