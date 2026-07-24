@@ -75,6 +75,14 @@ export function AiChatWidget() {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, open]);
 
+  // Auto-ajuste de altura del textarea para que se vea todo lo escrito.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 128)}px`;
+  }, [input, open]);
+
   const dismissTeaser = useCallback(() => {
     setShowTeaser(false);
     try {
@@ -266,7 +274,7 @@ export function AiChatWidget() {
                 rows={1}
                 maxLength={2000}
                 placeholder="Escribe tu mensaje…"
-                className="max-h-28 flex-1 resize-none bg-transparent text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none"
+                className="max-h-32 flex-1 resize-none overflow-y-auto bg-transparent text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 focus:outline-none"
               />
               <button
                 type="submit"
