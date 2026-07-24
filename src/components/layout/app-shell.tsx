@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { WhatsAppButton } from "@/components/ui/whatsapp-button";
+import { AiChatWidget } from "@/components/ui/ai-chat-widget";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -19,7 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <SiteHeader />
       <div className="flex-1">{children}</div>
       <SiteFooter />
-      <WhatsAppButton />
+      <AiChatWidget />
     </div>
   );
 }

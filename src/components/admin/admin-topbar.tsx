@@ -13,6 +13,7 @@ import {
   Landmark,
   ShieldCheck,
 } from "lucide-react";
+import { AdminNotifications } from "@/components/admin/admin-notifications";
 
 const routeMap: Record<string, string> = {
   "/admin": "Dashboard",
@@ -141,6 +142,9 @@ export function AdminTopbar({ isProd }: { isProd: boolean }) {
             <ShieldCheck className="h-3 w-3 text-slate-400" />
             Segura
           </div>
+
+          {/* Notificaciones en tiempo real */}
+          <AdminNotifications />
 
           <div className="mx-1 h-5 w-px bg-slate-200" />
 
