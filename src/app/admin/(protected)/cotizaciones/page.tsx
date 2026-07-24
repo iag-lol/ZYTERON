@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { QuoteSendEmailButton } from "@/components/admin/quote-send-email-button";
 import { QuoteRequestIntegrationButton } from "@/components/admin/quote-request-integration-button";
+import { QuoteDeleteButton } from "@/components/admin/quote-delete-button";
 import { getWorkOrders } from "@/lib/admin/repository";
 import { isManualQuote } from "@/lib/admin/work-orders";
 import {
@@ -549,6 +550,7 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
                       >
                         Ver detalle
                       </Link>
+                      <QuoteDeleteButton quoteId={q.id} />
                     </div>
                   </div>
                 );
@@ -736,6 +738,7 @@ export default async function CotizacionesPage({ searchParams }: PageProps) {
                         >
                           <ArrowUpRight className="h-3.5 w-3.5" />
                         </Link>
+                        <QuoteDeleteButton quoteId={q.id} compact />
                       </div>
                     </div>
                   );

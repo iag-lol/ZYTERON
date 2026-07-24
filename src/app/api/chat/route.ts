@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { buildZyteronSystemPrompt } from "@/lib/ai/zyteron-knowledge";
+import { LEAD_CAPTURE_TOOL, executeLeadCapture } from "@/lib/ai/lead-capture";
 import { siteConfig } from "@/config/site";
 
 export const runtime = "nodejs";
@@ -132,78 +133,169 @@ export async function POST(req: Request) {
   const model = readEnv("OPENAI_MODEL") || DEFAULT_MODEL;
   const systemPrompt = buildZyteronSystemPrompt();
 
-  // 4) Llamada a OpenAI con streaming
-  let upstream: Response;
-  try {
-    upstream = await fetch(OPENAI_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        stream: true,
-        temperature: 0.6,
-        max_tokens: 600,
-        messages: [{ role: "system", content: systemPrompt }, ...messages],
-      }),
-    });
-  } catch {
-    return streamingResponse(textStream(FALLBACK_ERROR));
-  }
+  const convo: ChatCompletionMessage[] = [
+    { role: "system", content: systemPrompt },
+    ...messages.map((m) => ({ role: m.role, content: m.content })),
+  ];
 
-  if (!upstream.ok || !upstream.body) {
-    // No exponemos detalles del proveedor; respondemos amablemente.
-    return streamingResponse(textStream(FALLBACK_ERROR));
-  }
-
-  // 5) Transformamos el SSE de OpenAI en texto plano incremental
   const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-  const reader = upstream.body.getReader();
 
+  // Loop con function-calling: la IA puede registrar el lead y luego confirmar
+  // al cliente en lenguaje natural. Todo se transmite en streaming.
   const stream = new ReadableStream<Uint8Array>({
-    async pull(controller) {
-      let buffer = "";
+    async start(controller) {
+      const emit = (text: string) => controller.enqueue(encoder.encode(text));
+      const MAX_TURNS = 3;
       try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-
-          const lines = buffer.split("\n");
-          buffer = lines.pop() ?? "";
-
-          for (const rawLine of lines) {
-            const line = rawLine.trim();
-            if (!line.startsWith("data:")) continue;
-            const data = line.slice(5).trim();
-            if (!data || data === "[DONE]") continue;
-            try {
-              const parsed = JSON.parse(data);
-              const delta = parsed?.choices?.[0]?.delta?.content;
-              if (typeof delta === "string" && delta.length > 0) {
-                controller.enqueue(encoder.encode(delta));
-              }
-            } catch {
-              // fragmento incompleto: se completará en la próxima iteración
-            }
+        for (let turn = 0; turn < MAX_TURNS; turn++) {
+          let upstream: Response;
+          try {
+            upstream = await fetch(OPENAI_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${apiKey}`,
+              },
+              body: JSON.stringify({
+                model,
+                stream: true,
+                temperature: 0.6,
+                max_tokens: 700,
+                tools: [LEAD_CAPTURE_TOOL],
+                tool_choice: "auto",
+                messages: convo,
+              }),
+            });
+          } catch {
+            emit(FALLBACK_ERROR);
+            break;
           }
+
+          if (!upstream.ok || !upstream.body) {
+            emit(FALLBACK_ERROR);
+            break;
+          }
+
+          const { content, toolCalls } = await consumeOpenAIStream(upstream.body, emit);
+
+          if (toolCalls.length === 0) {
+            break; // respuesta final ya transmitida al cliente
+          }
+
+          // Registramos la llamada del asistente y ejecutamos cada herramienta.
+          convo.push({
+            role: "assistant",
+            content: content || null,
+            tool_calls: toolCalls.map((tc) => ({
+              id: tc.id,
+              type: "function",
+              function: { name: tc.name, arguments: tc.args || "{}" },
+            })),
+          });
+
+          for (const tc of toolCalls) {
+            let result = "Solicitud recibida.";
+            if (tc.name === "registrar_interes_cliente") {
+              let parsed: Record<string, unknown> = {};
+              try {
+                parsed = JSON.parse(tc.args || "{}");
+              } catch {
+                parsed = {};
+              }
+              const outcome = await executeLeadCapture(parsed);
+              result = outcome.message;
+            }
+            convo.push({ role: "tool", tool_call_id: tc.id, content: result });
+          }
+          // Siguiente iteración: la IA redacta la confirmación (se transmite).
         }
       } catch {
-        controller.enqueue(encoder.encode("\n" + FALLBACK_ERROR));
+        emit("\n" + FALLBACK_ERROR);
       } finally {
         controller.close();
-        reader.releaseLock();
       }
-    },
-    cancel() {
-      reader.cancel().catch(() => {});
     },
   });
 
   return streamingResponse(stream);
+}
+
+// -- Tipos y parser de streaming con tool-calls -----------------------------
+
+type ChatCompletionMessage =
+  | { role: "system" | "user"; content: string }
+  | { role: "assistant"; content: string | null; tool_calls?: ToolCallPayload[] }
+  | { role: "tool"; tool_call_id: string; content: string };
+
+type ToolCallPayload = {
+  id: string;
+  type: "function";
+  function: { name: string; arguments: string };
+};
+
+type AccumulatedToolCall = { id: string; name: string; args: string };
+
+/**
+ * Consume el stream SSE de OpenAI: transmite el texto (`emit`) a medida que
+ * llega y acumula las llamadas a herramientas por índice.
+ */
+async function consumeOpenAIStream(
+  body: ReadableStream<Uint8Array>,
+  emit: (text: string) => void,
+): Promise<{ content: string; toolCalls: AccumulatedToolCall[] }> {
+  const decoder = new TextDecoder();
+  const reader = body.getReader();
+  let buffer = "";
+  let content = "";
+  const toolMap = new Map<number, AccumulatedToolCall>();
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line.startsWith("data:")) continue;
+        const data = line.slice(5).trim();
+        if (!data || data === "[DONE]") continue;
+        try {
+          const parsed = JSON.parse(data);
+          const delta = parsed?.choices?.[0]?.delta;
+          if (!delta) continue;
+
+          if (typeof delta.content === "string" && delta.content.length > 0) {
+            content += delta.content;
+            emit(delta.content);
+          }
+
+          if (Array.isArray(delta.tool_calls)) {
+            for (const call of delta.tool_calls) {
+              const index = typeof call.index === "number" ? call.index : 0;
+              const existing = toolMap.get(index) ?? { id: "", name: "", args: "" };
+              if (call.id) existing.id = call.id;
+              if (call.function?.name) existing.name = call.function.name;
+              if (typeof call.function?.arguments === "string") {
+                existing.args += call.function.arguments;
+              }
+              toolMap.set(index, existing);
+            }
+          }
+        } catch {
+          // fragmento incompleto: se completará en la próxima iteración
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const toolCalls = Array.from(toolMap.values()).filter((tc) => tc.id && tc.name);
+  return { content, toolCalls };
 }
 
 export function GET() {
