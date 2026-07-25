@@ -77,6 +77,39 @@ export async function listDteDocuments(limit = 100) {
   return data ?? [];
 }
 
+/**
+ * Elimina un documento tributario SOLO si es borrador/no emitido. Nunca borra
+ * documentos ya emitidos ante el SII (regla tributaria). Ítems/refs/historial
+ * se eliminan por cascade.
+ */
+export async function deleteDteDocument(id: string): Promise<{ ok: boolean; error?: string }> {
+  const supabase = db();
+  const { data: doc } = await supabase.from("tax_documents").select("internal_status,sii_status").eq("id", id).maybeSingle();
+  if (!doc) return { ok: false, error: "Documento no encontrado." };
+  if (doc.internal_status === "emitted" || doc.sii_status === "accepted" || doc.sii_status === "sent") {
+    return { ok: false, error: "No se puede eliminar un documento ya emitido/enviado al SII." };
+  }
+  const { error } = await supabase.from("tax_documents").delete().eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+/** Elimina los borradores DTE asociados a una cotización (al borrar la cotización). */
+export async function deleteDteByQuote(quoteId: string): Promise<void> {
+  try {
+    const supabase = db();
+    // Solo borra los que NO están emitidos/enviados.
+    await supabase
+      .from("tax_documents")
+      .delete()
+      .eq("quote_id", quoteId)
+      .not("internal_status", "eq", "emitted")
+      .not("sii_status", "in", "(sent,accepted)");
+  } catch (err) {
+    console.error("[dte] deleteDteByQuote error:", err);
+  }
+}
+
 export async function getDteDocument(id: string) {
   const supabase = db();
   const { data: doc } = await supabase.from("tax_documents").select("*").eq("id", id).maybeSingle();

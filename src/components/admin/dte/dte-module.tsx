@@ -12,6 +12,7 @@ import {
   Receipt,
   RefreshCw,
   ShieldCheck,
+  Trash2,
   TriangleAlert,
   Upload,
   Wallet,
@@ -365,6 +366,26 @@ function DocDetail({ id, onClose, onChanged }: { id: string; onClose: () => void
     }
   }
 
+  async function remove() {
+    if (!window.confirm("¿Eliminar este documento tributario (borrador)?")) return;
+    setBusy(true);
+    setMsg("");
+    try {
+      const res = await fetch(`/api/admin/dte/documents/${id}`, { method: "DELETE" });
+      const d = await res.json().catch(() => null);
+      if (!res.ok) {
+        setMsg(d?.error || "No se pudo eliminar.");
+        setBusy(false);
+        return;
+      }
+      onChanged();
+      onClose();
+    } catch {
+      setMsg("Error de conexión.");
+      setBusy(false);
+    }
+  }
+
   const doc = data?.document;
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-0 sm:items-center sm:p-4" onClick={onClose}>
@@ -413,6 +434,16 @@ function DocDetail({ id, onClose, onChanged }: { id: string; onClose: () => void
               >
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CircleCheck className="h-4 w-4" />}
                 Confirmar y asignar folio
+              </button>
+            )}
+            {doc.internal_status !== "emitted" && doc.sii_status !== "accepted" && doc.sii_status !== "sent" && (
+              <button
+                onClick={remove}
+                disabled={busy}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2 text-[13px] font-semibold text-rose-600 transition-colors hover:bg-rose-50 disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" />
+                Eliminar documento
               </button>
             )}
             <p className="text-center text-[10.5px] text-slate-400">

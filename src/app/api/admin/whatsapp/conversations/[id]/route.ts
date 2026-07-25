@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
-import { getConversation, updateConversation, listRecentMessages } from "@/lib/whatsapp/store";
+import { getConversation, updateConversation, listRecentMessages, deleteConversation } from "@/lib/whatsapp/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,4 +37,13 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   const conversation = await updateConversation(id, body);
   if (!conversation) return NextResponse.json({ error: "No se pudo actualizar." }, { status: 500 });
   return NextResponse.json({ conversation });
+}
+
+export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const auth = await requirePortalAdminApiSession();
+  if ("error" in auth) return auth.error;
+  const { id } = await ctx.params;
+  const ok = await deleteConversation(id);
+  if (!ok) return NextResponse.json({ error: "No se pudo eliminar." }, { status: 500 });
+  return NextResponse.json({ ok: true });
 }

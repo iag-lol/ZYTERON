@@ -18,6 +18,14 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
   try {
     // Borramos primero los extras por si la BD no tiene el cascade aplicado.
     await deleteRows("QuoteExtra", { quoteId: id }).catch(() => {});
+    // Arrastra el borrador tributario (DTE) asociado a esta cotización, para que
+    // no quede rastro en Contador/Auditor · Facturación SII.
+    try {
+      const { deleteDteByQuote } = await import("@/lib/dte/dte-store");
+      await deleteDteByQuote(id);
+    } catch {
+      /* si aún no existen las tablas tributarias, se ignora */
+    }
     await deleteRows("Quote", { id });
     return NextResponse.json({ ok: true });
   } catch (error) {

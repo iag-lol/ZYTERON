@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { BriefcaseBusiness, FileText, Mail, Phone, UserRoundCheck } from "lucide-react";
+import { BriefcaseBusiness, FileText, Mail, Phone, Trash2, UserRoundCheck } from "lucide-react";
 
 type Props = {
   leadId: string;
@@ -106,6 +106,32 @@ export function ContactLeadActions({ leadId, email, phone }: Props) {
         >
           <FileText className="h-3.5 w-3.5" />
           Generar cotización
+        </button>
+
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={() => {
+            if (!window.confirm("¿Eliminar este contacto de forma permanente?")) return;
+            setMessage("");
+            startTransition(async () => {
+              try {
+                const res = await fetch(`/admin/contactos/${leadId}/eliminar`, { method: "POST" });
+                const data = (await res.json().catch(() => null)) as ActionResult | null;
+                if (!res.ok || !data?.ok) {
+                  setMessage(data?.error || "No se pudo eliminar el contacto.");
+                  return;
+                }
+                router.refresh();
+              } catch {
+                setMessage("No se pudo eliminar el contacto.");
+              }
+            });
+          }}
+          className={`${baseButtonClass} border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:opacity-60`}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          Eliminar
         </button>
       </div>
 

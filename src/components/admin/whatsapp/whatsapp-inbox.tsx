@@ -20,6 +20,7 @@ import {
   Search,
   Send,
   Sparkles,
+  Trash2,
   User,
   X,
 } from "lucide-react";
@@ -356,6 +357,21 @@ export function WhatsappInbox() {
     }
   }, []);
 
+  const deleteConversation = useCallback(async () => {
+    const id = activeIdRef.current;
+    if (!id) return;
+    if (!window.confirm("¿Eliminar esta conversación y todos sus mensajes de forma permanente?")) return;
+    setConversations((prev) => prev.filter((c) => c.id !== id));
+    setActiveId(null);
+    setMessages([]);
+    setMobileView("list");
+    try {
+      await fetch(`/api/admin/whatsapp/conversations/${id}`, { method: "DELETE" });
+    } catch {
+      /* noop */
+    }
+  }, []);
+
   // -- Filtro + búsqueda -----------------------------------------------------
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -476,6 +492,7 @@ export function WhatsappInbox() {
               onOpenFicha={() => setMobileView("ficha")}
               onSetMode={(mode) => void patchConversation({ mode })}
               onClose={() => void patchConversation({ status: active.status === "closed" ? "open" : "closed" })}
+              onDelete={() => void deleteConversation()}
             />
 
             <div ref={scrollRef} className="flex-1 space-y-2 overflow-y-auto bg-slate-50 px-3 py-4 sm:px-5">
@@ -579,12 +596,14 @@ function ChatHeader({
   onOpenFicha,
   onSetMode,
   onClose,
+  onDelete,
 }: {
   conv: Conversation;
   onBack: () => void;
   onOpenFicha: () => void;
   onSetMode: (mode: string) => void;
   onClose: () => void;
+  onDelete: () => void;
 }) {
   const windowOpen = conv.window_expires_at ? new Date(conv.window_expires_at).getTime() > Date.now() : false;
   return (
@@ -644,6 +663,14 @@ function ChatHeader({
         >
           {conv.status === "closed" ? <Play className="h-3.5 w-3.5" /> : <CircleCheck className="h-3.5 w-3.5" />}
           {conv.status === "closed" ? "Reabrir" : "Cerrar"}
+        </button>
+        <button
+          onClick={onDelete}
+          className="flex items-center gap-1 rounded-lg bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-600 transition-colors hover:bg-rose-100"
+          title="Eliminar conversación"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          Eliminar
         </button>
       </div>
     </header>

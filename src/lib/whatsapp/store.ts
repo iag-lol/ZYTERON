@@ -356,3 +356,13 @@ export async function listQuickReplies(): Promise<WaQuickReply[]> {
   const { data } = await db().from(QUICK).select("*").eq("is_active", true).order("title");
   return (data as WaQuickReply[]) ?? [];
 }
+
+/** Elimina una conversación y todo su rastro (mensajes y notas por cascade). */
+export async function deleteConversation(id: string): Promise<boolean> {
+  const { error } = await db().from(CONV).delete().eq("id", id);
+  if (error) {
+    console.error("[whatsapp] deleteConversation error:", error.message);
+    return false;
+  }
+  return true;
+}
