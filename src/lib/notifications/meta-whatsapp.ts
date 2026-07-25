@@ -13,16 +13,17 @@ export function isMetaWhatsappConfigured() {
   return Boolean(env("META_WHATSAPP_TOKEN") && env("META_WHATSAPP_PHONE_ID"));
 }
 
-/** Envía un mensaje de texto a un número (formato internacional sin +). */
-export async function sendMetaWhatsappText(to: string, body: string): Promise<boolean> {
+export type MetaSendResult = { ok: boolean; id?: string; error?: string };
+
+/** Envía un mensaje de texto y devuelve el resultado detallado (con id de Meta). */
+export async function sendMetaWhatsappMessage(to: string, body: string): Promise<MetaSendResult> {
   const token = env("META_WHATSAPP_TOKEN");
   const phoneId = env("META_WHATSAPP_PHONE_ID");
   const recipient = String(to || "").replace(/\D/g, "");
   const text = String(body || "").slice(0, 4000);
 
   if (!token || !phoneId || !recipient || !text) {
-    console.warn("[whatsapp-agent] envío omitido: falta configuración o datos.");
-    return false;
+    return { ok: false, error: "Falta configuración de Meta o datos del mensaje." };
   }
 
   try {
@@ -38,14 +39,23 @@ export async function sendMetaWhatsappText(to: string, body: string): Promise<bo
       }),
       cache: "no-store",
     });
+    const data = (await res.json().catch(() => null)) as
+      | { messages?: Array<{ id?: string }>; error?: { message?: string } }
+      | null;
     if (!res.ok) {
-      const detail = await res.text().catch(() => "");
-      console.error("[whatsapp-agent] error enviando:", res.status, detail.slice(0, 300));
-      return false;
+      const msg = data?.error?.message || `HTTP ${res.status}`;
+      console.error("[whatsapp] error enviando:", msg);
+      return { ok: false, error: msg };
     }
-    return true;
+    return { ok: true, id: data?.messages?.[0]?.id };
   } catch (err) {
-    console.error("[whatsapp-agent] excepción enviando:", err);
-    return false;
+    console.error("[whatsapp] excepción enviando:", err);
+    return { ok: false, error: "Excepción de red al enviar." };
   }
+}
+
+/** Compat: envío de texto simple que devuelve boolean. */
+export async function sendMetaWhatsappText(to: string, body: string): Promise<boolean> {
+  const result = await sendMetaWhatsappMessage(to, body);
+  return result.ok;
 }

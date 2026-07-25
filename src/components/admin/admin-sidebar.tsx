@@ -36,6 +36,7 @@ import {
   Trophy,
   Award,
   Sparkles,
+  MessageCircle,
   X,
 } from "lucide-react";
 
@@ -82,6 +83,7 @@ const navGroups: NavGroup[] = [
   {
     label: "Comunicación",
     items: [
+      { href: "/admin/whatsapp", label: "WhatsApp", icon: MessageCircle, color: "emerald" },
       { href: "/admin/comentarios", label: "Comentarios", icon: MessageSquareQuote, color: "rose" },
       { href: "/admin/comunicaciones", label: "Mensajes", icon: Inbox, color: "teal" },
     ],

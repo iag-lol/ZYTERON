@@ -30,6 +30,7 @@ const routeMap: Record<string, string> = {
   "/admin/comentarios": "Comentarios",
   "/admin/contactos": "Contactos",
   "/admin/comunicaciones": "Mensajes",
+  "/admin/whatsapp": "WhatsApp",
   "/admin/visitas": "Visitas Técnicas",
   "/admin/visitas/nueva": "Nueva Visita",
   "/admin/ventas": "Ventas",
