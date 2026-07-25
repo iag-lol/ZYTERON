@@ -8,7 +8,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self'${isDevelopment ? " http://localhost:* ws://localhost:* ws://127.0.0.1:*" : ""} https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://www.googleadservices.com https://www.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://*.supabase.co wss://*.supabase.co https://api.resend.com https://sandbox.flow.cl https://www.flow.cl`,
+  `connect-src 'self'${isDevelopment ? " http://localhost:* ws://localhost:* ws://127.0.0.1:*" : ""} https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://www.googleadservices.com https://www.google.com https://pagead2.googlesyndication.com https://*.doubleclick.net https://*.supabase.co wss://*.supabase.co https://api.resend.com https://sandbox.flow.cl https://www.flow.cl`,
   "frame-src https://www.googletagmanager.com",
   "frame-ancestors 'none'",
   "object-src 'none'",

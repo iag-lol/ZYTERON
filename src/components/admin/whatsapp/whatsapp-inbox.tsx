@@ -129,6 +129,7 @@ export function WhatsappInbox() {
   const [sending, setSending] = useState(false);
   const [mobileView, setMobileView] = useState<"list" | "chat" | "ficha">("list");
   const [realtimeOk, setRealtimeOk] = useState(true);
+  const [usingRealtime, setUsingRealtime] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -160,10 +161,14 @@ export function WhatsappInbox() {
     try {
       client = createSupabaseBrowserClient();
     } catch {
-      setRealtimeOk(false);
-      const t = setInterval(() => void fetchConversations(), 15000);
+      // Sin credenciales públicas de Supabase en el navegador: usamos polling
+      // (sin mostrar "Reconectando", porque el respaldo mantiene todo al día).
+      setRealtimeOk(true);
+      setUsingRealtime(false);
+      const t = setInterval(() => void fetchConversations(), 10000);
       return () => clearInterval(t);
     }
+    setUsingRealtime(true);
 
     const upsertConv = (row: Conversation) => {
       setConversations((prev) => {
@@ -211,13 +216,44 @@ export function WhatsappInbox() {
       });
 
     // Respaldo por polling (por si Realtime no está habilitado).
-    const poll = setInterval(() => void fetchConversations(), 20000);
+    const poll = setInterval(() => void fetchConversations(), 12000);
 
     return () => {
       clearInterval(poll);
       client.removeChannel(channel).catch(() => {});
     };
   }, [fetchConversations]);
+
+  // -- Polling de la conversación activa (respaldo de Realtime) -------------
+  useEffect(() => {
+    if (!activeId) return;
+    let cancelled = false;
+
+    const refreshMessages = async () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const res = await fetch(`/api/admin/whatsapp/conversations/${activeId}`, { cache: "no-store" });
+        const data = (await res.json().catch(() => null)) as { messages?: Message[] } | null;
+        if (cancelled || !data?.messages) return;
+        const server = data.messages;
+        setMessages((prev) => {
+          // Conserva mensajes optimistas (temp-) que el servidor aún no refleja.
+          const temps = prev.filter(
+            (m) => m.id.startsWith("temp-") && !server.some((s) => s.direction === m.direction && s.content === m.content),
+          );
+          return [...server, ...temps];
+        });
+      } catch {
+        /* noop */
+      }
+    };
+
+    const interval = setInterval(refreshMessages, 4000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [activeId]);
 
   // -- Al abrir una conversación --------------------------------------------
   const openConversation = useCallback(async (id: string) => {
@@ -361,7 +397,7 @@ export function WhatsappInbox() {
                 <span className="rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">{totalUnread}</span>
               )}
             </h2>
-            {!realtimeOk && (
+            {usingRealtime && !realtimeOk && (
               <span className="flex items-center gap-1 text-[10px] font-medium text-amber-600" title="Reconectando…">
                 <Loader2 className="h-3 w-3 animate-spin" /> Reconectando
               </span>
