@@ -3,10 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bot, Loader2, MessageCircle, Send, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
+import { siteConfig } from "@/config/site";
 import {
   ZYTERON_QUICK_PROMPTS,
   ZYTERON_WELCOME_MESSAGE,
 } from "@/lib/ai/zyteron-knowledge";
+
+const WHATSAPP_DIGITS = siteConfig.contact.phone.replace(/\D/g, "");
 
 type ChatRole = "user" | "assistant";
 type ChatMessage = { id: string; role: ChatRole; content: string };
@@ -28,6 +32,7 @@ export function AiChatWidget() {
   const [messages, setMessages] = useState<ChatMessage[]>([welcomeMessage()]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [handoffLoading, setHandoffLoading] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -202,6 +207,32 @@ export function AiChatWidget() {
     return () => abortRef.current?.abort();
   }, []);
 
+  const goToWhatsApp = useCallback(async () => {
+    if (handoffLoading) return;
+    setHandoffLoading(true);
+    const history = messages
+      .filter((m) => m.id !== "welcome")
+      .map((m) => ({ role: m.role, content: m.content }));
+    let text = "Hola, vengo del sitio web de Zyteron. Quiero cotizar un proyecto para mi empresa.";
+    try {
+      if (history.length > 0) {
+        const res = await fetch("/api/chat/handoff", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: history }),
+        });
+        const data = (await res.json().catch(() => null)) as { text?: string } | null;
+        if (data?.text) text = data.text;
+      }
+    } catch {
+      /* usa el texto por defecto */
+    } finally {
+      setHandoffLoading(false);
+    }
+    const url = `https://wa.me/${WHATSAPP_DIGITS}?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  }, [handoffLoading, messages]);
+
   const showQuickPrompts = messages.filter((m) => m.role === "user").length === 0;
 
   return (
@@ -294,6 +325,19 @@ export function AiChatWidget() {
                 )}
               </button>
             </div>
+            <button
+              type="button"
+              onClick={() => void goToWhatsApp()}
+              disabled={handoffLoading}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] px-3 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[#1ebe5b] disabled:opacity-70"
+            >
+              {handoffLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <WhatsAppIcon className="h-4 w-4 text-white" />
+              )}
+              {handoffLoading ? "Preparando tu mensaje…" : "Continuar por WhatsApp"}
+            </button>
             <p className="mt-2 text-center text-[10px] text-slate-400">
               Asistente con IA · Respuestas orientativas de Zyteron SpA
             </p>

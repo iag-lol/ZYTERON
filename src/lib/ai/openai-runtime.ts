@@ -78,6 +78,87 @@ async function consumeStream(
   return { content, toolCalls };
 }
 
+/**
+ * Versión NO-streaming: ejecuta el loop de function-calling y devuelve el texto
+ * final. Útil para canales que no transmiten (WhatsApp, handoff, resúmenes).
+ */
+export async function runOpenAIToolCompletion(options: {
+  apiKey: string;
+  model: string;
+  messages: OpenAIMessage[];
+  tools?: OpenAITool[];
+  executeTool?: ToolExecutor;
+  temperature?: number;
+  maxTokens?: number;
+}): Promise<string> {
+  const { apiKey, model, tools, executeTool } = options;
+  const convo = [...options.messages];
+  const MAX_TURNS = 4;
+
+  for (let turn = 0; turn < MAX_TURNS; turn++) {
+    let res: Response;
+    try {
+      res = await fetch(OPENAI_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model,
+          temperature: options.temperature ?? 0.5,
+          max_tokens: options.maxTokens ?? 700,
+          ...(tools && tools.length ? { tools, tool_choice: "auto" } : {}),
+          messages: convo,
+        }),
+      });
+    } catch {
+      return "";
+    }
+    if (!res.ok) return "";
+
+    let data: {
+      choices?: Array<{
+        message?: {
+          content?: string | null;
+          tool_calls?: Array<{ id: string; function?: { name?: string; arguments?: string } }>;
+        };
+      }>;
+    };
+    try {
+      data = await res.json();
+    } catch {
+      return "";
+    }
+
+    const message = data?.choices?.[0]?.message;
+    if (!message) return "";
+    const toolCalls = Array.isArray(message.tool_calls) ? message.tool_calls : [];
+
+    if (toolCalls.length === 0 || !executeTool) {
+      return typeof message.content === "string" ? message.content : "";
+    }
+
+    convo.push({
+      role: "assistant",
+      content: message.content ?? null,
+      tool_calls: toolCalls.map((tc) => ({
+        id: tc.id,
+        type: "function",
+        function: { name: tc.function?.name || "", arguments: tc.function?.arguments || "{}" },
+      })),
+    });
+
+    for (const tc of toolCalls) {
+      let result = "Solicitud recibida.";
+      try {
+        result = await executeTool(tc.function?.name || "", tc.function?.arguments || "{}");
+      } catch {
+        result = "No se pudo ejecutar la acción.";
+      }
+      convo.push({ role: "tool", tool_call_id: tc.id, content: result });
+    }
+  }
+  return "";
+}
+
 export function createOpenAIToolStream(options: {
   apiKey: string;
   model: string;
