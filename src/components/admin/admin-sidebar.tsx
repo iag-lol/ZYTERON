@@ -15,7 +15,6 @@ import {
   Settings,
   LogOut,
   Zap,
-  PlusCircle,
   BriefcaseBusiness,
   MessagesSquare,
   MessageSquareQuote,
@@ -29,8 +28,8 @@ import {
   Inbox,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   ExternalLink,
-  TrendingUp,
   Calculator,
   Newspaper,
   Trophy,
@@ -67,9 +66,17 @@ const navGroups: NavGroup[] = [
     label: "Ventas & Clientes",
     items: [
       { href: "/admin/clientes", label: "Clientes", icon: Users, color: "blue" },
+      { href: "/admin/contactos", label: "Contactos", icon: Mail, color: "sky" },
       { href: "/admin/cotizaciones", label: "Cotizaciones", icon: FileText, color: "violet" },
       { href: "/admin/ventas", label: "Ventas", icon: ShoppingCart, color: "emerald" },
-      { href: "/admin/contactos", label: "Contactos", icon: Mail, color: "sky" },
+    ],
+  },
+  {
+    label: "Comunicación",
+    items: [
+      { href: "/admin/whatsapp", label: "WhatsApp", icon: MessageCircle, color: "emerald" },
+      { href: "/admin/comunicaciones", label: "Mensajes", icon: Inbox, color: "teal" },
+      { href: "/admin/comentarios", label: "Comentarios", icon: MessageSquareQuote, color: "rose" },
     ],
   },
   {
@@ -82,37 +89,24 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Comunicación",
-    items: [
-      { href: "/admin/whatsapp", label: "WhatsApp", icon: MessageCircle, color: "emerald" },
-      { href: "/admin/comentarios", label: "Comentarios", icon: MessageSquareQuote, color: "rose" },
-      { href: "/admin/comunicaciones", label: "Mensajes", icon: Inbox, color: "teal" },
-    ],
-  },
-  {
-    label: "Finanzas",
+    label: "Finanzas & Tributario",
     items: [
       { href: "/admin/contador-auditor", label: "Contador Auditor", icon: Calculator, color: "blue" },
       { href: "/admin/contador-auditor/facturacion", label: "Facturación SII", icon: Receipt, color: "violet" },
-      { href: "/admin/gastos", label: "Gastos", icon: WalletCards, color: "red" },
       { href: "/admin/sii", label: "Centro SII", icon: Landmark, color: "yellow" },
+      { href: "/admin/gastos", label: "Gastos", icon: WalletCards, color: "red" },
     ],
   },
   {
-    label: "Catálogo",
+    label: "Catálogo & Contenido",
     items: [
       { href: "/admin/productos", label: "Productos", icon: Boxes, color: "indigo" },
-    ],
-  },
-  {
-    label: "Contenido",
-    items: [
       { href: "/admin/blog", label: "Blog", icon: Newspaper, color: "orange" },
       { href: "/admin/casos", label: "Casos de éxito", icon: Trophy, color: "amber" },
     ],
   },
   {
-    label: "Programas Sociales",
+    label: "Programas",
     items: [
       { href: "/admin/becas", label: "Becas Web Pyme", icon: Award, color: "blue" },
     ],
@@ -145,13 +139,41 @@ const colorMap: Record<string, { activeBg: string; activeText: string; activeIco
   slate:   { activeBg: "bg-slate-100",  activeText: "text-slate-700",   activeIcon: "text-slate-600",   activeDot: "bg-slate-500" },
 };
 
+const GROUPS_STORAGE_KEY = "zyteron_admin_sidebar_collapsed_groups_v1";
+
 export function AdminSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const { mobileNavOpen, setMobileNavOpen } = useAdminUi();
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
+
+  // Restaura qué secciones están ocultas (persistente).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(GROUPS_STORAGE_KEY);
+      if (raw) setCollapsedGroups(JSON.parse(raw));
+    } catch {
+      /* noop */
+    }
+  }, []);
+
+  const toggleGroup = (label: string) => {
+    setCollapsedGroups((prev) => {
+      const next = { ...prev, [label]: !prev[label] };
+      try {
+        localStorage.setItem(GROUPS_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* noop */
+      }
+      return next;
+    });
+  };
+
+  // La sección que contiene la página activa siempre se muestra abierta.
+  const activeGroupLabel = navGroups.find((g) => g.items.some((i) => isActive(i.href, i.exact)))?.label;
 
   // Cierra el menú móvil al cambiar de página.
   useEffect(() => {
@@ -227,17 +249,27 @@ export function AdminSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-4 scrollbar-none">
-        <div className="space-y-5">
-          {navGroups.map((group) => (
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-3 scrollbar-none">
+        <div className="space-y-1.5">
+          {navGroups.map((group) => {
+            const isGroupOpen = !showLabels || group.label === activeGroupLabel || !collapsedGroups[group.label];
+            return (
             <div key={group.label}>
-              {showLabels && (
-                <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-                  {group.label}
-                </p>
+              {showLabels ? (
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.label)}
+                  className="mb-0.5 flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-600"
+                >
+                  <span>{group.label}</span>
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${isGroupOpen ? "" : "-rotate-90"}`}
+                  />
+                </button>
+              ) : (
+                <div className="mb-1 h-px w-full bg-slate-100" />
               )}
-              {!showLabels && <div className="mb-1 h-px w-full bg-slate-100" />}
-              <div className="space-y-0.5">
+              <div className={`space-y-0.5 overflow-hidden ${isGroupOpen ? "" : "hidden"}`}>
                 {group.items.map((item) => {
                   const active = isActive(item.href, item.exact);
                   const c = colorMap[item.color ?? "slate"];
@@ -274,38 +306,10 @@ export function AdminSidebar() {
                 })}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </nav>
-
-      {/* Quick actions */}
-      {showLabels && (
-        <div className="shrink-0 px-3 pb-3">
-          <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
-            <p className="mb-2.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-blue-600">
-              <TrendingUp className="h-3 w-3" />
-              Acceso rápido
-            </p>
-            <div className="space-y-0.5">
-              {[
-                { href: "/admin/cotizaciones/nueva", label: "Nueva cotización" },
-                { href: "/admin/ventas/nueva", label: "Registrar venta" },
-                { href: "/admin/visitas/nueva", label: "Agendar visita" },
-                { href: "/admin/clientes/nuevo", label: "Nuevo cliente" },
-              ].map((action) => (
-                <Link
-                  key={action.href}
-                  href={action.href}
-                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[12px] font-medium text-blue-600/80 transition-all hover:bg-blue-100 hover:text-blue-700"
-                >
-                  <PlusCircle className="h-3.5 w-3.5 shrink-0" />
-                  {action.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* User footer */}
       <div className="shrink-0 border-t border-slate-200 p-3">
