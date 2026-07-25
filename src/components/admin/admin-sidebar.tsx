@@ -37,6 +37,7 @@ import {
   Award,
   Sparkles,
   MessageCircle,
+  Receipt,
   X,
 } from "lucide-react";
 
@@ -92,6 +93,7 @@ const navGroups: NavGroup[] = [
     label: "Finanzas",
     items: [
       { href: "/admin/contador-auditor", label: "Contador Auditor", icon: Calculator, color: "blue" },
+      { href: "/admin/contador-auditor/facturacion", label: "Facturación SII", icon: Receipt, color: "violet" },
       { href: "/admin/gastos", label: "Gastos", icon: WalletCards, color: "red" },
       { href: "/admin/sii", label: "Centro SII", icon: Landmark, color: "yellow" },
     ],
