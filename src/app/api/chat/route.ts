@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { buildZyteronSystemPrompt } from "@/lib/ai/zyteron-knowledge";
 import { LEAD_CAPTURE_TOOL, executeLeadCapture } from "@/lib/ai/lead-capture";
+import { notifyOwnerChatStarted } from "@/lib/notifications/chat-started-alert";
 import { siteConfig } from "@/config/site";
 
 export const runtime = "nodejs";
@@ -122,6 +123,13 @@ export async function POST(req: Request) {
     return streamingResponse(
       textStream("No pude leer tu mensaje. ¿Puedes escribirlo nuevamente, por favor?"),
     );
+  }
+
+  // 2b) Aviso al dueño al INICIAR la conversación (primer mensaje del visitante).
+  //     Solo una vez por sesión: cuando hay exactamente un mensaje de usuario.
+  const userMessages = messages.filter((m) => m.role === "user");
+  if (userMessages.length === 1) {
+    void notifyOwnerChatStarted(userMessages[0]!.content);
   }
 
   // 3) Sin API key configurada: fallback amable (no es un error para el usuario)
