@@ -24,10 +24,16 @@ obtengas un dato nuevo, aunque sea uno solo. No esperes a tener todo.
 
 ## GENERAR COTIZACIÓN AL CONFIRMAR (MUY IMPORTANTE)
 Cuando el cliente CONFIRME que quiere avanzar (por ejemplo dice "lo quiero", "sí, adelante",
-"hagámoslo", "quiero cotizar"), llama a "generar_cotizacion" con los ítems y sus precios NETOS reales
-de Zyteron (los precios publicados son "desde", sin IVA). Después confírmale en lenguaje natural que su
-cotización quedó registrada y que el equipo lo contactará para finalizarla. No inventes precios que no
-estén en la información de Zyteron.`;
+"hagámoslo", "quiero cotizar"), llama a "generar_cotizacion" UNA SOLA VEZ con los ítems y sus precios
+NETOS reales de Zyteron (los precios publicados son "desde", sin IVA).
+- Genera la cotización SOLO UNA VEZ por conversación. Si ya la generaste (o la herramienta te dice que
+  ya existe), NO la vuelvas a generar aunque el cliente insista: simplemente confírmale con calma que su
+  cotización YA está registrada y que el equipo lo contactará.
+- No inventes precios que no estén en la información de Zyteron.
+
+## SIEMPRE RESPONDE
+Después de usar cualquier herramienta, SIEMPRE responde al cliente con un mensaje en lenguaje natural,
+breve y claro. Nunca dejes al cliente sin respuesta.`;
 
 const FICHA_TOOL: OpenAITool = {
   type: "function",
@@ -150,6 +156,14 @@ export async function generateAiReply(conversation: WaConversation): Promise<str
       }
 
       if (name === "generar_cotizacion") {
+        const fresh = (await getConversation(conversation.id)) ?? conversation;
+
+        // Anti-duplicado: si ya se generó una cotización en esta conversación,
+        // NO crear otra. Solo informar que ya está registrada.
+        if (fresh.lead_status === "cotizacion_enviada" || fresh.lead_id) {
+          return "Ya existe una cotización registrada para este cliente en esta conversación. NO generes otra: confírmale al cliente que su cotización ya está registrada y que el equipo lo contactará.";
+        }
+
         const rawItems = Array.isArray(args.items) ? (args.items as Record<string, unknown>[]) : [];
         const items = rawItems
           .map((it) => ({
@@ -160,7 +174,6 @@ export async function generateAiReply(conversation: WaConversation): Promise<str
           .filter((it) => it.descripcion && Number.isFinite(it.precio_neto) && it.precio_neto > 0);
         if (items.length === 0) return "No se pudo generar la cotización: faltan ítems con precio.";
 
-        const fresh = (await getConversation(conversation.id)) ?? conversation;
         const result = await executeCreateQuoteDraft({
           cliente_nombre: fresh.customer_name || fresh.profile_name || "Cliente WhatsApp",
           cliente_email: fresh.email || "",
@@ -170,7 +183,11 @@ export async function generateAiReply(conversation: WaConversation): Promise<str
           notas: `Cotización generada automáticamente desde WhatsApp (+${fresh.phone}).`,
         });
         if (result.ok) {
-          await updateConversation(conversation.id, { lead_status: "cotizacion_enviada" });
+          // Guardamos el id de la cotización para evitar duplicados futuros.
+          await updateConversation(conversation.id, {
+            lead_status: "cotizacion_enviada",
+            lead_id: result.quoteId,
+          });
         }
         return result.message;
       }
@@ -179,5 +196,10 @@ export async function generateAiReply(conversation: WaConversation): Promise<str
     },
   });
 
-  return reply.trim();
+  // Garantiza SIEMPRE una respuesta al cliente (evita silencios cuando la IA
+  // solo ejecutó herramientas sin redactar texto).
+  return (
+    reply.trim() ||
+    "Perfecto, ya tomé tu solicitud. El equipo de Zyteron te contactará muy pronto. ¿Te ayudo con algo más mientras tanto?"
+  );
 }
