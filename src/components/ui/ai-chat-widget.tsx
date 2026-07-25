@@ -125,9 +125,9 @@ export function AiChatWidget() {
           headers: { "Content-Type": "application/json" },
           signal: controller.signal,
           body: JSON.stringify({
-            messages: history
-              .filter((m) => m.id !== "welcome")
-              .map((m) => ({ role: m.role, content: m.content })),
+            // Incluimos el saludo de bienvenida como primer turno del asistente
+            // para que la IA sepa que YA saludó y no vuelva a presentarse.
+            messages: history.map((m) => ({ role: m.role, content: m.content })),
           }),
         });
 

@@ -17,6 +17,7 @@ import { AdminNotifications } from "@/components/admin/admin-notifications";
 
 const routeMap: Record<string, string> = {
   "/admin": "Dashboard",
+  "/admin/asistente-ia": "Asistente IA",
   "/admin/clientes": "Clientes",
   "/admin/portal-clientes": "Portal Clientes",
   "/admin/cotizaciones": "Cotizaciones",

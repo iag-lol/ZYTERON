@@ -34,6 +34,7 @@ import {
   Newspaper,
   Trophy,
   Award,
+  Sparkles,
 } from "lucide-react";
 
 interface NavItem {
@@ -54,6 +55,7 @@ const navGroups: NavGroup[] = [
     label: "Principal",
     items: [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true, color: "blue" },
+      { href: "/admin/asistente-ia", label: "Asistente IA", icon: Sparkles, color: "violet" },
       { href: "/admin/reportes", label: "Reportes", icon: BarChart3, color: "violet" },
     ],
   },
