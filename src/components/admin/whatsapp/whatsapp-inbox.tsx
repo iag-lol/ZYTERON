@@ -380,11 +380,11 @@ export function WhatsappInbox() {
   const totalUnread = useMemo(() => conversations.reduce((a, c) => a + (c.unread_count || 0), 0), [conversations]);
 
   return (
-    <div className="flex h-[calc(100vh-9.5rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="flex h-[calc(100vh-7rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {/* ===== Columna 1: Lista ===== */}
       <section
         className={cn(
-          "flex w-full flex-col border-r border-slate-200 lg:w-[320px] xl:w-[360px]",
+          "flex w-full flex-col border-r border-slate-200 lg:w-[300px] xl:w-[330px]",
           mobileView === "list" ? "flex" : "hidden lg:flex",
         )}
       >
@@ -504,7 +504,7 @@ export function WhatsappInbox() {
       {/* ===== Columna 3: Ficha ===== */}
       <section
         className={cn(
-          "w-full flex-col border-l border-slate-200 lg:flex lg:w-[300px] xl:w-[340px]",
+          "w-full flex-col border-l border-slate-200 lg:flex lg:w-[280px] xl:w-[310px]",
           mobileView === "ficha" ? "flex" : "hidden",
         )}
       >
@@ -782,7 +782,7 @@ function FichaPanel({
 
   const field = (label: string, key: keyof typeof form, type = "text") => (
     <label className="block">
-      <span className="text-[11px] font-semibold text-slate-500">{label}</span>
+      <span className="text-[10.5px] font-semibold text-slate-500">{label}</span>
       <input
         type={type}
         value={form[key]}
@@ -791,21 +791,21 @@ function FichaPanel({
           const value = key === "estimated_budget" ? Number(form[key]) || null : form[key] || null;
           onPatch({ [key]: value });
         }}
-        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[13px] text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+        className="mt-0.5 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[12.5px] text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
       />
     </label>
   );
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center gap-2 border-b border-slate-200 px-3 py-2.5">
+      <header className="flex items-center gap-2 border-b border-slate-200 px-3 py-2">
         <button onClick={onBack} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden">
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <h3 className="text-sm font-bold text-slate-900">Ficha del cliente</h3>
+        <h3 className="text-[13px] font-bold text-slate-900">Ficha del cliente</h3>
       </header>
 
-      <div className="flex-1 space-y-4 overflow-y-auto p-3">
+      <div className="flex-1 space-y-3 overflow-y-auto p-3">
         {/* Acciones rápidas */}
         <div className="flex flex-wrap gap-1.5">
           <button
@@ -854,11 +854,11 @@ function FichaPanel({
         </div>
 
         {/* Campos editables */}
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {field("Nombre", "customer_name")}
           <div className="block">
-            <span className="text-[11px] font-semibold text-slate-500">Teléfono</span>
-            <p className="mt-1 rounded-lg bg-slate-50 px-2.5 py-1.5 text-[13px] text-slate-600">+{conv.phone}</p>
+            <span className="text-[10.5px] font-semibold text-slate-500">Teléfono</span>
+            <p className="mt-0.5 rounded-lg bg-slate-50 px-2.5 py-1 text-[12.5px] text-slate-600">+{conv.phone}</p>
           </div>
           {field("Correo", "email", "email")}
           {field("Empresa", "company")}

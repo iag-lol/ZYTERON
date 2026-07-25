@@ -5,6 +5,7 @@ import { Bot, Loader2, MessageCircle, Send, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { siteConfig } from "@/config/site";
+import { HANDOFF_SIGNAL } from "@/lib/ai/handoff-signal";
 import {
   ZYTERON_QUICK_PROMPTS,
   ZYTERON_WELCOME_MESSAGE,
@@ -33,6 +34,7 @@ export function AiChatWidget() {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [handoffLoading, setHandoffLoading] = useState(false);
+  const [readyForWhatsApp, setReadyForWhatsApp] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -146,8 +148,11 @@ export function AiChatWidget() {
           const { done, value } = await reader.read();
           if (done) break;
           acc += decoder.decode(value, { stream: true });
+          // La señal indica que el cliente ya está listo → mostrar botón WhatsApp.
+          if (acc.includes(HANDOFF_SIGNAL)) setReadyForWhatsApp(true);
+          const display = acc.split(HANDOFF_SIGNAL).join("");
           setMessages((prev) =>
-            prev.map((m) => (m.id === assistantId ? { ...m, content: acc } : m)),
+            prev.map((m) => (m.id === assistantId ? { ...m, content: display } : m)),
           );
         }
 
@@ -325,19 +330,21 @@ export function AiChatWidget() {
                 )}
               </button>
             </div>
-            <button
-              type="button"
-              onClick={() => void goToWhatsApp()}
-              disabled={handoffLoading}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] px-3 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[#1ebe5b] disabled:opacity-70"
-            >
-              {handoffLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <WhatsAppIcon className="h-4 w-4 text-white" />
-              )}
-              {handoffLoading ? "Preparando tu mensaje…" : "Continuar por WhatsApp"}
-            </button>
+            {readyForWhatsApp && (
+              <button
+                type="button"
+                onClick={() => void goToWhatsApp()}
+                disabled={handoffLoading}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] px-3 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[#1ebe5b] disabled:opacity-70"
+              >
+                {handoffLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <WhatsAppIcon className="h-4 w-4 text-white" />
+                )}
+                {handoffLoading ? "Preparando tu mensaje…" : "Continuar por WhatsApp"}
+              </button>
+            )}
             <p className="mt-2 text-center text-[10px] text-slate-400">
               Asistente con IA · Respuestas orientativas de Zyteron SpA
             </p>

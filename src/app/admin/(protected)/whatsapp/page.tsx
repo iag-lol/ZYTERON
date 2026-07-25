@@ -7,15 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function WhatsappPage() {
-  return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold text-slate-900">WhatsApp</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Bandeja de atención en tiempo real: conversaciones, control de IA, leads y estados de entrega.
-        </p>
-      </div>
-      <WhatsappInbox />
-    </div>
-  );
+  return <WhatsappInbox />;
 }

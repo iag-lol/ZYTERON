@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { buildZyteronSystemPrompt } from "@/lib/ai/zyteron-knowledge";
 import { LEAD_CAPTURE_TOOL, executeLeadCapture } from "@/lib/ai/lead-capture";
+import { HANDOFF_SIGNAL } from "@/lib/ai/handoff-signal";
 import { notifyOwnerChatStarted } from "@/lib/notifications/chat-started-alert";
 import { siteConfig } from "@/config/site";
 
@@ -212,6 +213,9 @@ export async function POST(req: Request) {
               }
               const outcome = await executeLeadCapture(parsed);
               result = outcome.message;
+              // Señal para el widget: el cliente ya está listo (dio datos) →
+              // recién ahí se ofrece el botón "Continuar por WhatsApp".
+              if (outcome.ok) emit(HANDOFF_SIGNAL);
             }
             convo.push({ role: "tool", tool_call_id: tc.id, content: result });
           }
