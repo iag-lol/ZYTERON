@@ -55,9 +55,13 @@ export function AiChatWidget() {
     }
   }, [messages]);
 
-  // Burbuja proactiva para captar la atención (una vez por sesión).
+  // Burbuja proactiva SIEMPRE visible (aparece de inmediato) mientras el chat
+  // esté cerrado, salvo que el visitante la cierre manualmente en la sesión.
   useEffect(() => {
-    if (open) return;
+    if (open) {
+      setShowTeaser(false);
+      return;
+    }
     let dismissed = false;
     try {
       dismissed = sessionStorage.getItem(TEASER_DISMISSED_KEY) === "1";
@@ -65,7 +69,8 @@ export function AiChatWidget() {
       /* noop */
     }
     if (dismissed) return;
-    const timer = setTimeout(() => setShowTeaser(true), 2600);
+    // Pequeño retraso mínimo solo para el montaje del cliente.
+    const timer = setTimeout(() => setShowTeaser(true), 300);
     return () => clearTimeout(timer);
   }, [open]);
 
@@ -296,18 +301,18 @@ export function AiChatWidget() {
         </div>
       )}
 
-      {/* Burbuja proactiva */}
+      {/* Burbuja proactiva (siempre visible mientras el chat esté cerrado) */}
       {!open && showTeaser && (
-        <div className="fixed bottom-24 right-4 z-40 max-w-[240px] sm:right-6">
+        <div className="fixed bottom-[92px] right-4 z-40 w-[300px] max-w-[calc(100vw-2rem)] sm:bottom-28 sm:right-6 sm:w-[330px]">
           <button
             type="button"
             onClick={openPanel}
-            className="group relative block rounded-2xl rounded-br-sm border border-slate-200 bg-white px-4 py-3 text-left shadow-xl shadow-slate-900/10"
+            className="group relative block w-full rounded-2xl rounded-br-md border border-slate-200 bg-white p-4 text-left shadow-2xl shadow-slate-900/15 transition-transform hover:scale-[1.01]"
           >
             <span
               role="button"
               tabIndex={0}
-              aria-label="Descartar mensaje"
+              aria-label="Cerrar mensaje"
               onClick={(e) => {
                 e.stopPropagation();
                 dismissTeaser();
@@ -319,16 +324,28 @@ export function AiChatWidget() {
                   dismissTeaser();
                 }
               }}
-              className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:text-slate-700"
+              className="absolute -right-2.5 -top-2.5 flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:text-slate-700"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </span>
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-700">
-              <Sparkles className="h-3.5 w-3.5" />
-              Asistente Zyteron
+            <span className="flex items-center gap-2">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+                <Bot className="h-5 w-5" />
+              </span>
+              <span className="flex items-center gap-1.5 text-[13px] font-bold text-blue-700">
+                <Sparkles className="h-4 w-4" />
+                Zara · Asistente Zyteron
+              </span>
             </span>
-            <span className="mt-1 block text-[13px] leading-snug text-slate-600">
-              Hola, ¿en qué te puedo ayudar hoy? Cotiza tu proyecto aquí.
+            <span className="mt-2.5 block text-[15px] font-semibold leading-snug text-slate-800">
+              Hola, ¿en qué te puedo ayudar hoy?
+            </span>
+            <span className="mt-1 block text-[13px] leading-snug text-slate-500">
+              Cuéntame tu proyecto y te oriento con planes y precios al instante.
+            </span>
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[12px] font-semibold text-white">
+              <MessageCircle className="h-3.5 w-3.5" />
+              Conversar ahora
             </span>
           </button>
         </div>

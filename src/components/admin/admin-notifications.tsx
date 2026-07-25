@@ -121,6 +121,7 @@ export function AdminNotifications() {
   const lastSeenRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(false);
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   // Baseline de "visto" persistido entre recargas.
   useEffect(() => {
@@ -130,7 +131,68 @@ export function AdminNotifications() {
     } catch {
       lastSeenRef.current = 0;
     }
-    if ("Notification" in window) setPermission(Notification.permission);
+    if ("Notification" in window) {
+      setPermission(Notification.permission);
+      // Intento automático de pedir permiso (algunos navegadores lo permiten).
+      if (Notification.permission === "default") {
+        Notification.requestPermission().then(setPermission).catch(() => {});
+      }
+    }
+    // Desbloquea el audio con la primera interacción del usuario en el panel.
+    const unlock = () => {
+      try {
+        const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (Ctx && !audioCtxRef.current) audioCtxRef.current = new Ctx();
+        audioCtxRef.current?.resume().catch(() => {});
+      } catch {
+        /* noop */
+      }
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+  }, []);
+
+  // Insignia en el ícono de la app (PWA instalada, escritorio y Android).
+  useEffect(() => {
+    const nav = navigator as Navigator & {
+      setAppBadge?: (n?: number) => Promise<void>;
+      clearAppBadge?: () => Promise<void>;
+    };
+    if (unread > 0) nav.setAppBadge?.(unread).catch(() => {});
+    else nav.clearAppBadge?.().catch(() => {});
+  }, [unread]);
+
+  const playSound = useCallback(() => {
+    try {
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (Ctx && !audioCtxRef.current) audioCtxRef.current = new Ctx();
+      const ctx = audioCtxRef.current;
+      if (!ctx) return;
+      if (ctx.state === "suspended") ctx.resume().catch(() => {});
+      const now = ctx.currentTime;
+      // Dos tonos cortos ascendentes, sobrios y profesionales.
+      [880, 1175].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        const start = now + i * 0.16;
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.18, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.15);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + 0.16);
+      });
+    } catch {
+      /* noop */
+    }
   }, []);
 
   const pushToast = useCallback((notif: AdminNotification) => {
@@ -146,7 +208,8 @@ export function AdminNotifications() {
       const n = new Notification(notif.title, {
         body: notif.subtitle,
         tag: notif.id,
-        icon: "/favicon.ico",
+        icon: "/logo.svg",
+        badge: "/logo.svg",
       });
       n.onclick = () => {
         window.focus();
@@ -186,14 +249,16 @@ export function AdminNotifications() {
       if (alertable.length > 0) {
         setUnread((u) => u + alertable.length);
         if (!isInitial || mountedRef.current) {
+          playSound();
           for (const notif of alertable) {
             pushToast(notif);
-            if (document.visibilityState !== "visible") fireBrowserNotification(notif);
+            // Notificación del sistema SIEMPRE (con la pestaña abierta o no).
+            fireBrowserNotification(notif);
           }
         }
       }
     },
-    [pushToast, fireBrowserNotification],
+    [pushToast, fireBrowserNotification, playSound],
   );
 
   // Carga inicial + realtime + polling de respaldo.

@@ -117,7 +117,7 @@ const projectCards: ProjectCard[] = [
     label: "Web básica de presentación",
     description: "Una página simple para mostrar tu negocio y recibir contactos.",
     icon: MonitorSmartphone,
-    priceHint: "Desde $35.990",
+    priceHint: "Desde $79.990 + IVA",
   },
   {
     value: "web-profesional",

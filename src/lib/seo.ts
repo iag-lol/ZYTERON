@@ -455,7 +455,8 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 35990,
+          minPrice: 79990,
+          valueAddedTaxIncluded: false,
         },
       },
       {
@@ -465,7 +466,8 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 69990,
+          minPrice: 129990,
+          valueAddedTaxIncluded: false,
         },
       },
       {
@@ -475,7 +477,8 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 129990,
+          minPrice: 219990,
+          valueAddedTaxIncluded: false,
         },
       },
       {
@@ -485,17 +488,30 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 249990,
+          minPrice: 399990,
+          valueAddedTaxIncluded: false,
         },
       },
       {
         "@type": "Offer",
-        name: "Catálogo / Tienda Online",
+        name: "Catálogo por WhatsApp",
         priceCurrency: "CLP",
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
           minPrice: 299990,
+          valueAddedTaxIncluded: false,
+        },
+      },
+      {
+        "@type": "Offer",
+        name: "Ecommerce con carrito y pagos",
+        priceCurrency: "CLP",
+        priceSpecification: {
+          "@type": "PriceSpecification",
+          priceCurrency: "CLP",
+          minPrice: 599990,
+          valueAddedTaxIncluded: false,
         },
       },
       {
@@ -505,7 +521,8 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 399990,
+          minPrice: 1290000,
+          valueAddedTaxIncluded: false,
         },
       },
       {
@@ -515,7 +532,8 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 749990,
+          minPrice: 2490000,
+          valueAddedTaxIncluded: false,
         },
       },
     ],

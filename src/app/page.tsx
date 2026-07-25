@@ -173,7 +173,7 @@ const demoCards = [
   {
     name: "Demo tienda online de ropa",
     desc: "Demo visual para marcas que quieren vender online con diseño personalizado y responsive.",
-    tech: "Desde $299.990 CLP · Catálogo, carrito y estructura para pagos",
+    tech: "Desde $599.990 CLP + IVA · Catálogo, carrito y pagos online",
     gallery: [
       "/demos/tienda-ropa/tienda-ropa-01.png",
       "/demos/tienda-ropa/tienda-ropa-02.png",

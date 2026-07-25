@@ -6,6 +6,7 @@ import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { siteConfig } from "@/config/site";
+import { PLAN_PRICES, PRICING_NOTE } from "@/config/pricing";
 import {
   buildFaqJsonLd,
   buildPlanPriceSpecificationJsonLd,
@@ -94,7 +95,7 @@ const plans: PlanCard[] = [
   {
     id: "web-basica",
     name: "Web Básica de Presentación",
-    price: "$35.990 CLP",
+    price: PLAN_PRICES["web-basica"],
     priceNote: "pago único",
     tag: "Ideal para comenzar",
     tone: "starter",
@@ -143,7 +144,7 @@ const plans: PlanCard[] = [
   {
     id: "emprendedor",
     name: "Plan Emprendedor",
-    price: "Desde $69.990",
+    price: PLAN_PRICES["emprendedor"],
     tag: "Web inicial",
     audience:
       "Para emprendedores, técnicos, servicios pequeños, negocios locales y profesionales independientes que necesitan una web inicial más completa que una página básica.",
@@ -177,7 +178,7 @@ const plans: PlanCard[] = [
   {
     id: "pyme",
     name: "Plan Pyme",
-    price: "Desde $129.990",
+    price: PLAN_PRICES["pyme"],
     tag: "Más solicitado",
     tone: "featured",
     audience:
@@ -212,7 +213,7 @@ const plans: PlanCard[] = [
   {
     id: "empresa",
     name: "Plan Empresa",
-    price: "Desde $249.990",
+    price: PLAN_PRICES["empresa"],
     tag: "Mayor estructura",
     audience:
       "Para empresas, colegios, instituciones, oficinas, clínicas, talleres, transportes, constructoras y servicios B2B.",
@@ -243,40 +244,71 @@ const plans: PlanCard[] = [
     presetPlan: "plan-empresa",
   },
   {
-    id: "tienda",
-    name: "Catálogo / Tienda Online",
-    price: "Desde $299.990",
-    tag: "Venta digital",
+    id: "catalogo",
+    name: "Catálogo por WhatsApp",
+    price: PLAN_PRICES["catalogo"],
+    tag: "Venta por WhatsApp",
     audience:
-      "Para negocios que venden productos o necesitan un catálogo digital claro, ordenado y preparado para escalar.",
+      "Para negocios que quieren mostrar sus productos de forma ordenada y recibir pedidos directamente por WhatsApp.",
     description:
-      "Puede funcionar como catálogo por WhatsApp, tienda simple, tienda con carrito o tienda con pagos online según cotización.",
+      "Catálogo digital claro con fichas de productos y contacto directo por WhatsApp, sin carrito ni pagos online.",
     includes: [
-      "Catálogo por WhatsApp o tienda online base",
-      "Categorías y fichas de productos",
+      "Catálogo con categorías y fichas de productos",
       "Diseño responsive",
-      "Botón de compra o contacto",
+      "Botón de pedido o contacto por WhatsApp",
       "Carga inicial limitada de productos",
-      "Integración con WhatsApp",
       "Estructura SEO para productos",
-      "Preparación o integración de medios de pago según alcance",
+    ],
+    excludes: [
+      "Carrito de compras",
+      "Pagos en línea",
+      "Panel administrativo completo",
+      "Carga masiva de productos",
+    ],
+    availableAddons: ["Carga adicional de productos", "Catálogo administrable"],
+    notes: [
+      "El cliente entrega fotografías, precios, stock, categorías y descripciones correctamente organizadas.",
+    ],
+    ctaLabel: "Cotizar catálogo",
+    projectType: "tienda-online",
+    presetPlan: "catalogo-whatsapp",
+  },
+  {
+    id: "ecommerce",
+    name: "Ecommerce con carrito y pagos",
+    price: PLAN_PRICES["ecommerce"],
+    tag: "Venta online",
+    tone: "featured",
+    audience:
+      "Para negocios que quieren vender online con carrito de compras y pagos en línea integrados.",
+    description:
+      "Tienda con carrito, gestión de productos y pagos online (Flow, Webpay o Mercado Pago) según alcance.",
+    includes: [
+      "Tienda con carrito de compras",
+      "Gestión de productos y categorías",
+      "Integración de medios de pago",
+      "Diseño responsive",
+      "Estructura SEO para productos",
+      "Carga inicial limitada de productos",
     ],
     excludes: [
       "Carga masiva de productos",
-      "Panel administrativo completo",
       "Cupones o descuentos avanzados",
-      "Facturación externa automática",
-      "Pasarela de pago incluida siempre",
+      "Facturación electrónica automática",
+      "Integraciones externas no definidas",
     ],
-    availableAddons: ["Carga adicional de productos", "Catálogo administrable", "Medios de pago en línea"],
-    ctaLabel: "Cotizar tienda online",
+    availableAddons: ["Gestión de stock", "Cupones y descuentos", "Integración de despacho", "Catálogo administrable"],
+    notes: [
+      "El cliente entrega fotografías, precios, stock, categorías y descripciones correctamente organizadas.",
+    ],
+    ctaLabel: "Cotizar ecommerce",
     projectType: "tienda-online",
-    presetPlan: "catalogo-tienda-online",
+    presetPlan: "ecommerce-carrito-pagos",
   },
   {
     id: "sistema",
     name: "Sistema Web / Panel Administrativo",
-    price: "Desde $399.990",
+    price: PLAN_PRICES["sistema"],
     tag: "Procesos internos",
     audience:
       "Para empresas, pymes o instituciones que necesitan paneles administrativos, usuarios, registros, reportes y control de procesos.",
@@ -306,7 +338,7 @@ const plans: PlanCard[] = [
   {
     id: "avanzado",
     name: "Sistema Avanzado / Desarrollo a medida",
-    price: "Desde $749.990",
+    price: PLAN_PRICES["avanzado"],
     tag: "Proyecto crítico",
     tone: "critical",
     audience:
@@ -337,45 +369,71 @@ const plans: PlanCard[] = [
 
 const additionalCategories: AdditionalCategory[] = [
   {
+    title: "Inteligencia Artificial y atención automatizada",
+    items: [
+      { name: "Chat IA informativo para web", price: "Desde $399.990 + IVA · operación desde $49.990/mes" },
+      { name: "Asistente IA de ventas 24/7 (Más solicitado)", price: "Desde $899.990 + IVA · operación desde $99.990/mes" },
+      { name: "Asistente IA para cotizaciones o pedidos (Recomendado)", price: "Desde $1.290.000 + IVA · operación desde $149.990/mes" },
+      { name: "Asistente IA omnicanal Web y WhatsApp", price: "Desde $1.690.000 + IVA · operación desde $199.990/mes" },
+    ],
+  },
+  {
+    title: "WhatsApp y comunicación",
+    items: [
+      { name: "Botón personalizado de WhatsApp", price: "Desde $39.990 + IVA" },
+      { name: "Formulario conectado a WhatsApp", price: "Desde $79.990 + IVA" },
+      { name: "Notificaciones automáticas por WhatsApp Business API", price: "Desde $249.990 + IVA · soporte desde $49.990/mes" },
+      { name: "Chatbot de WhatsApp con menú automático", price: "Desde $399.990 + IVA · soporte desde $59.990/mes" },
+      { name: "Automatización de seguimiento de clientes", price: "Desde $349.990 + IVA" },
+    ],
+  },
+  {
     title: "Funcionalidades para sitios web",
     items: [
-      { name: "Sección adicional", price: "Desde $19.990" },
-      { name: "Página adicional", price: "Desde $29.990" },
-      { name: "Formulario avanzado", price: "Desde $39.990" },
-      { name: "Login de usuarios", price: "Desde $199.990" },
+      { name: "Sección adicional", price: "Desde $39.990 + IVA" },
+      { name: "Página adicional", price: "Desde $59.990 + IVA" },
+      { name: "Formulario avanzado", price: "Desde $79.990 + IVA" },
+      { name: "Formulario multipaso", price: "Desde $149.990 + IVA" },
+      { name: "Login de usuarios", price: "Desde $299.990 + IVA" },
+      { name: "Blog administrable", price: "Desde $199.990 + IVA" },
     ],
   },
   {
     title: "Ecommerce",
     items: [
-      { name: "Carga de productos hasta 20", price: "Desde $19.990" },
-      { name: "Carga de productos hasta 50", price: "Desde $49.990" },
-      { name: "Catálogo administrable", price: "Desde $99.990" },
+      { name: "Carga de productos hasta 20", price: "Desde $59.990 + IVA" },
+      { name: "Carga de productos hasta 50", price: "Desde $119.990 + IVA" },
+      { name: "Catálogo administrable", price: "Desde $249.990 + IVA" },
+      { name: "Gestión de stock", price: "Desde $249.990 + IVA" },
+      { name: "Cupones y descuentos", price: "Desde $99.990 + IVA" },
     ],
   },
   {
     title: "Paneles y sistemas",
     items: [
-      { name: "Mini panel administrativo", price: "Desde $149.990" },
-      { name: "Panel administrativo completo", price: "Desde $399.990" },
-      { name: "Sistema de reservas", price: "Desde $249.990" },
+      { name: "Mini panel administrativo", price: "Desde $349.990 + IVA" },
+      { name: "Panel administrativo completo", price: "Desde $990.000 + IVA" },
+      { name: "Sistema de reservas", price: "Desde $499.990 + IVA" },
+      { name: "Dashboard y estadísticas", price: "Desde $399.990 + IVA" },
     ],
   },
   {
     title: "Integraciones",
     items: [
-      { name: "Integración Flow, Webpay o Mercado Pago estándar", price: "Desde $89.990" },
-      { name: "Integración API personalizada", price: "Desde $199.990" },
-      { name: "Automatización WhatsApp", price: "Desde $99.990" },
+      { name: "Integración Flow, Webpay o Mercado Pago estándar", price: "Desde $149.990 + IVA" },
+      { name: "Integración API personalizada", price: "Desde $349.990 + IVA" },
+      { name: "Integración con CRM", price: "Desde $299.990 + IVA" },
+      { name: "Automatización por WhatsApp", price: "Desde $249.990 + IVA (más consumo)" },
     ],
   },
   {
-    title: "SEO y reportes",
+    title: "SEO, analítica y documentos",
     items: [
-      { name: "SEO inicial avanzado", price: "Desde $99.990" },
-      { name: "Generador de PDF", price: "Desde $149.990" },
-      { name: "Reportes o dashboard", price: "Desde $199.990" },
-      { name: "Exportación Excel/PDF", price: "Desde $49.990" },
+      { name: "SEO inicial avanzado", price: "Desde $179.990 + IVA" },
+      { name: "SEO mensual", price: "Desde $149.990 + IVA / mes" },
+      { name: "Generador de PDF", price: "Desde $249.990 + IVA" },
+      { name: "Dashboard y reportes", price: "Desde $399.990 + IVA" },
+      { name: "Exportación Excel o PDF", price: "Desde $99.990 + IVA" },
     ],
   },
 ];
@@ -383,22 +441,22 @@ const additionalCategories: AdditionalCategory[] = [
 const maintenancePlans = [
   {
     name: "Mantención básica",
-    price: "Desde $29.990/mes",
+    price: "Desde $39.990 + IVA / mes",
     description: "Para sitios simples que necesitan continuidad, ajustes menores y soporte base.",
   },
   {
     name: "Mantención profesional",
-    price: "Desde $59.990/mes",
+    price: "Desde $79.990 + IVA / mes",
     description: "Para negocios que necesitan más seguimiento, mejoras y soporte técnico periódico.",
   },
   {
     name: "Mantención ecommerce o sistema web",
-    price: "Desde $99.990/mes",
+    price: "Desde $129.990 + IVA / mes",
     description: "Para tiendas y plataformas con mayor complejidad, más riesgo operativo y más tareas técnicas.",
   },
   {
     name: "Soporte prioritario",
-    price: "Desde $69.990/mes",
+    price: "Desde $99.990 + IVA / mes",
     description: "Para empresas que necesitan atención más rápida y prioridad frente a incidencias.",
   },
 ];
@@ -759,6 +817,10 @@ export default function PlanesPage() {
               </Button>
             </div>
           </article>
+
+          <p className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-xs leading-relaxed text-slate-500">
+            {PRICING_NOTE}
+          </p>
         </Container>
       </section>
 

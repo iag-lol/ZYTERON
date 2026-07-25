@@ -19,9 +19,9 @@ const demoCards = [
     title: "Demo tienda online de ropa",
     description:
       "Tienda online profesional para marcas de ropa: diseño moderno, catálogo, carrito y estructura preparada para pagos online.",
-    tech: "Desde $299.990 CLP · Responsive · Catálogo · Carrito · Panel administrativo según requerimiento",
+    tech: "Desde $599.990 CLP + IVA · Responsive · Catálogo · Carrito · Pagos online según requerimiento",
     demoHref: "https://iag-lol.github.io/tienda.mck/",
-    priceFrom: "Desde $299.990 CLP",
+    priceFrom: "Desde $599.990 CLP + IVA",
     gallery: [
       "/demos/tienda-ropa/tienda-ropa-01.png",
       "/demos/tienda-ropa/tienda-ropa-02.png",

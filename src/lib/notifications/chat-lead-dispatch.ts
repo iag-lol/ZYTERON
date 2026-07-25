@@ -1,4 +1,5 @@
 import { siteConfig } from "@/config/site";
+import { sendLeadAlertEmail } from "@/lib/notifications/lead-alert";
 
 /**
  * Despacho de avisos cuando la IA del chat capta un interés/cotización.
@@ -63,48 +64,40 @@ function buildMessageText(p: ChatLeadPayload) {
 // -- Correo (Resend) --------------------------------------------------------
 
 async function sendEmail(p: ChatLeadPayload): Promise<{ result: ChannelResult; detail: string }> {
-  const apiKey = env("RESEND_API_KEY");
-  if (!apiKey) {
+  if (!env("RESEND_API_KEY")) {
     log("email:skipped", { reason: "no RESEND_API_KEY", leadId: p.leadId });
     return { result: "skipped", detail: "no RESEND_API_KEY" };
   }
 
-  const from = env("RESEND_FROM_EMAIL") || `Zyteron <noreply@${siteConfig.domain}>`;
-  const to =
-    env("RESEND_LEAD_TO_EMAIL") ||
-    env("CHECKOUT_ALERT_EMAILS") ||
-    siteConfig.contact.email;
-  const replyTo = env("RESEND_REPLY_TO") || siteConfig.contact.email;
-  const recipients = to.split(/[,;]/).map((s) => s.trim()).filter(Boolean);
-
-  const subject = p.isQuote
-    ? `Cotización desde el chat · ${p.name}`
-    : `Nuevo lead del chat · ${p.name}`;
-  const text = buildMessageText(p);
+  // Reutilizamos la plantilla HTML de marca de los leads del sitio.
+  const messageLines = [
+    p.isQuote ? "Solicitud de cotización desde el asistente con IA." : "Interés captado desde el asistente con IA.",
+    "",
+    `Contacto entregado: ${p.contact}`,
+    p.budget ? `Presupuesto mencionado: ${p.budget}` : "",
+    "",
+    p.summary,
+  ].filter(Boolean);
 
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from,
-        to: recipients,
-        reply_to: replyTo,
-        subject,
-        text,
-      }),
-      cache: "no-store",
+    const outcome = await sendLeadAlertEmail({
+      leadId: p.leadId,
+      source: "CHAT_IA",
+      submittedAtIso: p.createdAtIso,
+      name: p.name,
+      email: p.email || siteConfig.contact.email,
+      phone: p.phone,
+      service: p.projectType,
+      message: messageLines.join("\n"),
+      submittedFrom: "Asistente IA (chat web)",
     });
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      log("email:failed", { leadId: p.leadId, status: res.status, body: body.slice(0, 300) });
-      return { result: "failed", detail: `resend ${res.status}` };
+
+    if (outcome.sent) {
+      log("email:sent", { leadId: p.leadId, id: outcome.id });
+      return { result: "sent", detail: outcome.id || "resend" };
     }
-    log("email:sent", { leadId: p.leadId, to: recipients });
-    return { result: "sent", detail: recipients.join(", ") };
+    log("email:skipped", { leadId: p.leadId, reason: outcome.reason });
+    return { result: "skipped", detail: outcome.reason || "no enviado" };
   } catch (err) {
     log("email:failed", { leadId: p.leadId, error: String(err) });
     return { result: "failed", detail: "exception" };

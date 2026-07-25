@@ -10,7 +10,7 @@ type CartLine = {
 
 type LeadAlertInput = {
   leadId: string;
-  source: "CONTACTO_WEB" | "COTIZADOR_WEB";
+  source: "CONTACTO_WEB" | "COTIZADOR_WEB" | "CHAT_IA";
   submittedAtIso: string;
   name: string;
   email: string;
@@ -109,6 +109,7 @@ function extractResendErrorMessage(body: ResendResponse | null) {
 
 function sourceLabel(source: LeadAlertInput["source"]) {
   if (source === "COTIZADOR_WEB") return "Cotizador web";
+  if (source === "CHAT_IA") return "Asistente IA (chat)";
   return "Formulario contacto";
 }
 

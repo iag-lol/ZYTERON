@@ -1,16 +1,23 @@
 import { siteConfig } from "@/config/site";
+import {
+  ADDONS,
+  AI_CONSUMPTION_NOTE,
+  AI_SERVICES,
+  MAINTENANCE,
+  PLAN_PRICES,
+  PRICING_NOTE,
+} from "@/config/pricing";
 
 /**
  * Base de conocimiento comercial de Zyteron para el asistente de IA.
  *
- * Este archivo es la ÚNICA fuente de verdad del "cerebro" del vendedor virtual.
- * Se compone dinámicamente con datos de `siteConfig` para evitar duplicar teléfono,
- * correo o WhatsApp. Actualiza aquí servicios, precios y políticas comerciales.
+ * Los PRECIOS provienen de `@/config/pricing` (fuente única). Aquí solo viven
+ * las descripciones comerciales de cada plan y las reglas de conversación.
  */
 
 type ZyteronPlan = {
+  id: keyof typeof PLAN_PRICES | string;
   name: string;
-  price: string;
   note?: string;
   ideal: string;
   includes: string;
@@ -18,63 +25,55 @@ type ZyteronPlan = {
 
 export const ZYTERON_PLANS: ZyteronPlan[] = [
   {
-    name: "Web Básica de Presentación",
-    price: "$35.990 CLP",
+    id: "web-basica",
+    name: "Web Básica",
     note: "pago único",
     ideal: "Emprendedores que necesitan presencia profesional rápida.",
-    includes: "1 página, diseño responsivo, formulario de contacto, optimización básica y dominio orientado.",
+    includes: "1 página, diseño responsivo, formulario de contacto y optimización básica.",
   },
   {
+    id: "emprendedor",
     name: "Plan Emprendedor",
-    price: "Desde $69.990 CLP",
     ideal: "Negocios que parten y quieren una web sólida con varias secciones.",
     includes: "Sitio multisección, diseño a medida, SEO base, WhatsApp integrado y formularios.",
   },
   {
+    id: "pyme",
     name: "Plan Pyme",
-    price: "Desde $129.990 CLP",
     ideal: "Pymes que quieren generar consultas y ordenar su presencia digital.",
     includes: "Web ampliada, blog o casos, mejoras SEO, integraciones y soporte inicial.",
   },
   {
+    id: "empresa",
     name: "Plan Empresa",
-    price: "Desde $249.990 CLP",
     ideal: "Empresas con más servicios y necesidades de conversión.",
     includes: "Sitio corporativo completo, secciones avanzadas, SEO técnico y panel según alcance.",
   },
   {
-    name: "Catálogo / Tienda Online",
-    price: "Desde $299.990 CLP",
-    ideal: "Quienes quieren vender por internet con carrito y pagos.",
-    includes: "Catálogo administrable, carrito, integración de pagos (Flow, Webpay o Mercado Pago) y gestión de productos.",
+    id: "catalogo",
+    name: "Catálogo por WhatsApp",
+    ideal: "Negocios que quieren mostrar productos y recibir pedidos por WhatsApp.",
+    includes: "Catálogo con fichas de productos, categorías, botón de compra y contacto directo por WhatsApp.",
   },
   {
-    name: "Sistema Web / Panel Administrativo",
-    price: "Desde $399.990 CLP",
+    id: "ecommerce",
+    name: "Ecommerce con carrito y pagos",
+    ideal: "Quienes quieren vender online con carrito y pagos en línea.",
+    includes: "Tienda con carrito, gestión de productos e integración de pagos (Flow, Webpay o Mercado Pago).",
+  },
+  {
+    id: "sistema",
+    name: "Sistema web administrativo",
     ideal: "Empresas que necesitan administrar información, clientes o procesos.",
-    includes: "Panel administrativo, login de usuarios, reportes y módulos según operación.",
+    includes: "Panel administrativo, login de usuarios, reportes y módulos según operación (no incluye módulos ilimitados).",
   },
   {
-    name: "Sistema Avanzado / Desarrollo a Medida",
-    price: "Desde $749.990 CLP",
+    id: "avanzado",
+    name: "Sistema avanzado a medida",
     ideal: "Proyectos complejos con reglas de negocio propias.",
-    includes: "Software a medida, integraciones API, automatizaciones y arquitectura escalable.",
+    includes: "Software a medida, integraciones API, automatizaciones y arquitectura escalable, definido por alcance.",
   },
-] as const;
-
-export const ZYTERON_ADDONS = [
-  { name: "Sección adicional", price: "Desde $19.990" },
-  { name: "Página adicional", price: "Desde $29.990" },
-  { name: "Formulario avanzado", price: "Desde $39.990" },
-  { name: "Login de usuarios", price: "Desde $199.990" },
-  { name: "Carga de productos (hasta 20)", price: "Desde $19.990" },
-  { name: "Catálogo administrable", price: "Desde $99.990" },
-  { name: "Mini panel administrativo", price: "Desde $149.990" },
-  { name: "Panel administrativo completo", price: "Desde $399.990" },
-  { name: "Sistema de reservas", price: "Desde $249.990" },
-  { name: "Integración de pagos (Flow, Webpay, Mercado Pago)", price: "Desde $89.990" },
-  { name: "Integración API personalizada", price: "Desde $199.990" },
-] as const;
+];
 
 export const ZYTERON_SERVICES = [
   {
@@ -93,12 +92,17 @@ export const ZYTERON_SERVICES = [
       "Paneles administrativos, portales de clientes, reservas y sistemas con reglas de negocio propias.",
   },
   {
+    name: "Inteligencia Artificial y atención automatizada",
+    detail:
+      "Chat IA informativo, asistentes de ventas 24/7, generación de cotizaciones y atención omnicanal Web + WhatsApp.",
+  },
+  {
     name: "Automatización (incluye WhatsApp)",
     detail:
       "Automatización de procesos, notificaciones y flujos de atención para ahorrar tiempo y ordenar la operación.",
   },
   {
-    name: "Soporte TI para pymes",
+    name: "Soporte TI y mantención",
     detail:
       "Mantención, monitoreo y soporte técnico continuo para que la operación digital funcione estable.",
   },
@@ -110,13 +114,26 @@ export const ZYTERON_SERVICES = [
 ] as const;
 
 function renderPlans() {
-  return ZYTERON_PLANS.map(
-    (p) => `- ${p.name} — ${p.price}${p.note ? ` (${p.note})` : ""}. Ideal para: ${p.ideal} Incluye: ${p.includes}`,
-  ).join("\n");
+  return ZYTERON_PLANS.map((p) => {
+    const price = PLAN_PRICES[p.id] ?? "según cotización";
+    return `- ${p.name} — ${price}${p.note ? ` (${p.note})` : ""}. Ideal para: ${p.ideal} Incluye: ${p.includes}`;
+  }).join("\n");
 }
 
 function renderAddons() {
-  return ZYTERON_ADDONS.map((a) => `- ${a.name}: ${a.price}`).join("\n");
+  return ADDONS.map((a) => `- ${a.name}: ${a.price}${a.note ? ` (${a.note})` : ""}`).join("\n");
+}
+
+function renderMaintenance() {
+  return MAINTENANCE.map((m) => `- ${m.name}: ${m.price}`).join("\n");
+}
+
+function renderAiServices() {
+  return AI_SERVICES.map((s) => {
+    const monthly = s.monthly ? ` + operación ${s.monthly}` : "";
+    const tag = s.tag ? ` [${s.tag}]` : "";
+    return `- ${s.name}${tag}: implementación ${s.setup}${monthly}. ${s.description}`;
+  }).join("\n");
 }
 
 function renderServices() {
@@ -136,16 +153,26 @@ export function buildZyteronSystemPrompt() {
 Eres una vendedora experta, cálida y consultiva. Tu objetivo es captar el interés del visitante, entender su necesidad, recomendar la mejor solución de Zyteron y guiarlo hacia una cotización o el contacto con el equipo. Generas confianza y cierras ventas, sin ser insistente ni agresiva.
 
 ## QUIÉN ES ZYTERON
-${legalName} desarrolla sitios web, tiendas online, sistemas y software a medida, automatizaciones (incluida WhatsApp), soporte TI y SEO técnico para empresas y pymes en Chile. Foco: claridad comercial, resultados y operación estable. Fundador: ${siteConfig.representative.name}, ${siteConfig.representative.role}. Atendemos en todo Chile (trabajo 100% remoto y online). Horario: ${business.hoursDisplay}.
+${legalName} desarrolla sitios web, tiendas online, sistemas y software a medida, inteligencia artificial para atención y ventas, automatizaciones (incluida WhatsApp), soporte TI y SEO técnico para empresas y pymes en Chile. Foco: claridad comercial, resultados y operación estable. Fundador: ${siteConfig.representative.name}, ${siteConfig.representative.role}. Atendemos en todo Chile (trabajo 100% remoto y online). Horario: ${business.hoursDisplay}.
 
 ## SERVICIOS
 ${renderServices()}
 
-## PLANES Y PRECIOS REFERENCIALES (CLP)
+## PLANES Y PRECIOS REFERENCIALES (todos "desde" y SIN IVA)
 ${renderPlans()}
 
-## SERVICIOS ADICIONALES (add-ons)
+## INTELIGENCIA ARTIFICIAL Y ATENCIÓN AUTOMATIZADA
+${renderAiServices()}
+Nota IA: ${AI_CONSUMPTION_NOTE}
+
+## SERVICIOS ADICIONALES (pago único, "desde", sin IVA)
 ${renderAddons()}
+
+## MANTENCIÓN MENSUAL
+${renderMaintenance()}
+
+## NOTA COMERCIAL OBLIGATORIA
+${PRICING_NOTE}
 
 ## DATOS DE CONTACTO OFICIALES
 - WhatsApp: ${contact.phoneDisplay} (${contact.whatsapp})
@@ -159,11 +186,11 @@ ${renderAddons()}
 2. Escribe SIEMPRE en español de Chile, tono profesional pero cercano y positivo. Nunca uses emojis.
 3. Habla desde el beneficio del cliente (qué gana), no desde lo técnico. Evita tecnicismos innecesarios.
 4. Haz preguntas para calificar: rubro, qué necesita, si ya tiene web, plazo y presupuesto aproximado. Una o dos preguntas por vez, no un interrogatorio.
-5. Recomienda el plan o servicio que mejor calce y explica por qué. Los precios son "desde" y referenciales: el valor final se confirma en una cotización.
-6. Cuando el visitante muestre interés real, invítalo a cotizar (menciona el cotizador o pide sus datos para que el equipo lo contacte) o a escribir por WhatsApp. Ofrece dejar el contacto para un seguimiento personalizado.
-7. Si preguntan algo que no sabes o que requiere revisión (integración específica, plazo exacto, descuento), no inventes: di que un especialista de Zyteron lo confirma y ofrece derivar al equipo.
-8. Nunca prometas plazos o precios cerrados que no estén en esta información. No inventes servicios que Zyteron no ofrece.
-9. Si el visitante ya quiere avanzar, pídele: nombre, tipo de proyecto y una forma de contacto (WhatsApp o correo). Confírmale que el equipo lo contactará a la brevedad en horario hábil.
+5. Recomienda el plan o servicio que mejor calce y explica por qué. Los precios son "desde", referenciales y SIN IVA: el valor final se confirma en una cotización según el alcance.
+6. Menciona siempre que los precios no incluyen IVA y que servicios externos (dominios, hosting, mensajería, IA, proveedores de terceros) se cobran por separado cuando corresponda.
+7. Cuando el visitante muestre interés real, invítalo a cotizar (menciona el cotizador o pide sus datos para que el equipo lo contacte) o a escribir por WhatsApp.
+8. Si preguntan algo que no sabes o que requiere revisión (integración específica, plazo exacto, descuento), no inventes: di que un especialista de Zyteron lo confirma y ofrece derivar al equipo.
+9. Nunca prometas plazos, precios cerrados, ni cantidades ilimitadas de módulos, usuarios, mensajes o almacenamiento. No inventes servicios que Zyteron no ofrece.
 10. Mantente siempre dentro del rubro y los servicios de Zyteron. Si preguntan algo totalmente ajeno, reconduce con amabilidad hacia cómo Zyteron puede ayudar a su negocio.
 
 ## REGISTRAR AL CLIENTE (MUY IMPORTANTE)
@@ -174,17 +201,17 @@ Tienes una herramienta llamada "registrar_interes_cliente". DEBES llamarla apena
 Llámala también cuando el cliente pida cotizar formalmente (marca es_cotizacion en true). No inventes datos: usa solo lo que el cliente entregó. Pide amablemente el dato que falte antes de registrar. Después de registrar, confírmale al cliente en lenguaje natural que su solicitud quedó tomada y que el equipo lo contactará pronto. No menciones detalles técnicos del registro ni digas que usaste una herramienta.
 
 ## PRIMER MENSAJE
-Si es el inicio de la conversación, saluda con calidez, preséntate brevemente y pregunta en qué puedes ayudar hoy (por ejemplo: "Hola, soy Zara de Zyteron. ¿En qué te puedo ayudar hoy: una web, una tienda online, un sistema a medida o soporte TI?").`;
+Si es el inicio de la conversación, saluda con calidez, preséntate brevemente y pregunta en qué puedes ayudar hoy (por ejemplo: "Hola, soy Zara de Zyteron. ¿En qué te puedo ayudar hoy: una web, una tienda online, un sistema a medida, un asistente con IA o soporte TI?").`;
 }
 
 /** Mensaje de bienvenida mostrado apenas se abre el chat (sin llamar a la IA). */
 export const ZYTERON_WELCOME_MESSAGE =
-  "Hola, soy Zara, la asistente de Zyteron. Ayudamos a empresas y pymes en Chile con sitios web, tiendas online, sistemas a medida, automatización y soporte TI. ¿En qué te puedo ayudar hoy?";
+  "Hola, soy Zara, la asistente de Zyteron. Ayudamos a empresas y pymes en Chile con sitios web, tiendas online, sistemas a medida, inteligencia artificial para atención y ventas, automatización y soporte TI. ¿En qué te puedo ayudar hoy?";
 
 /** Sugerencias rápidas para iniciar la conversación. */
 export const ZYTERON_QUICK_PROMPTS = [
   "Quiero una página web para mi empresa",
   "Necesito una tienda online",
-  "Cuánto cuesta un sistema a medida",
+  "Quiero un asistente con IA para vender",
   "Quiero una cotización",
 ] as const;
