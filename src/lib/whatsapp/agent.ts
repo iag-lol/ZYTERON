@@ -2,6 +2,7 @@ import { buildZyteronSystemPrompt } from "@/lib/ai/zyteron-knowledge";
 import { runOpenAIToolCompletion, type OpenAIMessage, type OpenAITool } from "@/lib/ai/openai-runtime";
 import { listRecentMessages, updateConversation, getConversation, type WaConversation } from "@/lib/whatsapp/store";
 import { executeCreateQuoteDraft } from "@/lib/ai/admin-assistant";
+import { sendQuoteAlertEmail } from "@/lib/notifications/quote-alert";
 
 function readEnv(name: string) {
   const value = process.env[name];
@@ -17,19 +18,28 @@ Conversas por WhatsApp con un cliente real, como un vendedor humano del equipo d
 - No digas que eres un bot ni una IA. Conversa con cercanía y profesionalismo.
 - Una pregunta a la vez para avanzar la venta.
 
-## REGISTRAR DATOS (MUY IMPORTANTE)
-Usa la herramienta "registrar_datos_cliente" APENAS conozcas o actualices cualquier dato del cliente
-(nombre, correo, empresa, rubro, qué servicio necesita, presupuesto o plazo). Llámala cada vez que
-obtengas un dato nuevo, aunque sea uno solo. No esperes a tener todo.
+## CALIFICAR Y PEDIR DATOS (MUY IMPORTANTE)
+Primero RESPONDE la pregunta del cliente. Luego, de forma natural y de a UNA pregunta por vez, ve
+recopilando los datos de la ficha para poder cotizar bien:
+1) nombre, 2) correo, 3) empresa (si aplica), 4) rubro, 5) qué servicio/producto necesita exactamente,
+6) presupuesto aproximado, 7) plazo deseado.
+Usa "registrar_datos_cliente" APENAS obtengas cualquiera de estos datos (aunque sea uno solo).
+No hagas un interrogatorio: intercala las preguntas con respuestas útiles y cercanas.
 
-## GENERAR COTIZACIÓN AL CONFIRMAR (MUY IMPORTANTE)
-Cuando el cliente CONFIRME que quiere avanzar (por ejemplo dice "lo quiero", "sí, adelante",
-"hagámoslo", "quiero cotizar"), llama a "generar_cotizacion" UNA SOLA VEZ con los ítems y sus precios
-NETOS reales de Zyteron (los precios publicados son "desde", sin IVA).
-- Genera la cotización SOLO UNA VEZ por conversación. Si ya la generaste (o la herramienta te dice que
-  ya existe), NO la vuelvas a generar aunque el cliente insista: simplemente confírmale con calma que su
-  cotización YA está registrada y que el equipo lo contactará.
-- No inventes precios que no estén en la información de Zyteron.
+## CUÁNDO GENERAR LA COTIZACIÓN (MUY IMPORTANTE — NO ANTES DE TIEMPO)
+NO generes la cotización solo porque el cliente pregunte un precio. Primero responde y sigue calificando.
+Genera la cotización ("generar_cotizacion") SOLO cuando se cumplan TODAS estas condiciones:
+- El cliente CONFIRMÓ explícitamente que quiere la cotización formal ("sí, cotízame", "quiero la
+  cotización final", "hagámoslo").
+- Ya tienes al menos: nombre, una forma de contacto (correo o WhatsApp) y el servicio/producto claro.
+- Ya intentaste preguntar por empresa, presupuesto y plazo (si el cliente no los da, continúa igual).
+- El cliente NO está pidiendo más información ni tiene dudas pendientes.
+Reglas:
+- Llama "generar_cotizacion" UNA SOLA VEZ por conversación, con los ítems y precios NETOS reales de
+  Zyteron (los publicados son "desde", sin IVA). No inventes precios.
+- Si ya la generaste (o la herramienta dice que ya existe), NO la repitas: confirma con calma que la
+  cotización YA está registrada.
+- Al generarla, informa al cliente que su cotización quedó disponible y que el equipo lo contactará.
 
 ## SIEMPRE RESPONDE
 Después de usar cualquier herramienta, SIEMPRE responde al cliente con un mensaje en lenguaje natural,
@@ -188,6 +198,19 @@ export async function generateAiReply(conversation: WaConversation): Promise<str
             lead_status: "cotizacion_enviada",
             lead_id: result.quoteId,
           });
+          // AVISO AL VENDEDOR: correo "vendiste esto" (no bloquea la respuesta).
+          const net = items.reduce((a, it) => a + it.precio_neto * it.cantidad, 0);
+          const iva = Math.round(net * 0.19);
+          void sendQuoteAlertEmail({
+            clientName: fresh.customer_name || fresh.profile_name || "Cliente",
+            clientContact: [fresh.email, `+${fresh.phone}`].filter(Boolean).join(" · "),
+            channel: "WhatsApp",
+            items: items.map((it) => ({ descripcion: it.descripcion, cantidad: it.cantidad, precioNeto: it.precio_neto })),
+            net,
+            iva,
+            total: net + iva,
+            quoteId: result.quoteId,
+          }).catch(() => {});
         }
         return result.message;
       }
