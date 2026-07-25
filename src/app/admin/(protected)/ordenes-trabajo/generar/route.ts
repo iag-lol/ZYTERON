@@ -156,6 +156,34 @@ export async function POST(request: Request) {
       },
     });
 
+    // Auto-relleno del BORRADOR de documento tributario (DTE) desde la cotización.
+    // No emite ante el SII: deja el borrador listo para revisar y confirmar.
+    try {
+      const { createDteDraftFromQuote } = await import("@/lib/dte/dte-repository");
+      await createDteDraftFromQuote({
+        quote: {
+          id: quote.id,
+          userId: quote.userId,
+          name: quote.name,
+          email: quote.email,
+          phone: quote.phone,
+          company: quote.company,
+          totalAmount: quote.totalAmount,
+          displayNumber: quote.displayNumber,
+        },
+        workOrderId: id,
+        meta: {
+          items: manualMeta.items,
+          clientRut: manualMeta.clientRut,
+          clientAddress: manualMeta.clientAddress,
+          clientCity: manualMeta.clientCity,
+        },
+      });
+    } catch (dteError) {
+      // El borrador tributario no debe bloquear la creación de la OT.
+      console.error("[ot/generar] auto-relleno DTE falló", dteError);
+    }
+
     redirectUrl.searchParams.set("ot_created", "1");
     return NextResponse.redirect(redirectUrl, { status: 303 });
   } catch (error) {
