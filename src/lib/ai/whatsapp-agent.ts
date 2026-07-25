@@ -1,6 +1,7 @@
 import { buildZyteronSystemPrompt } from "@/lib/ai/zyteron-knowledge";
 import { LEAD_CAPTURE_TOOL, executeLeadCapture } from "@/lib/ai/lead-capture";
 import { runOpenAIToolCompletion, type OpenAIMessage } from "@/lib/ai/openai-runtime";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
  * Agente de WhatsApp con IA: responde a los clientes como un vendedor humano de
@@ -28,6 +29,50 @@ function pruneOld() {
   const now = Date.now();
   for (const [key, convo] of store) {
     if (now - convo.updatedAt > CONVERSATION_TTL_MS) store.delete(key);
+  }
+}
+
+const CONVO_TABLE = "WhatsappConversation";
+
+/**
+ * Carga los turnos desde Supabase. Devuelve null si la tabla no existe o
+ * Supabase no está disponible (para que el llamador use la memoria en RAM).
+ */
+async function dbLoadTurns(waId: string): Promise<Turn[] | null> {
+  try {
+    const { supabase } = createSupabaseServerClient();
+    const { data, error } = await supabase
+      .schema("public")
+      .from(CONVO_TABLE)
+      .select("turns")
+      .eq("wa_id", waId)
+      .maybeSingle();
+    if (error) return null;
+    const turns = (data as { turns?: unknown } | null)?.turns;
+    return Array.isArray(turns) ? (turns as Turn[]) : [];
+  } catch {
+    return null;
+  }
+}
+
+async function dbSaveTurns(waId: string, profileName: string | undefined, turns: Turn[]): Promise<boolean> {
+  try {
+    const { supabase } = createSupabaseServerClient();
+    const { error } = await supabase
+      .schema("public")
+      .from(CONVO_TABLE)
+      .upsert(
+        {
+          wa_id: waId,
+          profile_name: profileName ?? null,
+          turns,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "wa_id" },
+      );
+    return !error;
+  } catch {
+    return false;
   }
 }
 
@@ -61,9 +106,15 @@ export async function respondToWhatsappMessage(input: {
 
   pruneOld();
 
-  const convo = store.get(input.waId) ?? { turns: [], updatedAt: Date.now() };
-  convo.turns.push({ role: "user", content: input.text.slice(0, 2000) });
-  convo.turns = convo.turns.slice(-MAX_TURNS);
+  // Preferimos memoria persistente en Supabase; si no está, usamos RAM.
+  const dbTurns = await dbLoadTurns(input.waId);
+  const usingDb = dbTurns !== null;
+  let turns: Turn[] = usingDb
+    ? dbTurns!
+    : (store.get(input.waId)?.turns ?? []);
+
+  turns.push({ role: "user", content: input.text.slice(0, 2000) });
+  turns = turns.slice(-MAX_TURNS);
 
   const model = readEnv("OPENAI_MODEL") || "gpt-4o-mini";
   const systemPrompt =
@@ -73,7 +124,7 @@ export async function respondToWhatsappMessage(input: {
 
   const messages: OpenAIMessage[] = [
     { role: "system", content: systemPrompt },
-    ...convo.turns.map((t) => ({ role: t.role, content: t.content })),
+    ...turns.map((t) => ({ role: t.role, content: t.content })),
   ];
 
   const reply = await runOpenAIToolCompletion({
@@ -106,9 +157,14 @@ export async function respondToWhatsappMessage(input: {
     reply.trim() ||
     "Gracias por tu mensaje. Un ejecutivo de Zyteron te responde a la brevedad.";
 
-  convo.turns.push({ role: "assistant", content: finalReply });
-  convo.updatedAt = Date.now();
-  store.set(input.waId, convo);
+  turns.push({ role: "assistant", content: finalReply });
+  turns = turns.slice(-MAX_TURNS);
+
+  if (usingDb) {
+    await dbSaveTurns(input.waId, input.profileName, turns);
+  } else {
+    store.set(input.waId, { turns, updatedAt: Date.now() });
+  }
 
   return finalReply;
 }
