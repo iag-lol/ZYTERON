@@ -12,8 +12,10 @@ import {
   Power,
   Landmark,
   ShieldCheck,
+  Menu,
 } from "lucide-react";
 import { AdminNotifications } from "@/components/admin/admin-notifications";
+import { useAdminUi } from "@/components/admin/admin-ui-context";
 
 const routeMap: Record<string, string> = {
   "/admin": "Dashboard",
@@ -81,6 +83,7 @@ function LiveClock() {
 
 export function AdminTopbar({ isProd }: { isProd: boolean }) {
   const pathname = usePathname();
+  const { toggleMobileNav } = useAdminUi();
   const breadcrumbs = buildBreadcrumbs(pathname);
   const envLabel = isProd ? "Producción" : "Desarrollo";
 
@@ -93,8 +96,18 @@ export function AdminTopbar({ isProd }: { isProd: boolean }) {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
       <div className="flex h-14 items-center justify-between gap-4 px-5 lg:px-7">
+        {/* Botón menú (solo móvil) */}
+        <button
+          type="button"
+          onClick={toggleMobileNav}
+          aria-label="Abrir menú"
+          className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 lg:hidden"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
         {/* Breadcrumb */}
-        <nav className="flex min-w-0 items-center gap-1.5" aria-label="Breadcrumb">
+        <nav className="flex min-w-0 flex-1 items-center gap-1.5 lg:flex-none" aria-label="Breadcrumb">
           {breadcrumbs.map((crumb, idx) => (
             <div key={crumb.href} className="flex items-center gap-1.5">
               {idx > 0 && <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-300" />}
@@ -163,7 +176,7 @@ export function AdminTopbar({ isProd }: { isProd: boolean }) {
           <Link
             href="/admin/visitas/nueva"
             prefetch={false}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 sm:flex"
             title="Agendar visita"
           >
             <CalendarClock className="h-4 w-4" />
@@ -173,7 +186,7 @@ export function AdminTopbar({ isProd }: { isProd: boolean }) {
           <Link
             href="/admin/sii"
             prefetch={false}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 sm:flex"
             title="Centro SII"
           >
             <Landmark className="h-4 w-4" />

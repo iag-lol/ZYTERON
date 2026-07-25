@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
@@ -12,6 +12,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { JsonLd } from "@/components/seo/json-ld";
 import { IconSprite } from "@/components/ui/icon-sprite";
 import { WebVisitTracker } from "@/components/analytics/web-visit-tracker";
+import { PwaRegister } from "@/components/pwa-register";
 import { buildOrganizationGraph, buildPrimaryOgImageUrl } from "@/lib/seo";
 
 const geistSans = Geist({
@@ -79,10 +80,26 @@ export const metadata: Metadata = {
       }
     : undefined,
   icons: {
-    icon: [{ url: "/logo.svg", type: "image/svg+xml" }],
+    icon: [
+      { url: "/logo.svg", type: "image/svg+xml" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
     shortcut: ["/logo.svg"],
-    apple: ["/logo.svg"],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Zyteron Admin",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1d4ed8",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -122,6 +139,7 @@ export default function RootLayout({
           <JsonLd id="zyteron-organization-schema" data={buildOrganizationGraph()} />
           <WebVisitTracker />
           <ConversionEventTracker />
+          <PwaRegister />
           <AppShell>{children}</AppShell>
         </TooltipProvider>
       </body>

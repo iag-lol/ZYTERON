@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { siteConfig } from "@/config/site";
+import { useAdminUi } from "@/components/admin/admin-ui-context";
 import {
   LayoutDashboard,
   Users,
@@ -35,6 +36,7 @@ import {
   Trophy,
   Award,
   Sparkles,
+  X,
 } from "lucide-react";
 
 interface NavItem {
@@ -142,16 +144,44 @@ const colorMap: Record<string, { activeBg: string; activeText: string; activeIco
 export function AdminSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { mobileNavOpen, setMobileNavOpen } = useAdminUi();
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
 
+  // Cierra el menú móvil al cambiar de página.
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname, setMobileNavOpen]);
+
+  // Bloquea el scroll del fondo mientras el drawer está abierto (móvil).
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.style.overflow = mobileNavOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileNavOpen]);
+
+  // En móvil el drawer siempre se muestra expandido (con etiquetas).
+  const showLabels = !collapsed || mobileNavOpen;
+
   return (
-    <aside
-      className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-slate-200 bg-white transition-all duration-300 ${
-        collapsed ? "w-[72px]" : "w-64"
-      }`}
-    >
+    <>
+      {/* Fondo oscuro del drawer (solo móvil) */}
+      {mobileNavOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+          onClick={() => setMobileNavOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform duration-300 lg:z-40 lg:translate-x-0 lg:transition-all ${
+          mobileNavOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        } ${collapsed ? "lg:w-[72px]" : "lg:w-64"}`}
+      >
       {/* Logo */}
       <div className="relative flex h-16 shrink-0 items-center border-b border-slate-200 px-4">
         <Link href="/admin" className="flex items-center gap-3 overflow-hidden">
@@ -163,7 +193,7 @@ export function AdminSidebar() {
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
           </div>
-          {!collapsed && (
+          {showLabels && (
             <div className="min-w-0">
               <p className="text-[13px] font-extrabold tracking-wide text-slate-900">Zyteron</p>
               <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
@@ -173,13 +203,22 @@ export function AdminSidebar() {
           )}
         </Link>
 
-        {/* Collapse toggle */}
+        {/* Collapse toggle (solo escritorio) */}
         <button
           onClick={() => setCollapsed((v) => !v)}
-          className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-400 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
+          className="absolute right-2 top-1/2 hidden h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-400 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 lg:flex"
           title={collapsed ? "Expandir" : "Colapsar"}
         >
           {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+        </button>
+
+        {/* Cerrar drawer (solo móvil) */}
+        <button
+          onClick={() => setMobileNavOpen(false)}
+          className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 lg:hidden"
+          aria-label="Cerrar menú"
+        >
+          <X className="h-5 w-5" />
         </button>
       </div>
 
@@ -188,12 +227,12 @@ export function AdminSidebar() {
         <div className="space-y-5">
           {navGroups.map((group) => (
             <div key={group.label}>
-              {!collapsed && (
+              {showLabels && (
                 <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
                   {group.label}
                 </p>
               )}
-              {collapsed && <div className="mb-1 h-px w-full bg-slate-100" />}
+              {!showLabels && <div className="mb-1 h-px w-full bg-slate-100" />}
               <div className="space-y-0.5">
                 {group.items.map((item) => {
                   const active = isActive(item.href, item.exact);
@@ -208,7 +247,7 @@ export function AdminSidebar() {
                         active
                           ? `${c.activeBg} ${c.activeText}`
                           : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                      } ${collapsed ? "justify-center px-2" : ""}`}
+                      } ${!showLabels ? "lg:justify-center lg:px-2" : ""}`}
                     >
                       {/* Active left bar */}
                       {active && (
@@ -221,9 +260,9 @@ export function AdminSidebar() {
                         }`}
                       />
                       {/* Label */}
-                      {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+                      {showLabels && <span className="flex-1 truncate">{item.label}</span>}
                       {/* Active dot */}
-                      {active && !collapsed && (
+                      {active && showLabels && (
                         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${c.activeDot}`} />
                       )}
                     </Link>
@@ -236,7 +275,7 @@ export function AdminSidebar() {
       </nav>
 
       {/* Quick actions */}
-      {!collapsed && (
+      {showLabels && (
         <div className="shrink-0 px-3 pb-3">
           <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
             <p className="mb-2.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-blue-600">
@@ -266,19 +305,19 @@ export function AdminSidebar() {
 
       {/* User footer */}
       <div className="shrink-0 border-t border-slate-200 p-3">
-        <div className={`flex items-center gap-3 rounded-lg px-2 py-2 ${collapsed ? "justify-center" : ""}`}>
+        <div className={`flex items-center gap-3 rounded-lg px-2 py-2 ${!showLabels ? "justify-center" : ""}`}>
           <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-800 text-[11px] font-extrabold text-white shadow">
             Z
             <span className="absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" />
           </div>
-          {!collapsed && (
+          {showLabels && (
             <div className="min-w-0 flex-1">
               <p className="truncate text-[12px] font-bold text-slate-800">Zyteron Admin</p>
               <p className="truncate text-[10px] text-slate-400">{siteConfig.contact.email}</p>
             </div>
           )}
         </div>
-        <div className={`mt-1 flex gap-1 ${collapsed ? "flex-col items-center" : ""}`}>
+        <div className={`mt-1 flex gap-1 ${!showLabels ? "flex-col items-center" : ""}`}>
           <Link
             href="/"
             target="_blank"
@@ -286,7 +325,7 @@ export function AdminSidebar() {
             title="Ver sitio"
           >
             <ExternalLink className="h-3.5 w-3.5" />
-            {!collapsed && "Ver sitio"}
+            {showLabels && "Ver sitio"}
           </Link>
           <Link
             href="/admin/logout"
@@ -294,10 +333,11 @@ export function AdminSidebar() {
             title="Salir"
           >
             <LogOut className="h-3.5 w-3.5" />
-            {!collapsed && "Salir"}
+            {showLabels && "Salir"}
           </Link>
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
