@@ -34,6 +34,10 @@ export const LEAD_CAPTURE_TOOL = {
           description:
             "Qué necesita: web, tienda online, sistema a medida, automatización, soporte TI, SEO, etc.",
         },
+        empresa: { type: "string", description: "Nombre de la empresa del cliente, si aplica." },
+        rubro: { type: "string", description: "Rubro o industria del negocio del cliente." },
+        telefono: { type: "string", description: "Teléfono o WhatsApp, si lo entregó (aparte del correo)." },
+        plazo: { type: "string", description: "Plazo o urgencia que mencionó el cliente." },
         resumen: {
           type: "string",
           description: "Resumen breve de lo conversado y del requerimiento del cliente.",
@@ -56,6 +60,10 @@ type LeadCaptureArgs = {
   nombre?: unknown;
   contacto?: unknown;
   tipo_proyecto?: unknown;
+  empresa?: unknown;
+  rubro?: unknown;
+  telefono?: unknown;
+  plazo?: unknown;
   resumen?: unknown;
   presupuesto_estimado?: unknown;
   es_cotizacion?: unknown;
@@ -93,19 +101,25 @@ export async function executeLeadCapture(rawArgs: LeadCaptureArgs): Promise<Lead
   const name = str(rawArgs?.nombre, 140) || "Cliente del chat";
   const contact = str(rawArgs?.contacto, 200);
   const projectType = str(rawArgs?.tipo_proyecto, 200) || "Consulta general";
+  const company = str(rawArgs?.empresa, 140) || null;
+  const industry = str(rawArgs?.rubro, 120) || null;
+  const deadline = str(rawArgs?.plazo, 120) || null;
   const summary = str(rawArgs?.resumen, 2000) || "Interés captado desde el chat con IA.";
   const budget = str(rawArgs?.presupuesto_estimado, 120) || null;
   const isQuote = Boolean(rawArgs?.es_cotizacion);
 
   const email = extractEmail(contact);
-  const phone = extractPhone(contact);
+  const phone = extractPhone(contact) || extractPhone(str(rawArgs?.telefono, 60));
   const createdAtIso = new Date().toISOString();
   const leadId = randomUUID();
 
   const messageParts = [
     `[Chat IA] ${isQuote ? "Solicitud de cotización" : "Interés de cliente"}`,
     `Proyecto: ${projectType}`,
+    company ? `Empresa: ${company}` : null,
+    industry ? `Rubro: ${industry}` : null,
     budget ? `Presupuesto: ${budget}` : null,
+    deadline ? `Plazo: ${deadline}` : null,
     `Contacto: ${contact || "no especificado"}`,
     "",
     summary,
@@ -142,6 +156,9 @@ export async function executeLeadCapture(rawArgs: LeadCaptureArgs): Promise<Lead
       contact: contact || "no especificado",
       email,
       phone,
+      company,
+      industry,
+      deadline,
       projectType,
       summary,
       budget,

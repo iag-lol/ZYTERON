@@ -15,6 +15,9 @@ export type ChatLeadPayload = {
   contact: string;
   email: string | null;
   phone: string | null;
+  company?: string | null;
+  industry?: string | null;
+  deadline?: string | null;
   projectType: string;
   summary: string;
   budget?: string | null;
@@ -87,6 +90,10 @@ async function sendEmail(p: ChatLeadPayload): Promise<{ result: ChannelResult; d
       name: p.name,
       email: p.email || siteConfig.contact.email,
       phone: p.phone,
+      company: p.company ?? null,
+      industry: p.industry ?? null,
+      budget: p.budget ?? null,
+      deadline: p.deadline ?? null,
       service: p.projectType,
       message: messageLines.join("\n"),
       submittedFrom: "Asistente IA (chat web)",

@@ -16,6 +16,9 @@ type LeadAlertInput = {
   email: string;
   phone?: string | null;
   company?: string | null;
+  industry?: string | null;
+  budget?: string | null;
+  deadline?: string | null;
   service?: string | null;
   message?: string | null;
   submittedFrom?: string | null;
@@ -146,70 +149,110 @@ function renderRows(input: LeadAlertInput) {
   return rows;
 }
 
-function renderLeadAlertHtml(input: LeadAlertInput) {
-  const brand = escapeHtml(ZYTERON_COMPANY.brandName);
-  const rows = renderRows(input)
-    .map(
-      ([label, value]) => `
-      <tr>
-        <td style="padding:12px 14px;border-bottom:1px solid #e2e8f0;font-size:12px;color:#64748b;">${escapeHtml(label)}</td>
-        <td style="padding:12px 14px;border-bottom:1px solid #e2e8f0;font-size:13px;font-weight:700;color:#0f172a;text-align:right;">${escapeHtml(value)}</td>
-      </tr>`,
-    )
-    .join("");
+function detailCell(label: string, value: string) {
+  return `
+    <td width="50%" style="padding:6px;">
+      <div style="border:1px solid #e9eef5;border-radius:12px;padding:11px 13px;background:#f8fafc;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#94a3b8;">${escapeHtml(label)}</div>
+        <div style="font-size:14px;font-weight:700;color:#0f172a;margin-top:3px;word-break:break-word;">${value}</div>
+      </div>
+    </td>`;
+}
 
+function renderLeadAlertHtml(input: LeadAlertInput) {
   const message = normalizeText(input.message);
-  const extras = (input.extras || [])
-    .map((line) => {
-      const detail = `${line.name} x${line.quantity} · ${formatCurrency(line.unitPrice)} c/u · ${formatCurrency(line.total)}`;
-      return `<li style="margin:0 0 8px;color:#334155;">${escapeHtml(detail)}</li>`;
-    })
+  const name = escapeHtml(normalizeText(input.name) || "Nuevo contacto");
+  const email = normalizeText(input.email);
+  const phone = normalizeText(input.phone);
+  const contactLine = [email, phone].filter(Boolean).map(escapeHtml).join(" &nbsp;·&nbsp; ") || "Sin contacto directo";
+  const adminUrl = `${siteConfig.url}/admin/contactos`;
+
+  const details: Array<[string, string]> = [
+    ["Servicio de interés", escapeHtml(normalizeText(input.service) || "—")],
+    ["Empresa", escapeHtml(normalizeText(input.company) || "—")],
+    ["Rubro", escapeHtml(normalizeText(input.industry) || "—")],
+    ["Presupuesto estimado", escapeHtml(normalizeText(input.budget) || "—")],
+    ["Plazo deseado", escapeHtml(normalizeText(input.deadline) || "—")],
+    ["Origen", escapeHtml(sourceLabel(input.source))],
+    ["Fecha", escapeHtml(formatDateTime(input.submittedAtIso))],
+    ["Referencia", escapeHtml(input.leadId.slice(0, 8).toUpperCase())],
+  ];
+
+  const detailRows: string[] = [];
+  for (let i = 0; i < details.length; i += 2) {
+    const a = details[i]!;
+    const b = details[i + 1];
+    detailRows.push(`<tr>${detailCell(a[0], a[1])}${b ? detailCell(b[0], b[1]) : '<td width="50%"></td>'}</tr>`);
+  }
+
+  const totalsRows = renderRows(input)
+    .filter(([label]) => ["Subtotal", "Descuento", "IVA (19%)", "Total", "Valor plan"].includes(label))
+    .map(
+      ([label, value]) =>
+        `<tr><td style="padding:4px 0;font-size:13px;color:#64748b;">${escapeHtml(label)}</td><td style="padding:4px 0;font-size:13px;font-weight:700;color:#0f172a;text-align:right;">${escapeHtml(value)}</td></tr>`,
+    )
     .join("");
 
   return `<!doctype html>
 <html lang="es">
-  <body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:26px 12px;">
-      <tr>
-        <td align="center">
-          <table role="presentation" width="680" cellpadding="0" cellspacing="0" style="max-width:680px;width:100%;background:#ffffff;border:1px solid #dbe2ea;border-radius:14px;overflow:hidden;">
-            <tr>
-              <td style="background:linear-gradient(135deg,#0f5fff,#0b3aa4);padding:20px 24px;color:#fff;">
-                <p style="margin:0;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;opacity:0.95;">Nuevo lead web</p>
-                <h1 style="margin:8px 0 0;font-size:24px;line-height:1.2;">${brand}</h1>
+  <body style="margin:0;padding:0;background:#eef2f7;font-family:-apple-system,Segoe UI,Arial,sans-serif;color:#0f172a;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f7;padding:28px 12px;">
+      <tr><td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 6px 24px rgba(15,23,42,.08);">
+          <!-- Header -->
+          <tr><td style="background:linear-gradient(135deg,#1d4ed8,#2563eb);padding:26px 28px;">
+            <table role="presentation" width="100%"><tr>
+              <td style="color:#fff;font-size:13px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;opacity:.9;">Zyteron</td>
+              <td style="text-align:right;color:#dbeafe;font-size:11px;font-weight:600;">Nueva oportunidad</td>
+            </tr></table>
+            <div style="color:#fff;font-size:22px;font-weight:800;margin-top:12px;">Nueva solicitud de cliente</div>
+            <div style="color:#dbeafe;font-size:13px;margin-top:3px;">Vía ${escapeHtml(sourceLabel(input.source))}</div>
+          </td></tr>
+
+          <!-- Cliente hero -->
+          <tr><td style="padding:22px 22px 6px;">
+            <table role="presentation" width="100%" style="border:1px solid #e2e8f0;border-radius:14px;background:#f8fafc;"><tr>
+              <td style="padding:16px 18px;">
+                <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;">Cliente</div>
+                <div style="font-size:19px;font-weight:800;color:#0f172a;margin-top:4px;">${name}</div>
+                <div style="font-size:13px;color:#475569;margin-top:4px;">${contactLine}</div>
               </td>
-            </tr>
-            <tr>
-              <td style="padding:22px 24px;">
-                <p style="margin:0 0 14px;font-size:15px;color:#334155;">
-                  Se registró una nueva solicitud desde <strong>${escapeHtml(sourceLabel(input.source))}</strong>.
-                </p>
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#f8fafc;">
-                  ${rows}
-                </table>
-                ${
-                  message
-                    ? `
-                <div style="margin-top:16px;border:1px solid #e2e8f0;background:#ffffff;border-radius:10px;padding:12px 14px;">
-                  <p style="margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;">Mensaje / Necesidad</p>
-                  <p style="margin:0;font-size:14px;line-height:1.65;color:#1e293b;white-space:pre-line;">${escapeHtml(message)}</p>
-                </div>`
-                    : ""
-                }
-                ${
-                  extras
-                    ? `
-                <div style="margin-top:16px;border:1px solid #e2e8f0;background:#ffffff;border-radius:10px;padding:12px 14px;">
-                  <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;">Extras seleccionados</p>
-                  <ul style="padding-left:18px;margin:0;">${extras}</ul>
-                </div>`
-                    : ""
-                }
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
+            </tr></table>
+          </td></tr>
+
+          <!-- Detalles -->
+          <tr><td style="padding:8px 16px 4px;">
+            <table role="presentation" width="100%">${detailRows.join("")}</table>
+          </td></tr>
+
+          ${
+            message
+              ? `<tr><td style="padding:10px 22px 4px;">
+                  <div style="border:1px solid #e2e8f0;background:#ffffff;border-radius:12px;padding:14px 16px;">
+                    <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;">Mensaje / Necesidad</div>
+                    <div style="font-size:14px;line-height:1.6;color:#1e293b;margin-top:6px;white-space:pre-line;">${escapeHtml(message)}</div>
+                  </div>
+                </td></tr>`
+              : ""
+          }
+          ${
+            totalsRows
+              ? `<tr><td style="padding:10px 22px 4px;">
+                  <div style="border:1px solid #e2e8f0;background:#ffffff;border-radius:12px;padding:12px 16px;">
+                    <table role="presentation" width="100%">${totalsRows}</table>
+                  </div>
+                </td></tr>`
+              : ""
+          }
+
+          <!-- CTA -->
+          <tr><td style="padding:16px 22px 26px;">
+            <a href="${adminUrl}" style="display:block;text-align:center;background:#1d4ed8;color:#fff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 20px;border-radius:12px;">Ver contacto en el panel</a>
+            <div style="text-align:center;color:#94a3b8;font-size:11px;margin-top:12px;">Responde pronto para no perder la oportunidad. Atención automática con IA de ${escapeHtml(ZYTERON_COMPANY.brandName)}.</div>
+          </td></tr>
+        </table>
+        <div style="color:#94a3b8;font-size:11px;margin-top:14px;">${escapeHtml(ZYTERON_COMPANY.legalName)} · ${escapeHtml(ZYTERON_COMPANY.salesEmail)}</div>
+      </td></tr>
     </table>
   </body>
 </html>`;
