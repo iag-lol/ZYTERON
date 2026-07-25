@@ -10,6 +10,7 @@ import {
 import { generateAiReply } from "@/lib/whatsapp/agent";
 import { sendMetaWhatsappMessage } from "@/lib/notifications/meta-whatsapp";
 import { notifyOwnerChatStarted } from "@/lib/notifications/chat-started-alert";
+import { logWebhook } from "@/lib/whatsapp/webhook-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,8 +30,13 @@ export async function GET(req: Request) {
   const expected = readEnv("WHATSAPP_VERIFY_TOKEN");
 
   if (mode === "subscribe" && expected && token === expected && challenge) {
+    logWebhook("verify_ok", "Meta verificó el webhook correctamente.");
     return new Response(challenge, { status: 200, headers: { "Content-Type": "text/plain" } });
   }
+  logWebhook(
+    "verify_fail",
+    !expected ? "Falta WHATSAPP_VERIFY_TOKEN en el servidor." : "El verify token no coincide.",
+  );
   return new Response("Forbidden", { status: 403 });
 }
 
@@ -40,10 +46,12 @@ export async function POST(req: Request) {
   try {
     payload = await req.json();
   } catch {
+    logWebhook("error", "POST con cuerpo no-JSON.");
     return NextResponse.json({ ok: true });
   }
+  logWebhook("post_received", "Meta envió un evento al webhook.");
   // Procesamiento en segundo plano (Render mantiene el proceso vivo).
-  void processPayload(payload).catch((err) => console.error("[whatsapp-webhook]", err));
+  void processPayload(payload).catch((err) => logWebhook("error", String(err)));
   return NextResponse.json({ ok: true });
 }
 
@@ -124,7 +132,10 @@ async function processPayload(payload: unknown) {
         if (!from) continue;
 
         const conv = await upsertConversationByPhone({ phone: from, profileName });
-        if (!conv) continue;
+        if (!conv) {
+          logWebhook("error", `No se pudo crear/leer la conversación de +${from}. ¿Corriste whatsapp_inbox.sql?`);
+          continue;
+        }
 
         const desc = describeMessage(message);
         const { inserted } = await insertInboundMessage({
@@ -137,7 +148,11 @@ async function processPayload(payload: unknown) {
           mimeType: desc.mimeType,
           fileName: desc.fileName,
         });
-        if (!inserted) continue; // duplicado
+        if (!inserted) {
+          logWebhook("message_dup", `Mensaje duplicado de +${from} (ignorado).`);
+          continue;
+        }
+        logWebhook("message_stored", `Mensaje de +${from}: ${desc.content.slice(0, 60)}`);
 
         // ¿Primera interacción? avisamos al dueño (una vez).
         const isFirst = !conv.last_message_at;

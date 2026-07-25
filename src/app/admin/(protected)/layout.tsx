@@ -1,6 +1,7 @@
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminTopbar } from "@/components/admin/admin-topbar";
 import { AdminUiProvider } from "@/components/admin/admin-ui-context";
+import { AdminFab } from "@/components/admin/admin-fab";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </footer>
           </div>
         </div>
+        <AdminFab />
       </div>
     </AdminUiProvider>
   );

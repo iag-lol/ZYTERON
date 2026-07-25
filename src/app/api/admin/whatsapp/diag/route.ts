@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getWebhookLog } from "@/lib/whatsapp/webhook-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,11 +46,14 @@ export async function GET(req: Request) {
   }
 
   const origin = new URL(req.url).origin;
+  const webhookLog = getWebhookLog();
 
   return NextResponse.json({
     ok: true,
     env,
     db,
+    webhook_recibido_alguna_vez: webhookLog.length > 0,
+    ultimos_eventos_webhook: webhookLog,
     webhook: {
       callbackUrl: `${origin}/api/whatsapp/webhook`,
       verifyTokenConfigured: env.WHATSAPP_VERIFY_TOKEN,
