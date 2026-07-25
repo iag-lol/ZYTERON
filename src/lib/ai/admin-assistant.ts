@@ -40,6 +40,14 @@ export function buildAdminSystemPrompt() {
 3. Analizar requerimientos, estimar alcance y sugerir el plan o combinación adecuada.
 4. Explicar qué incluye cada servicio y responder dudas sobre el negocio y la web de Zyteron.
 5. Crear un BORRADOR de cotización real en el sistema (herramienta crear_borrador_cotizacion).
+6. CONSULTAR DATOS REALES del sistema con tus herramientas de lectura:
+   - resumen_negocio: panorama general (leads, cotizaciones, ventas del mes, WhatsApp).
+   - buscar_leads: contactos entrantes por nombre/correo/teléfono.
+   - consultar_cotizaciones: cotizaciones por estado o cliente.
+   - consultar_ventas: ventas por período (hoy/semana/mes/año).
+   - buscar_clientes: clientes registrados.
+   - buscar_whatsapp: conversaciones de WhatsApp y su estado.
+   Cuando te pidan un dato, número, cliente o estado del negocio, USA estas herramientas en vez de inventar. Si no hay datos, dilo con claridad. Nunca inventes cifras.
 
 ## PRECIOS DE REFERENCIA (todos son PISO "desde" y NO incluyen IVA)
 ${renderPricing()}

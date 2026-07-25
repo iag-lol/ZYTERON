@@ -6,6 +6,7 @@ import {
   CREATE_QUOTE_TOOL,
   executeCreateQuoteDraft,
 } from "@/lib/ai/admin-assistant";
+import { ADMIN_DATA_TOOLS, isAdminDataTool, runAdminDataTool } from "@/lib/ai/admin-tools";
 import { createOpenAIToolStream, type OpenAIMessage } from "@/lib/ai/openai-runtime";
 import { siteConfig } from "@/config/site";
 
@@ -93,7 +94,7 @@ export async function POST(req: Request) {
     apiKey,
     model,
     messages: convo,
-    tools: [CREATE_QUOTE_TOOL],
+    tools: [CREATE_QUOTE_TOOL, ...ADMIN_DATA_TOOLS],
     temperature: 0.4,
     maxTokens: 1400,
     fallbackText: fallback,
@@ -107,6 +108,9 @@ export async function POST(req: Request) {
         }
         const result = await executeCreateQuoteDraft(parsed);
         return result.message;
+      }
+      if (isAdminDataTool(name)) {
+        return runAdminDataTool(name, argsJson);
       }
       return "Acción no reconocida.";
     },
