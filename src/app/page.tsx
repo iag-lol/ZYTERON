@@ -468,8 +468,9 @@ export default async function Home() {
             quality={70}
             className="object-cover object-center"
           />
-          {/* Overlay: mantiene el texto legible sobre la imagen */}
-          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/85 to-white/40 lg:to-white/10" />
+          {/* Overlay: solo lo justo para que el texto de la izquierda sea legible;
+              a la derecha la imagen se ve nítida. */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/60 to-white/15 lg:from-white/95 lg:via-white/45 lg:to-transparent" />
         </div>
         <Container className="relative z-10 grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
           <div className="space-y-6">
