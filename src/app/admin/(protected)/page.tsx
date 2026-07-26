@@ -1,556 +1,336 @@
-import { getAdminSnapshot } from "@/lib/admin-data";
+import Link from "next/link";
 import {
   ArrowUpRight,
-  CheckCircle2,
-  Clock4,
+  ArrowDownRight,
+  DollarSign,
   FileText,
+  MessageCircle,
+  MessagesSquare,
+  Receipt,
+  Sparkles,
+  Target,
   TrendingUp,
   Users,
-  CalendarClock,
-  DollarSign,
-  Target,
-  BriefcaseBusiness,
-  MessagesSquare,
-  Landmark,
-  Activity,
   Globe,
-  Wifi,
-  BarChart2,
-  Zap,
-  AlertCircle,
-  ChevronRight,
-  Package,
-  ShieldCheck,
 } from "lucide-react";
-import Link from "next/link";
-import { BarChart, FunnelStep } from "@/components/admin/dashboard-chart";
+import { getAdminSnapshot } from "@/lib/admin-data";
+import { AreaChart, BarChart } from "@/components/admin/dashboard-chart";
+
+export const dynamic = "force-dynamic";
 
 function currency(value: number) {
-  return new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency: "CLP",
-    maximumFractionDigits: 0,
-  }).format(value || 0);
+  return new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(value || 0);
 }
-
+function compactCLP(value: number) {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `$${Math.round(value / 1_000)}K`;
+  return currency(value);
+}
 function pct(value: number) {
-  return `${value.toFixed(1)}%`;
+  return `${(value || 0).toFixed(1)}%`;
+}
+function timeAgo(iso?: string | null) {
+  if (!iso) return "";
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.round(diff / 60000);
+  if (m < 60) return `hace ${Math.max(1, m)} min`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `hace ${h} h`;
+  return new Date(iso).toLocaleDateString("es-CL", { day: "2-digit", month: "short" });
 }
 
-const statusConfig: Record<string, { label: string; dot: string; bg: string; text: string }> = {
-  PENDING: { label: "Pendiente", dot: "bg-amber-400", bg: "bg-amber-50",   text: "text-amber-700" },
-  SENT:    { label: "Enviada",   dot: "bg-blue-400",  bg: "bg-blue-50",    text: "text-blue-700" },
-  WON:     { label: "Ganada",    dot: "bg-emerald-400",bg:"bg-emerald-50", text: "text-emerald-700" },
-  LOST:    { label: "Perdida",   dot: "bg-rose-400",  bg: "bg-rose-50",    text: "text-rose-700" },
+const quoteStatus: Record<string, { label: string; cls: string }> = {
+  PENDING: { label: "Pendiente", cls: "bg-amber-50 text-amber-700 ring-amber-200" },
+  SENT: { label: "Enviada", cls: "bg-blue-50 text-blue-700 ring-blue-200" },
+  WON: { label: "Ganada", cls: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
+  LOST: { label: "Perdida", cls: "bg-rose-50 text-rose-700 ring-rose-200" },
 };
 
-function StatusBadge({ status }: { status: string }) {
-  const cfg = statusConfig[status] ?? {
-    label: status, dot: "bg-slate-400", bg: "bg-slate-100", text: "text-slate-600",
-  };
+// ---------- Sub-componentes (light) ----------
+function Kpi({
+  label,
+  value,
+  helper,
+  icon: Icon,
+  accent,
+  delta,
+}: {
+  label: string;
+  value: string;
+  helper?: string;
+  icon: typeof DollarSign;
+  accent: string;
+  delta?: { up: boolean; text: string };
+}) {
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${cfg.bg} ${cfg.text}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-      {cfg.label}
-    </span>
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+        <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${accent}`}>
+          <Icon className="h-4 w-4" />
+        </span>
+      </div>
+      <p className="mt-3 text-[26px] font-extrabold leading-none tracking-tight text-slate-900">{value}</p>
+      <div className="mt-2 flex items-center gap-2">
+        {delta && (
+          <span
+            className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-bold ${
+              delta.up ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
+            }`}
+          >
+            {delta.up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+            {delta.text}
+          </span>
+        )}
+        {helper && <p className="text-[11px] text-slate-400">{helper}</p>}
+      </div>
+    </div>
   );
 }
 
-function initials(name?: string) {
-  if (!name) return "?";
-  return name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+function Card({ title, subtitle, action, children }: { title: string; subtitle?: string; action?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-[15px] font-bold text-slate-900">{title}</h2>
+          {subtitle && <p className="text-[12px] text-slate-400">{subtitle}</p>}
+        </div>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
 }
 
-function shortId(value?: string | null, size = 10) {
-  const safe = String(value || "").trim();
-  if (!safe) return "—";
-  return safe.length > size ? `${safe.slice(0, size)}…` : safe;
+function Rate({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between text-[12px]">
+        <span className="font-medium text-slate-600">{label}</span>
+        <span className="font-bold text-slate-900">{pct(value)}</span>
+      </div>
+      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${Math.min(100, Math.max(2, value))}%` }} />
+      </div>
+    </div>
+  );
 }
 
-export default async function AdminDashboard() {
-  const data = await getAdminSnapshot();
-  const { metrics, charts, quotes, visits, leads } = data;
-  const leadBaseCount = metrics.conversion.leadBase;
-  const leadBaseEstimated = metrics.conversion.leadBaseEstimated;
+function FunnelRow({ label, value, base, color }: { label: string; value: number; base: number; color: string }) {
+  const width = base > 0 ? Math.min(100, Math.max(3, (value / base) * 100)) : 3;
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between text-[12.5px]">
+        <span className="font-semibold text-slate-700">{label}</span>
+        <span className="font-bold text-slate-900">{value.toLocaleString("es-CL")}</span>
+      </div>
+      <div className="h-3 overflow-hidden rounded-lg bg-slate-100">
+        <div className={`h-full rounded-lg ${color}`} style={{ width: `${width}%` }} />
+      </div>
+    </div>
+  );
+}
 
-  const now = new Date();
-  const nextVisit = visits.find((v) => v.date && new Date(v.date) >= now);
-  const upcomingVisits = visits.filter((v) => v.date && new Date(v.date) >= now);
+export default async function AdminDashboardPage() {
+  const snap = await getAdminSnapshot();
+  const m = snap.metrics;
+  const rev = snap.charts.revenueByMonth ?? [];
+  const lastRev = rev[rev.length - 1]?.value ?? 0;
+  const prevRev = rev[rev.length - 2]?.value ?? 0;
+  const revDelta = prevRev > 0 ? ((lastRev - prevRev) / prevRev) * 100 : 0;
 
-  const lastUpdated = new Date(metrics.lastUpdated).toLocaleString("es-CL", {
-    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
-  });
+  const recentQuotes = [...snap.quotes]
+    .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""))
+    .slice(0, 6);
 
-  const kpis = [
-    {
-      label: leadBaseEstimated ? "Base embudo" : "Leads totales",
-      value: leadBaseCount,
-      sub: `${pct(metrics.conversion.quoteRate)} pasan a cotización`,
-      icon: Users,
-      iconBg: "bg-blue-500",
-      iconShadow: "shadow-blue-500/30",
-      accent: "text-blue-600",
-      border: "border-slate-200",
-      trend: metrics.conversion.quoteRate > 0,
-      trendLabel: pct(metrics.conversion.quoteRate),
-      href: "/admin/contactos",
-    },
-    {
-      label: "Cotizaciones",
-      value: metrics.totals.quotes,
-      sub: currency(metrics.money.pipelineValue) + " en pipeline",
-      icon: FileText,
-      iconBg: "bg-violet-500",
-      iconShadow: "shadow-violet-500/30",
-      accent: "text-violet-600",
-      border: "border-slate-200",
-      trend: false,
-      trendLabel: "",
-      href: "/admin/cotizaciones",
-    },
-    {
-      label: "Visitas técnicas",
-      value: metrics.totals.visits,
-      sub: `${upcomingVisits.length} próximas agendadas`,
-      icon: CalendarClock,
-      iconBg: "bg-amber-500",
-      iconShadow: "shadow-amber-500/30",
-      accent: "text-amber-600",
-      border: "border-slate-200",
-      trend: upcomingVisits.length > 0,
-      trendLabel: `${upcomingVisits.length} próximas`,
-      href: "/admin/visitas",
-    },
-    {
-      label: "Ventas cerradas",
-      value: metrics.totals.sales,
-      sub: `Win rate ${pct(metrics.conversion.winRate)}`,
-      icon: CheckCircle2,
-      iconBg: "bg-emerald-500",
-      iconShadow: "shadow-emerald-500/30",
-      accent: "text-emerald-600",
-      border: "border-slate-200",
-      trend: metrics.conversion.winRate > 0,
-      trendLabel: pct(metrics.conversion.winRate),
-      href: "/admin/ventas",
-    },
+  const funnelBase = Math.max(m.totals.leads, m.web.totalVisits, 1);
+
+  const quickLinks = [
+    { href: "/admin/whatsapp", label: "WhatsApp", icon: MessageCircle, cls: "bg-emerald-50 text-emerald-600" },
+    { href: "/admin/asistente-ia", label: "Asistente IA", icon: Sparkles, cls: "bg-violet-50 text-violet-600" },
+    { href: "/admin/cotizaciones", label: "Cotizaciones", icon: FileText, cls: "bg-blue-50 text-blue-600" },
+    { href: "/admin/contactos", label: "Contactos", icon: MessagesSquare, cls: "bg-sky-50 text-sky-600" },
+    { href: "/admin/contador-auditor/facturacion", label: "Facturación", icon: Receipt, cls: "bg-amber-50 text-amber-600" },
+    { href: "/admin/clientes", label: "Clientes", icon: Users, cls: "bg-indigo-50 text-indigo-600" },
   ];
 
   return (
-    <div className="space-y-7">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="space-y-5">
+      {/* Encabezado */}
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
-            Panel de control
-          </p>
-          <h1 className="mt-0.5 text-2xl font-extrabold text-slate-900">
-            Dashboard operacional
-          </h1>
-          <p className="mt-1 text-[13px] text-slate-500">
-            Última actualización:{" "}
-            <span className="font-medium text-slate-700">{lastUpdated}</span>
-            {leadBaseEstimated && (
-              <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200">
-                modo estimado
-              </span>
-            )}
-          </p>
+          <h1 className="text-xl font-extrabold text-slate-900">Panel de control</h1>
+          <p className="text-[13px] text-slate-500">Resumen comercial y de tráfico en tiempo real</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/admin/visitas/nueva"
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-[13px] font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300 hover:shadow"
-          >
-            <Clock4 className="h-4 w-4 text-slate-500" />
-            Agendar visita
-          </Link>
-          <Link
-            href="/admin/cotizaciones/nueva"
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
-          >
-            <FileText className="h-4 w-4" />
-            Nueva cotización
-          </Link>
-        </div>
+        <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[12px] font-semibold text-emerald-700">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+          Datos en vivo · {new Date(m.lastUpdated).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
+        </span>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {kpis.map((kpi) => (
-          <Link
-            key={kpi.label}
-            href={kpi.href}
-            className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md"
-          >
-            <div className="flex items-start justify-between">
-              <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${kpi.iconBg} shadow-lg ${kpi.iconShadow}`}>
-                <kpi.icon className="h-5 w-5 text-white" />
-              </div>
-              {kpi.trend && (
-                <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                  <TrendingUp className="h-3 w-3" />
-                  {kpi.trendLabel}
-                </span>
-              )}
-            </div>
-            <div className="mt-4">
-              <p className="text-4xl font-extrabold text-slate-900">{kpi.value}</p>
-              <p className="mt-0.5 text-[13px] font-semibold text-slate-600">{kpi.label}</p>
-              <p className="mt-0.5 text-[11px] text-slate-400">{kpi.sub}</p>
-            </div>
-            <ChevronRight className={`mt-3 h-4 w-4 ${kpi.accent} opacity-0 transition-opacity group-hover:opacity-100`} />
-          </Link>
-        ))}
+        <Kpi
+          label="Ingresos"
+          value={compactCLP(m.money.revenue)}
+          icon={DollarSign}
+          accent="bg-emerald-50 text-emerald-600"
+          delta={rev.length >= 2 ? { up: revDelta >= 0, text: `${Math.abs(revDelta).toFixed(0)}% vs mes ant.` } : undefined}
+          helper={rev.length < 2 ? "Acumulado" : undefined}
+        />
+        <Kpi label="Pipeline abierto" value={compactCLP(m.money.pipelineValue)} icon={Target} accent="bg-blue-50 text-blue-600" helper={`${m.totals.quotes} cotizaciones`} />
+        <Kpi label="Ventas cerradas" value={String(m.totals.sales)} icon={TrendingUp} accent="bg-violet-50 text-violet-600" helper={`Ticket ${compactCLP(m.money.avgTicket)}`} />
+        <Kpi label="Leads captados" value={String(m.totals.leads)} icon={Users} accent="bg-amber-50 text-amber-600" helper={`${m.totals.requests} solicitudes`} />
       </div>
 
-      {/* Secondary KPI strip */}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          { href: "/admin/proyectos",  label: "Proyectos",      value: metrics.totals.projects,   helper: "Operaciones activas",      icon: BriefcaseBusiness, iconBg: "bg-orange-100", iconColor: "text-orange-600" },
-          { href: "/admin/solicitudes",label: "Solicitudes",    value: metrics.totals.requests,   helper: "Requerimientos de cliente", icon: MessagesSquare,    iconBg: "bg-pink-100",   iconColor: "text-pink-600" },
-          { href: "/admin/sii",        label: "Documentos SII", value: metrics.totals.taxDocuments,helper: "Boletas / Facturas",       icon: Landmark,          iconBg: "bg-yellow-100", iconColor: "text-yellow-700" },
-          { href: "/admin/ventas",     label: "Ingresos",       value: currency(metrics.money.revenue), helper: `Ticket prom. ${currency(metrics.money.avgTicket)}`, icon: DollarSign, iconBg: "bg-emerald-100", iconColor: "text-emerald-700", isAmount: true },
-        ].map((item) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-all hover:shadow-md"
-          >
-            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.iconBg} ${item.iconColor}`}>
-              <item.icon className="h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className={`truncate font-extrabold text-slate-900 ${item.isAmount ? "text-[15px]" : "text-[18px]"}`}>
-                {item.value}
-              </p>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                {item.label}
-              </p>
-              <p className="text-[11px] text-slate-400">{item.helper}</p>
-            </div>
-            <ArrowUpRight className={`h-4 w-4 shrink-0 ${item.iconColor} opacity-0 transition-opacity group-hover:opacity-100`} />
-          </Link>
-        ))}
-      </div>
-
-      {/* Revenue chart + Funnel */}
-      <div className="grid gap-5 lg:grid-cols-[3fr_2fr]">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-6 flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-base font-bold text-slate-900">Ingresos por mes</h2>
-              <p className="mt-0.5 text-[12px] text-slate-400">Últimos 6 meses · ventas registradas</p>
-            </div>
-            <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-1.5 text-sm font-bold text-slate-700">
-              <DollarSign className="h-4 w-4 text-blue-500" />
-              {currency(metrics.money.revenue)}
-            </div>
-          </div>
-          <BarChart
-            data={charts.revenueByMonth}
-            height={160}
-            formatType="currency"
-            accentClass="from-blue-600 to-blue-400"
-            dimClass="from-slate-200 to-slate-100"
-            highlightLast={true}
-          />
-          <div className="mt-5 grid grid-cols-3 gap-3 border-t border-slate-100 pt-4">
-            {[
-              { label: "Pipeline", value: currency(metrics.money.pipelineValue) },
-              { label: "Ingresos", value: currency(metrics.money.revenue) },
-              { label: "Ticket promedio", value: currency(metrics.money.avgTicket) },
-            ].map((item) => (
-              <div key={item.label}>
-                <p className="text-[11px] text-slate-400">{item.label}</p>
-                <p className="mt-0.5 text-[13px] font-bold text-slate-900">{item.value}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-5">
-            <h2 className="text-base font-bold text-slate-900">Embudo de conversión</h2>
-            <p className="mt-0.5 text-[12px] text-slate-400">Tasa por etapa del pipeline</p>
-          </div>
-          <div className="space-y-4">
-            <FunnelStep label={leadBaseEstimated ? "Base embudo" : "Leads"} value={leadBaseCount} pct={leadBaseCount > 0 ? 100 : 0} color="bg-blue-500" bgColor="bg-blue-50" textColor="text-blue-700" />
-            <FunnelStep label="Cotizaciones" value={metrics.totals.quotes} pct={metrics.conversion.quoteRate} color="bg-violet-500" bgColor="bg-violet-50" textColor="text-violet-700" subLabel={`${pct(metrics.conversion.quoteRate)} conversión`} />
-            <FunnelStep label="Visitas técnicas" value={metrics.totals.visits} pct={metrics.conversion.visitRate} color="bg-amber-500" bgColor="bg-amber-50" textColor="text-amber-700" subLabel={`${pct(metrics.conversion.visitRate)} de cotizaciones`} />
-            <FunnelStep label="Ventas cerradas" value={metrics.totals.sales} pct={metrics.conversion.winRate} color="bg-emerald-500" bgColor="bg-emerald-50" textColor="text-emerald-700" subLabel={`Win rate ${pct(metrics.conversion.winRate)}`} />
-          </div>
-          <div className="mt-5 rounded-xl bg-slate-50 p-4">
-            <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-blue-500" />
-              <p className="text-[12px] font-semibold text-slate-600">Win Rate global</p>
-            </div>
-            <p className="mt-1.5 text-3xl font-extrabold text-slate-900">{pct(metrics.conversion.winRate)}</p>
-            <p className="mt-0.5 text-[11px] text-slate-400">{metrics.totals.sales} ventas / {metrics.totals.quotes} cotizaciones</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Web analytics + Data health */}
-      <div className="grid gap-5 lg:grid-cols-[3fr_1fr]">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-5 flex items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-blue-600" />
-                <h2 className="text-base font-bold text-slate-900">Analítica web</h2>
-              </div>
-              <p className="mt-0.5 text-[12px] text-slate-400">
-                {metrics.web.estimated ? "Modo estimado — sin tracker activo" : "Visitas, IPs y rutas rastreadas"}
-              </p>
-            </div>
-            <div className="flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-[12px] font-semibold text-blue-700 ring-1 ring-blue-200">
-              <Wifi className="h-3.5 w-3.5" />
-              Hoy: {metrics.web.todayVisits}
-            </div>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              { label: "Visitas web", value: metrics.web.totalVisits, icon: Globe },
-              { label: "IPs únicas", value: metrics.web.uniqueIps, icon: Wifi },
-              { label: "Sesiones", value: metrics.web.uniqueSessions, icon: Activity },
-              { label: "Ingreso / visita", value: currency(metrics.web.revenuePerVisit), icon: DollarSign },
-            ].map((stat) => (
-              <div key={stat.label} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">{stat.label}</p>
-                <p className="mt-1.5 text-[18px] font-extrabold text-slate-900">{stat.value}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 grid gap-4 xl:grid-cols-2">
-            <div className="overflow-hidden rounded-xl border border-slate-200">
-              <div className="border-b border-slate-100 px-4 py-2.5">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Rutas más visitadas</p>
-              </div>
-              <div className="divide-y divide-slate-100">
-                {metrics.web.topPaths.length === 0 ? (
-                  <div className="flex flex-col items-center gap-1 px-4 py-6 text-center">
-                    <BarChart2 className="h-7 w-7 text-slate-300" />
-                    <p className="text-[12px] text-slate-400">Sin datos aún</p>
-                  </div>
-                ) : metrics.web.topPaths.map((item) => (
-                  <div key={item.path} className="flex items-center justify-between px-4 py-2.5 text-[12px]">
-                    <p className="truncate font-semibold text-slate-700">{item.path}</p>
-                    <p className="shrink-0 text-slate-400">{item.visits} vis · {item.uniqueIps} IP</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="overflow-hidden rounded-xl border border-slate-200">
-              <div className="border-b border-slate-100 px-4 py-2.5">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Navegación reciente</p>
-              </div>
-              <div className="divide-y divide-slate-100">
-                {metrics.web.recentNavigations.length === 0 ? (
-                  <div className="flex flex-col items-center gap-1 px-4 py-6 text-center">
-                    <Wifi className="h-7 w-7 text-slate-300" />
-                    <p className="text-[12px] text-slate-400">Sin registros</p>
-                  </div>
-                ) : metrics.web.recentNavigations.map((nav, idx) => (
-                  <div key={idx} className="px-4 py-2.5 text-[12px]">
-                    <p className="truncate font-semibold text-slate-700">{nav.path}</p>
-                    <p className="mt-0.5 text-slate-400">IP: {shortId(nav.ip, 18)} · Sesión: {shortId(nav.sessionId, 10)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <ShieldCheck className="h-4 w-4 text-emerald-500" />
-            <h2 className="text-[13px] font-bold text-slate-900">Salud de datos</h2>
-          </div>
-          <div className="space-y-2 text-xs text-slate-600">
-            <p>Leads reales: <span className="font-bold text-slate-900">{metrics.totals.leads}</span></p>
-            <p>Base de embudo: <span className="font-bold text-slate-900">{leadBaseCount}</span></p>
-            <p>Modo estimado: <span className="font-bold text-slate-900">{leadBaseEstimated ? "Sí" : "No"}</span></p>
-          </div>
-          {leadBaseEstimated && (
-            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
-                <p className="text-[11px] text-amber-700">Sin leads históricos — el embudo usa cotizaciones como base temporal.</p>
-              </div>
+      {/* Ingresos + Conversión */}
+      <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+        <Card title="Ingresos por mes" subtitle="Evolución de ventas cerradas">
+          {rev.length >= 2 ? (
+            <AreaChart data={rev} height={220} formatType="currency" strokeColor="#2563eb" fillId="rev-area" />
+          ) : (
+            <div className="flex h-[220px] items-center justify-center text-[13px] text-slate-400">
+              Aún no hay suficientes datos para el gráfico.
             </div>
           )}
-          <div className="mt-5 border-t border-slate-100 pt-4">
-            <Link href="/admin/reportes" className="flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-[12px] font-semibold text-blue-700 transition-all hover:bg-blue-100">
-              <BarChart2 className="h-3.5 w-3.5" />
-              Ver reportes completos
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
+        </Card>
+
+        <Card title="Tasas de conversión" subtitle="Del embudo comercial">
+          <div className="space-y-4 pt-1">
+            <Rate label="Lead → Cotización" value={m.conversion.quoteRate} color="bg-blue-500" />
+            <Rate label="Cotización → Venta" value={m.conversion.winRate} color="bg-emerald-500" />
+            <Rate label="Lead → Visita" value={m.conversion.visitRate} color="bg-violet-500" />
+            <div className="mt-2 rounded-xl bg-slate-50 p-3 text-[12px] text-slate-500">
+              Base de {m.conversion.leadBase.toLocaleString("es-CL")} leads
+              {m.conversion.leadBaseEstimated ? " (estimada)" : ""}.
+            </div>
           </div>
-        </div>
+        </Card>
       </div>
 
-      {/* Quotes + Visits */}
-      <div className="grid gap-5 lg:grid-cols-[3fr_2fr]">
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-            <div>
-              <h2 className="text-base font-bold text-slate-900">Cotizaciones recientes</h2>
-              <p className="mt-0.5 text-[12px] text-slate-400">{quotes.length} registros · Supabase</p>
-            </div>
-            <Link href="/admin/cotizaciones" className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
-              Ver todas <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
+      {/* Embudo + Tráfico web */}
+      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+        <Card title="Embudo comercial" subtitle="Del interés al cierre">
+          <div className="space-y-3.5 pt-1">
+            <FunnelRow label="Leads" value={m.totals.leads} base={funnelBase} color="bg-blue-500" />
+            <FunnelRow label="Visitas técnicas" value={m.totals.visits} base={funnelBase} color="bg-sky-500" />
+            <FunnelRow label="Cotizaciones" value={m.totals.quotes} base={funnelBase} color="bg-violet-500" />
+            <FunnelRow label="Ventas" value={m.totals.sales} base={funnelBase} color="bg-emerald-500" />
           </div>
-          <div className="divide-y divide-slate-100">
-            {quotes.length === 0 && (
-              <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-                <FileText className="h-10 w-10 text-slate-300" />
-                <p className="text-sm text-slate-500">Sin cotizaciones aún</p>
-              </div>
-            )}
-            {quotes.slice(0, 7).map((q) => (
-              <div key={q.id} className="flex items-center gap-4 px-6 py-3 transition-colors hover:bg-slate-50">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[11px] font-bold text-blue-700">
-                  {initials(q.name || "Sin nombre")}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-semibold text-slate-900">{q.name || "Sin nombre"}</p>
-                  <p className="truncate text-[11px] text-slate-400">{q.email}</p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2.5">
-                  <StatusBadge status={q.status || "PENDING"} />
-                  <p className="text-[13px] font-bold text-slate-900">{currency(q.total || 0)}</p>
-                  <Link href={`/admin/cotizaciones/${q.id}`} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
-                    <ArrowUpRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="border-t border-slate-100 px-6 py-3">
-            <Link href="/admin/cotizaciones/nueva" className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-200 py-2.5 text-[12px] font-semibold text-slate-400 transition-all hover:border-blue-300 hover:text-blue-600">
-              + Nueva cotización
-            </Link>
-          </div>
-        </div>
+        </Card>
 
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-            <div>
-              <h2 className="text-base font-bold text-slate-900">Próximas visitas</h2>
-              <p className="mt-0.5 text-[12px] text-slate-400">{upcomingVisits.length} agendadas</p>
+        <Card
+          title="Tráfico web"
+          subtitle={`${m.web.totalVisits.toLocaleString("es-CL")} visitas · ${m.web.uniqueIps.toLocaleString("es-CL")} únicas`}
+          action={
+            <span className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-500">
+              <Globe className="h-3.5 w-3.5" /> Hoy {m.web.todayVisits}
+            </span>
+          }
+        >
+          {m.web.topPaths.length > 0 ? (
+            <div className="space-y-2.5 pt-1">
+              {m.web.topPaths.slice(0, 6).map((p) => {
+                const max = m.web.topPaths[0]?.visits || 1;
+                return (
+                  <div key={p.path}>
+                    <div className="flex items-center justify-between text-[12px]">
+                      <span className="truncate font-medium text-slate-600">{p.path}</span>
+                      <span className="ml-2 shrink-0 font-bold text-slate-900">{p.visits}</span>
+                    </div>
+                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-full rounded-full bg-blue-500" style={{ width: `${Math.max(4, (p.visits / max) * 100)}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <Link href="/admin/visitas" className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
+          ) : (
+            <div className="flex h-[180px] items-center justify-center text-[13px] text-slate-400">Sin datos de tráfico aún.</div>
+          )}
+        </Card>
+      </div>
+
+      {/* Actividad reciente + Accesos */}
+      <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+        <Card
+          title="Cotizaciones recientes"
+          subtitle="Últimas solicitudes"
+          action={
+            <Link href="/admin/cotizaciones" className="inline-flex items-center gap-1 text-[12px] font-semibold text-blue-600 hover:text-blue-700">
               Ver todas <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
-          </div>
-          {nextVisit && (
-            <div className="border-b border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-3">
-              <div className="flex items-center gap-2">
-                <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
-                <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">Próxima visita</p>
-              </div>
-              <p className="mt-0.5 capitalize text-sm font-semibold text-emerald-900">
-                {new Date(nextVisit.date!).toLocaleString("es-CL", { weekday: "long", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
-              </p>
-            </div>
-          )}
-          <div className="divide-y divide-slate-100">
-            {upcomingVisits.length === 0 && (
-              <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-                <CalendarClock className="h-10 w-10 text-slate-300" />
-                <p className="text-sm text-slate-500">Sin visitas agendadas</p>
-              </div>
-            )}
-            {upcomingVisits.slice(0, 5).map((v) => (
-              <div key={v.id} className="px-6 py-3 hover:bg-slate-50">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-semibold text-slate-900">{v.notes || "Visita técnica"}</p>
-                    <p className="text-[11px] text-slate-400">Cliente: {v.clientId || "Sin asignar"}</p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-[12px] font-semibold text-slate-600">
-                      {v.date ? new Date(v.date).toLocaleDateString("es-CL", { day: "2-digit", month: "short" }) : "—"}
-                    </p>
-                    <span className="inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                      {v.status || "Programada"}
+          }
+        >
+          {recentQuotes.length === 0 ? (
+            <div className="py-10 text-center text-[13px] text-slate-400">Aún no hay cotizaciones.</div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {recentQuotes.map((q) => {
+                const st = quoteStatus[String(q.status || "PENDING").toUpperCase()] ?? quoteStatus.PENDING;
+                return (
+                  <Link
+                    key={q.id}
+                    href={`/admin/cotizaciones/${q.id}`}
+                    className="flex items-center gap-3 py-2.5 transition-colors hover:bg-slate-50"
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                      <FileText className="h-4 w-4" />
                     </span>
-                  </div>
-                </div>
-              </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-semibold text-slate-800">{q.name || "Cliente"}</p>
+                      <p className="text-[11px] text-slate-400">{q.displayNumber} · {timeAgo(q.createdAt)}</p>
+                    </div>
+                    <span className="hidden text-right text-[13px] font-bold text-slate-800 sm:block">{currency(q.totalAmount || 0)}</span>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${st.cls}`}>{st.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+
+        <Card title="Accesos rápidos" subtitle="Ir directo a la gestión">
+          <div className="grid grid-cols-2 gap-2.5 pt-1">
+            {quickLinks.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition-colors hover:border-slate-300 hover:bg-slate-50"
+              >
+                <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${l.cls}`}>
+                  <l.icon className="h-4 w-4" />
+                </span>
+                <span className="text-[12.5px] font-semibold text-slate-700">{l.label}</span>
+              </Link>
             ))}
           </div>
-          <div className="border-t border-slate-100 px-6 py-3">
-            <Link href="/admin/visitas/nueva" className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-200 py-2.5 text-[12px] font-semibold text-slate-400 transition-all hover:border-amber-300 hover:text-amber-600">
-              + Agendar nueva visita
-            </Link>
+          <div className="mt-3 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3 text-center">
+            <div className="rounded-lg bg-slate-50 py-2">
+              <p className="text-[16px] font-extrabold text-slate-900">{m.totals.projects}</p>
+              <p className="text-[10px] font-semibold uppercase text-slate-400">Proyectos</p>
+            </div>
+            <div className="rounded-lg bg-slate-50 py-2">
+              <p className="text-[16px] font-extrabold text-slate-900">{m.totals.visits}</p>
+              <p className="text-[10px] font-semibold uppercase text-slate-400">Visitas</p>
+            </div>
+            <div className="rounded-lg bg-slate-50 py-2">
+              <p className="text-[16px] font-extrabold text-slate-900">{m.totals.taxDocuments}</p>
+              <p className="text-[10px] font-semibold uppercase text-slate-400">Docs SII</p>
+            </div>
           </div>
-        </div>
+        </Card>
       </div>
 
-      {/* Leads snapshot */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">Leads recientes</h2>
-            <p className="mt-0.5 text-[12px] text-slate-400">{leads.length} leads · tabla Lead en Supabase</p>
+      {/* Ventas por mes (barras) */}
+      {rev.length >= 2 && (
+        <Card title="Ventas por mes" subtitle="Comparativo mensual">
+          <div className="pt-2">
+            <BarChart data={rev} height={160} formatType="currency" />
           </div>
-          <Link href="/admin/contactos" className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
-            Ver contactos <ArrowUpRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-        {leads.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-            <Users className="h-10 w-10 text-slate-300" />
-            <p className="text-sm text-slate-500">Sin leads registrados aún</p>
-          </div>
-        ) : (
-          <div className="grid gap-px bg-slate-100 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 rounded-b-2xl overflow-hidden">
-            {leads.slice(0, 8).map((lead) => (
-              <div key={lead.id} className="bg-white px-5 py-4 transition-colors hover:bg-slate-50">
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                    {lead.source || "web"}
-                  </span>
-                  <span className="text-[10px] text-slate-400">
-                    {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString("es-CL", { day: "2-digit", month: "short" }) : "—"}
-                  </span>
-                </div>
-                <p className="truncate text-sm font-bold text-slate-900">{lead.name || "Lead"}</p>
-                <p className="truncate text-[11px] text-slate-500">{lead.email}</p>
-                {lead.phone && <p className="mt-0.5 text-[11px] text-slate-400">{lead.phone}</p>}
-                {lead.status && (
-                  <span className="mt-2 inline-block rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600">
-                    {lead.status}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Footer quick links */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { href: "/admin/productos",      label: "Catálogo de productos", icon: Package,      bg: "bg-indigo-50",  text: "text-indigo-700",  border: "border-indigo-200" },
-          { href: "/admin/gastos",         label: "Gestión de gastos",     icon: DollarSign,   bg: "bg-red-50",     text: "text-red-700",     border: "border-red-200" },
-          { href: "/admin/portal-clientes",label: "Portal de clientes",    icon: ShieldCheck,  bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
-          { href: "/admin/control-web",    label: "Control web",           icon: Zap,          bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200" },
-        ].map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`group flex items-center gap-3 rounded-xl border ${item.border} ${item.bg} px-4 py-3.5 transition-all hover:brightness-95`}
-          >
-            <item.icon className={`h-4 w-4 ${item.text}`} />
-            <span className={`text-[13px] font-semibold ${item.text}`}>{item.label}</span>
-            <ChevronRight className={`ml-auto h-4 w-4 ${item.text} opacity-50 transition-opacity group-hover:opacity-100`} />
-          </Link>
-        ))}
-      </div>
+        </Card>
+      )}
     </div>
   );
 }

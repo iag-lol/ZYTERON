@@ -332,12 +332,11 @@ function buildSnapshot(base: {
 
 export async function getAdminSnapshot(): Promise<AdminSnapshot> {
   try {
-    // Reconciliación defensiva: no debe bloquear el dashboard si falla por permisos/entorno.
-    try {
-      await syncWonQuotesCrossModules();
-    } catch (syncError) {
-      console.warn("[admin/snapshot] syncWonQuotesCrossModules falló, se continúa con lectura de métricas:", syncError);
-    }
+    // Reconciliación defensiva EN SEGUNDO PLANO: ya no bloquea la carga del
+    // dashboard (antes se ejecutaba con await en cada visita y lo hacía lento).
+    void syncWonQuotesCrossModules().catch((syncError) => {
+      console.warn("[admin/snapshot] syncWonQuotesCrossModules falló (segundo plano):", syncError);
+    });
 
     const [leads, quotes, visits, sales, clients, projects, requests, taxDocuments, webVisits] =
       await Promise.all([
