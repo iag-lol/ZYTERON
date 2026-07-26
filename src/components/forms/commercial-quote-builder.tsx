@@ -967,9 +967,9 @@ export function CommercialQuoteBuilder({ initialPlanLabel, initialProjectType }:
                 Cotiza tu proyecto
               </div>
               <div className="space-y-3">
-                <h1 className="max-w-2xl text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
+                <h2 className="max-w-2xl text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
                   Cotiza tu proyecto
-                </h1>
+                </h2>
                 <p className="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
                   Responde unas preguntas rápidas y te ayudaremos a elegir la mejor solución para tu negocio.
                 </p>
@@ -1098,7 +1098,7 @@ export function CommercialQuoteBuilder({ initialPlanLabel, initialProjectType }:
                   Plan preseleccionado: {initialPlanLabel}
                 </div>
               ) : null}
-                <h1 className="text-2xl font-extrabold leading-tight text-slate-900 sm:text-4xl">Cuéntanos qué necesitas y prepararemos una propuesta clara para tu negocio.</h1>
+                <h2 className="text-2xl font-extrabold leading-tight text-slate-900 sm:text-4xl">Cuéntanos qué necesitas y prepararemos una propuesta clara para tu negocio.</h2>
               <p className="max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
                 Responde unas preguntas rápidas. No necesitas saber detalles técnicos, el equipo te orienta.
               </p>
