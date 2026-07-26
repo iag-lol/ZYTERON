@@ -451,6 +451,26 @@ export default async function Home() {
 
       {/* ── Hero ── */}
       <section className="relative overflow-hidden bg-hero-pattern">
+        {/*
+          IMAGEN DE FONDO DEL HERO
+          Sube tu imagen a: public/hero-bg.png  (queda accesible como /hero-bg.png)
+          Recomendado: 2400×1400 px aprox, liviana. Next la optimiza a WebP/AVIF y la
+          sirve en el tamaño justo, así carga rápido. Si el archivo no existe, se ve el
+          patrón de fondo actual sin romper nada.
+        */}
+        <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
+          <Image
+            src="/hero-bg.png"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            quality={70}
+            className="object-cover object-center"
+          />
+          {/* Overlay: mantiene el texto legible sobre la imagen */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/85 to-white/40 lg:to-white/10" />
+        </div>
         <Container className="relative z-10 grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
           <div className="space-y-6">
             <div className="badge-blue">
