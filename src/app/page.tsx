@@ -468,9 +468,11 @@ export default async function Home() {
             quality={70}
             className="object-cover object-center"
           />
-          {/* Overlay: solo lo justo para que el texto de la izquierda sea legible;
-              a la derecha la imagen se ve nítida. */}
-          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/60 to-white/15 lg:from-white/95 lg:via-white/45 lg:to-transparent" />
+          {/* Overlay anclado a la izquierda: firme donde va el texto, transparente
+              donde va la foto (derecha). */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/78 to-white/25 lg:from-white lg:via-white/68 lg:to-transparent" />
+          {/* Refuerzo suave solo detrás del texto (columna izquierda). */}
+          <div className="absolute inset-y-0 left-0 z-0 hidden bg-gradient-to-r from-white/55 to-transparent lg:block lg:w-[46%]" />
         </div>
         <Container className="relative z-10 grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
           <div className="space-y-6">
@@ -479,13 +481,13 @@ export default async function Home() {
               Empresas · Pymes · Emprendedores · Todo Chile
             </div>
 
-            <h1 className="text-balance text-[2rem] font-extrabold leading-[1.12] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.3rem]">
+            <h1 className="text-balance text-[2rem] font-extrabold leading-[1.12] tracking-tight text-slate-900 [text-shadow:0_1px_16px_rgba(255,255,255,0.75)] sm:text-5xl lg:text-[3.3rem]">
               Diseño de{" "}
               <span className="text-gradient-hero animate-gradient">páginas web profesionales</span>{" "}
               para empresas en todo Chile
             </h1>
 
-            <p className="max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
+            <p className="max-w-2xl text-base font-medium leading-relaxed text-slate-700 [text-shadow:0_1px_10px_rgba(255,255,255,0.7)] sm:text-lg">
               Creamos páginas web, tiendas online, sistemas internos y automatizaciones para pymes,
               empresas y emprendedores de Arica a Punta Arenas: diseño moderno, base SEO real y una
               estructura pensada para convertir visitas en clientes.
@@ -522,7 +524,7 @@ export default async function Home() {
 
             <div className="grid gap-2 sm:grid-cols-2">
               {heroTrustSignals.map((signal) => (
-                <p key={signal} className="flex items-start gap-2 text-xs text-slate-600">
+                <p key={signal} className="flex items-start gap-2 text-xs font-semibold text-slate-700 [text-shadow:0_1px_8px_rgba(255,255,255,0.75)]">
                   <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
                   {signal}
                 </p>
