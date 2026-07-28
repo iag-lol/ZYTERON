@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CommercialUsersManager } from "@/components/admin/commercial-users-manager";
+import { CommercialHub } from "@/components/admin/commercial-hub";
 
 export const metadata: Metadata = {
   title: "Comercial · Partners · Zyteron Admin",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function ComercialPage() {
-  return <CommercialUsersManager />;
+  return <CommercialHub />;
 }
