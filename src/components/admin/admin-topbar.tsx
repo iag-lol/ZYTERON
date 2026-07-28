@@ -21,6 +21,7 @@ const routeMap: Record<string, string> = {
   "/admin": "Dashboard",
   "/admin/asistente-ia": "Asistente IA",
   "/admin/clientes": "Clientes",
+  "/admin/comercial": "Partners & Ejecutivos",
   "/admin/portal-clientes": "Portal Clientes",
   "/admin/cotizaciones": "Cotizaciones",
   "/admin/cotizaciones/nueva": "Nueva Cotización",

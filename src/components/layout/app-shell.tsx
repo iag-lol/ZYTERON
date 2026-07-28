@@ -8,7 +8,8 @@ import { AiChatWidget } from "@/components/ui/ai-chat-widget";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdminRoute = pathname.startsWith("/admin");
-  const isPortalRoute = pathname.startsWith("/portal-clientes");
+  const isPortalRoute =
+    pathname.startsWith("/portal-clientes") || pathname.startsWith("/portal-comercial");
 
   if (isAdminRoute || isPortalRoute) {
     return <div className="min-h-screen">{children}</div>;

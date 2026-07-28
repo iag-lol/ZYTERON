@@ -37,6 +37,7 @@ import {
   Sparkles,
   MessageCircle,
   Receipt,
+  UserRoundCog,
   X,
 } from "lucide-react";
 
@@ -69,6 +70,7 @@ const navGroups: NavGroup[] = [
       { href: "/admin/contactos", label: "Contactos", icon: Mail, color: "sky" },
       { href: "/admin/cotizaciones", label: "Cotizaciones", icon: FileText, color: "violet" },
       { href: "/admin/ventas", label: "Ventas", icon: ShoppingCart, color: "emerald" },
+      { href: "/admin/comercial", label: "Partners & Ejecutivos", icon: UserRoundCog, color: "indigo" },
     ],
   },
   {

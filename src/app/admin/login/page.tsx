@@ -12,11 +12,12 @@ function AdminLoginInner() {
 }
 
 function AdminLoginForm({ queryHasError }: { queryHasError: boolean }) {
+  const [rut, setRut] = useState("");
   const [pwd, setPwd] = useState("");
   const [error, setError] = useState("");
   const [hideQueryError, setHideQueryError] = useState(false);
   const [pending, startTransition] = useTransition();
-  const queryError = !hideQueryError && queryHasError ? "Contraseña incorrecta" : "";
+  const queryError = !hideQueryError && queryHasError ? "Credenciales incorrectas" : "";
   const visibleError = error || queryError;
 
   async function submit(e: React.FormEvent) {
@@ -24,12 +25,31 @@ function AdminLoginForm({ queryHasError }: { queryHasError: boolean }) {
     setError("");
     setHideQueryError(true);
     startTransition(async () => {
+      // Con RUT → acceso de partner/ejecutivo/gestor. Sin RUT → admin (solo contraseña).
+      if (rut.trim()) {
+        try {
+          const res = await fetch("/api/comercial/login", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ rut: rut.trim(), password: pwd }),
+          });
+          const data = (await res.json().catch(() => null)) as { redirect?: string; error?: string } | null;
+          if (res.ok && data?.redirect) {
+            window.location.assign(data.redirect);
+          } else {
+            setError(data?.error || "RUT o contraseña incorrectos");
+          }
+        } catch {
+          setError("No se pudo conectar. Intenta nuevamente.");
+        }
+        return;
+      }
+
       const res = await fetch("/admin/login/submit", {
         method: "POST",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pwd }),
       });
       if (res.ok) {
@@ -44,11 +64,25 @@ function AdminLoginForm({ queryHasError }: { queryHasError: boolean }) {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="mb-6 space-y-2 text-center">
-          <p className="text-sm font-semibold text-primary">Panel administrativo</p>
+          <p className="text-sm font-semibold text-primary">Acceso Zyteron</p>
           <h1 className="text-2xl font-semibold text-slate-900">Acceso seguro</h1>
-          <p className="text-sm text-slate-600">Protegido con contraseña administrada por ambiente.</p>
+          <p className="text-sm text-slate-600">
+            Administración: solo contraseña. Partners y ejecutivos: RUT + contraseña.
+          </p>
         </div>
-        <form className="space-y-4" onSubmit={submit} method="post" action="/admin/login/submit">
+        <form className="space-y-4" onSubmit={submit}>
+          <div className="space-y-2">
+            <Label htmlFor="rut">RUT <span className="font-normal text-slate-400">(solo partners / ejecutivos)</span></Label>
+            <Input
+              id="rut"
+              name="rut"
+              type="text"
+              value={rut}
+              onChange={(e) => setRut(e.target.value)}
+              placeholder="12.345.678-9"
+              autoComplete="username"
+            />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="password">Contraseña</Label>
             <Input
@@ -59,6 +93,7 @@ function AdminLoginForm({ queryHasError }: { queryHasError: boolean }) {
               onChange={(e) => setPwd(e.target.value)}
               required
               placeholder="••••••••"
+              autoComplete="current-password"
             />
           </div>
           {visibleError && <p className="text-sm text-red-600">{visibleError}</p>}
