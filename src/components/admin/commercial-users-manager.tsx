@@ -42,7 +42,7 @@ function fmtDate(iso: string | null) {
   return new Date(iso).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-export function CommercialUsersManager() {
+export function CommercialUsersManager({ embedded = false }: { embedded?: boolean }) {
   const [users, setUsers] = useState<CommercialUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -113,12 +113,18 @@ export function CommercialUsersManager() {
     async (id: string, body: Record<string, unknown>) => {
       setBusyId(id);
       try {
-        await fetch(`/api/admin/comercial/users/${id}`, {
+        const res = await fetch(`/api/admin/comercial/users/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        if (!res.ok) {
+          window.alert(data.error || "No se pudo actualizar el usuario.");
+          return false;
+        }
         await load();
+        return true;
       } finally {
         setBusyId(null);
       }
@@ -134,8 +140,9 @@ export function CommercialUsersManager() {
         window.alert("La contraseña debe tener al menos 6 caracteres.");
         return;
       }
-      await patch(id, { newPassword: pass });
-      window.alert("Contraseña actualizada.");
+      if (await patch(id, { newPassword: pass })) {
+        window.alert("Contraseña actualizada.");
+      }
     },
     [patch],
   );
@@ -145,7 +152,12 @@ export function CommercialUsersManager() {
       if (!window.confirm("¿Eliminar este usuario comercial de forma permanente?")) return;
       setBusyId(id);
       try {
-        await fetch(`/api/admin/comercial/users/${id}`, { method: "DELETE" });
+        const res = await fetch(`/api/admin/comercial/users/${id}`, { method: "DELETE" });
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        if (!res.ok) {
+          window.alert(data.error || "No se pudo eliminar el usuario.");
+          return;
+        }
         await load();
       } finally {
         setBusyId(null);
@@ -159,10 +171,11 @@ export function CommercialUsersManager() {
 
   return (
     <div className="space-y-5">
-      {/* Encabezado */}
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-xl font-extrabold text-slate-900">Comercial · Partners y ejecutivos</h1>
+          <h2 className={cn("font-extrabold text-slate-900", embedded ? "text-lg" : "text-xl")}>
+            Usuarios comerciales
+          </h2>
           <p className="text-[13px] text-slate-500">Accesos por RUT y contraseña, gestionados desde el admin.</p>
         </div>
         <button

@@ -82,6 +82,18 @@ export async function getCommercialSession(): Promise<SessionPayload | null> {
 }
 
 /**
+ * Para endpoints API: devuelve el usuario comercial válido y activo, o null
+ * (el endpoint responde 401). No redirige.
+ */
+export async function getCommercialUserForApi(): Promise<CommercialUser | null> {
+  const session = await getCommercialSession();
+  if (!session) return null;
+  const user = await getCommercialUserById(session.id);
+  if (!user || user.status !== "active") return null;
+  return user;
+}
+
+/**
  * Exige un usuario comercial válido y activo. Redirige al login si no lo hay.
  * Opcionalmente restringe por roles permitidos.
  */
