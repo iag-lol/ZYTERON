@@ -19,7 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PROGRESS, VALIDATION } from "@/components/commercial/commercial-portal-dashboard";
+import { PROGRESS_INFO as PROGRESS, VALIDATION_INFO as VALIDATION } from "@/config/commercial";
 
 type Activity = {
   id: string;
