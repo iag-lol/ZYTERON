@@ -290,7 +290,7 @@ export function CommercialPortfolio({ initialLeads }: { initialLeads: Lead[] }) 
         <Panel padded={false}>
           {filtered.length === 0 ? (
             <EmptyState
-              icon={Users}
+              icon={<Users className="h-4 w-4" />}
               title={leads.length ? "No hay resultados para este filtro" : "Aún no registras contactos"}
               text={
                 leads.length

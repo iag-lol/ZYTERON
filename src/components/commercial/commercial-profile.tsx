@@ -136,7 +136,7 @@ export function CommercialProfile({ user, audit }: { user: ProfileUser; audit: A
       {error && <ErrorNote>{error}</ErrorNote>}
 
       {/* Identidad (solo lectura) */}
-      <Panel title="Ficha profesional" description="Definida por administración." icon={IdCard}>
+      <Panel title="Ficha profesional" description="Definida por administración." icon={<IdCard className="h-4 w-4" />}>
         <div className="flex flex-wrap items-center gap-2">
           <Pill label={role?.label ?? user.role} cls={role?.cls} />
           <Pill
@@ -179,7 +179,7 @@ export function CommercialProfile({ user, audit }: { user: ProfileUser; audit: A
 
       <div className="grid gap-5 xl:grid-cols-2">
         {/* Datos personales */}
-        <Panel title="Datos personales y de contacto" description="Cómo te ubicamos." icon={UserRound}>
+        <Panel title="Datos personales y de contacto" description="Cómo te ubicamos." icon={<UserRound className="h-4 w-4" />}>
           <form onSubmit={(event) => patchProfile(event, setSavingPersonal, "Ficha personal actualizada.")}>
             <fieldset disabled={savingPersonal} className="grid gap-3 sm:grid-cols-2">
               <InputField label="Correo" name="email" type="email" defaultValue={user.email ?? ""} />
@@ -214,7 +214,7 @@ export function CommercialProfile({ user, audit }: { user: ProfileUser; audit: A
         <Panel
           title="Datos bancarios para liquidaciones"
           description="A esta cuenta se transfiere tu comisión."
-          icon={Banknote}
+          icon={<Banknote className="h-4 w-4" />}
         >
           <form onSubmit={(event) => patchProfile(event, setSavingBank, "Datos de pago actualizados.")}>
             <fieldset disabled={savingBank} className="grid gap-3 sm:grid-cols-2">
@@ -261,7 +261,7 @@ export function CommercialProfile({ user, audit }: { user: ProfileUser; audit: A
         </Panel>
 
         {/* Contraseña */}
-        <Panel title="Seguridad de la cuenta" description="Tu acceso es personal e intransferible." icon={KeyRound}>
+        <Panel title="Seguridad de la cuenta" description="Tu acceso es personal e intransferible." icon={<KeyRound className="h-4 w-4" />}>
           <form onSubmit={savePassword}>
             <fieldset disabled={savingPassword} className="grid gap-3 sm:grid-cols-3">
               <InputField label="Contraseña actual" name="currentPassword" type="password" required />
@@ -282,7 +282,7 @@ export function CommercialProfile({ user, audit }: { user: ProfileUser; audit: A
         <Panel
           title="Movimientos de mi cuenta"
           description="Registro de cambios y acciones administrativas."
-          icon={ShieldCheck}
+          icon={<ShieldCheck className="h-4 w-4" />}
           padded={false}
         >
           {audit.length === 0 ? (

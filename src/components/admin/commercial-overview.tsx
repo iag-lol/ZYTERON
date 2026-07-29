@@ -153,36 +153,36 @@ export function CommercialOverview({ onOpenMember }: { onOpenMember: (id: string
         <StatCard
           label="Equipo comercial"
           value={totals.activeExecutives}
-          icon={Users}
+          icon={<Users className="h-4 w-4" />}
           tone="blue"
           hint={`${totals.executives} cuentas creadas`}
         />
         <StatCard
           label="Registros totales"
           value={totals.leads}
-          icon={Building2}
+          icon={<Building2 className="h-4 w-4" />}
           tone="cyan"
           hint={`${totals.monthLeads} este mes`}
         />
-        <StatCard label="En gestión activa" value={totals.activeLeads} icon={Target} tone="violet" />
+        <StatCard label="En gestión activa" value={totals.activeLeads} icon={<Target className="h-4 w-4" />} tone="violet" />
         <StatCard
           label="Por evaluar"
           value={totals.pendingEvaluation}
-          icon={CircleAlert}
+          icon={<CircleAlert className="h-4 w-4" />}
           tone={totals.pendingEvaluation > 0 ? "amber" : "slate"}
           hint="Esperan tu clasificación"
         />
         <StatCard
           label="Cierres ganados"
           value={totals.wonLeads}
-          icon={Trophy}
+          icon={<Trophy className="h-4 w-4" />}
           tone="emerald"
           hint={`${totals.leads ? Math.round((totals.wonLeads / totals.leads) * 100) : 0}% de conversión`}
         />
         <StatCard
           label="Comisión por pagar"
           value={formatCLP(totals.commissionPendingPayment)}
-          icon={Wallet}
+          icon={<Wallet className="h-4 w-4" />}
           tone="rose"
           hint={`${formatCLP(totals.commissionPaid)} ya pagado`}
         />
@@ -218,12 +218,12 @@ export function CommercialOverview({ onOpenMember }: { onOpenMember: (id: string
         <Panel
           title="Desempeño por ejecutivo"
           description="Cartera, avance y estado financiero de cada persona del equipo."
-          icon={Users}
+          icon={<Users className="h-4 w-4" />}
           padded={false}
         >
           {members.length === 0 ? (
             <EmptyState
-              icon={Users}
+              icon={<Users className="h-4 w-4" />}
               title="Aún no hay usuarios comerciales"
               text="Crea el primer ejecutivo o partner desde la pestaña Equipo."
             />
@@ -325,9 +325,9 @@ export function CommercialOverview({ onOpenMember }: { onOpenMember: (id: string
         </Panel>
 
         <div className="space-y-5">
-          <Panel title="Embudo consolidado" description="Todos los registros del equipo." icon={TrendingUp}>
+          <Panel title="Embudo consolidado" description="Todos los registros del equipo." icon={<TrendingUp className="h-4 w-4" />}>
             {totals.leads === 0 ? (
-              <EmptyState icon={TrendingUp} title="Sin registros todavía" />
+              <EmptyState icon={<TrendingUp className="h-4 w-4" />} title="Sin registros todavía" />
             ) : (
               <div className="space-y-2.5">
                 {Object.entries(PROGRESS_INFO)
@@ -345,7 +345,7 @@ export function CommercialOverview({ onOpenMember }: { onOpenMember: (id: string
             )}
           </Panel>
 
-          <Panel title="Últimos 6 meses" description="Registros creados y cierres ganados." icon={Activity}>
+          <Panel title="Últimos 6 meses" description="Registros creados y cierres ganados." icon={<Activity className="h-4 w-4" />}>
             <div className="flex items-end justify-between gap-2">
               {series.map((item) => (
                 <div key={item.period} className="flex min-w-0 flex-1 flex-col items-center gap-2">
@@ -371,7 +371,7 @@ export function CommercialOverview({ onOpenMember }: { onOpenMember: (id: string
           <Panel
             title="Estado financiero"
             description="Comisiones y liquidaciones del área."
-            icon={BadgeCheck}
+            icon={<BadgeCheck className="h-4 w-4" />}
           >
             <dl className="grid grid-cols-2 gap-4">
               <div>
@@ -401,7 +401,7 @@ export function CommercialOverview({ onOpenMember }: { onOpenMember: (id: string
             </dl>
           </Panel>
 
-          <Panel title="Seguimiento del equipo" description="Compromisos y actividad." icon={AlarmClock}>
+          <Panel title="Seguimiento del equipo" description="Compromisos y actividad." icon={<AlarmClock className="h-4 w-4" />}>
             <dl className="grid grid-cols-2 gap-4">
               <div>
                 <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -421,7 +421,7 @@ export function CommercialOverview({ onOpenMember }: { onOpenMember: (id: string
       <Panel
         title="Bitácora de auditoría"
         description="Cada acción del área comercial con responsable y fecha."
-        icon={History}
+        icon={<History className="h-4 w-4" />}
         padded={false}
         action={
           <button
@@ -433,7 +433,7 @@ export function CommercialOverview({ onOpenMember }: { onOpenMember: (id: string
         }
       >
         {audit.length === 0 ? (
-          <EmptyState icon={ShieldCheck} title="Sin movimientos registrados" />
+          <EmptyState icon={<ShieldCheck className="h-4 w-4" />} title="Sin movimientos registrados" />
         ) : (
           <ul className="max-h-[460px] divide-y divide-slate-100 overflow-y-auto">
             {audit.map((entry) => (

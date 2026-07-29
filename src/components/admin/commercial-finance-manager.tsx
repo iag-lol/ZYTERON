@@ -202,20 +202,20 @@ export function CommercialFinanceManager() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <StatCard label="Comisión total" value={formatCLP(totals.gross)} icon={Wallet} tone="blue" />
-        <StatCard label="Pagado" value={formatCLP(totals.paid)} icon={BadgeCheck} tone="emerald" />
-        <StatCard label="Por pagar" value={formatCLP(totals.pending)} icon={Banknote} tone="amber" />
+        <StatCard label="Comisión total" value={formatCLP(totals.gross)} icon={<Wallet className="h-4 w-4" />} tone="blue" />
+        <StatCard label="Pagado" value={formatCLP(totals.paid)} icon={<BadgeCheck className="h-4 w-4" />} tone="emerald" />
+        <StatCard label="Por pagar" value={formatCLP(totals.pending)} icon={<Banknote className="h-4 w-4" />} tone="amber" />
         <StatCard
           label="Aprobado sin liquidar"
           value={formatCLP(totals.approved)}
-          icon={Receipt}
+          icon={<Receipt className="h-4 w-4" />}
           tone="cyan"
           hint="Listo para incluir en una liquidación"
         />
         <StatCard
           label="Liquidaciones emitidas"
           value={totals.pendingStatements}
-          icon={FileSpreadsheet}
+          icon={<FileSpreadsheet className="h-4 w-4" />}
           tone={totals.pendingStatements > 0 ? "rose" : "slate"}
           hint={`${formatCLP(totals.pendingStatementsAmount)} sin transferir`}
         />
@@ -243,12 +243,12 @@ export function CommercialFinanceManager() {
       <Panel
         title="Liquidaciones mensuales"
         description="Cada liquidación consolida las comisiones aprobadas del periodo."
-        icon={FileSpreadsheet}
+        icon={<FileSpreadsheet className="h-4 w-4" />}
         padded={false}
       >
         {visibleStatements.length === 0 ? (
           <EmptyState
-            icon={FileSpreadsheet}
+            icon={<FileSpreadsheet className="h-4 w-4" />}
             title="Sin liquidaciones emitidas"
             text="Aprueba comisiones y emite la liquidación del periodo para dejar constancia del pago."
           />
@@ -281,12 +281,12 @@ export function CommercialFinanceManager() {
       <Panel
         title="Comisiones registradas"
         description="Aprueba cuando el cliente pague; las aprobadas entran en la próxima liquidación."
-        icon={Banknote}
+        icon={<Banknote className="h-4 w-4" />}
         padded={false}
       >
         {visibleCommissions.length === 0 ? (
           <EmptyState
-            icon={Banknote}
+            icon={<Banknote className="h-4 w-4" />}
             title="Sin comisiones registradas"
             text="Registra la comisión cuando un contacto aceptado se convierta en proyecto."
           />

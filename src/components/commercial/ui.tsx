@@ -1,6 +1,5 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +7,10 @@ import { cn } from "@/lib/utils";
  * Primitivas visuales del área comercial (portal del ejecutivo y admin).
  * Un solo lugar define tarjetas, métricas, badges y campos de formulario para
  * que ambas vistas se vean como un mismo producto.
+ *
+ * IMPORTANTE: `icon` recibe un elemento ya renderizado (`<Users className="h-4 w-4" />`),
+ * no el componente. Los iconos de lucide-react no son referencias de cliente, así
+ * que pasarlos como función desde un Server Component rompe el renderizado.
  */
 
 export const TONES = {
@@ -25,7 +28,7 @@ export type Tone = keyof typeof TONES;
 export function StatCard({
   label,
   value,
-  icon: Icon,
+  icon,
   tone = "blue",
   hint,
   trend,
@@ -33,7 +36,7 @@ export function StatCard({
 }: {
   label: string;
   value: string | number;
-  icon: LucideIcon;
+  icon: React.ReactNode;
   tone?: Tone;
   hint?: string;
   trend?: { value: string; positive?: boolean };
@@ -48,7 +51,7 @@ export function StatCard({
       <div className="flex items-start justify-between gap-2">
         <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">{label}</p>
         <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1", TONES[tone])}>
-          <Icon className="h-4 w-4" />
+          {icon}
         </span>
       </div>
       <p className="mt-2 text-[22px] font-extrabold leading-tight tracking-tight text-slate-900">{value}</p>
@@ -88,7 +91,7 @@ export function StatCard({
 export function Panel({
   title,
   description,
-  icon: Icon,
+  icon,
   action,
   children,
   className,
@@ -96,7 +99,7 @@ export function Panel({
 }: {
   title?: string;
   description?: string;
-  icon?: LucideIcon;
+  icon?: React.ReactNode;
   action?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
@@ -107,9 +110,9 @@ export function Panel({
       {title && (
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
           <div className="flex min-w-0 items-center gap-2.5">
-            {Icon && (
+            {icon && (
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
-                <Icon className="h-4 w-4" />
+                {icon}
               </span>
             )}
             <div className="min-w-0">
@@ -172,13 +175,13 @@ export function DataItem({
 }
 
 export function EmptyState({
-  icon: Icon,
+  icon,
   title,
   text,
   spin,
   action,
 }: {
-  icon: LucideIcon;
+  icon: React.ReactNode;
   title: string;
   text?: string;
   spin?: boolean;
@@ -186,7 +189,15 @@ export function EmptyState({
 }) {
   return (
     <div className="px-6 py-14 text-center">
-      <Icon className={cn("mx-auto h-8 w-8 text-slate-300", spin && "animate-spin")} />
+      {/* El selector de hijo agranda el icono sin que cada llamada tenga que saberlo. */}
+      <div
+        className={cn(
+          "mx-auto flex h-8 w-8 items-center justify-center text-slate-300 [&>svg]:h-8 [&>svg]:w-8",
+          spin && "animate-spin",
+        )}
+      >
+        {icon}
+      </div>
       <p className="mt-3 text-[13px] font-bold text-slate-600">{title}</p>
       {text && <p className="mx-auto mt-1 max-w-sm text-[12px] leading-5 text-slate-400">{text}</p>}
       {action && <div className="mt-4 flex justify-center">{action}</div>}

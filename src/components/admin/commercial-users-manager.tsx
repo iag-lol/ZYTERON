@@ -263,18 +263,18 @@ export function CommercialUsersManager({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Usuarios totales" value={users.length} icon={Users} tone="blue" />
-        <StatCard label="Activos" value={activeCount} icon={ShieldCheck} tone="emerald" />
+        <StatCard label="Usuarios totales" value={users.length} icon={<Users className="h-4 w-4" />} tone="blue" />
+        <StatCard label="Activos" value={activeCount} icon={<ShieldCheck className="h-4 w-4" />} tone="emerald" />
         <StatCard
           label="Partners"
           value={users.filter((user) => user.role === "partner").length}
-          icon={Briefcase}
+          icon={<Briefcase className="h-4 w-4" />}
           tone="violet"
         />
         <StatCard
           label="Sin datos bancarios"
           value={missingBank}
-          icon={Banknote}
+          icon={<Banknote className="h-4 w-4" />}
           tone={missingBank > 0 ? "amber" : "slate"}
           hint="No se les puede liquidar"
         />
@@ -319,10 +319,10 @@ export function CommercialUsersManager({
 
       <Panel padded={false}>
         {loading ? (
-          <EmptyState icon={Loader2} title="Cargando equipo…" spin />
+          <EmptyState icon={<Loader2 className="h-4 w-4" />} title="Cargando equipo…" spin />
         ) : filtered.length === 0 ? (
           <EmptyState
-            icon={Users}
+            icon={<Users className="h-4 w-4" />}
             title={users.length ? "Sin resultados" : "Aún no hay usuarios comerciales"}
             text={
               users.length
@@ -1001,31 +1001,31 @@ function MemberPerformance({ detail }: { detail: MemberDetail }) {
         <StatCard
           label="Cartera total"
           value={snapshot.totalLeads}
-          icon={Building2}
+          icon={<Building2 className="h-4 w-4" />}
           tone="blue"
           hint={`${snapshot.monthLeads} este mes`}
           progress={user.goal_monthly_leads > 0 ? { current: snapshot.monthLeads, goal: user.goal_monthly_leads } : undefined}
         />
-        <StatCard label="En gestión" value={snapshot.activeLeads} icon={Target} tone="cyan" />
+        <StatCard label="En gestión" value={snapshot.activeLeads} icon={<Target className="h-4 w-4" />} tone="cyan" />
         <StatCard
           label="Ganados"
           value={snapshot.wonLeads}
-          icon={TrendingUp}
+          icon={<TrendingUp className="h-4 w-4" />}
           tone="emerald"
           hint={`${snapshot.conversionRate}% conversión`}
         />
         <StatCard
           label="Gestiones 30 días"
           value={snapshot.activities30d}
-          icon={History}
+          icon={<History className="h-4 w-4" />}
           tone={snapshot.activities30d === 0 && snapshot.totalLeads > 0 ? "rose" : "violet"}
           hint={snapshot.lastActivityAt ? `Última ${relativeTime(snapshot.lastActivityAt)}` : "Sin gestiones"}
         />
       </div>
 
-      <Panel title="Embudo del ejecutivo" icon={TrendingUp}>
+      <Panel title="Embudo del ejecutivo" icon={<TrendingUp className="h-4 w-4" />}>
         {snapshot.totalLeads === 0 ? (
-          <EmptyState icon={Building2} title="Sin registros en su cartera" />
+          <EmptyState icon={<Building2 className="h-4 w-4" />} title="Sin registros en su cartera" />
         ) : (
           <div className="space-y-2.5">
             {Object.entries(PROGRESS_INFO)
@@ -1043,7 +1043,7 @@ function MemberPerformance({ detail }: { detail: MemberDetail }) {
         )}
       </Panel>
 
-      <Panel title="Señales de alerta" icon={Target}>
+      <Panel title="Señales de alerta" icon={<Target className="h-4 w-4" />}>
         <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <DataItem label="Seguimientos vencidos" value={snapshot.overdueFollowUps} />
           <DataItem label="Sin gestión hace 14 días" value={snapshot.staleLeads} />
@@ -1052,9 +1052,9 @@ function MemberPerformance({ detail }: { detail: MemberDetail }) {
         </dl>
       </Panel>
 
-      <Panel title="Últimas gestiones informadas" icon={History} padded={false}>
+      <Panel title="Últimas gestiones informadas" icon={<History className="h-4 w-4" />} padded={false}>
         {detail.activities.length === 0 ? (
-          <EmptyState icon={History} title="No ha informado gestiones" />
+          <EmptyState icon={<History className="h-4 w-4" />} title="No ha informado gestiones" />
         ) : (
           <ul className="divide-y divide-slate-100">
             {detail.activities.slice(0, 12).map((activity) => (
@@ -1079,10 +1079,10 @@ function MemberPerformance({ detail }: { detail: MemberDetail }) {
 
 function MemberPortfolio({ detail }: { detail: MemberDetail }) {
   if (detail.leads.length === 0) {
-    return <EmptyState icon={Building2} title="Este ejecutivo aún no registra contactos" />;
+    return <EmptyState icon={<Building2 className="h-4 w-4" />} title="Este ejecutivo aún no registra contactos" />;
   }
   return (
-    <Panel title={`Cartera (${detail.leads.length})`} icon={Building2} padded={false}>
+    <Panel title={`Cartera (${detail.leads.length})`} icon={<Building2 className="h-4 w-4" />} padded={false}>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[620px] text-left">
           <thead>
@@ -1135,12 +1135,12 @@ function MemberFinance({ detail }: { detail: MemberDetail }) {
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard label="Comisión total" value={formatCLP(gross)} icon={Wallet} tone="blue" />
-        <StatCard label="Pagado" value={formatCLP(paid)} icon={Banknote} tone="emerald" />
-        <StatCard label="Por pagar" value={formatCLP(gross - paid)} icon={Wallet} tone="amber" />
+        <StatCard label="Comisión total" value={formatCLP(gross)} icon={<Wallet className="h-4 w-4" />} tone="blue" />
+        <StatCard label="Pagado" value={formatCLP(paid)} icon={<Banknote className="h-4 w-4" />} tone="emerald" />
+        <StatCard label="Por pagar" value={formatCLP(gross - paid)} icon={<Wallet className="h-4 w-4" />} tone="amber" />
       </div>
 
-      <Panel title="Datos de pago registrados" icon={Banknote}>
+      <Panel title="Datos de pago registrados" icon={<Banknote className="h-4 w-4" />}>
         <dl className="grid gap-4 sm:grid-cols-3">
           <DataItem label="Banco" value={detail.user.bank_name} />
           <DataItem label="Tipo de cuenta" value={detail.user.bank_account_type} />
@@ -1151,9 +1151,9 @@ function MemberFinance({ detail }: { detail: MemberDetail }) {
         </dl>
       </Panel>
 
-      <Panel title="Liquidaciones" icon={Wallet} padded={false}>
+      <Panel title="Liquidaciones" icon={<Wallet className="h-4 w-4" />} padded={false}>
         {detail.statements.length === 0 ? (
-          <EmptyState icon={Wallet} title="Sin liquidaciones emitidas" />
+          <EmptyState icon={<Wallet className="h-4 w-4" />} title="Sin liquidaciones emitidas" />
         ) : (
           <ul className="divide-y divide-slate-100">
             {detail.statements.map((statement) => (
@@ -1178,9 +1178,9 @@ function MemberFinance({ detail }: { detail: MemberDetail }) {
         )}
       </Panel>
 
-      <Panel title="Comisiones" icon={Banknote} padded={false}>
+      <Panel title="Comisiones" icon={<Banknote className="h-4 w-4" />} padded={false}>
         {detail.commissions.length === 0 ? (
-          <EmptyState icon={Banknote} title="Sin comisiones registradas" />
+          <EmptyState icon={<Banknote className="h-4 w-4" />} title="Sin comisiones registradas" />
         ) : (
           <ul className="divide-y divide-slate-100">
             {detail.commissions.map((item) => (
@@ -1214,11 +1214,11 @@ function MemberAudit({ detail }: { detail: MemberDetail }) {
     <Panel
       title="Trazabilidad de la cuenta"
       description="Toda acción sobre este ejecutivo, con responsable y fecha."
-      icon={History}
+      icon={<History className="h-4 w-4" />}
       padded={false}
     >
       {detail.audit.length === 0 ? (
-        <EmptyState icon={ShieldCheck} title="Sin movimientos registrados" />
+        <EmptyState icon={<ShieldCheck className="h-4 w-4" />} title="Sin movimientos registrados" />
       ) : (
         <ul className="divide-y divide-slate-100">
           {detail.audit.map((entry) => (

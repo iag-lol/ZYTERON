@@ -37,25 +37,25 @@ export default async function AgendaPage() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Vencidos" value={overdue.length} icon={AlarmClock} tone="rose" hint="Requieren contacto hoy" />
+        <StatCard label="Vencidos" value={overdue.length} icon={<AlarmClock className="h-4 w-4" />} tone="rose" hint="Requieren contacto hoy" />
         <StatCard
           label="Próximos 7 días"
           value={snapshot.upcomingFollowUps}
-          icon={CalendarCheck2}
+          icon={<CalendarCheck2 className="h-4 w-4" />}
           tone="blue"
           hint={`${upcoming.length} agendados en total`}
         />
         <StatCard
           label="Sin fecha comprometida"
           value={unscheduled.length}
-          icon={CircleDashed}
+          icon={<CircleDashed className="h-4 w-4" />}
           tone="amber"
           hint={`${staleUnscheduled.length} sin gestión hace 14 días`}
         />
         <StatCard
           label="Gestiones en 30 días"
           value={snapshot.activities30d}
-          icon={History}
+          icon={<History className="h-4 w-4" />}
           tone="emerald"
           hint={snapshot.lastActivityAt ? `Última ${relativeTime(snapshot.lastActivityAt)}` : "Sin gestiones aún"}
         />
@@ -65,11 +65,11 @@ export default async function AgendaPage() {
         <Panel
           title="Seguimientos vencidos"
           description="Compromisos cuya fecha ya pasó."
-          icon={AlarmClock}
+          icon={<AlarmClock className="h-4 w-4" />}
           padded={false}
         >
           {overdue.length === 0 ? (
-            <EmptyState icon={CalendarCheck2} title="Sin seguimientos vencidos" text="Tu agenda está al día." />
+            <EmptyState icon={<CalendarCheck2 className="h-4 w-4" />} title="Sin seguimientos vencidos" text="Tu agenda está al día." />
           ) : (
             <ul className="divide-y divide-slate-100">
               {overdue.map((lead) => (
@@ -82,12 +82,12 @@ export default async function AgendaPage() {
         <Panel
           title="Próximos contactos"
           description="Ordenados por la fecha que comprometiste."
-          icon={CalendarClock}
+          icon={<CalendarClock className="h-4 w-4" />}
           padded={false}
         >
           {upcoming.length === 0 ? (
             <EmptyState
-              icon={CalendarClock}
+              icon={<CalendarClock className="h-4 w-4" />}
               title="No tienes contactos agendados"
               text="Al informar un avance puedes dejar la fecha del próximo seguimiento."
             />
@@ -104,11 +104,11 @@ export default async function AgendaPage() {
       <Panel
         title="Contactos sin fecha de seguimiento"
         description="Están abiertos pero no tienen un próximo paso comprometido."
-        icon={CircleDashed}
+        icon={<CircleDashed className="h-4 w-4" />}
         padded={false}
       >
         {unscheduled.length === 0 ? (
-          <EmptyState icon={CalendarCheck2} title="Todos tus contactos abiertos tienen próxima fecha" />
+          <EmptyState icon={<CalendarCheck2 className="h-4 w-4" />} title="Todos tus contactos abiertos tienen próxima fecha" />
         ) : (
           <ul className="divide-y divide-slate-100">
             {unscheduled.slice(0, 15).map((lead) => (
@@ -142,11 +142,11 @@ export default async function AgendaPage() {
       <Panel
         title="Historial reciente de gestiones"
         description="Las últimas 15 acciones que informaste, con canal y resultado."
-        icon={History}
+        icon={<History className="h-4 w-4" />}
         padded={false}
       >
         {activities.length === 0 ? (
-          <EmptyState icon={History} title="Sin gestiones informadas" />
+          <EmptyState icon={<History className="h-4 w-4" />} title="Sin gestiones informadas" />
         ) : (
           <ul className="divide-y divide-slate-100">
             {activities.slice(0, 15).map((activity) => (

@@ -97,7 +97,7 @@ export function CommercialKnowledge() {
 function CompanyTab() {
   return (
     <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
-      <Panel title="Quiénes somos" description="Lo que debes poder explicar en 30 segundos." icon={Building2}>
+      <Panel title="Quiénes somos" description="Lo que debes poder explicar en 30 segundos." icon={<Building2 className="h-4 w-4" />}>
         <p className="text-[13px] leading-6 text-slate-600">{companyIdentity.pitch}</p>
         <div className="mt-4">
           <SectionTitle>Lo que nos diferencia</SectionTitle>
@@ -122,7 +122,7 @@ function CompanyTab() {
       </Panel>
 
       <div className="space-y-5">
-        <Panel title="Datos de la empresa" description="Úsalos tal cual al identificarte." icon={ShieldAlert}>
+        <Panel title="Datos de la empresa" description="Úsalos tal cual al identificarte." icon={<ShieldAlert className="h-4 w-4" />}>
           <dl className="grid gap-4 sm:grid-cols-2">
             <DataItem label="Razón social" value={companyIdentity.legalName} />
             <DataItem label="RUT" value={companyIdentity.taxId} mono />
@@ -135,7 +135,7 @@ function CompanyTab() {
           </dl>
         </Panel>
 
-        <Panel title="Enlaces de apoyo" description="Material público para compartir con el cliente." icon={ExternalLink}>
+        <Panel title="Enlaces de apoyo" description="Material público para compartir con el cliente." icon={<ExternalLink className="h-4 w-4" />}>
           <ul className="space-y-2">
             {quickLinks.map((link) => (
               <li key={link.href}>
@@ -162,7 +162,7 @@ function CompanyTab() {
 function ScopeTab() {
   return (
     <div className="grid gap-5 xl:grid-cols-2">
-      <Panel title="Qué hacemos" description="Servicios que sí puedes ofrecer." icon={CheckCircle2}>
+      <Panel title="Qué hacemos" description="Servicios que sí puedes ofrecer." icon={<CheckCircle2 className="h-4 w-4" />}>
         <div className="space-y-5">
           {whatWeDo.map((section) => (
             <section key={section.title}>
@@ -180,7 +180,7 @@ function ScopeTab() {
         </div>
       </Panel>
 
-      <Panel title="Qué NO hacemos" description="Límites que debes conocer antes de comprometer." icon={Ban}>
+      <Panel title="Qué NO hacemos" description="Límites que debes conocer antes de comprometer." icon={<Ban className="h-4 w-4" />}>
         <div className="space-y-5">
           {whatWeDoNot.map((section) => (
             <section key={section.title}>
@@ -212,7 +212,7 @@ function CatalogTab() {
         <strong className="text-slate-700">Cómo usar estos valores:</strong> {catalog.note}
       </div>
 
-      <Panel title="Planes" description="Punto de partida de toda conversación." icon={Sparkles} padded={false}>
+      <Panel title="Planes" description="Punto de partida de toda conversación." icon={<Sparkles className="h-4 w-4" />} padded={false}>
         <div className="divide-y divide-slate-100">
           {catalog.plans.map((plan) => {
             const guidance = planGuidance.find((item) => plan.name.includes(item.plan) || item.plan.includes(plan.name));
@@ -242,7 +242,7 @@ function CatalogTab() {
       </Panel>
 
       <div className="grid gap-5 xl:grid-cols-2">
-        <Panel title="Servicios de inteligencia artificial" description="Implementación + mensualidad." icon={Sparkles} padded={false}>
+        <Panel title="Servicios de inteligencia artificial" description="Implementación + mensualidad." icon={<Sparkles className="h-4 w-4" />} padded={false}>
           <div className="divide-y divide-slate-100">
             {catalog.aiServices.map((service) => (
               <article key={service.name} className="px-5 py-4">
@@ -264,7 +264,7 @@ function CatalogTab() {
         </Panel>
 
         <div className="space-y-5">
-          <Panel title="Servicios adicionales" description="Módulos que se suman a cualquier plan." icon={Wrench} padded={false}>
+          <Panel title="Servicios adicionales" description="Módulos que se suman a cualquier plan." icon={<Wrench className="h-4 w-4" />} padded={false}>
             <ul className="max-h-[360px] divide-y divide-slate-100 overflow-y-auto">
               {catalog.addons.map((addon) => (
                 <li key={addon.name} className="flex items-center justify-between gap-3 px-5 py-2.5">
@@ -278,7 +278,7 @@ function CatalogTab() {
             </ul>
           </Panel>
 
-          <Panel title="Mantención mensual" description="La continuidad que sostiene la relación." icon={Wrench} padded={false}>
+          <Panel title="Mantención mensual" description="La continuidad que sostiene la relación." icon={<Wrench className="h-4 w-4" />} padded={false}>
             <ul className="divide-y divide-slate-100">
               {catalog.maintenance.map((item) => (
                 <li key={item.name} className="flex items-center justify-between gap-3 px-5 py-2.5">
@@ -297,7 +297,7 @@ function CatalogTab() {
 function ProcessTab() {
   return (
     <div className="grid gap-5 xl:grid-cols-[1.3fr_1fr]">
-      <Panel title="Etapas del proceso comercial" description="Quién hace qué en cada momento." icon={Route}>
+      <Panel title="Etapas del proceso comercial" description="Quién hace qué en cada momento." icon={<Route className="h-4 w-4" />}>
         <ol className="space-y-4">
           {salesProcess.map((step) => (
             <li key={step.step} className="relative flex gap-3.5 pb-1">
@@ -316,7 +316,7 @@ function ProcessTab() {
         </ol>
       </Panel>
 
-      <Panel title="Preguntas de calificación" description="Hazlas siempre en el primer contacto real." icon={CircleHelp}>
+      <Panel title="Preguntas de calificación" description="Hazlas siempre en el primer contacto real." icon={<CircleHelp className="h-4 w-4" />}>
         <ol className="space-y-3.5">
           {qualificationChecklist.map((item, index) => (
             <li key={item.question} className="rounded-xl border border-slate-200 p-3.5">
@@ -337,7 +337,7 @@ function PitchTab() {
     <Panel
       title="Objeciones frecuentes"
       description="Qué responder y qué evitar en cada caso."
-      icon={MessageSquareWarning}
+      icon={<MessageSquareWarning className="h-4 w-4" />}
       padded={false}
     >
       <div className="divide-y divide-slate-100">
@@ -372,7 +372,7 @@ function RulesTab() {
               key={section.title}
               title={section.title}
               description={always ? "Prácticas obligatorias." : "Conductas que ponen en riesgo tu acceso."}
-              icon={always ? CheckCircle2 : Ban}
+              icon={always ? <CheckCircle2 className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
             >
               <ul className="space-y-2">
                 {section.points.map((point) => (
@@ -392,7 +392,7 @@ function RulesTab() {
         })}
       </div>
 
-      <Panel title="Preguntas frecuentes del ejecutivo" description="Dudas habituales sobre comisiones y registros." icon={CircleHelp} padded={false}>
+      <Panel title="Preguntas frecuentes del ejecutivo" description="Dudas habituales sobre comisiones y registros." icon={<CircleHelp className="h-4 w-4" />} padded={false}>
         <div className="divide-y divide-slate-100">
           {executiveFaq.map((item) => (
             <details key={item.question} className="group px-5 py-3.5">
