@@ -9,7 +9,10 @@ const contentSecurityPolicy = [
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   `connect-src 'self'${isDevelopment ? " http://localhost:* ws://localhost:* ws://127.0.0.1:*" : ""} https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://www.googleadservices.com https://www.google.com https://pagead2.googlesyndication.com https://*.doubleclick.net https://*.supabase.co wss://*.supabase.co https://api.resend.com https://sandbox.flow.cl https://www.flow.cl`,
-  "frame-src https://www.googletagmanager.com",
+  // 'self' y blob: habilitan el visor de PDF embebido y la impresión de
+  // documentos propios (contratos, cotizaciones) desde un iframe del mismo
+  // origen. Sin ellos el navegador bloquea el marco y no se ve nada.
+  "frame-src 'self' blob: https://www.googletagmanager.com",
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",
