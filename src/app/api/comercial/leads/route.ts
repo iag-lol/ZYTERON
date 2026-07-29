@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCommercialUserForApi } from "@/lib/commercial/session";
+import { recordAudit } from "@/lib/commercial/audit";
 import { listLeadsByOwner, createLead } from "@/lib/commercial/store";
 
 export const runtime = "nodejs";
@@ -47,5 +48,18 @@ export async function POST(req: Request) {
 
   const result = await createLead(user.id, parsed.data);
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
+
+  await recordAudit({
+    actorType: "commercial",
+    actorId: user.id,
+    actorName: user.name,
+    entity: "lead",
+    entityId: result.id,
+    entityLabel: parsed.data.name,
+    action: "created",
+    summary: `${user.name} registró el contacto "${parsed.data.name}" para evaluación.`,
+    meta: { service: parsed.data.service || null, source: parsed.data.source || null },
+    ownerId: user.id,
+  });
   return NextResponse.json({ ok: true, id: result.id });
 }

@@ -24,15 +24,99 @@ export type CommercialUser = {
   last_login_at: string | null;
   created_at: string;
   updated_at: string;
+  // Ficha personal y laboral
+  position: string | null;
+  contract_type: string | null;
+  started_at: string | null;
+  birth_date: string | null;
+  address: string | null;
+  comuna: string | null;
+  region: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  // Datos de pago
+  bank_name: string | null;
+  bank_account_type: string | null;
+  bank_account_number: string | null;
+  bank_account_holder: string | null;
+  bank_account_rut: string | null;
+  payment_email: string | null;
+  // Metas mensuales
+  goal_monthly_leads: number;
+  goal_monthly_won: number;
+  goal_monthly_amount: number;
 };
 
+/** Campos de la ficha que solo ve administración. */
+export type CommercialUserAdminView = CommercialUser & { internal_notes: string | null };
+
 const TABLE = "commercial_users";
+
+const PERSONAL_COLS =
+  "position,contract_type,started_at,birth_date,address,comuna,region,emergency_contact_name,emergency_contact_phone," +
+  "bank_name,bank_account_type,bank_account_number,bank_account_holder,bank_account_rut,payment_email," +
+  "goal_monthly_leads,goal_monthly_won,goal_monthly_amount";
+
 const PUBLIC_COLS =
-  "id,rut,name,email,phone,role,status,commission_pct,must_change_password,notes,last_login_at,created_at,updated_at";
+  "id,rut,name,email,phone,role,status,commission_pct,must_change_password,notes,last_login_at,created_at,updated_at," +
+  PERSONAL_COLS;
+
+const ADMIN_COLS = `${PUBLIC_COLS},internal_notes`;
+
+/** Campos que el propio ejecutivo puede editar desde su portal. */
+export const OWN_PROFILE_FIELDS = [
+  "email",
+  "phone",
+  "address",
+  "comuna",
+  "region",
+  "birth_date",
+  "emergency_contact_name",
+  "emergency_contact_phone",
+  "bank_name",
+  "bank_account_type",
+  "bank_account_number",
+  "bank_account_holder",
+  "bank_account_rut",
+  "payment_email",
+] as const;
+
+/** Campos que solo administración puede modificar. */
+export const ADMIN_PROFILE_FIELDS = [
+  "name",
+  "email",
+  "phone",
+  "role",
+  "status",
+  "commission_pct",
+  "notes",
+  "internal_notes",
+  "position",
+  "contract_type",
+  "started_at",
+  "birth_date",
+  "address",
+  "comuna",
+  "region",
+  "emergency_contact_name",
+  "emergency_contact_phone",
+  "bank_name",
+  "bank_account_type",
+  "bank_account_number",
+  "bank_account_holder",
+  "bank_account_rut",
+  "payment_email",
+  "goal_monthly_leads",
+  "goal_monthly_won",
+  "goal_monthly_amount",
+] as const;
 
 function db() {
   return createSupabaseServerClient().supabase.schema("public");
 }
+
+/** Mismo cliente (service role) para los módulos de finanzas y auditoría. */
+export const commercialDb = db;
 
 /** Normaliza a RUT canónico 12345678-9. Devuelve null si es inválido. */
 export function normalizeRut(rut: string): string | null {
@@ -40,14 +124,19 @@ export function normalizeRut(rut: string): string | null {
   return toSiiRut(rut);
 }
 
-export async function listCommercialUsers(): Promise<CommercialUser[]> {
-  const { data } = await db().from(TABLE).select(PUBLIC_COLS).order("created_at", { ascending: false });
-  return (data as CommercialUser[]) ?? [];
+export async function listCommercialUsers(): Promise<CommercialUserAdminView[]> {
+  const { data } = await db().from(TABLE).select(ADMIN_COLS).order("created_at", { ascending: false });
+  return (data as unknown as CommercialUserAdminView[]) ?? [];
 }
 
 export async function getCommercialUserById(id: string): Promise<CommercialUser | null> {
   const { data } = await db().from(TABLE).select(PUBLIC_COLS).eq("id", id).maybeSingle();
-  return (data as CommercialUser) ?? null;
+  return (data as unknown as CommercialUser) ?? null;
+}
+
+export async function getCommercialUserForAdmin(id: string): Promise<CommercialUserAdminView | null> {
+  const { data } = await db().from(TABLE).select(ADMIN_COLS).eq("id", id).maybeSingle();
+  return (data as unknown as CommercialUserAdminView) ?? null;
 }
 
 export async function createCommercialUser(input: {
@@ -58,6 +147,12 @@ export async function createCommercialUser(input: {
   role: CommercialRole;
   password: string;
   commissionPct?: number;
+  position?: string | null;
+  contractType?: string | null;
+  startedAt?: string | null;
+  goalMonthlyLeads?: number;
+  goalMonthlyWon?: number;
+  goalMonthlyAmount?: number;
   createdBy?: string | null;
 }): Promise<{ ok: boolean; id?: string; error?: string }> {
   const rut = normalizeRut(input.rut);
@@ -82,6 +177,12 @@ export async function createCommercialUser(input: {
       status: "active",
       commission_pct: Number(input.commissionPct) || 0,
       must_change_password: true,
+      position: input.position?.trim() || null,
+      contract_type: input.contractType?.trim() || null,
+      started_at: input.startedAt || null,
+      goal_monthly_leads: Number(input.goalMonthlyLeads) || 0,
+      goal_monthly_won: Number(input.goalMonthlyWon) || 0,
+      goal_monthly_amount: Number(input.goalMonthlyAmount) || 0,
       created_by: input.createdBy ?? null,
     })
     .select("id")
@@ -92,15 +193,26 @@ export async function createCommercialUser(input: {
 
 export async function updateCommercialUser(
   id: string,
-  patch: Partial<{ name: string; email: string | null; phone: string | null; role: string; status: string; commission_pct: number; notes: string | null }>,
-): Promise<{ ok: boolean; error?: string }> {
+  patch: Record<string, unknown>,
+): Promise<{ ok: boolean; error?: string; changed: string[] }> {
+  const allowed = ADMIN_PROFILE_FIELDS as readonly string[];
+  const current = await getCommercialUserForAdmin(id);
+  if (!current) return { ok: false, error: "Usuario no encontrado.", changed: [] };
+
   const clean: Record<string, unknown> = {};
-  const allowed = ["name", "email", "phone", "role", "status", "commission_pct", "notes"];
-  for (const [k, v] of Object.entries(patch)) if (allowed.includes(k)) clean[k] = v;
-  if (Object.keys(clean).length === 0) return { ok: true };
+  const changed: string[] = [];
+  for (const [key, value] of Object.entries(patch)) {
+    if (!allowed.includes(key)) continue;
+    const before = (current as unknown as Record<string, unknown>)[key];
+    const after = typeof value === "string" ? value.trim() || null : value;
+    if (String(before ?? "") === String(after ?? "")) continue;
+    clean[key] = after;
+    changed.push(key);
+  }
+  if (changed.length === 0) return { ok: true, changed: [] };
   const { error } = await db().from(TABLE).update(clean).eq("id", id);
-  if (error) return { ok: false, error: error.message };
-  return { ok: true };
+  if (error) return { ok: false, error: error.message, changed: [] };
+  return { ok: true, changed };
 }
 
 export async function resetCommercialPassword(id: string, newPassword: string): Promise<{ ok: boolean; error?: string }> {
@@ -479,14 +591,31 @@ export async function listStatementsByOwner(ownerId: string) {
   return data ?? [];
 }
 
-/** El propio usuario actualiza su contacto (no su rol/estado/%). */
-export async function updateOwnProfile(id: string, patch: { email?: string | null; phone?: string | null }) {
+/**
+ * El propio usuario actualiza su ficha personal y sus datos de pago.
+ * Nunca puede tocar su rol, estado, porcentaje de comisión ni sus metas.
+ */
+export async function updateOwnProfile(
+  id: string,
+  patch: Record<string, unknown>,
+): Promise<{ ok: boolean; error?: string; changed: string[] }> {
+  const allowed = OWN_PROFILE_FIELDS as readonly string[];
+  const current = await getCommercialUserById(id);
+  if (!current) return { ok: false, error: "Usuario no encontrado.", changed: [] };
+
   const clean: Record<string, unknown> = {};
-  if (patch.email !== undefined) clean.email = patch.email?.trim() || null;
-  if (patch.phone !== undefined) clean.phone = patch.phone?.trim() || null;
-  if (Object.keys(clean).length === 0) return { ok: true as const };
+  const changed: string[] = [];
+  for (const [key, value] of Object.entries(patch)) {
+    if (!allowed.includes(key)) continue;
+    const after = typeof value === "string" ? value.trim() || null : value;
+    const before = (current as unknown as Record<string, unknown>)[key];
+    if (String(before ?? "") === String(after ?? "")) continue;
+    clean[key] = after;
+    changed.push(key);
+  }
+  if (changed.length === 0) return { ok: true, changed: [] };
   const { error } = await db().from(TABLE).update(clean).eq("id", id);
-  return error ? { ok: false as const, error: error.message } : { ok: true as const };
+  return error ? { ok: false, error: error.message, changed: [] } : { ok: true, changed };
 }
 
 /** El propio usuario cambia su contraseña (verifica la actual). */
