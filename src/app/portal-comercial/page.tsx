@@ -116,7 +116,7 @@ export default async function PortalComercialHome() {
         <StatCard
           label="Registros del mes"
           value={snapshot.monthLeads}
-          icon={Building2}
+          icon={<Building2 className="h-4 w-4" />}
           tone="blue"
           hint={`${snapshot.totalLeads} en total`}
           progress={goalLeads > 0 ? { current: snapshot.monthLeads, goal: goalLeads } : undefined}
@@ -124,21 +124,21 @@ export default async function PortalComercialHome() {
         <StatCard
           label="Gestiones activas"
           value={snapshot.activeLeads}
-          icon={Target}
+          icon={<Target className="h-4 w-4" />}
           tone="cyan"
           hint={`${snapshot.activities30d} gestiones informadas en 30 días`}
         />
         <StatCard
           label="Potenciales y aceptados"
           value={snapshot.potentialLeads + snapshot.acceptedLeads}
-          icon={CheckCircle2}
+          icon={<CheckCircle2 className="h-4 w-4" />}
           tone="violet"
           hint={`${snapshot.acceptanceRate}% de tus registros califican`}
         />
         <StatCard
           label="Cierres ganados"
           value={snapshot.wonLeads}
-          icon={Trophy}
+          icon={<Trophy className="h-4 w-4" />}
           tone="emerald"
           hint={`${snapshot.conversionRate}% de conversión`}
           progress={goalWon > 0 ? { current: monthWon, goal: goalWon } : undefined}
@@ -146,7 +146,7 @@ export default async function PortalComercialHome() {
         <StatCard
           label="Comisión acumulada"
           value={formatCLP(earnings.grossTotal)}
-          icon={Wallet}
+          icon={<Wallet className="h-4 w-4" />}
           tone="amber"
           hint={`${formatCLP(earnings.currentPeriodGross)} este periodo`}
         />
@@ -158,7 +158,7 @@ export default async function PortalComercialHome() {
           <Panel
             title="Embudo de mi cartera"
             description="Distribución de tus contactos según la etapa que informaste."
-            icon={TrendingUp}
+            icon={<TrendingUp className="h-4 w-4" />}
             action={
               <Link
                 href="/portal-comercial/cartera"
@@ -170,7 +170,7 @@ export default async function PortalComercialHome() {
           >
             {snapshot.totalLeads === 0 ? (
               <EmptyState
-                icon={Building2}
+                icon={<Building2 className="h-4 w-4" />}
                 title="Todavía no registras contactos"
                 text="Registra a la primera persona o empresa que contactaste para comenzar a construir tu cartera."
                 action={
@@ -212,7 +212,7 @@ export default async function PortalComercialHome() {
           <Panel
             title="Evolución de los últimos 6 meses"
             description="Contactos registrados y cierres ganados por periodo."
-            icon={TrendingUp}
+            icon={<TrendingUp className="h-4 w-4" />}
           >
             <div className="flex items-end justify-between gap-2 sm:gap-4">
               {series.map((item) => {
@@ -256,7 +256,7 @@ export default async function PortalComercialHome() {
           <Panel
             title="Próximos compromisos"
             description="Tus seguimientos comprometidos más cercanos."
-            icon={CalendarClock}
+            icon={<CalendarClock className="h-4 w-4" />}
             action={
               <Link
                 href="/portal-comercial/agenda"
@@ -269,7 +269,7 @@ export default async function PortalComercialHome() {
           >
             {agenda.overdue.length === 0 && agenda.upcoming.length === 0 ? (
               <EmptyState
-                icon={CalendarClock}
+                icon={<CalendarClock className="h-4 w-4" />}
                 title="Sin seguimientos agendados"
                 text="Al informar un avance puedes dejar comprometida la fecha del próximo contacto."
               />
@@ -304,7 +304,7 @@ export default async function PortalComercialHome() {
           <Panel
             title="Mis ganancias"
             description="Resumen del estado de tus comisiones."
-            icon={Wallet}
+            icon={<Wallet className="h-4 w-4" />}
             action={
               <Link
                 href="/portal-comercial/ganancias"
@@ -330,9 +330,9 @@ export default async function PortalComercialHome() {
           </Panel>
 
           {/* Últimas gestiones */}
-          <Panel title="Mis últimas gestiones" description="Lo último que informaste." icon={History} padded={false}>
+          <Panel title="Mis últimas gestiones" description="Lo último que informaste." icon={<History className="h-4 w-4" />} padded={false}>
             {activities.length === 0 ? (
-              <EmptyState icon={History} title="Aún no informas gestiones" text="Cada llamada, correo o reunión debe quedar registrada." />
+              <EmptyState icon={<History className="h-4 w-4" />} title="Aún no informas gestiones" text="Cada llamada, correo o reunión debe quedar registrada." />
             ) : (
               <ul className="divide-y divide-slate-100">
                 {activities.slice(0, 5).map((activity) => {

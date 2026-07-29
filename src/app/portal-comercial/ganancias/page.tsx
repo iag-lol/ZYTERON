@@ -66,35 +66,35 @@ export default async function GananciasPage() {
         <StatCard
           label="Comisión acumulada"
           value={formatCLP(earnings.grossTotal)}
-          icon={Wallet}
+          icon={<Wallet className="h-4 w-4" />}
           tone="blue"
           hint={`${commissions.length} comisión(es) registradas`}
         />
         <StatCard
           label="Pagado"
           value={formatCLP(earnings.paidTotal)}
-          icon={BadgeCheck}
+          icon={<BadgeCheck className="h-4 w-4" />}
           tone="emerald"
           hint={earnings.lastPaymentAt ? `Último pago ${formatDate(earnings.lastPaymentAt)}` : "Sin pagos aún"}
         />
         <StatCard
           label="Aprobado por liquidar"
           value={formatCLP(earnings.approvedPending)}
-          icon={Hourglass}
+          icon={<Hourglass className="h-4 w-4" />}
           tone="cyan"
           hint="Entra en la próxima liquidación"
         />
         <StatCard
           label="Pendiente de aprobación"
           value={formatCLP(earnings.pendingTotal)}
-          icon={Percent}
+          icon={<Percent className="h-4 w-4" />}
           tone="amber"
           hint="A la espera del pago del cliente"
         />
         <StatCard
           label={`Periodo ${formatPeriod(period)}`}
           value={formatCLP(earnings.currentPeriodGross)}
-          icon={Receipt}
+          icon={<Receipt className="h-4 w-4" />}
           tone="violet"
           hint={`${earnings.statementsPaid} de ${earnings.statementsIssued} liquidaciones pagadas`}
         />
@@ -106,12 +106,12 @@ export default async function GananciasPage() {
           <Panel
             title="Liquidaciones mensuales"
             description="Consolidado del periodo con retención, ajustes y monto neto."
-            icon={FileSpreadsheet}
+            icon={<FileSpreadsheet className="h-4 w-4" />}
             padded={false}
           >
             {statements.length === 0 ? (
               <EmptyState
-                icon={FileSpreadsheet}
+                icon={<FileSpreadsheet className="h-4 w-4" />}
                 title="Aún no tienes liquidaciones emitidas"
                 text="Se emiten al cierre del mes con las comisiones aprobadas de ese periodo."
               />
@@ -183,12 +183,12 @@ export default async function GananciasPage() {
           <Panel
             title="Detalle de comisiones"
             description="Origen, base de cálculo, porcentaje y estado de cada comisión."
-            icon={Banknote}
+            icon={<Banknote className="h-4 w-4" />}
             padded={false}
           >
             {commissions.length === 0 ? (
               <EmptyState
-                icon={Banknote}
+                icon={<Banknote className="h-4 w-4" />}
                 title="Todavía no registras comisiones"
                 text="Se generan cuando un contacto aceptado se convierte en proyecto y el cliente paga."
               />
@@ -242,7 +242,7 @@ export default async function GananciasPage() {
         </div>
 
         <div className="space-y-5">
-          <Panel title="Mis condiciones" description="Datos con los que se calcula y paga." icon={Percent}>
+          <Panel title="Mis condiciones" description="Datos con los que se calcula y paga." icon={<Percent className="h-4 w-4" />}>
             <dl className="grid grid-cols-2 gap-4">
               <DataItem label="Comisión vigente" value={`${user.commission_pct || 0}%`} />
               <DataItem label="Tipo de vínculo" value={user.contract_type ?? "—"} />
@@ -255,7 +255,7 @@ export default async function GananciasPage() {
           </Panel>
 
           {earnings.byPeriod.length > 0 && (
-            <Panel title="Comisión por periodo" description="Últimos 12 periodos con movimiento." icon={Banknote}>
+            <Panel title="Comisión por periodo" description="Últimos 12 periodos con movimiento." icon={<Banknote className="h-4 w-4" />}>
               <div className="space-y-2.5">
                 {earnings.byPeriod.map((item) => (
                   <BarRow
@@ -271,7 +271,7 @@ export default async function GananciasPage() {
             </Panel>
           )}
 
-          <Panel title="Reglas de comisión" description="Cómo se genera y cuándo se paga." icon={BadgeCheck}>
+          <Panel title="Reglas de comisión" description="Cómo se genera y cuándo se paga." icon={<BadgeCheck className="h-4 w-4" />}>
             <ol className="space-y-3">
               {COMMISSION_RULES.map((rule, index) => (
                 <li key={rule.title} className="flex gap-2.5">
