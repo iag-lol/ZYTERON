@@ -16,8 +16,10 @@ import {
 import {
   COMMISSION_STATUS_INFO,
   DEFAULT_RETENTION_PCT,
+  PROGRESS_INFO,
   RETENTION_NOTE,
   STATEMENT_STATUS_INFO,
+  VALIDATION_INFO,
   currentPeriod,
   formatCLP,
   formatPeriod,
@@ -47,9 +49,29 @@ import { cn } from "@/lib/utils";
 
 type Owner = { id: string; name: string; rut: string; commission_pct: number; status: string };
 
+/** Prospecto del equipo, usado para autorrellenar la comisión desde su origen. */
+type AdminLead = {
+  id: string;
+  owner_id: string;
+  owner_name: string;
+  name: string;
+  rut: string | null;
+  contact_name: string | null;
+  email: string | null;
+  phone: string | null;
+  service: string | null;
+  budget: string | null;
+  comuna: string | null;
+  region: string | null;
+  commercial_status: string;
+  validation_status: string;
+  updated_at: string;
+};
+
 type Commission = {
   id: string;
   owner_id: string;
+  lead_id: string | null;
   client_name: string | null;
   project_ref: string | null;
   concept: string | null;
@@ -85,6 +107,7 @@ type Statement = {
 
 export function CommercialFinanceManager() {
   const [owners, setOwners] = useState<Owner[]>([]);
+  const [leads, setLeads] = useState<AdminLead[]>([]);
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [statements, setStatements] = useState<Statement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,12 +121,14 @@ export function CommercialFinanceManager() {
     setLoading(true);
     setError("");
     try {
-      const [usersData, commissionData, statementData] = await Promise.all([
+      const [usersData, leadsData, commissionData, statementData] = await Promise.all([
         readJson(await fetch("/api/admin/comercial/users", { cache: "no-store" })),
+        readJson(await fetch("/api/admin/comercial/leads", { cache: "no-store" })),
         readJson(await fetch("/api/admin/comercial/commissions", { cache: "no-store" })),
         readJson(await fetch("/api/admin/comercial/statements", { cache: "no-store" })),
       ]);
       setOwners((usersData.users as Owner[]) ?? []);
+      setLeads((leadsData.leads as AdminLead[]) ?? []);
       setCommissions((commissionData.commissions as Commission[]) ?? []);
       setStatements((statementData.statements as Statement[]) ?? []);
     } catch (cause) {
@@ -379,6 +404,8 @@ export function CommercialFinanceManager() {
       {modal === "commission" && (
         <CommissionModal
           owners={owners}
+          leads={leads}
+          commissions={commissions}
           onClose={() => setModal(null)}
           onSaved={async (message) => {
             setModal(null);
@@ -548,22 +575,87 @@ function ModalShell({
   );
 }
 
+/** Extrae un monto de un texto libre de presupuesto ("aprox. $1.200.000" → 1200000). */
+function parseBudget(value: string | null): number | null {
+  if (!value) return null;
+  const digits = value.replace(/[^\d]/g, "");
+  if (!digits) return null;
+  const amount = Number(digits);
+  return amount >= 1000 ? amount : null;
+}
+
 function CommissionModal({
   owners,
+  leads,
+  commissions,
   onClose,
   onSaved,
 }: {
   owners: Owner[];
+  leads: AdminLead[];
+  commissions: Commission[];
   onClose: () => void;
   onSaved: (message: string) => Promise<void>;
 }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [ownerId, setOwnerId] = useState(owners[0]?.id ?? "");
+  const [leadId, setLeadId] = useState("");
+  const [clientName, setClientName] = useState("");
+  const [projectRef, setProjectRef] = useState("");
+  const [concept, setConcept] = useState("");
   const [base, setBase] = useState("");
   const [pct, setPct] = useState(String(owners[0]?.commission_pct ?? 0));
 
   const preview = Math.round(((Number(base) || 0) * (Number(pct) || 0)) / 100);
+
+  // Prospectos del ejecutivo elegido que ya cerró o que Zyteron aceptó: son los
+  // únicos que pueden originar una comisión.
+  const { won, accepted } = useMemo(() => {
+    const mine = leads
+      .filter((lead) => lead.owner_id === ownerId)
+      .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+    return {
+      won: mine.filter((lead) => lead.commercial_status === "won"),
+      accepted: mine.filter(
+        (lead) => lead.commercial_status !== "won" && lead.validation_status === "accepted",
+      ),
+    };
+  }, [leads, ownerId]);
+
+  const selectedLead = leads.find((lead) => lead.id === leadId) ?? null;
+
+  /**
+   * Prospectos que ya originaron una comisión. Se identifican por `lead_id`;
+   * el nombre del cliente cubre las comisiones cargadas a mano, sin enlace.
+   */
+  const billedLeadIds = useMemo(
+    () => new Set(commissions.map((item) => item.lead_id).filter(Boolean)),
+    [commissions],
+  );
+  const billedClients = useMemo(
+    () => new Set(commissions.map((item) => item.client_name).filter(Boolean)),
+    [commissions],
+  );
+  const isBilled = (lead: AdminLead) => billedLeadIds.has(lead.id) || billedClients.has(lead.name);
+
+  /** Al elegir un prospecto se copian sus datos; el admin puede corregirlos. */
+  function applyLead(id: string) {
+    setLeadId(id);
+    const lead = leads.find((item) => item.id === id);
+    if (!lead) return;
+    setClientName(lead.name);
+    setConcept(lead.service ?? "");
+    const budget = parseBudget(lead.budget);
+    if (budget && !base) setBase(String(budget));
+  }
+
+  function clearLead() {
+    setLeadId("");
+    setClientName("");
+    setProjectRef("");
+    setConcept("");
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -576,12 +668,13 @@ function CommissionModal({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            ownerId: raw.ownerId,
-            clientName: raw.clientName,
-            projectRef: raw.projectRef,
-            concept: raw.concept,
-            baseAmount: Number(raw.baseAmount) || 0,
-            percentage: Number(raw.percentage) || 0,
+            ownerId,
+            leadId: leadId || undefined,
+            clientName,
+            projectRef,
+            concept,
+            baseAmount: Number(base) || 0,
+            percentage: Number(pct) || 0,
             period: raw.period,
             status: raw.status,
             notes: raw.notes,
@@ -606,13 +699,13 @@ function CommissionModal({
         <fieldset disabled={saving} className="grid gap-3 sm:grid-cols-2">
           <SelectField
             label="Ejecutivo"
-            name="ownerId"
             required
             value={ownerId}
             onChange={(event) => {
               setOwnerId(event.target.value);
               const owner = owners.find((item) => item.id === event.target.value);
               if (owner) setPct(String(owner.commission_pct));
+              clearLead();
             }}
           >
             {owners.map((owner) => (
@@ -622,26 +715,104 @@ function CommissionModal({
             ))}
           </SelectField>
           <InputField label="Periodo" name="period" required defaultValue={currentPeriod()} placeholder="AAAA-MM" />
-          <InputField label="Cliente" name="clientName" placeholder="Razón social del cliente" />
-          <InputField label="Referencia del proyecto" name="projectRef" placeholder="N° de cotización o proyecto" />
+
+          <SelectField
+            label="Prospecto de origen"
+            className="sm:col-span-2"
+            value={leadId}
+            onChange={(event) => (event.target.value ? applyLead(event.target.value) : clearLead())}
+            hint="Al elegirlo se copian cliente, servicio y presupuesto. También puedes cargarlo a mano."
+          >
+            <option value="">Sin prospecto asociado (carga manual)</option>
+            {won.length > 0 && (
+              <optgroup label={`Ganados por la empresa (${won.length})`}>
+                {won.map((lead) => (
+                  <option key={lead.id} value={lead.id}>
+                    {lead.name}
+                    {lead.service ? ` · ${lead.service}` : ""}
+                    {isBilled(lead) ? " · ya tiene comisión" : ""}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {accepted.length > 0 && (
+              <optgroup label={`Aceptados por Zyteron (${accepted.length})`}>
+                {accepted.map((lead) => (
+                  <option key={lead.id} value={lead.id}>
+                    {lead.name}
+                    {lead.service ? ` · ${lead.service}` : ""}
+                    {isBilled(lead) ? " · ya tiene comisión" : ""}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+          </SelectField>
+
+          {selectedLead && (
+            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3.5 sm:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[12.5px] font-extrabold text-blue-950">{selectedLead.name}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <Pill
+                    label={PROGRESS_INFO[selectedLead.commercial_status]?.label ?? selectedLead.commercial_status}
+                    cls={PROGRESS_INFO[selectedLead.commercial_status]?.cls}
+                  />
+                  <Pill
+                    label={VALIDATION_INFO[selectedLead.validation_status]?.label ?? selectedLead.validation_status}
+                    cls={VALIDATION_INFO[selectedLead.validation_status]?.cls}
+                  />
+                </div>
+              </div>
+              <dl className="mt-2.5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <DataItem label="Contacto" value={selectedLead.contact_name} />
+                <DataItem label="RUT" value={selectedLead.rut} mono />
+                <DataItem label="Teléfono" value={selectedLead.phone} />
+                <DataItem label="Presupuesto informado" value={selectedLead.budget} />
+              </dl>
+              {isBilled(selectedLead) && (
+                <p className="mt-2.5 flex items-center gap-1.5 text-[11px] font-bold text-amber-700">
+                  <CircleAlert className="h-3.5 w-3.5" /> Este cliente ya tiene una comisión registrada. Confirma
+                  que corresponde a otra etapa de pago.
+                </p>
+              )}
+            </div>
+          )}
+
+          <InputField
+            label="Cliente"
+            required
+            value={clientName}
+            onChange={(event) => setClientName(event.target.value)}
+            placeholder="Razón social del cliente"
+          />
+          <InputField
+            label="Referencia del proyecto"
+            value={projectRef}
+            onChange={(event) => setProjectRef(event.target.value)}
+            placeholder="N° de cotización o proyecto"
+          />
           <InputField
             label="Concepto"
-            name="concept"
             className="sm:col-span-2"
+            value={concept}
+            onChange={(event) => setConcept(event.target.value)}
             placeholder="Ej.: Plan Pyme + integración de pagos, primera etapa"
           />
           <InputField
             label="Base neta comisionable (CLP)"
-            name="baseAmount"
             type="number"
             min={0}
             required
             value={base}
             onChange={(event) => setBase(event.target.value)}
+            hint={
+              selectedLead && parseBudget(selectedLead.budget)
+                ? `Presupuesto informado por el ejecutivo: ${formatCLP(parseBudget(selectedLead.budget) as number)}`
+                : undefined
+            }
           />
           <InputField
             label="Porcentaje"
-            name="percentage"
             type="number"
             min={0}
             max={100}
