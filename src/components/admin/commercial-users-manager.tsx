@@ -6,6 +6,7 @@ import {
   Briefcase,
   Building2,
   Copy,
+  FileSignature,
   History,
   IdCard,
   KeyRound,
@@ -47,6 +48,7 @@ import {
   TextareaField,
   Toast,
 } from "@/components/commercial/ui";
+import { CommercialContractPanel } from "@/components/admin/commercial-contract-panel";
 import { cn } from "@/lib/utils";
 
 /**
@@ -610,6 +612,7 @@ function CreateUserModal({
 
 const DRAWER_TABS = [
   { id: "ficha", label: "Ficha", icon: IdCard },
+  { id: "contrato", label: "Contrato y documentación", icon: FileSignature },
   { id: "desempeno", label: "Desempeño", icon: TrendingUp },
   { id: "cartera", label: "Cartera", icon: Building2 },
   { id: "finanzas", label: "Finanzas", icon: Wallet },
@@ -760,6 +763,12 @@ function MemberDrawer({
                   onPatch={patch}
                   onResetPassword={resetPassword}
                   onDelete={removeUser}
+                />
+              )}
+              {tab === "contrato" && (
+                <CommercialContractPanel
+                  ownerId={detail.user.id}
+                  onChanged={(message) => void onChanged(message)}
                 />
               )}
               {tab === "desempeno" && <MemberPerformance detail={detail} />}

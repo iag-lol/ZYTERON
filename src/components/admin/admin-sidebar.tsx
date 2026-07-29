@@ -337,14 +337,16 @@ export function AdminSidebar() {
             <ExternalLink className="h-3.5 w-3.5" />
             {showLabels && "Ver sitio"}
           </Link>
-          <Link
-            href="/admin/logout"
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-500 transition-all hover:bg-rose-50 hover:text-rose-600"
-            title="Salir"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            {showLabels && "Salir"}
-          </Link>
+          <form action="/admin/logout" method="post" className="flex flex-1">
+            <button
+              type="submit"
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-500 transition-all hover:bg-rose-50 hover:text-rose-600"
+              title="Salir"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              {showLabels && "Salir"}
+            </button>
+          </form>
         </div>
       </div>
       </aside>

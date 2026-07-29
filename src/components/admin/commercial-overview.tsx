@@ -110,6 +110,7 @@ const ENTITY_LABEL: Record<string, string> = {
   lead: "Registro",
   commission: "Comisión",
   statement: "Liquidación",
+  contract: "Contrato",
 };
 
 export function CommercialOverview({ onOpenMember }: { onOpenMember: (id: string) => void }) {

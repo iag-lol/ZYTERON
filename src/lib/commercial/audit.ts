@@ -13,7 +13,7 @@ import { commercialDb } from "@/lib/commercial/store";
  * acción principal ya se completó y solo se ignora el evento.
  */
 
-export type AuditEntity = "user" | "lead" | "commission" | "statement";
+export type AuditEntity = "user" | "lead" | "commission" | "statement" | "contract";
 
 export type AuditEntry = {
   id: string;
