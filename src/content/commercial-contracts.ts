@@ -40,10 +40,24 @@ export type ContractTemplate = {
   bankAnnexNote: string;
 };
 
-const APPEARANCE_COMMON = [
+const APPEARANCE_PARTIES = [
   "En {{ciudad}}, a {{fecha_contrato}}, entre {{razon_social_zyteron}}, RUT {{rut_zyteron}}, sociedad del giro de servicios informáticos, desarrollo de software y soluciones tecnológicas, domiciliada en {{domicilio_zyteron}}, comuna de {{comuna_zyteron}}, representada legalmente por don {{nombre_representante}}, cédula de identidad N° {{rut_representante}}, ambos con domicilio para estos efectos en el ya señalado, en adelante indistintamente «Zyteron» o «la Empresa»;",
-  "y {{nombre_completo}}, cédula de identidad N° {{rut_prestador}}, con domicilio en {{domicilio_prestador}}, comuna de {{comuna_prestador}}, correo electrónico {{correo_personal}} y teléfono {{telefono}}, en adelante «el Prestador»;",
+  "y {{nombre_completo}}, cédula de identidad N° {{rut_prestador}}, con domicilio en {{domicilio_prestador}}, comuna de {{comuna_prestador}}, correo electrónico {{correo_personal}} y teléfono {{telefono}};",
+];
+
+/** Cierre de la comparecencia según el tipo de instrumento. */
+const APPEARANCE_CONTRACT = [
+  ...APPEARANCE_PARTIES.map((text) =>
+    text.replace("y teléfono {{telefono}};", "y teléfono {{telefono}}, en adelante «el Prestador»;"),
+  ),
   "se ha convenido el siguiente contrato:",
+];
+
+const APPEARANCE_AGREEMENT = [
+  ...APPEARANCE_PARTIES.map((text) =>
+    text.replace("y teléfono {{telefono}};", "y teléfono {{telefono}}, en adelante «el Partner»;"),
+  ),
+  "se ha convenido el siguiente convenio:",
 ];
 
 // =====================================================================
@@ -270,15 +284,9 @@ const EXECUTIVE_CLAUSES: ContractClause[] = [
     ],
   },
   {
-    title: "Domicilio",
+    title: "Domicilio y jurisdicción",
     paragraphs: [
-      "Para todos los efectos legales derivados del presente contrato, las partes fijan su domicilio en la comuna y ciudad de {{ciudad}}.",
-    ],
-  },
-  {
-    title: "Jurisdicción",
-    paragraphs: [
-      "Cualquier dificultad o controversia que se produzca entre las partes respecto de la aplicación, interpretación, cumplimiento o validez de este contrato será sometida al conocimiento de los Tribunales Ordinarios de Justicia con asiento en la ciudad de {{ciudad}}.",
+      "Para todos los efectos derivados del presente contrato, las partes fijan domicilio en la ciudad de Santiago y se someten a la competencia de sus Tribunales Ordinarios de Justicia.",
     ],
   },
   {
@@ -304,146 +312,178 @@ const PARTNER_CLAUSES: ContractClause[] = [
   {
     title: "Objeto del convenio",
     paragraphs: [
-      "El Partner se obliga a presentar a Zyteron personas naturales o jurídicas que puedan requerir los servicios que la Empresa comercializa, mediante el registro de referidos en el portal comercial.",
-      "La labor del Partner se limita a la referencia y presentación del interesado. La evaluación, la elaboración de la propuesta, la negociación y el cierre comercial son de cargo exclusivo de Zyteron.",
+      "El Partner se obliga a buscar, prospectar y contactar personas naturales o jurídicas que puedan requerir los servicios que Zyteron comercializa, presentarles dichos servicios utilizando exclusivamente la información y el material previamente aprobados por la Empresa, identificar sus necesidades comerciales, efectuar el seguimiento correspondiente, registrar las oportunidades en el portal comercial y coordinar al interesado con Zyteron.",
+      "El contacto podrá efectuarse por correo electrónico, teléfono, mensajería instantánea u otros medios lícitos.",
+      "La elaboración de la propuesta definitiva, la negociación de condiciones especiales, la aprobación de descuentos, la contratación y el cierre corresponden exclusivamente a Zyteron.",
     ],
   },
   {
     title: "Denominación funcional",
     paragraphs: [
-      "El Partner podrá presentarse bajo la denominación funcional de «{{cargo_funcional}}», la que es meramente descriptiva y no constituye cargo, representación ni relación laboral con Zyteron.",
+      "Para efectos operativos y de identificación ante terceros, el Partner podrá identificarse como «{{cargo_funcional}}».",
+      "Esta denominación es meramente funcional y descriptiva de la actividad que desarrolla. No constituye contrato de trabajo, mandato, representación legal ni facultad alguna para obligar a Zyteron frente a terceros.",
+      "El Partner deberá aclarar su condición de independiente cuando el interesado pudiere entender lo contrario.",
     ],
   },
   {
     title: "Naturaleza civil y comercial del vínculo",
     paragraphs: [
       "El presente convenio se rige por las normas del derecho común y comercial aplicables, y en caso alguno constituye contrato de trabajo ni genera relación laboral entre las partes.",
+      "No resultan aplicables a este vínculo las disposiciones del Código del Trabajo relativas a remuneración, jornada, feriado, indemnizaciones ni terminación del contrato de trabajo.",
     ],
   },
   {
     title: "Ausencia de subordinación y dependencia",
     paragraphs: [
-      "El Partner actúa con plena autonomía. No está sujeto a órdenes, instrucciones permanentes, supervisión jerárquica, metas obligatorias ni potestad disciplinaria de Zyteron.",
+      "El Partner actúa con plena autonomía técnica y organizativa. No está sujeto a órdenes, instrucciones permanentes, supervisión jerárquica, metas obligatorias ni potestad disciplinaria de Zyteron.",
+      "La información de productos y los lineamientos comerciales que la Empresa entregue tienen por única finalidad asegurar que los servicios se presenten con exactitud, sin que ello importe subordinación.",
     ],
   },
   {
-    title: "Ausencia de jornada y de exclusividad",
+    title: "Autonomía, jornada y exclusividad",
     paragraphs: [
-      "No existe jornada, horario, turnos ni control de asistencia. El Partner determina libremente cuándo y con qué intensidad desarrolla su actividad.",
-      "El convenio no es exclusivo: el Partner podrá mantener otras actividades, salvo conflicto de interés directo con Zyteron.",
+      "El Partner organiza libremente su actividad, sus métodos, su ruta comercial y la administración de su tiempo. No existe jornada, horario, turnos, marcaje ni control de asistencia de ninguna especie.",
+      "El registro de gestiones en el portal comercial constituye únicamente respaldo de la actividad para efectos de trazabilidad y cálculo de comisiones, y no constituye control horario.",
+      "El convenio no es exclusivo: el Partner podrá desarrollar otras actividades, salvo que ello importe conflicto de interés directo con Zyteron.",
     ],
   },
   {
     title: "Medios propios",
     paragraphs: [
-      "El Partner desarrolla su actividad con medios propios, incluidos computador, conexión a internet y teléfono. Zyteron provee únicamente el acceso al portal comercial.",
+      "El Partner ejecuta su actividad con medios propios, incluidos el computador, la conexión a internet, el teléfono móvil y el plan de datos.",
+      "Zyteron proporciona únicamente el acceso personal al portal comercial y, cuando corresponda, una casilla de correo corporativo, ambos de propiedad de la Empresa y destinados exclusivamente a la actividad objeto de este convenio.",
     ],
   },
   {
-    title: "Registro de referidos",
+    title: "Registro de oportunidades",
     paragraphs: [
-      "Todo referido deberá registrarse en el portal comercial con la información que el sistema requiera, en forma oportuna y veraz.",
-      "El registro es la única forma de acreditar la referencia. Los contactos no registrados no generan derecho alguno.",
+      "Todo interesado deberá ser registrado por el Partner en el portal comercial en forma oportuna, con la información veraz y completa que el sistema requiera. El portal deja constancia automática de la fecha y hora de ingreso de cada registro.",
+      "El registro en el portal es la única forma de acreditar la gestión. Los contactos no registrados no generan derecho a comisión ni prioridad alguna.",
     ],
   },
   {
-    title: "Validación de referidos",
+    title: "Aceptación o rechazo del referido",
     paragraphs: [
-      "Zyteron revisará y clasificará cada referido. Solo los clasificados como «cliente potencial» o «aceptado» habilitan el eventual devengo de comisión.",
-      "La clasificación es facultad exclusiva de la Empresa.",
+      "Zyteron revisará cada registro y lo aceptará o lo rechazará. Únicamente el estado «referido aceptado» habilita el eventual devengo de comisión conforme a este convenio.",
+      "Cuando Zyteron rechace un registro deberá indicar una razón básica del rechazo, la que quedará disponible para el Partner en el portal comercial.",
+      "La decisión es facultad de Zyteron y se fundará en criterios comerciales, técnicos y de cartera.",
     ],
   },
   {
     title: "Referidos duplicados o preexistentes",
     paragraphs: [
-      "No generarán comisión los referidos que ya se encuentren en la cartera de Zyteron, que hubieren sido ingresados previamente por otra persona, o que mantengan o hayan mantenido relación comercial con la Empresa.",
-      "En caso de coincidencia prevalecerá el primer registro ingresado en el sistema.",
-      "El referido aceptado queda asociado al Partner por {{dias_cola_comisiones}} días corridos contados desde su aceptación.",
+      "No generarán comisión los interesados que ya se encuentren registrados en la cartera de Zyteron, que hayan sido ingresados previamente por otro Partner, o que mantengan o hayan mantenido relación comercial con la Empresa.",
+      "En caso de registros coincidentes prevalecerá el primer registro válido ingresado en el sistema, según la fecha y hora que conste en el portal.",
+    ],
+  },
+  {
+    title: "Atribución comercial",
+    paragraphs: [
+      "El referido aceptado quedará asociado al Partner durante {{dias_cola_comisiones}} días corridos contados desde la fecha de su aceptación.",
+      "Si dentro de ese plazo el interesado contrata con Zyteron, el Partner conservará íntegramente el derecho a la comisión correspondiente a ese contrato inicial, aunque uno o más pagos se reciban con posterioridad al vencimiento del plazo de atribución.",
+      "El plazo de atribución determina hasta cuándo un referido aceptado sigue asociado al Partner, y no debe confundirse con las fechas en que el cliente efectúa los pagos del proyecto.",
+      "Este es el único plazo de atribución aplicable al presente convenio.",
     ],
   },
   {
     title: "Límites de actuación",
     paragraphs: [
       "El Partner no representa legal ni convencionalmente a Zyteron y no puede obligarla frente a terceros.",
-      "En particular, le está prohibido emitir cotizaciones, comprometer precios, descuentos, plazos, alcances o funcionalidades, y prometer fechas de entrega o resultados.",
-      "El Partner deberá abstenerse de presentarse como ejecutivo, empleado o representante de la Empresa.",
+      "En particular, le está prohibido firmar contratos en nombre de la Empresa, emitir cotizaciones por cuenta propia, modificar o comprometer precios, descuentos, plazos, alcances, funcionalidades o fechas de entrega, prometer resultados sin autorización y utilizar piezas publicitarias no aprobadas.",
+      "El Partner podrá orientar al interesado con los valores referenciales publicados por Zyteron, dejando constancia de que son referenciales, que no incluyen impuestos y que la cotización formal la emite la Empresa.",
     ],
   },
   {
     title: "Prohibición de recibir dineros",
     paragraphs: [
-      "Queda expresamente prohibido al Partner recibir dinero, transferencias, anticipos o pagos de clientes o interesados, por cualquier vía.",
-      "Todo pago se efectúa directamente a Zyteron contra el documento tributario correspondiente. La infracción constituye incumplimiento grave.",
+      "Queda expresamente prohibido al Partner recibir dinero, transferencias, anticipos o pagos de clientes o interesados, sea en efectivo, en cuentas propias o de terceros.",
+      "Todo pago se efectúa directamente a Zyteron, en las cuentas que la Empresa informe y contra el documento tributario correspondiente. La infracción a esta cláusula constituye incumplimiento grave.",
     ],
   },
   {
     title: "Comisión",
     paragraphs: [
-      "Zyteron pagará al Partner una comisión equivalente al {{porcentaje_comision}}% por cada referido que resulte validado, contratado y efectivamente pagado.",
-      "El Partner no percibirá renta fija, sueldo base ni beneficio de naturaleza laboral alguno.",
+      "Zyteron pagará al Partner una comisión bruta equivalente al {{porcentaje_comision}}% por cada referido aceptado que resulte contratado y efectivamente pagado.",
+      "El Partner no percibirá sueldo base, renta fija, viáticos, asignaciones ni beneficio de naturaleza laboral alguno. La comisión es la única contraprestación pactada.",
     ],
   },
   {
     title: "Base neta comisionable",
     paragraphs: [
-      "La base de cálculo será el {{base_comision}}, excluido el Impuesto al Valor Agregado.",
-      "Se descontarán los montos correspondientes a servicios de terceros, licencias, dominios, hosting, mensajería, consumo de inteligencia artificial, medios de pago y cualquier costo externo transferido a un proveedor.",
+      "La comisión se calcula sobre el {{base_comision}}, entendiéndose por tal el monto efectivamente percibido por la Empresa, excluido el Impuesto al Valor Agregado.",
+      "Se excluyen de la base los montos correspondientes a dominios, hosting, licencias, mensajería, servicios de terceros, consumo de inteligencia artificial, comisiones de medios de pago y cualquier otro costo externo pagado a proveedores.",
+      "Cuando el cliente pague por etapas, la comisión se devengará proporcionalmente con cada pago recibido. No se devenga comisión sobre montos facturados y no pagados.",
+      "A modo de ejemplo: si la base neta comisionable efectivamente recibida asciende a {{ejemplo_base_comisionable}}, la comisión bruta será de {{ejemplo_comision_bruta}}, monto sobre el cual se aplicará la retención tributaria vigente.",
     ],
   },
   {
-    title: "Condición de pago y pagos parciales",
+    title: "Alcance de la comisión y ventas posteriores",
     paragraphs: [
-      "La comisión se devenga únicamente una vez que el cliente ha pagado efectivamente a Zyteron. Cuando el proyecto se cobre por etapas, se devengará en la misma proporción de cada pago recibido.",
-      "No se devengará comisión respecto de montos facturados y no percibidos.",
+      "La comisión comprende exclusivamente el contrato, proyecto o venta inicial originada por el referido aceptado.",
+      "Tratándose de servicios de suscripción, la comisión se aplicará únicamente al primer pago, salvo acuerdo comercial individual y escrito que establezca una condición distinta.",
+      "No se generan automáticamente comisiones por renovaciones, mantenciones, mensualidades posteriores, ampliaciones, ventas adicionales ni nuevos proyectos del mismo cliente.",
+      "Una venta adicional solo generará comisión cuando sea registrada como una nueva oportunidad en el portal y aceptada expresamente por Zyteron.",
     ],
   },
   {
     title: "Devoluciones y contracargos",
     paragraphs: [
-      "Si el cliente obtiene devolución total o parcial, o si se produce contracargo o reverso del pago, la comisión se dejará sin efecto en la misma proporción y, de haberse pagado, se descontará de liquidaciones posteriores.",
+      "Si el cliente obtiene la devolución total o parcial de lo pagado, o si se produce un contracargo, anulación o reverso del pago, se dejará sin efecto exactamente la comisión asociada al monto devuelto.",
+      "Si dicha comisión ya hubiere sido pagada, el descuento se aplicará sobre las liquidaciones siguientes. De no existir liquidaciones futuras, las partes acordarán la forma de restitución del monto correspondiente.",
     ],
   },
   {
-    title: "Liquidación mensual y documentación tributaria",
+    title: "Liquidación mensual",
     paragraphs: [
-      "Zyteron emitirá mensualmente una liquidación con el detalle de las comisiones devengadas, disponible en el portal comercial.",
-      "El Partner deberá emitir la boleta de honorarios electrónica correspondiente como condición previa al pago, y es el único responsable de sus obligaciones tributarias.",
-      "Zyteron practicará la retención de impuesto de segunda categoría vigente, actualmente {{retencion_vigente}}%.",
+      "Zyteron emitirá mensualmente una liquidación con el detalle de las comisiones devengadas en el período, indicando base de cálculo, porcentaje aplicado, retención y monto neto. La liquidación quedará disponible en el portal comercial.",
+      "El Partner dispondrá de 10 días corridos desde su emisión para formular observaciones; transcurrido dicho plazo sin objeciones, se tendrá por aceptada.",
     ],
   },
   {
-    title: "Forma de pago",
+    title: "Documentación tributaria y pago",
     paragraphs: [
-      "El pago se efectuará por transferencia electrónica a la cuenta individualizada en el anexo, dentro de los 10 días hábiles siguientes a la recepción conforme de la boleta de honorarios.",
-      "El Partner deberá mantener actualizados sus datos bancarios en el portal comercial.",
+      "El Partner deberá emitir la Boleta de Honorarios Electrónica correspondiente a la comisión bruta liquidada, utilizando la opción en que la retención es efectuada por Zyteron en su calidad de receptor del documento.",
+      "Zyteron practicará y enterará en arcas fiscales la retención de impuestos a la tasa legal vigente al momento del pago (durante el año {{anio_retencion}}, {{retencion_vigente}}%). La variación legal de la tasa se aplicará automáticamente, sin necesidad de modificar este convenio.",
+      "El monto transferido al Partner corresponderá a la comisión bruta menos la retención legal.",
+      "El pago se efectuará mediante transferencia electrónica a la cuenta individualizada en el anexo, dentro de los 10 días hábiles siguientes a la recepción conforme de la boleta.",
+      "El Partner es el único responsable del cumplimiento de sus obligaciones tributarias y previsionales, y deberá mantener actualizados sus datos bancarios en el portal comercial.",
     ],
   },
   {
     title: "Confidencialidad",
     paragraphs: [
-      "El Partner mantendrá estricta reserva sobre la información comercial, técnica, financiera y de clientes de Zyteron a la que acceda con ocasión de este convenio.",
-      "La obligación se mantiene durante toda la relación y por 3 años contados desde su término.",
+      "El Partner mantendrá estricta reserva sobre la información comercial, técnica, financiera, de clientes, precios y márgenes de Zyteron a la que acceda con ocasión de este convenio.",
+      "La obligación se mantiene durante toda la relación y por 3 años contados desde su término, cualquiera sea la causa.",
     ],
   },
   {
-    title: "Protección de datos personales",
+    title: "Origen lícito de los datos",
     paragraphs: [
-      "El Partner tratará los datos personales de los referidos exclusivamente para los fines de este convenio y conforme a la normativa vigente.",
-      "Le está prohibido copiar, exportar, comercializar o ceder dichos datos. Al término del convenio deberá cesar todo tratamiento y eliminar las copias que mantenga.",
+      "El Partner solo podrá registrar datos personales obtenidos lícitamente, y deberá asegurarse de que el interesado haya autorizado ser contactado por Zyteron o tenga una expectativa razonable de recibir un contacto comercial.",
+      "Le está expresamente prohibido ingresar bases de datos compradas, extraídas ilegalmente o recopiladas masivamente sin autorización.",
     ],
   },
   {
-    title: "Portal comercial",
+    title: "Tratamiento de datos personales",
     paragraphs: [
-      "El acceso al portal comercial es personal e intransferible. El Partner responde de toda actuación registrada con su usuario.",
-      "Zyteron podrá suspenderlo en caso de incumplimiento o término del convenio.",
+      "El Partner tratará los datos personales de los interesados exclusivamente para los fines de este convenio. No podrá copiarlos, venderlos, exportarlos, cederlos ni utilizarlos para fines distintos.",
+      "Al término del convenio deberá cesar todo tratamiento y eliminar cualquier copia que mantenga en su poder.",
+      "Zyteron tratará dichos datos conforme a la normativa chilena vigente sobre protección de datos personales.",
     ],
   },
   {
-    title: "Propiedad intelectual y uso de marca",
+    title: "Portal comercial y credenciales",
     paragraphs: [
+      "El acceso al portal comercial es personal e intransferible. El Partner es responsable de la custodia de sus credenciales y de toda actuación registrada con su usuario.",
+      "Zyteron podrá suspender el acceso en caso de incumplimiento grave, uso indebido o término del convenio.",
+    ],
+  },
+  {
+    title: "Uso de la marca y material comercial",
+    paragraphs: [
+      "El Partner podrá utilizar únicamente el correo corporativo, las credenciales, la firma de correo, las presentaciones y las piezas comerciales que Zyteron le autorice.",
+      "No podrá modificar el logotipo ni los signos distintivos de la Empresa, ni crear promociones, publicidad o material propio que utilice la marca Zyteron, sin autorización previa y por escrito.",
       "Todo material, metodología y contenido proporcionado por Zyteron es de su propiedad exclusiva y este convenio no transfiere derecho alguno sobre ellos.",
-      "El Partner no podrá utilizar la marca, el logotipo ni los signos distintivos de Zyteron en piezas publicitarias, perfiles o material propio sin autorización previa y escrita de la Empresa.",
     ],
   },
   {
@@ -455,33 +495,35 @@ const PARTNER_CLAUSES: ContractClause[] = [
   {
     title: "Término",
     paragraphs: [
-      "Cualquiera de las partes podrá poner término al convenio, sin expresión de causa y sin derecho a indemnización, dando aviso por escrito con a lo menos {{dias_aviso_termino}} días corridos de anticipación.",
-      "Zyteron podrá ponerle término de inmediato en caso de incumplimiento grave, en especial la recepción de dineros de clientes, la emisión de cotizaciones no autorizadas, la infracción a la confidencialidad o la atribución de una representación que no ostenta.",
+      "Cualquiera de las partes podrá poner término al convenio, sin expresión de causa y sin derecho a indemnización de ninguna naturaleza, dando aviso por escrito a la otra con a lo menos {{dias_aviso_termino}} días corridos de anticipación.",
+      "Zyteron podrá ponerle término de inmediato, sin necesidad de aviso previo, en caso de incumplimiento grave, en especial la recepción de dineros de clientes, la emisión de cotizaciones no autorizadas, la infracción a la confidencialidad, el uso ilícito de datos personales o la atribución de una representación que no ostenta.",
+      "Terminado el convenio, los referidos aceptados con anterioridad conservarán el período de atribución que les reste conforme a la cláusula de atribución comercial, y las comisiones que se devenguen dentro de dicho período se pagarán en los términos aquí pactados.",
     ],
   },
   {
-    title: "Comisiones posteriores al término",
+    title: "Domicilio y jurisdicción",
     paragraphs: [
-      "Terminado el convenio, el Partner conservará el derecho a las comisiones por referidos aceptados con anterioridad cuyos negocios se cierren y sean pagados dentro de los {{dias_cola_comisiones}} días corridos siguientes al término.",
-    ],
-  },
-  {
-    title: "Domicilio",
-    paragraphs: [
-      "Las partes fijan domicilio en la comuna y ciudad de {{ciudad}} para todos los efectos legales de este convenio.",
-    ],
-  },
-  {
-    title: "Jurisdicción",
-    paragraphs: [
-      "Toda controversia relativa a la aplicación, interpretación, cumplimiento o validez de este convenio será sometida a los Tribunales Ordinarios de Justicia con asiento en la ciudad de {{ciudad}}.",
+      "Para todos los efectos derivados del presente convenio, las partes fijan domicilio en la ciudad de Santiago y se someten a la competencia de sus Tribunales Ordinarios de Justicia.",
     ],
   },
   {
     title: "Firma electrónica y comunicaciones",
     paragraphs: [
-      "Las partes reconocen plena validez a la suscripción por firma electrónica, conforme a la Ley N° 19.799.",
-      "Las comunicaciones se entenderán válidamente efectuadas por correo electrónico a las direcciones individualizadas en la comparecencia.",
+      "Las partes acuerdan que el presente convenio podrá suscribirse mediante firma electrónica, reconociéndole plena validez y eficacia conforme a la Ley N° 19.799 sobre documentos electrónicos y firma electrónica.",
+      "Las comunicaciones entre las partes se entenderán válidamente efectuadas por correo electrónico a las direcciones individualizadas en la comparecencia.",
+    ],
+  },
+  {
+    title: "Integridad del convenio",
+    paragraphs: [
+      "El presente convenio y sus anexos contienen el acuerdo completo entre las partes respecto de la materia que regulan, y reemplazan cualquier acuerdo, oferta o comunicación anterior, verbal o escrita.",
+      "Toda modificación deberá constar por escrito o mediante aceptación electrónica verificable de ambas partes.",
+    ],
+  },
+  {
+    title: "Separabilidad",
+    paragraphs: [
+      "Si alguna disposición de este convenio fuere declarada nula, inválida o inexigible, las demás mantendrán plena vigencia. Las partes procurarán reemplazar la disposición afectada por otra válida que refleje su intención original.",
     ],
   },
   {
@@ -498,11 +540,11 @@ const BANK_ANNEX_NOTE =
 export const CONTRACT_TEMPLATES: Record<ContractTypeId, ContractTemplate> = {
   executive_services: {
     id: "zyteron-ejecutivo-comercial-freelance",
-    version: "1.0.0",
+    version: "1.1.0",
     type: "executive_services",
     documentTitle: "CONTRATO DE PRESTACIÓN DE SERVICIOS COMERCIALES INDEPENDIENTES",
     subtitle: "Cargo funcional: {{cargo_funcional}}",
-    appearance: APPEARANCE_COMMON,
+    appearance: APPEARANCE_CONTRACT,
     clauses: EXECUTIVE_CLAUSES,
     closing: [
       "Leído por ambas partes y en señal de plena aceptación de todas y cada una de las cláusulas precedentes, firman:",
@@ -514,18 +556,18 @@ export const CONTRACT_TEMPLATES: Record<ContractTypeId, ContractTemplate> = {
   },
   partner_agreement: {
     id: "zyteron-partner-referidor",
-    version: "1.0.0",
+    version: "2.0.0",
     type: "partner_agreement",
     documentTitle: "CONVENIO DE COLABORACIÓN COMERCIAL INDEPENDIENTE",
-    subtitle: "Cargo funcional: {{cargo_funcional}}",
-    appearance: APPEARANCE_COMMON,
+    subtitle: "Denominación funcional: {{cargo_funcional}}",
+    appearance: APPEARANCE_AGREEMENT,
     clauses: PARTNER_CLAUSES,
     closing: [
       "Leído por ambas partes y en señal de plena aceptación de todas y cada una de las cláusulas precedentes, firman:",
     ],
     bankAnnexTitle: "ANEXO A · DATOS BANCARIOS PARA EL PAGO DE COMISIONES",
     bankAnnexIntro:
-      "Forma parte integrante del presente convenio el siguiente anexo, en el que se individualiza la cuenta bancaria destinada al pago de las comisiones:",
+      "Forma parte integrante del presente convenio el siguiente anexo, en el que se individualiza la cuenta bancaria destinada al pago de las comisiones del Partner:",
     bankAnnexNote: BANK_ANNEX_NOTE,
   },
 };

@@ -158,6 +158,13 @@ export const STATEMENT_STATUS_INFO: Record<string, { label: string; cls: string 
  */
 export const DEFAULT_RETENTION_PCT = 15.25;
 
+/**
+ * Año al que corresponde la tasa anterior. Se imprime en el convenio junto al
+ * porcentaje para dejar claro que es la tasa vigente de ese año y no una
+ * condición permanente del acuerdo.
+ */
+export const RETENTION_YEAR = 2026;
+
 export const RETENTION_NOTE =
   "La retención corresponde al impuesto de segunda categoría que Zyteron retiene y entera al SII cuando el pago se documenta con boleta de honorarios. Si el pago se realiza contra factura, la retención se ajusta a 0% y el IVA se maneja por separado.";
 

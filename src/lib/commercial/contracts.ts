@@ -114,7 +114,9 @@ export function defaultConfig(user: CommercialUserAdminView): ContractConfig {
   const defaults = CONTRACT_DEFAULTS[contractType];
   return {
     contractType,
-    city: user.comuna?.trim() || CONTRACT_COMPANY.city,
+    // El lugar de celebración es el domicilio de Zyteron, para que coincida
+    // con la comparecencia y con la cláusula de domicilio y jurisdicción.
+    city: CONTRACT_COMPANY.city,
     contractDate: today(),
     startDate: user.started_at?.slice(0, 10) || today(),
     functionalRole: user.position?.trim() || CONTRACT_TYPE_INFO[contractType].functionalRole,
