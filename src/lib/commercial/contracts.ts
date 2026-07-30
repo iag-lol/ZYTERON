@@ -42,6 +42,9 @@ export type ContractRecord = {
   template_version: string;
   version: number;
   supersedes_id: string | null;
+  origin: string;
+  update_reason: string | null;
+  updated_by: string | null;
   status: string;
   city: string | null;
   contract_date: string | null;
@@ -604,29 +607,66 @@ export async function reviewSignature(
 }
 
 /**
- * Nueva versión: el documento anterior queda como reemplazado y se abre un
- * borrador con la misma configuración. Nunca se borra el histórico.
+ * Actualiza el convenio con los datos vigentes del Partner y la última
+ * plantilla oficial. Es la única vía para reemitir un documento.
+ *
+ *  · No firmado  → conserva el número del convenio y sube la versión
+ *    documental (v1 → v2). La versión anterior queda en el historial.
+ *  · Ya firmado  → el documento firmado no se toca. Se emite un convenio
+ *    nuevo, con identificador propio, enlazado al anterior y pendiente de
+ *    firma.
+ *
+ * En ambos casos se releen los datos desde la ficha, se revalidan y se
+ * genera un PDF nuevo con su propio hash. Nunca se reutiliza el anterior.
  */
-export async function createNewVersion(
+export async function updateContract(
   actor: Actor,
   contractId: string,
   reason: string,
-): Promise<{ ok: boolean; id?: string; error?: string }> {
+): Promise<
+  | { ok: true; id: string; number: string; version: number; mode: "updated" | "amended" }
+  | { ok: false; error: string }
+> {
   const record = await getContract(contractId);
   if (!record) return { ok: false, error: "Contrato no encontrado." };
-  if (!reason?.trim()) return { ok: false, error: "Indica el motivo de la nueva versión." };
+  if (!reason?.trim()) return { ok: false, error: "Indica el motivo de la actualización." };
 
+  // Datos frescos de la ficha: nombre, RUT, domicilio, correo, teléfono,
+  // denominación funcional, comisión, banco, cuenta y fecha de vigencia.
   const user = await getCommercialUserForAdmin(record.owner_id);
   if (!user) return { ok: false, error: "El usuario comercial no existe." };
 
-  const { error: closeError } = await commercialDb()
-    .from(TABLE)
-    .update({ status: "superseded" })
-    .eq("id", contractId);
-  if (closeError) return { ok: false, error: closeError.message };
+  const signed = isSigned(record.status);
+  const fresh = defaultConfig(user);
+  const config: ContractConfig = {
+    ...fresh,
+    // Decisiones administrativas que no viven en la ficha se conservan.
+    contractType: (record.contract_type as ContractTypeId) ?? fresh.contractType,
+    city: record.city ?? fresh.city,
+    contractDate: today(),
+    commissionBase: record.commission_base ?? fresh.commissionBase,
+    noticeDays: Number(record.notice_days ?? fresh.noticeDays),
+    commissionTailDays: Number(record.commission_tail_days ?? fresh.commissionTailDays),
+    validity: record.validity ?? fresh.validity,
+    signatureMethod: record.signature_method ?? fresh.signatureMethod,
+    corporateEmail: record.corporate_email ?? "",
+    includeBankAnnex: record.include_bank_annex ?? true,
+    observations: record.observations ?? "",
+    representativeName: record.representative_name ?? fresh.representativeName,
+    representativeRut: record.representative_rut ?? fresh.representativeRut,
+  };
 
-  const config = configFromRecord(record, user);
+  const validation = validateContract(user, config);
+  if (!validation.canGenerate) {
+    return { ok: false, error: `No se puede actualizar: ${validation.blockers[0]}` };
+  }
+
   const template = CONTRACT_TEMPLATES[config.contractType];
+  const mode: "updated" | "amended" = signed ? "amended" : "updated";
+  // Firmado: identificador propio. No firmado: mismo número, versión nueva.
+  const number = signed ? await nextContractNumber(config.contractType) : record.contract_number;
+  const version = signed ? 1 : record.version + 1;
+
   const { data, error } = await commercialDb()
     .from(TABLE)
     .insert({
@@ -634,28 +674,64 @@ export async function createNewVersion(
       profile_role: user.role,
       template_id: template.id,
       template_version: template.version,
-      version: record.version + 1,
+      version,
       supersedes_id: record.id,
+      contract_number: number,
       status: "draft",
+      origin: mode,
+      update_reason: reason.trim(),
       created_by: actor.id,
+      updated_by: actor.id,
       ...configToRow(config),
     })
     .select("id")
     .single();
   if (error) return { ok: false, error: error.message };
+  const newId = data.id as string;
+
+  // El anterior sale de circulación, pero se conserva íntegro en el
+  // historial: su PDF, su hash y su firma no se modifican ni se borran.
+  await commercialDb().from(TABLE).update({ status: "superseded" }).eq("id", contractId);
+
+  const issued = await issueContract(actor, newId);
+  if (!issued.ok) {
+    // Si la emisión falla se revierte para no dejar dos documentos vigentes.
+    await commercialDb().from(TABLE).delete().eq("id", newId);
+    await commercialDb().from(TABLE).update({ status: record.status }).eq("id", contractId);
+    return { ok: false, error: issued.error ?? "No se pudo generar el documento actualizado." };
+  }
 
   await recordAudit({
     actorId: actor.id,
     actorName: actor.name ?? null,
     entity: "contract",
-    entityId: data.id as string,
-    entityLabel: user.name,
-    action: "version_created",
-    summary: `Se generó la versión ${record.version + 1} del contrato de ${user.name}, reemplazando a ${record.contract_number ?? "la anterior"}. Motivo: ${reason.trim()}`,
-    meta: { supersedes: record.id, reason: reason.trim() },
+    entityId: newId,
+    entityLabel: `${issued.number ?? number} v${version}`,
+    action: signed ? "amended" : "updated",
+    summary: signed
+      ? `Se emitió el documento modificatorio ${issued.number} para ${user.name}, porque el convenio ${record.contract_number ?? ""} ya estaba firmado y no puede alterarse. Motivo: ${reason.trim()}`
+      : `Se actualizó el convenio ${record.contract_number ?? ""} a la versión ${version} con los datos vigentes de ${user.name} y la plantilla ${template.id} v${template.version}. Motivo: ${reason.trim()}`,
+    meta: {
+      supersedes: record.id,
+      previousVersion: record.version,
+      version,
+      templateVersion: template.version,
+      mode,
+      reason: reason.trim(),
+    },
     ownerId: record.owner_id,
   });
-  return { ok: true, id: data.id as string };
+
+  if (signed) {
+    await notifyCommercialUser({
+      ownerId: record.owner_id,
+      kind: "warning",
+      title: "Se emitió un documento modificatorio de tu convenio",
+      body: "Tu convenio firmado se mantiene sin cambios. Recibirás un documento nuevo que también requiere firma.",
+    });
+  }
+
+  return { ok: true, id: newId, number: issued.number ?? String(number), version, mode };
 }
 
 /** Anulación o cierre del vínculo. Conserva el documento para auditoría. */

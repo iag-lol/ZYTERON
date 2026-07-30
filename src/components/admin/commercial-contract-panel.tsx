@@ -242,24 +242,43 @@ export function CommercialContractPanel({
   }
 
   async function act(action: string, extra: Record<string, unknown> = {}, message = "Listo.") {
+    // `version` devuelve el número y la versión emitidos, para informarlos.
     if (!active) return;
+    // Una acción que reemite el documento invalida la vista previa anterior.
+    if (action === "version" && preview) {
+      URL.revokeObjectURL(preview.url);
+      setPreview(null);
+    }
+    let detail = "";
     await run(
-      async () =>
-        readJson(
+      async () => {
+        const data = await readJson(
           await fetch(`/api/admin/comercial/contracts/${active.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action, ...extra }),
           }),
-        ),
+        );
+        if (action === "version" && data.number) {
+          detail =
+            data.mode === "amended"
+              ? ` Documento modificatorio ${data.number} emitido y pendiente de firma.`
+              : ` ${data.number} versión ${data.version} generada.`;
+        }
+        return data;
+      },
       message,
     );
+    if (detail) onChanged(`${message}${detail}`);
     setModal(null);
   }
 
   function fileHref(kind: "original" | "signed", disposition: "inline" | "attachment") {
     if (!active) return "#";
-    return `/api/admin/comercial/contracts/${active.id}/pdf?kind=${kind}&disposition=${disposition}`;
+    // La huella del documento entra en la URL: si el contrato se actualiza,
+    // la dirección cambia y el navegador no puede servir el PDF anterior.
+    const stamp = (kind === "signed" ? active.signed_pdf_hash : active.pdf_hash)?.slice(0, 12) ?? active.version;
+    return `/api/admin/comercial/contracts/${active.id}/pdf?kind=${kind}&disposition=${disposition}&v=${active.version}&h=${stamp}`;
   }
 
   function printContract() {
@@ -433,7 +452,7 @@ export function CommercialContractPanel({
 
           {issued && (
             <GhostButton onClick={() => setModal("version")} disabled={busy}>
-              <RefreshCw className="h-4 w-4" /> Generar nueva versión
+              <RefreshCw className="h-4 w-4" /> Actualizar contrato
             </GhostButton>
           )}
           {active && !isIssued(active.status) && (
@@ -808,7 +827,7 @@ export function CommercialContractPanel({
         <ReasonModal
           title={
             modal === "version"
-              ? "Generar nueva versión"
+              ? "Actualizar contrato"
               : modal === "cancel"
                 ? "Anular contrato"
                 : modal === "terminate"
@@ -817,19 +836,22 @@ export function CommercialContractPanel({
           }
           hint={
             modal === "version"
-              ? "El documento actual quedará como reemplazado y se abrirá un borrador nuevo. Nada se elimina."
+              ? active && ["signed_pending", "signed", "validated"].includes(active.status)
+                ? "Este convenio ya está firmado y no puede alterarse. Se emitirá un documento modificatorio con identificador propio, que quedará pendiente de firma. El documento firmado se conserva intacto en el historial."
+                : "Se generará una nueva versión del contrato utilizando los datos actuales del Partner y la última plantilla disponible. La versión anterior se conservará en el historial."
               : modal === "reject"
                 ? "Indica qué debe corregirse. El prestador recibirá un aviso con este texto."
                 : "Queda registrado en la bitácora de auditoría."
           }
           busy={busy}
           onClose={() => setModal(null)}
+          submitLabel={modal === "version" ? "Generar nueva versión" : "Confirmar"}
           onSubmit={(reason) =>
             act(
               modal,
               { reason },
               modal === "version"
-                ? "Nueva versión creada."
+                ? "Contrato actualizado."
                 : modal === "cancel"
                   ? "Contrato anulado."
                   : modal === "terminate"
@@ -1057,12 +1079,14 @@ function ReasonModal({
   title,
   hint,
   busy,
+  submitLabel = "Confirmar",
   onClose,
   onSubmit,
 }: {
   title: string;
   hint: string;
   busy: boolean;
+  submitLabel?: string;
   onClose: () => void;
   onSubmit: (reason: string) => Promise<void>;
 }) {
@@ -1089,7 +1113,7 @@ function ReasonModal({
           <GhostButton type="button" onClick={onClose}>
             Cancelar
           </GhostButton>
-          <PrimaryButton loading={busy}>Confirmar</PrimaryButton>
+          <PrimaryButton loading={busy}>{submitLabel}</PrimaryButton>
         </div>
       </form>
     </ModalShell>

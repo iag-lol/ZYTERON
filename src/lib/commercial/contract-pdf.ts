@@ -466,7 +466,8 @@ export async function generateContractPdf(input: ContractPdfInput): Promise<Uint
       const raw = variables[variable] ?? "";
       if (variable === "porcentaje_comision") return [label, `${raw}%`] as [string, string];
       if (variable === "dias_aviso_termino") return [label, `${raw} días corridos`] as [string, string];
-      if (variable === "dias_cola_comisiones") return [label, `${raw} días corridos`] as [string, string];
+      if (variable === "dias_cola_comisiones")
+        return [label, `${raw} días corridos desde la aceptación del referido`] as [string, string];
       return [label, raw] as [string, string];
     }),
   );
