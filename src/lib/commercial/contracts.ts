@@ -347,14 +347,20 @@ export async function previewPdf(
   ownerId: string,
   config: ContractConfig,
 ): Promise<{ ok: true; bytes: Uint8Array; filename: string } | { ok: false; error: string }> {
-  const user = await getCommercialUserForAdmin(ownerId);
-  if (!user) return { ok: false, error: "El usuario comercial no existe." };
-
-  const variables = buildVariables(user, config, "BORRADOR");
   try {
+    const user = await getCommercialUserForAdmin(ownerId);
+    if (!user) return { ok: false, error: "El usuario comercial no existe." };
+
+    const variables = buildVariables(user, config, "BORRADOR");
     const bytes = await generateContractPdf({ config, variables, contractNumber: "BORRADOR", draft: true });
-    return { ok: true, bytes, filename: `Borrador_${contractFileName(config.contractType, user.name, new Date().getFullYear())}` };
+    return {
+      ok: true,
+      bytes,
+      filename: `Borrador_${contractFileName(config.contractType, user.name, new Date().getFullYear())}`,
+    };
   } catch (cause) {
+    // Incluye la base de datos mal configurada: mejor un mensaje legible que
+    // un error 500 sin explicación en pantalla.
     return { ok: false, error: cause instanceof Error ? cause.message : "No se pudo generar la vista previa." };
   }
 }

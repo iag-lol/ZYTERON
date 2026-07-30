@@ -45,7 +45,22 @@ export async function GET(req: Request) {
   const ownerId = new URL(req.url).searchParams.get("ownerId");
   if (!ownerId) return NextResponse.json({ error: "Indica el ejecutivo." }, { status: 400 });
 
-  const context = await getContractContext(ownerId);
+  let context;
+  try {
+    context = await getContractContext(ownerId);
+  } catch (cause) {
+    // Tablas sin migrar o Supabase mal configurado: se informa en pantalla en
+    // vez de dejar caer un 500 sin explicación.
+    return NextResponse.json(
+      {
+        error:
+          cause instanceof Error
+            ? `No se pudo cargar la sección de contrato: ${cause.message}`
+            : "No se pudo cargar la sección de contrato.",
+      },
+      { status: 503 },
+    );
+  }
   if (!context) return NextResponse.json({ error: "Usuario comercial no encontrado." }, { status: 404 });
 
   const actor = "session" in auth ? auth.session.user.id : "legacy-admin";

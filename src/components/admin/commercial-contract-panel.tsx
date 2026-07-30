@@ -142,7 +142,7 @@ export function CommercialContractPanel({
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ url: string; filename: string } | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [modal, setModal] = useState<null | "send" | "signed" | "version" | "cancel" | "terminate" | "reject">(null);
   const printFrame = useRef<HTMLIFrameElement | null>(null);
@@ -170,9 +170,9 @@ export function CommercialContractPanel({
   // Libera el object URL de la vista previa al cambiarla o desmontar.
   useEffect(() => {
     return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      if (preview) URL.revokeObjectURL(preview.url);
     };
-  }, [previewUrl]);
+  }, [preview]);
 
   const active = context?.active ?? null;
   const status = active?.status ?? (context?.validation.canGenerate ? "draft" : "incomplete");
@@ -227,9 +227,13 @@ export function CommercialContractPanel({
         const data = (await response.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error || "No se pudo generar la vista previa.");
       }
-      const blob = await response.blob();
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(URL.createObjectURL(blob));
+      // El backend informa el nombre del archivo; se conserva para que la
+      // descarga del borrador salga con un nombre legible.
+      const header = response.headers.get("Content-Disposition") ?? "";
+      const filename = /filename="([^"]+)"/.exec(header)?.[1] ?? "Borrador_contrato.pdf";
+      const blob = new Blob([await response.arrayBuffer()], { type: "application/pdf" });
+      if (preview) URL.revokeObjectURL(preview.url);
+      setPreview({ url: URL.createObjectURL(blob), filename });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No se pudo generar la vista previa.");
     } finally {
@@ -640,20 +644,46 @@ export function CommercialContractPanel({
         </Panel>
       )}
 
-      {/* Vista previa embebida */}
-      {previewUrl && (
+      {/* Vista previa: PDF descargable + visor embebido */}
+      {preview && (
         <Panel
           title="Vista previa del documento"
-          description="Revisa todas las páginas antes de emitir. El visor permite ampliar, paginar e imprimir una prueba."
+          description="Es el PDF real con marca de agua «BORRADOR». Descárgalo, ábrelo en una pestaña o revísalo aquí."
           icon={<Eye className="h-4 w-4" />}
           action={
-            <GhostButton onClick={() => setPreviewUrl(null)} className="px-3 py-1.5 text-[11.5px]">
-              Cerrar
-            </GhostButton>
+            <div className="flex flex-wrap items-center gap-2">
+              <a
+                href={preview.url}
+                download={preview.filename}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[11.5px] font-bold text-white hover:bg-blue-700"
+              >
+                <Download className="h-3.5 w-3.5" /> Descargar borrador
+              </a>
+              <a
+                href={preview.url}
+                target="_blank"
+                rel="noopener"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[11.5px] font-bold text-slate-600 hover:bg-slate-50"
+              >
+                <Eye className="h-3.5 w-3.5" /> Abrir en pestaña
+              </a>
+              <GhostButton onClick={() => setPreview(null)} className="px-3 py-1.5 text-[11.5px]">
+                Cerrar
+              </GhostButton>
+            </div>
           }
           padded={false}
         >
-          <iframe src={previewUrl} title="Vista previa del contrato" className="h-[70vh] w-full border-0" />
+          <iframe
+            src={preview.url}
+            title="Vista previa del contrato"
+            className="h-[70vh] w-full border-0 bg-slate-100"
+          />
+          <p className="border-t border-slate-100 px-5 py-3 text-[11px] leading-5 text-slate-500">
+            Archivo: <span className="font-mono">{preview.filename}</span> · No queda almacenado ni numerado: es solo
+            para revisión. Si el visor no carga en tu navegador, descarga el archivo o ábrelo en una pestaña con los
+            botones de arriba.
+          </p>
         </Panel>
       )}
 
