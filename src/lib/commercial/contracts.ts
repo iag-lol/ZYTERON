@@ -667,6 +667,23 @@ export async function updateContract(
   const number = signed ? await nextContractNumber(config.contractType) : record.contract_number;
   const version = signed ? 1 : record.version + 1;
 
+  // Solo puede haber un convenio vigente por persona. El anterior debe salir
+  // de circulación ANTES de insertar el nuevo; de lo contrario ambos quedan
+  // activos por un instante y la base rechaza la operación.
+  //
+  // Retirarlo no lo altera: su PDF, su hash y su firma quedan intactos y el
+  // documento sigue disponible en el historial.
+  const { error: supersedeError } = await commercialDb()
+    .from(TABLE)
+    .update({ status: "superseded" })
+    .eq("id", contractId);
+  if (supersedeError) return { ok: false, error: supersedeError.message };
+
+  /** Devuelve el documento anterior a su estado original si algo falla. */
+  const restore = async () => {
+    await commercialDb().from(TABLE).update({ status: record.status }).eq("id", contractId);
+  };
+
   const { data, error } = await commercialDb()
     .from(TABLE)
     .insert({
@@ -686,18 +703,26 @@ export async function updateContract(
     })
     .select("id")
     .single();
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    await restore();
+    // Si el número de convenio aún tiene la restricción de unicidad simple,
+    // dos versiones no pueden compartirlo. Se explica en vez de mostrar el
+    // error crudo de la base.
+    const faltaMigracion = /contract_number_key/.test(error.message);
+    return {
+      ok: false,
+      error: faltaMigracion
+        ? "Falta aplicar la migración commercial_contracts_versioning.sql: el número de convenio todavía no admite varias versiones."
+        : error.message,
+    };
+  }
   const newId = data.id as string;
-
-  // El anterior sale de circulación, pero se conserva íntegro en el
-  // historial: su PDF, su hash y su firma no se modifican ni se borran.
-  await commercialDb().from(TABLE).update({ status: "superseded" }).eq("id", contractId);
 
   const issued = await issueContract(actor, newId);
   if (!issued.ok) {
-    // Si la emisión falla se revierte para no dejar dos documentos vigentes.
+    // Si la emisión falla no se deja a la persona sin convenio vigente.
     await commercialDb().from(TABLE).delete().eq("id", newId);
-    await commercialDb().from(TABLE).update({ status: record.status }).eq("id", contractId);
+    await restore();
     return { ok: false, error: issued.error ?? "No se pudo generar el documento actualizado." };
   }
 
