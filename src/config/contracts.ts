@@ -62,7 +62,7 @@ export const CONTRACT_TYPE_INFO: Record<
   partner_agreement: {
     label: "Convenio de Colaboración Comercial Independiente",
     documentTitle: "CONVENIO DE COLABORACIÓN COMERCIAL INDEPENDIENTE",
-    functionalRole: "Partner o Referidor Independiente",
+    functionalRole: "Ejecutivo Comercial independiente de Zyteron",
     fileLabel: "Convenio_Partner",
     numberPrefix: "PT",
     defaultRoles: ["partner"],
@@ -97,7 +97,7 @@ export const CONTRACT_DEFAULTS: Record<
     signatureMethod: "Firma electrónica simple",
   },
   partner_agreement: {
-    commissionPercentage: 10,
+    commissionPercentage: 15,
     commissionBase: "Monto neto comisionable efectivamente recibido por Zyteron",
     noticeDays: 5,
     commissionTailDays: 90,
@@ -270,6 +270,9 @@ export const CONTRACT_VARIABLES = [
   "sitio_web_zyteron",
   "primer_nombre",
   "retencion_vigente",
+  "anio_retencion",
+  "ejemplo_base_comisionable",
+  "ejemplo_comision_bruta",
 ] as const;
 
 export type ContractVariable = (typeof CONTRACT_VARIABLES)[number];

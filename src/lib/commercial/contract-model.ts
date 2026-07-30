@@ -1,4 +1,4 @@
-import { DEFAULT_RETENTION_PCT } from "@/config/commercial";
+import { DEFAULT_RETENTION_PCT, RETENTION_YEAR, formatCLP } from "@/config/commercial";
 import {
   CONTRACT_COMPANY,
   CONTRACT_TYPE_INFO,
@@ -9,6 +9,17 @@ import {
 } from "@/config/contracts";
 import { CONTRACT_TEMPLATES } from "@/content/commercial-contracts";
 import { isValidRut, toSiiRut } from "@/lib/sii/rut";
+import {
+  normalizeAccountNumber,
+  normalizeAccountType,
+  normalizeAddress,
+  normalizeBank,
+  normalizeEmail,
+  normalizePersonName,
+  normalizePhone,
+  normalizePlace,
+  normalizeRutDisplay,
+} from "@/lib/commercial/normalize";
 import type { CommercialUserAdminView } from "@/lib/commercial/store";
 
 /**
@@ -77,49 +88,63 @@ function formatLongDate(value: string): string {
   return date.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
 }
 
-/** Construye el mapa de variables a partir de la ficha y la configuración. */
+/** Base de ejemplo que ilustra el cálculo de la comisión dentro del texto. */
+const COMMISSION_EXAMPLE_BASE = 1_000_000;
+
+/**
+ * Construye el mapa de variables a partir de la ficha y la configuración.
+ *
+ * Todo lo que se imprime pasa antes por el normalizador: los RUT salen con
+ * puntos y guion, las comunas con su grafía oficial, los bancos con su
+ * nombre comercial y las direcciones con mayúsculas correctas. Así el
+ * documento no depende de cómo se haya tipeado la ficha.
+ */
 export function buildVariables(
   user: CommercialUserAdminView,
   config: ContractConfig,
   contractNumber: string,
 ): Record<string, string> {
   const info = CONTRACT_TYPE_INFO[config.contractType];
-  const fullName = text(user.name);
+  const fullName = normalizePersonName(user.name);
+  const pct = Number(config.commissionPercentage) || 0;
 
   return {
     numero_contrato: contractNumber,
     tipo_contrato: info.label,
     fecha_contrato: formatLongDate(config.contractDate),
-    ciudad: text(config.city),
+    ciudad: normalizePlace(config.city),
     nombre_completo: fullName,
     primer_nombre: fullName.split(/\s+/)[0] ?? "",
-    rut_prestador: text(user.rut),
-    domicilio_prestador: text(user.address),
-    comuna_prestador: text(user.comuna),
-    correo_personal: text(user.email),
-    telefono: text(user.phone),
-    correo_corporativo: text(config.corporateEmail) || "Pendiente de asignación",
+    rut_prestador: normalizeRutDisplay(user.rut),
+    domicilio_prestador: normalizeAddress(user.address),
+    comuna_prestador: normalizePlace(user.comuna),
+    correo_personal: normalizeEmail(user.email),
+    telefono: normalizePhone(user.phone),
+    correo_corporativo: normalizeEmail(config.corporateEmail) || "Pendiente de asignación",
     cargo_funcional: text(config.functionalRole) || info.functionalRole,
-    porcentaje_comision: String(config.commissionPercentage ?? ""),
+    porcentaje_comision: String(pct),
     base_comision: text(config.commissionBase),
     fecha_inicio: formatLongDate(config.startDate) || formatLongDate(config.contractDate),
     dias_aviso_termino: String(config.noticeDays ?? ""),
     dias_cola_comisiones: String(config.commissionTailDays ?? ""),
     vigencia: text(config.validity).toLocaleLowerCase("es"),
     retencion_vigente: String(DEFAULT_RETENTION_PCT),
-    banco: text(user.bank_name),
-    tipo_cuenta: text(user.bank_account_type),
-    numero_cuenta: text(user.bank_account_number),
-    titular_cuenta: text(user.bank_account_holder) || fullName,
-    rut_titular: text(user.bank_account_rut) || text(user.rut),
+    anio_retencion: String(RETENTION_YEAR),
+    ejemplo_base_comisionable: formatCLP(COMMISSION_EXAMPLE_BASE),
+    ejemplo_comision_bruta: formatCLP(Math.round((COMMISSION_EXAMPLE_BASE * pct) / 100)),
+    banco: normalizeBank(user.bank_name),
+    tipo_cuenta: normalizeAccountType(user.bank_account_type),
+    numero_cuenta: normalizeAccountNumber(user.bank_account_number),
+    titular_cuenta: normalizePersonName(user.bank_account_holder) || fullName,
+    rut_titular: normalizeRutDisplay(user.bank_account_rut) || normalizeRutDisplay(user.rut),
     razon_social_zyteron: CONTRACT_COMPANY.legalName,
     rut_zyteron: CONTRACT_COMPANY.rut,
-    domicilio_zyteron: CONTRACT_COMPANY.address,
-    comuna_zyteron: CONTRACT_COMPANY.comuna,
-    nombre_representante: text(config.representativeName),
-    rut_representante: text(config.representativeRut),
-    correo_contractual_zyteron: CONTRACT_COMPANY.email,
-    telefono_zyteron: CONTRACT_COMPANY.phone,
+    domicilio_zyteron: normalizeAddress(CONTRACT_COMPANY.address),
+    comuna_zyteron: normalizePlace(CONTRACT_COMPANY.comuna),
+    nombre_representante: normalizePersonName(config.representativeName),
+    rut_representante: normalizeRutDisplay(config.representativeRut),
+    correo_contractual_zyteron: normalizeEmail(CONTRACT_COMPANY.email),
+    telefono_zyteron: normalizePhone(CONTRACT_COMPANY.phone),
     sitio_web_zyteron: CONTRACT_COMPANY.website,
   };
 }
