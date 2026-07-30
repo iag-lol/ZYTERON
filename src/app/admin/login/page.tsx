@@ -65,43 +65,43 @@ function AdminLoginForm({ queryHasError }: { queryHasError: boolean }) {
     "w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-3 text-[14px] text-slate-800 outline-none transition-colors placeholder:text-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
 
   return (
-    <div className="min-h-dvh w-full overflow-x-hidden bg-white lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      {/* Panel de marca · en móvil se reduce a una franja superior */}
-      <aside className="relative isolate min-w-0 overflow-hidden bg-slate-950 px-5 py-9 sm:px-10 lg:flex lg:flex-col lg:justify-between lg:py-14">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -left-24 -top-24 h-80 w-80 rounded-full bg-blue-600/25 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-32 -right-16 h-96 w-96 rounded-full bg-cyan-500/15 blur-3xl"
-        />
+    <div className="relative isolate flex min-h-dvh w-full items-center justify-center overflow-hidden bg-slate-950 px-4 py-10 sm:px-6">
+      {/* Fondo: resplandores suaves y una rejilla muy tenue */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/3 rounded-full bg-blue-600/20 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute bottom-0 right-1/4 h-[460px] w-[460px] translate-y-1/3 rounded-full bg-cyan-500/10 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.035]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px)",
+          backgroundSize: "56px 56px",
+        }}
+      />
 
-        <div className="relative flex items-center gap-3.5 lg:gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-inset ring-white/15 backdrop-blur lg:h-14 lg:w-14">
-            <Image src="/logo.svg" alt="Zyteron" width={36} height={36} priority unoptimized className="h-8 w-8 lg:h-9 lg:w-9" />
+      <div className="relative w-full max-w-[420px]">
+        {/* Marca */}
+        <div className="flex flex-col items-center text-center">
+          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-inset ring-white/15 backdrop-blur">
+            <Image src="/logo.svg" alt="Zyteron" width={40} height={40} priority unoptimized className="h-10 w-10" />
           </span>
-          <span className="min-w-0">
-            <span className="block text-[19px] font-extrabold tracking-tight text-white lg:text-[22px]">
-              {siteConfig.name}
-            </span>
-            <span className="block text-[10.5px] font-semibold uppercase tracking-[0.22em] text-blue-300/80">
-              Acceso privado
-            </span>
+          <span className="mt-4 text-[24px] font-extrabold tracking-tight text-white">{siteConfig.name}</span>
+          <span className="mt-1 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-blue-300/70">
+            Acceso privado
           </span>
         </div>
 
-        <p className="relative mt-8 hidden text-[11px] text-slate-600 lg:block">
-          {siteConfig.legalName} · {siteConfig.address.display}
-        </p>
-      </aside>
+        {/* Tarjeta */}
+        <div className="mt-7 rounded-2xl border border-white/10 bg-white p-6 shadow-2xl shadow-slate-950/50 sm:p-8">
+          <h1 className="text-[20px] font-extrabold tracking-tight text-slate-900">Iniciar sesión</h1>
 
-      {/* Formulario */}
-      <main className="flex min-w-0 items-center justify-center px-5 py-12 sm:px-10 lg:py-14">
-        <div className="mx-auto w-full max-w-[400px] min-w-0">
-          <h1 className="text-[26px] font-extrabold tracking-tight text-slate-900 sm:text-[30px]">Iniciar sesión</h1>
-
-          <form className="mt-8 space-y-4" onSubmit={submit}>
+          <form className="mt-6 space-y-4" onSubmit={submit}>
             <label className="block">
               <span className="mb-1.5 flex items-baseline justify-between">
                 <span className="text-[12.5px] font-bold text-slate-700">RUT</span>
@@ -113,7 +113,6 @@ function AdminLoginForm({ queryHasError }: { queryHasError: boolean }) {
                   id="rut"
                   name="rut"
                   type="text"
-                  inputMode="text"
                   value={rut}
                   onChange={(e) => setRut(e.target.value)}
                   placeholder="12.345.678-9"
@@ -158,19 +157,19 @@ function AdminLoginForm({ queryHasError }: { queryHasError: boolean }) {
             <button
               type="submit"
               disabled={pending}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-[14px] font-bold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-[14px] font-bold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/25 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
               {pending ? "Verificando" : "Ingresar"}
             </button>
           </form>
-
-          <p className="mt-8 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Conexión cifrada
-          </p>
         </div>
-      </main>
+
+        <p className="mt-5 flex items-center justify-center gap-1.5 text-[11px] text-slate-500">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          {siteConfig.legalName} · Conexión cifrada
+        </p>
+      </div>
     </div>
   );
 }
