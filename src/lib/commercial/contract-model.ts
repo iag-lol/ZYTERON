@@ -128,7 +128,8 @@ export function buildVariables(
     dias_aviso_termino: String(config.noticeDays ?? ""),
     dias_cola_comisiones: String(config.commissionTailDays ?? ""),
     vigencia: text(config.validity).toLocaleLowerCase("es"),
-    retencion_vigente: String(DEFAULT_RETENTION_PCT),
+    // Notación chilena: coma decimal, nunca punto.
+    retencion_vigente: String(DEFAULT_RETENTION_PCT).replace(".", ","),
     anio_retencion: String(RETENTION_YEAR),
     ejemplo_base_comisionable: formatCLP(COMMISSION_EXAMPLE_BASE),
     ejemplo_comision_bruta: formatCLP(Math.round((COMMISSION_EXAMPLE_BASE * pct) / 100)),

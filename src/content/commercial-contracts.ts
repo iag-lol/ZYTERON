@@ -442,10 +442,10 @@ const PARTNER_CLAUSES: ContractClause[] = [
   {
     title: "Documentación tributaria y pago",
     paragraphs: [
-      "El Partner deberá emitir la Boleta de Honorarios Electrónica correspondiente a la comisión bruta liquidada, utilizando la opción en que la retención es efectuada por Zyteron en su calidad de receptor del documento.",
-      "Zyteron practicará y enterará en arcas fiscales la retención de impuestos a la tasa legal vigente al momento del pago (durante el año {{anio_retencion}}, {{retencion_vigente}}%). La variación legal de la tasa se aplicará automáticamente, sin necesidad de modificar este convenio.",
-      "El monto transferido al Partner corresponderá a la comisión bruta menos la retención legal.",
-      "El pago se efectuará mediante transferencia electrónica a la cuenta individualizada en el anexo, dentro de los 10 días hábiles siguientes a la recepción conforme de la boleta.",
+      "El Partner deberá emitir la Boleta de Honorarios Electrónica o el documento tributario que legalmente corresponda según su situación tributaria. Cuando se emita una Boleta de Honorarios Electrónica con retención por parte del receptor, Zyteron practicará y enterará la retención aplicando la tasa legal vigente.",
+      "Durante el año {{anio_retencion}}, dicha tasa corresponde al {{retencion_vigente}}%. La variación legal de la tasa se aplicará automáticamente, sin necesidad de modificar el presente convenio.",
+      "El monto transferido corresponderá a la comisión bruta menos las retenciones legalmente aplicables.",
+      "El pago se efectuará mediante transferencia electrónica a la cuenta individualizada en el anexo, dentro de los 10 días hábiles siguientes a la recepción conforme del documento tributario.",
       "El Partner es el único responsable del cumplimiento de sus obligaciones tributarias y previsionales, y deberá mantener actualizados sus datos bancarios en el portal comercial.",
     ],
   },
@@ -454,6 +454,15 @@ const PARTNER_CLAUSES: ContractClause[] = [
     paragraphs: [
       "El Partner mantendrá estricta reserva sobre la información comercial, técnica, financiera, de clientes, precios y márgenes de Zyteron a la que acceda con ocasión de este convenio.",
       "La obligación se mantiene durante toda la relación y por 3 años contados desde su término, cualquiera sea la causa.",
+    ],
+  },
+  {
+    title: "Comunicaciones comerciales",
+    paragraphs: [
+      "El Partner deberá efectuar toda comunicación comercial utilizando exclusivamente información, canales y material autorizado por Zyteron.",
+      "Las comunicaciones deberán identificar claramente a Zyteron, indicar su finalidad comercial y proporcionar un mecanismo válido y expedito mediante el cual el destinatario pueda solicitar la suspensión de futuros contactos.",
+      "Solicitada la suspensión, quedará prohibido efectuar nuevas comunicaciones promocionales al destinatario. El Partner deberá respetar las solicitudes de eliminación, las restricciones informadas por Zyteron y la normativa vigente sobre comunicaciones publicitarias, protección al consumidor y tratamiento de datos personales.",
+      "Queda prohibido realizar envíos masivos indiscriminados, utilizar bases de datos compradas o contactar personas cuyos datos hayan sido obtenidos ilícitamente.",
     ],
   },
   {
@@ -497,7 +506,7 @@ const PARTNER_CLAUSES: ContractClause[] = [
     paragraphs: [
       "Cualquiera de las partes podrá poner término al convenio, sin expresión de causa y sin derecho a indemnización de ninguna naturaleza, dando aviso por escrito a la otra con a lo menos {{dias_aviso_termino}} días corridos de anticipación.",
       "Zyteron podrá ponerle término de inmediato, sin necesidad de aviso previo, en caso de incumplimiento grave, en especial la recepción de dineros de clientes, la emisión de cotizaciones no autorizadas, la infracción a la confidencialidad, el uso ilícito de datos personales o la atribución de una representación que no ostenta.",
-      "Terminado el convenio, los referidos aceptados con anterioridad conservarán el período de atribución que les reste conforme a la cláusula de atribución comercial, y las comisiones que se devenguen dentro de dicho período se pagarán en los términos aquí pactados.",
+      "Terminado el convenio, los referidos aceptados con anterioridad conservarán el período de atribución que les reste conforme a la cláusula de atribución comercial. Si el cliente contrata dentro de dicho período, el Partner conservará el derecho a las comisiones correspondientes al contrato inicial, aunque uno o más pagos sean recibidos por Zyteron con posterioridad al vencimiento del plazo de atribución. Estas comisiones deberán liquidarse y pagarse en los mismos términos establecidos en el presente convenio.",
     ],
   },
   {
@@ -556,7 +565,7 @@ export const CONTRACT_TEMPLATES: Record<ContractTypeId, ContractTemplate> = {
   },
   partner_agreement: {
     id: "zyteron-partner-referidor",
-    version: "2.0.0",
+    version: "2.1.0",
     type: "partner_agreement",
     documentTitle: "CONVENIO DE COLABORACIÓN COMERCIAL INDEPENDIENTE",
     subtitle: "Denominación funcional: {{cargo_funcional}}",
@@ -578,6 +587,6 @@ export const ESSENTIAL_TERMS_LABELS: Array<{ label: string; variable: string }> 
   { label: "Base de cálculo", variable: "base_comision" },
   { label: "Vigencia", variable: "vigencia" },
   { label: "Aviso de término", variable: "dias_aviso_termino" },
-  { label: "Comisiones posteriores", variable: "dias_cola_comisiones" },
+  { label: "Plazo de atribución", variable: "dias_cola_comisiones" },
   { label: "Cargo funcional", variable: "cargo_funcional" },
 ];

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
 import {
   closeContract,
-  createNewVersion,
+  updateContract,
   getContract,
   issueContract,
   listEmailLogs,
@@ -27,7 +27,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 const schema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("issue") }),
   z.object({ action: z.literal("received") }),
-  z.object({ action: z.literal("version"), reason: z.string().trim().min(3, "Indica el motivo de la nueva versión.") }),
+  z.object({ action: z.literal("version"), reason: z.string().trim().min(3, "Indica el motivo de la actualización.") }),
   z.object({ action: z.literal("cancel"), reason: z.string().trim().min(3, "Indica el motivo de la anulación.") }),
   z.object({ action: z.literal("terminate"), reason: z.string().trim().min(3, "Indica el motivo del término.") }),
   z.object({ action: z.literal("validate") }),
@@ -54,7 +54,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
       : body.action === "received"
         ? await markReceived(actor, id)
         : body.action === "version"
-          ? await createNewVersion(actor, id, body.reason)
+          ? await updateContract(actor, id, body.reason)
           : body.action === "cancel"
             ? await closeContract(actor, id, "cancel", body.reason)
             : body.action === "terminate"
