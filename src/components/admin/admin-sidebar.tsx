@@ -212,7 +212,7 @@ export function AdminSidebar() {
       >
       {/* Logo */}
       <div className="relative flex h-16 shrink-0 items-center border-b border-slate-200 px-4">
-        <Link href="/admin" className="flex items-center gap-3 overflow-hidden">
+        <Link href="/admin" prefetch={false} className="flex items-center gap-3 overflow-hidden">
           <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 shadow-md shadow-blue-700/20">
             <Zap className="text-white" style={{ width: "1.125rem", height: "1.125rem" }} />
             {/* Online indicator */}
