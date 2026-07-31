@@ -17,6 +17,13 @@
 - `npm run db:push` — push schema a DB
 - `npm run db:seed` — semillas iniciales
 
+## Widget de macOS
+
+La app descargable sigue siendo la PWA existente. El compañero nativo mínimo
+SwiftUI + WidgetKit está en `macos/ZyteronWidget`. Consulta la auditoría,
+arquitectura, variables, compilación e instalación en
+[`docs/widget-macos.md`](docs/widget-macos.md).
+
 ## Variables de entorno
 Copia `.env.example` a `.env` y ajusta:
 - `DATABASE_URL`

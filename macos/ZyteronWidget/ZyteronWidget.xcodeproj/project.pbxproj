@@ -1,0 +1,493 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		027ED8E778583B40D61C4CDA /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D9342C13ABA545C91A8702D /* LoginView.swift */; };
+		0928EBCF0145F3A7C2378D05 /* BrandMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED8B42AA213414B9206AD79E /* BrandMark.swift */; };
+		09B9673DD689E77F4D66220A /* ZyteronWidgetApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB91669DFAA0D24D39106A5A /* ZyteronWidgetApp.swift */; };
+		11D6647FB8E108D2AB10E7C7 /* SharedConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DD8FA2FF3143035FF7EE9F2 /* SharedConfiguration.swift */; };
+		3DD0C90F220017DE8E701DBE /* RefreshWidgetIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74739F7E89D8B9F616FBB652 /* RefreshWidgetIntent.swift */; };
+		478C352D1C7104F9DBF9C549 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936857DEBACC2BDB3783A5A9 /* SettingsView.swift */; };
+		4B987128A2B8D3F4EE05D418 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BF3BC1286106B58238E9BF3 /* ContentView.swift */; };
+		58205913AED4112A434810C6 /* ZyteronDashboardWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0575E5933A9A54032D2230B2 /* ZyteronDashboardWidget.swift */; };
+		5EA50B6C979B43163890E949 /* ZyteronWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9962011058C68846F6303433 /* ZyteronWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		7E534CD702D7E40B684FB94D /* SharedConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DD8FA2FF3143035FF7EE9F2 /* SharedConfiguration.swift */; };
+		808BAF7E2E00BB20B9D160DD /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53EFE62765B19429A8B665F5 /* KeychainStore.swift */; };
+		834CC50EB28AE4F0957E592D /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCEB6E916F68F2641C4E21A2 /* AppModel.swift */; };
+		A0FC19107AAF5034F6FAE4B4 /* SharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 015337335E5A921D0C0B297C /* SharedStore.swift */; };
+		AE6EE329658D3978AE6E0756 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAB2380269E89B901F73E80F /* Models.swift */; };
+		C3855D76256420E4BEB1D64F /* SharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 015337335E5A921D0C0B297C /* SharedStore.swift */; };
+		D41B3B2001F9A4058741ED56 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53EFE62765B19429A8B665F5 /* KeychainStore.swift */; };
+		DC932F882955C8C097991904 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D28002622A9E853416F0D8E /* NotificationService.swift */; };
+		DEB7037F335832FE68F958C5 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA127FF72719D03691562568 /* APIClient.swift */; };
+		E93FEF1CA92C59A8FC7E1D1B /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA127FF72719D03691562568 /* APIClient.swift */; };
+		EE3ABB6CE4D34CF3E240D381 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAB2380269E89B901F73E80F /* Models.swift */; };
+		F79483A73276C993AE84E777 /* ZyteronWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76883D3D00404C9421614A35 /* ZyteronWidgetBundle.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		415D0263E02F6E71FA97B42E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8D26F592CA80B583CCD76583 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B8EDB181B127DDE621DE5256;
+			remoteInfo = ZyteronWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DF6561618572A77A1102B45A /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				5EA50B6C979B43163890E949 /* ZyteronWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		015337335E5A921D0C0B297C /* SharedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStore.swift; sourceTree = "<group>"; };
+		0575E5933A9A54032D2230B2 /* ZyteronDashboardWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZyteronDashboardWidget.swift; sourceTree = "<group>"; };
+		08038F3C96847AEA8CDA2667 /* ZyteronWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ZyteronWidget.entitlements; sourceTree = "<group>"; };
+		18445F5622CDE74483016114 /* ZyteronWidget.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZyteronWidget.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1D28002622A9E853416F0D8E /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		3D9342C13ABA545C91A8702D /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		53EFE62765B19429A8B665F5 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		74739F7E89D8B9F616FBB652 /* RefreshWidgetIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshWidgetIntent.swift; sourceTree = "<group>"; };
+		76883D3D00404C9421614A35 /* ZyteronWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZyteronWidgetBundle.swift; sourceTree = "<group>"; };
+		8BF3BC1286106B58238E9BF3 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		936857DEBACC2BDB3783A5A9 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		9962011058C68846F6303433 /* ZyteronWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ZyteronWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		9DD8FA2FF3143035FF7EE9F2 /* SharedConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedConfiguration.swift; sourceTree = "<group>"; };
+		AD4CF7B8B744AFC297219BA5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		BA127FF72719D03691562568 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		BB91669DFAA0D24D39106A5A /* ZyteronWidgetApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZyteronWidgetApp.swift; sourceTree = "<group>"; };
+		BCEB6E916F68F2641C4E21A2 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		D7B2F68FF652103560BA8D13 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		EAB2380269E89B901F73E80F /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		ED8B42AA213414B9206AD79E /* BrandMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMark.swift; sourceTree = "<group>"; };
+		F19CD885F00F6480A7BF945E /* ZyteronWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ZyteronWidgetExtension.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		042CEB97C6558580D44C2824 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				18445F5622CDE74483016114 /* ZyteronWidget.app */,
+				9962011058C68846F6303433 /* ZyteronWidgetExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		222FF0F59F9BFA1F6BAF2CD4 = {
+			isa = PBXGroup;
+			children = (
+				7131239F7FADB46940D12258 /* App */,
+				B525D92DD87F4357A59ED061 /* Shared */,
+				2B914317C056383169410B01 /* Widget */,
+				042CEB97C6558580D44C2824 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		2B914317C056383169410B01 /* Widget */ = {
+			isa = PBXGroup;
+			children = (
+				D7B2F68FF652103560BA8D13 /* Info.plist */,
+				74739F7E89D8B9F616FBB652 /* RefreshWidgetIntent.swift */,
+				0575E5933A9A54032D2230B2 /* ZyteronDashboardWidget.swift */,
+				76883D3D00404C9421614A35 /* ZyteronWidgetBundle.swift */,
+				F19CD885F00F6480A7BF945E /* ZyteronWidgetExtension.entitlements */,
+			);
+			path = Widget;
+			sourceTree = "<group>";
+		};
+		7131239F7FADB46940D12258 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				BCEB6E916F68F2641C4E21A2 /* AppModel.swift */,
+				ED8B42AA213414B9206AD79E /* BrandMark.swift */,
+				8BF3BC1286106B58238E9BF3 /* ContentView.swift */,
+				AD4CF7B8B744AFC297219BA5 /* Info.plist */,
+				3D9342C13ABA545C91A8702D /* LoginView.swift */,
+				1D28002622A9E853416F0D8E /* NotificationService.swift */,
+				936857DEBACC2BDB3783A5A9 /* SettingsView.swift */,
+				08038F3C96847AEA8CDA2667 /* ZyteronWidget.entitlements */,
+				BB91669DFAA0D24D39106A5A /* ZyteronWidgetApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		B525D92DD87F4357A59ED061 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				BA127FF72719D03691562568 /* APIClient.swift */,
+				53EFE62765B19429A8B665F5 /* KeychainStore.swift */,
+				EAB2380269E89B901F73E80F /* Models.swift */,
+				9DD8FA2FF3143035FF7EE9F2 /* SharedConfiguration.swift */,
+				015337335E5A921D0C0B297C /* SharedStore.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5A34D75EF73C6C8501DA2C3E /* ZyteronWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F0ED57FAD12C0EFA1F1E3FEB /* Build configuration list for PBXNativeTarget "ZyteronWidget" */;
+			buildPhases = (
+				7CC28312139F150CD222F0E3 /* Sources */,
+				DF6561618572A77A1102B45A /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E7A050850193AC2D79693D5C /* PBXTargetDependency */,
+			);
+			name = ZyteronWidget;
+			packageProductDependencies = (
+			);
+			productName = ZyteronWidget;
+			productReference = 18445F5622CDE74483016114 /* ZyteronWidget.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B8EDB181B127DDE621DE5256 /* ZyteronWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0889CE5D2D56EBDC9F5D7854 /* Build configuration list for PBXNativeTarget "ZyteronWidgetExtension" */;
+			buildPhases = (
+				FF195B192323D132DBC085FB /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ZyteronWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = ZyteronWidgetExtension;
+			productReference = 9962011058C68846F6303433 /* ZyteronWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		8D26F592CA80B583CCD76583 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					5A34D75EF73C6C8501DA2C3E = {
+						ProvisioningStyle = Automatic;
+					};
+					B8EDB181B127DDE621DE5256 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 2B80CD74B23959DDFD237BE8 /* Build configuration list for PBXProject "ZyteronWidget" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 222FF0F59F9BFA1F6BAF2CD4;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 042CEB97C6558580D44C2824 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5A34D75EF73C6C8501DA2C3E /* ZyteronWidget */,
+				B8EDB181B127DDE621DE5256 /* ZyteronWidgetExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7CC28312139F150CD222F0E3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DEB7037F335832FE68F958C5 /* APIClient.swift in Sources */,
+				834CC50EB28AE4F0957E592D /* AppModel.swift in Sources */,
+				0928EBCF0145F3A7C2378D05 /* BrandMark.swift in Sources */,
+				4B987128A2B8D3F4EE05D418 /* ContentView.swift in Sources */,
+				808BAF7E2E00BB20B9D160DD /* KeychainStore.swift in Sources */,
+				027ED8E778583B40D61C4CDA /* LoginView.swift in Sources */,
+				EE3ABB6CE4D34CF3E240D381 /* Models.swift in Sources */,
+				DC932F882955C8C097991904 /* NotificationService.swift in Sources */,
+				478C352D1C7104F9DBF9C549 /* SettingsView.swift in Sources */,
+				11D6647FB8E108D2AB10E7C7 /* SharedConfiguration.swift in Sources */,
+				A0FC19107AAF5034F6FAE4B4 /* SharedStore.swift in Sources */,
+				09B9673DD689E77F4D66220A /* ZyteronWidgetApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FF195B192323D132DBC085FB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E93FEF1CA92C59A8FC7E1D1B /* APIClient.swift in Sources */,
+				D41B3B2001F9A4058741ED56 /* KeychainStore.swift in Sources */,
+				AE6EE329658D3978AE6E0756 /* Models.swift in Sources */,
+				3DD0C90F220017DE8E701DBE /* RefreshWidgetIntent.swift in Sources */,
+				7E534CD702D7E40B684FB94D /* SharedConfiguration.swift in Sources */,
+				C3855D76256420E4BEB1D64F /* SharedStore.swift in Sources */,
+				58205913AED4112A434810C6 /* ZyteronDashboardWidget.swift in Sources */,
+				F79483A73276C993AE84E777 /* ZyteronWidgetBundle.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E7A050850193AC2D79693D5C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B8EDB181B127DDE621DE5256 /* ZyteronWidgetExtension */;
+			targetProxy = 415D0263E02F6E71FA97B42E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0ABE9DBF9C3CF8C3592437B6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		78FB1E91C81918B369CE5593 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/ZyteronWidget.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = cl.zyteron.widget;
+				PRODUCT_NAME = "Zyteron Widget";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		928D0BEE58243AC51CBCFF91 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/ZyteronWidget.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = cl.zyteron.widget;
+				PRODUCT_NAME = "Zyteron Widget";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		A5F25115926B1D0FFAE812F1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Widget/ZyteronWidgetExtension.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Widget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = cl.zyteron.widget.extension;
+				PRODUCT_NAME = "Zyteron Widget Extension";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		BB172CC32A6A37C2625C86B2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Widget/ZyteronWidgetExtension.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Widget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = cl.zyteron.widget.extension;
+				PRODUCT_NAME = "Zyteron Widget Extension";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		D6C875440B20388B33100F03 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0889CE5D2D56EBDC9F5D7854 /* Build configuration list for PBXNativeTarget "ZyteronWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A5F25115926B1D0FFAE812F1 /* Debug */,
+				BB172CC32A6A37C2625C86B2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		2B80CD74B23959DDFD237BE8 /* Build configuration list for PBXProject "ZyteronWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0ABE9DBF9C3CF8C3592437B6 /* Debug */,
+				D6C875440B20388B33100F03 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F0ED57FAD12C0EFA1F1E3FEB /* Build configuration list for PBXNativeTarget "ZyteronWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				78FB1E91C81918B369CE5593 /* Debug */,
+				928D0BEE58243AC51CBCFF91 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 8D26F592CA80B583CCD76583 /* Project object */;
+}

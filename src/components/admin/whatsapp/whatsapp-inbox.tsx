@@ -22,7 +22,6 @@ import {
   Sparkles,
   Trash2,
   User,
-  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -117,7 +116,7 @@ function modeBadge(mode: string) {
 
 // -- Componente principal ----------------------------------------------------
 
-export function WhatsappInbox() {
+export function WhatsappInbox({ initialConversationId = null }: { initialConversationId?: string | null }) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -131,6 +130,7 @@ export function WhatsappInbox() {
   const [mobileView, setMobileView] = useState<"list" | "chat" | "ficha">("list");
   const [realtimeOk, setRealtimeOk] = useState(true);
   const [usingRealtime, setUsingRealtime] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -144,17 +144,32 @@ export function WhatsappInbox() {
     try {
       const res = await fetch("/api/admin/whatsapp/conversations", { cache: "no-store" });
       const data = (await res.json().catch(() => null)) as { conversations?: Conversation[] } | null;
-      if (data?.conversations) setConversations(data.conversations);
+      if (data?.conversations) {
+        setConversations(data.conversations);
+        if (initialConversationId && data.conversations.some((item) => item.id === initialConversationId)) {
+          setActiveId((current) => current ?? initialConversationId);
+          setMobileView("chat");
+        }
+      }
     } catch {
       /* noop */
     } finally {
       setLoadingList(false);
     }
-  }, []);
+  }, [initialConversationId]);
 
   useEffect(() => {
     void fetchConversations();
   }, [fetchConversations]);
+
+  useEffect(() => {
+    const first = window.setTimeout(() => setCurrentTime(Date.now()), 0);
+    const timer = window.setInterval(() => setCurrentTime(Date.now()), 60_000);
+    return () => {
+      window.clearTimeout(first);
+      window.clearInterval(timer);
+    };
+  }, []);
 
   // -- Realtime + polling de respaldo ---------------------------------------
   useEffect(() => {
@@ -296,7 +311,7 @@ export function WhatsappInbox() {
   }, [input]);
 
   // -- Enviar mensaje --------------------------------------------------------
-  const windowOpen = active?.window_expires_at ? new Date(active.window_expires_at).getTime() > Date.now() : false;
+  const windowOpen = active?.window_expires_at ? new Date(active.window_expires_at).getTime() > currentTime : false;
 
   const sendMessage = useCallback(async () => {
     const text = input.trim();
@@ -488,6 +503,7 @@ export function WhatsappInbox() {
           <>
             <ChatHeader
               conv={active}
+              windowOpen={windowOpen}
               onBack={() => setMobileView("list")}
               onOpenFicha={() => setMobileView("ficha")}
               onSetMode={(mode) => void patchConversation({ mode })}
@@ -527,6 +543,7 @@ export function WhatsappInbox() {
       >
         {active ? (
           <FichaPanel
+            key={active.id}
             conv={active}
             notes={notes}
             onBack={() => setMobileView("chat")}
@@ -592,6 +609,7 @@ function ConversationItem({ conv, active, onClick }: { conv: Conversation; activ
 
 function ChatHeader({
   conv,
+  windowOpen,
   onBack,
   onOpenFicha,
   onSetMode,
@@ -599,13 +617,13 @@ function ChatHeader({
   onDelete,
 }: {
   conv: Conversation;
+  windowOpen: boolean;
   onBack: () => void;
   onOpenFicha: () => void;
   onSetMode: (mode: string) => void;
   onClose: () => void;
   onDelete: () => void;
 }) {
-  const windowOpen = conv.window_expires_at ? new Date(conv.window_expires_at).getTime() > Date.now() : false;
   return (
     <header className="flex flex-col gap-2 border-b border-slate-200 px-3 py-2.5 sm:px-4">
       <div className="flex items-center gap-2">
@@ -794,18 +812,6 @@ function FichaPanel({
   });
   const [noteText, setNoteText] = useState("");
   const [savingNote, setSavingNote] = useState(false);
-
-  useEffect(() => {
-    setForm({
-      customer_name: conv.customer_name ?? "",
-      email: conv.email ?? "",
-      company: conv.company ?? "",
-      industry: conv.industry ?? "",
-      requested_service: conv.requested_service ?? "",
-      estimated_budget: conv.estimated_budget?.toString() ?? "",
-      deadline: conv.deadline ?? "",
-    });
-  }, [conv.id, conv.customer_name, conv.email, conv.company, conv.industry, conv.requested_service, conv.estimated_budget, conv.deadline]);
 
   const field = (label: string, key: keyof typeof form, type = "text") => (
     <label className="block">

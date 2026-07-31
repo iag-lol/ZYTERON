@@ -68,12 +68,13 @@ function LiveClock() {
         new Date().toLocaleTimeString("es-CL", {
           hour: "2-digit",
           minute: "2-digit",
-          second: "2-digit",
         })
       );
     }
     update();
-    const id = setInterval(update, 1000);
+    // Sin segundos basta con refrescar cada medio minuto. Antes se redibujaba
+    // una vez por segundo en todas las páginas del panel, sin ganancia real.
+    const id = setInterval(update, 30_000);
     return () => clearInterval(id);
   }, []);
   return (

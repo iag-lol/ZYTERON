@@ -3,7 +3,14 @@
 import { usePathname } from "next/navigation";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { AiChatWidget } from "@/components/ui/ai-chat-widget";
+import dynamic from "next/dynamic";
+
+// El asistente es un botón flotante: no hace falta para el primer pintado,
+// así que su código se descarga aparte y no pesa en la carga inicial.
+const AiChatWidget = dynamic(
+  () => import("@/components/ui/ai-chat-widget").then((m) => m.AiChatWidget),
+  { ssr: false },
+);
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

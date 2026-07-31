@@ -815,10 +815,18 @@ export async function getTaxDocuments() {
   );
 }
 
+/**
+ * Visitas web para el panel. Solo trae las columnas que el dashboard usa
+ * (conteos, IPs únicas, rutas más vistas y las últimas navegaciones).
+ *
+ * `pageTitle`, `referrer` y `userAgent` se omiten a propósito: son las
+ * columnas más largas de la tabla y nadie las lee, así que transferirlas
+ * multiplicaba el peso de cada carga del panel sin aportar nada.
+ */
 export async function getWebVisits(limit = 5000) {
   return safeSelect<WebVisit>(
     "WebVisit",
-    "id, path, pageTitle, referrer, userAgent, ip, ipHash, sessionId, createdAt",
+    "id, path, ip, ipHash, sessionId, createdAt",
     { orderBy: "createdAt", limit },
   );
 }

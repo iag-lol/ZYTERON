@@ -23,8 +23,10 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
-export function CommercialHub() {
-  const [tab, setTab] = useState<TabId>("panel");
+export function CommercialHub({ initialTab }: { initialTab?: string }) {
+  const [tab, setTab] = useState<TabId>(
+    TABS.some((item) => item.id === initialTab) ? (initialTab as TabId) : "panel",
+  );
   const [memberToOpen, setMemberToOpen] = useState<string | null>(null);
 
   function openMember(id: string) {

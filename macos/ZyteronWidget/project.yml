@@ -1,0 +1,62 @@
+name: ZyteronWidget
+options:
+  bundleIdPrefix: cl.zyteron
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_HARDENED_RUNTIME: YES
+    GENERATE_INFOPLIST_FILE: NO
+targets:
+  ZyteronWidget:
+    type: application
+    platform: macOS
+    sources:
+      - path: Shared
+      - path: App
+    info:
+      path: App/Info.plist
+    entitlements:
+      path: App/ZyteronWidget.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: cl.zyteron.widget
+        PRODUCT_NAME: Zyteron Widget
+        INFOPLIST_FILE: App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/ZyteronWidget.entitlements
+    dependencies:
+      - target: ZyteronWidgetExtension
+        embed: true
+  ZyteronWidgetExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Shared
+      - path: Widget
+    info:
+      path: Widget/Info.plist
+    entitlements:
+      path: Widget/ZyteronWidgetExtension.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: cl.zyteron.widget.extension
+        PRODUCT_NAME: Zyteron Widget Extension
+        INFOPLIST_FILE: Widget/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Widget/ZyteronWidgetExtension.entitlements
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+schemes:
+  ZyteronWidget:
+    build:
+      targets:
+        ZyteronWidget: all
+        ZyteronWidgetExtension: all
+    run:
+      config: Debug
+    archive:
+      config: Release
