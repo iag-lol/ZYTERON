@@ -203,22 +203,42 @@ export function AdminNotifications() {
   }, []);
 
   const fireBrowserNotification = useCallback((notif: AdminNotification) => {
-    try {
-      if (!("Notification" in window) || Notification.permission !== "granted") return;
-      const n = new Notification(notif.title, {
-        body: notif.subtitle,
-        tag: notif.id,
-        icon: "/logo.svg",
-        badge: "/logo.svg",
-      });
-      n.onclick = () => {
-        window.focus();
-        window.location.href = notif.href;
-        n.close();
-      };
-    } catch {
-      /* noop */
-    }
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+    const payload = {
+      body: notif.subtitle,
+      tag: notif.id,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      data: { href: notif.href },
+      // Vibración en teléfonos; los navegadores que no la soportan la ignoran.
+      vibrate: [180, 80, 180],
+    } as NotificationOptions;
+
+    // En Android e iOS instalado, el constructor `new Notification()` está
+    // prohibido: la notificación debe emitirla el service worker. Se intenta
+    // esa vía primero y solo se recurre al constructor en escritorio.
+    void (async () => {
+      try {
+        if ("serviceWorker" in navigator) {
+          const registration = await navigator.serviceWorker.ready;
+          await registration.showNotification(notif.title, payload);
+          return;
+        }
+      } catch {
+        /* Sin service worker disponible: se intenta la vía clásica. */
+      }
+      try {
+        const n = new Notification(notif.title, payload);
+        n.onclick = () => {
+          window.focus();
+          window.location.href = notif.href;
+          n.close();
+        };
+      } catch {
+        /* noop */
+      }
+    })();
   }, []);
 
   const ingest = useCallback(

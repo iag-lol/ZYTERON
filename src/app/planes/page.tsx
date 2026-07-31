@@ -5,6 +5,7 @@ import { ArrowRight, Check, CircleDollarSign } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
+import { PlansShowcase, type ShowcasePlan } from "@/components/planes/plans-showcase";
 import { siteConfig } from "@/config/site";
 import { PLAN_PRICES, PRICING_NOTE } from "@/config/pricing";
 import {
@@ -27,15 +28,12 @@ type ProjectTypeValue =
   | "tienda-online"
   | "sistema-web";
 
-type PlanTone = "default" | "starter" | "featured" | "critical";
-
 type PlanCard = {
   id: string;
   name: string;
   price: string;
   priceNote?: string;
   tag: string;
-  tone?: PlanTone;
   audience: string;
   description: string;
   includes: string[];
@@ -59,38 +57,6 @@ function buildQuoteHref(projectType: ProjectTypeValue, presetPlan: string) {
   return `/cotizador?tipo=${projectType}&plan=${presetPlan}`;
 }
 
-function planToneClasses(tone: PlanTone = "default") {
-  if (tone === "starter") {
-    return {
-      card: "border-blue-200 bg-gradient-to-b from-blue-50 to-white shadow-blue-100/70",
-      badge: "border-blue-200 bg-white text-blue-700",
-      price: "text-blue-700",
-    };
-  }
-
-  if (tone === "featured") {
-    return {
-      card: "border-cyan-300 bg-gradient-to-b from-cyan-50 via-white to-white shadow-cyan-100/80 ring-1 ring-cyan-100",
-      badge: "border-cyan-200 bg-cyan-100 text-cyan-800",
-      price: "text-cyan-700",
-    };
-  }
-
-  if (tone === "critical") {
-    return {
-      card: "border-slate-300 bg-gradient-to-b from-slate-100 to-white shadow-slate-200/80",
-      badge: "border-slate-300 bg-slate-900 text-white",
-      price: "text-slate-900",
-    };
-  }
-
-  return {
-    card: "border-slate-200 bg-white shadow-slate-100/80",
-    badge: "border-slate-200 bg-slate-50 text-slate-700",
-    price: "text-blue-700",
-  };
-}
-
 const plans: PlanCard[] = [
   {
     id: "web-basica",
@@ -98,7 +64,6 @@ const plans: PlanCard[] = [
     price: PLAN_PRICES["web-basica"],
     priceNote: "pago único",
     tag: "Ideal para comenzar",
-    tone: "starter",
     audience:
       "Emprendedores, profesionales independientes y negocios pequeños que recién comienzan y necesitan presencia online seria sin una inversión alta.",
     description:
@@ -180,7 +145,6 @@ const plans: PlanCard[] = [
     name: "Plan Pyme",
     price: PLAN_PRICES["pyme"],
     tag: "Más solicitado",
-    tone: "featured",
     audience:
       "Para negocios que necesitan una web más completa, ordenada y enfocada en generar confianza, mostrar servicios, responder dudas y recibir consultas.",
     description:
@@ -278,7 +242,6 @@ const plans: PlanCard[] = [
     name: "Ecommerce con carrito y pagos",
     price: PLAN_PRICES["ecommerce"],
     tag: "Venta online",
-    tone: "featured",
     audience:
       "Para negocios que quieren vender online con carrito de compras y pagos en línea integrados.",
     description:
@@ -340,7 +303,6 @@ const plans: PlanCard[] = [
     name: "Sistema Avanzado / Desarrollo a medida",
     price: PLAN_PRICES["avanzado"],
     tag: "Proyecto crítico",
-    tone: "critical",
     audience:
       "Para empresas con procesos más complejos, múltiples módulos, integraciones, automatizaciones y operación crítica.",
     description:
@@ -502,6 +464,30 @@ const priceFaqs = [
   },
 ];
 
+/**
+ * Los tres planes que se muestran de entrada: el recorrido natural de compra,
+ * de tener presencia a vender en línea. El resto del catálogo queda tras el
+ * botón "ver más". Cambiar este arreglo cambia la vitrina.
+ */
+const FEATURED_IDS = ["web-basica", "pyme", "ecommerce"];
+
+/** Adapta un plan del catálogo al formato resumido de la vitrina. */
+function toShowcase(id: string): ShowcasePlan {
+  const plan = plans.find((item) => item.id === id);
+  if (!plan) throw new Error(`Plan desconocido en la vitrina: ${id}`);
+  return {
+    id: plan.id,
+    name: plan.name,
+    price: plan.price,
+    priceNote: plan.priceNote,
+    tag: plan.tag,
+    audience: plan.audience,
+    description: plan.description,
+    includes: plan.includes,
+    quoteHref: buildQuoteHref(plan.projectType, plan.presetPlan),
+  };
+}
+
 export default function PlanesPage() {
   return (
     <main className="bg-white">
@@ -567,139 +553,10 @@ export default function PlanesPage() {
             </p>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-3">
-            {plans.map((plan) => {
-              const tone = planToneClasses(plan.tone);
-              return (
-                <article
-                  key={plan.id}
-                  className={`flex h-full flex-col rounded-[2rem] border p-6 shadow-sm ${tone.card}`}
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] ${tone.badge}`}
-                    >
-                      {plan.tag}
-                    </span>
-                  </div>
-
-                  <div className="mt-4">
-                    <h2 className="text-2xl font-extrabold text-slate-900">{plan.name}</h2>
-                    <div className="mt-2 flex flex-wrap items-end gap-2">
-                      <p className={`text-2xl font-extrabold ${tone.price}`}>{plan.price}</p>
-                      {plan.priceNote ? (
-                        <p className="text-sm font-semibold text-slate-500">{plan.priceNote}</p>
-                      ) : null}
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-slate-600">{plan.description}</p>
-                    <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white/70 p-4">
-                      <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Ideal para</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-700">{plan.audience}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 hidden flex-1 grid-cols-1 gap-4 md:grid">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-widest text-emerald-700">Incluye</p>
-                      <div className="mt-2 space-y-2">
-                        {plan.includes.map((item) => (
-                          <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
-                            <span>{item}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-widest text-rose-700">No incluye</p>
-                      <div className="mt-2 space-y-2">
-                        {plan.excludes.map((item) => (
-                          <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-rose-600" />
-                            <span>{item}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    {plan.availableAddons?.length ? (
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Adicionales disponibles</p>
-                        <div className="mt-2 space-y-2">
-                          {plan.availableAddons.map((item) => (
-                            <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" />
-                              <span>{item}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="mt-5 space-y-3 md:hidden">
-                    <details className="rounded-2xl border border-slate-200 bg-white/80 p-4" open>
-                      <summary className="cursor-pointer list-none text-sm font-bold text-emerald-700">
-                        Incluye
-                      </summary>
-                      <div className="mt-3 space-y-2">
-                        {plan.includes.map((item) => (
-                          <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
-                            <span>{item}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </details>
-                    <details className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-                      <summary className="cursor-pointer list-none text-sm font-bold text-rose-700">
-                        No incluye
-                      </summary>
-                      <div className="mt-3 space-y-2">
-                        {plan.excludes.map((item) => (
-                          <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-rose-600" />
-                            <span>{item}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </details>
-                    {plan.availableAddons?.length ? (
-                      <details className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-                        <summary className="cursor-pointer list-none text-sm font-bold text-blue-700">
-                          Adicionales disponibles
-                        </summary>
-                        <div className="mt-3 space-y-2">
-                          {plan.availableAddons.map((item) => (
-                            <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" />
-                              <span>{item}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </details>
-                    ) : null}
-                  </div>
-
-                  {plan.notes?.length ? (
-                    <div className="mt-5 space-y-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                      {plan.notes.map((note) => (
-                        <p key={note}>{note}</p>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  <div className="mt-5">
-                    <Button asChild className="w-full bg-blue-700 text-white hover:bg-blue-800">
-                      <Link href={buildQuoteHref(plan.projectType, plan.presetPlan)}>
-                        {plan.ctaLabel} <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
-
-                </article>
-              );
-            })}
-          </div>
+          <PlansShowcase
+            featured={FEATURED_IDS.map(toShowcase)}
+            rest={plans.filter((plan) => !FEATURED_IDS.includes(plan.id)).map((plan) => toShowcase(plan.id))}
+          />
 
           <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             Cada valor es referencial y se confirma según alcance, contenido, integraciones, soporte y complejidad real del proyecto.

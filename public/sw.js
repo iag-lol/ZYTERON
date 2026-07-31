@@ -53,3 +53,45 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
+
+// ── Notificaciones del sistema operativo ──────────────────────────────
+// Al tocar una notificación se enfoca la pestaña del panel si ya está
+// abierta, y solo se abre una nueva cuando no hay ninguna.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const destino = (event.notification.data && event.notification.data.href) || "/admin";
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes("/admin") && "focus" in client) {
+          client.navigate(destino);
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(destino);
+    })
+  );
+});
+
+// Mensajes push del servidor (requiere claves VAPID configuradas).
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+  let payload = {};
+  try {
+    payload = event.data.json();
+  } catch {
+    payload = { title: "Zyteron", body: event.data.text() };
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title || "Zyteron", {
+      body: payload.body || "",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      tag: payload.tag,
+      data: { href: payload.href || "/admin" },
+      vibrate: [180, 80, 180],
+    })
+  );
+});
