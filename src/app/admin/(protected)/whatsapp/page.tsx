@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function WhatsappPage() {
-  return <WhatsappInbox />;
+export default async function WhatsappPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ conversation?: string }>;
+}) {
+  const query = await searchParams;
+  return <WhatsappInbox initialConversationId={query?.conversation ?? null} />;
 }

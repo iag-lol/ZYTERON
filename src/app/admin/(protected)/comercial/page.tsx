@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function ComercialPage() {
-  return <CommercialHub />;
+export default async function ComercialPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ tab?: string }>;
+}) {
+  const query = await searchParams;
+  return <CommercialHub initialTab={query?.tab} />;
 }
