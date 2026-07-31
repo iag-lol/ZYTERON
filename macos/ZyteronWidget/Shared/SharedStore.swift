@@ -1,6 +1,7 @@
 import Foundation
 
 enum SharedStore {
+    private static let cacheDirectoryName = "ZyteronWidget"
     private static let cacheFilename = "dashboard-snapshot.json"
 
     static func save(_ snapshot: DashboardSnapshot) throws {
@@ -29,8 +30,8 @@ enum SharedStore {
     }
 
     private static var containerURL: URL? {
-        FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: SharedConfiguration.appGroup
-        )
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+            .first?
+            .appendingPathComponent(cacheDirectoryName, isDirectory: true)
     }
 }

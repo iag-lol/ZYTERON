@@ -15,7 +15,7 @@
 		478C352D1C7104F9DBF9C549 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936857DEBACC2BDB3783A5A9 /* SettingsView.swift */; };
 		4B987128A2B8D3F4EE05D418 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BF3BC1286106B58238E9BF3 /* ContentView.swift */; };
 		58205913AED4112A434810C6 /* ZyteronDashboardWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0575E5933A9A54032D2230B2 /* ZyteronDashboardWidget.swift */; };
-		5EA50B6C979B43163890E949 /* ZyteronWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9962011058C68846F6303433 /* ZyteronWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		5EA50B6C979B43163890E949 /* Zyteron Widget Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9962011058C68846F6303433 /* Zyteron Widget Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		7E534CD702D7E40B684FB94D /* SharedConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DD8FA2FF3143035FF7EE9F2 /* SharedConfiguration.swift */; };
 		808BAF7E2E00BB20B9D160DD /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53EFE62765B19429A8B665F5 /* KeychainStore.swift */; };
 		834CC50EB28AE4F0957E592D /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCEB6E916F68F2641C4E21A2 /* AppModel.swift */; };
@@ -47,7 +47,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				5EA50B6C979B43163890E949 /* ZyteronWidgetExtension.appex in Embed Foundation Extensions */,
+				5EA50B6C979B43163890E949 /* Zyteron Widget Extension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -58,7 +58,7 @@
 		015337335E5A921D0C0B297C /* SharedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStore.swift; sourceTree = "<group>"; };
 		0575E5933A9A54032D2230B2 /* ZyteronDashboardWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZyteronDashboardWidget.swift; sourceTree = "<group>"; };
 		08038F3C96847AEA8CDA2667 /* ZyteronWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ZyteronWidget.entitlements; sourceTree = "<group>"; };
-		18445F5622CDE74483016114 /* ZyteronWidget.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZyteronWidget.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		18445F5622CDE74483016114 /* Zyteron Widget.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Zyteron Widget.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1D28002622A9E853416F0D8E /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		3D9342C13ABA545C91A8702D /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		53EFE62765B19429A8B665F5 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
@@ -66,7 +66,7 @@
 		76883D3D00404C9421614A35 /* ZyteronWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZyteronWidgetBundle.swift; sourceTree = "<group>"; };
 		8BF3BC1286106B58238E9BF3 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		936857DEBACC2BDB3783A5A9 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		9962011058C68846F6303433 /* ZyteronWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ZyteronWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		9962011058C68846F6303433 /* Zyteron Widget Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Zyteron Widget Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9DD8FA2FF3143035FF7EE9F2 /* SharedConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedConfiguration.swift; sourceTree = "<group>"; };
 		AD4CF7B8B744AFC297219BA5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		BA127FF72719D03691562568 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
@@ -82,8 +82,8 @@
 		042CEB97C6558580D44C2824 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				18445F5622CDE74483016114 /* ZyteronWidget.app */,
-				9962011058C68846F6303433 /* ZyteronWidgetExtension.appex */,
+				18445F5622CDE74483016114 /* Zyteron Widget.app */,
+				9962011058C68846F6303433 /* Zyteron Widget Extension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -157,7 +157,7 @@
 			packageProductDependencies = (
 			);
 			productName = ZyteronWidget;
-			productReference = 18445F5622CDE74483016114 /* ZyteronWidget.app */;
+			productReference = 18445F5622CDE74483016114 /* Zyteron Widget.app */;
 			productType = "com.apple.product-type.application";
 		};
 		B8EDB181B127DDE621DE5256 /* ZyteronWidgetExtension */ = {
@@ -174,7 +174,7 @@
 			packageProductDependencies = (
 			);
 			productName = ZyteronWidgetExtension;
-			productReference = 9962011058C68846F6303433 /* ZyteronWidgetExtension.appex */;
+			productReference = 9962011058C68846F6303433 /* Zyteron Widget Extension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -188,11 +188,11 @@
 				TargetAttributes = {
 					5A34D75EF73C6C8501DA2C3E = {
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.ApplicationGroups\": [\"enabled\": 1], \"com.apple.Keychain\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.Keychain\": [\"enabled\": 1], \"com.apple.Sandbox\": [\"enabled\": 1]]";
 					};
 					B8EDB181B127DDE621DE5256 = {
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.Keychain\": [\"enabled\": 1], \"com.apple.ApplicationGroups\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.Keychain\": [\"enabled\": 1], \"com.apple.Sandbox\": [\"enabled\": 1]]";
 					};
 				};
 			};
@@ -334,6 +334,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = App/ZyteronWidget.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = GDM68A2762;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -351,6 +352,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = App/ZyteronWidget.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = GDM68A2762;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -368,6 +370,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = Widget/ZyteronWidgetExtension.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = GDM68A2762;
 				INFOPLIST_FILE = Widget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -387,6 +390,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = Widget/ZyteronWidgetExtension.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = GDM68A2762;
 				INFOPLIST_FILE = Widget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

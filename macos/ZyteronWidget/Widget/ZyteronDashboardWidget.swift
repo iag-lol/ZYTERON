@@ -35,7 +35,7 @@ struct ZyteronProvider: TimelineProvider {
             } catch APIError.unauthorized {
                 entry = ZyteronEntry(date: Date(), snapshot: SharedStore.cachedSnapshot(), state: .sessionExpired)
             } catch APIError.notConfigured {
-                entry = ZyteronEntry(date: Date(), snapshot: SharedStore.cachedSnapshot(), state: .needsLogin)
+                entry = ZyteronEntry(date: Date(), snapshot: nil, state: .needsLogin)
             } catch {
                 if let cached = SharedStore.cachedSnapshot() {
                     entry = ZyteronEntry(date: Date(), snapshot: cached, state: .cached(error.localizedDescription))
