@@ -20,5 +20,10 @@
 	<string>1</string>
 	<key>SharedKeychainAccessGroup</key>
 	<string>$(AppIdentifierPrefix)cl.zyteron.widget.shared</string>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.widgetkit-extension</string>
+	</dict>
 </dict>
 </plist>

@@ -61,6 +61,8 @@ targets:
       path: Widget/Info.plist
       properties:
         SharedKeychainAccessGroup: $(AppIdentifierPrefix)cl.zyteron.widget.shared
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:
       path: Widget/ZyteronWidgetExtension.entitlements
       properties:
