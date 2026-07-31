@@ -1,22 +1,26 @@
 import Foundation
 
 enum SharedConfiguration {
-    static let appGroup = "group.cl.zyteron.widget"
     static let widgetKind = "ZyteronDashboardWidget"
     private static let baseURLKey = "zyteron.widget.baseURL"
+    private static let productionBaseURL = URL(string: "https://www.zyteron.cl")!
 
-    static var defaults: UserDefaults {
-        UserDefaults(suiteName: appGroup) ?? .standard
-    }
+    static var defaults: UserDefaults { .standard }
 
     static var baseURL: URL? {
-        guard let raw = defaults.string(forKey: baseURLKey) else { return nil }
-        return normalizedBaseURL(raw)
+        if let shared = KeychainStore.baseURLString(), let url = normalizedBaseURL(shared) {
+            return url
+        }
+        if let local = defaults.string(forKey: baseURLKey), let url = normalizedBaseURL(local) {
+            return url
+        }
+        return productionBaseURL
     }
 
     static func saveBaseURL(_ raw: String) throws -> URL {
         guard let url = normalizedBaseURL(raw) else { throw APIError.invalidBaseURL }
         defaults.set(url.absoluteString, forKey: baseURLKey)
+        try KeychainStore.saveBaseURL(url)
         return url
     }
 

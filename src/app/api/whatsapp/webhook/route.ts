@@ -11,6 +11,7 @@ import { generateAiReply } from "@/lib/whatsapp/agent";
 import { sendMetaWhatsappMessage } from "@/lib/notifications/meta-whatsapp";
 import { notifyOwnerChatStarted } from "@/lib/notifications/chat-started-alert";
 import { logWebhook } from "@/lib/whatsapp/webhook-log";
+import { sendAdminPushNotification } from "@/lib/notifications/admin-web-push";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -138,7 +139,7 @@ async function processPayload(payload: unknown) {
         }
 
         const desc = describeMessage(message);
-        const { inserted } = await insertInboundMessage({
+        const { inserted, message: storedMessage } = await insertInboundMessage({
           conversationId: conv.id,
           metaMessageId: message.id,
           replyTo: message.context?.id,
@@ -164,6 +165,16 @@ async function processPayload(payload: unknown) {
           incrementUnread: true,
           extendWindow: true,
         });
+
+        await sendAdminPushNotification({
+          title: `Nuevo WhatsApp: ${profileName || `+${from}`}`,
+          body: desc.content.slice(0, 180) || "Nuevo mensaje recibido",
+          href: `/admin/whatsapp?conversation=${conv.id}`,
+          tag: `whatsapp-${storedMessage?.id || message.id || conv.id}`,
+          kind: "whatsapp",
+          createdAt: storedMessage?.created_at || new Date().toISOString(),
+          eventId: `whatsapp:${storedMessage?.id || message.id || conv.id}`,
+        }).catch((error) => console.error("[admin-push] aviso de WhatsApp fallido:", error));
 
         if (isFirst) {
           void notifyOwnerChatStarted(`WhatsApp de +${from}: ${desc.content}`).catch(() => {});

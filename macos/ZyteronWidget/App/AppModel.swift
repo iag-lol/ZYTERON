@@ -16,6 +16,7 @@ final class AppModel: ObservableObject {
     private var refreshTask: Task<Void, Never>?
 
     func start() async {
+        NotificationRouter.shared.register()
         await NotificationService.requestAuthorization()
         if isAuthenticated { await refresh(showProgress: false) }
         scheduleForegroundRefresh()
@@ -81,7 +82,7 @@ final class AppModel: ObservableObject {
         refreshTask?.cancel()
         refreshTask = Task { [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(300))
+                try? await Task.sleep(for: .seconds(60))
                 guard let self, self.isAuthenticated else { continue }
                 await self.refresh(showProgress: false)
             }

@@ -13,8 +13,10 @@ El backend combina PostgreSQL/Prisma con Supabase. Las consultas privilegiadas
 se realizan en el servidor con `SUPABASE_SERVICE_ROLE_KEY`; la app de macOS no
 recibe esa clave ni una anon key. La sesión del widget se obtiene validando la
 misma contraseña del acceso administrativo actual (`ADMIN_PASSWORD`) y se
-representa con un token HMAC limitado al rol `ADMIN`. El token queda en el
-Keychain compartido de macOS y el snapshot queda en el contenedor App Group.
+representa con un token HMAC limitado al rol `ADMIN`. El token y la URL quedan
+en el Keychain compartido de macOS. La app y la extensión mantienen su propio
+snapshot dentro de sus contenedores App Sandbox, por lo que la compilación para
+uso personal no depende de App Groups de pago.
 
 ### Fuentes reales utilizadas
 
@@ -45,8 +47,8 @@ conversación indicada.
   mínimo con métricas, alertas y listas recientes. No cachea respuestas HTTP.
 - La extensión WidgetKit solicita un snapshot aproximadamente cada 15 minutos.
   macOS puede espaciar ese intervalo según batería y uso.
-- El botón de recarga usa un `AppIntent`. El último snapshot válido se guarda
-  de forma atómica para estados sin conexión.
+- El botón de recarga usa un `AppIntent`. Cada target guarda de forma atómica
+  su último snapshot válido para estados sin conexión.
 - La app compañera revisa cada cinco minutos mientras está abierta y emite
   avisos locales por aumentos de contactos, cotizaciones, WhatsApp, web,
   partners y ejecutivos. Avisos garantizados con la app cerrada requerirían
@@ -91,12 +93,12 @@ Requisitos: macOS 14 o posterior y Xcode 16 o posterior.
 2. Abre `macos/ZyteronWidget/ZyteronWidget.xcodeproj` en Xcode.
 3. En **Signing & Capabilities**, selecciona tu Apple Development Team para
    los targets `ZyteronWidget` y `ZyteronWidgetExtension`.
-4. Verifica que ambos targets tengan App Groups
-   (`group.cl.zyteron.widget`) y Keychain Sharing
-   (`cl.zyteron.widget.shared`). Xcode agregará el prefijo de tu Team.
-5. Si esos identificadores ya pertenecen a otro equipo, cambia los bundle IDs
-   en `project.yml`, el App Group en ambos entitlements y
-   `Shared/SharedConfiguration.swift`, y vuelve a generar el proyecto con:
+4. Verifica que ambos targets tengan App Sandbox, acceso de red saliente y
+   Keychain Sharing (`cl.zyteron.widget.shared`). Xcode agregará el prefijo de
+   tu Team. No agregues App Groups: un Personal Team gratuito no los incluye y
+   esta implementación no los necesita.
+5. Si los bundle IDs ya pertenecen a otro equipo, cámbialos en `project.yml` y
+   vuelve a generar el proyecto con:
 
    ```bash
    brew install xcodegen
@@ -153,8 +155,8 @@ abrir la app compilada una vez desde Finder.
 
 - Configurar las variables nuevas en el proveedor donde está desplegado
   Next.js y volver a desplegar.
-- Seleccionar el Apple Development Team y registrar los capabilities App Group
-  y Keychain Sharing; esos recursos dependen de la cuenta Apple del dueño.
+- Seleccionar el Apple Development Team y firmar App Sandbox y Keychain
+  Sharing; esos recursos dependen de la cuenta Apple del dueño.
 - Instalar la app y agregar el widget desde la galería de macOS.
 
 No hay migraciones SQL nuevas: el widget usa las tablas ya presentes en el

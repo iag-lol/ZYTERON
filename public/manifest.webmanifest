@@ -1,5 +1,6 @@
 {
   "name": "Zyteron Admin",
+  "id": "/admin",
   "short_name": "Zyteron",
   "description": "Panel de administración de Zyteron: cotizaciones, clientes, ventas y asistente IA.",
   "start_url": "/admin",

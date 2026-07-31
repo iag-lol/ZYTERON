@@ -3,7 +3,7 @@
  * admin ni de APIs para no exponer datos. Solo provee el "app shell" offline
  * básico y el manejo de fetch requerido para la instalación. */
 
-const CACHE = "zyteron-shell-v1";
+const CACHE = "zyteron-shell-v2";
 const OFFLINE_ASSETS = ["/manifest.webmanifest", "/logo.svg", "/icon-192.png"];
 
 self.addEventListener("install", (event) => {
@@ -60,16 +60,17 @@ self.addEventListener("fetch", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const destino = (event.notification.data && event.notification.data.href) || "/admin";
+  const destinationUrl = new URL(destino, self.location.origin).href;
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
         if (client.url.includes("/admin") && "focus" in client) {
-          client.navigate(destino);
+          client.navigate(destinationUrl);
           return client.focus();
         }
       }
-      return self.clients.openWindow(destino);
+      return self.clients.openWindow(destinationUrl);
     })
   );
 });
@@ -84,14 +85,53 @@ self.addEventListener("push", (event) => {
     payload = { title: "Zyteron", body: event.data.text() };
   }
 
-  event.waitUntil(
-    self.registration.showNotification(payload.title || "Zyteron", {
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    windows.forEach((client) => client.postMessage({ type: "ZYTERON_PUSH", payload }));
+
+    if (typeof payload.badgeCount === "number" && self.navigator && "setAppBadge" in self.navigator) {
+      await self.navigator.setAppBadge(payload.badgeCount).catch(() => {});
+    }
+
+    await self.registration.showNotification(payload.title || "Zyteron", {
       body: payload.body || "",
       icon: "/icon-192.png",
       badge: "/icon-192.png",
       tag: payload.tag,
+      renotify: true,
+      timestamp: payload.createdAt ? new Date(payload.createdAt).getTime() : Date.now(),
       data: { href: payload.href || "/admin" },
       vibrate: [180, 80, 180],
-    })
-  );
+    });
+  })());
+});
+
+function urlBase64ToUint8Array(base64) {
+  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+  const raw = atob((base64 + padding).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from([...raw].map((character) => character.charCodeAt(0)));
+}
+
+// Chrome puede rotar la suscripción. La renovamos para no perder avisos.
+self.addEventListener("pushsubscriptionchange", (event) => {
+  event.waitUntil((async () => {
+    const response = await fetch("/api/admin/push/subscriptions", {
+      credentials: "include",
+      cache: "no-store",
+    });
+    if (!response.ok) return;
+    const config = await response.json();
+    if (!config.publicKey) return;
+
+    const subscription = await self.registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(config.publicKey),
+    });
+    await fetch("/api/admin/push/subscriptions", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(subscription.toJSON()),
+    });
+  })().catch(() => {}));
 });

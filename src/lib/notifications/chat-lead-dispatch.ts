@@ -67,12 +67,8 @@ function buildMessageText(p: ChatLeadPayload) {
 // -- Correo (Resend) --------------------------------------------------------
 
 async function sendEmail(p: ChatLeadPayload): Promise<{ result: ChannelResult; detail: string }> {
-  if (!env("RESEND_API_KEY")) {
-    log("email:skipped", { reason: "no RESEND_API_KEY", leadId: p.leadId });
-    return { result: "skipped", detail: "no RESEND_API_KEY" };
-  }
-
-  // Reutilizamos la plantilla HTML de marca de los leads del sitio.
+  // Reutilizamos la plantilla HTML de marca. Esta función también despacha
+  // Web Push, incluso si Resend no está configurado.
   const messageLines = [
     p.isQuote ? "Solicitud de cotización desde el asistente con IA." : "Interés captado desde el asistente con IA.",
     "",

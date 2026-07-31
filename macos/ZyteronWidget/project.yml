@@ -16,13 +16,27 @@ targets:
   ZyteronWidget:
     type: application
     platform: macOS
+    attributes:
+      SystemCapabilities:
+        com.apple.Keychain:
+          enabled: 1
+        com.apple.Sandbox:
+          enabled: 1
     sources:
       - path: Shared
       - path: App
     info:
       path: App/Info.plist
+      properties:
+        CFBundleVersion: "2"
+        SharedKeychainAccessGroup: $(AppIdentifierPrefix)cl.zyteron.widget.shared
     entitlements:
       path: App/ZyteronWidget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)cl.zyteron.widget.shared
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: cl.zyteron.widget
@@ -35,13 +49,29 @@ targets:
   ZyteronWidgetExtension:
     type: app-extension
     platform: macOS
+    attributes:
+      SystemCapabilities:
+        com.apple.Keychain:
+          enabled: 1
+        com.apple.Sandbox:
+          enabled: 1
     sources:
       - path: Shared
       - path: Widget
     info:
       path: Widget/Info.plist
+      properties:
+        CFBundleVersion: "2"
+        SharedKeychainAccessGroup: $(AppIdentifierPrefix)cl.zyteron.widget.shared
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:
       path: Widget/ZyteronWidgetExtension.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)cl.zyteron.widget.shared
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: cl.zyteron.widget.extension
