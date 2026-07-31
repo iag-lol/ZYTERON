@@ -188,9 +188,11 @@
 				TargetAttributes = {
 					5A34D75EF73C6C8501DA2C3E = {
 						ProvisioningStyle = Automatic;
+						SystemCapabilities = "[\"com.apple.ApplicationGroups\": [\"enabled\": 1], \"com.apple.Keychain\": [\"enabled\": 1]]";
 					};
 					B8EDB181B127DDE621DE5256 = {
 						ProvisioningStyle = Automatic;
+						SystemCapabilities = "[\"com.apple.Keychain\": [\"enabled\": 1], \"com.apple.ApplicationGroups\": [\"enabled\": 1]]";
 					};
 				};
 			};
