@@ -1,5 +1,6 @@
 import { siteConfig } from "@/config/site";
 import { ZYTERON_COMPANY } from "@/lib/company";
+import { leadPushPayload, sendAdminPushNotification } from "@/lib/notifications/admin-web-push";
 
 type CartLine = {
   name: string;
@@ -297,6 +298,12 @@ function renderLeadAlertText(input: LeadAlertInput) {
 }
 
 export async function sendLeadAlertEmail(input: LeadAlertInput) {
+  // Web Push es independiente del correo: si Resend no está configurado, el
+  // aviso del dispositivo debe seguir llegando.
+  await sendAdminPushNotification(leadPushPayload(input)).catch((error) => {
+    console.error("[admin-push] aviso de lead fallido:", error);
+  });
+
   const resendApiKey = process.env.RESEND_API_KEY;
   if (!resendApiKey) {
     return { sent: false as const, reason: "missing_api_key" as const };

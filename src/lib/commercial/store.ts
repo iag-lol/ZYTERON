@@ -1,5 +1,6 @@
 import { hash, compare } from "bcrypt";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { sendAdminPushNotification } from "@/lib/notifications/admin-web-push";
 import { toSiiRut, isValidRut } from "@/lib/sii/rut";
 
 /**
@@ -406,6 +407,23 @@ export async function createLead(ownerId: string, input: Record<string, unknown>
     .select("id")
     .single();
   if (error) return { ok: false, error: error.message };
+
+  const { data: owner } = await db()
+    .from("commercial_users")
+    .select("name,role")
+    .eq("id", ownerId)
+    .maybeSingle();
+  const ownerRole = owner?.role === "partner" ? "partner" : "executive";
+  await sendAdminPushNotification({
+    title: `${ownerRole === "partner" ? "Partner" : "Ejecutivo"}: nuevo cliente`,
+    body: `${fields.name} · ${owner?.name || "Equipo comercial"}`,
+    href: "/admin/comercial?tab=leads",
+    tag: `commercial-${String(data.id)}`,
+    kind: ownerRole,
+    createdAt: new Date().toISOString(),
+    eventId: `commercial:${String(data.id)}`,
+  }).catch((pushError) => console.error("[admin-push] aviso comercial fallido:", pushError));
+
   return { ok: true, id: data.id as string };
 }
 

@@ -8,7 +8,9 @@ export function PwaRegister() {
     if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
     if (process.env.NODE_ENV !== "production") return;
     const register = () => {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).then((registration) => {
+        void registration.update();
+      }).catch(() => {});
     };
     if (document.readyState === "complete") register();
     else window.addEventListener("load", register, { once: true });
