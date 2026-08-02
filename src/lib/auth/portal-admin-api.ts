@@ -2,13 +2,13 @@ import { Role } from "@prisma/client";
 import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { ADMIN_SESSION_VALUE, COOKIE_KEY } from "@/lib/auth/admin-constants";
+import { ADMIN_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin-session";
 import { portalAuthOptions } from "@/lib/auth/portal-auth";
 
 export async function requirePortalAdminApiSession() {
   const cookieStore = await cookies();
-  const legacyAdminToken = cookieStore.get(COOKIE_KEY)?.value;
-  if (legacyAdminToken && legacyAdminToken === ADMIN_SESSION_VALUE) {
+  const adminToken = cookieStore.get(ADMIN_COOKIE)?.value;
+  if (await verifyAdminSessionToken(adminToken)) {
     return {
       session: {
         user: {
