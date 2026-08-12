@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
-import { CommercialQuoteBuilder, type ProjectTypeValue } from "@/components/forms/commercial-quote-builder";
+import { CommercialQuoteBuilder } from "@/components/forms/commercial-quote-builder";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Cotizador web para empresas en Chile",
@@ -11,41 +11,7 @@ export const metadata: Metadata = createPageMetadata({
   path: "/cotizador",
 });
 
-const allowedProjectTypes = new Set<ProjectTypeValue>([
-  "web-basica",
-  "web-profesional",
-  "tienda-online",
-  "sistema-web",
-  "automatizacion",
-  "soporte-ti",
-  "no-seguro",
-]);
-
-const planLabels: Record<string, string> = {
-  "web-basica-presentacion": "Web Básica de Presentación",
-  "plan-emprendedor": "Plan Emprendedor",
-  "plan-pyme": "Plan Pyme",
-  "plan-empresa": "Plan Empresa",
-  "catalogo-tienda-online": "Catálogo / Tienda Online",
-  "sistema-web-panel-administrativo": "Sistema Web / Panel Administrativo",
-  "sistema-avanzado": "Sistema Avanzado / Desarrollo a medida",
-};
-
-function normalizeProjectType(value?: string) {
-  return value && allowedProjectTypes.has(value as ProjectTypeValue) ? (value as ProjectTypeValue) : undefined;
-}
-
-type PageProps = {
-  searchParams?:
-    | Promise<{ tipo?: string; plan?: string }>
-    | { tipo?: string; plan?: string };
-};
-
-export default async function CotizadorPage({ searchParams }: PageProps) {
-  const query = await Promise.resolve(searchParams);
-  const initialProjectType = normalizeProjectType(query?.tipo);
-  const initialPlanLabel = query?.plan ? planLabels[String(query.plan).trim()] : undefined;
-
+export default function CotizadorPage() {
   return (
     <main className="bg-white">
       <JsonLd
@@ -79,10 +45,7 @@ export default async function CotizadorPage({ searchParams }: PageProps) {
 
       <section className="py-12">
         <Container className="space-y-8">
-          <CommercialQuoteBuilder
-            initialPlanLabel={initialPlanLabel}
-            initialProjectType={initialProjectType}
-          />
+          <CommercialQuoteBuilder />
         </Container>
       </section>
     </main>

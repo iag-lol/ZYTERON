@@ -16,9 +16,9 @@ import {
 } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Planes web, ecommerce y sistemas para empresas",
+  title: "Precios de páginas web en Chile: planes y valores",
   description:
-    "Revisa planes y precios referenciales para páginas web, ecommerce, sistemas y soporte, con alcance claro para cada etapa del negocio.",
+    "Compara precios de páginas web en Chile: web básica, plan pyme, sitio corporativo, ecommerce y sistemas, con valores referenciales y alcance claro.",
   path: "/planes",
 });
 
@@ -435,6 +435,10 @@ const planGuide = [
 
 const priceFaqs = [
   {
+    q: "¿Cuánto cuesta una página web en Chile?",
+    a: `Los valores publicados por Zyteron son: Web Básica, ${PLAN_PRICES["web-basica"]}; Plan Pyme, ${PLAN_PRICES.pyme}; y Plan Empresa, ${PLAN_PRICES.empresa}. Son referencias: el precio final depende de páginas, contenido, administración e integraciones.`,
+  },
+  {
     q: "¿Los precios publicados son finales?",
     a: "No. Son valores base para proyectos referenciales. El precio final depende del alcance real, secciones, integraciones, contenido, soporte requerido y nivel de personalización.",
   },
@@ -495,9 +499,9 @@ export default function PlanesPage() {
         id="planes-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/planes",
-          title: "Planes flexibles para cada etapa de tu negocio",
+          title: "Precios de páginas web en Chile: planes y valores",
           description:
-            "Desde una web simple de presentación hasta un sistema completo, con valores base claros y cotización formal según alcance.",
+            "Precios referenciales para páginas web, ecommerce y sistemas, con alcance claro y cotización formal según cada proyecto.",
           breadcrumbs: [
             { name: "Inicio", path: "/" },
             { name: "Planes", path: "/planes" },
@@ -522,10 +526,10 @@ export default function PlanesPage() {
             Planes y cotización profesional
           </div>
           <h1 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">
-            Planes flexibles para cada etapa de tu negocio
+            Precios de páginas web en Chile y planes para cada negocio
           </h1>
           <p className="mx-auto max-w-4xl text-base text-slate-600 sm:text-lg">
-            Desde una web simple de presentación hasta un sistema completo, en ZYTERON trabajamos con valores base claros y cotización formal según el alcance real de cada proyecto.
+            Compara desde una web simple de presentación hasta un sitio corporativo, ecommerce o sistema. Publicamos valores base claros y confirmamos cada proyecto mediante una cotización formal.
           </p>
           <div className="mx-auto max-w-4xl rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-slate-700">
             Los valores publicados son referenciales para proyectos base. El precio final puede variar según secciones, funcionalidades, contenido, integraciones, soporte requerido y nivel de personalización.
@@ -547,7 +551,7 @@ export default function PlanesPage() {
         <Container className="space-y-4">
           <div className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Planes principales</p>
-            <h2 className="text-3xl font-extrabold text-slate-900">Elige una base clara para partir</h2>
+            <h2 className="text-3xl font-extrabold text-slate-900">Planes y valores de páginas web para comenzar</h2>
             <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
               Ordenamos los planes para que sea más fácil distinguir una web de entrada, una web comercial más completa, una solución para empresa y un sistema interno.
             </p>

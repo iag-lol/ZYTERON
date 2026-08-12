@@ -65,7 +65,7 @@ const nextConfig: NextConfig = {
   images: {
     deviceSizes: [320, 384, 640, 750, 828, 1080, 1200],
     imageSizes: [16, 32, 48, 64, 96, 128, 200, 256, 300, 384, 512, 640, 800],
-    qualities: [75, 80, 90],
+    qualities: [70, 75, 80, 85, 90, 95],
     remotePatterns: [
       {
         protocol: "https",
@@ -104,7 +104,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/servicios/paginas-web-para-empresas",
-        destination: "/desarrollo-web",
+        destination: "/diseno-web-empresas",
+        permanent: true,
+      },
+      {
+        source: "/paginas-web-para-empresas",
+        destination: "/diseno-web-empresas",
         permanent: true,
       },
       {
@@ -125,6 +130,61 @@ const nextConfig: NextConfig = {
       {
         source: "/servicios/agencia-diseno-web-chile",
         destination: "/diseno-web-empresas",
+        permanent: true,
+      },
+      {
+        source: "/servicios/diseno-web-santiago",
+        destination: "/desarrollo-web-santiago",
+        permanent: true,
+      },
+      {
+        source: "/tiendas-online-chile",
+        destination: "/tiendas-online",
+        permanent: true,
+      },
+      {
+        source: "/sistemas-web-a-medida",
+        destination: "/sistemas-web",
+        permanent: true,
+      },
+      {
+        source: "/desarrollo-web/santiago",
+        destination: "/desarrollo-web-santiago",
+        permanent: true,
+      },
+      {
+        source: "/desarrollo-web/:ubicacion",
+        destination: "/desarrollo-web",
+        permanent: true,
+      },
+      {
+        source: "/diseno-web/:ubicacion",
+        destination: "/diseno-web-empresas",
+        permanent: true,
+      },
+      {
+        source: "/paginas-web-para-pymes/:ubicacion",
+        destination: "/paginas-web-para-pymes",
+        permanent: true,
+      },
+      {
+        source: "/soporte-ti/:ubicacion",
+        destination: "/soporte-ti",
+        permanent: true,
+      },
+      {
+        source: "/sistemas-web/:ubicacion",
+        destination: "/sistemas-web",
+        permanent: true,
+      },
+      {
+        source: "/ciudades/santiago",
+        destination: "/desarrollo-web-santiago",
+        permanent: true,
+      },
+      {
+        source: "/ciudades/:ubicacion",
+        destination: "/desarrollo-web",
         permanent: true,
       },
       {

@@ -9,7 +9,6 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { siteConfig } from "@/config/site";
 import {
   buildFaqJsonLd,
-  buildProfessionalServiceJsonLd,
   buildServiceJsonLd,
   buildWebPageJsonLd,
   createPageMetadata,
@@ -25,12 +24,14 @@ const WHATSAPP_BASE = siteConfig.social.whatsapp;
 
 const CANONICAL_SERVICE_PATHS: Record<string, string> = {
   "desarrollo-web-chile": "/desarrollo-web",
-  "paginas-web-para-empresas": "/desarrollo-web",
+  "paginas-web-para-empresas": "/diseno-web-empresas",
   "creacion-de-sitios-web-para-empresas": "/desarrollo-web",
   "paginas-web-para-pymes": "/paginas-web-para-pymes",
   "diseno-web-chile": "/diseno-web-empresas",
   "agencia-diseno-web-chile": "/diseno-web-empresas",
+  "diseno-web-santiago": "/desarrollo-web-santiago",
 };
+const CONSOLIDATED_SERVICE_SLUGS = new Set(Object.keys(CANONICAL_SERVICE_PATHS));
 
 const serviceExamplesBySlug: Record<
   string,
@@ -153,7 +154,9 @@ const serviceExamplesBySlug: Record<
 };
 
 export function generateStaticParams() {
-  return servicePages.map((service) => ({ slug: service.slug }));
+  return servicePages
+    .filter((service) => !CONSOLIDATED_SERVICE_SLUGS.has(service.slug))
+    .map((service) => ({ slug: service.slug }));
 }
 
 export async function generateMetadata({ params }: ServicePageProps): Promise<Metadata> {
@@ -209,13 +212,6 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
         })}
       />
       <JsonLd
-        id={`professional-service-schema-${service.slug}`}
-        data={buildProfessionalServiceJsonLd({
-          path: servicePath,
-          description: service.metaDescription,
-        })}
-      />
-      <JsonLd
         id={`service-schema-${service.slug}`}
         data={buildServiceJsonLd({
           path: servicePath,
@@ -252,7 +248,7 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-slate-300 font-semibold text-slate-800 hover:bg-slate-50">
-              <Link href="/contacto">
+              <Link href={`/contacto?servicio=${service.slug}`}>
                 Solicitar propuesta <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -368,7 +364,7 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
                   <span className="text-sm font-bold text-slate-900">Ir al cotizador</span>
                   <span className="mt-1 block text-xs leading-relaxed text-slate-500">Completa el formulario y envía tu requerimiento con más contexto.</span>
                 </Link>
-                <Link href="/contacto" className="block rounded-xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:border-blue-200 hover:bg-white">
+                <Link href={`/contacto?servicio=${service.slug}`} className="block rounded-xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:border-blue-200 hover:bg-white">
                   <span className="text-sm font-bold text-slate-900">Hablar con un especialista</span>
                   <span className="mt-1 block text-xs leading-relaxed text-slate-500">Solicita orientación comercial para definir alcance y prioridades.</span>
                 </Link>
@@ -447,7 +443,7 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
               </Link>
             </Button>
             <Button asChild variant="outline" className="border-slate-300 font-semibold text-slate-800 hover:bg-slate-50">
-              <Link href="/contacto">Hablar con un especialista</Link>
+              <Link href={`/contacto?servicio=${service.slug}`}>Hablar con un especialista</Link>
             </Button>
             <Button asChild variant="outline" className="border-slate-300 font-semibold text-slate-800 hover:bg-slate-50">
               <Link href="/servicios">Ver todos los servicios</Link>

@@ -5,11 +5,55 @@ import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import type { DbCaseStudy } from "@/lib/admin/blog-cases-repository";
 
+const caseServiceOptions = [
+  {
+    href: "/sistemas-web",
+    label: "Ver sistemas web",
+    signals: ["sistema", "panel", "inventario", "asistencia", "control", "dashboard", "software"],
+  },
+  {
+    href: "/tiendas-online",
+    label: "Ver tiendas online",
+    signals: ["ecommerce", "tienda online", "catálogo", "carrito", "producto"],
+  },
+  {
+    href: "/automatizacion",
+    label: "Ver automatización",
+    signals: ["automat", "whatsapp", "notificación", "tarea repetitiva"],
+  },
+  {
+    href: "/paginas-web-para-pymes",
+    label: "Ver páginas web para pymes",
+    signals: ["pyme", "emprendimiento", "negocio pequeño"],
+  },
+  {
+    href: "/diseno-web-empresas",
+    label: "Ver páginas web para empresas",
+    signals: ["página web", "sitio web", "web corporativa", "landing", "seo"],
+  },
+] as const;
+
+function getCaseService(item: DbCaseStudy) {
+  const context = [item.companyName, item.industry, item.problem, item.solution, item.results]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return (
+    caseServiceOptions.find((service) => service.signals.some((signal) => context.includes(signal))) ??
+    caseServiceOptions[0]
+  );
+}
+
 /**
  * Renderiza un caso de éxito administrado en Supabase.
  * Mantiene el lenguaje visual de los casos curados.
  */
 export function DbCaseArticle({ item }: { item: DbCaseStudy }) {
+  const problemSummary = item.problem.trim().replace(/\s+/g, " ").split(/(?<=[.!?])\s/)[0];
+  const contactHref = `/contacto?origen=caso-exito&item=${encodeURIComponent(item.slug)}`;
+  const relatedService = getCaseService(item);
+
   return (
     <main className="bg-white">
       <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-20">
@@ -40,7 +84,7 @@ export function DbCaseArticle({ item }: { item: DbCaseStudy }) {
           <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
             {item.companyName}
           </h1>
-          {item.results ? <p className="max-w-3xl text-lg text-slate-600">{item.results}</p> : null}
+          {problemSummary ? <p className="max-w-3xl text-lg text-slate-600">{problemSummary}</p> : null}
         </Container>
       </section>
 
@@ -98,14 +142,14 @@ export function DbCaseArticle({ item }: { item: DbCaseStudy }) {
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Button asChild className="bg-white font-bold text-blue-800 hover:bg-blue-50">
-                  <Link href="/contacto">Solicitar evaluación</Link>
+                  <Link href={contactHref}>Solicitar evaluación</Link>
                 </Button>
                 <Button
                   asChild
                   variant="outline"
                   className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
                 >
-                  <Link href="/sistemas-web">Ver sistemas web</Link>
+                  <Link href={relatedService.href}>{relatedService.label}</Link>
                 </Button>
               </div>
             </section>
@@ -152,7 +196,7 @@ export function DbCaseArticle({ item }: { item: DbCaseStudy }) {
                 Cuéntanos tu proceso actual y te proponemos una solución concreta.
               </p>
               <Button asChild className="w-full gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800">
-                <Link href="/contacto">
+                <Link href={contactHref}>
                   Cotizar una solución <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>

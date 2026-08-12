@@ -1,6 +1,12 @@
 import { siteConfig } from "@/config/site";
 
-const sameAs = [siteConfig.social.linkedin, siteConfig.social.instagram].filter(Boolean);
+const sameAs = [
+  siteConfig.social.linkedin,
+  siteConfig.social.instagram,
+  siteConfig.social.facebook,
+  siteConfig.social.goodfirms,
+  siteConfig.social.theManifest,
+].filter(Boolean);
 
 export const defaultOpenGraph = {
   type: "website",

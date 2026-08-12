@@ -166,7 +166,7 @@ export const seoServicePages: SeoServicePage[] = [
     ],
     relatedLinks: [
       { label: "Páginas web para pymes", href: "/paginas-web-para-pymes", description: "Soluciones web para pymes chilenas con foco en contacto y presencia profesional." },
-      { label: "Diseño web para empresas", href: "/diseno-web-empresas", description: "Sitios corporativos con UX, confianza y enfoque comercial." },
+      { label: "Páginas web para empresas", href: "/diseno-web-empresas", description: "Sitios corporativos con UX, confianza y enfoque comercial." },
       { label: "SEO para empresas", href: "/servicios/seo-para-empresas-chile", description: "Mejoras técnicas y contenido para crecer en tráfico orgánico." },
       ...commonRelatedLinks,
     ],
@@ -180,14 +180,19 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "paginas-web-para-pymes",
     path: "/paginas-web-para-pymes",
     navLabel: "Páginas web para pymes",
-    metaTitle: "Páginas Web para Pymes en Chile | Sitios Profesionales y Escalables",
+    metaTitle: "Páginas web para pymes en Chile",
     metaDescription:
-      "Diseñamos páginas web para pymes chilenas que necesitan presencia digital, contacto directo, servicios claros y una imagen profesional.",
-    primaryKeyword: "páginas web para pymes",
-    secondaryKeywords: ["web para pymes Chile", "sitios para negocios", "páginas web profesionales Chile"],
+      "Creamos páginas web para pymes en Chile: rápidas, responsivas y orientadas a generar consultas por Google, WhatsApp y formulario. Revisa planes y cotiza.",
+    primaryKeyword: "páginas web para pymes en Chile",
+    secondaryKeywords: [
+      "página web para pyme",
+      "web para pymes Chile",
+      "sitios web para pequeñas empresas",
+      "diseño web para pymes",
+    ],
     heroTitle: "Páginas web para pymes en Chile con foco en confianza, contacto y crecimiento",
     heroDescription:
-      "Ayudamos a pymes chilenas a tener una web clara, profesional y fácil de usar, preparada para explicar servicios, mostrar productos, recibir consultas y proyectar una imagen más seria.",
+      "Creamos sitios profesionales para pequeñas y medianas empresas que necesitan explicar sus servicios, construir visibilidad en búsquedas relevantes y transformar visitas en consultas por WhatsApp, formulario o correo.",
     problemTitle: "Una pyme necesita una web que explique rápido y genere contacto",
     problemDescription:
       "Una web para pyme no debe ser compleja por obligación. Debe mostrar qué haces, por qué confiar, cómo contactarte y qué pasos seguir. Diseñamos estructuras simples de entender, pero sólidas para crecer.",
@@ -215,6 +220,16 @@ export const seoServicePages: SeoServicePage[] = [
     process: baseProcess,
     faqs: [
       {
+        question: "¿Cuánto cuesta una página web para una pyme en Chile?",
+        answer:
+          "El valor depende de la cantidad de secciones, contenido, administración e integraciones. Publicamos rangos referenciales en la página de planes y confirmamos el precio final en una cotización formal antes de comenzar.",
+      },
+      {
+        question: "¿Qué debe incluir una página web para pyme?",
+        answer:
+          "Como base debe explicar qué hace el negocio, a quién ayuda, sus servicios o productos, señales reales de confianza, preguntas frecuentes y una ruta simple hacia WhatsApp, formulario, correo o llamada.",
+      },
+      {
         question: "¿Trabajan con pymes y emprendedores?",
         answer:
           "Sí. Adaptamos alcance, contenidos y presupuesto según la etapa real del negocio.",
@@ -236,8 +251,9 @@ export const seoServicePages: SeoServicePage[] = [
       },
     ],
     relatedLinks: [
-      { label: "Desarrollo web", href: "/desarrollo-web", description: "Sitios web profesionales para empresas y negocios en Chile." },
-      { label: "Tiendas online", href: "/tiendas-online", description: "Ecommerce y catálogos digitales para vender productos online." },
+      { label: "Páginas web para empresas", href: "/diseno-web-empresas", description: "Sitios corporativos para organizaciones con una oferta y proceso comercial más amplios." },
+      { label: "Desarrollo web en Chile", href: "/desarrollo-web", description: "Implementación técnica de sitios profesionales, rápidos y escalables." },
+      { label: "Tiendas online para pymes", href: "/tiendas-online", description: "Ecommerce y catálogos digitales para vender productos online." },
       { label: "Blog para pymes", href: "/blog/que-debe-tener-pagina-web-profesional-pyme", description: "Checklist de una web profesional para una pyme." },
       ...commonRelatedLinks,
     ],
@@ -250,24 +266,30 @@ export const seoServicePages: SeoServicePage[] = [
   {
     slug: "diseno-web-empresas",
     path: "/diseno-web-empresas",
-    navLabel: "Diseño web para empresas",
-    metaTitle: "Diseño Web para Empresas | Sitios Corporativos Profesionales | Zyteron",
+    navLabel: "Páginas web para empresas",
+    metaTitle: "Páginas web para empresas en Chile",
     metaDescription:
-      "Diseño web corporativo para empresas que buscan mejorar su presencia digital, captar clientes y mostrar sus servicios con confianza.",
-    primaryKeyword: "diseño web para empresas",
-    secondaryKeywords: ["sitios corporativos", "UX para empresas", "diseño web corporativo Chile"],
-    heroTitle: "Diseño web para empresas que necesitan comunicar confianza desde el primer clic",
+      "Creamos páginas web para empresas en Chile con diseño corporativo, contenido comercial, SEO técnico y rutas claras para captar consultas y cotizaciones.",
+    primaryKeyword: "páginas web para empresas en Chile",
+    secondaryKeywords: [
+      "diseño web para empresas Chile",
+      "sitios web corporativos",
+      "página web empresarial",
+      "diseño web corporativo Chile",
+    ],
+    heroTitle: "Páginas web para empresas en Chile con diseño corporativo y foco comercial",
     heroDescription:
-      "Como empresa de diseño web en Chile, diseñamos sitios corporativos con estructura visual limpia, mensajes claros y experiencia de usuario orientada a que un visitante entienda tu valor y avance hacia contacto.",
-    problemTitle: "El diseño corporativo debe ordenar la decisión del cliente",
+      "Diseñamos y desarrollamos sitios corporativos para que clientes, proveedores y equipos de compra entiendan tu oferta, encuentren respaldo real y avancen hacia una consulta o cotización.",
+    problemTitle: "Una página web empresarial debe apoyar la decisión comercial",
     problemDescription:
-      "Una empresa puede tener buenos servicios y aun así perder oportunidades si su web se ve antigua, confusa o poco confiable. Trabajamos jerarquía, contenido, navegación, CTA y señales de confianza para mejorar la experiencia completa.",
+      "Una empresa puede ofrecer buenos servicios y aun así perder oportunidades si su sitio se ve antiguo, no explica diferencias o esconde el contacto. Trabajamos arquitectura, contenido, navegación, llamados a la acción y evidencia para convertir la web en un canal comercial serio.",
     benefits: [
       "Imagen profesional alineada a servicios B2B y clientes exigentes.",
       "Mejor lectura en móvil y escritorio.",
       "Estructura visual preparada para servicios, equipo, casos y FAQ.",
       "Copy comercial para explicar valor sin textos genéricos.",
       "Mayor consistencia entre marca, propuesta y conversión.",
+      "Base SEO preparada para servicios, industrias y contenido futuro.",
     ],
     includes: [
       "Arquitectura visual para home y páginas internas.",
@@ -275,7 +297,7 @@ export const seoServicePages: SeoServicePage[] = [
       "Diseño responsive con buena legibilidad y contraste.",
       "Revisión de jerarquía H1, H2 y H3.",
       "Optimización de navegación y enlaces internos.",
-      "Base preparada para medición y mejoras futuras.",
+      "Analítica y eventos preparados para medir formularios, WhatsApp y cotizaciones.",
     ],
     audience: [
       "Empresas con sitio antiguo o poco alineado a su nivel actual.",
@@ -285,6 +307,16 @@ export const seoServicePages: SeoServicePage[] = [
     ],
     process: baseProcess,
     faqs: [
+      {
+        question: "¿Qué debe incluir una página web para una empresa?",
+        answer:
+          "Debe presentar una propuesta de valor clara, servicios o soluciones, experiencia comprobable, proceso de trabajo, preguntas frecuentes, información comercial y rutas de contacto medibles. La estructura exacta depende del ciclo de venta y del tipo de cliente.",
+      },
+      {
+        question: "¿Cuánto cuesta una página web para empresa en Chile?",
+        answer:
+          "El precio depende de páginas internas, contenido, integraciones, administración y nivel de personalización. Zyteron publica valores referenciales y entrega una cotización formal con alcance, plazos y condiciones antes de iniciar.",
+      },
       {
         question: "¿Hacen rediseño de sitios existentes?",
         answer:
@@ -307,14 +339,14 @@ export const seoServicePages: SeoServicePage[] = [
       },
     ],
     relatedLinks: [
-      { label: "Desarrollo web", href: "/desarrollo-web", description: "Implementación técnica de sitios rápidos, indexables y escalables." },
-      { label: "Sistemas web", href: "/sistemas-web", description: "Plataformas internas para procesos administrativos y operación." },
-      { label: "Agencia diseño web Chile", href: "/servicios/agencia-diseno-web-chile", description: "Página ampliada sobre estrategia web para empresas." },
+      { label: "Páginas web para pymes", href: "/paginas-web-para-pymes", description: "Una solución de menor alcance para pequeñas y medianas empresas." },
+      { label: "Desarrollo web en Chile", href: "/desarrollo-web", description: "Implementación técnica de sitios rápidos, indexables y escalables." },
+      { label: "Sistemas web para empresas", href: "/sistemas-web", description: "Plataformas internas para procesos administrativos y operación." },
       ...commonRelatedLinks,
     ],
-    serviceType: "Diseño web corporativo",
-    primaryCta: "Solicitar diseño web corporativo",
-    finalCtaTitle: "¿Tu sitio actual ya no representa a tu empresa?",
+    serviceType: "Páginas web corporativas para empresas",
+    primaryCta: "Cotizar página web para empresa",
+    finalCtaTitle: "¿Tu empresa necesita una página web que genere confianza y consultas?",
     finalCtaCopy:
       "Revisamos tu situación y proponemos una estructura visual y comercial más clara, moderna y confiable.",
   },
@@ -322,7 +354,7 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "tiendas-online",
     path: "/tiendas-online",
     navLabel: "Tiendas online",
-    metaTitle: "Tiendas Online para Pymes | ZYTERON · Chile",
+    metaTitle: "Tiendas online para pymes en Chile",
     metaDescription:
       "Crea una tienda online profesional para vender en Chile con catálogo, pagos, WhatsApp y base SEO lista para crecer. Cotiza sin compromiso para pymes.",
     primaryKeyword: "tiendas online para pymes",
@@ -408,7 +440,6 @@ export const seoServicePages: SeoServicePage[] = [
     relatedLinks: [
       { label: "Páginas web para pymes", href: "/paginas-web-para-pymes", description: "Presencia digital profesional antes de escalar a ecommerce." },
       { label: "Sistemas web", href: "/sistemas-web", description: "Paneles y módulos internos para stock, pedidos o reportes." },
-      { label: "Tienda online Chile", href: "/tiendas-online-chile", description: "Landing local ampliada para tiendas online en Chile." },
       ...commonRelatedLinks,
     ],
     serviceType: "Tiendas online y ecommerce",
@@ -421,7 +452,7 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "sistemas-web",
     path: "/sistemas-web",
     navLabel: "Sistemas web",
-    metaTitle: "Sistemas Web a Medida | ZYTERON · Chile",
+    metaTitle: "Sistemas web a medida para empresas",
     metaDescription:
       "Ordena procesos con sistemas web a medida para pymes y empresas en Chile: paneles, reportes, permisos y automatización. Conoce nuestra metodología.",
     primaryKeyword: "sistemas web a medida",
@@ -500,7 +531,6 @@ export const seoServicePages: SeoServicePage[] = [
     relatedLinks: [
       { label: "Automatización", href: "/automatizacion", description: "Automatiza tareas repetitivas y notificaciones del negocio." },
       { label: "Cotizador web con PDF", href: "/cotizador-web-pdf", description: "Automatiza solicitudes comerciales y generación de propuestas." },
-      { label: "Sistemas web a medida Chile", href: "/sistemas-web-a-medida", description: "Página ampliada sobre desarrollo de sistemas personalizados." },
       ...commonRelatedLinks,
     ],
     serviceType: "Sistemas web a medida",
@@ -513,7 +543,7 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "automatizacion",
     path: "/automatizacion",
     navLabel: "Automatización",
-    metaTitle: "Automatización de Procesos | ZYTERON · Chile",
+    metaTitle: "Automatización de procesos para empresas",
     metaDescription:
       "Automatiza tareas, formularios y WhatsApp para tu empresa en Chile con flujos medibles, alertas y soporte técnico. Conoce nuestra metodología hoy.",
     primaryKeyword: "automatización de procesos para empresas",
@@ -610,7 +640,7 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "soporte-ti",
     path: "/soporte-ti",
     navLabel: "Soporte TI",
-    metaTitle: "Soporte TI para Pymes | ZYTERON · Santiago, Chile",
+    metaTitle: "Soporte TI para pymes en Santiago",
     metaDescription:
       "Soporte TI para pymes y empresas en Santiago: correos, equipos, mantención, seguridad básica y continuidad operativa. Cotiza atención técnica clara.",
     primaryKeyword: "soporte TI para pymes",

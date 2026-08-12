@@ -7,7 +7,6 @@ import { siteConfig } from "@/config/site";
 import type { PriorityServicePage } from "@/content/priority-service-pages";
 import {
   buildFaqJsonLd,
-  buildProfessionalServiceJsonLd,
   buildServiceJsonLd,
   buildWebPageJsonLd,
 } from "@/lib/seo";
@@ -33,13 +32,6 @@ export function PriorityServicePageTemplate({ page }: Props) {
             { name: "Servicios", path: "/servicios" },
             { name: page.title, path: page.path },
           ],
-        })}
-      />
-      <JsonLd
-        id={`${page.slug}-professional-service-schema`}
-        data={buildProfessionalServiceJsonLd({
-          path: page.path,
-          description: page.metaDescription,
         })}
       />
       <JsonLd
@@ -166,7 +158,7 @@ export function PriorityServicePageTemplate({ page }: Props) {
               <Link href="/faq" className="block rounded-lg border border-slate-200 bg-slate-50 p-3 text-slate-700 hover:bg-slate-100">
                 Resolver dudas frecuentes antes de cotizar
               </Link>
-              <Link href="/contacto" className="block rounded-lg border border-slate-200 bg-slate-50 p-3 text-slate-700 hover:bg-slate-100">
+              <Link href={`/contacto?servicio=${page.slug}`} className="block rounded-lg border border-slate-200 bg-slate-50 p-3 text-slate-700 hover:bg-slate-100">
                 Solicitar contacto comercial
               </Link>
             </div>

@@ -11,8 +11,8 @@ type CaseDetailProps = {
   }>;
 };
 
-// Solo contenido publicado desde Supabase, siempre fresco.
-export const dynamic = "force-dynamic";
+// El admin invalida el detalle al publicar; React cache deduplica metadata y página.
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: CaseDetailProps): Promise<Metadata> {
   const { slug } = await params;

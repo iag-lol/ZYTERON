@@ -14,9 +14,9 @@ export const metadata: Metadata = createPageMetadata({
   path: "/blog",
 });
 
-// Lee siempre el contenido fresco desde Supabase (sin caché estática) para que
-// los artículos publicados desde el admin aparezcan de inmediato.
-export const dynamic = "force-dynamic";
+// El admin invalida esta ruta al publicar. ISR evita consultar la base en cada
+// visita y mantiene una actualización de respaldo una vez por hora.
+export const revalidate = 3600;
 
 const categories = [
   "Desarrollo web",

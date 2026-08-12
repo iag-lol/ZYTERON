@@ -5,6 +5,8 @@ import { seoServicePages } from "@/content/seo-service-pages";
 import { getPublishedBlogPosts, getPublishedCaseStudies } from "@/lib/admin/blog-cases-repository";
 import type { MetadataRoute } from "next";
 
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteConfig.url;
   // Sin lastModified en rutas estáticas: emitir new Date() en cada build le
@@ -29,11 +31,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority,
   }));
 
-  const priorityServiceRoutes = priorityServicePages.map((servicePage) => ({
-    url: `${base}${servicePage.path}`,
-    changeFrequency: "monthly" as const,
-    priority: 0.9,
-  }));
+  const consolidatedPriorityPaths = new Set(["/tiendas-online-chile", "/sistemas-web-a-medida"]);
+
+  const priorityServiceRoutes = priorityServicePages
+    .filter((servicePage) => !consolidatedPriorityPaths.has(servicePage.path))
+    .map((servicePage) => ({
+      url: `${base}${servicePage.path}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.9,
+    }));
 
   const seoServiceRoutes = seoServicePages.map((servicePage) => ({
     url: `${base}${servicePage.path}`,
@@ -48,6 +54,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "paginas-web-para-pymes",
     "diseno-web-chile",
     "agencia-diseno-web-chile",
+    "diseno-web-santiago",
   ]);
 
   const serviceRoutes = servicePages.filter((service) => !consolidatedServiceSlugs.has(service.slug)).map((service) => ({

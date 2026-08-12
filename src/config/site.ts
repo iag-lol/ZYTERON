@@ -56,6 +56,8 @@ export const siteConfig = {
     linkedin: "https://www.linkedin.com/company/zyteron-spa/",
     instagram: "https://www.instagram.com/zyteron.spa",
     facebook: "https://www.facebook.com/people/Zyteron-Cl/61588716751111/",
+    goodfirms: "https://www.goodfirms.co/company/zyteron-spa",
+    theManifest: "https://themanifest.com/company/zyteron-spa",
     whatsapp: ZYTERON_WHATSAPP_URL,
   },
   representative: {

@@ -25,17 +25,18 @@ const contactSchema = z.object({
   name: z.string().trim().min(2, "Ingresa tu nombre completo").max(120, "Nombre demasiado largo"),
   email: z.string().trim().email("Email inválido").max(160, "Email demasiado largo"),
   phone: z.string().trim().min(8, "Ingresa un teléfono válido").max(32, "Teléfono demasiado largo"),
-  company: z.string().trim().min(2, "Ingresa tu empresa").max(140, "Empresa demasiado larga"),
+  company: z.string().trim().max(140, "Empresa demasiado larga").optional().or(z.literal("")),
   projectType: z.string().trim().min(2, "Selecciona tipo de proyecto").max(120, "Tipo de proyecto inválido"),
   budget: z.string().trim().max(80, "Presupuesto demasiado largo").optional().or(z.literal("")),
   expectedDate: z.string().trim().max(40, "Fecha inválida").optional().or(z.literal("")),
-  needDomain: z.enum(["si", "no", "no-se"]),
-  needHosting: z.enum(["si", "no", "no-se"]),
-  needPayments: z.enum(["si", "no", "no-se"]),
-  needAdminPanel: z.enum(["si", "no", "no-se"]),
-  needCustomSystem: z.enum(["si", "no", "no-se"]),
-  needTaxDocument: z.enum(["si", "no", "no-se"]),
+  needDomain: z.enum(["si", "no", "no-se"]).default("no-se"),
+  needHosting: z.enum(["si", "no", "no-se"]).default("no-se"),
+  needPayments: z.enum(["si", "no", "no-se"]).default("no-se"),
+  needAdminPanel: z.enum(["si", "no", "no-se"]).default("no-se"),
+  needCustomSystem: z.enum(["si", "no", "no-se"]).default("no-se"),
+  needTaxDocument: z.enum(["si", "no", "no-se"]).default("no-se"),
   service: z.string().trim().max(500, "Servicio demasiado largo").optional().or(z.literal("")),
+  marketingSource: z.string().trim().max(600, "Origen comercial demasiado largo").optional().or(z.literal("")),
   message: z
     .string()
     .trim()
@@ -209,6 +210,7 @@ export async function POST(req: Request) {
       `Necesita panel administrativo: ${humanizeChoice(data.needAdminPanel)}`,
       `Necesita sistema a medida: ${humanizeChoice(data.needCustomSystem)}`,
       `Requiere documento tributario: ${humanizeChoice(data.needTaxDocument)}`,
+      `Origen comercial: ${data.marketingSource?.trim() || "Acceso directo"}`,
       "",
       `Requerimiento: ${data.message.trim()}`,
     ].join("\n");
