@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { defaultOpenGraph, defaultTwitter } from "@/config/seo";
 import { siteConfig } from "@/config/site";
 import { getAbsoluteOgImageUrl } from "@/config/og";
+import { PLAN_PRICE_AMOUNTS } from "@/config/pricing";
 import {
   buildAbsoluteUrl as buildAbsoluteUrlFromSchema,
   buildPrimaryOgImageUrl as buildPrimaryOgImageUrlFromSchema,
@@ -80,11 +81,6 @@ type ServicesListJsonLdInput = {
     description: string;
     path: string;
   }>;
-};
-
-type ProfessionalServiceJsonLdInput = {
-  path: string;
-  description?: string;
 };
 
 function normalizeMetadataTitle(rawTitle: string) {
@@ -211,67 +207,8 @@ export function createPageMetadata({
   };
 }
 
-function buildServedAreas() {
-  return [
-    {
-      "@type": "Country",
-      name: "Chile",
-    },
-    {
-      "@type": "City",
-      name: "Santiago",
-    },
-    {
-      "@type": "AdministrativeArea",
-      name: "Región Metropolitana",
-    },
-  ];
-}
-
-function buildContactPoint() {
-  return [
-    {
-      "@type": "ContactPoint",
-      contactType: "sales",
-      telephone: siteConfig.contact.phone,
-      email: siteConfig.contact.email,
-      areaServed: siteConfig.business.areaServed,
-      availableLanguage: ["es-CL", "es"],
-    },
-  ];
-}
-
 export function buildOrganizationGraph() {
   return getOrganizationSchema();
-}
-
-export function buildProfessionalServiceJsonLd({
-  path,
-  description = siteConfig.description,
-}: ProfessionalServiceJsonLdInput) {
-  const pageUrl = buildAbsoluteUrl(path);
-  const sameAs = [siteConfig.social.linkedin, siteConfig.social.instagram].filter(Boolean);
-
-  return {
-    "@context": "https://schema.org",
-    "@type": "ProfessionalService",
-    "@id": `${pageUrl}#professionalservice`,
-    name: siteConfig.name,
-    legalName: siteConfig.legalName,
-    url: pageUrl,
-    logo: `${siteConfig.url}/logo.svg`,
-    image: getAbsoluteOgImageUrl(path),
-    description,
-    telephone: siteConfig.contact.phone,
-    email: siteConfig.contact.email,
-    areaServed: buildServedAreas(),
-    priceRange: siteConfig.business.priceRange,
-    sameAs,
-    contactPoint: buildContactPoint(),
-    mainEntityOfPage: {
-      "@id": `${pageUrl}#webpage`,
-    },
-  };
 }
 
 export function buildWebPageJsonLd({
@@ -455,7 +392,7 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 79990,
+          minPrice: PLAN_PRICE_AMOUNTS["web-basica"],
           valueAddedTaxIncluded: false,
         },
       },
@@ -466,7 +403,7 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 129990,
+          minPrice: PLAN_PRICE_AMOUNTS.emprendedor,
           valueAddedTaxIncluded: false,
         },
       },
@@ -477,7 +414,7 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 219990,
+          minPrice: PLAN_PRICE_AMOUNTS.pyme,
           valueAddedTaxIncluded: false,
         },
       },
@@ -488,7 +425,7 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 399990,
+          minPrice: PLAN_PRICE_AMOUNTS.empresa,
           valueAddedTaxIncluded: false,
         },
       },
@@ -499,7 +436,7 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 299990,
+          minPrice: PLAN_PRICE_AMOUNTS.catalogo,
           valueAddedTaxIncluded: false,
         },
       },
@@ -510,7 +447,7 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 599990,
+          minPrice: PLAN_PRICE_AMOUNTS.ecommerce,
           valueAddedTaxIncluded: false,
         },
       },
@@ -521,7 +458,7 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 1290000,
+          minPrice: PLAN_PRICE_AMOUNTS.sistema,
           valueAddedTaxIncluded: false,
         },
       },
@@ -532,7 +469,7 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
         priceSpecification: {
           "@type": "PriceSpecification",
           priceCurrency: "CLP",
-          minPrice: 2490000,
+          minPrice: PLAN_PRICE_AMOUNTS.avanzado,
           valueAddedTaxIncluded: false,
         },
       },

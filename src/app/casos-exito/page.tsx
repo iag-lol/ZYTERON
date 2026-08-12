@@ -14,9 +14,8 @@ export const metadata: Metadata = createPageMetadata({
   path: "/casos-exito",
 });
 
-// Lee siempre el contenido fresco desde Supabase (sin caché estática) para que
-// los casos publicados desde el admin aparezcan de inmediato.
-export const dynamic = "force-dynamic";
+// El admin invalida esta ruta al publicar. ISR evita consultar la base en cada visita.
+export const revalidate = 3600;
 
 function buildCaseStudiesItemListJsonLd(items: CaseListItem[]) {
   return {

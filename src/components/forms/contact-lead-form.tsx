@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,19 +13,12 @@ import { trackContactFormSubmit, trackQuoteRequestConversion } from "@/lib/analy
 
 const contactLeadSchema = z.object({
   name: z.string().trim().min(2, "Ingresa tu nombre completo").max(120, "Nombre demasiado largo"),
-  company: z.string().trim().min(2, "Ingresa el nombre de tu empresa").max(140, "Empresa demasiado larga"),
+  company: z.string().trim().max(140, "Empresa demasiado larga").optional(),
   email: z.string().trim().email("Ingresa un email válido").max(160, "Email demasiado largo"),
   phone: z.string().trim().min(8, "Ingresa un WhatsApp o teléfono válido").max(32, "Teléfono demasiado largo"),
   projectType: z.string().trim().min(2, "Selecciona el tipo de proyecto").max(120, "Tipo de proyecto inválido"),
   budget: z.string().trim().max(80, "Presupuesto demasiado largo").optional(),
-  expectedDate: z.string().trim().max(40, "Fecha inválida").optional(),
   message: z.string().trim().min(10, "Describe brevemente tu requerimiento").max(4000, "Mensaje demasiado largo"),
-  needDomain: z.enum(["si", "no", "no-se"], { message: "Selecciona una opción" }),
-  needHosting: z.enum(["si", "no", "no-se"], { message: "Selecciona una opción" }),
-  needPayments: z.enum(["si", "no", "no-se"], { message: "Selecciona una opción" }),
-  needAdminPanel: z.enum(["si", "no", "no-se"], { message: "Selecciona una opción" }),
-  needCustomSystem: z.enum(["si", "no", "no-se"], { message: "Selecciona una opción" }),
-  needTaxDocument: z.enum(["si", "no", "no-se"], { message: "Selecciona una opción" }),
   website: z.string().max(0).optional(),
 });
 
@@ -36,6 +29,35 @@ type SubmitState =
   | { status: "success"; reference: string }
   | { status: "error"; message: string };
 
+const PROJECT_TYPE_BY_SOURCE: Record<string, string> = {
+  "desarrollo-web": "Página web corporativa",
+  "desarrollo-web-santiago": "Página web corporativa",
+  "paginas-web-para-pymes": "Página web corporativa",
+  "diseno-web-empresas": "Página web corporativa",
+  "tiendas-online": "Tienda online",
+  "sistemas-web": "Sistema interno",
+  automatizacion: "Automatización de procesos",
+  "automatizacion-whatsapp-empresas": "Automatización de procesos",
+  "soporte-ti": "Soporte TI",
+  "soporte-ti-pymes-santiago": "Soporte TI",
+  "seo-para-empresas-chile": "SEO y posicionamiento",
+  "landing-pages-para-empresas": "Landing page comercial",
+  "mantencion-web-chile": "Soporte TI",
+  "cotizador-web-pdf": "Sistema interno",
+};
+
+function readMarketingSource() {
+  const params = new URLSearchParams(window.location.search);
+  return ["servicio", "tipo", "plan", "origen", "item", "utm_source", "utm_medium", "utm_campaign", "gclid"]
+    .map((key) => {
+      const value = params.get(key)?.trim();
+      return value ? `${key}=${value}` : "";
+    })
+    .filter(Boolean)
+    .join(" | ")
+    .slice(0, 600);
+}
+
 export function ContactLeadForm() {
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
 
@@ -43,6 +65,7 @@ export function ContactLeadForm() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ContactLeadFormData>({
     resolver: zodResolver(contactLeadSchema),
@@ -53,18 +76,19 @@ export function ContactLeadForm() {
       phone: "",
       projectType: "",
       budget: "",
-      expectedDate: "",
       message: "",
-      needDomain: "no-se",
-      needHosting: "no-se",
-      needPayments: "no-se",
-      needAdminPanel: "no-se",
-      needCustomSystem: "no-se",
-      needTaxDocument: "no-se",
       website: "",
     },
     mode: "onTouched",
   });
+
+  useEffect(() => {
+    const source = new URLSearchParams(window.location.search).get("servicio")?.trim();
+    const projectType = source ? PROJECT_TYPE_BY_SOURCE[source] : undefined;
+    if (projectType) {
+      setValue("projectType", projectType, { shouldValidate: true });
+    }
+  }, [setValue]);
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmitState({ status: "idle" });
@@ -77,6 +101,14 @@ export function ContactLeadForm() {
       body: JSON.stringify({
         ...values,
         service: values.projectType,
+        expectedDate: "",
+        needDomain: "no-se",
+        needHosting: "no-se",
+        needPayments: "no-se",
+        needAdminPanel: "no-se",
+        needCustomSystem: "no-se",
+        needTaxDocument: "no-se",
+        marketingSource: readMarketingSource(),
       }),
     });
 
@@ -109,10 +141,10 @@ export function ContactLeadForm() {
       <div className="mb-6 space-y-1">
         <div className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5 text-blue-700" />
-          <h2 className="text-lg font-bold text-slate-900">Formulario de cotización</h2>
+          <h2 className="text-lg font-bold text-slate-900">Solicita una orientación inicial</h2>
         </div>
         <p className="text-xs text-slate-500">
-          Completaremos una evaluación inicial para preparar una cotización formal según tu requerimiento.
+          Cuéntanos lo esencial. Revisaremos tu necesidad y te contactaremos para definir el siguiente paso.
         </p>
       </div>
 
@@ -131,15 +163,15 @@ export function ContactLeadForm() {
             <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wide text-slate-500">
               Nombre
             </Label>
-            <Input id="name" placeholder="Tu nombre completo" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("name")} />
+            <Input id="name" autoComplete="name" placeholder="Tu nombre completo" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("name")} />
             {errors.name ? <p className="text-xs text-rose-600">{errors.name.message}</p> : null}
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="company" className="text-xs font-bold uppercase tracking-wide text-slate-500">
-              Empresa
+              Empresa (opcional)
             </Label>
-            <Input id="company" placeholder="Nombre de tu empresa" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("company")} />
+            <Input id="company" autoComplete="organization" placeholder="Nombre de tu empresa" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("company")} />
             {errors.company ? <p className="text-xs text-rose-600">{errors.company.message}</p> : null}
           </div>
 
@@ -147,7 +179,7 @@ export function ContactLeadForm() {
             <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wide text-slate-500">
               Correo
             </Label>
-            <Input id="email" type="email" placeholder="correo@empresa.cl" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("email")} />
+            <Input id="email" type="email" autoComplete="email" placeholder="correo@empresa.cl" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("email")} />
             {errors.email ? <p className="text-xs text-rose-600">{errors.email.message}</p> : null}
           </div>
 
@@ -155,11 +187,11 @@ export function ContactLeadForm() {
             <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wide text-slate-500">
               WhatsApp
             </Label>
-            <Input id="phone" placeholder="+56939526626" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("phone")} />
+            <Input id="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+56939526626" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("phone")} />
             {errors.phone ? <p className="text-xs text-rose-600">{errors.phone.message}</p> : null}
           </div>
 
-          <div className="space-y-1.5 sm:col-span-2">
+          <div className="space-y-1.5">
             <Label htmlFor="projectType" className="text-xs font-bold uppercase tracking-wide text-slate-500">
               Tipo de proyecto
             </Label>
@@ -170,6 +202,8 @@ export function ContactLeadForm() {
               <option value="Tienda online">Tienda online</option>
               <option value="Sistema interno">Sistema interno</option>
               <option value="Panel administrativo">Panel administrativo</option>
+              <option value="Automatización de procesos">Automatización de procesos</option>
+              <option value="SEO y posicionamiento">SEO y posicionamiento</option>
               <option value="Soporte TI">Soporte TI</option>
               <option value="Otro">Otro</option>
             </select>
@@ -184,39 +218,6 @@ export function ContactLeadForm() {
             {errors.budget ? <p className="text-xs text-rose-600">{errors.budget.message}</p> : null}
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="expectedDate" className="text-xs font-bold uppercase tracking-wide text-slate-500">
-              Fecha esperada
-            </Label>
-            <Input id="expectedDate" type="date" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("expectedDate")} />
-            {errors.expectedDate ? <p className="text-xs text-rose-600">{errors.expectedDate.message}</p> : null}
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          {[
-            { id: "needDomain", label: "¿Necesitas dominio?" },
-            { id: "needHosting", label: "¿Necesitas hosting?" },
-            { id: "needPayments", label: "¿Necesitas pagos online?" },
-            { id: "needAdminPanel", label: "¿Necesitas panel administrativo?" },
-            { id: "needCustomSystem", label: "¿Necesitas sistema a medida?" },
-            { id: "needTaxDocument", label: "¿Necesitas factura/documento tributario?" },
-          ].map((item) => (
-            <div className="space-y-1.5" key={item.id}>
-              <Label htmlFor={item.id} className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                {item.label}
-              </Label>
-              <select
-                id={item.id}
-                className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-blue-400 focus:bg-white focus:outline-none"
-                {...register(item.id as keyof ContactLeadFormData)}
-              >
-                <option value="no-se">No definido</option>
-                <option value="si">Sí</option>
-                <option value="no">No</option>
-              </select>
-            </div>
-          ))}
         </div>
 
         <div className="space-y-1.5">
@@ -226,7 +227,7 @@ export function ContactLeadForm() {
           <Textarea
             id="message"
             rows={5}
-            placeholder="Describe objetivos, funcionalidades, alcance y contexto de tu proyecto..."
+            placeholder="Ej: necesito una web para mostrar mis servicios y recibir consultas por WhatsApp."
             className="resize-none border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
             {...register("message")}
           />
@@ -241,7 +242,7 @@ export function ContactLeadForm() {
             </>
           ) : (
             <>
-              Solicitar cotización <ArrowRight className="h-4 w-4" />
+              Quiero orientación para mi proyecto <ArrowRight className="h-4 w-4" />
             </>
           )}
         </Button>

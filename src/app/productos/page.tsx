@@ -9,7 +9,8 @@ import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 import { getWebPricingSnapshot } from "@/lib/web-control";
 import { PublicProductsCatalog } from "@/components/forms/public-products-catalog";
 
-export const dynamic = "force-dynamic";
+// Las rutas del administrador invalidan /productos al guardar cambios.
+export const revalidate = 3600;
 
 export const metadata: Metadata = createPageMetadata({
   title: "Productos TI y Hardware Para Empresas | Zyteron",

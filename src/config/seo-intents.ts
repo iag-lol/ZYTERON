@@ -9,9 +9,10 @@ export type SeoIntent = {
 export const seoIntentMap: SeoIntent[] = [
   {
     path: "/",
-    primaryKeyword: "desarrollo web y soluciones digitales Chile",
-    intent: "marca",
+    primaryKeyword: "paginas web Chile",
+    intent: "comercial",
     indexable: true,
+    notes: "Portada nacional para la intención amplia; la marca queda como señal secundaria.",
   },
   {
     path: "/desarrollo-web",
@@ -20,16 +21,17 @@ export const seoIntentMap: SeoIntent[] = [
     indexable: true,
   },
   {
-    path: "/servicios/paginas-web-para-empresas",
-    primaryKeyword: "paginas web para empresas Chile",
+    path: "/paginas-web-para-pymes",
+    primaryKeyword: "paginas web para pymes Chile",
     intent: "comercial",
     indexable: true,
   },
   {
-    path: "/servicios/diseno-web-chile",
-    primaryKeyword: "diseño web Chile",
+    path: "/diseno-web-empresas",
+    primaryKeyword: "paginas web para empresas Chile",
     intent: "comercial",
     indexable: true,
+    notes: "Incluye diseño web corporativo como variante secundaria, sin duplicar una nueva landing.",
   },
   {
     path: "/desarrollo-web-santiago",
@@ -50,8 +52,26 @@ export const seoIntentMap: SeoIntent[] = [
     indexable: true,
   },
   {
+    path: "/tiendas-online",
+    primaryKeyword: "tiendas online para pymes Chile",
+    intent: "comercial",
+    indexable: true,
+  },
+  {
+    path: "/sistemas-web",
+    primaryKeyword: "sistemas web a medida Chile",
+    intent: "comercial",
+    indexable: true,
+  },
+  {
+    path: "/automatizacion",
+    primaryKeyword: "automatización de procesos Chile",
+    intent: "comercial",
+    indexable: true,
+  },
+  {
     path: "/planes",
-    primaryKeyword: "planes de paginas web Chile",
+    primaryKeyword: "precio pagina web Chile",
     intent: "comercial",
     indexable: true,
   },

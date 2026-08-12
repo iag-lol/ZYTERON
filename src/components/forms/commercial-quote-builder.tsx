@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -110,6 +110,43 @@ type FormState = {
 const TOTAL_STEPS = 6;
 const DIRECT_WHATSAPP_URL = siteConfig.social.whatsapp;
 const CHILE_WHATSAPP_REGEX = /^(?:\+?56)?(?:\s?9)?(?:[\s-]?\d){8}$/;
+const ALLOWED_PROJECT_TYPES = new Set<ProjectTypeValue>([
+  "web-basica",
+  "web-profesional",
+  "tienda-online",
+  "sistema-web",
+  "automatizacion",
+  "soporte-ti",
+  "no-seguro",
+]);
+const PLAN_LABELS: Record<string, string> = {
+  "web-basica-presentacion": "Web Básica de Presentación",
+  "plan-emprendedor": "Plan Emprendedor",
+  "plan-pyme": "Plan Pyme",
+  "plan-empresa": "Plan Empresa",
+  "catalogo-tienda-online": "Catálogo / Tienda Online",
+  "sistema-web-panel-administrativo": "Sistema Web / Panel Administrativo",
+  "sistema-avanzado": "Sistema Avanzado / Desarrollo a medida",
+};
+
+function normalizeProjectType(value: string | null) {
+  return value && ALLOWED_PROJECT_TYPES.has(value as ProjectTypeValue)
+    ? (value as ProjectTypeValue)
+    : undefined;
+}
+
+function subscribeToLocation(onStoreChange: () => void) {
+  window.addEventListener("popstate", onStoreChange);
+  return () => window.removeEventListener("popstate", onStoreChange);
+}
+
+function getLocationSearch() {
+  return window.location.search;
+}
+
+function getServerSearch() {
+  return "";
+}
 
 const projectCards: ProjectCard[] = [
   {
@@ -729,12 +766,16 @@ function StepIndicator({ step }: { step: number }) {
   );
 }
 
-type CommercialQuoteBuilderProps = {
-  initialPlanLabel?: string;
-  initialProjectType?: ProjectTypeValue;
-};
+export function CommercialQuoteBuilder() {
+  const search = useSyncExternalStore(subscribeToLocation, getLocationSearch, getServerSearch);
+  return <CommercialQuoteBuilderFlow key={search} search={search} />;
+}
 
-export function CommercialQuoteBuilder({ initialPlanLabel, initialProjectType }: CommercialQuoteBuilderProps) {
+function CommercialQuoteBuilderFlow({ search }: { search: string }) {
+  const searchParams = new URLSearchParams(search);
+  const initialProjectType = normalizeProjectType(searchParams.get("tipo"));
+  const planParam = searchParams.get("plan")?.trim();
+  const initialPlanLabel = planParam ? PLAN_LABELS[planParam] : undefined;
   const hasPreset = Boolean(initialProjectType);
   const [started, setStarted] = useState(hasPreset);
   const [step, setStep] = useState(hasPreset ? 2 : 1);

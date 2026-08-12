@@ -334,7 +334,7 @@ export const caseStudies: CaseStudyData[] = [
     relatedServices: ["paginas-web-para-empresas", "seo-para-empresas-chile", "diseno-web-chile"],
     relatedPages: [
       { label: "Desarrollo web", href: "/desarrollo-web" },
-      { label: "Diseño web para empresas", href: "/diseno-web-empresas" },
+      { label: "Páginas web para empresas", href: "/diseno-web-empresas" },
       { label: "Contacto", href: "/contacto?caso=web-combustible-seo" },
     ],
   },
