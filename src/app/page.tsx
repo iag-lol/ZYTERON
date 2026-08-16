@@ -38,12 +38,12 @@ import { HomeFaqAccordion } from "@/components/home/home-faq";
 export const revalidate = 3600;
 
 const WHATSAPP_BASE =
-  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.`;
+  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20p%C3%A1gina%20web%20para%20mi%20empresa.`;
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Desarrollo de páginas web para empresas en Santiago y Chile",
+  title: "Páginas web para empresas en Santiago y Chile",
   description:
-    "Desarrollo de páginas web, sistemas y soluciones digitales para empresas y pymes de Santiago, Región Metropolitana y todo Chile. Sitios rápidos, con SEO real. Cotiza gratis.",
+    "Creamos páginas web profesionales para empresas y pymes de Santiago, Región Metropolitana y todo Chile: sitios rápidos, con SEO real y enfocados en generar cotizaciones.",
   path: "/",
 });
 
@@ -119,19 +119,33 @@ const trustPoints = [
 
 const serviceGroups = [
   {
-    title: "Desarrollo Web",
+    title: "Páginas web para empresas",
     icon: <MonitorSmartphone className="h-5 w-5" />,
     href: "/desarrollo-web",
     description:
-      "Diseño de páginas web profesionales para presentar, posicionar y vender tus servicios o productos.",
+      "Nuestro servicio principal: páginas web profesionales para presentar tu empresa, posicionarte en Google y recibir cotizaciones.",
     items: [
       "Sitios web corporativos",
-      "Landing pages",
-      "Tiendas online",
-      "Catálogos digitales",
-      "Webs responsivas",
-      "SEO básico",
+      "Páginas web para pymes",
+      "Landing pages comerciales",
+      "Diseño responsive para celular",
+      "Base SEO técnica incluida",
+      "Formularios y WhatsApp integrados",
       "Optimización de velocidad",
+    ],
+  },
+  {
+    title: "Tiendas online y catálogos",
+    icon: <Globe className="h-5 w-5" />,
+    href: "/tiendas-online",
+    description:
+      "Cuando tu web además necesita vender: catálogo administrable, carrito y pagos online.",
+    items: [
+      "Catálogo digital administrable",
+      "Carrito y checkout",
+      "Pagos con Webpay, Flow o Mercado Pago",
+      "Venta asistida por WhatsApp",
+      "Fichas de producto con SEO",
     ],
   },
   {
@@ -139,29 +153,14 @@ const serviceGroups = [
     icon: <Settings className="h-5 w-5" />,
     href: "/sistemas-web",
     description:
-      "Herramientas para ordenar procesos y reducir tareas manuales dentro de tu empresa.",
+      "Extensiones para tu solución web: ordenar procesos internos y reducir tareas manuales.",
     items: [
-      "Sistemas internos",
       "Paneles administrativos",
-      "Cotizadores",
-      "Generación de PDF",
-      "Control de registros",
+      "Sistemas internos a medida",
+      "Cotizadores con PDF",
       "Automatización de WhatsApp",
       "Integración de pagos",
-    ],
-  },
-  {
-    title: "Soporte TI y soluciones tecnológicas",
-    icon: <ShieldCheck className="h-5 w-5" />,
-    href: "/soporte-ti",
-    description:
-      "Acompañamiento técnico para mantener continuidad operativa en tu negocio.",
-    items: [
-      "Soporte técnico",
-      "Redes",
-      "Configuración de equipos",
-      "Asesoría tecnológica",
-      "Productos TI como complemento",
+      "Soporte TI para continuidad",
     ],
   },
 ];
@@ -313,13 +312,6 @@ const homeFaqs = [
 
 const solutionsByNeed = [
   {
-    title: "Necesito una página web profesional",
-    description:
-      "Diseñamos webs corporativas con propuesta de valor clara, estructura comercial y foco en generación de consultas.",
-    href: "/desarrollo-web",
-    cta: "Ver servicio",
-  },
-  {
     title: "Mi empresa está en Santiago",
     description:
       "Creamos páginas web para empresas y pymes de Santiago y la Región Metropolitana, con reuniones presenciales en nuestra oficina de Providencia.",
@@ -327,32 +319,39 @@ const solutionsByNeed = [
     cta: "Ver páginas web Santiago",
   },
   {
+    title: "Necesito una página web profesional",
+    description:
+      "Diseñamos webs corporativas con propuesta de valor clara, estructura comercial y foco en generación de consultas.",
+    href: "/desarrollo-web",
+    cta: "Cotizar página web",
+  },
+  {
+    title: "Tengo una pyme y necesito presencia digital",
+    description:
+      "Páginas web administrables y fáciles de mantener para pymes que hoy dependen solo de redes sociales o referidos.",
+    href: "/paginas-web-para-pymes",
+    cta: "Ver páginas web pymes",
+  },
+  {
     title: "Necesito vender online",
     description:
-      "Implementamos tiendas online y catálogos para ordenar productos, vender por web y complementar venta por WhatsApp.",
+      "Implementamos tiendas online y catálogos para ordenar tu oferta, vender por web y complementar la venta por WhatsApp.",
     href: "/tiendas-online",
-    cta: "Cotizar tienda",
+    cta: "Cotizar tienda online",
+  },
+  {
+    title: "Quiero aparecer en Google",
+    description:
+      "Trabajamos SEO técnico y de contenido para que tu web aparezca en las búsquedas de tu rubro y ciudad.",
+    href: "/servicios/seo-para-empresas-chile",
+    cta: "Ver SEO para empresas",
   },
   {
     title: "Necesito ordenar procesos internos",
     description:
-      "Desarrollamos sistemas web y paneles administrativos para registrar información, controlar estados y reducir tareas manuales.",
+      "Sumamos sistemas web y paneles administrativos a tu solución web para controlar estados y reducir tareas manuales.",
     href: "/sistemas-web",
-    cta: "Ver solución",
-  },
-  {
-    title: "Necesito automatizar tareas o WhatsApp",
-    description:
-      "Creamos flujos de automatización para responder más rápido, filtrar solicitudes y mejorar trazabilidad comercial.",
-    href: "/automatizacion",
-    cta: "Cotizar automatización",
-  },
-  {
-    title: "Necesito soporte TI para mi empresa",
-    description:
-      "Entregamos soporte técnico para continuidad operativa en pymes y empresas con atención en Santiago y otras regiones.",
-    href: "/soporte-ti",
-    cta: "Solicitar soporte",
+    cta: "Ver sistemas web",
   },
 ];
 
@@ -396,9 +395,9 @@ export default async function Home() {
         id="home-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/",
-          title: "Zyteron | Desarrollo de páginas web para empresas en Santiago y Chile",
+          title: "Zyteron | Páginas web para empresas en Santiago y Chile",
           description:
-            "Desarrollo de páginas web, tiendas online, sistemas y soporte TI para empresas y pymes de Santiago, Región Metropolitana y todo Chile, con SEO técnico y foco comercial.",
+            "Desarrollo de páginas web para empresas y pymes de Santiago, Región Metropolitana y todo Chile, con tiendas online y sistemas como complemento.",
           breadcrumbs: [{ name: "Inicio", path: "/" }],
         })}
       />
@@ -406,7 +405,7 @@ export default async function Home() {
         id="home-localbusiness-schema"
         data={buildLocalBusinessJsonLd(
           "/",
-          "Desarrollo de páginas web, tiendas online, sistemas, automatización y soporte TI para empresas y pymes en Santiago, Región Metropolitana y todo Chile.",
+          "Desarrollo de páginas web profesionales para empresas y pymes en Santiago, Región Metropolitana y todo Chile, con tiendas online, sistemas y automatización como complemento.",
         )}
       />
       <JsonLd
@@ -430,8 +429,18 @@ export default async function Home() {
               path: "/paginas-web-santiago",
             },
             {
+              name: "Páginas web para empresas",
+              description: "Sitios web corporativos para presentar servicios y captar consultas B2B.",
+              path: "/diseno-web-empresas",
+            },
+            {
+              name: "Páginas web para pymes",
+              description: "Páginas web profesionales y administrables para pymes chilenas.",
+              path: "/paginas-web-para-pymes",
+            },
+            {
               name: "Desarrollo web",
-              description: "Diseño de páginas web profesionales para empresas y pymes en Chile.",
+              description: "Diseño y desarrollo de páginas web profesionales para empresas y pymes en Chile.",
               path: "/desarrollo-web",
             },
             {
@@ -445,19 +454,14 @@ export default async function Home() {
               path: "/sistemas-web",
             },
             {
+              name: "SEO para empresas",
+              description: "Optimización técnica y estructura SEO para empresas en Chile.",
+              path: "/servicios/seo-para-empresas-chile",
+            },
+            {
               name: "Automatización empresarial",
               description: "Automatización de flujos y atención por WhatsApp para empresas.",
               path: "/automatizacion",
-            },
-            {
-              name: "Soporte TI",
-              description: "Soporte técnico y continuidad operativa para pymes y empresas.",
-              path: "/soporte-ti",
-            },
-            {
-              name: "SEO técnico",
-              description: "Optimización técnica y estructura SEO para empresas en Chile.",
-              path: "/servicios/seo-para-empresas-chile",
             },
           ],
         })}
@@ -496,15 +500,14 @@ export default async function Home() {
             </div>
 
             <h1 className="text-balance text-[2rem] font-extrabold leading-[1.12] tracking-tight text-slate-900 [text-shadow:0_1px_16px_rgba(255,255,255,0.75)] sm:text-5xl lg:text-[3.3rem]">
-              Desarrollo de{" "}
-              <span className="text-gradient-hero animate-gradient">páginas web y sistemas digitales</span>{" "}
+              <span className="text-gradient-hero animate-gradient">Páginas web profesionales</span>{" "}
               para empresas en Santiago
             </h1>
 
             <p className="max-w-2xl text-base font-medium leading-relaxed text-slate-700 [text-shadow:0_1px_10px_rgba(255,255,255,0.7)] sm:text-lg">
-              Creamos sitios web, tiendas online, plataformas empresariales y soluciones digitales
-              para empresas y pymes de Santiago, Región Metropolitana y todo Chile: diseño
-              profesional, base SEO real y una estructura pensada para convertir visitas en clientes.
+              Creamos sitios web rápidos, modernos y orientados a generar contactos para empresas y
+              pymes de Santiago, Región Metropolitana y todo Chile. Diseño profesional, base SEO real
+              y una estructura pensada para convertir visitas en cotizaciones.
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -514,7 +517,7 @@ export default async function Home() {
                 className="btn-primary-glow w-full gap-2 bg-blue-700 px-6 font-bold text-white hover:bg-blue-800 sm:w-auto"
               >
                 <Link href="/cotizador">
-                  Cotizar proyecto <ArrowRight className="h-4 w-4" />
+                  Cotizar página web <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button
@@ -523,7 +526,7 @@ export default async function Home() {
                 variant="outline"
                 className="w-full border-slate-300 text-slate-800 hover:bg-slate-50 sm:w-auto"
               >
-                <Link href="/servicios">Ver servicios</Link>
+                <Link href="/planes">Ver planes</Link>
               </Button>
               <Link
                 href={WHATSAPP_BASE}

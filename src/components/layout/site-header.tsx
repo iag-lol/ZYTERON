@@ -11,36 +11,33 @@ import { Container } from "./container";
 import { PortalAccessLink } from "./portal-access-link";
 
 const WHATSAPP_URL =
-  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.`;
+  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20p%C3%A1gina%20web%20para%20mi%20empresa.`;
 
 const primaryNavItems = [
   { href: "/", label: "Inicio" },
-  { href: "/demos", label: "Demos" },
-  { href: "/productos", label: "Productos TI" },
+  { href: "/servicios", label: "Servicios" },
+  { href: "/casos-exito", label: "Casos de éxito" },
   { href: "/planes", label: "Planes" },
-  { href: "/blog", label: "Blog" },
-  { href: "/cotizador", label: "Cotizar" },
+  { href: "/quienes-somos", label: "Nosotros" },
   { href: "/contacto", label: "Contacto" },
 ];
 
 const secondaryNavItems = [
-  { href: "/quienes-somos", label: "Quiénes somos" },
-  { href: "/casos-exito", label: "Casos" },
+  { href: "/demos", label: "Demos" },
+  { href: "/blog", label: "Blog" },
   { href: "/faq", label: "FAQ" },
 ];
 
-const servicesHubItem = { href: "/servicios", label: "Todos los servicios" };
+// El desplegable encabeza el servicio principal: páginas web.
+const servicesHubItem = { href: "/desarrollo-web", label: "Todo sobre páginas web" };
 
 const servicesNavItems = [
   { href: "/paginas-web-santiago", label: "Páginas Web Santiago" },
-  { href: "/desarrollo-web", label: "Desarrollo Web" },
-  { href: "/paginas-web-para-pymes", label: "Páginas Web para Pymes" },
   { href: "/diseno-web-empresas", label: "Páginas Web para Empresas" },
+  { href: "/paginas-web-para-pymes", label: "Páginas Web para Pymes" },
   { href: "/tiendas-online", label: "Tiendas Online" },
   { href: "/sistemas-web", label: "Sistemas Web" },
-  { href: "/automatizacion", label: "Automatización" },
   { href: "/servicios/seo-para-empresas-chile", label: "SEO para Empresas" },
-  { href: "/soporte-ti", label: "Soporte TI" },
 ];
 
 export function SiteHeader() {
@@ -108,7 +105,7 @@ export function SiteHeader() {
                 WhatsApp
               </Link>
               <Button asChild size="sm" className="bg-blue-700 px-3 font-bold text-white hover:bg-blue-800">
-                <Link href="/cotizador">Cotizar</Link>
+                <Link href="/cotizador">Cotizar web</Link>
               </Button>
             </div>
 
@@ -129,7 +126,7 @@ export function SiteHeader() {
                 className="btn-primary-glow gap-2 bg-blue-700 font-bold text-white shadow-md shadow-blue-700/25 hover:bg-blue-800"
               >
                 <Link href="/cotizador">
-                  Solicitar cotización <ArrowRight className="h-3.5 w-3.5" />
+                  Cotizar página web <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </Button>
             </div>
@@ -160,13 +157,13 @@ export function SiteHeader() {
                 onMouseLeave={() => setServicesOpen(false)}
               >
                 <Link
-                  href="/servicios"
+                  href="/desarrollo-web"
                   className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap text-slate-700 transition-colors hover:bg-white hover:text-blue-700"
                   onFocus={() => setServicesOpen(true)}
                   aria-expanded={servicesOpen}
                   aria-controls="desktop-services-menu"
                 >
-                  Servicios <ChevronDown className="h-3.5 w-3.5" />
+                  Páginas Web <ChevronDown className="h-3.5 w-3.5" />
                 </Link>
                 {servicesOpen ? (
                   <div id="desktop-services-menu" className="absolute left-0 top-full z-40 w-64 pt-2">
@@ -267,7 +264,7 @@ export function SiteHeader() {
                   className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-base font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
                   aria-expanded={mobileServicesOpen}
                 >
-                  Servicios
+                  Páginas Web
                   <ChevronDown
                     className={cn(
                       "h-4 w-4 text-slate-400 transition-transform duration-200",
@@ -349,7 +346,7 @@ export function SiteHeader() {
               </Link>
               <Button asChild className="w-full rounded-xl bg-blue-700 py-6 text-base font-bold text-white shadow-md shadow-blue-700/20 hover:bg-blue-800 hover:shadow-lg hover:shadow-blue-700/30">
                 <Link href="/cotizador" onClick={() => setOpen(false)}>
-                  Cotizar mi proyecto <ArrowRight className="ml-2 h-4 w-4" />
+                  Cotizar mi página web <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </div>

@@ -72,7 +72,7 @@ export default function FaqPage() {
                 </Link>
               </Button>
               <Button asChild variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
-                <Link href="/cotizador">Solicitar cotización</Link>
+                <Link href="/cotizador">Cotizar página web</Link>
               </Button>
             </div>
           </div>

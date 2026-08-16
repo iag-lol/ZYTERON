@@ -39,9 +39,13 @@ function getCaseService(item: DbCaseStudy) {
     .join(" ")
     .toLowerCase();
 
+  // Sin señales claras, el caso se asocia al servicio principal: páginas web.
+  const fallback =
+    caseServiceOptions.find((service) => service.href === "/diseno-web-empresas") ?? caseServiceOptions[0];
+
   return (
     caseServiceOptions.find((service) => service.signals.some((signal) => context.includes(signal))) ??
-    caseServiceOptions[0]
+    fallback
   );
 }
 
@@ -197,7 +201,7 @@ export function DbCaseArticle({ item }: { item: DbCaseStudy }) {
               </p>
               <Button asChild className="w-full gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800">
                 <Link href={contactHref}>
-                  Cotizar una solución <ArrowRight className="h-4 w-4" />
+                  Cotizar mi página web <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
             </div>

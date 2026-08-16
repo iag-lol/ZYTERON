@@ -6,23 +6,31 @@ import { LocationMap } from "./location-map";
 import { siteConfig } from "@/config/site";
 
 const WHATSAPP_URL =
-  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.`;
+  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20p%C3%A1gina%20web%20para%20mi%20empresa.`;
 
 const COPYRIGHT_YEAR = 2026;
 
 const footerColumns = [
   {
-    title: "Servicios principales",
+    title: "Páginas web",
     items: [
-      { label: "Páginas web en Santiago", href: "/paginas-web-santiago" },
-      { label: "Desarrollo web", href: "/desarrollo-web" },
-      { label: "Páginas web para pymes", href: "/paginas-web-para-pymes" },
+      { label: "Páginas web Santiago", href: "/paginas-web-santiago" },
       { label: "Páginas web para empresas", href: "/diseno-web-empresas" },
+      { label: "Páginas web para pymes", href: "/paginas-web-para-pymes" },
+      { label: "Desarrollo web", href: "/desarrollo-web" },
       { label: "Tiendas online", href: "/tiendas-online" },
+      { label: "Cotizar página web", href: "/cotizador" },
+    ],
+  },
+  {
+    title: "Servicios",
+    items: [
       { label: "Sistemas web a medida", href: "/sistemas-web" },
-      { label: "Automatización", href: "/automatizacion" },
       { label: "SEO para empresas", href: "/servicios/seo-para-empresas-chile" },
+      { label: "Automatización", href: "/automatizacion" },
       { label: "Soporte TI", href: "/soporte-ti" },
+      { label: "Planes y precios", href: "/planes" },
+      { label: "Todos los servicios", href: "/servicios" },
     ],
   },
   {
@@ -30,12 +38,10 @@ const footerColumns = [
     items: [
       { label: "Nosotros", href: "/quienes-somos" },
       { label: "Casos de éxito", href: "/casos-exito" },
-      { label: "Planes y precios", href: "/planes" },
-      { label: "Demos funcionales", href: "/demos" },
+      { label: "Demos de páginas web", href: "/demos" },
       { label: "Blog", href: "/blog" },
       { label: "Preguntas frecuentes", href: "/faq" },
       { label: "Contacto", href: "/contacto" },
-      { label: "Cotizar proyecto", href: "/cotizador" },
     ],
   },
 ];
@@ -63,7 +69,7 @@ export function SiteFooter() {
         </Container>
       </div>
 
-      <Container className="grid gap-10 py-12 md:grid-cols-2 lg:grid-cols-[1.2fr_0.9fr_0.9fr_1.2fr]">
+      <Container className="grid gap-10 py-12 md:grid-cols-2 lg:grid-cols-[1.15fr_0.85fr_0.85fr_0.85fr_1.1fr]">
         <div className="space-y-4">
           <Link href="/" className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-lg font-extrabold text-white">

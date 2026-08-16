@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, MessageCircle, MonitorSmartphone, Settings, ShieldCheck } from "lucide-react";
+import { ArrowRight, Check, Globe, MessageCircle, MonitorSmartphone, Settings } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
@@ -13,57 +13,55 @@ const WHATSAPP_URL =
   `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20orientaci%C3%B3n%20sobre%20un%20servicio%20digital%20para%20mi%20empresa.`;
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Servicios digitales para empresas en Santiago y Chile",
+  title: "Servicios de desarrollo web para empresas en Santiago y Chile",
   description:
-    "Explora los servicios de Zyteron: desarrollo web, ecommerce, sistemas internos, automatización y soporte TI para empresas de Santiago, Región Metropolitana y todo Chile.",
+    "Servicios de Zyteron: páginas web para empresas y pymes, tiendas online, sistemas a medida, SEO y automatización para Santiago, Región Metropolitana y todo Chile.",
   path: "/servicios",
 });
 
 const introParagraphs = [
-  "En Zyteron desarrollamos soluciones digitales para empresas, pymes y emprendedores en Chile que necesitan mejorar su presencia online, ordenar procesos internos y avanzar con tecnología útil. Nuestro trabajo combina desarrollo web, tiendas online, sistemas web, automatización, soporte TI y optimización web con un enfoque práctico: resolver problemas reales del negocio.",
+  "En Zyteron desarrollamos principalmente páginas web para empresas y pymes de Santiago, Región Metropolitana y todo Chile. Alrededor de ese servicio principal sumamos tiendas online, sistemas web, automatización, SEO y soporte TI cuando el proyecto lo necesita, siempre con el mismo enfoque práctico: resolver problemas reales del negocio.",
   "Cada servicio se define según alcance, prioridad y etapa de la empresa. No todos los proyectos necesitan una solución compleja desde el inicio; algunas pymes requieren una página web clara para generar confianza, mientras otras necesitan un sistema web para controlar datos, documentación, ventas, inventario o tareas operativas.",
   "El objetivo es ayudarte a elegir una alternativa profesional, escalable y coherente con lo que quieres lograr. Por eso trabajamos con diagnóstico inicial, propuesta clara, diseño responsive, estructura SEO base, rutas de contacto visibles y acompañamiento posterior según el tipo de proyecto.",
 ];
 
 const serviceGroups = [
   {
-    title: "A) Desarrollo Web",
+    title: "Páginas web (servicio principal)",
     description: "Presencia digital profesional para captar clientes y fortalecer la confianza comercial.",
     icon: <MonitorSmartphone className="h-5 w-5" />,
     items: [
       "Sitios web corporativos",
-      "Landing pages",
-      "Tiendas online",
-      "Catálogos digitales",
-      "Webs responsivas",
-      "SEO básico",
+      "Páginas web para pymes",
+      "Landing pages comerciales",
+      "Diseño responsive",
+      "Base SEO técnica",
+      "Formularios y WhatsApp",
       "Optimización de velocidad",
     ],
   },
   {
-    title: "B) Sistemas y automatización",
-    description: "Soluciones para ordenar procesos internos y mejorar productividad operativa.",
-    icon: <Settings className="h-5 w-5" />,
+    title: "Tiendas online y catálogos",
+    description: "Para negocios que además de mostrar necesitan vender por internet.",
+    icon: <Globe className="h-5 w-5" />,
     items: [
-      "Sistemas internos",
-      "Paneles administrativos",
-      "Cotizadores",
-      "Generación de PDF",
-      "Control de registros",
-      "Automatización de WhatsApp",
-      "Integración de pagos",
+      "Catálogo administrable",
+      "Carrito y checkout",
+      "Pagos online",
+      "Fichas de producto con SEO",
+      "Venta asistida por WhatsApp",
     ],
   },
   {
-    title: "C) Soporte TI y soluciones tecnológicas",
-    description: "Soporte para operación diaria, continuidad técnica y crecimiento con menor fricción.",
-    icon: <ShieldCheck className="h-5 w-5" />,
+    title: "Sistemas, automatización y soporte",
+    description: "Extensiones de la solución web para ordenar procesos y mantener continuidad.",
+    icon: <Settings className="h-5 w-5" />,
     items: [
-      "Soporte técnico",
-      "Redes",
-      "Configuración de equipos",
-      "Asesoría tecnológica",
-      "Productos TI como complemento",
+      "Sistemas internos y paneles",
+      "Cotizadores con PDF",
+      "Automatización de WhatsApp",
+      "Integración de pagos",
+      "Soporte TI y mantención",
     ],
   },
 ];
@@ -338,7 +336,7 @@ export default async function ServiciosPage() {
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" className="bg-white font-bold text-blue-800 hover:bg-blue-50">
               <Link href="/cotizador">
-                Solicitar cotización <ArrowRight className="h-4 w-4" />
+                Cotizar página web <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
