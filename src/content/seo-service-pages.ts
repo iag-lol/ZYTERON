@@ -94,7 +94,7 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "desarrollo-web",
     path: "/desarrollo-web",
     navLabel: "Desarrollo web",
-    metaTitle: "Desarrollo Web para Empresas | Santiago y todo Chile | Zyteron",
+    metaTitle: "Desarrollo Web a Medida en Chile | Zyteron",
     metaDescription:
       "Empresa de desarrollo web en Santiago para empresas de todo Chile: webs profesionales con SEO base, diseño responsive y rutas de contacto claras. Cotiza sin compromiso.",
     primaryKeyword: "desarrollo web en Chile",
@@ -104,7 +104,7 @@ export const seoServicePages: SeoServicePage[] = [
       "empresa de desarrollo web en Santiago",
       "sitios web responsive",
     ],
-    heroTitle: "Desarrollo web para empresas que necesitan una presencia digital profesional",
+    heroTitle: "Desarrollo web personalizado para proyectos que necesitan más que una plantilla",
     heroDescription:
       "Hacemos diseño de páginas web y desarrollo web para empresas, pymes y emprendedores de Santiago y todo Chile: sitios profesionales, modernos y rápidos para mostrar tus servicios con confianza, captar consultas y crecer con una base técnica escalable.",
     problemTitle: "Una web profesional debe vender confianza, no solo verse bien",
@@ -166,8 +166,9 @@ export const seoServicePages: SeoServicePage[] = [
     ],
     relatedLinks: [
       { label: "Páginas web para pymes", href: "/paginas-web-para-pymes", description: "Soluciones web para pymes chilenas con foco en contacto y presencia profesional." },
-      { label: "Páginas web para empresas", href: "/diseno-web-empresas", description: "Sitios corporativos con UX, confianza y enfoque comercial." },
+      { label: "Páginas web para empresas", href: "/paginas-web-para-empresas", description: "Sitios corporativos con UX, confianza y enfoque comercial." },
       { label: "SEO para empresas", href: "/servicios/seo-para-empresas-chile", description: "Mejoras técnicas y contenido para crecer en tráfico orgánico." },
+      { label: "Calculadora de precio", href: "/calculadora-precio-pagina-web", description: "Estima cuánto costaría tu página web antes de cotizar." },
       ...commonRelatedLinks,
     ],
     serviceType: "Desarrollo web",
@@ -180,7 +181,7 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "paginas-web-para-pymes",
     path: "/paginas-web-para-pymes",
     navLabel: "Páginas web para pymes",
-    metaTitle: "Páginas web para pymes en Chile",
+    metaTitle: "Páginas Web para Pymes en Chile | Zyteron",
     metaDescription:
       "Creamos páginas web para pymes en Chile: rápidas, responsivas y orientadas a generar consultas por Google, WhatsApp y formulario. Revisa planes y cotiza.",
     primaryKeyword: "páginas web para pymes en Chile",
@@ -190,7 +191,7 @@ export const seoServicePages: SeoServicePage[] = [
       "sitios web para pequeñas empresas",
       "diseño web para pymes",
     ],
-    heroTitle: "Páginas web para pymes en Chile con foco en confianza, contacto y crecimiento",
+    heroTitle: "Páginas web profesionales para pymes chilenas",
     heroDescription:
       "Creamos sitios profesionales para pequeñas y medianas empresas que necesitan explicar sus servicios, construir visibilidad en búsquedas relevantes y transformar visitas en consultas por WhatsApp, formulario o correo.",
     problemTitle: "Una pyme necesita una web que explique rápido y genere contacto",
@@ -251,7 +252,7 @@ export const seoServicePages: SeoServicePage[] = [
       },
     ],
     relatedLinks: [
-      { label: "Páginas web para empresas", href: "/diseno-web-empresas", description: "Sitios corporativos para organizaciones con una oferta y proceso comercial más amplios." },
+      { label: "Páginas web para empresas", href: "/paginas-web-para-empresas", description: "Sitios corporativos para organizaciones con una oferta y proceso comercial más amplios." },
       { label: "Desarrollo web en Chile", href: "/desarrollo-web", description: "Implementación técnica de sitios profesionales, rápidos y escalables." },
       { label: "Tiendas online para pymes", href: "/tiendas-online", description: "Ecommerce y catálogos digitales para vender productos online." },
       { label: "Blog para pymes", href: "/blog/que-debe-tener-pagina-web-profesional-pyme", description: "Checklist de una web profesional para una pyme." },
@@ -264,10 +265,10 @@ export const seoServicePages: SeoServicePage[] = [
       "Podemos ayudarte a definir una primera versión sólida, con posibilidad de crecer por etapas según presupuesto y prioridades.",
   },
   {
-    slug: "diseno-web-empresas",
-    path: "/diseno-web-empresas",
+    slug: "paginas-web-para-empresas",
+    path: "/paginas-web-para-empresas",
     navLabel: "Páginas web para empresas",
-    metaTitle: "Páginas web para empresas en Chile",
+    metaTitle: "Páginas Web para Empresas en Chile | Zyteron",
     metaDescription:
       "Creamos páginas web para empresas en Chile con diseño corporativo, contenido comercial, SEO técnico y rutas claras para captar consultas y cotizaciones.",
     primaryKeyword: "páginas web para empresas en Chile",
@@ -277,7 +278,7 @@ export const seoServicePages: SeoServicePage[] = [
       "página web empresarial",
       "diseño web corporativo Chile",
     ],
-    heroTitle: "Páginas web para empresas en Chile con diseño corporativo y foco comercial",
+    heroTitle: "Páginas web empresariales diseñadas para generar negocios",
     heroDescription:
       "Diseñamos y desarrollamos sitios corporativos para que clientes, proveedores y equipos de compra entiendan tu oferta, encuentren respaldo real y avancen hacia una consulta o cotización.",
     problemTitle: "Una página web empresarial debe apoyar la decisión comercial",
@@ -354,7 +355,7 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "tiendas-online",
     path: "/tiendas-online",
     navLabel: "Tiendas online",
-    metaTitle: "Tiendas Online para Pymes y Empresas en Chile | Zyteron",
+    metaTitle: "Tiendas Online en Chile para Empresas | Zyteron",
     metaDescription:
       "Desarrollo de tiendas online en Chile para pymes y empresas: catálogo, pagos con Webpay, Flow o Mercado Pago, WhatsApp y base SEO lista para crecer. Cotiza sin compromiso.",
     primaryKeyword: "tiendas online para pymes",
@@ -371,7 +372,7 @@ export const seoServicePages: SeoServicePage[] = [
       "página web con tienda online",
       "catálogo digital para empresas",
     ],
-    heroTitle: "Tiendas online para pymes y empresas que quieren vender con orden",
+    heroTitle: "Tiendas online preparadas para vender en Chile",
     heroDescription:
       "Hacemos diseño y desarrollo de tiendas online para crear tu tienda virtual en Chile: catálogo online administrable, fichas de producto y flujos de compra o cotización para mostrar productos, recibir pedidos y vender con una experiencia profesional.",
     problemTitle: "Vender online requiere más que subir productos",
@@ -452,7 +453,7 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "sistemas-web",
     path: "/sistemas-web",
     navLabel: "Sistemas web",
-    metaTitle: "Sistemas web a medida para empresas",
+    metaTitle: "Sistemas Web para Empresas en Chile | Zyteron",
     metaDescription:
       "Desarrollo de sistemas web a medida en Santiago y todo Chile: paneles administrativos, reportes, permisos y automatización para ordenar tu operación. Conoce nuestra metodología.",
     primaryKeyword: "sistemas web a medida",
@@ -468,7 +469,7 @@ export const seoServicePages: SeoServicePage[] = [
       "sistema de control de flota",
       "plataformas administrativas para empresas",
     ],
-    heroTitle: "Sistemas web a medida para empresas que necesitan ordenar su operación",
+    heroTitle: "Sistemas web a medida para digitalizar procesos empresariales",
     heroDescription:
       "Hacemos desarrollo de software y sistemas web a medida para empresas de Santiago y todo Chile: plataformas administrativas, aplicaciones web y paneles de gestión para controlar datos, usuarios, documentos, clientes, reportes y flujos críticos del negocio.",
     problemTitle: "Cuando la operación crece, las planillas dejan de ser suficientes",
@@ -531,6 +532,9 @@ export const seoServicePages: SeoServicePage[] = [
     relatedLinks: [
       { label: "Automatización", href: "/automatizacion", description: "Automatiza tareas repetitivas y notificaciones del negocio." },
       { label: "Cotizador web con PDF", href: "/cotizador-web-pdf", description: "Automatiza solicitudes comerciales y generación de propuestas." },
+      { label: "Intranet corporativa", href: "/sistemas-web/intranet-corporativa", description: "Comunicación interna, documentos y solicitudes del personal con permisos por rol." },
+      { label: "Gestión documental", href: "/sistemas-web/gestion-documental", description: "Versionado, vencimientos y trazabilidad para documentación crítica." },
+      { label: "Control de flota", href: "/sistemas-web/control-flota", description: "Mantenciones, documentación y costo real por vehículo." },
       ...commonRelatedLinks,
     ],
     serviceType: "Sistemas web a medida",

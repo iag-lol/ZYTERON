@@ -104,7 +104,7 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
       description: "Rango referencial para una web de presentación o un sitio pyme comercial; el alcance final se cotiza por escrito.",
     },
   },
-  "diseno-web-empresas": {
+  "paginas-web-para-empresas": {
     serviceLabel: "las páginas web para empresas",
     whyParagraphs: [
       "En una compra empresarial, el sitio suele ser revisado por más de una persona: cliente, jefatura, administración o compras. Una página web corporativa debe permitir que cada perfil entienda la oferta, encuentre respaldo y sepa qué información entregar para avanzar hacia una reunión o cotización.",

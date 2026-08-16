@@ -27,7 +27,7 @@ const caseServiceOptions = [
     signals: ["pyme", "emprendimiento", "negocio pequeño"],
   },
   {
-    href: "/diseno-web-empresas",
+    href: "/paginas-web-para-empresas",
     label: "Ver páginas web para empresas",
     signals: ["página web", "sitio web", "web corporativa", "landing", "seo"],
   },
@@ -41,7 +41,7 @@ function getCaseService(item: DbCaseStudy) {
 
   // Sin señales claras, el caso se asocia al servicio principal: páginas web.
   const fallback =
-    caseServiceOptions.find((service) => service.href === "/diseno-web-empresas") ?? caseServiceOptions[0];
+    caseServiceOptions.find((service) => service.href === "/paginas-web-para-empresas") ?? caseServiceOptions[0];
 
   return (
     caseServiceOptions.find((service) => service.signals.some((signal) => context.includes(signal))) ??

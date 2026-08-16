@@ -105,12 +105,15 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/servicios/paginas-web-para-empresas",
-        destination: "/diseno-web-empresas",
+        destination: "/paginas-web-para-empresas",
         permanent: true,
       },
       {
-        source: "/paginas-web-para-empresas",
-        destination: "/diseno-web-empresas",
+        // URL antigua de la money page de empresas. Se renombró al slug
+        // exact-match; todas las demás reglas apuntan ya al destino final
+        // para no encadenar redirecciones.
+        source: "/diseno-web-empresas",
+        destination: "/paginas-web-para-empresas",
         permanent: true,
       },
       {
@@ -125,12 +128,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/servicios/diseno-web-chile",
-        destination: "/diseno-web-empresas",
+        destination: "/paginas-web-para-empresas",
         permanent: true,
       },
       {
         source: "/servicios/agencia-diseno-web-chile",
-        destination: "/diseno-web-empresas",
+        destination: "/paginas-web-para-empresas",
         permanent: true,
       },
       {
@@ -171,12 +174,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/diseno-web/:ubicacion",
-        destination: "/diseno-web-empresas",
+        destination: "/paginas-web-para-empresas",
         permanent: true,
       },
       {
         source: "/diseno-web",
-        destination: "/diseno-web-empresas",
+        destination: "/paginas-web-para-empresas",
         permanent: true,
       },
       {
@@ -190,7 +193,10 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: "/sistemas-web/:ubicacion",
+        // Consolida las antiguas landings por comuna, pero NO las subpáginas
+        // reales del cluster de sistemas, que tienen contenido propio.
+        source:
+          "/sistemas-web/:ubicacion((?!intranet-corporativa$|gestion-documental$|control-flota$).*)",
         destination: "/sistemas-web",
         permanent: true,
       },
@@ -202,6 +208,12 @@ const nextConfig: NextConfig = {
       {
         source: "/soporte-ti/:ubicacion",
         destination: "/soporte-ti",
+        permanent: true,
+      },
+      {
+        // Variante corta de la URL de conversión; la canónica es /cotizador.
+        source: "/cotizar",
+        destination: "/cotizador",
         permanent: true,
       },
       {

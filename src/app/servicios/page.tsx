@@ -8,6 +8,7 @@ import { siteConfig } from "@/config/site";
 import { buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 import { seoServicePages } from "@/content/seo-service-pages";
 import { priorityServicePages } from "@/content/priority-service-pages";
+import { verticalPages } from "@/content/vertical-pages";
 
 const WHATSAPP_URL =
   `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20orientaci%C3%B3n%20sobre%20un%20servicio%20digital%20para%20mi%20empresa.`;
@@ -250,6 +251,30 @@ export default async function ServiciosPage() {
                 <Link key={service.path} href={service.path} className="card-premium p-5 transition-colors hover:border-blue-200">
                   <h4 className="text-base font-extrabold text-slate-900">{service.title}</h4>
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">{service.metaDescription}</p>
+                  <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
+                    Ver servicio <ArrowRight className="h-4 w-4" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-6">
+            <div className="space-y-1 text-center">
+              <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Por rubro</p>
+              <h3 className="text-xl font-extrabold text-slate-900">
+                Páginas web según el sector de tu empresa
+              </h3>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {verticalPages.map((vertical) => (
+                <Link
+                  key={vertical.path}
+                  href={vertical.path}
+                  className="card-premium p-5 transition-colors hover:border-blue-200"
+                >
+                  <h4 className="text-base font-extrabold text-slate-900">{vertical.navLabel}</h4>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{vertical.heroTitle}</p>
                   <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
                     Ver servicio <ArrowRight className="h-4 w-4" />
                   </span>

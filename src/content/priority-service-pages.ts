@@ -28,10 +28,10 @@ export const priorityServicePages: PriorityServicePage[] = [
     slug: "paginas-web-santiago",
     path: "/paginas-web-santiago",
     title: "Páginas web en Santiago para empresas y pymes",
-    metaTitle: "Páginas web Santiago | Diseño y creación para empresas | Zyteron",
+    metaTitle: "Páginas Web en Santiago para Empresas | Zyteron",
     metaDescription:
       "Creación de páginas web en Santiago para empresas y pymes: diseño profesional, SEO local y foco en cotizaciones. Oficina en Providencia, atención en toda la Región Metropolitana.",
-    heroTitle: "Páginas web en Santiago que generan cotizaciones, no solo visitas",
+    heroTitle: "Páginas web en Santiago que generan oportunidades comerciales",
     heroDescription:
       "Diseñamos y creamos páginas web para empresas y pymes de Santiago y la Región Metropolitana. Trabajamos desde Providencia, con reuniones presenciales cuando el proyecto lo requiere, y atendemos clientes en todo Chile en modalidad remota.",
     context: [

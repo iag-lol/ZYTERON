@@ -33,7 +33,7 @@ export const seoIntentMap: SeoIntent[] = [
     indexable: true,
   },
   {
-    path: "/diseno-web-empresas",
+    path: "/paginas-web-para-empresas",
     primaryKeyword: "paginas web para empresas Chile",
     intent: "comercial",
     indexable: true,

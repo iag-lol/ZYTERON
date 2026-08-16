@@ -5,7 +5,12 @@ import { Bot, Loader2, MessageCircle, Send, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { siteConfig } from "@/config/site";
-import { trackAnalyticsEvent } from "@/lib/analytics/google-ads";
+import {
+  trackAnalyticsEvent,
+  trackChatHandoff,
+  trackChatOpen,
+  trackChatQualified,
+} from "@/lib/analytics/google-ads";
 import { HANDOFF_SIGNAL } from "@/lib/ai/handoff-signal";
 import {
   ZYTERON_QUICK_PROMPTS,
@@ -40,6 +45,8 @@ export function AiChatWidget() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // Evita emitir chat_qualified más de una vez por conversación.
+  const qualifiedRef = useRef(false);
 
   // Restaurar historial de la sesión.
   useEffect(() => {
@@ -108,7 +115,7 @@ export function AiChatWidget() {
   const openPanel = useCallback(() => {
     setOpen(true);
     dismissTeaser();
-    trackAnalyticsEvent("chat_open", { page_path: window.location.pathname });
+    trackChatOpen({ page_path: window.location.pathname });
     setTimeout(() => inputRef.current?.focus(), 120);
   }, [dismissTeaser]);
 
@@ -151,7 +158,14 @@ export function AiChatWidget() {
           if (done) break;
           acc += decoder.decode(value, { stream: true });
           // La señal indica que el cliente ya está listo → mostrar botón WhatsApp.
-          if (acc.includes(HANDOFF_SIGNAL)) setReadyForWhatsApp(true);
+          // Es también el momento en que el lead queda calificado por la IA.
+          if (acc.includes(HANDOFF_SIGNAL)) {
+            setReadyForWhatsApp(true);
+            if (!qualifiedRef.current) {
+              qualifiedRef.current = true;
+              trackChatQualified({ page_path: window.location.pathname });
+            }
+          }
           const display = acc.split(HANDOFF_SIGNAL).join("");
           setMessages((prev) =>
             prev.map((m) => (m.id === assistantId ? { ...m, content: display } : m)),
@@ -239,6 +253,7 @@ export function AiChatWidget() {
     const url = `https://wa.me/${WHATSAPP_DIGITS}?text=${encodeURIComponent(text)}`;
     // window.open no pasa por el listener global de anchors, así que el
     // evento de conversión se registra aquí.
+    trackChatHandoff({ page_path: window.location.pathname });
     trackAnalyticsEvent("whatsapp_click", {
       page_path: window.location.pathname,
       link_text: "chat_handoff",

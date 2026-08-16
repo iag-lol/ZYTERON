@@ -41,7 +41,7 @@ const WHATSAPP_BASE =
   `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20p%C3%A1gina%20web%20para%20mi%20empresa.`;
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Páginas web para empresas en Santiago y Chile",
+  title: "Páginas Web Profesionales en Chile para Empresas y Pymes",
   description:
     "Creamos páginas web profesionales para empresas y pymes de Santiago, Región Metropolitana y todo Chile: sitios rápidos, con SEO real y enfocados en generar cotizaciones.",
   path: "/",
@@ -340,6 +340,13 @@ const solutionsByNeed = [
     cta: "Cotizar tienda online",
   },
   {
+    title: "Busco algo específico para mi rubro",
+    description:
+      "Tenemos páginas web pensadas para transporte y logística, constructoras, servicios profesionales e industria B2B.",
+    href: "/paginas-web/industria-b2b",
+    cta: "Ver páginas web por rubro",
+  },
+  {
     title: "Quiero aparecer en Google",
     description:
       "Trabajamos SEO técnico y de contenido para que tu web aparezca en las búsquedas de tu rubro y ciudad.",
@@ -366,7 +373,7 @@ const clientTypes = [
     title: "Páginas web para empresas en Chile",
     description:
       "Webs corporativas para presentar servicios, respaldo y procesos con una estructura preparada para captar consultas B2B.",
-    href: "/diseno-web-empresas",
+    href: "/paginas-web-para-empresas",
   },
   {
     title: "Tiendas online para negocios",
@@ -395,7 +402,7 @@ export default async function Home() {
         id="home-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/",
-          title: "Zyteron | Páginas web para empresas en Santiago y Chile",
+          title: "Páginas Web Profesionales en Chile | Zyteron",
           description:
             "Desarrollo de páginas web para empresas y pymes de Santiago, Región Metropolitana y todo Chile, con tiendas online y sistemas como complemento.",
           breadcrumbs: [{ name: "Inicio", path: "/" }],
@@ -431,7 +438,7 @@ export default async function Home() {
             {
               name: "Páginas web para empresas",
               description: "Sitios web corporativos para presentar servicios y captar consultas B2B.",
-              path: "/diseno-web-empresas",
+              path: "/paginas-web-para-empresas",
             },
             {
               name: "Páginas web para pymes",
@@ -501,7 +508,7 @@ export default async function Home() {
 
             <h1 className="text-balance text-[2rem] font-extrabold leading-[1.12] tracking-tight text-slate-900 [text-shadow:0_1px_16px_rgba(255,255,255,0.75)] sm:text-5xl lg:text-[3.3rem]">
               <span className="text-gradient-hero animate-gradient">Páginas web profesionales</span>{" "}
-              para empresas en Santiago
+              para empresas que necesitan vender
             </h1>
 
             <p className="max-w-2xl text-base font-medium leading-relaxed text-slate-700 [text-shadow:0_1px_10px_rgba(255,255,255,0.7)] sm:text-lg">
