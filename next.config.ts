@@ -205,6 +205,19 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        // Productos TI dejó de ser línea comercial pública. No existe página
+        // equivalente, así que la intención "qué ofrece Zyteron" se resuelve
+        // en el hub de servicios. El catálogo sigue vivo en el panel privado.
+        source: "/productos",
+        destination: "/servicios",
+        permanent: true,
+      },
+      {
+        source: "/productos/:path*",
+        destination: "/servicios",
+        permanent: true,
+      },
+      {
         // Hub local noindex y huérfano: se consolida en el servicio principal.
         source: "/ciudades",
         destination: "/desarrollo-web",

@@ -413,9 +413,9 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
           <div className="grid gap-4 md:grid-cols-3">
             {[
               {
-                title: "Productos TI",
-                description: "Revisa catálogo administrable de PCs, combos y equipos para empresas.",
-                href: "/productos",
+                title: "Páginas web en Santiago",
+                description: "Nuestro servicio principal para empresas y pymes de Santiago y la Región Metropolitana.",
+                href: "/paginas-web-santiago",
               },
               {
                 title: "Blog comercial",

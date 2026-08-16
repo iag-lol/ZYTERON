@@ -8,9 +8,9 @@ import { DemosGrid } from "@/components/demos/demos-grid";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Demos funcionales y casos de uso",
+  title: "Ejemplos y demos de páginas web",
   description:
-    "Explora demos funcionales de ZYTERON para empresas y pymes: tienda online, web corporativa, plataformas de cursos, paneles administrativos y sistemas internos.",
+    "Mira ejemplos de páginas web que desarrollamos para empresas y pymes: sitios corporativos, tiendas online y plataformas, para imaginar cómo puede quedar la tuya.",
   path: "/demos",
 });
 
@@ -90,8 +90,8 @@ export default function DemosPage() {
         id="demos-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/demos",
-          title: "Demos funcionales y casos de uso",
-          description: "Catálogo de demos funcionales para evaluación comercial de proyectos.",
+          title: "Ejemplos y demos de páginas web",
+          description: "Ejemplos navegables de páginas web desarrolladas por Zyteron para evaluar un proyecto antes de cotizar.",
           breadcrumbs: [
             { name: "Inicio", path: "/" },
             { name: "Demos", path: "/demos" },
@@ -106,10 +106,11 @@ export default function DemosPage() {
             Portafolio de referencia
           </div>
           <h1 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">
-            Demos funcionales para evaluar soluciones reales
+            Ejemplos de páginas web que hemos desarrollado
           </h1>
           <p className="mx-auto max-w-3xl text-base text-slate-600 sm:text-lg">
-            Cada tarjeta corresponde a un demo funcional. Se usan para revisar estructura, flujo y capacidades antes de cotizar.
+            Cada tarjeta es un demo funcional que puedes abrir y navegar. Sirven para imaginar cómo
+            puede quedar la página web de tu empresa antes de cotizar.
           </p>
         </Container>
       </section>
@@ -128,7 +129,7 @@ export default function DemosPage() {
           </p>
           <Button asChild size="lg" className="mt-5 bg-white font-bold text-blue-800 hover:bg-blue-50">
             <Link href="/cotizador">
-              Solicitar cotización <ArrowRight className="h-4 w-4" />
+              Cotizar mi página web <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
         </Container>

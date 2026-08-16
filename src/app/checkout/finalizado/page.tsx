@@ -162,7 +162,7 @@ export default async function CheckoutFinalizadoPage({
               </Button>
             ) : null}
             <Button asChild className="btn-primary-glow bg-blue-700 text-white hover:bg-blue-800">
-              <Link href="/productos">Volver a productos</Link>
+              <Link href="/">Volver al inicio</Link>
             </Button>
             <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
               <Link href="/contacto">Contactar soporte</Link>

@@ -87,7 +87,7 @@ export default async function CasosExitoPage() {
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" className="bg-blue-700 font-bold text-white hover:bg-blue-800">
               <Link href="/contacto">
-                Cotizar una solución similar <ArrowRight className="h-4 w-4" />
+                Cotizar mi página web <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
