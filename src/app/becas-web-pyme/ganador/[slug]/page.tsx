@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .maybeSingle();
 
   if (!campaign) {
-    return { title: "No encontrado | Becas Web Pyme" };
+    return { title: "No encontrado | Becas Web Pyme", robots: { index: false, follow: false } };
   }
 
   const { data: winner } = await supabase
@@ -29,6 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `Ganador: ${campaign.title} | Becas Web Pyme Zyteron`,
     description: "Conoce al emprendimiento seleccionado para la Beca Web Pyme de Zyteron.",
+    alternates: { canonical: `https://www.zyteron.cl/becas-web-pyme/ganador/${slug}` },
     robots: {
       index: isPublished,
       follow: true,

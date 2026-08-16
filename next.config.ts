@@ -12,7 +12,8 @@ const contentSecurityPolicy = [
   // 'self' y blob: habilitan el visor de PDF embebido y la impresión de
   // documentos propios (contratos, cotizaciones) desde un iframe del mismo
   // origen. Sin ellos el navegador bloquea el marco y no se ve nada.
-  "frame-src 'self' blob: https://www.googletagmanager.com",
+  // www.google.com permite el mapa embebido de la oficina (footer).
+  "frame-src 'self' blob: https://www.googletagmanager.com https://www.google.com",
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",
@@ -125,6 +126,88 @@ const nextConfig: NextConfig = {
       {
         source: "/servicios/agencia-diseno-web-chile",
         destination: "/diseno-web-empresas",
+        permanent: true,
+      },
+      {
+        // "Diseño web Santiago" se consolida en la página pilar de Santiago.
+        source: "/servicios/diseno-web-santiago",
+        destination: "/paginas-web-santiago",
+        permanent: true,
+      },
+      {
+        // Duplicaba la intención de /tiendas-online con contenido casi igual.
+        source: "/tiendas-online-chile",
+        destination: "/tiendas-online",
+        permanent: true,
+      },
+      {
+        // Duplicaba la intención de /sistemas-web (mismo metaTitle objetivo).
+        source: "/sistemas-web-a-medida",
+        destination: "/sistemas-web",
+        permanent: true,
+      },
+      // Landings locales generadas por plantilla (5 servicios × 35 comunas):
+      // contenido casi duplicado sin valor individual. Se consolidan en la
+      // página del servicio; las variantes "santiago" van a la página local real.
+      {
+        source: "/desarrollo-web/santiago",
+        destination: "/desarrollo-web-santiago",
+        permanent: true,
+      },
+      {
+        source: "/desarrollo-web/:ubicacion",
+        destination: "/desarrollo-web",
+        permanent: true,
+      },
+      {
+        source: "/diseno-web/santiago",
+        destination: "/paginas-web-santiago",
+        permanent: true,
+      },
+      {
+        source: "/diseno-web/:ubicacion",
+        destination: "/diseno-web-empresas",
+        permanent: true,
+      },
+      {
+        source: "/diseno-web",
+        destination: "/diseno-web-empresas",
+        permanent: true,
+      },
+      {
+        source: "/paginas-web-para-pymes/santiago",
+        destination: "/paginas-web-santiago",
+        permanent: true,
+      },
+      {
+        source: "/paginas-web-para-pymes/:ubicacion",
+        destination: "/paginas-web-para-pymes",
+        permanent: true,
+      },
+      {
+        source: "/sistemas-web/:ubicacion",
+        destination: "/sistemas-web",
+        permanent: true,
+      },
+      {
+        source: "/soporte-ti/santiago",
+        destination: "/soporte-ti-pymes-santiago",
+        permanent: true,
+      },
+      {
+        source: "/soporte-ti/:ubicacion",
+        destination: "/soporte-ti",
+        permanent: true,
+      },
+      {
+        // Hub local noindex y huérfano: se consolida en el servicio principal.
+        source: "/ciudades",
+        destination: "/desarrollo-web",
+        permanent: true,
+      },
+      {
+        source: "/ciudades/:slug",
+        destination: "/desarrollo-web",
         permanent: true,
       },
       {

@@ -25,6 +25,77 @@ export type PriorityServicePage = {
 
 export const priorityServicePages: PriorityServicePage[] = [
   {
+    slug: "paginas-web-santiago",
+    path: "/paginas-web-santiago",
+    title: "Páginas web en Santiago para empresas y pymes",
+    metaTitle: "Páginas web Santiago | Diseño y creación para empresas | Zyteron",
+    metaDescription:
+      "Creación de páginas web en Santiago para empresas y pymes: diseño profesional, SEO local y foco en cotizaciones. Oficina en Providencia, atención en toda la Región Metropolitana.",
+    heroTitle: "Páginas web en Santiago que generan cotizaciones, no solo visitas",
+    heroDescription:
+      "Diseñamos y creamos páginas web para empresas y pymes de Santiago y la Región Metropolitana. Trabajamos desde Providencia, con reuniones presenciales cuando el proyecto lo requiere, y atendemos clientes en todo Chile en modalidad remota.",
+    context: [
+      "Si tu empresa está en Santiago, tus clientes te buscan en Google antes de llamarte. Una página web bien construida responde esas búsquedas: explica qué haces, muestra trabajos reales y deja claro cómo cotizar. Eso es lo que construimos: sitios que funcionan como un canal comercial, no como un folleto.",
+      "Atendemos empresas de Providencia, Las Condes, Ñuñoa, Santiago Centro, Maipú, Huechuraba, Quilicura y el resto de la Región Metropolitana. Nuestra oficina está en Antonio Bellet 193, Providencia, y coordinamos reuniones presenciales para levantamiento de requerimientos cuando el proyecto lo amerita.",
+      "Cada página web se cotiza por alcance definido: cantidad de secciones, contenido, integraciones y soporte posterior. Publicamos precios referenciales en nuestros planes para que compares con información real antes de conversar con nosotros.",
+    ],
+    benefits: [
+      "Presencia profesional que genera confianza en clientes de Santiago y RM.",
+      "Estructura SEO pensada para búsquedas locales de tu rubro.",
+      "Carga rápida en celular, donde ocurre la mayoría de las visitas.",
+      "Formulario, WhatsApp y teléfono visibles para captar cotizaciones.",
+      "Autoadministración o mantención mensual según tu equipo y tiempo.",
+    ],
+    includes: [
+      "Reunión de levantamiento (presencial en Providencia o por videollamada).",
+      "Definición de estructura, textos y jerarquía de contenidos.",
+      "Diseño responsive adaptado a celular, tablet y escritorio.",
+      "SEO técnico: metadata, canonical, datos estructurados y sitemap.",
+      "Integración de formularios de contacto y botón de WhatsApp.",
+      "Publicación con dominio, hosting y correos según alcance.",
+    ],
+    audience: [
+      "Empresas de servicios de Santiago que necesitan más cotizaciones.",
+      "Pymes de la Región Metropolitana que quieren profesionalizar su imagen.",
+      "Negocios establecidos cuya web actual no aparece en Google.",
+      "Emprendedores de Santiago que parten y necesitan una base seria.",
+    ],
+    process: [
+      "Conversación inicial para entender tu negocio y objetivo comercial.",
+      "Propuesta formal con alcance, plazos y precio cerrado.",
+      "Diseño y construcción del sitio con revisiones tuyas en el camino.",
+      "Optimización SEO y pruebas en celular y escritorio.",
+      "Publicación, capacitación de uso y soporte inicial.",
+    ],
+    faqs: [
+      {
+        question: "¿Puedo reunirme con ustedes en persona en Santiago?",
+        answer:
+          "Sí. Nuestra oficina está en Antonio Bellet 193, Providencia. Coordinamos reuniones presenciales para levantamiento de proyectos y también trabajamos por videollamada con clientes de toda la Región Metropolitana y de otras regiones de Chile.",
+      },
+      {
+        question: "¿Cuánto cuesta una página web en Santiago?",
+        answer:
+          "Depende del alcance: cantidad de secciones, contenido, integraciones y si necesitas tienda o sistema. Publicamos precios referenciales en nuestra página de planes y entregamos cotización formal sin costo después de una conversación inicial.",
+      },
+      {
+        question: "¿Atienden empresas fuera de Santiago?",
+        answer:
+          "Sí. Santiago y la Región Metropolitana concentran la mayoría de nuestros clientes, pero desarrollamos páginas web para empresas de todo Chile en modalidad remota, con el mismo proceso y seguimiento.",
+      },
+      {
+        question: "¿Incluyen posicionamiento en Google?",
+        answer:
+          "Toda página que entregamos incluye base SEO técnica: estructura, metadata, datos estructurados y sitemap. Si necesitas posicionamiento continuo por keywords competitivas, ofrecemos SEO como servicio mensual aparte.",
+      },
+    ],
+    serviceType: "creación de páginas web santiago",
+    primaryCta: "Cotizar mi página web",
+    finalCtaTitle: "¿Tu empresa en Santiago necesita una página web que venda?",
+    finalCtaCopy:
+      "Cuéntanos qué hace tu negocio y te proponemos una estructura de sitio con alcance, plazos y precio claros. Sin compromiso y con respuesta rápida.",
+  },
+  {
     slug: "desarrollo-web-santiago",
     path: "/desarrollo-web-santiago",
     title: "Desarrollo web en Santiago para empresas y pymes",
@@ -89,138 +160,6 @@ export const priorityServicePages: PriorityServicePage[] = [
     finalCtaTitle: "¿Necesitas una web profesional para tu empresa en Santiago?",
     finalCtaCopy:
       "Podemos revisar tu caso y proponerte una estructura de sitio alineada a tu objetivo comercial, presupuesto y nivel de urgencia.",
-  },
-  {
-    slug: "tiendas-online-chile",
-    path: "/tiendas-online-chile",
-    title: "Tiendas online en Chile para pymes y empresas",
-    metaTitle: "Tiendas online Chile para pymes y empresas | ZYTERON",
-    metaDescription:
-      "Desarrollo de tiendas online en Chile para pymes y empresas: catálogo, carrito, integración comercial y acompañamiento para vender con orden.",
-    heroTitle: "Tiendas online en Chile para vender con estructura y confianza",
-    heroDescription:
-      "Te ayudamos a crear tu tienda online en Chile (o tienda virtual) orientada a operación real: catálogo online bien organizado, experiencia de compra clara, pagos con Webpay, Flow o Mercado Pago y rutas de contacto para cerrar ventas por web o WhatsApp.",
-    context: [
-      "Muchas pymes quieren vender online, pero se frenan por desorden en catálogo, falta de flujo comercial o problemas de mantención. Nuestra propuesta es construir una tienda que puedas operar sin fricción y que escale por etapas.",
-      "Trabajamos con compromisos concretos: definimos junto a ti qué incluye tu implementación —tipos de productos, cantidad inicial, forma de pago, envíos, reglas comerciales y soporte posterior— para que sepas exactamente qué recibirás.",
-      "La meta no es solo publicar productos. La meta es que tu tienda genere consultas, pedidos o ventas con una experiencia profesional que aumente confianza en tu marca.",
-    ],
-    benefits: [
-      "Catálogo ordenado para mejorar navegación y decisión de compra.",
-      "Diseño responsive para comprar desde celular sin fricción.",
-      "Integración gradual de funciones según etapa del negocio.",
-      "Mensajes comerciales claros para reducir dudas frecuentes.",
-      "Base SEO para posicionar categorías y productos clave.",
-    ],
-    includes: [
-      "Estructura de tienda según tipo de producto y público objetivo.",
-      "Categorías, fichas de producto y llamados a la acción.",
-      "Carrito y flujos comerciales según alcance contratado.",
-      "Integración con WhatsApp para venta asistida.",
-      "Configuración técnica inicial para indexación y rendimiento.",
-      "Capacitación breve para gestión operativa básica.",
-    ],
-    audience: [
-      "Pymes que venden productos físicos o mixtos en Chile.",
-      "Empresas que quieren pasar de catálogo estático a venta digital.",
-      "Marcas que ya venden por redes y necesitan un canal propio.",
-      "Negocios que requieren ordenar su proceso de cotización y pedido.",
-    ],
-    process: [
-      "Diagnóstico de catálogo, operación y objetivo comercial.",
-      "Definición de alcance, módulos y costos por etapa.",
-      "Diseño de estructura y experiencia de compra.",
-      "Desarrollo, carga inicial y pruebas de flujo.",
-      "Salida a producción y soporte de estabilización.",
-    ],
-    faqs: [
-      {
-        question: "¿Incluye integración de pagos en línea con Webpay, Flow o Mercado Pago?",
-        answer:
-          "Puede incluirse según alcance. Integramos tu tienda online con Webpay, Flow o Mercado Pago según proveedor, requisitos técnicos y flujo comercial de tu negocio.",
-      },
-      {
-        question: "¿Puedo comenzar con un catálogo pequeño?",
-        answer:
-          "Sí. Es una estrategia común para validar operación y escalar funciones cuando ya exista tracción.",
-      },
-      {
-        question: "¿La tienda queda lista para SEO?",
-        answer:
-          "Sí. Se implementa base técnica SEO para indexación, metadata y estructura de navegación por categorías.",
-      },
-    ],
-    serviceType: "tienda online para pyme chile",
-    primaryCta: "Cotizar mi tienda online",
-    finalCtaTitle: "¿Quieres vender online con una tienda clara y mantenible?",
-    finalCtaCopy:
-      "Definimos contigo la mejor estructura para vender según tipo de producto, operación interna y presupuesto disponible.",
-  },
-  {
-    slug: "sistemas-web-a-medida",
-    path: "/sistemas-web-a-medida",
-    title: "Sistemas web a medida en Chile para empresas",
-    metaTitle: "Sistemas web a medida Chile | ZYTERON",
-    metaDescription:
-      "Desarrollo de sistemas web a medida para empresas en Chile: paneles administrativos, control de procesos, generación de reportes y automatización.",
-    heroTitle: "Sistemas web a medida para ordenar procesos y escalar operación",
-    heroDescription:
-      "Cuando una planilla ya no alcanza, hacemos desarrollo de software a medida en Chile: sistemas web y aplicaciones web personalizadas para controlar información, usuarios, flujos internos y trazabilidad operativa.",
-    context: [
-      "Los sistemas a medida permiten transformar tareas manuales en procesos controlados. En vez de adaptar tu negocio a una herramienta genérica, construimos una solución alineada a tu flujo real de trabajo.",
-      "Nuestro enfoque parte por prioridades: qué duele hoy, qué proceso consume más tiempo y qué resultado esperas al digitalizar. Con eso definimos módulos, tiempos y una implementación por etapas.",
-      "Esto te permite reducir reprocesos, mejorar control interno y tomar decisiones con datos actualizados. Todo con una base escalable para nuevas funciones futuras.",
-    ],
-    benefits: [
-      "Mayor control de información crítica del negocio.",
-      "Reducción de tareas manuales y errores operativos.",
-      "Trazabilidad por estados, usuarios y fechas.",
-      "Escalabilidad por módulos sin rehacer todo el sistema.",
-      "Visibilidad ejecutiva mediante paneles y reportes.",
-    ],
-    includes: [
-      "Levantamiento funcional del proceso actual.",
-      "Diseño de arquitectura de módulos y permisos.",
-      "Desarrollo de panel administrativo y formularios internos.",
-      "Generación de documentos o reportes según necesidad.",
-      "Pruebas, ajustes y capacitación de uso.",
-      "Soporte inicial post implementación.",
-    ],
-    audience: [
-      "Empresas que gestionan múltiples registros o flujos internos.",
-      "Pymes que buscan software para pymes en Chile con control por roles.",
-      "Equipos que necesitan sistema de inventario, cotizaciones o control de flota.",
-      "Negocios que buscan automatizar cotizaciones y documentos.",
-    ],
-    process: [
-      "Diagnóstico de procesos y definición de objetivos medibles.",
-      "Diseño funcional por módulos priorizados.",
-      "Cotización formal y planificación por hitos.",
-      "Desarrollo incremental con revisiones periódicas.",
-      "Entrega, capacitación y soporte de adopción.",
-    ],
-    faqs: [
-      {
-        question: "¿Puedo partir con un módulo y luego crecer?",
-        answer:
-          "Sí. Recomendamos comenzar por el módulo de mayor impacto y luego ampliar el sistema por etapas.",
-      },
-      {
-        question: "¿Incluye panel de administración?",
-        answer:
-          "Sí. El panel forma parte de la arquitectura base para gestionar datos, estados y usuarios según alcance.",
-      },
-      {
-        question: "¿Trabajan con integración de servicios externos?",
-        answer:
-          "Sí, cuando aplica. Se evalúa factibilidad técnica y comercial durante el levantamiento inicial.",
-      },
-    ],
-    serviceType: "sistemas web a medida chile",
-    primaryCta: "Solicitar evaluación técnica",
-    finalCtaTitle: "¿Tu operación necesita un sistema web personalizado?",
-    finalCtaCopy:
-      "Revisemos tu proceso actual y diseñemos una solución por etapas para digitalizar con control, sin improvisación.",
   },
   {
     slug: "automatizacion-whatsapp-empresas",

@@ -8,6 +8,7 @@ import PrintButton from "../_components/print-button";
 export const metadata: Metadata = {
   title: "Bases Oficiales | Becas Web Pyme Zyteron",
   description: "Bases y condiciones oficiales para postular a las Becas Web Pyme de Zyteron.",
+  alternates: { canonical: "https://www.zyteron.cl/becas-web-pyme/bases" },
 };
 
 export const dynamic = "force-dynamic";

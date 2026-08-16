@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Container } from "./container";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
+import { LocationMap } from "./location-map";
 import { siteConfig } from "@/config/site";
 
 const WHATSAPP_URL =
@@ -11,44 +12,32 @@ const COPYRIGHT_YEAR = 2026;
 
 const footerColumns = [
   {
-    title: "Servicios Principales",
+    title: "Servicios principales",
     items: [
+      { label: "Páginas web en Santiago", href: "/paginas-web-santiago" },
       { label: "Desarrollo web", href: "/desarrollo-web" },
       { label: "Páginas web para pymes", href: "/paginas-web-para-pymes" },
       { label: "Diseño web para empresas", href: "/diseno-web-empresas" },
       { label: "Tiendas online", href: "/tiendas-online" },
-      { label: "Sistemas web", href: "/sistemas-web" },
+      { label: "Sistemas web a medida", href: "/sistemas-web" },
       { label: "Automatización", href: "/automatizacion" },
+      { label: "SEO para empresas", href: "/servicios/seo-para-empresas-chile" },
       { label: "Soporte TI", href: "/soporte-ti" },
-    ],
-  },
-  {
-    title: "Soluciones",
-    items: [
-      { label: "Demos funcionales", href: "/demos" },
-      { label: "Productos TI", href: "/productos" },
-      { label: "Planes y precios", href: "/planes" },
-      { label: "Cotizador", href: "/cotizador" },
-      { label: "Casos de éxito", href: "/casos-exito" },
-      { label: "Preguntas frecuentes", href: "/faq" },
-      { label: "Blog", href: "/blog" },
     ],
   },
   {
     title: "Empresa",
     items: [
-      { label: "Quiénes Somos", href: "/quienes-somos" },
+      { label: "Nosotros", href: "/quienes-somos" },
+      { label: "Casos de éxito", href: "/casos-exito" },
+      { label: "Planes y precios", href: "/planes" },
+      { label: "Demos funcionales", href: "/demos" },
+      { label: "Blog", href: "/blog" },
+      { label: "Preguntas frecuentes", href: "/faq" },
       { label: "Contacto", href: "/contacto" },
-      { label: "Política de privacidad", href: "/privacidad" },
-      { label: "Términos y condiciones", href: "/terminos" },
+      { label: "Cotizar proyecto", href: "/cotizador" },
     ],
   },
-];
-
-const footerResources = [
-  { label: "Blog para empresas", href: "/blog" },
-  { label: "Casos de éxito", href: "/casos-exito" },
-  { label: "Planes y precios", href: "/planes" },
 ];
 
 export function SiteFooter() {
@@ -59,7 +48,7 @@ export function SiteFooter() {
           <div>
             <p className="text-base font-bold text-white">Cotización formal para tu negocio</p>
             <p className="text-sm text-blue-200">
-              Atención a empresas, pymes y emprendedores en Chile.
+              Empresas y pymes de Santiago, Región Metropolitana y todo Chile.
             </p>
           </div>
           <Link
@@ -74,44 +63,44 @@ export function SiteFooter() {
         </Container>
       </div>
 
-      <Container className="grid gap-10 py-12 md:grid-cols-[1.35fr_1fr_1fr_1fr_1fr]">
+      <Container className="grid gap-10 py-12 md:grid-cols-2 lg:grid-cols-[1.2fr_0.9fr_0.9fr_1.2fr]">
         <div className="space-y-4">
           <Link href="/" className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-lg font-extrabold text-white">
               Z
             </div>
             <div className="leading-tight">
-              <p className="text-sm font-bold text-white">ZYTERON</p>
+              <p className="text-sm font-bold text-white">ZYTERON SpA</p>
               <p className="text-[10px] uppercase tracking-widest text-blue-300">Web · Sistemas · Soporte TI</p>
             </div>
           </Link>
 
           <p className="max-w-xs text-sm leading-relaxed text-slate-300">
-            ZYTERON - Soluciones web, soporte TI y sistemas digitales para empresas y pymes en Chile.
+            Servicios digitales para empresas y pymes: páginas web, sistemas a medida,
+            tiendas online, automatización y soporte TI.
           </p>
           <p className="max-w-sm text-xs leading-relaxed text-slate-400">
-            Atendemos empresas, pymes y emprendedores en Santiago y otras regiones de Chile mediante atención remota.
+            Atención principal en Santiago y Región Metropolitana, con servicios para
+            empresas de todo Chile.
           </p>
 
           <div className="space-y-2.5 text-sm">
-            <div className="space-y-1">
-              <a
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-[#4ade80] transition-opacity hover:opacity-80"
-              >
-                <WhatsAppIcon className="h-4 w-4" />
-                WhatsApp: {siteConfig.contact.phoneDisplay}
-              </a>
-              <a
-                href={`tel:${siteConfig.contact.phone}`}
-                className="flex items-center gap-2 text-slate-300 transition-colors hover:text-white"
-              >
-                <Phone className="h-4 w-4" />
-                Llamadas: {siteConfig.contact.phoneDisplay}
-              </a>
-            </div>
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-[#4ade80] transition-opacity hover:opacity-80"
+            >
+              <WhatsAppIcon className="h-4 w-4" />
+              WhatsApp: {siteConfig.contact.phoneDisplay}
+            </a>
+            <a
+              href={`tel:${siteConfig.contact.phone}`}
+              className="flex items-center gap-2 text-slate-300 transition-colors hover:text-white"
+            >
+              <Phone className="h-4 w-4" />
+              Llamadas: {siteConfig.contact.phoneDisplay}
+            </a>
             <a
               href={`mailto:${siteConfig.contact.email}`}
               className="flex items-center gap-2 text-slate-300 transition-colors hover:text-white"
@@ -120,14 +109,9 @@ export function SiteFooter() {
               {siteConfig.contact.email}
             </a>
             <div className="flex items-center gap-2 text-slate-300">
-              <MapPin className="h-4 w-4" />
-              {siteConfig.address.display}
-            </div>
-            <div className="flex items-center gap-2 text-slate-300">
               <Phone className="h-4 w-4" />
               Atención comercial: {siteConfig.business.hoursDisplay}
             </div>
-
           </div>
         </div>
 
@@ -145,17 +129,17 @@ export function SiteFooter() {
             </ul>
           </div>
         ))}
+
         <div className="space-y-4">
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-300">Recursos</p>
-          <ul className="space-y-3 text-sm">
-            {footerResources.map((item) => (
-              <li key={item.href}>
-                <Link href={item.href} className="text-slate-400 transition-colors hover:text-white">
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-300">Ubicación</p>
+          <address className="flex items-start gap-2 text-sm not-italic leading-relaxed text-slate-300">
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>
+              {siteConfig.address.streetAddress}, {siteConfig.address.commune},{" "}
+              {siteConfig.address.city}, {siteConfig.address.region}, Chile
+            </span>
+          </address>
+          <LocationMap />
         </div>
       </Container>
 
@@ -165,10 +149,10 @@ export function SiteFooter() {
             <p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">Identidad comercial</p>
             <div className="grid gap-2 text-xs text-slate-300 md:grid-cols-2">
               <p>Nombre comercial: ZYTERON</p>
-              <p>Razón social: ZYTERON SpA</p>
-              <p>RUT: 78.398.774-0</p>
+              <p>Razón social: {siteConfig.legalName}</p>
+              <p>RUT: {siteConfig.taxId}</p>
               <p>Giro: Servicios informáticos, desarrollo web, soporte TI y soluciones digitales</p>
-              <p>Ubicación: {siteConfig.address.display}</p>
+              <p>Dirección: {siteConfig.address.display}</p>
               <p>Atención: Empresas, pymes y emprendedores</p>
             </div>
           </div>
@@ -219,6 +203,27 @@ export function SiteFooter() {
                   <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
                   <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
                   <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                </svg>
+              </a>
+              <a
+                href={siteConfig.social.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center rounded-full bg-white/5 p-2 text-slate-400 transition-all hover:bg-[#1877f2] hover:text-white"
+                aria-label="Facebook"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
                 </svg>
               </a>
             </div>

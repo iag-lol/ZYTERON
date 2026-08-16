@@ -14,7 +14,6 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Políticas y condiciones de servicio de ZYTERON SpA para desarrollo web, software, soporte técnico, pagos, revisiones, garantía y propiedad intelectual.",
   path: "/terminos",
-  noIndex: true,
 });
 
 export default function TerminosPage() {

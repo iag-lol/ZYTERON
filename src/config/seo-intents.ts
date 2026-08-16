@@ -9,8 +9,14 @@ export type SeoIntent = {
 export const seoIntentMap: SeoIntent[] = [
   {
     path: "/",
-    primaryKeyword: "desarrollo web y soluciones digitales Chile",
+    primaryKeyword: "desarrollo de páginas web para empresas Santiago y Chile",
     intent: "marca",
+    indexable: true,
+  },
+  {
+    path: "/paginas-web-santiago",
+    primaryKeyword: "páginas web Santiago",
+    intent: "comercial local",
     indexable: true,
   },
   {
@@ -78,12 +84,5 @@ export const seoIntentMap: SeoIntent[] = [
     primaryKeyword: "cotizar página web Chile",
     intent: "conversion",
     indexable: true,
-  },
-  {
-    path: "/ciudades",
-    primaryKeyword: "diseño web por ciudad Chile",
-    intent: "comercial local",
-    indexable: false,
-    notes: "Noindex por riesgo de páginas locales generadas por plantilla sin contenido aprobado individual.",
   },
 ];

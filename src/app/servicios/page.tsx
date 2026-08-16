@@ -7,14 +7,15 @@ import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
 import { buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 import { seoServicePages } from "@/content/seo-service-pages";
+import { priorityServicePages } from "@/content/priority-service-pages";
 
 const WHATSAPP_URL =
   `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20orientaci%C3%B3n%20sobre%20un%20servicio%20digital%20para%20mi%20empresa.`;
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Servicios digitales para empresas en Chile",
+  title: "Servicios digitales para empresas en Santiago y Chile",
   description:
-    "Explora los servicios de Zyteron: desarrollo web, ecommerce, sistemas internos, automatización y soporte TI para empresas en Chile.",
+    "Explora los servicios de Zyteron: desarrollo web, ecommerce, sistemas internos, automatización y soporte TI para empresas de Santiago, Región Metropolitana y todo Chile.",
   path: "/servicios",
 });
 
@@ -237,6 +238,26 @@ export default async function ServiciosPage() {
                 </span>
               </Link>
             ))}
+          </div>
+
+          <div className="space-y-4 pt-6">
+            <div className="space-y-1 text-center">
+              <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Atención local y especializada</p>
+              <h3 className="text-xl font-extrabold text-slate-900">
+                Santiago, Región Metropolitana y soluciones específicas
+              </h3>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {priorityServicePages.map((service) => (
+                <Link key={service.path} href={service.path} className="card-premium p-5 transition-colors hover:border-blue-200">
+                  <h4 className="text-base font-extrabold text-slate-900">{service.title}</h4>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{service.metaDescription}</p>
+                  <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
+                    Ver servicio <ArrowRight className="h-4 w-4" />
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
         </Container>
       </section>

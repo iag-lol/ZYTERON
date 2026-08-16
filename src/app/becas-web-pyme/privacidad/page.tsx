@@ -7,6 +7,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Política de Privacidad y Vitrina | Becas Web Pyme Zyteron",
   description: "Política de privacidad, tratamiento de datos y condiciones de vitrina de Becas Web Pyme Zyteron.",
+  alternates: { canonical: "https://www.zyteron.cl/becas-web-pyme/privacidad" },
 };
 
 export const dynamic = "force-dynamic";

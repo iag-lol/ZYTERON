@@ -15,15 +15,14 @@ const ogImageByPath: Record<string, string> = {
   "/faq": "/og/faq.png",
   "/quienes-somos": "/og/quienes-somos.png",
   "/paginas-web-para-pymes": "/og/desarrollo-web.png",
+  "/paginas-web-santiago": "/og/desarrollo-web.png",
   "/planes": "/og/planes.png",
   "/productos": "/og/productos.png",
   "/servicios": "/og/servicios.png",
   "/sistemas-web": "/og/sistemas-web.png",
-  "/sistemas-web-a-medida": "/og/sistemas-web.png",
   "/soporte-ti": "/og/soporte-ti.png",
   "/soporte-ti-pymes-santiago": "/og/soporte-ti.png",
   "/tiendas-online": "/og/tiendas-online.png",
-  "/tiendas-online-chile": "/og/tiendas-online.png",
 };
 
 function normalizePath(path: string) {
@@ -44,7 +43,6 @@ export function getOgImagePath(path: string) {
   if (normalized.startsWith("/blog/")) return "/og/blog.png";
   if (normalized.startsWith("/casos-exito/")) return "/og/casos-exito.png";
   if (normalized.startsWith("/servicios/")) return "/og/servicios.png";
-  if (normalized.startsWith("/ciudades/")) return "/og/desarrollo-web.png";
 
   return "/og/home.png";
 }

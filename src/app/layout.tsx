@@ -34,7 +34,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: "Zyteron | Desarrollo web y sistemas para empresas",
+    default: "Zyteron | Desarrollo web y sistemas para empresas en Santiago y Chile",
     template: "%s | Zyteron",
   },
   description: siteConfig.description,
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: siteConfig.locale,
     url: siteConfig.url,
-    title: "Zyteron | Desarrollo web y sistemas para empresas",
+    title: "Zyteron | Desarrollo web y sistemas para empresas en Santiago y Chile",
     description: siteConfig.description,
     siteName: siteConfig.name,
     images: [
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Zyteron | Desarrollo web y sistemas para empresas",
+    title: "Zyteron | Desarrollo web y sistemas para empresas en Santiago y Chile",
     description: siteConfig.description,
     images: [buildPrimaryOgImageUrl()],
   },
@@ -87,11 +87,11 @@ export const metadata: Metadata = {
     shortcut: ["/logo.svg"],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
-  manifest: "/manifest.webmanifest",
+  manifest: "/site.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Zyteron Admin",
+    title: "Zyteron",
   },
 };
 
@@ -117,7 +117,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full bg-white text-slate-900">
         <GoogleAdsTag />
-        <Script id="gtm-base" strategy="lazyOnload">
+        <Script id="gtm-base" strategy="afterInteractive">
           {`
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
             new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],

@@ -3,10 +3,10 @@ import { PriorityServicePageTemplate } from "@/components/services/priority-serv
 import { getPriorityServicePageBySlug } from "@/content/priority-service-pages";
 import { createPageMetadata } from "@/lib/seo";
 
-const pageData = getPriorityServicePageBySlug("sistemas-web-a-medida");
+const pageData = getPriorityServicePageBySlug("paginas-web-santiago");
 
 if (!pageData) {
-  throw new Error("Missing SEO priority page data for sistemas-web-a-medida");
+  throw new Error("Missing SEO priority page data for paginas-web-santiago");
 }
 
 const priorityServicePage = pageData;

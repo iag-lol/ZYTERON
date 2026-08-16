@@ -48,6 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "paginas-web-para-pymes",
     "diseno-web-chile",
     "agencia-diseno-web-chile",
+    "diseno-web-santiago",
   ]);
 
   const serviceRoutes = servicePages.filter((service) => !consolidatedServiceSlugs.has(service.slug)).map((service) => ({

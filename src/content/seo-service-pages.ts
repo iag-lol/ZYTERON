@@ -94,19 +94,19 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "desarrollo-web",
     path: "/desarrollo-web",
     navLabel: "Desarrollo web",
-    metaTitle: "Desarrollo web para empresas en Chile | Zyteron",
+    metaTitle: "Desarrollo Web para Empresas | Santiago y todo Chile | Zyteron",
     metaDescription:
-      "Desarrolla una web profesional para captar clientes en Chile, con SEO base, diseño responsive y rutas de contacto claras. Cotiza sin compromiso hoy.",
+      "Empresa de desarrollo web en Santiago para empresas de todo Chile: webs profesionales con SEO base, diseño responsive y rutas de contacto claras. Cotiza sin compromiso.",
     primaryKeyword: "desarrollo web en Chile",
     secondaryKeywords: [
       "páginas web profesionales",
       "diseño web para empresas",
-      "agencia de desarrollo web en Santiago",
+      "empresa de desarrollo web en Santiago",
       "sitios web responsive",
     ],
-    heroTitle: "Desarrollo web en Chile para empresas que necesitan una presencia digital profesional",
+    heroTitle: "Desarrollo web para empresas que necesitan una presencia digital profesional",
     heroDescription:
-      "Hacemos diseño de páginas web y desarrollo web para crear una página web profesional, moderna y rápida para empresas, pymes y emprendedores que necesitan mostrar sus servicios con confianza, captar consultas y crecer con una base técnica escalable.",
+      "Hacemos diseño de páginas web y desarrollo web para empresas, pymes y emprendedores de Santiago y todo Chile: sitios profesionales, modernos y rápidos para mostrar tus servicios con confianza, captar consultas y crecer con una base técnica escalable.",
     problemTitle: "Una web profesional debe vender confianza, no solo verse bien",
     problemDescription:
       "Muchas empresas tienen sitios lentos, desordenados o genéricos que no explican bien sus servicios. En Zyteron trabajamos estructura, copy, diseño responsive, SEO base y rutas de conversión para que la web ayude al negocio desde el primer contacto.",
@@ -322,9 +322,9 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "tiendas-online",
     path: "/tiendas-online",
     navLabel: "Tiendas online",
-    metaTitle: "Tiendas Online para Pymes | ZYTERON · Chile",
+    metaTitle: "Tiendas Online para Pymes y Empresas en Chile | Zyteron",
     metaDescription:
-      "Crea una tienda online profesional para vender en Chile con catálogo, pagos, WhatsApp y base SEO lista para crecer. Cotiza sin compromiso para pymes.",
+      "Desarrollo de tiendas online en Chile para pymes y empresas: catálogo, pagos con Webpay, Flow o Mercado Pago, WhatsApp y base SEO lista para crecer. Cotiza sin compromiso.",
     primaryKeyword: "tiendas online para pymes",
     secondaryKeywords: [
       "ecommerce Chile",
@@ -408,7 +408,7 @@ export const seoServicePages: SeoServicePage[] = [
     relatedLinks: [
       { label: "Páginas web para pymes", href: "/paginas-web-para-pymes", description: "Presencia digital profesional antes de escalar a ecommerce." },
       { label: "Sistemas web", href: "/sistemas-web", description: "Paneles y módulos internos para stock, pedidos o reportes." },
-      { label: "Tienda online Chile", href: "/tiendas-online-chile", description: "Landing local ampliada para tiendas online en Chile." },
+      { label: "Planes y precios", href: "/planes", description: "Rangos de precios referenciales para tiendas online y ecommerce." },
       ...commonRelatedLinks,
     ],
     serviceType: "Tiendas online y ecommerce",
@@ -421,9 +421,9 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "sistemas-web",
     path: "/sistemas-web",
     navLabel: "Sistemas web",
-    metaTitle: "Sistemas Web a Medida | ZYTERON · Chile",
+    metaTitle: "Sistemas Web a Medida para Empresas | Zyteron",
     metaDescription:
-      "Ordena procesos con sistemas web a medida para pymes y empresas en Chile: paneles, reportes, permisos y automatización. Conoce nuestra metodología.",
+      "Desarrollo de sistemas web a medida en Santiago y todo Chile: paneles administrativos, reportes, permisos y automatización para ordenar tu operación. Conoce nuestra metodología.",
     primaryKeyword: "sistemas web a medida",
     secondaryKeywords: [
       "software a medida en Chile",
@@ -439,7 +439,7 @@ export const seoServicePages: SeoServicePage[] = [
     ],
     heroTitle: "Sistemas web a medida para empresas que necesitan ordenar su operación",
     heroDescription:
-      "Hacemos desarrollo de software a medida en Chile: plataformas administrativas, aplicaciones web y paneles de gestión para controlar datos, usuarios, documentos, clientes, reportes y flujos críticos del negocio.",
+      "Hacemos desarrollo de software y sistemas web a medida para empresas de Santiago y todo Chile: plataformas administrativas, aplicaciones web y paneles de gestión para controlar datos, usuarios, documentos, clientes, reportes y flujos críticos del negocio.",
     problemTitle: "Cuando la operación crece, las planillas dejan de ser suficientes",
     problemDescription:
       "Los sistemas web permiten centralizar información, reducir errores, controlar estados y entregar trazabilidad. Desarrollamos soluciones por etapas para resolver primero el proceso de mayor impacto.",
@@ -500,7 +500,7 @@ export const seoServicePages: SeoServicePage[] = [
     relatedLinks: [
       { label: "Automatización", href: "/automatizacion", description: "Automatiza tareas repetitivas y notificaciones del negocio." },
       { label: "Cotizador web con PDF", href: "/cotizador-web-pdf", description: "Automatiza solicitudes comerciales y generación de propuestas." },
-      { label: "Sistemas web a medida Chile", href: "/sistemas-web-a-medida", description: "Página ampliada sobre desarrollo de sistemas personalizados." },
+      { label: "Cotizador web con PDF", href: "/cotizador-web-pdf", description: "Ejemplo de sistema comercial: cotizadores con generación de PDF." },
       ...commonRelatedLinks,
     ],
     serviceType: "Sistemas web a medida",
@@ -527,7 +527,6 @@ export const seoServicePages: SeoServicePage[] = [
       "formularios automatizados",
       "sistema de cotización online",
       "automatización de tareas administrativas",
-      "automatización WhatsApp empresas",
     ],
     heroTitle: "Automatización de procesos para empresas que quieren operar con menos fricción",
     heroDescription:
@@ -610,9 +609,9 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "soporte-ti",
     path: "/soporte-ti",
     navLabel: "Soporte TI",
-    metaTitle: "Soporte TI para Pymes | ZYTERON · Santiago, Chile",
+    metaTitle: "Soporte TI para Empresas y Pymes en Chile | Zyteron",
     metaDescription:
-      "Soporte TI para pymes y empresas en Santiago: correos, equipos, mantención, seguridad básica y continuidad operativa. Cotiza atención técnica clara.",
+      "Soporte TI para pymes y empresas en Chile: correos, equipos, mantención, seguridad básica y continuidad operativa. Atención remota y en Santiago. Cotiza atención técnica clara.",
     primaryKeyword: "soporte TI para pymes",
     secondaryKeywords: [
       "soporte TI en Chile",

@@ -250,7 +250,7 @@ export function buildProfessionalServiceJsonLd({
   description = siteConfig.description,
 }: ProfessionalServiceJsonLdInput) {
   const pageUrl = buildAbsoluteUrl(path);
-  const sameAs = [siteConfig.social.linkedin, siteConfig.social.instagram].filter(Boolean);
+  const sameAs = [siteConfig.social.linkedin, siteConfig.social.instagram, siteConfig.social.facebook].filter(Boolean);
 
   return {
     "@context": "https://schema.org",
