@@ -20,6 +20,7 @@ import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { siteConfig } from "@/config/site";
 import {
   buildFaqJsonLd,
+  buildLocalBusinessJsonLd,
   buildServicesListJsonLd,
   buildWebPageJsonLd,
   createPageMetadata,
@@ -40,9 +41,9 @@ const WHATSAPP_BASE =
   `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.`;
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Páginas web en Chile para empresas y pymes",
+  title: "Desarrollo de páginas web para empresas en Santiago y Chile",
   description:
-    "Creamos páginas web profesionales en Chile para empresas y pymes: sitios rápidos, responsivos, con SEO técnico y rutas claras para recibir consultas.",
+    "Desarrollo de páginas web, sistemas y soluciones digitales para empresas y pymes de Santiago, Región Metropolitana y todo Chile. Sitios rápidos, con SEO real. Cotiza gratis.",
   path: "/",
 });
 
@@ -97,8 +98,8 @@ const heroStats = [
 ];
 
 const coverageSignals = [
+  "Oficina en Antonio Bellet 193, Providencia: reuniones presenciales para proyectos en Santiago y la Región Metropolitana.",
   "Atendemos empresas, pymes y emprendedores en todas las regiones de Chile con trabajo remoto y reuniones online.",
-  "Base operativa en Santiago para proyectos que requieren contexto local en la Región Metropolitana.",
   "Seguimiento por etapas y comunicación directa para avanzar con tu proyecto estés donde estés.",
   "Cada web se entrega con base SEO técnica para que tu negocio aparezca en las búsquedas de tu ciudad y rubro.",
 ];
@@ -293,6 +294,10 @@ const homeFaqs = [
     a: "Sí. Incluimos soporte post-entrega y planes de continuidad según necesidad.",
   },
   {
+    q: "¿Dónde están ubicados y puedo reunirme con ustedes?",
+    a: "Nuestra oficina está en Antonio Bellet 193, Providencia, Santiago. Coordinamos reuniones presenciales para proyectos en la Región Metropolitana y videollamadas para el resto de Chile.",
+  },
+  {
     q: "¿Diseñan páginas web para empresas de todo Chile?",
     a: "Sí. Trabajamos con pymes, emprendedores y empresas de todas las regiones de Chile, con atención remota, reuniones online y seguimiento por etapas.",
   },
@@ -313,6 +318,13 @@ const solutionsByNeed = [
       "Diseñamos webs corporativas con propuesta de valor clara, estructura comercial y foco en generación de consultas.",
     href: "/desarrollo-web",
     cta: "Ver servicio",
+  },
+  {
+    title: "Mi empresa está en Santiago",
+    description:
+      "Creamos páginas web para empresas y pymes de Santiago y la Región Metropolitana, con reuniones presenciales en nuestra oficina de Providencia.",
+    href: "/paginas-web-santiago",
+    cta: "Ver páginas web Santiago",
   },
   {
     title: "Necesito vender online",
@@ -384,11 +396,18 @@ export default async function Home() {
         id="home-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/",
-          title: "Páginas web en Chile para empresas y pymes | Zyteron",
+          title: "Zyteron | Desarrollo de páginas web para empresas en Santiago y Chile",
           description:
-            "Páginas web profesionales, tiendas online y sistemas para empresas y pymes en todo Chile, con SEO técnico y foco comercial.",
+            "Desarrollo de páginas web, tiendas online, sistemas y soporte TI para empresas y pymes de Santiago, Región Metropolitana y todo Chile, con SEO técnico y foco comercial.",
           breadcrumbs: [{ name: "Inicio", path: "/" }],
         })}
+      />
+      <JsonLd
+        id="home-localbusiness-schema"
+        data={buildLocalBusinessJsonLd(
+          "/",
+          "Desarrollo de páginas web, tiendas online, sistemas, automatización y soporte TI para empresas y pymes en Santiago, Región Metropolitana y todo Chile.",
+        )}
       />
       <JsonLd
         id="home-faq-schema"
@@ -405,6 +424,11 @@ export default async function Home() {
           path: "/",
           title: "Servicios principales Zyteron",
           services: [
+            {
+              name: "Páginas web en Santiago",
+              description: "Creación de páginas web para empresas y pymes de Santiago y la Región Metropolitana.",
+              path: "/paginas-web-santiago",
+            },
             {
               name: "Desarrollo web",
               description: "Diseño de páginas web profesionales para empresas y pymes en Chile.",
@@ -468,18 +492,19 @@ export default async function Home() {
           <div className="space-y-6">
             <div className="badge-blue">
               <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
-              Empresas · Pymes · Emprendedores · Todo Chile
+              Santiago · Región Metropolitana · Todo Chile
             </div>
 
             <h1 className="text-balance text-[2rem] font-extrabold leading-[1.12] tracking-tight text-slate-900 [text-shadow:0_1px_16px_rgba(255,255,255,0.75)] sm:text-5xl lg:text-[3.3rem]">
-              <span className="text-gradient-hero animate-gradient">Páginas web profesionales</span>{" "}
-              en Chile para empresas y pymes
+              Desarrollo de{" "}
+              <span className="text-gradient-hero animate-gradient">páginas web y sistemas digitales</span>{" "}
+              para empresas en Santiago
             </h1>
 
             <p className="max-w-2xl text-base font-medium leading-relaxed text-slate-700 [text-shadow:0_1px_10px_rgba(255,255,255,0.7)] sm:text-lg">
-              Creamos páginas web, tiendas online, sistemas internos y automatizaciones para pymes,
-              empresas y emprendedores en Chile: diseño moderno, base SEO real y una estructura pensada
-              para convertir visitas en clientes.
+              Creamos sitios web, tiendas online, plataformas empresariales y soluciones digitales
+              para empresas y pymes de Santiago, Región Metropolitana y todo Chile: diseño
+              profesional, base SEO real y una estructura pensada para convertir visitas en clientes.
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -489,7 +514,7 @@ export default async function Home() {
                 className="btn-primary-glow w-full gap-2 bg-blue-700 px-6 font-bold text-white hover:bg-blue-800 sm:w-auto"
               >
                 <Link href="/cotizador">
-                  Solicitar cotización <ArrowRight className="h-4 w-4" />
+                  Cotizar proyecto <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button
@@ -498,7 +523,7 @@ export default async function Home() {
                 variant="outline"
                 className="w-full border-slate-300 text-slate-800 hover:bg-slate-50 sm:w-auto"
               >
-                <Link href="/diseno-web-empresas">Ver páginas web para empresas</Link>
+                <Link href="/servicios">Ver servicios</Link>
               </Button>
               <Link
                 href={WHATSAPP_BASE}

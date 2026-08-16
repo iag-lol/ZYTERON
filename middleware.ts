@@ -1,8 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { ADMIN_SESSION_VALUE } from "./src/lib/auth/admin-constants";
+import { ADMIN_COOKIE, verifyAdminSessionToken } from "./src/lib/auth/admin-session";
 
-const ADMIN_COOKIE = "zyteron_admin_token";
 const AUTH_SECRET =
   process.env.NEXTAUTH_SECRET ||
   process.env.AUTH_SECRET ||
@@ -25,7 +24,7 @@ export async function middleware(req: NextRequest) {
 
   if (isAdminArea && !isLogin && !isLogout) {
     const token = req.cookies.get(ADMIN_COOKIE)?.value;
-    if (!token || token !== ADMIN_SESSION_VALUE) {
+    if (!(await verifyAdminSessionToken(token))) {
       const url = req.nextUrl.clone();
       url.pathname = "/admin/login";
       url.search = "";

@@ -9,10 +9,16 @@ export type SeoIntent = {
 export const seoIntentMap: SeoIntent[] = [
   {
     path: "/",
-    primaryKeyword: "paginas web Chile",
+    primaryKeyword: "desarrollo de páginas web para empresas Santiago y Chile",
     intent: "comercial",
     indexable: true,
-    notes: "Portada nacional para la intención amplia; la marca queda como señal secundaria.",
+    notes: "Portada para la intención amplia con señal geográfica Santiago-primero; la marca queda como señal secundaria.",
+  },
+  {
+    path: "/paginas-web-santiago",
+    primaryKeyword: "páginas web Santiago",
+    intent: "comercial local",
+    indexable: true,
   },
   {
     path: "/desarrollo-web",
@@ -98,12 +104,5 @@ export const seoIntentMap: SeoIntent[] = [
     primaryKeyword: "cotizar página web Chile",
     intent: "conversion",
     indexable: true,
-  },
-  {
-    path: "/ciudades",
-    primaryKeyword: "diseño web por ciudad Chile",
-    intent: "comercial local",
-    indexable: false,
-    notes: "Noindex por riesgo de páginas locales generadas por plantilla sin contenido aprobado individual.",
   },
 ];

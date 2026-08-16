@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   description:
     "Conoce los emprendimientos y pymes chilenas que están postulando a las Becas Web Pyme de Zyteron. Negocios reales, historias reales.",
   robots: { index: true, follow: true },
+  alternates: { canonical: "https://www.zyteron.cl/becas-web-pyme/vitrina" },
   openGraph: {
     title: "Vitrina de Emprendimientos | Becas Web Pyme Zyteron",
     description:

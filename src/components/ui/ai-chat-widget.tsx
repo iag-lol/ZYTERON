@@ -5,6 +5,7 @@ import { Bot, Loader2, MessageCircle, Send, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { siteConfig } from "@/config/site";
+import { trackAnalyticsEvent } from "@/lib/analytics/google-ads";
 import { HANDOFF_SIGNAL } from "@/lib/ai/handoff-signal";
 import {
   ZYTERON_QUICK_PROMPTS,
@@ -107,6 +108,7 @@ export function AiChatWidget() {
   const openPanel = useCallback(() => {
     setOpen(true);
     dismissTeaser();
+    trackAnalyticsEvent("chat_open", { page_path: window.location.pathname });
     setTimeout(() => inputRef.current?.focus(), 120);
   }, [dismissTeaser]);
 
@@ -235,6 +237,12 @@ export function AiChatWidget() {
       setHandoffLoading(false);
     }
     const url = `https://wa.me/${WHATSAPP_DIGITS}?text=${encodeURIComponent(text)}`;
+    // window.open no pasa por el listener global de anchors, así que el
+    // evento de conversión se registra aquí.
+    trackAnalyticsEvent("whatsapp_click", {
+      page_path: window.location.pathname,
+      link_text: "chat_handoff",
+    });
     window.open(url, "_blank", "noopener,noreferrer");
   }, [handoffLoading, messages]);
 

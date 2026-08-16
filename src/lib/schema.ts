@@ -82,7 +82,6 @@ export type SchemaLocalLandingInput = {
 const ROUTE_LABELS: Record<string, string> = {
   blog: "Blog",
   "casos-exito": "Casos de éxito",
-  ciudades: "Ciudades",
   contacto: "Contacto",
   cotizador: "Cotizador",
   demos: "Demos",
@@ -93,6 +92,8 @@ const ROUTE_LABELS: Record<string, string> = {
   planes: "Planes",
   productos: "Productos",
   "paginas-web-para-pymes": "Páginas web para pymes",
+  "paginas-web-santiago": "Páginas web Santiago",
+  "desarrollo-web-santiago": "Desarrollo web Santiago",
   "quienes-somos": "Quiénes somos",
   servicios: "Servicios",
   "sistemas-web": "Sistemas web",
@@ -139,6 +140,24 @@ function buildServedAreas() {
     { "@type": "City", name: siteConfig.address.city },
     { "@type": "AdministrativeArea", name: siteConfig.address.region },
   ];
+}
+
+function buildPostalAddress() {
+  return {
+    "@type": "PostalAddress",
+    streetAddress: siteConfig.address.streetAddress,
+    addressLocality: siteConfig.address.commune,
+    addressRegion: siteConfig.address.region,
+    postalCode: siteConfig.address.postalCode,
+    addressCountry: siteConfig.address.countryCode,
+  };
+}
+
+export function buildGoogleMapsUrl() {
+  const query = encodeURIComponent(
+    `${siteConfig.address.streetAddress}, ${siteConfig.address.commune}, ${siteConfig.address.city}, Chile`,
+  );
+  return `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
 
 function buildContactPoint() {
@@ -203,6 +222,7 @@ export function getOrganizationSchema() {
         email: siteConfig.contact.email,
         telephone: siteConfig.contact.phone,
         foundingDate: siteConfig.foundingDate,
+        ...(siteConfig.business.hasPublicOffice ? { address: buildPostalAddress() } : {}),
         founder: {
           "@type": "Person",
           "@id": `${siteConfig.url}/quienes-somos#eduardo-avila`,
@@ -249,19 +269,13 @@ export function getLocalBusinessSchema({
 
   const publicLocation = siteConfig.business.hasPublicOffice
     ? {
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: siteConfig.address.streetAddress,
-          addressLocality: siteConfig.address.city,
-          addressRegion: siteConfig.address.region,
-          postalCode: siteConfig.address.postalCode,
-          addressCountry: siteConfig.address.countryCode,
-        },
+        address: buildPostalAddress(),
         geo: {
           "@type": "GeoCoordinates",
           latitude: siteConfig.geo.latitude,
           longitude: siteConfig.geo.longitude,
         },
+        hasMap: buildGoogleMapsUrl(),
       }
     : {
         address: {
@@ -298,7 +312,13 @@ export function getLocalBusinessSchema({
       name: siteConfig.business.areaServed,
     },
     contactPoint: [buildContactPoint()],
-    sameAs: [siteConfig.social.linkedin, siteConfig.social.instagram, siteConfig.social.facebook].filter(Boolean),
+    sameAs: [
+      siteConfig.social.linkedin,
+      siteConfig.social.instagram,
+      siteConfig.social.facebook,
+      siteConfig.social.goodfirms,
+      siteConfig.social.theManifest,
+    ].filter(Boolean),
     parentOrganization: {
       "@id": getOrganizationId(),
     },

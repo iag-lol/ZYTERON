@@ -6,6 +6,12 @@ export const metadata: Metadata = {
     follow: false,
     nocache: true,
   },
+  // El admin conserva su manifest instalable propio (start_url /admin);
+  // el resto del sitio usa /site.webmanifest.
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    title: "Zyteron Admin",
+  },
 };
 
 export default function AdminRootLayout({ children }: { children: React.ReactNode }) {

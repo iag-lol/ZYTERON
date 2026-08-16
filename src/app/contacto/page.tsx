@@ -50,13 +50,13 @@ const contactInfo = [
   },
   {
     icon: <MapPin className="h-5 w-5" />,
-    label: "Ubicación",
+    label: "Oficina",
     value: siteConfig.address.display,
-    sub: "Atención a todo Chile",
-    href: null,
-    classes: "border-violet-200 bg-violet-50",
+    sub: "Reuniones presenciales con coordinación previa · Atención a todo Chile",
+    href: "https://www.google.com/maps/search/?api=1&query=Antonio+Bellet+193%2C+Providencia%2C+Santiago%2C+Chile",
+    classes: "border-violet-200 bg-violet-50 hover:bg-violet-100/70",
     iconClasses: "bg-violet-100 text-violet-700",
-    external: false,
+    external: true,
   },
   {
     icon: <Clock className="h-5 w-5" />,
@@ -117,7 +117,8 @@ export default function ContactoPage() {
                 Elige el canal que prefieras. Si tu solicitud es urgente, recomendamos WhatsApp.
               </p>
               <p className="text-sm leading-relaxed text-slate-600">
-                Atendemos empresas, pymes y emprendedores en Santiago y otras regiones de Chile mediante atención remota.
+                Atendemos empresas, pymes y emprendedores de Santiago y la Región Metropolitana desde
+                nuestra oficina en Providencia, y al resto de Chile mediante atención remota.
               </p>
               <p className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm leading-relaxed text-slate-700">
                 Responderemos con una orientación clara según el tipo de proyecto y necesidad de tu negocio.

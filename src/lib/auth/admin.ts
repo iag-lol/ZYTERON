@@ -1,22 +1,15 @@
-import { headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { ADMIN_SESSION_VALUE, COOKIE_KEY } from "@/lib/auth/admin-constants";
+import { ADMIN_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin-session";
 
-function parseCookieString(raw: string) {
-  return raw.split(";").reduce<Record<string, string>>((acc, part) => {
-    const [k, ...rest] = part.trim().split("=");
-    if (!k) return acc;
-    acc[k] = rest.join("=");
-    return acc;
-  }, {});
-}
-
+/**
+ * Exige una sesión administrativa firmada y vigente. Una cookie manipulada,
+ * caducada o emitida con otro secreto no sirve.
+ */
 export async function assertAdmin() {
-  const hdrs = await headers();
-  const raw = hdrs.get("cookie") ?? "";
-  const parsed = parseCookieString(raw);
-  const token = parsed[COOKIE_KEY];
-  if (!token || token !== ADMIN_SESSION_VALUE) {
+  const store = await cookies();
+  const token = store.get(ADMIN_COOKIE)?.value;
+  if (!(await verifyAdminSessionToken(token))) {
     redirect("/admin/login");
   }
 }

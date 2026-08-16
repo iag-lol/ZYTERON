@@ -8,7 +8,6 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Política de privacidad de ZYTERON sobre datos de formularios, cotizaciones, pagos por Flow y comunicación comercial.",
   path: "/privacidad",
-  noIndex: true,
 });
 
 export default function PrivacidadPage() {

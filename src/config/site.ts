@@ -1,7 +1,8 @@
 const ZYTERON_PHONE_E164 = "+56939526626";
 const ZYTERON_WHATSAPP_URL = `https://wa.me/${ZYTERON_PHONE_E164.replace(/\D/g, "")}`;
 const ZYTERON_PHONE_DISPLAY = "+56 9 3952 6626";
-const ZYTERON_ADDRESS_DISPLAY = "Santiago, Chile";
+const ZYTERON_ADDRESS_DISPLAY =
+  "Antonio Bellet 193, Providencia, Santiago, Región Metropolitana, Chile";
 const ZYTERON_BUSINESS_HOURS_DISPLAY = "Lun-Vie 09:00 a 18:00";
 
 export const siteConfig = {
@@ -13,19 +14,20 @@ export const siteConfig = {
   locale: "es-CL",
   foundingDate: "2024",
   description:
-    "Desarrollamos sitios web, sistemas digitales, automatizaciones y soporte TI para empresas en Chile con foco en claridad comercial y operación estable.",
+    "Desarrollamos páginas web, sistemas digitales, automatizaciones y soporte TI para empresas y pymes de Santiago, Región Metropolitana y todo Chile, con foco en claridad comercial y operación estable.",
   address: {
-    streetAddress: "Santiago",
+    streetAddress: "Antonio Bellet 193",
+    commune: "Providencia",
     city: "Santiago",
     region: "Región Metropolitana",
-    postalCode: "8320000",
+    postalCode: "7500000",
     country: "Chile",
     countryCode: "CL",
     display: ZYTERON_ADDRESS_DISPLAY,
   },
   geo: {
-    latitude: -33.4489,
-    longitude: -70.6693,
+    latitude: -33.4238,
+    longitude: -70.6182,
   },
   contact: {
     phone: ZYTERON_PHONE_E164,
@@ -34,11 +36,12 @@ export const siteConfig = {
     whatsapp: ZYTERON_PHONE_E164,
   },
   business: {
-    hasPublicOffice: false,
+    hasPublicOffice: true,
     priceRange: "$$",
     hours: ["Mo-Fr 09:00-18:00"],
     hoursDisplay: ZYTERON_BUSINESS_HOURS_DISPLAY,
     areaServed: "Chile",
+    primaryArea: "Santiago y Región Metropolitana",
     experienceYears: 7,
     serviceTypes: [
       "Desarrollo web",

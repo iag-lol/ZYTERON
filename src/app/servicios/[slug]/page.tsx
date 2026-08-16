@@ -29,7 +29,7 @@ const CANONICAL_SERVICE_PATHS: Record<string, string> = {
   "paginas-web-para-pymes": "/paginas-web-para-pymes",
   "diseno-web-chile": "/diseno-web-empresas",
   "agencia-diseno-web-chile": "/diseno-web-empresas",
-  "diseno-web-santiago": "/desarrollo-web-santiago",
+  "diseno-web-santiago": "/paginas-web-santiago",
 };
 const CONSOLIDATED_SERVICE_SLUGS = new Set(Object.keys(CANONICAL_SERVICE_PATHS));
 
@@ -154,6 +154,8 @@ const serviceExamplesBySlug: Record<
 };
 
 export function generateStaticParams() {
+  // Los slugs con redirect 301 en next.config.ts no se construyen: nunca son
+  // alcanzables y solo inflan el build.
   return servicePages
     .filter((service) => !CONSOLIDATED_SERVICE_SLUGS.has(service.slug))
     .map((service) => ({ slug: service.slug }));
