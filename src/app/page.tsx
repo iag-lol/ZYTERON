@@ -29,16 +29,13 @@ import { getApprovedReviewsSnapshot } from "@/lib/web-control";
 import { ClientReviewsSection } from "@/components/home/client-reviews-section";
 import { getFeaturedCaseItems } from "@/lib/content/cases-merge";
 import { softBlueBlurDataUrl } from "@/lib/image-placeholders";
-import { getPublishedScholarshipProfiles } from "@/lib/becas/public-profiles";
-import { PublicShowcaseCarousel } from "@/components/becas/public-showcase-carousel";
 import { Reveal } from "@/components/home/reveal";
 import { CountUp } from "@/components/home/count-up";
 import { ScrollProgress } from "@/components/home/scroll-progress";
-import { CoverageMarquee } from "@/components/home/coverage-marquee";
 import { ClientLogosMarquee } from "@/components/home/client-logos-marquee";
 import { HomeFaqAccordion } from "@/components/home/home-faq";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 const WHATSAPP_BASE =
   `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.`;
@@ -302,7 +299,7 @@ const homeFaqs = [
   },
   {
     q: "¿Diseñan páginas web para empresas de todo Chile?",
-    a: "Sí. Trabajamos con pymes, emprendedores y empresas de todas las regiones de Chile, de Arica a Punta Arenas, con atención remota, reuniones online y seguimiento por etapas.",
+    a: "Sí. Trabajamos con pymes, emprendedores y empresas de todas las regiones de Chile, con atención remota, reuniones online y seguimiento por etapas.",
   },
   {
     q: "¿Emiten factura o boleta?",
@@ -361,35 +358,36 @@ const solutionsByNeed = [
 
 const clientTypes = [
   {
-    title: "Pymes que quieren profesionalizarse",
+    title: "Páginas web para pymes en Chile",
     description:
-      "Sitios claros, rápidos y con contacto directo para negocios que necesitan mejorar confianza y ordenar su presencia digital.",
+      "Sitios claros, rápidos y con contacto directo para pequeñas y medianas empresas que necesitan dejar de depender solo de redes sociales o referidos.",
     href: "/paginas-web-para-pymes",
   },
   {
-    title: "Empresas con operación interna",
+    title: "Páginas web para empresas en Chile",
     description:
-      "Sistemas web, paneles y automatizaciones para controlar información, procesos, documentos y reportes.",
-    href: "/sistemas-web",
+      "Webs corporativas para presentar servicios, respaldo y procesos con una estructura preparada para captar consultas B2B.",
+    href: "/diseno-web-empresas",
   },
   {
-    title: "Negocios que venden productos",
+    title: "Tiendas online para negocios",
     description:
       "Tiendas online, catálogos y flujos de venta asistida por WhatsApp para vender con estructura.",
     href: "/tiendas-online",
   },
   {
-    title: "Equipos que necesitan continuidad TI",
+    title: "Sistemas web para empresas",
     description:
-      "Soporte, configuración y acompañamiento técnico para reducir fricciones en la operación diaria.",
-    href: "/soporte-ti",
+      "Paneles y automatizaciones para controlar información, procesos, documentos y reportes internos.",
+    href: "/sistemas-web",
   },
 ];
 
 export default async function Home() {
-  const reviews = await getApprovedReviewsSnapshot();
-  const featuredCases = await getFeaturedCaseItems(4);
-  const publishedScholarshipProfiles = await getPublishedScholarshipProfiles(5);
+  const [reviews, featuredCases] = await Promise.all([
+    getApprovedReviewsSnapshot(),
+    getFeaturedCaseItems(4),
+  ]);
 
   return (
     <main className="overflow-hidden bg-white">
@@ -678,10 +676,6 @@ export default async function Home() {
             </p>
           </Reveal>
 
-          <Reveal>
-            <CoverageMarquee />
-          </Reveal>
-
           <div className="grid gap-4 md:grid-cols-2">
             {coverageSignals.map((signal, index) => (
               <Reveal key={signal} delay={(index % 2) * 90} className="h-full">
@@ -779,9 +773,9 @@ export default async function Home() {
       <section className="bg-white py-20">
         <Container className="space-y-10">
           <Reveal className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Tipo de cliente</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Soluciones por tipo de negocio</p>
             <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Soluciones digitales para empresas en Chile
+              Elige la página web o solución según tu empresa
             </h2>
             <p className="mx-auto max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
               Atendemos proyectos para pymes, emprendedores y empresas de distintas regiones de Chile, con foco
@@ -902,21 +896,6 @@ export default async function Home() {
           </div>
         </Container>
       </section>
-
-      {publishedScholarshipProfiles.length > 0 ? (
-        <section className="section-alt py-20">
-          <Container>
-            <PublicShowcaseCarousel
-              profiles={publishedScholarshipProfiles}
-              badge="Becas Web Pyme"
-              title="Una vitrina profesional para negocios que quieren crecer"
-              description="Además de la vitrina completa, en la portada destacamos automáticamente algunos emprendimientos publicados para reforzar confianza y movimiento real dentro del programa."
-              ctaHref="/becas-web-pyme"
-              ctaLabel="Ver programa completo"
-            />
-          </Container>
-        </section>
-      ) : null}
 
       {/* ── Panel administrativo ── */}
       <section className="bg-white py-20">

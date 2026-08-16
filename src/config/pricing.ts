@@ -30,6 +30,23 @@ export const PLAN_PRICES: Record<string, string> = {
   avanzado: "Desde $2.490.000 + IVA",
 };
 
+/** Valores numéricos para cálculos y datos estructurados; mismas claves de PLAN_PRICES. */
+export const PLAN_PRICE_AMOUNTS = {
+  "web-basica": 79990,
+  emprendedor: 129990,
+  pyme: 219990,
+  empresa: 399990,
+  catalogo: 299990,
+  ecommerce: 599990,
+  sistema: 1290000,
+  avanzado: 2490000,
+} as const;
+
+export const SERVICE_PRICE_AMOUNTS = {
+  automationWhatsapp: 249990,
+  supportTi: 49990,
+} as const;
+
 export type PricedItem = { name: string; price: string; note?: string };
 
 export const PLANS: PricedItem[] = [

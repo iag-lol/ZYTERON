@@ -1,5 +1,6 @@
 // Fuente de datos del blog público: SOLO artículos publicados en Supabase
 // (creados desde /admin/blog). El contenido curado/hardcodeado fue eliminado.
+import { cache } from "react";
 import { getPublishedBlogPosts, getBlogPostBySlug, type DbBlogPost } from "@/lib/admin/blog-cases-repository";
 import { formatStableDateEsCl } from "@/lib/stable-date";
 
@@ -29,11 +30,11 @@ export async function getBlogListItems(): Promise<BlogListItem[]> {
 }
 
 /** Devuelve el artículo publicado por slug, o null. */
-export async function getDbBlogPost(slug: string): Promise<DbBlogPost | null> {
+export const getDbBlogPost = cache(async (slug: string): Promise<DbBlogPost | null> => {
   const post = await getBlogPostBySlug(slug);
   if (!post || post.status !== "published") return null;
   return post;
-}
+});
 
 export type RecommendedBlogLink = { slug: string; title: string };
 

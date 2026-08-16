@@ -35,6 +35,7 @@ const servicesNavItems = [
   { href: "/paginas-web-santiago", label: "Páginas Web Santiago" },
   { href: "/desarrollo-web", label: "Desarrollo Web" },
   { href: "/paginas-web-para-pymes", label: "Páginas Web para Pymes" },
+  { href: "/diseno-web-empresas", label: "Páginas Web para Empresas" },
   { href: "/tiendas-online", label: "Tiendas Online" },
   { href: "/sistemas-web", label: "Sistemas Web" },
   { href: "/automatizacion", label: "Automatización" },

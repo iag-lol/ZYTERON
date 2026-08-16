@@ -1,5 +1,6 @@
 // Fuente de datos de casos públicos: SOLO casos publicados en Supabase
 // (creados desde /admin/casos). El contenido curado/hardcodeado fue eliminado.
+import { cache } from "react";
 import {
   getPublishedCaseStudies,
   getCaseStudyBySlug,
@@ -37,8 +38,8 @@ export async function getFeaturedCaseItems(limit = 4): Promise<CaseListItem[]> {
 }
 
 /** Devuelve el caso publicado por slug, o null. */
-export async function getDbCaseStudy(slug: string): Promise<DbCaseStudy | null> {
+export const getDbCaseStudy = cache(async (slug: string): Promise<DbCaseStudy | null> => {
   const item = await getCaseStudyBySlug(slug);
   if (!item || item.status !== "published") return null;
   return item;
-}
+});

@@ -17,7 +17,7 @@ const footerColumns = [
       { label: "Páginas web en Santiago", href: "/paginas-web-santiago" },
       { label: "Desarrollo web", href: "/desarrollo-web" },
       { label: "Páginas web para pymes", href: "/paginas-web-para-pymes" },
-      { label: "Diseño web para empresas", href: "/diseno-web-empresas" },
+      { label: "Páginas web para empresas", href: "/diseno-web-empresas" },
       { label: "Tiendas online", href: "/tiendas-online" },
       { label: "Sistemas web a medida", href: "/sistemas-web" },
       { label: "Automatización", href: "/automatizacion" },

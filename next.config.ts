@@ -66,7 +66,7 @@ const nextConfig: NextConfig = {
   images: {
     deviceSizes: [320, 384, 640, 750, 828, 1080, 1200],
     imageSizes: [16, 32, 48, 64, 96, 128, 200, 256, 300, 384, 512, 640, 800],
-    qualities: [75, 80, 90],
+    qualities: [70, 75, 80, 85, 90, 95],
     remotePatterns: [
       {
         protocol: "https",
@@ -105,7 +105,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/servicios/paginas-web-para-empresas",
-        destination: "/desarrollo-web",
+        destination: "/diseno-web-empresas",
+        permanent: true,
+      },
+      {
+        source: "/paginas-web-para-empresas",
+        destination: "/diseno-web-empresas",
         permanent: true,
       },
       {
@@ -203,6 +208,11 @@ const nextConfig: NextConfig = {
         // Hub local noindex y huérfano: se consolida en el servicio principal.
         source: "/ciudades",
         destination: "/desarrollo-web",
+        permanent: true,
+      },
+      {
+        source: "/ciudades/santiago",
+        destination: "/desarrollo-web-santiago",
         permanent: true,
       },
       {

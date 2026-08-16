@@ -18,8 +18,8 @@ type BlogDetailProps = {
   }>;
 };
 
-// Solo contenido publicado desde Supabase, siempre fresco.
-export const dynamic = "force-dynamic";
+// El admin invalida el detalle al publicar; React cache deduplica metadata y página.
+export const revalidate = 3600;
 
 /**
  * Imagen para compartir del artículo: usa og/portada sólo si son URLs de

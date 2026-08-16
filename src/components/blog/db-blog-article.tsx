@@ -8,6 +8,28 @@ import { formatStableLongDateEsCl } from "@/lib/stable-date";
 import type { DbBlogPost } from "@/lib/admin/blog-cases-repository";
 import { siteConfig } from "@/config/site";
 
+type RelatedService = { href: string; label: string; signals: string[] };
+
+const relatedServiceOptions: RelatedService[] = [
+  { href: "/servicios/seo-para-empresas-chile", label: "SEO para empresas", signals: ["seo", "google", "posicion", "tráfico orgánico"] },
+  { href: "/paginas-web-para-pymes", label: "Páginas web para pymes", signals: ["para pyme", "pymes", "emprendedor", "negocio pequeño"] },
+  { href: "/diseno-web-empresas", label: "Páginas web para empresas", signals: ["web corporativa", "página web empresa", "sitio corporativo", "b2b"] },
+  { href: "/tiendas-online", label: "Tiendas online", signals: ["ecommerce", "tienda", "catálogo", "venta online"] },
+  { href: "/sistemas-web", label: "Sistemas web", signals: ["sistema", "software", "panel", "inventario", "dashboard"] },
+  { href: "/automatizacion", label: "Automatización", signals: ["automat", "whatsapp", "proceso", "formulario", "flujo"] },
+  { href: "/soporte-ti", label: "Soporte TI", signals: ["soporte", "hosting", "correo", "seguridad", "respaldo"] },
+  { href: "/desarrollo-web", label: "Desarrollo web", signals: ["página web", "sitio web", "diseño web", "desarrollo web"] },
+];
+
+function getRelatedServices(post: DbBlogPost) {
+  const text = [post.title, post.excerpt, post.category, ...(post.tags ?? [])].filter(Boolean).join(" ").toLowerCase();
+  const matched = relatedServiceOptions.filter((service) => service.signals.some((signal) => text.includes(signal)));
+  const fallback = relatedServiceOptions.filter((service) => ["/desarrollo-web", "/sistemas-web", "/automatizacion"].includes(service.href));
+  return [...matched, ...fallback]
+    .filter((service, index, items) => items.findIndex((item) => item.href === service.href) === index)
+    .slice(0, 3);
+}
+
 /**
  * Renderiza un artículo del blog administrado en Supabase (contenido Markdown).
  * Mantiene el mismo lenguaje visual del detalle curado (hero + CTA), pero el
@@ -18,6 +40,8 @@ export function DbBlogArticle({ post }: { post: DbBlogPost }) {
   const publishedDate = formatStableLongDateEsCl(post.publishedAt ?? post.createdAt ?? "");
   const modifiedDate = formatStableLongDateEsCl(post.updatedAt ?? post.publishedAt ?? post.createdAt ?? "");
   const authorName = post.author?.trim() || siteConfig.representative.name;
+  const relatedServices = getRelatedServices(post);
+  const contactHref = `/contacto?origen=blog&item=${encodeURIComponent(post.slug)}`;
 
   return (
     <main className="bg-white">
@@ -79,7 +103,7 @@ export function DbBlogArticle({ post }: { post: DbBlogPost }) {
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Button asChild className="bg-white font-bold text-blue-800 hover:bg-blue-50">
-                  <Link href="/contacto">Solicitar diagnóstico</Link>
+                  <Link href={contactHref}>Solicitar diagnóstico</Link>
                 </Button>
                 <Button
                   asChild
@@ -96,13 +120,7 @@ export function DbBlogArticle({ post }: { post: DbBlogPost }) {
             <div className="card-premium p-5">
               <h2 className="mb-3 text-lg font-extrabold text-slate-900">Servicios relacionados</h2>
               <ul className="space-y-2 text-sm">
-                {[
-                  { href: "/desarrollo-web", label: "Desarrollo web" },
-                  { href: "/sistemas-web", label: "Sistemas web" },
-                  { href: "/automatizacion", label: "Automatización" },
-                  { href: "/tiendas-online", label: "Tiendas online" },
-                  { href: "/soporte-ti", label: "Soporte TI" },
-                ].map((service) => (
+                {relatedServices.map((service) => (
                   <li key={service.href}>
                     <Link href={service.href} className="text-blue-700 transition-colors hover:text-blue-900">
                       {service.label}
@@ -117,7 +135,7 @@ export function DbBlogArticle({ post }: { post: DbBlogPost }) {
                 Agenda una revisión y define un plan priorizado para mejorar tu presencia digital.
               </p>
               <Button asChild className="w-full gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800">
-                <Link href="/contacto">
+                <Link href={contactHref}>
                   Solicitar diagnóstico <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>

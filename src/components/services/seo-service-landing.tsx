@@ -3,11 +3,11 @@ import { ArrowRight, CheckCircle2, MessageCircle, SearchCheck } from "lucide-rea
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
+import { PLAN_PRICE_AMOUNTS, SERVICE_PRICE_AMOUNTS } from "@/config/pricing";
 import { siteConfig } from "@/config/site";
 import type { SeoServicePage } from "@/content/seo-service-pages";
 import {
   buildFaqJsonLd,
-  buildProfessionalServiceJsonLd,
   buildServiceJsonLd,
   buildWebPageJsonLd,
 } from "@/lib/seo";
@@ -62,9 +62,82 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
     ],
     offer: {
       name: "Desarrollo web profesional",
-      lowPrice: 59990,
-      highPrice: 850000,
+      lowPrice: PLAN_PRICE_AMOUNTS["web-basica"],
+      highPrice: PLAN_PRICE_AMOUNTS.empresa,
       description: "Rango referencial según cantidad de páginas, contenido, integraciones y soporte.",
+    },
+  },
+  "paginas-web-para-pymes": {
+    serviceLabel: "las páginas web para pymes",
+    whyParagraphs: [
+      "Una pyme chilena suele competir con empresas que ya tienen años de presencia, reseñas y contenido publicado. Una página propia permite explicar con claridad qué hace el negocio, en qué zonas atiende, qué problemas resuelve y cómo contactar, sin depender únicamente del alcance cambiante de una red social.",
+      "Para captar búsquedas no marcarias, cada sección debe responder una necesidad real del cliente: servicios concretos, precios o forma de cotizar, proceso, plazos, respaldo y preguntas frecuentes. Repetir palabras clave no reemplaza esa información; la prioridad es que una persona pueda comparar y decidir con menos incertidumbre.",
+      "La web también debe poder crecer. Una primera versión puede concentrarse en presencia y contacto, y luego sumar páginas de servicio, casos autorizados, artículos útiles, catálogo, agenda o automatizaciones cuando exista una necesidad comercial comprobada.",
+    ],
+    technologyParagraphs: [
+      "Construimos una base responsive y ligera, con HTML semántico, metadata específica, canonical, sitemap y enlaces internos rastreables. El contenido principal queda disponible desde el servidor para que usuarios y buscadores lo reciban sin depender de interacciones en el navegador.",
+      "Según el alcance, integramos WhatsApp, formularios, correo, analítica y eventos de conversión. Así no solo se mide tráfico: también se puede saber qué página originó una consulta y qué servicio interesó al potencial cliente.",
+      "La implementación se organiza por prioridades. Primero definimos oferta, público y acción principal; después estructuramos contenido, diseño y desarrollo; finalmente revisamos móvil, formularios, indexación y publicación antes de entregar.",
+    ],
+    methodologyBullets: [
+      "Una propuesta principal y una acción comercial clara por página.",
+      "Contenido propio sobre servicios, proceso, cobertura y condiciones reales.",
+      "Enlaces hacia páginas específicas sin duplicar la misma intención.",
+      "Revisión responsive, accesibilidad básica y velocidad de carga.",
+      "Medición de formulario, WhatsApp, llamada y cotizador.",
+    ],
+    caseStudySlugs: [
+      "web-empresa-combustible-seo",
+      "tienda-online-articulos-personalizados",
+      "web-cotizaciones-personalizadas-pdf",
+    ],
+    comparisonRows: [
+      ["Descubrimiento", "Página preparada para búsquedas por servicio, necesidad y ubicación real", "Plantilla publicada con textos genéricos", "Dependencia de marca, redes sociales y recomendaciones"],
+      ["Confianza", "Servicios, proceso, respaldo y contacto dentro de un activo propio", "Diseño correcto pero con poca evidencia del negocio", "Información dispersa entre perfiles y mensajes"],
+      ["Conversión", "WhatsApp, formulario, llamada y cotizador con rutas medibles", "Botones de contacto sin contexto suficiente", "Consultas manuales difíciles de atribuir"],
+      ["Crecimiento", "Base escalable a contenidos, catálogo, campañas o automatización", "Cambios limitados por la plantilla o proveedor", "Cada canal nuevo aumenta la carga operativa"],
+    ],
+    offer: {
+      name: "Página web para pyme",
+      lowPrice: PLAN_PRICE_AMOUNTS["web-basica"],
+      highPrice: PLAN_PRICE_AMOUNTS.pyme,
+      description: "Rango referencial para una web de presentación o un sitio pyme comercial; el alcance final se cotiza por escrito.",
+    },
+  },
+  "diseno-web-empresas": {
+    serviceLabel: "las páginas web para empresas",
+    whyParagraphs: [
+      "En una compra empresarial, el sitio suele ser revisado por más de una persona: cliente, jefatura, administración o compras. Una página web corporativa debe permitir que cada perfil entienda la oferta, encuentre respaldo y sepa qué información entregar para avanzar hacia una reunión o cotización.",
+      "Las búsquedas como páginas web para empresas, diseño web corporativo o desarrollo web empresarial expresan una necesidad más exigente que solo tener presencia. La respuesta debe mostrar arquitectura, capacidad técnica, metodología, continuidad y una ruta comercial coherente con servicios B2B.",
+      "Una estructura sólida también evita depender de una portada genérica. La empresa puede desarrollar páginas específicas para líneas de servicio, industrias o problemas reales, siempre que cada URL aporte contenido distinto y se conecte mediante enlaces internos claros.",
+    ],
+    technologyParagraphs: [
+      "Trabajamos sitios corporativos con Next.js, TypeScript y componentes reutilizables cuando esa arquitectura responde al proyecto. Priorizamos renderizado rastreable, URLs estables, metadata única, datos estructurados representativos y una experiencia móvil rápida.",
+      "Preparamos formularios, WhatsApp, llamadas y cotización para medición de conversiones. Cuando el ciclo comercial lo exige, se pueden integrar CRM, correo, automatizaciones, descargas, áreas privadas o sistemas internos como etapas separadas.",
+      "En rediseños revisamos inventario de URLs, contenido que debe conservarse, redirecciones y analítica antes de reemplazar el sitio. Esto reduce el riesgo de perder señales SEO o romper enlaces que ya reciben tráfico.",
+    ],
+    methodologyBullets: [
+      "Mapa de servicios, audiencias, objeciones y responsables de decisión.",
+      "Arquitectura corporativa con una intención principal por URL.",
+      "Señales verificables: empresa, proceso, casos autorizados y contacto.",
+      "Plan de migración y redirecciones cuando existe un sitio anterior.",
+      "Analítica de consultas y evolución según datos posteriores al lanzamiento.",
+    ],
+    caseStudySlugs: [
+      "web-empresa-combustible-seo",
+      "web-cotizaciones-personalizadas-pdf",
+      "app-checklist-revision-buses",
+    ],
+    comparisonRows: [
+      ["Arquitectura", "Páginas ordenadas por servicios, audiencias y objetivos comerciales", "Secciones adaptadas sobre una plantilla general", "Oferta compleja explicada en documentos o reuniones"],
+      ["Credibilidad", "Identidad, proceso, respaldo y contacto corporativo coherentes", "Imagen visual sin suficiente contexto de negocio", "Validación lenta y dependencia de referencias"],
+      ["SEO", "Contenido único, enlazado interno y base técnica preparada para crecer", "Optimización limitada a etiquetas generales", "La empresa solo aparece cuando ya conocen su nombre"],
+      ["Medición", "Eventos por formulario, WhatsApp, llamada y cotización", "Analítica básica sin atribución comercial", "No se identifica qué contenido genera oportunidades"],
+    ],
+    offer: {
+      name: "Página web corporativa para empresa",
+      lowPrice: PLAN_PRICE_AMOUNTS.empresa,
+      description: "Valor inicial referencial para una web corporativa; páginas, contenido e integraciones se definen en la propuesta formal.",
     },
   },
   "tiendas-online": {
@@ -99,8 +172,8 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
     ],
     offer: {
       name: "Tienda online o catálogo digital",
-      lowPrice: 299990,
-      highPrice: 900000,
+      lowPrice: PLAN_PRICE_AMOUNTS.catalogo,
+      highPrice: PLAN_PRICE_AMOUNTS.ecommerce,
       description: "Rango referencial según catálogo, pagos, carga inicial y administración requerida.",
     },
   },
@@ -137,8 +210,8 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
     ],
     offer: {
       name: "Sistema web a medida",
-      lowPrice: 399990,
-      highPrice: 1800000,
+      lowPrice: PLAN_PRICE_AMOUNTS.sistema,
+      highPrice: PLAN_PRICE_AMOUNTS.avanzado,
       description: "Rango referencial para primera etapa con diagnóstico técnico incluido.",
     },
   },
@@ -174,8 +247,7 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
     ],
     offer: {
       name: "Automatización de procesos",
-      lowPrice: 99990,
-      highPrice: 750000,
+      lowPrice: SERVICE_PRICE_AMOUNTS.automationWhatsapp,
       description: "Rango referencial según canales, reglas, integraciones y pruebas requeridas.",
     },
   },
@@ -211,8 +283,7 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
     ],
     offer: {
       name: "Soporte TI para pymes",
-      lowPrice: 49990,
-      highPrice: 180000,
+      lowPrice: SERVICE_PRICE_AMOUNTS.supportTi,
       description: "Rango referencial mensual o por requerimiento según carga, criticidad y cobertura.",
     },
   },
@@ -221,6 +292,10 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
 type Props = {
   page: SeoServicePage;
 };
+
+function formatClp(value: number) {
+  return `$${new Intl.NumberFormat("es-CL").format(value)}`;
+}
 
 export function SeoServiceLanding({ page }: Props) {
   const deepContent = deepContentBySlug[page.slug];
@@ -244,13 +319,6 @@ export function SeoServiceLanding({ page }: Props) {
             { name: "Servicios", path: "/servicios" },
             { name: page.navLabel, path: page.path },
           ],
-        })}
-      />
-      <JsonLd
-        id={`${page.slug}-professional-service-schema`}
-        data={buildProfessionalServiceJsonLd({
-          path: page.path,
-          description: page.metaDescription,
         })}
       />
       <JsonLd
@@ -281,7 +349,7 @@ export function SeoServiceLanding({ page }: Props) {
 
           <div className="badge-blue w-fit">
             <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
-            Servicio SEO prioritario
+            Solución para empresas y pymes
           </div>
 
           <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
@@ -325,6 +393,17 @@ export function SeoServiceLanding({ page }: Props) {
               <p className="mt-4 text-sm leading-relaxed text-slate-600">
                 Atendemos proyectos para pymes, emprendedores y empresas de Santiago, Región Metropolitana y distintas regiones de Chile.
               </p>
+              {deepContent ? (
+                <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
+                  <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Inversión referencial</p>
+                  <p className="mt-1 text-lg font-extrabold text-slate-900">
+                    {deepContent.offer.highPrice
+                      ? `${formatClp(deepContent.offer.lowPrice)}–${formatClp(deepContent.offer.highPrice)} + IVA`
+                      : `Desde ${formatClp(deepContent.offer.lowPrice)} + IVA`}
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-600">{deepContent.offer.description}</p>
+                </div>
+              ) : null}
               <div className="mt-4 grid gap-2">
                 <Link
                   href="/cotizador"
@@ -333,7 +412,7 @@ export function SeoServiceLanding({ page }: Props) {
                   Ir al cotizador
                 </Link>
                 <Link
-                  href="/contacto"
+                  href={`/contacto?servicio=${page.slug}`}
                   className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-blue-200 hover:bg-white"
                 >
                   Solicitar orientación comercial
@@ -436,7 +515,7 @@ export function SeoServiceLanding({ page }: Props) {
               <div className="space-y-3">
                 <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Contexto local</p>
                 <h2 className="text-3xl font-extrabold text-slate-900">
-                  ¿Por qué {serviceLabel} es clave para tu negocio en Chile?
+                  El valor de {serviceLabel} para tu negocio en Chile
                 </h2>
               </div>
               <div className="space-y-4">

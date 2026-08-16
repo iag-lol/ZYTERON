@@ -1,5 +1,7 @@
 import { siteConfig } from "@/config/site";
 
+// El sameAs canónico vive en src/lib/schema.ts (Organization/LocalBusiness);
+// aquí solo quedan los defaults de Open Graph y Twitter.
 export const defaultOpenGraph = {
   type: "website",
   locale: siteConfig.locale,
