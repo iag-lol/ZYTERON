@@ -47,6 +47,39 @@ export const SERVICE_PRICE_AMOUNTS = {
   supportTi: 49990,
 } as const;
 
+/**
+ * Montos numéricos de los servicios adicionales más cotizados. Se usan en la
+ * calculadora pública de precio; deben mantenerse alineados con ADDONS.
+ */
+export const ADDON_PRICE_AMOUNTS = {
+  extraPage: 59990,
+  advancedForm: 79990,
+  multiStepForm: 149990,
+  userLogin: 299990,
+  blog: 199990,
+  clientArea: 399990,
+  manageableCatalog: 249990,
+  stock: 249990,
+  miniAdminPanel: 349990,
+  fullAdminPanel: 990000,
+  booking: 499990,
+  dashboardReports: 399990,
+  payments: 149990,
+  customApi: 349990,
+  whatsappAutomation: 249990,
+  advancedSeo: 179990,
+  pdfGenerator: 249990,
+  multiLanguage: 199990,
+} as const;
+
+/** Mantención mensual referencial usada por la calculadora; alineada con MAINTENANCE. */
+export const MAINTENANCE_PRICE_AMOUNTS = {
+  basic: 39990,
+  professional: 79990,
+  ecommerce: 129990,
+  system: 199990,
+} as const;
+
 export type PricedItem = { name: string; price: string; note?: string };
 
 export const PLANS: PricedItem[] = [

@@ -13,7 +13,7 @@ type RelatedService = { href: string; label: string; signals: string[] };
 const relatedServiceOptions: RelatedService[] = [
   { href: "/servicios/seo-para-empresas-chile", label: "SEO para empresas", signals: ["seo", "google", "posicion", "tráfico orgánico"] },
   { href: "/paginas-web-para-pymes", label: "Páginas web para pymes", signals: ["para pyme", "pymes", "emprendedor", "negocio pequeño"] },
-  { href: "/diseno-web-empresas", label: "Páginas web para empresas", signals: ["web corporativa", "página web empresa", "sitio corporativo", "b2b"] },
+  { href: "/paginas-web-para-empresas", label: "Páginas web para empresas", signals: ["web corporativa", "página web empresa", "sitio corporativo", "b2b"] },
   { href: "/tiendas-online", label: "Tiendas online", signals: ["ecommerce", "tienda", "catálogo", "venta online"] },
   { href: "/sistemas-web", label: "Sistemas web", signals: ["sistema", "software", "panel", "inventario", "dashboard"] },
   { href: "/automatizacion", label: "Automatización", signals: ["automat", "whatsapp", "proceso", "formulario", "flujo"] },

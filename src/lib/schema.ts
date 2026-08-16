@@ -87,7 +87,7 @@ const ROUTE_LABELS: Record<string, string> = {
   demos: "Demos",
   "desarrollo-web": "Desarrollo web",
   "diseno-web": "Diseño web",
-  "diseno-web-empresas": "Páginas web para empresas",
+  "paginas-web-para-empresas": "Páginas web para empresas",
   faq: "FAQ",
   planes: "Planes",
   productos: "Productos",

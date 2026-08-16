@@ -15,10 +15,11 @@ const footerColumns = [
     title: "Páginas web",
     items: [
       { label: "Páginas web Santiago", href: "/paginas-web-santiago" },
-      { label: "Páginas web para empresas", href: "/diseno-web-empresas" },
+      { label: "Páginas web para empresas", href: "/paginas-web-para-empresas" },
       { label: "Páginas web para pymes", href: "/paginas-web-para-pymes" },
       { label: "Desarrollo web", href: "/desarrollo-web" },
       { label: "Tiendas online", href: "/tiendas-online" },
+      { label: "Calculadora de precio", href: "/calculadora-precio-pagina-web" },
       { label: "Cotizar página web", href: "/cotizador" },
     ],
   },

@@ -43,3 +43,6 @@ next-env.d.ts
 # Xcode local build products and per-user state
 /macos/**/.derived/
 /macos/**/*.xcuserdatad/
+
+# graphify knowledge graph (generado localmente)
+graphify-out/

@@ -24,11 +24,11 @@ const WHATSAPP_BASE = siteConfig.social.whatsapp;
 
 const CANONICAL_SERVICE_PATHS: Record<string, string> = {
   "desarrollo-web-chile": "/desarrollo-web",
-  "paginas-web-para-empresas": "/diseno-web-empresas",
+  "paginas-web-para-empresas": "/paginas-web-para-empresas",
   "creacion-de-sitios-web-para-empresas": "/desarrollo-web",
   "paginas-web-para-pymes": "/paginas-web-para-pymes",
-  "diseno-web-chile": "/diseno-web-empresas",
-  "agencia-diseno-web-chile": "/diseno-web-empresas",
+  "diseno-web-chile": "/paginas-web-para-empresas",
+  "agencia-diseno-web-chile": "/paginas-web-para-empresas",
   "diseno-web-santiago": "/paginas-web-santiago",
 };
 const CONSOLIDATED_SERVICE_SLUGS = new Set(Object.keys(CANONICAL_SERVICE_PATHS));

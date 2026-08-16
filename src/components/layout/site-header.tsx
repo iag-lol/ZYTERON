@@ -33,11 +33,12 @@ const servicesHubItem = { href: "/desarrollo-web", label: "Todo sobre páginas w
 
 const servicesNavItems = [
   { href: "/paginas-web-santiago", label: "Páginas Web Santiago" },
-  { href: "/diseno-web-empresas", label: "Páginas Web para Empresas" },
+  { href: "/paginas-web-para-empresas", label: "Páginas Web para Empresas" },
   { href: "/paginas-web-para-pymes", label: "Páginas Web para Pymes" },
   { href: "/tiendas-online", label: "Tiendas Online" },
   { href: "/sistemas-web", label: "Sistemas Web" },
   { href: "/servicios/seo-para-empresas-chile", label: "SEO para Empresas" },
+  { href: "/calculadora-precio-pagina-web", label: "Calculadora de precio" },
 ];
 
 export function SiteHeader() {

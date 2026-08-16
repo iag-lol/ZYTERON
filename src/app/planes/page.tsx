@@ -16,9 +16,9 @@ import {
 } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Precios de páginas web en Chile: planes y valores",
+  title: "Planes y Precios de Páginas Web en Chile",
   description:
-    "Compara precios de páginas web en Chile: web básica, plan pyme, sitio corporativo, ecommerce y sistemas, con valores referenciales y alcance claro.",
+    "Precios de páginas web en Chile: web básica, plan pyme, sitio corporativo, ecommerce y sistemas. Valores referenciales, alcance por plan y calculadora de precio.",
   path: "/planes",
 });
 

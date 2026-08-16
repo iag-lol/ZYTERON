@@ -33,7 +33,7 @@ const PROJECT_TYPE_BY_SOURCE: Record<string, string> = {
   "desarrollo-web": "Página web corporativa",
   "desarrollo-web-santiago": "Página web corporativa",
   "paginas-web-para-pymes": "Página web corporativa",
-  "diseno-web-empresas": "Página web corporativa",
+  "paginas-web-para-empresas": "Página web corporativa",
   "tiendas-online": "Tienda online",
   "sistemas-web": "Sistema interno",
   automatizacion: "Automatización de procesos",

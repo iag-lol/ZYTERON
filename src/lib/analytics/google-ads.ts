@@ -47,3 +47,52 @@ export function trackQuoteRequestConversion(params?: GoogleAdsEventParams) {
     ...params,
   });
 }
+
+/**
+ * Embudo del cotizador. `quote_step` se emite en cada avance para poder medir
+ * en qué paso se cae el usuario, no solo si terminó.
+ */
+export function trackQuoteStart(params?: GoogleAdsEventParams) {
+  trackAnalyticsEvent("quote_start", params);
+}
+
+export function trackQuoteStep(step: number, params?: GoogleAdsEventParams) {
+  trackAnalyticsEvent("quote_step", { step, ...params });
+}
+
+export function trackQuoteComplete(params?: GoogleAdsEventParams) {
+  trackAnalyticsEvent("quote_complete", params);
+}
+
+/** Clic en cualquier CTA que lleva al cotizador, desde cualquier página. */
+export function trackCtaQuoteClick(params?: GoogleAdsEventParams) {
+  trackAnalyticsEvent("cta_quote_click", params);
+}
+
+/** Chat IA: apertura, calificación del lead y traspaso a un humano. */
+export function trackChatOpen(params?: GoogleAdsEventParams) {
+  trackAnalyticsEvent("chat_open", params);
+}
+
+export function trackChatQualified(params?: GoogleAdsEventParams) {
+  trackAnalyticsEvent("chat_qualified", params);
+  trackGenerateLead({ form_type: "chat_ia", ...params });
+}
+
+export function trackChatHandoff(params?: GoogleAdsEventParams) {
+  trackAnalyticsEvent("chat_handoff", params);
+}
+
+/** Planes: vista de la vitrina y selección de un plan concreto. */
+export function trackPlanView(params?: GoogleAdsEventParams) {
+  trackAnalyticsEvent("plan_view", params);
+}
+
+export function trackPlanSelect(params?: GoogleAdsEventParams) {
+  trackAnalyticsEvent("plan_select", params);
+}
+
+/** Vista de un caso de éxito, usado como señal de prueba social. */
+export function trackCaseView(params?: GoogleAdsEventParams) {
+  trackAnalyticsEvent("case_view", params);
+}

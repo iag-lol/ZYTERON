@@ -2,6 +2,8 @@ import { siteConfig } from "@/config/site";
 import { priorityServicePages } from "@/content/priority-service-pages";
 import { servicePages } from "@/content/service-pages";
 import { seoServicePages } from "@/content/seo-service-pages";
+import { verticalPages } from "@/content/vertical-pages";
+import { systemPages } from "@/content/system-pages";
 import { getPublishedBlogPosts, getPublishedCaseStudies } from "@/lib/admin/blog-cases-repository";
 import type { MetadataRoute } from "next";
 
@@ -17,6 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/planes", priority: 0.8, changeFrequency: "monthly" as const },
     { path: "/contacto", priority: 0.8, changeFrequency: "monthly" as const },
     { path: "/cotizador", priority: 0.9, changeFrequency: "monthly" as const },
+    { path: "/calculadora-precio-pagina-web", priority: 0.9, changeFrequency: "monthly" as const },
     { path: "/demos", priority: 0.5, changeFrequency: "monthly" as const },
     { path: "/blog", priority: 0.7, changeFrequency: "weekly" as const },
     { path: "/casos-exito", priority: 0.8, changeFrequency: "monthly" as const },
@@ -44,6 +47,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: `${base}${servicePage.path}`,
     changeFrequency: "monthly" as const,
     priority: 0.9,
+  }));
+
+  // Landings por rubro y subpáginas de sistemas: contenido propio por URL.
+  const verticalRoutes = verticalPages.map((page) => ({
+    url: `${base}${page.path}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
+  }));
+
+  const systemRoutes = systemPages.map((page) => ({
+    url: `${base}${page.path}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
   }));
 
   const consolidatedServiceSlugs = new Set([
@@ -83,6 +99,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticRoutes,
     ...seoServiceRoutes,
     ...priorityServiceRoutes,
+    ...verticalRoutes,
+    ...systemRoutes,
     ...serviceRoutes,
     ...caseStudyRoutes,
     ...blogRoutes,
