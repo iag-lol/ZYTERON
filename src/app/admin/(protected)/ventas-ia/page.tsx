@@ -11,17 +11,42 @@ import {
 } from "lucide-react";
 
 import { getBudgetStatus } from "@/lib/sales-ai/budget";
+import { getMailAccount, isGraphConfigured } from "@/lib/sales-ai/graph-client";
+import { detectDormantOpportunities } from "@/lib/sales-ai/followups";
 import { getSalesSettings } from "@/lib/sales-ai/settings";
 import { listCompanies } from "@/lib/sales-ai/repository";
 import { SALES_STATUSES, SALES_STATUS_LABELS } from "@/lib/sales-ai/types";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Ventas IA" };
+export const metadata = { title: "Zara" };
+
+/** Se evalúa fuera del componente para no leer el reloj durante el render. */
+function resolveWebhookStatus(subscriptionId: string | null, expiresAt: string | null) {
+  if (!subscriptionId) return "SIN SUSCRIPCIÓN";
+  if (!expiresAt) return "VENCIDO";
+  return new Date(expiresAt).getTime() > new Date().getTime() ? "OPERATIVO" : "VENCIDO";
+}
 
 export default async function VentasIaResumenPage() {
   const settings = await getSalesSettings();
   const budget = await getBudgetStatus();
+  const mailAccount = await getMailAccount().catch(() => null);
+  const graphReady = isGraphConfigured();
+  const dormant = await detectDormantOpportunities().catch(() => []);
+
+  const mailStatus = !graphReady
+    ? "NO CONFIGURADO"
+    : mailAccount?.last_error
+      ? "ERROR"
+      : mailAccount?.connected_at
+        ? "CONECTADO"
+        : "DESCONECTADO";
+
+  const webhookStatus = resolveWebhookStatus(
+    mailAccount?.subscription_id ?? null,
+    mailAccount?.subscription_expires_at ?? null,
+  );
 
   let byStatus: Record<string, number> = {};
   let total = 0;
@@ -59,9 +84,9 @@ export default async function VentasIaResumenPage() {
           <Bot className="h-5 w-5" />
         </span>
         <div>
-          <h1 className="text-xl font-extrabold text-slate-900 sm:text-2xl">Ventas IA · Zara</h1>
+          <h1 className="text-xl font-extrabold text-slate-900 sm:text-2xl">Zara · Ejecutiva Comercial</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Ejecutivo comercial IA. Estado actual del pipeline y del gasto.
+            Estado actual del pipeline comercial, la operación y el gasto.
           </p>
         </div>
       </header>
@@ -120,7 +145,7 @@ export default async function VentasIaResumenPage() {
 
         <div className={`rounded-xl border p-4 ${budgetTone}`}>
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
-            <AlertTriangle className="h-3.5 w-3.5" /> Presupuesto IA
+            <AlertTriangle className="h-3.5 w-3.5" /> Presupuesto
           </p>
           <p className="mt-1 text-lg font-extrabold">{budget.percent.toFixed(0)}% consumido</p>
           <p className="mt-1 text-xs">
@@ -129,6 +154,74 @@ export default async function VentasIaResumenPage() {
           </p>
         </div>
       </div>
+
+      {/* Estado general */}
+      <section className="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 className="text-sm font-extrabold text-slate-900">Estado general</h2>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            { label: "Correo", value: mailStatus, ok: mailStatus === "CONECTADO" },
+            {
+              label: "Motor de redacción",
+              value: process.env.OPENAI_API_KEY ? "OPERATIVO" : "SIN CLAVE",
+              ok: Boolean(process.env.OPENAI_API_KEY),
+            },
+            { label: "Webhook", value: webhookStatus, ok: webhookStatus === "OPERATIVO" },
+            {
+              label: "Seguimientos",
+              value: settings.zara_paused ? "PAUSADOS" : "OPERATIVOS",
+              ok: !settings.zara_paused,
+            },
+            {
+              label: "Automatización",
+              value: settings.auto_reply_enabled ? "AUTOMÁTICA" : "MANUAL",
+              ok: true,
+            },
+            {
+              label: "Presupuesto",
+              value: `${budget.percent.toFixed(0)}%`,
+              ok: budget.level === "OK",
+            },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 text-sm"
+            >
+              <span className="text-slate-600">{item.label}</span>
+              <span className="flex items-center gap-1.5 font-bold text-slate-900">
+                <span
+                  className={`h-2 w-2 rounded-full ${item.ok ? "bg-emerald-500" : "bg-amber-500"}`}
+                />
+                {item.value}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Oportunidades dormidas */}
+      {dormant.length > 0 ? (
+        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+          <h2 className="text-sm font-extrabold text-amber-900">
+            {dormant.length} oportunidad(es) requieren atención
+          </h2>
+          <div className="mt-3 space-y-2">
+            {dormant.slice(0, 5).map((item) => (
+              <Link
+                key={item.id}
+                href={`/admin/ventas-ia/prospectos/${item.id}`}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-white p-3 text-sm transition-colors hover:border-amber-300"
+              >
+                <span className="font-bold text-slate-900">{item.name}</span>
+                <span className="text-xs text-slate-600">
+                  {item.status} · potencial {item.potential} · {item.daysWithoutReply} días sin respuesta
+                  {item.potentialValue ? ` · $${item.potentialValue.toLocaleString("es-CL")}` : ""}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* Pipeline */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -168,8 +261,8 @@ export default async function VentasIaResumenPage() {
         {[
           { href: "/admin/ventas-ia/importar", label: "Importar prospectos", icon: FileSpreadsheet },
           { href: "/admin/ventas-ia/prospectos", label: "Ver prospectos", icon: Users },
-          { href: "/admin/ventas-ia/bandeja", label: "Bandeja IA", icon: Inbox },
-          { href: "/admin/ventas-ia/actividad", label: "Actividad IA", icon: BarChart3 },
+          { href: "/admin/ventas-ia/bandeja", label: "Bandeja", icon: Inbox },
+          { href: "/admin/ventas-ia/actividad", label: "Actividad", icon: BarChart3 },
         ].map((item) => (
           <Link
             key={item.href}

@@ -5,7 +5,7 @@ import { getSalesSettings } from "@/lib/sales-ai/settings";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Bandeja IA" };
+export const metadata = { title: "Bandeja comercial" };
 
 type MessageRow = {
   id: string;
@@ -58,7 +58,7 @@ export default async function BandejaIaPage() {
           <Inbox className="h-5 w-5" />
         </span>
         <div>
-          <h1 className="text-xl font-extrabold text-slate-900 sm:text-2xl">Bandeja IA</h1>
+          <h1 className="text-xl font-extrabold text-slate-900 sm:text-2xl">Bandeja comercial</h1>
           <p className="mt-1 text-sm text-slate-600">
             Correos recibidos de prospectos, con el análisis de Zara y la acción recomendada.
           </p>

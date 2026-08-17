@@ -1,181 +1,266 @@
-# ZARA — Ejecutivo Comercial IA
+# ZARA — Ejecutiva Comercial de Zyteron
 
-Módulo comercial dentro del panel administrativo. Estado: **Fases A, B y parte de D implementadas**.
+Módulo comercial dentro del panel administrativo.
 
 ---
 
-## 1. Qué está funcionando hoy
+## 1. Identidad de Zara (regla de producto)
 
-| Capacidad | Estado |
+Zara se presenta ante clientes como **Zara · Ejecutiva Comercial · Zyteron SpA**.
+
+**Nunca** aparecen en correos hacia clientes: "IA", "inteligencia artificial", "AI", "bot", "robot", "asistente IA", "generado automáticamente". Esto se aplica con una barrera en código (`findForbiddenClientTerms` en `rules.ts`): si el texto contiene alguno de esos términos, **el envío se bloquea** antes de salir.
+
+**Pero no se miente.** Si un cliente pregunta directamente si habla con una persona, Zara responde con honestidad, de forma breve, y continúa con la atención comercial. Esa instrucción (`HONESTY_RULE`) está en todos los prompts de redacción.
+
+La firma, el nombre y el cargo son configurables (`zara_name`, `zara_role`, `zara_signature`, `mailbox_address`) — nada está fijo en el código.
+
+---
+
+## 2. Estado del sistema
+
+| Módulo | Estado |
 |---|---|
-| CRM de empresas con 40+ campos | Operativo |
-| Historial append-only por empresa | Operativo |
-| Importador XLSX/CSV con mapeo y deduplicación | Operativo |
-| Detección de duplicados (RUT, email, dominio, teléfono, nombre) | Operativo |
-| Lista de no contactar / opt-out | Operativo |
-| Cerebro de Zara con salida estructurada validada | Operativo (sin correo) |
-| Control de presupuesto de IA | Operativo |
-| Registro de actividad y costo por acción | Operativo |
-| Botón de emergencia PAUSAR ZARA | Operativo |
-| Modo prueba | Operativo, **activo por defecto** |
-| Bandeja IA | UI lista, **requiere conectar Microsoft 365** |
-| Envío y recepción de correo | **Requiere credenciales de Azure** |
-| Seguimientos automáticos | Tablas y reglas listas, falta el cron |
-| Campañas | Tablas listas, falta la UI |
+| CRM comercial | Operativo |
+| Importador XLSX/CSV | Operativo |
+| Deduplicación | Operativo · 15 pruebas |
+| Historial append-only | Operativo |
+| Cerebro con Zod | Operativo |
+| Control de presupuesto | Operativo · 3 pruebas |
+| Auditoría de consumo | Operativo |
+| Pausar Zara | Operativo |
+| Do Not Contact | Operativo · 7 pruebas |
+| OAuth Microsoft | Implementado · **requiere credenciales** |
+| Correo saliente | Implementado · **requiere credenciales** |
+| Correo entrante | Implementado · **requiere credenciales** |
+| Hilos de Outlook | Implementado · **requiere credenciales** |
+| Webhook | Implementado y probado (handshake + clientState) |
+| Renovación de webhook | Implementado en el cron |
+| Seguimientos | Operativo · 7 pruebas |
+| Oportunidades dormidas | Operativo |
+| Ganado → Clientes | Operativo |
+| Formularios web → CRM | Operativo (contacto y cotizador) |
+| Notificaciones | Operativo |
+| Dashboard | Operativo |
+| Campañas | Tablas y filtros listos; **falta la UI** |
 
 ---
 
-## 2. Paso obligatorio antes de usar: migración
+## 3. NECESITO TU INTERVENCIÓN
 
-Ejecuta **una sola vez** en el editor SQL de Supabase:
+### 3.1 Migraciones de base de datos
 
-```
-supabase/sales_ai_zara.sql
-```
+**Servicio:** Supabase
+**Ruta:** Editor SQL de tu proyecto
+**Acción:** ejecutar en este orden, una sola vez cada uno:
 
-Es idempotente (se puede correr varias veces) y **no toca ninguna tabla existente**. Crea 15 tablas nuevas con prefijo `sales_`. Todas quedan con RLS activo y sin políticas públicas: solo el backend con service role puede leerlas.
+1. `supabase/sales_ai_zara.sql` (si aún no lo corriste)
+2. `supabase/sales_ai_zara_fase2.sql`
 
-Para desinstalar por completo, el archivo trae al final un bloque de `DROP` comentado en el orden correcto de dependencias.
+**Resultado esperado:** 16 tablas con prefijo `sales_`. Ambos scripts son idempotentes y no tocan tus tablas existentes.
 
 ---
 
-## 3. Lo que necesito de ti: credenciales de Microsoft Graph
+### 3.2 Credenciales de Microsoft Graph
 
-El envío y la recepción de correo no pueden funcionar sin esto. **No me envíes los valores por chat**: colócalos directamente en las variables de entorno de Render.
+**Servicio:** Azure / Microsoft Entra ID
+**Ruta:** <https://portal.azure.com> → Microsoft Entra ID → Registros de aplicaciones → Nuevo registro
 
-### Dónde obtenerlos
+**Acción:**
+1. Nombre: `Zyteron Zara`. Cuentas: *solo este directorio organizativo*.
+2. URI de redirección (Web): `https://www.zyteron.cl/api/admin/sales-ai/mail/callback`
+3. Anota **Id. de aplicación (cliente)** y **Id. de directorio (inquilino)**.
+4. **Certificados y secretos → Nuevo secreto de cliente** → copia el *Valor* (se muestra una sola vez).
+5. **Permisos de API → Microsoft Graph → Permisos delegados**: `Mail.Read`, `Mail.Send`, `Mail.ReadWrite`, `offline_access`, `User.Read` → **Conceder consentimiento del administrador**.
 
-1. Entra a <https://portal.azure.com> con la cuenta de Microsoft 365 de Zyteron.
-2. Ve a **Microsoft Entra ID → Registros de aplicaciones → Nuevo registro**.
-   - Nombre: `Zyteron Zara`
-   - Tipos de cuenta: *Solo cuentas de este directorio organizativo*
-   - URI de redirección (Web): `https://www.zyteron.cl/api/admin/sales-ai/mail/callback`
-3. Al crearla anota **Id. de aplicación (cliente)** y **Id. de directorio (inquilino)**.
-4. En **Certificados y secretos → Nuevo secreto de cliente**, genera uno y copia el **Valor** (solo se muestra una vez).
-5. En **Permisos de API → Microsoft Graph → Permisos delegados**, agrega:
-   - `Mail.Read`
-   - `Mail.Send`
-   - `Mail.ReadWrite`
-   - `offline_access`
-   - `User.Read`
-   Luego pulsa **Conceder consentimiento del administrador**.
-
-### Dónde colocarlos
-
-En Render → tu servicio → **Environment**:
+**Valor:** en Render → Environment (nunca por chat):
 
 ```
 MS_GRAPH_CLIENT_ID=<Id. de aplicación>
 MS_GRAPH_TENANT_ID=<Id. de directorio>
 MS_GRAPH_CLIENT_SECRET=<Valor del secreto>
 MS_GRAPH_REDIRECT_URI=https://www.zyteron.cl/api/admin/sales-ai/mail/callback
-SALES_AI_ENCRYPTION_KEY=<cadena aleatoria de 32+ caracteres>
+SALES_AI_ENCRYPTION_KEY=<genera con: openssl rand -base64 32>
+SALES_AI_CRON_SECRET=<genera con: openssl rand -base64 32>
 ```
 
-`SALES_AI_ENCRYPTION_KEY` cifra los tokens de Microsoft antes de guardarlos en Supabase. Genérala tú, por ejemplo con `openssl rand -base64 32`.
+**Resultado esperado:** en Zara → Configuración aparece el botón "Conectar correo". Al pulsarlo vas a Microsoft, autorizas, y vuelves con el buzón conectado.
 
-> **Importante:** el secreto de cliente de Azure caduca (12 o 24 meses según lo que elijas). Anota la fecha: cuando venza, el correo deja de funcionar hasta renovarlo.
+> El secreto de Azure **caduca** (12 o 24 meses). Anota la fecha: cuando venza, el correo deja de funcionar hasta renovarlo en el mismo lugar.
 
 ---
 
-## 4. Variables de entorno de IA
+### 3.3 Cron de tareas programadas
 
-Reutilizamos la integración de OpenAI que ya existe en el proyecto. **No se crea ninguna cuenta ni suscripción nueva.**
+**Servicio:** Render
+**Ruta:** New → Cron Job (o el scheduler que uses)
+**Acción:** programar cada 30 minutos:
 
 ```
-OPENAI_API_KEY=<la que ya tienes configurada>   # ya existe, no la cambies
-SALES_AI_MODEL=gpt-4o-mini                      # opcional; si no, usa el de la config
+curl -X POST https://www.zyteron.cl/api/sales-ai/cron \
+  -H "Authorization: Bearer $SALES_AI_CRON_SECRET"
 ```
 
-Los presupuestos y el modelo también se editan desde la interfaz en **Ventas IA → Configuración**, sin desplegar.
+**Resultado esperado:** renovación del webhook antes de vencer, envío de seguimientos que corresponda y detección de oportunidades dormidas.
 
 ---
 
-## 5. Control de costos
+### 3.4 Buzón de correo
 
-- Los precios por modelo **no están fijos en el código**: viven en `sales_settings.ai_model_prices` y se editan desde Supabase.
-- Cada llamada registra el `usage` real que devuelve OpenAI (tokens de entrada y salida).
-- Umbrales: **80%** avisa · **90%** suspende tareas masivas · **100%** solo permite tareas esenciales.
-- Al 100% **siguen funcionando**: recepción de correo, CRM, historial, notificaciones y acciones manuales. Ninguna de esas consume IA.
-
-Operaciones que **nunca** llaman a OpenAI, por diseño: contar días, detectar vencimientos, cambiar estados, verificar duplicados, importar Excel, consultar la base, calcular estadísticas.
+**Servicio:** Microsoft 365
+**Acción:** crear o habilitar el buzón `zara@zyteron.cl` y usar esa cuenta al autorizar en el paso 3.2.
+**Resultado esperado:** la dirección queda guardada sola en `mailbox_address` tras conectar.
 
 ---
 
-## 6. Go-live gradual
+## 4. Arquitectura
 
-El sistema arranca en la etapa más conservadora:
+```
+Admin Zyteron
+  └─ /admin/ventas-ia/*          (6 páginas, protegidas por sesión admin)
+       ↓
+  /api/admin/sales-ai/*          (import, settings, mail · exigen sesión)
+  /api/sales-ai/webhook          (público, valida clientState de Microsoft)
+  /api/sales-ai/cron             (público, valida Bearer secreto)
+       ↓
+  src/lib/sales-ai/
+    rules.ts          reglas puras y testeables (sin IO)
+    repository.ts     CRM, historial, deduplicación
+    importer.ts       XLSX/CSV
+    settings.ts       configuración cacheada
+    budget.ts         control de gasto
+    crypto.ts         cifrado AES-256-GCM de tokens
+    graph-client.ts   OAuth, envío, hilos, suscripciones
+    mailer.ts         barreras de envío + rebotes
+    inbound.ts        procesamiento de correo entrante
+    followups.ts      seguimientos y oportunidades dormidas
+    conversion.ts     Ganado → Clientes
+    web-leads.ts      formularios públicos → CRM
+    zara-brain.ts     análisis y redacción (Zod)
+    zara-identity.ts  identidad comercial y honestidad
+       ↓
+  Supabase (16 tablas sales_*) · Microsoft Graph · OpenAI (runtime existente)
+```
 
-| Etapa | Estado inicial |
+---
+
+## 5. Flujo de correo entrante
+
+```
+Microsoft Graph → webhook → valida clientState → toma solo el messageId
+   → consulta el mensaje REAL a Graph (nunca confía en el payload)
+   → ¿es nuestro propio envío? se ignora
+   → ¿es rebote? marca el correo inválido y cancela seguimientos
+   → guarda el mensaje SIEMPRE (antes de analizar)
+   → ¿pide no contactar? do_not_contact + cancela todo  [sin IA]
+   → ¿fuera de oficina? no es interés comercial          [sin IA]
+   → cancela seguimientos pendientes                     [sin IA]
+   → analiza intención con Zara                          [IA]
+   → actualiza estado si confianza ≥ 0.80
+   → prepara borrador para aprobación
+   → notifica al administrador
+```
+
+Guardar antes de analizar es deliberado: aunque falle la IA o se acabe el presupuesto, **ningún correo se pierde**.
+
+---
+
+## 6. Estrategia de bajo costo
+
+Orden de decisión aplicado en el código:
+
+1. ¿Se puede resolver con código? → **no se usa OpenAI**. Así funcionan: deduplicación, opt-out, fuera de oficina, rebotes, cancelación de seguimientos, límites de envío, estadísticas y detección de dormidas.
+2. ¿El dato ya está en Supabase? → no se vuelve a investigar.
+3. ¿Ya venía en el Excel? → no se reanaliza.
+4. ¿Hace falta comprender lenguaje natural? → recién ahí se llama a OpenAI.
+
+Además, al redactar se envía **solo contexto relevante**: ficha de la empresa, 15 eventos del historial, 5 mensajes del hilo recortados y precios reales. Nunca la base completa. Las citas del mensaje anterior se recortan antes de enviar (`stripQuotedReply`).
+
+**Umbrales:** 80% avisa · 90% suspende tareas masivas (incluida la personalización de seguimientos, que cae al texto base) · 100% solo tareas esenciales. Recepción, CRM, historial y acciones manuales siguen funcionando siempre.
+
+Los precios por modelo viven en `sales_settings.ai_model_prices`, **no en el código**.
+
+---
+
+## 7. Seguridad
+
+- Tokens de Microsoft cifrados con **AES-256-GCM** antes de guardarse. Nunca en texto plano ni en el navegador.
+- Webhook: responde el `validationToken`, valida `clientState` en **tiempo constante** y descarta lo que no calce. No ejecuta nada con el payload; siempre reconsulta a Graph.
+- Cron protegido por secreto compartido, comparado en tiempo constante.
+- Todas las rutas `/admin/ventas-ia/*` → 307 al login sin sesión. Todas las APIs de admin → 401.
+- RLS activo en las 16 tablas, sin políticas públicas.
+- Verificado: **cero secretos** en el HTML público y en los bundles JS servidos.
+
+---
+
+## 8. Pruebas
+
+```
+npm test
+```
+
+**30 pruebas, 30 pasan** (`src/lib/sales-ai/rules.test.ts`), sin dependencias nuevas: usan el runner de Node.
+
+Cubren: deduplicación (email, dominio, nombre, RUT, teléfono), opt-out, respuestas automáticas, rebotes, terminología prohibida, política de escalamiento, las 7 condiciones de cancelación de seguimientos, umbrales de presupuesto y mapeo de columnas del importador.
+
+### Probado end-to-end contra servidor real
+
+| Escenario | Resultado |
 |---|---|
-| 1. Todo requiere aprobación | **Activa** (`auto_reply_enabled = false`) |
-| 2. Clasificación automática | Disponible al conectar el correo |
-| 3. Respuestas simples automáticas | Desactivada; se habilita en Configuración |
-| 4. Seguimientos automáticos | Pendiente de implementar el cron |
-| 5. Mayor autonomía | Solo con datos que la respalden |
+| Webhook: handshake de validación | Devuelve el token en texto plano |
+| Webhook: `clientState` inválido | `accepted: 0`, se descarta |
+| Cron sin secreto / con secreto erróneo | Rechazado |
+| APIs de correo sin sesión | 401 |
+| Rutas de Zara sin sesión | 307 al login |
+| Sitio público y portales | 200, sin cambios |
+| Fuga de secretos | 0 coincidencias |
 
-Además, **el modo prueba viene activado**: aunque conectes el correo, nada sale a prospectos reales hasta que lo desactives y definas `test_mode_recipient`.
+### No probado todavía (requiere credenciales)
 
----
-
-## 7. Barreras de seguridad comercial
-
-Estas reglas están en **código**, no en el prompt, así que el modelo no puede saltárselas:
-
-- Siempre exigen aprobación humana: reclamos, negociaciones, proyectos fuera de catálogo y peticiones de no contacto.
-- Se detecta por patrón: descuentos, contratos, temas legales, devoluciones y plazos urgentes.
-- Zara solo puede citar precios que existan en `src/config/pricing.ts`. Si el cliente pide algo fuera de lista, debe indicar que requiere cotización y escalar.
-- Toda respuesta del modelo se valida con Zod antes de ejecutar cualquier acción. Si el esquema no calza, no se hace nada y se registra el error.
-- La IA nunca ejecuta SQL. Solo lee contexto ya preparado por el backend.
+Envío real, recepción real, hilos de Outlook y renovación real de la suscripción. **No los declaro OK porque no los he ejecutado contra Microsoft.**
 
 ---
 
-## 8. Archivos del módulo
+## 9. Go-live gradual
 
-```
-supabase/sales_ai_zara.sql                        migración (15 tablas)
-src/lib/sales-ai/types.ts                         estados, potenciales, eventos
-src/lib/sales-ai/settings.ts                      configuración cacheada
-src/lib/sales-ai/budget.ts                        control de gasto y auditoría
-src/lib/sales-ai/repository.ts                    CRM, historial, deduplicación
-src/lib/sales-ai/importer.ts                      lectura XLSX/CSV y validación
-src/lib/sales-ai/zara-brain.ts                    análisis y redacción con Zod
-src/app/api/admin/sales-ai/import/route.ts        API del importador (3 pasos)
-src/app/api/admin/sales-ai/settings/route.ts      API de configuración
-src/app/admin/(protected)/ventas-ia/**            6 páginas del panel
-src/components/admin/sales-ai/**                  importador y controles
-```
+Arranca en la etapa más conservadora y así se queda hasta que tú decidas:
+
+- `test_mode = true` → los correos se redirigen al destinatario de pruebas, nunca a un prospecto real.
+- `auto_reply_enabled = false` → todo borrador espera aprobación humana.
+- Límites de envío: 30 al día, 10 por hora.
+
+Siempre exigen aprobación, aunque actives la automatización: descuentos, negociación, reclamos, contratos, temas legales, proyectos fuera de catálogo y baja confianza.
 
 ---
 
-## 9. Pruebas realizadas
+## 10. Troubleshooting
 
-- `npm run build`: correcto, 128 rutas.
-- `npx tsc --noEmit`: sin errores nuevos.
-- `npx eslint`: limpio en todo el módulo.
-- Rutas `/admin/ventas-ia/*`: las 6 responden **307 hacia el login** sin sesión.
-- APIs `/api/admin/sales-ai/*`: responden **401** sin sesión.
-- Sitio público (`/`, `/planes`, `/cotizador`, `/paginas-web-santiago`): 200, sin cambios.
-
-**No probado todavía** (requiere la migración y las credenciales): importación real de un archivo, envío y recepción de correo, análisis de un correo real.
-
----
-
-## 10. Rollback
-
-1. **Solo la interfaz:** quita el grupo "Ventas IA" de `src/components/admin/admin-sidebar.tsx`. Las tablas quedan intactas.
-2. **Módulo completo:** borra `src/lib/sales-ai/`, `src/app/admin/(protected)/ventas-ia/`, `src/app/api/admin/sales-ai/` y `src/components/admin/sales-ai/`.
-3. **Base de datos:** ejecuta el bloque de `DROP` comentado al final de la migración.
-
-Nada de esto afecta a `Lead`, `Cliente`, `Cotizacion`, órdenes de trabajo ni al resto del admin: el módulo no modifica ninguna tabla existente.
+| Síntoma | Causa probable | Solución |
+|---|---|---|
+| "El buzón no está conectado" | No se completó el OAuth | Zara → Configuración → Conectar correo |
+| Dejan de llegar correos | Suscripción vencida | Verifica el cron; renueva manualmente desde Configuración |
+| "Microsoft rechazó la solicitud de token" | Secreto de Azure caducado | Genera uno nuevo y actualiza `MS_GRAPH_CLIENT_SECRET` |
+| Los envíos no salen | `test_mode` activo sin destinatario | Define `test_mode_recipient` o desactiva el modo prueba |
+| "Presupuesto de IA agotado" | Límite mensual alcanzado | Sube el límite en Configuración o espera al mes siguiente |
+| Borradores sin generarse | Zara pausada | Reanuda desde Configuración |
+| Tablas inexistentes | Falta la migración | Ejecuta los dos SQL del punto 3.1 |
 
 ---
 
-## 11. Lo que sigue
+## 11. Rollback
 
-1. Conectar Microsoft Graph (bloqueado por las credenciales del punto 3).
-2. Webhooks de correo entrante con renovación de suscripción.
-3. Cron de seguimientos y detector de oportunidades dormidas.
-4. Conversión de GANADO a cliente en el módulo existente.
-5. UI de campañas y limitador de envíos.
-6. Enganche de los formularios públicos de zyteron.cl al CRM.
+1. **Solo la interfaz:** quita el grupo "ZARA" de `src/components/admin/admin-sidebar.tsx`.
+2. **Desconectar el correo:** Configuración → eliminar suscripción; o borra la fila de `sales_mail_account`.
+3. **Desenganchar los formularios:** quita las llamadas a `registerWebLeadSafe` en `src/app/api/contacto/route.ts` y `src/app/api/cotizador/route.ts`. Los formularios siguen funcionando igual: esa llamada nunca lanza ni altera su respuesta.
+4. **Módulo completo:** borra `src/lib/sales-ai/`, `src/app/admin/(protected)/ventas-ia/`, `src/app/api/admin/sales-ai/`, `src/app/api/sales-ai/` y `src/components/admin/sales-ai/`.
+5. **Base de datos:** bloques `DROP` comentados al final de cada migración (primero fase 2, después la base).
+
+Nada de esto afecta a `Lead`, `User`, `Cotizacion`, órdenes de trabajo ni al resto del admin.
+
+---
+
+## 12. Pendiente
+
+1. UI de campañas (tablas, filtros y limitador ya existen).
+2. Pruebas reales contra Microsoft, cuando estén las credenciales.
+3. Panel de presupuestos comerciales (`sales_proposals` ya está creada).
+4. Estadísticas históricas por rubro y motivo de pérdida.

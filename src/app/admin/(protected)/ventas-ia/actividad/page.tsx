@@ -5,7 +5,7 @@ import { getBudgetStatus } from "@/lib/sales-ai/budget";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Actividad IA" };
+export const metadata = { title: "Actividad de Zara" };
 
 type ActivityRow = {
   id: number;
@@ -47,7 +47,7 @@ export default async function ActividadIaPage() {
           <BarChart3 className="h-5 w-5" />
         </span>
         <div>
-          <h1 className="text-xl font-extrabold text-slate-900 sm:text-2xl">Actividad IA</h1>
+          <h1 className="text-xl font-extrabold text-slate-900 sm:text-2xl">Actividad de Zara</h1>
           <p className="mt-1 text-sm text-slate-600">
             Auditoría completa de lo que hizo Zara, con tokens y costo por acción.
           </p>

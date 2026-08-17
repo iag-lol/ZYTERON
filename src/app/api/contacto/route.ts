@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { insertRow } from "@/lib/admin/repository";
 import { serializeContactLeadDetails } from "@/lib/admin/contact-lead";
 import { sendLeadAlertEmail } from "@/lib/notifications/lead-alert";
+import { registerWebLeadSafe } from "@/lib/sales-ai/web-leads";
 
 type RateLimitEntry = {
   hits: number;
@@ -260,6 +261,18 @@ export async function POST(req: Request) {
     } catch (emailError) {
       console.error("[contact-form] lead alert email failed:", emailError);
     }
+
+    // Espejo en el CRM comercial. No bloquea ni altera la respuesta del formulario.
+    registerWebLeadSafe({
+      formOrigin: "Formulario de contacto",
+      leadId,
+      name: data.name,
+      email: data.email,
+      phone: normalizeOptional(data.phone),
+      company: normalizeOptional(data.company),
+      service: normalizeOptional(serviceSummary),
+      message: normalizeOptional(detailLines),
+    });
 
     return NextResponse.json({ ok: true, reference: leadId.slice(0, 8).toUpperCase() });
   } catch (error) {

@@ -23,6 +23,11 @@ export type SalesSettings = {
   ai_model_prices: Record<string, { input: number; output: number }>;
   test_mode: boolean;
   test_mode_recipient: string;
+  mailbox_address: string;
+  zara_name: string;
+  zara_role: string;
+  zara_signature: string;
+  bounce_max_attempts: number;
 };
 
 /**
@@ -48,6 +53,11 @@ export const DEFAULT_SALES_SETTINGS: SalesSettings = {
   },
   test_mode: true,
   test_mode_recipient: "",
+  mailbox_address: "",
+  zara_name: "Zara",
+  zara_role: "Ejecutiva Comercial",
+  zara_signature: "",
+  bounce_max_attempts: 2,
 };
 
 const CACHE_TTL_MS = 30_000;
