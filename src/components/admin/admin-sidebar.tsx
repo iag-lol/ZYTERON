@@ -68,13 +68,13 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Ventas IA",
+    label: "ZARA",
     items: [
       { href: "/admin/ventas-ia", label: "Resumen", icon: Bot, exact: true, color: "violet" },
       { href: "/admin/ventas-ia/prospectos", label: "Prospectos", icon: Building2, color: "blue" },
-      { href: "/admin/ventas-ia/bandeja", label: "Bandeja IA", icon: Inbox, color: "sky" },
+      { href: "/admin/ventas-ia/bandeja", label: "Bandeja", icon: Inbox, color: "sky" },
       { href: "/admin/ventas-ia/importar", label: "Importar prospectos", icon: FileSpreadsheet, color: "emerald" },
-      { href: "/admin/ventas-ia/actividad", label: "Actividad IA", icon: Activity, color: "amber" },
+      { href: "/admin/ventas-ia/actividad", label: "Actividad", icon: Activity, color: "amber" },
       { href: "/admin/ventas-ia/configuracion", label: "Configuración", icon: SlidersHorizontal, color: "slate" },
     ],
   },

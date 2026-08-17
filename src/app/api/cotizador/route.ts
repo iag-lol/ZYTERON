@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { serializeContactLeadDetails } from "@/lib/admin/contact-lead";
 import { insertRow } from "@/lib/admin/repository";
 import { sendLeadAlertEmail } from "@/lib/notifications/lead-alert";
+import { registerWebLeadSafe } from "@/lib/sales-ai/web-leads";
 
 const lineItemSchema = z.object({
   id: z.string().trim().max(120).optional(),
@@ -285,6 +286,19 @@ export async function POST(req: Request) {
     } catch (emailError) {
       console.error("[package-builder] lead alert email failed:", emailError);
     }
+
+    // Espejo en el CRM comercial. El cotizador es la señal de intención más
+    // alta del sitio, por eso el prospecto entra directamente como INTERESADO.
+    registerWebLeadSafe({
+      formOrigin: "Cotizador web",
+      leadId,
+      name: data.name,
+      email: data.email,
+      phone: normalizeOptional(data.phone),
+      company: data.company,
+      service: serviceSummary,
+      message: `${planName} · total estimado ${formatCurrency(total)}`,
+    });
 
     return NextResponse.json({ ok: true, reference: leadId.slice(0, 8).toUpperCase() });
   } catch (error) {

@@ -8,62 +8,23 @@ import { SALES_EVENT_TYPES, type SalesCompany, type SalesEvent, type SalesPotent
  * servidor: el navegador nunca consulta estas tablas directamente.
  */
 
-// ---------------------------------------------------------------------------
-// Normalización (sin IA: son reglas deterministas)
-// ---------------------------------------------------------------------------
+// Las reglas puras de normalización viven en rules.ts para poder probarlas
+// aisladamente. Se reexportan aquí para no romper importaciones existentes.
+export {
+  normalizeEmail,
+  normalizeDomain,
+  normalizeCompanyName,
+  normalizeRut,
+  normalizePhone,
+} from "./rules";
 
-export function normalizeEmail(value?: string | null): string | null {
-  const email = (value || "").trim().toLowerCase();
-  if (!email || !email.includes("@")) return null;
-  return email;
-}
-
-export function normalizeDomain(website?: string | null, email?: string | null): string | null {
-  const raw = (website || "").trim().toLowerCase();
-  if (raw) {
-    try {
-      const url = raw.startsWith("http") ? raw : `https://${raw}`;
-      const host = new URL(url).hostname.replace(/^www\./, "");
-      if (host.includes(".")) return host;
-    } catch {
-      // Cae al dominio del correo.
-    }
-  }
-  const mail = normalizeEmail(email);
-  if (!mail) return null;
-  const domain = mail.split("@")[1] || "";
-  // Los dominios de correo genéricos no identifican a una empresa.
-  const GENERIC = new Set([
-    "gmail.com", "hotmail.com", "outlook.com", "yahoo.com", "live.cl",
-    "icloud.com", "hotmail.cl", "gmail.cl", "yahoo.cl",
-  ]);
-  if (!domain || GENERIC.has(domain)) return null;
-  return domain;
-}
-
-export function normalizeCompanyName(name?: string | null): string {
-  return (name || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/\b(spa|ltda|limitada|s\.?a\.?|eirl|e\.?i\.?r\.?l\.?|inc|llc)\b/g, "")
-    .replace(/[^a-z0-9\s]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-export function normalizeRut(value?: string | null): string | null {
-  const raw = (value || "").replace(/[.\s]/g, "").toUpperCase();
-  if (!raw || raw.length < 8) return null;
-  return raw.includes("-") ? raw : `${raw.slice(0, -1)}-${raw.slice(-1)}`;
-}
-
-export function normalizePhone(value?: string | null): string | null {
-  const digits = (value || "").replace(/\D/g, "");
-  if (digits.length < 8) return null;
-  return digits.slice(-9); // Últimos 9 dígitos: formato chileno sin prefijo.
-}
+import {
+  normalizeDomain,
+  normalizeEmail,
+  normalizeCompanyName,
+  normalizePhone,
+  normalizeRut,
+} from "./rules";
 
 // ---------------------------------------------------------------------------
 // Historial

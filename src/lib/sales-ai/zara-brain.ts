@@ -7,6 +7,7 @@ import { siteConfig } from "@/config/site";
 import { canRunAiTask, recordAiUsage, type TaskPriority } from "./budget";
 import { getSalesSettings } from "./settings";
 import { getCompany, getCompanyTimeline } from "./repository";
+import { requiresHumanByPolicy } from "./rules";
 
 /**
  * Cerebro de Zara. No es un prompt gigante: es una capa acotada que recibe
@@ -64,41 +65,9 @@ export const draftSchema = z.object({
 
 export type DraftReply = z.infer<typeof draftSchema>;
 
-/**
- * Temas que SIEMPRE exigen aprobación humana, sin importar la confianza que
- * declare el modelo. Es una barrera de código, no una instrucción de prompt.
- */
-const ALWAYS_HUMAN_INTENTS = new Set([
-  "RECLAMO",
-  "NEGOCIACION",
-  "FUERA_DE_ALCANCE",
-  "PIDE_NO_CONTACTAR",
-]);
-
-const SENSITIVE_PATTERNS = [
-  /descuento/i,
-  /rebaj/i,
-  /contrato/i,
-  /legal/i,
-  /demand/i,
-  /abogad/i,
-  /factura\s+impag/i,
-  /reclam/i,
-  /devoluci[oó]n/i,
-  /urgente.*plazo/i,
-];
-
-export function requiresHumanByPolicy(intent: string, text: string): string | null {
-  if (ALWAYS_HUMAN_INTENTS.has(intent)) {
-    return `La intención "${intent}" siempre requiere revisión humana.`;
-  }
-  for (const pattern of SENSITIVE_PATTERNS) {
-    if (pattern.test(text)) {
-      return `El mensaje menciona un tema sensible (${pattern.source}) que requiere aprobación.`;
-    }
-  }
-  return null;
-}
+// La política de escalamiento vive en rules.ts: es una barrera de código,
+// no una instrucción de prompt, y debe poder probarse por separado.
+export { requiresHumanByPolicy } from "./rules";
 
 // ---------------------------------------------------------------------------
 // Contexto verificado: la IA solo ve datos reales del sistema
