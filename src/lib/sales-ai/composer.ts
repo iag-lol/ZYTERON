@@ -20,6 +20,11 @@ import { checkOutreachQuality, outreachContentSchema, type OutreachContent } fro
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 
+type RepairResult = {
+  content?: OutreachContent;
+  error?: string;
+};
+
 /** Esquema que se le exige al modelo. */
 const RESPONSE_SCHEMA = {
   type: "object",
@@ -45,7 +50,11 @@ const RESPONSE_SCHEMA = {
     recommended_solution: { type: "string", description: "Qué haría Zyteron, concreto y acotado." },
     commercial_benefits: { type: "string", description: "Beneficios comerciales claros y verificables." },
     call_to_action: { type: "string", description: "Una sola pregunta de cierre, fácil de responder." },
-    body_text: { type: "string", description: "Correo completo en texto plano, 140 a 220 palabras, en bloques cortos separados por línea en blanco. Sin firma." },
+    body_text: {
+      type: "string",
+      description:
+        "Correo FINAL completo en texto plano, 140 a 220 palabras, en bloques cortos separados por línea en blanco. Debe desarrollar los siete bloques; no es un resumen ni una concatenación de los otros campos. Sin firma.",
+    },
     confidence: { type: "number", description: "0 a 1. Qué tan sólido es el correo con los datos disponibles." },
     requires_review: { type: "boolean", description: "true si falta información o hay algo dudoso." },
     review_reason: { type: "string", description: "Motivo si requires_review es true; vacío si no." },
@@ -60,7 +69,10 @@ export type ComposeResult = {
   error?: string;
 };
 
-function buildSystemPrompt(company: NonNullable<Awaited<ReturnType<typeof getCompany>>>, settings: { zara_name: string; zara_role: string }) {
+function buildSystemPrompt(
+  company: NonNullable<Awaited<ReturnType<typeof getCompany>>>,
+  settings: { zara_name: string; zara_role: string },
+) {
   const plans = Object.entries(PLAN_PRICES)
     .map(([id, price]) => `- ${id}: ${price}`)
     .join("\n");
@@ -70,15 +82,18 @@ function buildSystemPrompt(company: NonNullable<Awaited<ReturnType<typeof getCom
 Escribes el PRIMER correo en frío a ${company.name}. No te conocen. Tienes que ganarte la respuesta.
 
 ESTRUCTURA DEL CUERPO (bloques cortos separados por línea en blanco)
-1. Saludo profesional.
-2. Observación concreta y verdadera sobre ${company.name}. Debe notarse que miraste su negocio.
-3. El problema u oportunidad, en términos de negocio: qué les cuesta hoy en tiempo, consultas perdidas u orden.
-4. Qué haría Zyteron, concreto y acotado.
-5. Beneficios comerciales claros, sin exagerar.
-6. Una sola pregunta de cierre, simple de responder.
-7. Una línea educada indicando que pueden pedir no recibir más correos.
+1. Saludo profesional: 2 a 8 palabras.
+2. Observación concreta y verdadera sobre ${company.name}: 25 a 35 palabras. Debe notarse que miraste su negocio.
+3. El problema u oportunidad, en términos de negocio: 25 a 35 palabras sobre qué les cuesta hoy en tiempo, consultas perdidas u orden.
+4. Qué haría Zyteron: 35 a 50 palabras, concreto y acotado.
+5. Beneficios comerciales claros: 25 a 40 palabras, sin exagerar.
+6. Una sola pregunta de cierre, simple de responder: 10 a 20 palabras.
+7. Una línea educada indicando que pueden pedir no recibir más correos: 12 a 20 palabras.
 
 LARGO: entre 140 y 220 palabras. Ni una línea de relleno.
+El campo body_text ES el correo final completo: desarrolla todos los bloques anteriores
+en prosa natural. No lo resumas y no copies simplemente los campos breves. Antes de
+responder, cuenta las palabras de body_text; apunta a 165-190 para dejar margen.
 
 PROHIBIDO
 - Fórmulas vacías: "es crucial", "te propongo considerar", "solución integral", "sinergia", "potenciar", "llevar al siguiente nivel", "en el mundo digital actual".
@@ -109,6 +124,113 @@ DATOS REALES DEL PROSPECTO (no agregues nada que no esté aquí)
 - Servicio recomendado: ${company.recommended_service ?? "NO DEFINIDO"}
 - Potencial: ${company.potential} · score ${company.score ?? "sin calcular"}
 - Observaciones: ${company.notes ?? "sin observaciones"}`;
+}
+
+/**
+ * Structured Outputs garantiza la forma del JSON, no que una redacción sea
+ * comercialmente buena. Si el primer intento no pasa el control por código,
+ * se permite UNA sola reparación dirigida. Si también falla, permanece en
+ * revisión humana y nunca se envía.
+ */
+async function repairOutreachContent(input: {
+  companyId: string;
+  companyName: string;
+  apiKey: string;
+  model: string;
+  systemPrompt: string;
+  content: OutreachContent;
+  issues: Array<{ field: string; reason: string }>;
+}): Promise<RepairResult> {
+  let response: Response;
+  try {
+    response = await fetch(OPENAI_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${input.apiKey}` },
+      body: JSON.stringify({
+        model: input.model,
+        temperature: 0.45,
+        max_tokens: 1600,
+        response_format: {
+          type: "json_schema",
+          json_schema: { name: "outreach_email_repaired", strict: true, schema: RESPONSE_SCHEMA },
+        },
+        messages: [
+          { role: "system", content: input.systemPrompt },
+          {
+            role: "user",
+            content: `Corrige este borrador para ${input.companyName}. El control automático lo rechazó por:\n${input.issues
+              .map((issue) => `- ${issue.field}: ${issue.reason}`)
+              .join("\n")}\n\nBORRADOR ANTERIOR:\n${JSON.stringify(input.content)}\n\nDevuelve nuevamente todos los campos. body_text debe ser el correo final completo, tener 165-190 palabras reales, usar bloques cortos y conservar únicamente los datos verdaderos del prospecto. No agregues precios, resultados, plazos ni funciones no autorizadas.`,
+          },
+        ],
+      }),
+    });
+  } catch {
+    return { error: "No se pudo conectar con el servicio para corregir el borrador." };
+  }
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    await recordAiUsage({
+      companyId: input.companyId,
+      action: "REPAIR_OUTREACH",
+      model: input.model,
+      promptTokens: 0,
+      completionTokens: 0,
+      result: "ERROR",
+      errorDetail: `HTTP ${response.status}: ${detail.slice(0, 200)}`,
+    });
+    return { error: `La corrección respondió ${response.status}.` };
+  }
+
+  const payload = (await response.json().catch(() => null)) as {
+    choices?: Array<{ message?: { content?: string } }>;
+    usage?: { prompt_tokens?: number; completion_tokens?: number };
+  } | null;
+
+  const promptTokens = payload?.usage?.prompt_tokens ?? 0;
+  const completionTokens = payload?.usage?.completion_tokens ?? 0;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(payload?.choices?.[0]?.message?.content ?? "{}");
+  } catch {
+    await recordAiUsage({
+      companyId: input.companyId,
+      action: "REPAIR_OUTREACH",
+      model: input.model,
+      promptTokens,
+      completionTokens,
+      result: "ERROR",
+      errorDetail: "La corrección no devolvió JSON válido.",
+    });
+    return { error: "La corrección no devolvió JSON válido." };
+  }
+
+  const validation = outreachContentSchema.safeParse(parsed);
+  if (!validation.success) {
+    await recordAiUsage({
+      companyId: input.companyId,
+      action: "REPAIR_OUTREACH",
+      model: input.model,
+      promptTokens,
+      completionTokens,
+      result: "ERROR",
+      errorDetail: `Esquema inválido: ${validation.error.issues[0]?.message}`,
+    });
+    return { error: `La corrección no cumplió el esquema: ${validation.error.issues[0]?.message}` };
+  }
+
+  await recordAiUsage({
+    companyId: input.companyId,
+    action: "REPAIR_OUTREACH",
+    model: input.model,
+    promptTokens,
+    completionTokens,
+    confidence: validation.data.confidence,
+    result: "OK",
+  });
+
+  return { content: validation.data };
 }
 
 export async function composeOutreach(companyId: string): Promise<ComposeResult> {
@@ -222,7 +344,7 @@ export async function composeOutreach(companyId: string): Promise<ComposeResult>
     };
   }
 
-  const content = validation.data;
+  let content = validation.data;
 
   await recordAiUsage({
     companyId,
@@ -235,21 +357,50 @@ export async function composeOutreach(companyId: string): Promise<ComposeResult>
   });
 
   // Control de calidad por código: manda por sobre lo que declare el modelo.
-  const issues = checkOutreachQuality(content, {
+  let issues = checkOutreachQuality(content, {
     name: company.name,
     contactName: company.contact_name,
   });
+
+  // Un solo intento de reparación: evita bucles y mantiene el gasto acotado.
+  // Nunca repara si el propio modelo detectó datos dudosos: eso corresponde a
+  // revisión humana, no a forzar una redacción.
+  let repairError: string | undefined;
+  if (!content.requires_review && issues.length > 0) {
+    const repaired = await repairOutreachContent({
+      companyId,
+      companyName: company.name,
+      apiKey,
+      model,
+      systemPrompt: buildSystemPrompt(company, settings),
+      content,
+      issues,
+    });
+
+    if (repaired.content) {
+      content = repaired.content;
+      issues = checkOutreachQuality(content, {
+        name: company.name,
+        contactName: company.contact_name,
+      });
+    } else {
+      repairError = repaired.error;
+    }
+  }
 
   const requiresReview =
     content.requires_review || issues.length > 0 || content.confidence < 0.7;
 
   const reviewReason = issues.length
-    ? issues.map((issue) => `${issue.field}: ${issue.reason}`).join(" · ")
+    ? [
+        ...issues.map((issue) => `${issue.field}: ${issue.reason}`),
+        ...(repairError ? [`Reparación: ${repairError}`] : []),
+      ].join(" · ")
     : content.requires_review
       ? content.review_reason || "El modelo pidió revisión humana."
       : content.confidence < 0.7
         ? `Confianza baja (${content.confidence.toFixed(2)}).`
-        : undefined;
+        : repairError;
 
   return { ok: true, content, requiresReview, reviewReason };
 }
