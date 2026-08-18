@@ -74,18 +74,18 @@ export function BulkOutreach({ candidates }: { candidates: Candidate[] }) {
             <Users className="h-4 w-4" /> Contactar prospectos nuevos
           </h2>
           <p className="mt-1 text-xs text-slate-600">
-            {contactable.length} sin contactar y con correo. Cada mensaje se redacta con los datos
-            de su empresa, uno por uno.
+            {contactable.length} sin contactar y con correo. Entran a la cola y Zara los redacta y
+            despacha de a uno, con horarios repartidos.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setSelected(contactable.slice(0, 8).map((item) => item.id))}
+            onClick={() => setSelected(contactable.slice(0, 50).map((item) => item.id))}
             disabled={busy}
           >
-            Seleccionar 8
+            Seleccionar 50
           </Button>
           <Button
             variant="outline"
@@ -101,7 +101,7 @@ export function BulkOutreach({ candidates }: { candidates: Candidate[] }) {
             className="gap-2 bg-emerald-600 font-bold text-white hover:bg-emerald-700"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            Contactar {selected.length > 0 ? `(${selected.length})` : ""}
+            Encolar {selected.length > 0 ? `(${selected.length})` : ""}
           </Button>
         </div>
       </div>
@@ -115,7 +115,10 @@ export function BulkOutreach({ candidates }: { candidates: Candidate[] }) {
       {result ? (
         <div className="mt-3 rounded-xl border border-slate-200 bg-white p-4 text-sm">
           <p className="font-bold text-slate-900">
-            Enviados: {result.sent} de {result.attempted}
+            Encolados: {result.sent} de {result.attempted}
+          </p>
+          <p className="mt-0.5 text-xs text-slate-600">
+            Zara los redacta y los envía de a uno, repartidos durante el día. No salen ahora.
           </p>
           {result.skipped.length > 0 ? (
             <ul className="mt-2 space-y-0.5 text-xs text-slate-600">
@@ -141,7 +144,7 @@ export function BulkOutreach({ candidates }: { candidates: Candidate[] }) {
       {busy ? (
         <p className="mt-3 flex items-center gap-2 text-xs text-slate-600">
           <AlertTriangle className="h-3.5 w-3.5" />
-          Redactando y enviando uno por uno, con pausa entre cada envío. No cierres esta página.
+          Encolando prospectos. El envío ocurre después, de a uno.
         </p>
       ) : null}
 

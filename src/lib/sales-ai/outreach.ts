@@ -255,16 +255,19 @@ export type BulkOutreachResult = {
  * modo prueba y límites por día y por hora. El límite se comprueba en cada
  * envío, así que la tanda se detiene sola al alcanzarlo.
  */
-/** Pausa entre envíos. Mandar decenas de correos en un minuto desde un buzón
- *  nuevo es lo que dispara los bloqueos por reputación. */
-const SEND_SPACING_MS = 12_000;
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
+/**
+ * Encola una tanda de prospectos.
+ *
+ * Ya NO envía en el momento: cada prospecto entra en la cola y su hora se
+ * asigna de forma espaciada y aleatoria. Enviar en bucle fue exactamente lo
+ * que produjo la ráfaga rechazada por Microsoft.
+ */
 export async function sendBulkOutreach(input: {
   companyIds: string[];
   actor: string;
 }): Promise<BulkOutreachResult> {
+  const { enqueueSend } = await import("./queue");
+
   const result: BulkOutreachResult = {
     attempted: 0,
     sent: 0,
@@ -275,17 +278,17 @@ export async function sendBulkOutreach(input: {
   for (const companyId of input.companyIds) {
     result.attempted += 1;
 
-    // Espaciado entre envíos, salvo antes del primero.
-    if (result.sent > 0) await sleep(SEND_SPACING_MS);
-
     const company = await getCompany(companyId);
     if (!company) {
       result.skipped.push({ companyId, name: companyId, reason: "No existe." });
       continue;
     }
-
     if (company.do_not_contact) {
       result.skipped.push({ companyId, name: company.name, reason: "Pidió no ser contactada." });
+      continue;
+    }
+    if (company.email_invalid) {
+      result.skipped.push({ companyId, name: company.name, reason: "Su correo rebotó antes." });
       continue;
     }
     if (!company.primary_email) {
@@ -301,29 +304,18 @@ export async function sendBulkOutreach(input: {
       continue;
     }
 
-    const generated = await generateOutreach(companyId);
-    if (!generated.ok || !generated.draft) {
-      result.errors.push({
-        companyId,
-        name: company.name,
-        error: generated.error ?? "No se pudo redactar el mensaje.",
-      });
-      continue;
-    }
-
-    const sent = await sendOutreach({
+    const enqueued = await enqueueSend({
       companyId,
-      subject: generated.draft.subject,
-      body: generated.draft.body,
-      actor: input.actor,
+      kind: "PRIMER_CONTACTO",
+      recipientEmail: company.primary_email,
+      createdBy: input.actor,
     });
 
-    if (sent.ok) {
+    if (enqueued.ok) {
+      // "sent" aquí significa encolado: nada sale todavía.
       result.sent += 1;
     } else {
-      result.errors.push({ companyId, name: company.name, error: sent.error ?? "Error al enviar." });
-      // Si se agotó el límite diario, no tiene sentido seguir intentando.
-      if (sent.error?.includes("límite")) break;
+      result.errors.push({ companyId, name: company.name, error: enqueued.error ?? "No se pudo encolar." });
     }
   }
 

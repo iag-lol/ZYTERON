@@ -307,3 +307,81 @@ describe("clasificación de rebotes", () => {
     assert.equal(classifyBounce("Message blocked using spam reputation filters"), "POLICY");
   });
 });
+
+describe("rebotes · reacción esperada del sistema", () => {
+  /** Decide qué hacer ante un rebote. Refleja la lógica de markBounced. */
+  function reaction(text: string) {
+    const kind = classifyBounce(text);
+    return {
+      kind,
+      marcarEmailInvalido: kind === "HARD",
+      pausarZara: kind === "POLICY",
+      reintentar: kind === "SOFT",
+      cancelarSeguimientos: true,
+    };
+  }
+
+  it("5.7.708 pausa Zara y NO marca la dirección como inválida", () => {
+    const result = reaction(
+      "550 5.7.708 Service unavailable. Access denied, traffic not accepted from this IP. AS(7230)",
+    );
+    assert.equal(result.kind, "POLICY");
+    assert.equal(result.pausarZara, true);
+    assert.equal(result.marcarEmailInvalido, false, "no debe quemar un prospecto válido");
+    assert.equal(result.reintentar, false, "un bloqueo no se reintenta automáticamente");
+  });
+
+  it("5.7.705 también pausa por bloqueo del tenant", () => {
+    const result = reaction("550 5.7.705 Access denied, tenant has exceeded threshold");
+    assert.equal(result.kind, "POLICY");
+    assert.equal(result.pausarZara, true);
+  });
+
+  it("5.1.1 marca solo esa dirección y no pausa", () => {
+    const result = reaction("550 5.1.1 The email account that you tried to reach does not exist");
+    assert.equal(result.kind, "HARD");
+    assert.equal(result.marcarEmailInvalido, true);
+    assert.equal(result.pausarZara, false, "una dirección mala no debe detener toda la operación");
+  });
+
+  it("un fallo temporal permite un reintento controlado", () => {
+    const result = reaction("452 4.2.2 Mailbox is full, try again later");
+    assert.equal(result.kind, "SOFT");
+    assert.equal(result.reintentar, true);
+    assert.equal(result.pausarZara, false);
+  });
+
+  it("cualquier rebote cancela los seguimientos pendientes", () => {
+    for (const text of ["550 5.1.1 user unknown", "550 5.7.708 access denied", "452 4.2.2 mailbox full"]) {
+      assert.equal(reaction(text).cancelarSeguimientos, true);
+    }
+  });
+});
+
+describe("seguimientos · el que respondió no recibe más", () => {
+  const base = {
+    status: "CONTACTADO",
+    doNotContact: false,
+    emailInvalid: false,
+    hasEmail: true,
+    alreadyReplied: false,
+  };
+
+  it("cancela apenas hay una respuesta registrada", () => {
+    const result = evaluateFollowupGuards({ ...base, alreadyReplied: true });
+    assert.equal(result.shouldSend, false);
+  });
+
+  it("cancela si el correo rebotó", () => {
+    assert.equal(evaluateFollowupGuards({ ...base, emailInvalid: true }).shouldSend, false);
+  });
+
+  it("cancela si pidió no ser contactado", () => {
+    assert.equal(evaluateFollowupGuards({ ...base, doNotContact: true }).shouldSend, false);
+  });
+
+  it("cancela si se ganó o se perdió", () => {
+    assert.equal(evaluateFollowupGuards({ ...base, status: "GANADO" }).shouldSend, false);
+    assert.equal(evaluateFollowupGuards({ ...base, status: "PERDIDO" }).shouldSend, false);
+  });
+});
