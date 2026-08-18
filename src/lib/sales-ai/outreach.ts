@@ -210,3 +210,88 @@ export async function sendOutreach(input: {
 
   return { ok: true, redirected: sent.redirected, followupsScheduled };
 }
+
+// ---------------------------------------------------------------------------
+// Contacto masivo
+// ---------------------------------------------------------------------------
+
+export type BulkOutreachResult = {
+  attempted: number;
+  sent: number;
+  skipped: Array<{ companyId: string; name: string; reason: string }>;
+  errors: Array<{ companyId: string; name: string; error: string }>;
+};
+
+/**
+ * Contacta una tanda de prospectos. Cada uno se redacta por separado con sus
+ * propios datos, para no mandar el mismo texto a todos.
+ *
+ * Respeta las mismas barreras que el envío individual: pausa, opt-out, rebotes,
+ * modo prueba y límites por día y por hora. El límite se comprueba en cada
+ * envío, así que la tanda se detiene sola al alcanzarlo.
+ */
+export async function sendBulkOutreach(input: {
+  companyIds: string[];
+  actor: string;
+}): Promise<BulkOutreachResult> {
+  const result: BulkOutreachResult = {
+    attempted: 0,
+    sent: 0,
+    skipped: [],
+    errors: [],
+  };
+
+  for (const companyId of input.companyIds) {
+    result.attempted += 1;
+
+    const company = await getCompany(companyId);
+    if (!company) {
+      result.skipped.push({ companyId, name: companyId, reason: "No existe." });
+      continue;
+    }
+
+    if (company.do_not_contact) {
+      result.skipped.push({ companyId, name: company.name, reason: "Pidió no ser contactada." });
+      continue;
+    }
+    if (!company.primary_email) {
+      result.skipped.push({ companyId, name: company.name, reason: "Sin correo registrado." });
+      continue;
+    }
+    if (["CONTACTADO", "RESPONDIO", "INTERESADO", "NEGOCIACION", "GANADO"].includes(company.status)) {
+      result.skipped.push({
+        companyId,
+        name: company.name,
+        reason: `Ya está en estado ${company.status}.`,
+      });
+      continue;
+    }
+
+    const generated = await generateOutreach(companyId);
+    if (!generated.ok || !generated.draft) {
+      result.errors.push({
+        companyId,
+        name: company.name,
+        error: generated.error ?? "No se pudo redactar el mensaje.",
+      });
+      continue;
+    }
+
+    const sent = await sendOutreach({
+      companyId,
+      subject: generated.draft.subject,
+      body: generated.draft.body,
+      actor: input.actor,
+    });
+
+    if (sent.ok) {
+      result.sent += 1;
+    } else {
+      result.errors.push({ companyId, name: company.name, error: sent.error ?? "Error al enviar." });
+      // Si se agotó el límite diario, no tiene sentido seguir intentando.
+      if (sent.error?.includes("límite")) break;
+    }
+  }
+
+  return result;
+}

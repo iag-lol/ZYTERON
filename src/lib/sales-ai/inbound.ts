@@ -2,7 +2,7 @@ import "server-only";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getConversationMessages, getMessage, type GraphMessage } from "./graph-client";
-import { markEmailInvalid } from "./mailer";
+import { markEmailInvalid, sendCommercialEmail } from "./mailer";
 import { detectAutoReply, detectBounce, detectOptOut } from "./rules";
 import { analyzeIncomingEmail, decideAction, draftReply } from "./zara-brain";
 import { getZaraProfile } from "./zara-identity";
@@ -372,25 +372,81 @@ export async function processInboundMessage(graphMessageId: string): Promise<Inb
     });
 
     if (draft.ok && draft.data) {
-      await supabase.from("sales_drafts").insert({
-        company_id: companyId,
-        thread_id: threadId,
-        in_reply_to_message_id: savedId ?? null,
-        subject: draft.data.subject,
-        body: draft.data.body,
-        confidence: draft.data.confidence,
-        requires_approval: draft.data.requires_approval || decision.action !== "AUTO_REPLY",
-        status: "PENDIENTE",
+      // El destinatario se guarda en el propio borrador. Antes se dependía de
+      // la ficha de la empresa, así que un correo de alguien que no estaba en
+      // el CRM generaba un borrador sin destinatario, imposible de enviar.
+      const replyTo = company?.primary_email ?? fromEmail ?? null;
+      const requiresApproval = draft.data.requires_approval || decision.action !== "AUTO_REPLY";
+
+      const { data: createdDraft } = await supabase
+        .from("sales_drafts")
+        .insert({
+          company_id: companyId,
+          thread_id: threadId,
+          in_reply_to_message_id: savedId ?? null,
+          reply_to_email: replyTo,
+          subject: draft.data.subject,
+          body: draft.data.body,
+          confidence: draft.data.confidence,
+          requires_approval: requiresApproval,
+          status: "PENDIENTE",
+        })
+        .select("id")
+        .single();
+
+      await logSalesEvent({
+        companyId,
+        type: SALES_EVENT_TYPES.DRAFT_CREATED,
+        title: "Respuesta preparada",
+        detail: decision.reason,
+        actor: "ZARA",
       });
 
-      if (companyId) {
-        await logSalesEvent({
+      // Envío automático: solo si la configuración lo permite, el análisis no
+      // exige revisión y hay a quién responder. Antes esta rama nunca enviaba
+      // nada, así que "respuesta automática" no hacía efecto.
+      if (!requiresApproval && replyTo && createdDraft?.id) {
+        const sent = await sendCommercialEmail({
           companyId,
-          type: SALES_EVENT_TYPES.DRAFT_CREATED,
-          title: "Respuesta preparada",
-          detail: decision.reason,
-          actor: "ZARA",
+          threadId,
+          recipient: replyTo,
+          subject: draft.data.subject,
+          body: draft.data.body,
+          replyToGraphMessageId: message.id,
         });
+
+        if (sent.ok) {
+          await supabase
+            .from("sales_drafts")
+            .update({
+              status: "ENVIADO",
+              auto_sent: true,
+              sent_at: new Date().toISOString(),
+              approved_by: "ZARA (automático)",
+              approved_at: new Date().toISOString(),
+            })
+            .eq("id", createdDraft.id);
+
+          await logSalesEvent({
+            companyId,
+            type: SALES_EVENT_TYPES.DRAFT_SENT,
+            title: "Respuesta enviada automáticamente",
+            detail: `${draft.data.subject} · confianza ${data.confidence.toFixed(2)}`,
+            actor: "ZARA",
+          });
+        } else {
+          await supabase
+            .from("sales_drafts")
+            .update({ status: "PENDIENTE", error_detail: sent.error })
+            .eq("id", createdDraft.id);
+
+          await notifySalesEvent({
+            priority: "ALTA",
+            title: "No se pudo enviar la respuesta automática",
+            detail: `${sent.error}. El borrador quedó esperando aprobación.`,
+            companyId,
+          });
+        }
       }
     }
   }

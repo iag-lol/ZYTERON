@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
-import { generateOutreach, sendOutreach } from "@/lib/sales-ai/outreach";
+import { generateOutreach, sendBulkOutreach, sendOutreach } from "@/lib/sales-ai/outreach";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,11 +19,39 @@ export async function POST(request: Request) {
   if ("error" in auth) return auth.error;
   const actor = auth.legacy ? "admin" : (auth.session.user.id ?? "admin");
 
-  let body: { action?: string; companyId?: string; subject?: string; bodyText?: string };
+  let body: {
+    action?: string;
+    companyId?: string;
+    companyIds?: string[];
+    subject?: string;
+    bodyText?: string;
+  };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Cuerpo inválido." }, { status: 400 });
+  }
+
+  // El contacto masivo recibe una lista en vez de un identificador único.
+  if (body.action === "bulk") {
+    const ids = Array.isArray(body.companyIds) ? body.companyIds.filter(Boolean) : [];
+    if (ids.length === 0) {
+      return NextResponse.json({ error: "No se seleccionó ninguna empresa." }, { status: 400 });
+    }
+    if (ids.length > 25) {
+      return NextResponse.json(
+        { error: "Máximo 25 empresas por tanda, para controlar el ritmo de envío." },
+        { status: 400 },
+      );
+    }
+
+    try {
+      const result = await sendBulkOutreach({ companyIds: ids, actor });
+      return NextResponse.json({ ok: true, result });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Error en el contacto masivo.";
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
   }
 
   if (!body.companyId) {

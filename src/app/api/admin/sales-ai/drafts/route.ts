@@ -18,7 +18,7 @@ export async function GET() {
     const { supabase } = createSupabaseServerClient();
     const { data } = await supabase
       .from("sales_drafts")
-      .select("id, company_id, thread_id, in_reply_to_message_id, subject, body, confidence, requires_approval, status, created_at")
+      .select("id, company_id, thread_id, in_reply_to_message_id, reply_to_email, subject, body, confidence, requires_approval, status, created_at")
       .eq("status", "PENDIENTE")
       .order("created_at", { ascending: false })
       .limit(50);
@@ -44,7 +44,11 @@ export async function GET() {
       drafts: drafts.map((draft) => ({
         ...draft,
         companyName: draft.company_id ? companies.get(draft.company_id)?.name ?? null : null,
-        companyEmail: draft.company_id ? companies.get(draft.company_id)?.email ?? null : null,
+        // El destinatario efectivo: el del borrador manda, porque puede venir
+        // de un remitente que todavía no está en el CRM.
+        companyEmail:
+          (draft.reply_to_email as string) ??
+          (draft.company_id ? companies.get(draft.company_id)?.email ?? null : null),
       })),
     });
   } catch (error) {
@@ -78,7 +82,7 @@ export async function POST(request: Request) {
   try {
     const { data: draft } = await supabase
       .from("sales_drafts")
-      .select("id, company_id, thread_id, in_reply_to_message_id, subject, body, status")
+      .select("id, company_id, thread_id, in_reply_to_message_id, reply_to_email, subject, body, status")
       .eq("id", payload.draftId)
       .maybeSingle();
 
@@ -113,15 +117,31 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "El cuerpo del correo está vacío." }, { status: 400 });
       }
 
-      const { data: company } = await supabase
-        .from("sales_companies")
-        .select("primary_email")
-        .eq("id", draft.company_id)
-        .maybeSingle();
+      // Orden de preferencia: destinatario guardado en el borrador, luego el
+      // de la ficha, y como último recurso el remitente del mensaje original.
+      let recipient = (draft.reply_to_email as string) || "";
 
-      if (!company?.primary_email) {
+      if (!recipient && draft.company_id) {
+        const { data: company } = await supabase
+          .from("sales_companies")
+          .select("primary_email")
+          .eq("id", draft.company_id)
+          .maybeSingle();
+        recipient = (company?.primary_email as string) || "";
+      }
+
+      if (!recipient && draft.in_reply_to_message_id) {
+        const { data: original } = await supabase
+          .from("sales_messages")
+          .select("from_email")
+          .eq("id", draft.in_reply_to_message_id)
+          .maybeSingle();
+        recipient = (original?.from_email as string) || "";
+      }
+
+      if (!recipient) {
         return NextResponse.json(
-          { error: "La empresa no tiene correo registrado." },
+          { error: "No hay dirección a la cual responder." },
           { status: 400 },
         );
       }
@@ -140,7 +160,7 @@ export async function POST(request: Request) {
       const sent = await sendCommercialEmail({
         companyId: draft.company_id as string,
         threadId: (draft.thread_id as string) ?? null,
-        recipient: company.primary_email as string,
+        recipient,
         subject,
         body,
         replyToGraphMessageId,
