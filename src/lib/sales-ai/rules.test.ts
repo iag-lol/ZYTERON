@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  analysisSchema,
   detectAutoReply,
   detectBounce,
   detectOptOut,
@@ -226,5 +227,59 @@ describe("importador · mapeo de columnas", () => {
     assert.equal(normalizePotential("bajo"), "BAJO");
     assert.equal(normalizePotential(""), "MEDIO");
     assert.equal(normalizePotential("cualquier cosa"), "MEDIO");
+  });
+});
+
+describe("esquema de análisis · tolerancia a la respuesta del modelo", () => {
+  const base = {
+    intent: "INTERESADO",
+    confidence: 0.9,
+    lead_status: "RESPONDIO",
+    potential: "ALTO",
+    summary: "Cliente pide propuesta.",
+    recommended_action: "Enviar cotización.",
+    requires_human: false,
+    reason: "",
+  };
+
+  it("acepta una respuesta correcta", () => {
+    const result = analysisSchema.safeParse(base);
+    assert.equal(result.success, true);
+  });
+
+  it("normaliza etiquetas con espacios en vez de guion bajo", () => {
+    const result = analysisSchema.safeParse({ ...base, intent: "CONSULTA PRECIO" });
+    assert.equal(result.success, true);
+    assert.equal(result.success && result.data.intent, "CONSULTA_PRECIO");
+  });
+
+  it("cae en OTRO ante una intención desconocida en vez de fallar", () => {
+    const result = analysisSchema.safeParse({ ...base, intent: "SALUDO_INICIAL" });
+    assert.equal(result.success, true);
+    assert.equal(result.success && result.data.intent, "OTRO");
+  });
+
+  it("convierte una confianza expresada en porcentaje", () => {
+    const result = analysisSchema.safeParse({ ...base, confidence: 85 });
+    assert.equal(result.success, true);
+    assert.equal(result.success && result.data.confidence, 0.85);
+  });
+
+  it("normaliza el estado escrito con espacio", () => {
+    const result = analysisSchema.safeParse({ ...base, lead_status: "EN PAUSA" });
+    assert.equal(result.success, true);
+    assert.equal(result.success && result.data.lead_status, "EN_PAUSA");
+  });
+
+  it("tolera que falte el campo reason", () => {
+    const { reason, ...withoutReason } = base;
+    void reason;
+    assert.equal(analysisSchema.safeParse(withoutReason).success, true);
+  });
+
+  it("acepta RESPUESTA_AUTOMATICA, que antes no estaba en el enum", () => {
+    const result = analysisSchema.safeParse({ ...base, intent: "RESPUESTA_AUTOMATICA" });
+    assert.equal(result.success, true);
+    assert.equal(result.success && result.data.intent, "RESPUESTA_AUTOMATICA");
   });
 });

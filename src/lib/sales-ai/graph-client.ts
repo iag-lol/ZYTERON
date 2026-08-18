@@ -214,7 +214,19 @@ export async function recordMailError(message: string) {
   }
 }
 
-export async function graphFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+/**
+ * Llama a Graph.
+ *
+ * `critical` distingue un problema de CONEXIÓN (token vencido, permisos
+ * revocados) de un fallo puntual de una consulta. Solo el primero deja la
+ * cuenta marcada en error: antes, una consulta mal formada bastaba para que
+ * el panel mostrara el buzón como desconectado aunque siguiera operativo.
+ */
+export async function graphFetch<T>(
+  path: string,
+  init: RequestInit = {},
+  options: { critical?: boolean } = {},
+): Promise<T> {
   const token = await getAccessToken();
   const response = await fetch(`${GRAPH_BASE}${path}`, {
     ...init,
@@ -228,7 +240,15 @@ export async function graphFetch<T>(path: string, init: RequestInit = {}): Promi
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
     const message = `Graph ${response.status} en ${path}: ${detail.slice(0, 300)}`;
-    await recordMailError(message);
+
+    // 401/403 sí son de conexión; el resto son fallos de la operación puntual.
+    const isAuthFailure = response.status === 401 || response.status === 403;
+    const critical = options.critical ?? true;
+    if (isAuthFailure || critical) {
+      await recordMailError(message);
+    } else {
+      console.warn("[graph] fallo no crítico:", message);
+    }
     throw new Error(message);
   }
 
@@ -264,11 +284,23 @@ export async function getMessage(messageId: string): Promise<GraphMessage> {
 
 /** Últimos mensajes de una conversación, para dar contexto al redactar. */
 export async function getConversationMessages(conversationId: string, top = 10): Promise<GraphMessage[]> {
-  const filter = encodeURIComponent(`conversationId eq '${conversationId}'`);
+  // Microsoft rechaza con InefficientFilter cuando se combina $filter por
+  // conversationId con $orderby. Se pide sin ordenar y se ordena en memoria,
+  // que además es gratis: son pocos mensajes.
+  const escaped = conversationId.replace(/'/g, "''");
+  const filter = encodeURIComponent(`conversationId eq '${escaped}'`);
+
   const data = await graphFetch<{ value: GraphMessage[] }>(
-    `/me/messages?$filter=${filter}&$top=${top}&$orderby=receivedDateTime desc&$select=id,subject,bodyPreview,from,receivedDateTime`,
+    `/me/messages?$filter=${filter}&$top=${top}&$select=id,subject,bodyPreview,from,receivedDateTime`,
+    {},
+    { critical: false },
   );
-  return data.value ?? [];
+
+  return (data.value ?? []).sort((a, b) => {
+    const left = a.receivedDateTime ? new Date(a.receivedDateTime).getTime() : 0;
+    const right = b.receivedDateTime ? new Date(b.receivedDateTime).getTime() : 0;
+    return right - left;
+  });
 }
 
 export type SendMailInput = {
