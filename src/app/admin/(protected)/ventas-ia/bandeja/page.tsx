@@ -2,6 +2,7 @@ import { Inbox, Plug } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSalesSettings } from "@/lib/sales-ai/settings";
+import { DraftApproval } from "@/components/admin/sales-ai/draft-approval";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,8 @@ export default async function BandejaIaPage() {
           </p>
         </div>
       </header>
+
+      <DraftApproval />
 
       {!ready ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">

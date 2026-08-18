@@ -4,6 +4,7 @@ import { ArrowLeft, Building2, Clock3, Globe, Mail, MapPin, Phone, User } from "
 
 import { getCompany, getCompanyTimeline } from "@/lib/sales-ai/repository";
 import { SALES_STATUS_LABELS } from "@/lib/sales-ai/types";
+import { OutreachComposer } from "@/components/admin/sales-ai/outreach-composer";
 
 export const dynamic = "force-dynamic";
 
@@ -82,6 +83,21 @@ export default async function ProspectoDetallePage({ params }: PageProps) {
 
       <div className="grid gap-5 lg:grid-cols-[1fr_1.1fr] lg:items-start">
         <section className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5">
+            <h2 className="mb-3 text-sm font-extrabold text-slate-900">Contacto comercial</h2>
+            <OutreachComposer
+              companyId={company.id}
+              companyName={company.name}
+              companyEmail={company.primary_email}
+              disabled={company.do_not_contact || company.status === "GANADO"}
+              disabledReason={
+                company.do_not_contact
+                  ? "Esta empresa pidió no ser contactada."
+                  : "Esta oportunidad ya está ganada."
+              }
+            />
+          </div>
+
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <h2 className="text-sm font-extrabold text-slate-900">Ficha de la empresa</h2>
             <dl className="mt-3 space-y-2.5">
