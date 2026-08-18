@@ -831,6 +831,35 @@ export async function getWebVisits(limit = 5000) {
   );
 }
 
+/**
+ * Canales comerciales que deben verse en /admin/contactos.
+ *
+ * IMPORTANTE: esta lista es un filtro de visualización, no de guardado. Si se
+ * agrega un canal nuevo que escribe en la tabla Lead y no se suma aquí, los
+ * contactos se guardan pero quedan invisibles en el panel. Fue exactamente lo
+ * que pasó con CHAT_IA: llegaba el correo y la notificación, pero la página
+ * los descartaba.
+ *
+ * `types` vacío significa "cualquier tipo para ese origen".
+ */
+const CONTACT_LEAD_CHANNELS: Array<{ source: string; types: string[] }> = [
+  { source: "CONTACTO_WEB", types: ["CONTACT"] },
+  { source: "COTIZADOR_WEB", types: ["PACKAGE_BUILDER"] },
+  { source: "QUOTE_REQUEST", types: ["QUOTE"] },
+  // Chat de la web y WhatsApp: ambos guardan con source CHAT_IA.
+  { source: "CHAT_IA", types: [] },
+];
+
+export function isContactLeadVisible(lead: { source?: string | null; type?: string | null }) {
+  const source = String(lead.source || "").toUpperCase();
+  const type = String(lead.type || "").toUpperCase();
+
+  return CONTACT_LEAD_CHANNELS.some(
+    (channel) =>
+      channel.source === source && (channel.types.length === 0 || channel.types.includes(type)),
+  );
+}
+
 export async function getContactLeads() {
   const rows = await safeSelect<Lead>(
     "Lead",
@@ -840,15 +869,7 @@ export async function getContactLeads() {
     },
   );
 
-  return rows.filter((lead) => {
-    const source = String(lead.source || "").toUpperCase();
-    const type = String(lead.type || "").toUpperCase();
-    return (
-      (source === "CONTACTO_WEB" && type === "CONTACT") ||
-      (source === "COTIZADOR_WEB" && type === "PACKAGE_BUILDER") ||
-      (source === "QUOTE_REQUEST" && type === "QUOTE")
-    );
-  });
+  return rows.filter(isContactLeadVisible);
 }
 
 type WonQuoteRow = {

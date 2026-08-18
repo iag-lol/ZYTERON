@@ -263,7 +263,7 @@ export function isTaskAllowedForBudget(
 // ---------------------------------------------------------------------------
 
 export const HEADER_HINTS: Record<string, string[]> = {
-  name: ["nombre", "empresa", "razon", "company", "negocio"],
+  name: ["nombre empresa", "empresa", "nombre", "razon", "company", "negocio"],
   legal_name: ["razon social", "razonsocial", "legal"],
   tax_id: ["rut", "tax", "identificacion"],
   industry: ["rubro", "industria", "sector", "giro", "categoria"],
@@ -279,7 +279,11 @@ export const HEADER_HINTS: Record<string, string[]> = {
   instagram_url: ["instagram", "ig"],
   detected_problem: ["problema", "dolor", "necesidad"],
   recommended_service: ["servicio", "recomendado", "solucion"],
-  potential: ["potencial", "score", "prioridad"],
+  potential: ["potencial", "prioridad"],
+  score: ["score", "score comercial", "puntaje"],
+  country: ["pais", "country"],
+  status: ["estado", "status"],
+  do_not_contact: ["no contactar", "nocontactar", "opt out", "optout", "baja"],
   notes: ["nota", "observacion", "comentario"],
 };
 
@@ -289,20 +293,48 @@ function normalizeHeader(header: string) {
     .trim()
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
+    .replace(/[̀-ͯ]/g, "")
+    // "razon_social" y "razon-social" deben leerse igual que "razon social".
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
+/**
+ * Sugiere el campo del CRM para cada columna del archivo.
+ *
+ * Va en dos pasadas y ese orden es deliberado: primero se resuelven las
+ * coincidencias EXACTAS y solo después las parciales. Sin esto, una columna
+ * "score_comercial" se quedaba con el campo "potencial" antes de que se
+ * evaluara la columna "potencial" real, que terminaba ignorada.
+ */
 export function suggestMapping(headers: string[]): Record<string, string> {
   const mapping: Record<string, string> = {};
   const used = new Set<string>();
+  const normalized = new Map(headers.map((header) => [header, normalizeHeader(header)]));
 
+  // Pasada 1: el encabezado coincide exactamente con alguna pista.
   for (const header of headers) {
-    const normalized = normalizeHeader(header);
+    const value = normalized.get(header) ?? "";
+    for (const [field, hints] of Object.entries(HEADER_HINTS)) {
+      if (used.has(field)) continue;
+      if (hints.includes(value)) {
+        mapping[header] = field;
+        used.add(field);
+        break;
+      }
+    }
+  }
+
+  // Pasada 2: coincidencia parcial para lo que quedó sin asignar.
+  for (const header of headers) {
+    if (mapping[header]) continue;
+    const value = normalized.get(header) ?? "";
     let matched = "";
 
     for (const [field, hints] of Object.entries(HEADER_HINTS)) {
       if (used.has(field)) continue;
-      if (hints.some((hint) => normalized.includes(hint))) {
+      if (hints.some((hint) => value.includes(hint))) {
         matched = field;
         break;
       }
@@ -313,6 +345,19 @@ export function suggestMapping(headers: string[]): Record<string, string> {
   }
 
   return mapping;
+}
+
+/** Interpreta un valor de verdad escrito de las formas habituales en Excel. */
+export function parseBoolean(value?: string | null): boolean {
+  const raw = (value || "").trim().toLowerCase();
+  return ["true", "verdadero", "si", "sí", "1", "x", "yes"].includes(raw);
+}
+
+/** Convierte un score comercial a número acotado entre 0 y 100. */
+export function parseScore(value?: string | null): number | null {
+  const parsed = Number((value || "").toString().replace(/[^0-9.-]/g, ""));
+  if (!Number.isFinite(parsed)) return null;
+  return Math.max(0, Math.min(100, Math.round(parsed)));
 }
 
 export function normalizePotential(value?: string): "BAJO" | "MEDIO" | "POTENCIAL" | "ALTO" {
