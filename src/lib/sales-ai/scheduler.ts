@@ -166,11 +166,21 @@ export function rescheduleBacklog(
  */
 export const WARMUP_AUTOMATIC_CEILING = 15;
 
+/**
+ * Rampa automática: solo llega hasta 15 diarios.
+ * Los tramos de 20 y 30 son RECOMENDACIONES que el panel muestra, pero exigen
+ * que el administrador fije el límite a mano.
+ */
 export function warmupDailyLimit(daysSinceStart: number): number {
   if (daysSinceStart <= 2) return 10;
-  if (daysSinceStart <= 4) return 15;
-  if (daysSinceStart <= 7) return 20;
-  return 30;
+  return 15;
+}
+
+/** Lo que el panel puede sugerir, sin aplicarlo solo. */
+export function warmupRecommendation(daysSinceStart: number): number | null {
+  if (daysSinceStart >= 8) return 30;
+  if (daysSinceStart >= 5) return 20;
+  return null;
 }
 
 export type EffectiveLimitInput = {
@@ -188,30 +198,43 @@ export function effectiveDailyLimit(input: EffectiveLimitInput): {
   limit: number;
   stage: string;
   automatic: boolean;
+  recommendation: number | null;
 } {
   const now = input.now ?? new Date();
 
   if (!input.warmupStartedOn) {
-    return { limit: Math.min(10, input.configuredDailyLimit), stage: "Sin iniciar", automatic: true };
+    return {
+      limit: Math.min(10, input.configuredDailyLimit),
+      stage: "Sin iniciar · parte con el primer envío real",
+      automatic: true,
+      recommendation: null,
+    };
   }
 
   const started = new Date(input.warmupStartedOn);
   const days = Math.floor((now.getTime() - started.getTime()) / (24 * 60 * 60_000)) + 1;
   const ramp = warmupDailyLimit(days);
 
+  const recommendation = warmupRecommendation(days);
+
   if (typeof input.manualOverride === "number" && input.manualOverride > 0) {
     return {
       limit: Math.min(input.manualOverride, input.configuredDailyLimit),
-      stage: `Día ${days} · límite manual`,
+      stage: `Día ${days} · límite aprobado a mano`,
       automatic: false,
+      recommendation,
     };
   }
 
-  // Sin override, el automatismo no pasa del techo definido.
+  // Sin aprobación manual, el automatismo nunca pasa de 15 diarios.
   const capped = Math.min(ramp, WARMUP_AUTOMATIC_CEILING, input.configuredDailyLimit);
   return {
     limit: capped,
-    stage: `Día ${days} · rampa automática (${ramp}/día, tope ${WARMUP_AUTOMATIC_CEILING})`,
+    stage:
+      recommendation !== null
+        ? `Día ${days} · automático ${capped}/día · puedes aprobar ${recommendation}/día`
+        : `Día ${days} · automático ${capped}/día`,
     automatic: true,
+    recommendation,
   };
 }

@@ -17,6 +17,78 @@ import { analysisSchema, requiresHumanByPolicy, type EmailAnalysis } from "./rul
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 
+/**
+ * Esquemas JSON estrictos. Antes se usaba json_object y se dependía de
+ * normalizar categorías inválidas para dar por bueno un análisis; ahora el
+ * modelo solo puede devolver los valores permitidos, y Zod queda como segunda
+ * barrera en vez de como parche.
+ */
+const ANALYSIS_JSON_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "intent",
+    "confidence",
+    "lead_status",
+    "potential",
+    "summary",
+    "recommended_action",
+    "requires_human",
+    "reason",
+  ],
+  properties: {
+    intent: {
+      type: "string",
+      enum: [
+        "CONSULTA_PRECIO",
+        "SOLICITA_REUNION",
+        "SOLICITA_COTIZACION",
+        "INTERESADO",
+        "NO_INTERESADO",
+        "PIDE_NO_CONTACTAR",
+        "RECLAMO",
+        "NEGOCIACION",
+        "PREGUNTA_TECNICA",
+        "FUERA_DE_ALCANCE",
+        "RESPUESTA_AUTOMATICA",
+        "OTRO",
+      ],
+    },
+    confidence: { type: "number", description: "Entre 0 y 1." },
+    lead_status: {
+      type: "string",
+      enum: [
+        "CONTACTADO",
+        "RESPONDIO",
+        "INTERESADO",
+        "PRESUPUESTO_ENVIADO",
+        "NEGOCIACION",
+        "GANADO",
+        "PERDIDO",
+        "EN_PAUSA",
+      ],
+    },
+    potential: { type: "string", enum: ["BAJO", "MEDIO", "POTENCIAL", "ALTO"] },
+    summary: { type: "string" },
+    recommended_action: { type: "string" },
+    requires_human: { type: "boolean" },
+    reason: { type: "string" },
+  },
+} as const;
+
+const DRAFT_JSON_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["subject", "body", "confidence", "requires_approval", "reason"],
+  properties: {
+    subject: { type: "string" },
+    body: { type: "string", description: "Correo listo para enviar, sin firma." },
+    confidence: { type: "number", description: "Entre 0 y 1." },
+    requires_approval: { type: "boolean" },
+    reason: { type: "string" },
+  },
+} as const;
+
 // ---------------------------------------------------------------------------
 // Esquema de análisis (sección 8 del encargo)
 // ---------------------------------------------------------------------------
@@ -128,6 +200,8 @@ type StructuredCallResult<T> = {
 
 async function callStructured<T>(options: {
   schema: z.ZodType<T>;
+  /** Esquema JSON que se le impone al modelo. */
+  jsonSchema: { name: string; schema: Record<string, unknown> };
   systemPrompt: string;
   userPrompt: string;
   action: string;
@@ -157,7 +231,14 @@ async function callStructured<T>(options: {
         model,
         temperature: 0.4,
         max_tokens: options.maxTokens ?? 900,
-        response_format: { type: "json_object" },
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: options.jsonSchema.name,
+            strict: true,
+            schema: options.jsonSchema.schema,
+          },
+        },
         messages: [
           { role: "system", content: options.systemPrompt },
           { role: "user", content: options.userPrompt },
@@ -263,6 +344,7 @@ export async function analyzeIncomingEmail(input: {
 
   const result = await callStructured({
     schema: analysisSchema,
+    jsonSchema: { name: "email_analysis", schema: ANALYSIS_JSON_SCHEMA as unknown as Record<string, unknown> },
     action: "ANALYZE_EMAIL",
     companyId: input.companyId,
     priority: "NORMAL",
@@ -302,6 +384,7 @@ export async function draftReply(input: {
 
   const result = await callStructured({
     schema: draftSchema,
+    jsonSchema: { name: "email_reply", schema: DRAFT_JSON_SCHEMA as unknown as Record<string, unknown> },
     action: "DRAFT_REPLY",
     companyId: input.companyId,
     priority: "NORMAL",

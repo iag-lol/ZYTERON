@@ -163,9 +163,9 @@ export default async function VentasIaResumenPage() {
       {queueStats ? (
         <QueuePanel
           stats={queueStats}
-          upcoming={upcoming as never}
+          upcoming={upcoming}
           paused={settings.zara_paused}
-          pauseReason={(settings as unknown as { pause_reason?: string }).pause_reason ?? null}
+          pauseReason={settings.pause_reason || null}
           dailyLimit={dailyLimit.limit}
           warmupStage={dailyLimit.stage}
         />

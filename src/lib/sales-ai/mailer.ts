@@ -104,6 +104,8 @@ export async function checkSendGuards(input: {
 export type SendResult = {
   ok: boolean;
   messageId?: string;
+  /** Identificador que Microsoft cita en los NDR. Clave para correlacionar rebotes. */
+  internetMessageId?: string;
   conversationId?: string;
   error?: string;
   redirected?: boolean;
@@ -113,6 +115,20 @@ export type SendResult = {
  * Envía un correo comercial. Si `replyToGraphMessageId` viene informado, la
  * respuesta se hace DENTRO del hilo de Outlook en vez de abrir uno nuevo.
  */
+/**
+ * Token de reserva. Solo el trabajador de la cola lo conoce, y sin él esta
+ * función se niega a enviar: es la barrera que impide que un flujo nuevo se
+ * salte la reserva global y vuelva a producir envíos simultáneos.
+ */
+const QUEUE_DISPATCH_TOKEN = Symbol.for("zyteron.sales-ai.queue-dispatch");
+
+export type DispatchTicket = { readonly token: symbol; readonly queueItemId: string };
+
+/** Solo queue-worker debe crear tickets. */
+export function createDispatchTicket(queueItemId: string): DispatchTicket {
+  return { token: QUEUE_DISPATCH_TOKEN, queueItemId };
+}
+
 export async function sendCommercialEmail(input: {
   companyId?: string | null;
   threadId?: string | null;
@@ -123,7 +139,18 @@ export async function sendCommercialEmail(input: {
   replyAll?: boolean;
   isCampaign?: boolean;
   actor?: string;
+  /** Obligatorio: acredita que el envío viene de una reserva válida de la cola. */
+  ticket: DispatchTicket;
 }): Promise<SendResult> {
+  if (input.ticket?.token !== QUEUE_DISPATCH_TOKEN) {
+    return {
+      ok: false,
+      error:
+        "Envío rechazado: todo correo debe salir por la cola con una reserva válida. " +
+        "Usa enqueueSend en vez de llamar directamente al envío.",
+    };
+  }
+
   const guard = await checkSendGuards({
     recipient: input.recipient,
     companyId: input.companyId,
@@ -208,6 +235,7 @@ export async function sendCommercialEmail(input: {
     return {
       ok: true,
       messageId: sent.id,
+      internetMessageId: sent.internetMessageId,
       conversationId: sent.conversationId,
       redirected: guard.redirected,
     };

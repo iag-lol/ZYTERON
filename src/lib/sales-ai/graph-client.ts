@@ -332,8 +332,25 @@ export async function sendNewMail(input: SendMailInput): Promise<GraphMessage> {
     }),
   });
 
+  // Se lee el internetMessageId ANTES de enviar: es el identificador que
+  // Microsoft cita luego en los NDR y el único que permite correlacionar el
+  // rebote con el envío original.
+  let internetMessageId = draft.internetMessageId;
+  if (!internetMessageId) {
+    try {
+      const detail = await graphFetch<GraphMessage>(
+        `/me/messages/${encodeURIComponent(draft.id)}?$select=internetMessageId`,
+        {},
+        { critical: false },
+      );
+      internetMessageId = detail.internetMessageId;
+    } catch {
+      // Sin este dato el rebote se correlaciona por el id interno de Graph.
+    }
+  }
+
   await graphFetch<void>(`/me/messages/${encodeURIComponent(draft.id)}/send`, { method: "POST" });
-  return draft;
+  return { ...draft, internetMessageId };
 }
 
 /**

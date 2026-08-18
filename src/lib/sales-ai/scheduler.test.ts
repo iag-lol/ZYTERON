@@ -115,50 +115,56 @@ describe("programación · el reinicio no altera las horas", () => {
   });
 });
 
-describe("calentamiento del buzón", () => {
-  it("sigue la rampa por días", () => {
+describe("calentamiento · tope automático corregido", () => {
+  const started = "2026-08-01T00:00:00.000Z";
+
+  it("días 1 y 2 permiten 10 diarios", () => {
     assert.equal(warmupDailyLimit(1), 10);
     assert.equal(warmupDailyLimit(2), 10);
+  });
+
+  it("desde el día 3 el automatismo llega a 15 y no sube más", () => {
     assert.equal(warmupDailyLimit(3), 15);
-    assert.equal(warmupDailyLimit(4), 15);
-    assert.equal(warmupDailyLimit(6), 20);
-    assert.equal(warmupDailyLimit(9), 30);
+    assert.equal(warmupDailyLimit(5), 15);
+    assert.equal(warmupDailyLimit(8), 15);
+    assert.equal(warmupDailyLimit(30), 15);
   });
 
-  it("sin fecha de inicio parte en 10 diarios", () => {
-    const result = effectiveDailyLimit({ warmupStartedOn: null, configuredDailyLimit: 30 });
-    assert.equal(result.limit, 10);
-  });
-
-  it("no sube solo por encima de 15 diarios", () => {
-    // Día 9: la rampa diría 30, pero sin aprobación manual el tope es 15.
+  it("el día 5 recomienda 20 sin aplicarlo", () => {
     const result = effectiveDailyLimit({
-      warmupStartedOn: "2026-08-01T00:00:00.000Z",
+      warmupStartedOn: started,
       configuredDailyLimit: 30,
-      now: new Date("2026-08-18T00:00:00.000Z"),
+      now: new Date("2026-08-05T00:00:00.000Z"),
     });
-    assert.equal(result.limit, 15);
+    assert.equal(result.limit, 15, "no debe aplicarse solo");
+    assert.equal(result.recommendation, 20);
     assert.equal(result.automatic, true);
   });
 
-  it("respeta el aumento manual del administrador", () => {
+  it("el día 8 recomienda 30 sin aplicarlo", () => {
     const result = effectiveDailyLimit({
-      warmupStartedOn: "2026-08-01T00:00:00.000Z",
-      manualOverride: 25,
+      warmupStartedOn: started,
       configuredDailyLimit: 30,
-      now: new Date("2026-08-18T00:00:00.000Z"),
+      now: new Date("2026-08-10T00:00:00.000Z"),
     });
-    assert.equal(result.limit, 25);
+    assert.equal(result.limit, 15);
+    assert.equal(result.recommendation, 30);
+  });
+
+  it("solo la aprobación manual supera los 15", () => {
+    const result = effectiveDailyLimit({
+      warmupStartedOn: started,
+      manualOverride: 30,
+      configuredDailyLimit: 30,
+      now: new Date("2026-08-10T00:00:00.000Z"),
+    });
+    assert.equal(result.limit, 30);
     assert.equal(result.automatic, false);
   });
 
-  it("nunca supera el límite configurado", () => {
-    const result = effectiveDailyLimit({
-      warmupStartedOn: "2026-08-01T00:00:00.000Z",
-      manualOverride: 100,
-      configuredDailyLimit: 20,
-      now: new Date("2026-08-18T00:00:00.000Z"),
-    });
-    assert.equal(result.limit, 20);
+  it("sin fecha de inicio el calentamiento no ha comenzado", () => {
+    const result = effectiveDailyLimit({ warmupStartedOn: null, configuredDailyLimit: 30 });
+    assert.equal(result.limit, 10);
+    assert.match(result.stage, /primer envío real/);
   });
 });

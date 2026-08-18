@@ -82,11 +82,7 @@ export async function POST(request: Request) {
 
       if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
 
-      return NextResponse.json({
-        ok: true,
-        redirected: result.redirected,
-        followupsScheduled: result.followupsScheduled,
-      });
+      return NextResponse.json({ ok: true, scheduledAt: result.scheduledAt ?? null });
     }
 
     return NextResponse.json({ error: "Acción no reconocida." }, { status: 400 });

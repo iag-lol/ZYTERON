@@ -51,6 +51,9 @@ export type QueueItem = {
   bounce_code: string | null;
   bounce_kind: string | null;
   graph_message_id: string | null;
+  graph_internet_message_id: string | null;
+  reply_to_graph_message_id: string | null;
+  is_test: boolean;
   attempts: number;
   max_attempts: number;
   last_error: string | null;
@@ -70,8 +73,15 @@ export type EnqueueInput = {
   campaignId?: string | null;
   threadId?: string | null;
   followupId?: string | null;
+  draftId?: string | null;
   recipientEmail?: string | null;
   createdBy?: string;
+  /** Para respuestas: contenido ya redactado, no hace falta analizar. */
+  subject?: string | null;
+  body?: string | null;
+  replyToGraphMessageId?: string | null;
+  /** Las respuestas entran listas para programarse. */
+  readyToSchedule?: boolean;
 };
 
 /**
@@ -90,9 +100,14 @@ export async function enqueueSend(input: EnqueueInput): Promise<{ ok: boolean; i
         campaign_id: input.campaignId ?? null,
         thread_id: input.threadId ?? null,
         followup_id: input.followupId ?? null,
+        draft_id: input.draftId ?? null,
         kind: input.kind,
         recipient_email: input.recipientEmail ?? null,
-        status: "PENDIENTE_ANALISIS",
+        subject: input.subject ?? null,
+        body: input.body ?? null,
+        reply_to_graph_message_id: input.replyToGraphMessageId ?? null,
+        requires_review: !input.readyToSchedule,
+        status: input.readyToSchedule ? "PENDIENTE_REVISION" : "PENDIENTE_ANALISIS",
         created_by: input.createdBy ?? "SYSTEM",
       })
       .select("id")
@@ -136,23 +151,28 @@ export async function scheduleQueueItem(
 ): Promise<{ ok: boolean; scheduledAt?: string; error?: string }> {
   try {
     const { supabase } = createSupabaseServerClient();
-    const lastScheduledAt = await getLastScheduledAt();
-    const scheduledAt = computeNextSendAt({ lastScheduledAt });
+    const settings = await getSalesSettings();
+    const gap = Number(settings.queue_min_gap_seconds) || 2100;
 
-    const { error } = await supabase
-      .from("sales_send_queue")
-      .update({
-        status: "PROGRAMADO",
-        scheduled_at: scheduledAt.toISOString(),
-        requires_review: false,
-        reviewed_by: options.reviewedBy ?? null,
-        reviewed_at: options.reviewedBy ? new Date().toISOString() : null,
-      })
-      .eq("id", id)
-      .in("status", ["PENDIENTE_REVISION", "PENDIENTE_ANALISIS"]);
+    // La aplicación propone la hora (franjas + aleatoriedad) y la función SQL
+    // la ajusta bajo el bloqueo global: así dos crons no pueden asignar el
+    // mismo minuto ni una separación menor a la mínima.
+    const lastScheduledAt = await getLastScheduledAt();
+    const candidate = computeNextSendAt({ lastScheduledAt });
+
+    const { data, error } = await supabase.rpc("sales_schedule_send", {
+      p_id: id,
+      p_candidate: candidate.toISOString(),
+      p_min_gap_seconds: gap,
+      p_reviewed_by: options.reviewedBy ?? null,
+    });
 
     if (error) return { ok: false, error: error.message };
-    return { ok: true, scheduledAt: scheduledAt.toISOString() };
+    if (!data) {
+      return { ok: false, error: "Otra ejecución tenía el bloqueo de despacho; se reintenta luego." };
+    }
+
+    return { ok: true, scheduledAt: new Date(data as string).toISOString() };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "Error al programar." };
   }
@@ -165,14 +185,10 @@ export async function scheduleQueueItem(
 /** Límite diario efectivo considerando calentamiento y override manual. */
 export async function getEffectiveDailyLimit() {
   const settings = await getSalesSettings();
-  const raw = settings as unknown as {
-    warmup_started_on?: string | null;
-    warmup_manual_override?: number | null;
-  };
 
   return effectiveDailyLimit({
-    warmupStartedOn: raw.warmup_started_on ?? null,
-    manualOverride: raw.warmup_manual_override ?? null,
+    warmupStartedOn: settings.warmup_started_on,
+    manualOverride: settings.warmup_manual_override,
     configuredDailyLimit: settings.daily_send_limit,
   });
 }
@@ -186,7 +202,7 @@ export async function claimNextSend(): Promise<QueueItem | null> {
   if (settings.zara_paused) return null;
 
   const { limit } = await getEffectiveDailyLimit();
-  const gap = Number((settings as unknown as { queue_min_gap_seconds?: number }).queue_min_gap_seconds ?? 60);
+  const gap = Number(settings.queue_min_gap_seconds) || 2100;
 
   try {
     const { supabase } = createSupabaseServerClient();
@@ -230,26 +246,50 @@ export async function releaseStuckSends(): Promise<number> {
  */
 export async function markAccepted(
   id: string,
-  graph: { messageId?: string | null; conversationId?: string | null },
+  graph: {
+    messageId?: string | null;
+    internetMessageId?: string | null;
+    conversationId?: string | null;
+  },
+  options: { isTest?: boolean } = {},
 ): Promise<void> {
   const { supabase } = createSupabaseServerClient();
+  const isTest = Boolean(options.isTest);
+
   await supabase
     .from("sales_send_queue")
     .update({
       status: "ACEPTADO_POR_MICROSOFT",
       accepted_at: new Date().toISOString(),
       graph_message_id: graph.messageId ?? null,
+      // El NDR cita este identificador, no el interno de Graph.
+      graph_internet_message_id: graph.internetMessageId ?? null,
       graph_conversation_id: graph.conversationId ?? null,
+      is_test: isTest,
       processing_started_at: null,
       last_error: null,
     })
     .eq("id", id);
 
-  // El primer envío real marca el inicio del calentamiento.
-  const settings = await getSalesSettings();
-  const started = (settings as unknown as { warmup_started_on?: string | null }).warmup_started_on;
-  if (!started) {
-    await updateSalesSetting("warmup_started_on" as never, new Date().toISOString(), "SYSTEM");
+  // El calentamiento arranca solo con un envío REAL: un correo redirigido por
+  // test_mode nunca llegó al prospecto y no construye reputación.
+  if (!isTest) {
+    const settings = await getSalesSettings();
+    if (!settings.warmup_started_on) {
+      await updateSalesSetting("warmup_started_on", new Date().toISOString(), "SYSTEM");
+    }
+  }
+}
+
+/** Pasa a ENVIADO_SIN_REBOTE lo aceptado hace más de 24 horas sin NDR. */
+export async function confirmDeliveredWithoutBounce(hours = 24): Promise<number> {
+  try {
+    const { supabase } = createSupabaseServerClient();
+    const { data, error } = await supabase.rpc("sales_confirm_delivered", { p_hours: hours });
+    if (error) return 0;
+    return Number(data ?? 0);
+  } catch {
+    return 0;
   }
 }
 
@@ -277,17 +317,41 @@ export async function markSendError(id: string, error: string): Promise<void> {
  * Registra un rebote sobre el envío original y detiene lo que corresponda.
  * Un bloqueo del tenant pausa a Zara por completo.
  */
+export type BounceMatch = {
+  queueId: string | null;
+  companyId: string | null;
+  campaignId: string | null;
+  followupId: string | null;
+};
+
 export async function markBounced(input: {
+  /** Identificador que cita el NDR de Microsoft. */
+  internetMessageId?: string | null;
   graphMessageId?: string | null;
   companyId?: string | null;
   code: string;
   kind: "HARD" | "POLICY" | "SOFT" | "UNKNOWN";
   detail: string;
-}): Promise<{ matched: boolean; paused: boolean }> {
+}): Promise<{ matched: boolean; paused: boolean; match: BounceMatch }> {
   const { supabase } = createSupabaseServerClient();
   let matched = false;
+  const match: BounceMatch = {
+    queueId: null,
+    companyId: input.companyId ?? null,
+    campaignId: null,
+    followupId: null,
+  };
 
+  // Se busca primero por internetMessageId, que es el que aparece en el NDR.
+  const identifiers: Array<{ column: string; value: string }> = [];
+  if (input.internetMessageId) {
+    identifiers.push({ column: "graph_internet_message_id", value: input.internetMessageId });
+  }
   if (input.graphMessageId) {
+    identifiers.push({ column: "graph_message_id", value: input.graphMessageId });
+  }
+
+  for (const identifier of identifiers) {
     const { data } = await supabase
       .from("sales_send_queue")
       .update({
@@ -297,11 +361,29 @@ export async function markBounced(input: {
         bounce_kind: input.kind,
         bounce_detail: input.detail.slice(0, 1000),
       })
-      .eq("graph_message_id", input.graphMessageId)
-      .select("id, company_id");
+      .eq(identifier.column, identifier.value)
+      .select("id, company_id, campaign_id, followup_id");
 
-    matched = (data?.length ?? 0) > 0;
+    if ((data?.length ?? 0) > 0) {
+      const row = data![0];
+      matched = true;
+      match.queueId = row.id as string;
+      match.companyId = (row.company_id as string) ?? match.companyId;
+      match.campaignId = (row.campaign_id as string) ?? null;
+      match.followupId = (row.followup_id as string) ?? null;
+
+      // Un seguimiento rebotado no queda marcado como enviado con éxito.
+      if (match.followupId) {
+        await supabase
+          .from("sales_followups")
+          .update({ status: "OMITIDO", cancel_reason: `Rebote ${input.code}` })
+          .eq("id", match.followupId);
+      }
+      break;
+    }
   }
+
+  input = { ...input, companyId: match.companyId };
 
   // El rebote cancela los seguimientos del prospecto: no se insiste.
   if (input.companyId) {
@@ -324,11 +406,11 @@ export async function markBounced(input: {
     // Bloqueo del tenant: se detiene TODO de inmediato y sin reintentos.
     await updateSalesSetting("zara_paused", true, "SYSTEM");
     await updateSalesSetting(
-      "pause_reason" as never,
+      "pause_reason",
       `Bloqueo de entrega ${input.code}. Revisa SPF, DKIM y DMARC antes de reanudar.`,
       "SYSTEM",
     );
-    await updateSalesSetting("last_bounce_code" as never, input.code, "SYSTEM");
+    await updateSalesSetting("last_bounce_code", input.code, "SYSTEM");
     paused = true;
 
     await notifySalesEvent({
@@ -349,7 +431,7 @@ export async function markBounced(input: {
     });
   }
 
-  return { matched, paused };
+  return { matched, paused, match };
 }
 
 // ---------------------------------------------------------------------------
@@ -395,6 +477,9 @@ export type QueueStats = {
   scheduled: number;
   processing: number;
   acceptedToday: number;
+  /** Aceptados por Microsoft, aún dentro de la ventana de 24 h. */
+  accepted: number;
+  /** Confirmados sin NDR tras 24 h. No prueba entrega ni apertura. */
   sentWithoutBounce: number;
   bounced: number;
   errors: number;
@@ -409,6 +494,7 @@ export async function getQueueStats(): Promise<QueueStats> {
     scheduled: 0,
     processing: 0,
     acceptedToday: 0,
+    accepted: 0,
     sentWithoutBounce: 0,
     bounced: 0,
     errors: 0,
@@ -449,7 +535,8 @@ export async function getQueueStats(): Promise<QueueStats> {
           stats.processing += 1;
           break;
         case "ACEPTADO_POR_MICROSOFT":
-          stats.sentWithoutBounce += 1;
+          // Aceptado NO es enviado: el NDR puede llegar después.
+          stats.accepted += 1;
           break;
         case "ENVIADO_SIN_REBOTE":
           stats.sentWithoutBounce += 1;

@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   try {
     if (body.action === "pause") {
       await updateSalesSetting("zara_paused", true, actor);
-      await updateSalesSetting("pause_reason" as never, `Pausa manual de ${actor}.`, actor);
+      await updateSalesSetting("pause_reason", `Pausa manual de ${actor}.`, actor);
       await logSalesEvent({
         type: SALES_EVENT_TYPES.HUMAN_INTERVENTION,
         title: "Cola pausada manualmente",
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       // Al reactivar se reparte el atraso: despacharlo junto sería una ráfaga.
       const rescheduled = await rescheduleOverdue();
       await updateSalesSetting("zara_paused", false, actor);
-      await updateSalesSetting("pause_reason" as never, "", actor);
+      await updateSalesSetting("pause_reason", "", actor);
 
       await logSalesEvent({
         type: SALES_EVENT_TYPES.HUMAN_INTERVENTION,
