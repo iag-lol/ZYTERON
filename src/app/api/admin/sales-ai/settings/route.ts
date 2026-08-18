@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 
 import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
-import { DEFAULT_SALES_SETTINGS, getSalesSettings, updateSalesSetting } from "@/lib/sales-ai/settings";
+import {
+  DEFAULT_SALES_SETTINGS,
+  SECRET_SETTING_KEYS,
+  getSalesSettings,
+  redactSecretSettings,
+  updateSalesSetting,
+} from "@/lib/sales-ai/settings";
 import { logSalesEvent } from "@/lib/sales-ai/repository";
 import { SALES_EVENT_TYPES } from "@/lib/sales-ai/types";
 
@@ -13,7 +19,7 @@ export async function GET() {
   if ("error" in auth) return auth.error;
 
   const settings = await getSalesSettings();
-  return NextResponse.json({ settings });
+  return NextResponse.json({ settings: redactSecretSettings(settings) });
 }
 
 export async function PATCH(request: Request) {
@@ -28,7 +34,10 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Cuerpo inválido." }, { status: 400 });
   }
 
-  const allowed = Object.keys(DEFAULT_SALES_SETTINGS);
+  // Las claves secretas no se pueden fijar desde el navegador: las genera el servidor.
+  const allowed = Object.keys(DEFAULT_SALES_SETTINGS).filter(
+    (key) => !SECRET_SETTING_KEYS.has(key as keyof typeof DEFAULT_SALES_SETTINGS),
+  );
   const updates = Object.entries(body).filter(([key]) => allowed.includes(key));
 
   if (updates.length === 0) {
@@ -52,7 +61,7 @@ export async function PATCH(request: Request) {
     }
 
     const settings = await getSalesSettings();
-    return NextResponse.json({ settings });
+    return NextResponse.json({ settings: redactSecretSettings(settings) });
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo guardar la configuración.";
     return NextResponse.json({ error: message }, { status: 500 });

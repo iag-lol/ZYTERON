@@ -1,6 +1,9 @@
 import "server-only";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { randomBytes } from "node:crypto";
+
+import { siteConfig } from "@/config/site";
 import { decryptSecret, encryptSecret, isEncryptionConfigured } from "./crypto";
 
 /**
@@ -397,4 +400,50 @@ export async function deleteSubscription(subscriptionId: string) {
     .from("sales_mail_account")
     .update({ subscription_id: null, subscription_expires_at: null })
     .eq("id", ACCOUNT_ID);
+}
+
+/** URL pública del webhook. Se arma desde siteConfig para no depender del host
+ *  de la petición, que detrás del proxy de Render llega como localhost. */
+export function getWebhookNotificationUrl(): string {
+  return `${siteConfig.url}/api/sales-ai/webhook`;
+}
+
+/**
+ * Crea la suscripción de webhooks generando un clientState nuevo y seguro.
+ * Si ya existe una suscripción vigente, la renueva en lugar de duplicarla.
+ *
+ * El clientState se guarda en sales_settings y NUNCA se devuelve al llamador
+ * ni viaja al navegador: solo lo comparan Microsoft y nuestro endpoint.
+ */
+export async function ensureSubscription(options: { actor?: string } = {}): Promise<{
+  subscriptionId: string;
+  expiresAt: string;
+  renewed: boolean;
+}> {
+  const { updateSalesSetting } = await import("./settings");
+  const account = await getMailAccount();
+
+  // Si hay suscripción vigente, basta con extenderla.
+  if (account?.subscription_id && account.subscription_expires_at) {
+    const stillValid = new Date(account.subscription_expires_at).getTime() > Date.now();
+    if (stillValid) {
+      const renewed = await renewSubscription(account.subscription_id);
+      return {
+        subscriptionId: renewed.id,
+        expiresAt: renewed.expirationDateTime,
+        renewed: true,
+      };
+    }
+  }
+
+  const clientState = randomBytes(24).toString("hex");
+  await updateSalesSetting("webhook_client_state", clientState, options.actor);
+
+  const subscription = await createSubscription(getWebhookNotificationUrl(), clientState);
+
+  return {
+    subscriptionId: subscription.id,
+    expiresAt: subscription.expirationDateTime,
+    renewed: false,
+  };
 }
