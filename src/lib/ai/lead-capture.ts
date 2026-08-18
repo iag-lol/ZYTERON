@@ -94,6 +94,8 @@ export type LeadCaptureResult = {
   leadId: string | null;
   dispatch: DispatchReport | null;
   message: string;
+  /** Detalle del fallo si el lead no se pudo guardar en la base. */
+  saveError?: string | null;
 };
 
 /** Ejecuta la captura del lead. Diseñada para NO lanzar nunca. */
@@ -127,6 +129,7 @@ export async function executeLeadCapture(rawArgs: LeadCaptureArgs): Promise<Lead
 
   // 1) Registro en base de datos (aparece en /admin/contactos + notificación).
   let saved = false;
+  let saveError: string | null = null;
   try {
     await insertRow(
       "Lead",
@@ -144,7 +147,15 @@ export async function executeLeadCapture(rawArgs: LeadCaptureArgs): Promise<Lead
     );
     saved = true;
   } catch (err) {
-    console.error("[chat-lead] no se pudo guardar el Lead:", err);
+    // Un fallo aquí es grave: el aviso igual sale por correo, así que el
+    // problema pasa desapercibido y el contacto no queda en el panel.
+    // Se deja registro explícito para poder detectarlo en los logs.
+    saveError = err instanceof Error ? err.message : String(err);
+    console.error("[chat-lead] NO SE GUARDÓ EL LEAD EN LA BASE:", {
+      leadId,
+      email,
+      error: saveError,
+    });
   }
 
   // 2) Despacho de avisos (correo + WhatsApp) — siempre deja registro en logs.
@@ -173,5 +184,5 @@ export async function executeLeadCapture(rawArgs: LeadCaptureArgs): Promise<Lead
     ? "Registro creado correctamente. El equipo de Zyteron recibió el aviso y contactará al cliente a la brevedad."
     : "El interés quedó registrado en el aviso al equipo, aunque hubo un problema al guardarlo en el panel.";
 
-  return { ok: saved, leadId: saved ? leadId : null, dispatch, message };
+  return { ok: saved, leadId: saved ? leadId : null, dispatch, message, saveError };
 }
