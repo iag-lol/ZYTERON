@@ -110,16 +110,52 @@ export function detectAutoReply(subject: string, body: string): boolean {
   return AUTO_REPLY_PATTERNS.some((pattern) => pattern.test(`${subject} ${body}`));
 }
 
-const BOUNCE_TEXT_PATTERNS = [
+/** Rebote definitivo: la dirección no existe. Solo estos justifican marcarla. */
+const HARD_BOUNCE_PATTERNS = [
   /address not found/i,
   /recipient not found/i,
-  /mailbox unavailable/i,
   /no such user/i,
   /user unknown/i,
+  /unknown recipient/i,
+  /does not exist/i,
+  /destinatario desconocido/i,
+  /550 5\.1\.1/,
+  /5\.1\.10/,
+];
+
+/**
+ * Rechazo por política o reputación del REMITENTE. La dirección del
+ * destinatario puede ser perfectamente válida: el problema es nuestro.
+ * Marcarlas como inválidas quemaría prospectos buenos.
+ */
+const POLICY_BOUNCE_PATTERNS = [
+  /5\.7\.\d+/,
+  /access denied/i,
+  /not accepted from this ip/i,
+  /blocked using/i,
+  /spam/i,
+  /reputation/i,
+  /blacklist/i,
+  /rejected due to/i,
+];
+
+/** Fallo temporal: buzón lleno, servidor caído. Se puede reintentar. */
+const SOFT_BOUNCE_PATTERNS = [
+  /mailbox (?:is )?full/i,
+  /over quota/i,
+  /quota exceeded/i,
+  /try again later/i,
+  /temporarily/i,
+  /4\.\d\.\d/,
+];
+
+const BOUNCE_TEXT_PATTERNS = [
+  ...HARD_BOUNCE_PATTERNS,
+  ...POLICY_BOUNCE_PATTERNS,
+  ...SOFT_BOUNCE_PATTERNS,
   /delivery has failed/i,
   /undeliverable/i,
-  /5[59][013]\s|550 5\.1\.1/,
-  /destinatario desconocido/i,
+  /mailbox unavailable/i,
   /no se pudo entregar/i,
 ];
 
@@ -139,6 +175,25 @@ export function detectBounce(message: {
   const hasBounceText = BOUNCE_TEXT_PATTERNS.some((pattern) => pattern.test(text));
 
   return fromDaemon && hasBounceText;
+}
+
+export type BounceKind = "HARD" | "POLICY" | "SOFT" | "UNKNOWN";
+
+/**
+ * Clasifica el rebote para decidir qué hacer.
+ *
+ * Distinguir POLICY de HARD es crítico: un "550 5.7.708 access denied" es un
+ * bloqueo a NUESTRO servidor, no una dirección mala. Tratarlo como dirección
+ * inválida elimina prospectos buenos de forma permanente.
+ *
+ * El orden importa: se evalúa POLICY antes que HARD porque los mensajes de
+ * bloqueo suelen incluir además texto genérico de "no se pudo entregar".
+ */
+export function classifyBounce(text: string): BounceKind {
+  if (POLICY_BOUNCE_PATTERNS.some((pattern) => pattern.test(text))) return "POLICY";
+  if (HARD_BOUNCE_PATTERNS.some((pattern) => pattern.test(text))) return "HARD";
+  if (SOFT_BOUNCE_PATTERNS.some((pattern) => pattern.test(text))) return "SOFT";
+  return "UNKNOWN";
 }
 
 // ---------------------------------------------------------------------------

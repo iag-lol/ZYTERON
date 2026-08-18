@@ -74,3 +74,58 @@ export function appendSignature(body: string, profile: ZaraProfile): string {
   }
   return `${trimmed}\n\n--\n${profile.signature}`;
 }
+
+/**
+ * Firma HTML con logo para correos comerciales.
+ *
+ * El logo se referencia por URL pública y absoluta: los clientes de correo no
+ * resuelven rutas relativas, y una imagen embebida en base64 suele terminar en
+ * spam. Se usa PNG porque Outlook no renderiza SVG de forma confiable.
+ */
+export function buildHtmlSignature(profile: ZaraProfile): string {
+  const logoUrl = `${siteConfig.url}/icon-192.png`;
+  const siteUrl = siteConfig.url;
+
+  return `
+<table cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:16px;font-family:Arial,Helvetica,sans-serif;">
+  <tr>
+    <td style="vertical-align:top;padding-right:14px;">
+      <img src="${logoUrl}" width="48" height="48" alt="${siteConfig.name}"
+           style="display:block;border:0;border-radius:8px;" />
+    </td>
+    <td style="vertical-align:top;font-size:13px;line-height:1.5;color:#0f172a;">
+      <div style="font-weight:bold;font-size:14px;">${profile.name}</div>
+      <div style="color:#475569;">${profile.role} · ${profile.company}</div>
+      <div style="margin-top:6px;color:#475569;">
+        <a href="mailto:${profile.mailboxAddress}" style="color:#1d4ed8;text-decoration:none;">${profile.mailboxAddress}</a>
+        &nbsp;·&nbsp; ${profile.phone}
+      </div>
+      <div style="color:#475569;">${siteConfig.address.display}</div>
+      <div style="margin-top:4px;">
+        <a href="${siteUrl}" style="color:#1d4ed8;text-decoration:none;font-weight:bold;">${profile.website}</a>
+      </div>
+    </td>
+  </tr>
+</table>`.trim();
+}
+
+/** Convierte el cuerpo en texto plano a HTML y le adjunta la firma. */
+export function buildHtmlEmail(body: string, profile: ZaraProfile): string {
+  const paragraphs = body
+    .trim()
+    .split(/\n{2,}/)
+    .map((block) => {
+      const safe = block
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\n/g, "<br />");
+      return `<p style="margin:0 0 14px 0;">${safe}</p>`;
+    })
+    .join("\n");
+
+  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#0f172a;max-width:600px;">
+${paragraphs}
+${buildHtmlSignature(profile)}
+</div>`;
+}

@@ -2,7 +2,7 @@ import "server-only";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSalesSettings } from "./settings";
-import { getZaraProfile, appendSignature } from "./zara-identity";
+import { getZaraProfile, appendSignature, buildHtmlEmail } from "./zara-identity";
 import { findForbiddenClientTerms } from "./rules";
 import { replyInThread, sendNewMail, type GraphMessage } from "./graph-client";
 import { isOptedOut, logSalesEvent } from "./repository";
@@ -145,8 +145,12 @@ export async function sendCommercialEmail(input: {
     };
   }
 
-  const body = appendSignature(input.body, profile);
   const prefix = guard.redirected ? `[PRUEBA · destinatario real: ${input.recipient}]\n\n` : "";
+
+  // Se envía en HTML para que la firma con logo se vea correctamente. El texto
+  // plano se conserva para guardarlo en el historial y para la vista previa.
+  const plainBody = appendSignature(input.body, profile);
+  const htmlBody = buildHtmlEmail(`${prefix}${input.body}`, profile);
 
   try {
     let sent: GraphMessage;
@@ -154,14 +158,16 @@ export async function sendCommercialEmail(input: {
     if (input.replyToGraphMessageId && !guard.redirected) {
       sent = await replyInThread({
         messageId: input.replyToGraphMessageId,
-        body: `${prefix}${body}`,
+        body: htmlBody,
+        isHtml: true,
         replyAll: input.replyAll,
       });
     } else {
       sent = await sendNewMail({
         to: [guard.recipient],
         subject: input.subject,
-        body: `${prefix}${body}`,
+        body: htmlBody,
+        isHtml: true,
       });
     }
 
@@ -176,8 +182,8 @@ export async function sendCommercialEmail(input: {
       from_name: profile.displayName,
       to_emails: [input.recipient],
       subject: input.subject,
-      body_preview: body.slice(0, 250),
-      body_text: body,
+      body_preview: plainBody.slice(0, 250),
+      body_text: plainBody,
       sent_at: new Date().toISOString(),
     });
 
