@@ -530,6 +530,12 @@ export const outreachContentSchema = z.object({
 
 export type OutreachContent = z.infer<typeof outreachContentSchema>;
 
+/** Respuesta mínima de la auditoría semántica que bloquea afirmaciones inventadas. */
+export const factAuditResponseSchema = z.object({
+  supported: z.boolean(),
+  unsupported_claims: z.array(z.string().min(1).max(300)).max(12),
+});
+
 /** Palabras que disparan filtros de spam en el asunto. */
 const SPAM_SUBJECT_WORDS = [
   /\bgratis\b/i,
