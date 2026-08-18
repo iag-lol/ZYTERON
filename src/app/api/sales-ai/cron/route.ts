@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getMailAccount, isGraphConfigured, renewSubscription } from "@/lib/sales-ai/graph-client";
-import { detectDormantOpportunities, runDueFollowups } from "@/lib/sales-ai/followups";
+import { detectDormantOpportunities } from "@/lib/sales-ai/followups";
+import { runQueueCycle } from "@/lib/sales-ai/queue-worker";
 import { notifySalesEvent } from "@/lib/sales-ai/notifications";
 import { getSalesSettings } from "@/lib/sales-ai/settings";
 import { safeCompare } from "@/lib/sales-ai/crypto";
@@ -67,10 +68,11 @@ export async function POST(request: Request) {
 
   const webhook = await renewWebhookIfNeeded();
 
-  // Con Zara pausada no se envía nada, pero sí se sigue detectando y avisando.
-  const followups = settings.zara_paused
-    ? { evaluated: 0, sent: 0, cancelled: 0, skipped: 0, errors: 0, paused: true }
-    : await runDueFollowups(25);
+  // La cola procesa como máximo UN correo por ejecución. Nunca en paralelo:
+  // el despacho simultáneo fue lo que generó la ráfaga rechazada.
+  const queue = settings.zara_paused
+    ? { released: 0, analyzed: 0, scheduled: 0, sent: 0, detail: "Zara está pausada." }
+    : await runQueueCycle();
 
   const dormant = await detectDormantOpportunities();
 
@@ -79,7 +81,7 @@ export async function POST(request: Request) {
     await supabase.from("sales_webhook_log").insert({
       status: "PROCESADO",
       resource: "cron",
-      detail: `followups=${followups.sent} dormidas=${dormant.length} ms=${Date.now() - startedAt}`,
+      detail: `enviados=${queue.sent} analizados=${queue.analyzed} programados=${queue.scheduled} dormidas=${dormant.length} ms=${Date.now() - startedAt}`,
     });
   } catch {
     // best-effort
@@ -89,7 +91,7 @@ export async function POST(request: Request) {
     ok: true,
     paused: settings.zara_paused,
     webhook,
-    followups,
+    queue,
     dormantOpportunities: dormant.length,
     durationMs: Date.now() - startedAt,
   });

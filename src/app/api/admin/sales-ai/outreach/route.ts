@@ -40,9 +40,10 @@ export async function POST(request: Request) {
     }
     // Tope bajo a propósito: las tandas grandes desde un buzón nuevo terminan
     // en bloqueo por reputación, que es mucho más caro de revertir.
-    if (ids.length > 8) {
+    // Encolar es barato: el ritmo lo controla la cola, no esta petición.
+    if (ids.length > 100) {
       return NextResponse.json(
-        { error: "Máximo 8 empresas por tanda. Enviar de a muchas quema la reputación del dominio." },
+        { error: "Máximo 100 prospectos por tanda de encolado." },
         { status: 400 },
       );
     }

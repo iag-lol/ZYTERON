@@ -91,6 +91,8 @@ export type SalesCompany = {
   lost_comment: string | null;
   closed_at: string | null;
   do_not_contact: boolean;
+  email_invalid: boolean;
+  dormant_since: string | null;
   import_batch_id: string | null;
   created_at: string;
   updated_at: string;

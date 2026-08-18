@@ -8,6 +8,7 @@ import { analyzeIncomingEmail, decideAction, draftReply } from "./zara-brain";
 import { getZaraProfile } from "./zara-identity";
 import { logSalesEvent, markDoNotContact } from "./repository";
 import { notifySalesEvent } from "./notifications";
+import { markBounced } from "./queue";
 import { SALES_EVENT_TYPES, type SalesStatus } from "./types";
 
 /**
@@ -187,6 +188,19 @@ export async function processInboundMessage(graphMessageId: string): Promise<Inb
   // significa que la dirección sea mala, así que no se marca como inválida.
   if (detectBounce({ from: fromEmail, subject, body: bodyFull })) {
     const kind = classifyBounce(bodyFull);
+    const codeMatch = bodyFull.match(/\b5\.\d\.\d{1,3}\b/);
+    const bounceCode = codeMatch?.[0] ?? "desconocido";
+
+    // Se vincula con el envío original de la cola usando el identificador de
+    // Graph que Microsoft cita en el NDR.
+    const originalIdMatch = bodyFull.match(/Message-ID:\s*<([^>]+)>/i);
+    await markBounced({
+      graphMessageId: originalIdMatch?.[1] ?? null,
+      companyId,
+      code: bounceCode,
+      kind,
+      detail: `${subject} · ${body.slice(0, 400)}`,
+    });
 
     if (kind === "HARD" && companyId) {
       await markEmailInvalid(companyId, `Dirección inexistente: ${subject}`);

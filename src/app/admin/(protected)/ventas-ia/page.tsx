@@ -13,6 +13,8 @@ import {
 import { getBudgetStatus } from "@/lib/sales-ai/budget";
 import { getMailAccount, isGraphConfigured } from "@/lib/sales-ai/graph-client";
 import { detectDormantOpportunities } from "@/lib/sales-ai/followups";
+import { getEffectiveDailyLimit, getQueueStats, getUpcomingSends } from "@/lib/sales-ai/queue";
+import { QueuePanel } from "@/components/admin/sales-ai/queue-panel";
 import { getSalesSettings } from "@/lib/sales-ai/settings";
 import { listCompanies } from "@/lib/sales-ai/repository";
 import { SALES_STATUSES, SALES_STATUS_LABELS } from "@/lib/sales-ai/types";
@@ -34,6 +36,9 @@ export default async function VentasIaResumenPage() {
   const mailAccount = await getMailAccount().catch(() => null);
   const graphReady = isGraphConfigured();
   const dormant = await detectDormantOpportunities().catch(() => []);
+  const queueStats = await getQueueStats().catch(() => null);
+  const upcoming = await getUpcomingSends(12).catch(() => []);
+  const dailyLimit = await getEffectiveDailyLimit().catch(() => ({ limit: 0, stage: "sin datos" }));
 
   const mailStatus = !graphReady
     ? "NO CONFIGURADO"
@@ -154,6 +159,17 @@ export default async function VentasIaResumenPage() {
           </p>
         </div>
       </div>
+
+      {queueStats ? (
+        <QueuePanel
+          stats={queueStats}
+          upcoming={upcoming as never}
+          paused={settings.zara_paused}
+          pauseReason={(settings as unknown as { pause_reason?: string }).pause_reason ?? null}
+          dailyLimit={dailyLimit.limit}
+          warmupStage={dailyLimit.stage}
+        />
+      ) : null}
 
       {/* Estado general */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5">

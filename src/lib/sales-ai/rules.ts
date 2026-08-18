@@ -500,3 +500,117 @@ export const analysisSchema = z.object({
 });
 
 export type EmailAnalysis = z.infer<typeof analysisSchema>;
+
+// ---------------------------------------------------------------------------
+// Redacción del primer contacto
+// ---------------------------------------------------------------------------
+
+/**
+ * Esquema estricto del correo comercial. Se valida ANTES de guardar: si el
+ * modelo devuelve algo incompleto o pobre, el envío queda para revisión humana
+ * en vez de salir.
+ */
+export const outreachContentSchema = z.object({
+  subject: z.string().min(20).max(80),
+  greeting: z.string().min(3).max(120),
+  company_observation: z.string().min(20).max(400),
+  detected_opportunity: z.string().min(20).max(500),
+  recommended_solution: z.string().min(20).max(500),
+  commercial_benefits: z.string().min(20).max(500),
+  call_to_action: z.string().min(10).max(300),
+  body_text: z.string().min(400).max(2500),
+  confidence: z.preprocess((value) => {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return 0;
+    return parsed > 1 ? Math.min(parsed / 100, 1) : Math.max(parsed, 0);
+  }, z.number().min(0).max(1)),
+  requires_review: z.preprocess((value) => Boolean(value), z.boolean()),
+  review_reason: z.string().max(400).default(""),
+});
+
+export type OutreachContent = z.infer<typeof outreachContentSchema>;
+
+/** Palabras que disparan filtros de spam en el asunto. */
+const SPAM_SUBJECT_WORDS = [
+  /\bgratis\b/i,
+  /\b100%\b/,
+  /\boferta\b/i,
+  /\bpromoci[oó]n\b/i,
+  /\bincre[ií]ble\b/i,
+  /\b[úu]ltima oportunidad\b/i,
+  /\bgaranti[zs]ad[oa]\b/i,
+  /\burgente\b/i,
+  /\bhaz clic\b/i,
+  /\$\$/,
+  /!!+/,
+];
+
+/** Fórmulas vacías que delatan un correo de plantilla. */
+const EMPTY_PHRASES = [
+  /es crucial/i,
+  /te propongo considerar/i,
+  /llevar (?:tu|su) negocio al siguiente nivel/i,
+  /soluci[oó]n integral/i,
+  /sinergia/i,
+  /espero que se encuentre muy bien/i,
+  /potenciar (?:tu|su) presencia/i,
+  /en el mundo digital actual/i,
+  /hoy en d[ií]a las empresas/i,
+];
+
+export type OutreachQualityIssue = { field: string; reason: string };
+
+/**
+ * Control de calidad por código, independiente de lo que declare el modelo.
+ *
+ * La regla decisiva es la última: si el correo funciona igual cambiando el
+ * nombre de la empresa, es genérico y no debe enviarse.
+ */
+export function checkOutreachQuality(
+  content: OutreachContent,
+  company: { name: string; contactName?: string | null },
+): OutreachQualityIssue[] {
+  const issues: OutreachQualityIssue[] = [];
+  const subject = content.subject.trim();
+  const body = content.body_text.trim();
+
+  if (subject.length < 35 || subject.length > 65) {
+    issues.push({ field: "subject", reason: `El asunto debe tener entre 35 y 65 caracteres (tiene ${subject.length}).` });
+  }
+  if (/^[^a-z]*$/.test(subject.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ]/g, ""))) {
+    issues.push({ field: "subject", reason: "El asunto está en mayúsculas." });
+  }
+  for (const pattern of SPAM_SUBJECT_WORDS) {
+    if (pattern.test(subject)) {
+      issues.push({ field: "subject", reason: `El asunto contiene lenguaje de spam (${pattern.source}).` });
+      break;
+    }
+  }
+  if (/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(subject + body)) {
+    issues.push({ field: "subject", reason: "No se permiten emojis." });
+  }
+
+  const words = body.split(/\s+/).filter(Boolean).length;
+  if (words < 140 || words > 220) {
+    issues.push({ field: "body_text", reason: `El cuerpo debe tener entre 140 y 220 palabras (tiene ${words}).` });
+  }
+
+  for (const pattern of EMPTY_PHRASES) {
+    if (pattern.test(body)) {
+      issues.push({ field: "body_text", reason: `Contiene una fórmula vacía (${pattern.source}).` });
+      break;
+    }
+  }
+
+  // Debe nombrar a la empresa: es la prueba mínima de que no es una plantilla.
+  const companyToken = company.name.trim().split(/\s+/)[0] ?? "";
+  if (companyToken.length > 2 && !body.toLowerCase().includes(companyToken.toLowerCase())) {
+    issues.push({ field: "body_text", reason: "El correo no menciona a la empresa por su nombre." });
+  }
+
+  if (findForbiddenClientTerms(body).length > 0) {
+    issues.push({ field: "body_text", reason: "Menciona terminología técnica no permitida hacia clientes." });
+  }
+
+  return issues;
+}
