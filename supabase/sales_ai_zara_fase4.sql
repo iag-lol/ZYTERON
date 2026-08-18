@@ -85,6 +85,19 @@ create table if not exists public.sales_send_queue (
   updated_at timestamptz not null default now()
 );
 
+-- ---------------------------------------------------------------------------
+-- Actualización de instalaciones anteriores
+-- ---------------------------------------------------------------------------
+-- "create table if not exists" no toca una tabla que ya existe, así que en una
+-- instalación previa estas columnas nunca se agregarían y el resto de la
+-- migración fallaría al referenciarlas.
+alter table public.sales_send_queue
+  add column if not exists graph_internet_message_id text,
+  add column if not exists reply_to_graph_message_id text,
+  add column if not exists is_test boolean not null default false,
+  add column if not exists confirmed_at timestamptz;
+
+
 comment on table public.sales_send_queue is
   'Cola de envíos comerciales. Un solo correo se procesa a la vez y su hora se fija al programar.';
 
@@ -354,6 +367,30 @@ insert into public.sales_settings (key, value, description) values
   ('queue_min_gap_seconds', '2100'::jsonb,
    'Separación mínima absoluta entre envíos, en segundos. 2100 = 35 minutos.')
 on conflict (key) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- Corrección de la separación mínima
+-- ---------------------------------------------------------------------------
+-- El insert de arriba no pisa lo que ya existe, y una instalación anterior dejó
+-- esta clave en 60 segundos. Sin esta corrección, la barrera de 35 minutos
+-- quedaría escrita en el código pero nunca se aplicaría: la reserva lee el
+-- valor de la base, y seguiría separando los envíos por un minuto.
+do $$
+declare
+  v_actual integer;
+begin
+  select (value #>> '{}')::integer into v_actual
+  from public.sales_settings where key = 'queue_min_gap_seconds';
+
+  if v_actual is not null and v_actual < 2100 then
+    update public.sales_settings
+    set value = '2100'::jsonb,
+        description = 'Separación mínima absoluta entre envíos, en segundos. 2100 = 35 minutos.'
+    where key = 'queue_min_gap_seconds';
+
+    raise notice 'Separación mínima corregida de % a 2100 segundos (35 minutos).', v_actual;
+  end if;
+end $$;
 
 -- ============================================================================
 -- ROLLBACK FASE 4
