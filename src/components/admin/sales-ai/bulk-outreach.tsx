@@ -24,8 +24,8 @@ type BulkResult = {
  * Contacto masivo de prospectos nuevos.
  *
  * Cada mensaje se redacta por separado con los datos de su empresa: no se envía
- * el mismo texto a todos. La tanda se limita a 25 y se detiene sola si se
- * alcanza el límite diario de envíos.
+ * el mismo texto a todos. La tanda se limita a 8 y va espaciada, para no quemar la
+ * reputación del dominio.
  */
 export function BulkOutreach({ candidates }: { candidates: Candidate[] }) {
   const router = useRouter();
@@ -82,10 +82,10 @@ export function BulkOutreach({ candidates }: { candidates: Candidate[] }) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setSelected(contactable.slice(0, 25).map((item) => item.id))}
+            onClick={() => setSelected(contactable.slice(0, 8).map((item) => item.id))}
             disabled={busy}
           >
-            Seleccionar 25
+            Seleccionar 8
           </Button>
           <Button
             variant="outline"
@@ -141,7 +141,7 @@ export function BulkOutreach({ candidates }: { candidates: Candidate[] }) {
       {busy ? (
         <p className="mt-3 flex items-center gap-2 text-xs text-slate-600">
           <AlertTriangle className="h-3.5 w-3.5" />
-          Redactando y enviando uno por uno. No cierres esta página.
+          Redactando y enviando uno por uno, con pausa entre cada envío. No cierres esta página.
         </p>
       ) : null}
 

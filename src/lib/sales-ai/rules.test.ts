@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import {
   analysisSchema,
+  classifyBounce,
   detectAutoReply,
   detectBounce,
   detectOptOut,
@@ -281,5 +282,28 @@ describe("esquema de análisis · tolerancia a la respuesta del modelo", () => {
     const result = analysisSchema.safeParse({ ...base, intent: "RESPUESTA_AUTOMATICA" });
     assert.equal(result.success, true);
     assert.equal(result.success && result.data.intent, "RESPUESTA_AUTOMATICA");
+  });
+});
+
+describe("clasificación de rebotes", () => {
+  it("reconoce un bloqueo por reputación como POLICY, no como dirección mala", () => {
+    // Este es el rebote real que devolvió Microsoft en el primer envío masivo.
+    const text =
+      "Remote server returned '550 5.7.708 Service unavailable. " +
+      "Access denied, traffic not accepted from this IP'";
+    assert.equal(classifyBounce(text), "POLICY");
+  });
+
+  it("reconoce una dirección inexistente como HARD", () => {
+    assert.equal(classifyBounce("550 5.1.1 user unknown"), "HARD");
+    assert.equal(classifyBounce("Address not found"), "HARD");
+  });
+
+  it("reconoce un buzón lleno como SOFT", () => {
+    assert.equal(classifyBounce("Mailbox is full, try again later"), "SOFT");
+  });
+
+  it("no confunde un bloqueo por spam con dirección inválida", () => {
+    assert.equal(classifyBounce("Message blocked using spam reputation filters"), "POLICY");
   });
 });

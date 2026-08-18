@@ -3,7 +3,7 @@ import "server-only";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getConversationMessages, getMessage, type GraphMessage } from "./graph-client";
 import { markEmailInvalid, sendCommercialEmail } from "./mailer";
-import { detectAutoReply, detectBounce, detectOptOut } from "./rules";
+import { classifyBounce, detectAutoReply, detectBounce, detectOptOut } from "./rules";
 import { analyzeIncomingEmail, decideAction, draftReply } from "./zara-brain";
 import { getZaraProfile } from "./zara-identity";
 import { logSalesEvent, markDoNotContact } from "./repository";
@@ -183,9 +183,37 @@ export async function processInboundMessage(graphMessageId: string): Promise<Inb
   const companyId = (company?.id as string) ?? null;
   const threadId = await upsertThread(message, companyId);
 
-  // Rebote: se marca la dirección y no se sigue el flujo comercial.
+  // Rebote: qué se hace depende del tipo. Un bloqueo por reputación NO
+  // significa que la dirección sea mala, así que no se marca como inválida.
   if (detectBounce({ from: fromEmail, subject, body: bodyFull })) {
-    if (companyId) await markEmailInvalid(companyId, `Rebote recibido: ${subject}`);
+    const kind = classifyBounce(bodyFull);
+
+    if (kind === "HARD" && companyId) {
+      await markEmailInvalid(companyId, `Dirección inexistente: ${subject}`);
+    }
+
+    if (kind === "POLICY") {
+      // Nuestro servidor está siendo rechazado: es un problema de entrega que
+      // afecta a TODOS los envíos, no a este destinatario. Se avisa fuerte.
+      await notifySalesEvent({
+        priority: "ALTA",
+        title: "Correo rechazado por reputación del remitente",
+        detail:
+          `El servidor de destino rechazó el envío por política, no por dirección inválida. ` +
+          `Revisa SPF, DKIM y DMARC antes de seguir enviando. Asunto: ${subject}`,
+        companyId,
+      });
+
+      if (companyId) {
+        await logSalesEvent({
+          companyId,
+          type: SALES_EVENT_TYPES.ERROR,
+          title: "Envío rechazado por política del destinatario",
+          detail: "La dirección se mantiene válida; el bloqueo es de reputación del remitente.",
+          actor: "SYSTEM",
+        });
+      }
+    }
     await supabase.from("sales_messages").insert({
       thread_id: threadId,
       company_id: companyId,
@@ -200,10 +228,15 @@ export async function processInboundMessage(graphMessageId: string): Promise<Inb
       sent_at: message.receivedDateTime ?? new Date().toISOString(),
       ai_analyzed: true,
       ai_intent: "REBOTE",
-      ai_requires_human: false,
-      ai_summary: "Rebote de entrega. La dirección quedó marcada como inválida.",
+      ai_requires_human: kind === "POLICY",
+      ai_summary:
+        kind === "HARD"
+          ? "Dirección inexistente. Se marcó como inválida."
+          : kind === "POLICY"
+            ? "Rechazado por política o reputación del remitente. La dirección sigue siendo válida."
+            : "Rebote temporal. Se puede reintentar más adelante.",
     });
-    return { processed: true, companyId, action: "BOUNCE" };
+    return { processed: true, companyId, action: `BOUNCE_${kind}` };
   }
 
   // Guardamos el mensaje SIEMPRE, antes de cualquier análisis.

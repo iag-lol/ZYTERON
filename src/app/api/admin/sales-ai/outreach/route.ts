@@ -38,9 +38,11 @@ export async function POST(request: Request) {
     if (ids.length === 0) {
       return NextResponse.json({ error: "No se seleccionó ninguna empresa." }, { status: 400 });
     }
-    if (ids.length > 25) {
+    // Tope bajo a propósito: las tandas grandes desde un buzón nuevo terminan
+    // en bloqueo por reputación, que es mucho más caro de revertir.
+    if (ids.length > 8) {
       return NextResponse.json(
-        { error: "Máximo 25 empresas por tanda, para controlar el ritmo de envío." },
+        { error: "Máximo 8 empresas por tanda. Enviar de a muchas quema la reputación del dominio." },
         { status: 400 },
       );
     }

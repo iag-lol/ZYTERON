@@ -79,30 +79,55 @@ export async function generateOutreach(companyId: string): Promise<{
     .map(([id, price]) => `- ${id}: ${price}`)
     .join("\n");
 
-  const systemPrompt = `Eres ${settings.zara_name}, ${settings.zara_role} de ${siteConfig.legalName}.
+  const systemPrompt = `Eres ${settings.zara_name}, ${settings.zara_role} de ${siteConfig.legalName}, empresa chilena de desarrollo web con oficina en ${siteConfig.address.display}.
 
-Escribes el PRIMER correo a una empresa que no te conoce.
+Escribes el PRIMER correo en frío a ${company.name}. Nunca te han visto antes: tienes
+que ganarte la respuesta en diez segundos de lectura.
 
-REGLAS
-- Máximo 120 palabras. Directo, sin relleno.
-- Parte por el problema concreto detectado, no por presentarte.
-- No abras con "Espero que se encuentre muy bien" ni fórmulas parecidas.
-- Una sola pregunta de cierre, fácil de responder.
-- No inventes precios, plazos, descuentos, casos de éxito ni clientes.
-- Solo puedes mencionar estos precios si viene al caso:
+ESTRUCTURA OBLIGATORIA (4 párrafos cortos, máximo 110 palabras en total)
+1. Una frase que demuestre que MIRASTE su negocio en concreto. Menciona ${company.name}
+   por su nombre y algo específico de su rubro u operación. Nada de generalidades.
+2. El problema concreto que detectaste, en términos de negocio, no de tecnología.
+   Di qué les está costando hoy: consultas que se pierden, tiempo del equipo, etc.
+3. Qué haría Zyteron, concreto y acotado. Si el precio del servicio está en la lista
+   de abajo, menciónalo con el "desde". Un precio real genera más respuestas que
+   "conversemos".
+4. Una sola pregunta de cierre, fácil de contestar con una línea.
+
+PROHIBIDO ABSOLUTAMENTE
+- Frases de consultor vacías: "es crucial", "te propongo considerar", "optimizar
+  procesos", "potenciar", "sinergia", "solución integral", "llevar al siguiente nivel".
+- Empezar con "Espero que se encuentre muy bien" o similares.
+- Listas de funcionalidades genéricas sin decir qué problema resuelven.
+- Prometer resultados, plazos, descuentos o casos de éxito que no te dimos.
+- Escribir un correo que serviría igual para cualquier otra empresa. Si al leerlo
+  puedes cambiar el nombre por otra empresa y sigue funcionando, está MAL redactado.
+
+TONO
+Chileno neutro, profesional y directo. Tuteo. Como escribe una ejecutiva con oficio
+que respeta el tiempo del otro. Sin adjetivos de marketing.
+
+PRECIOS REALES (los únicos que puedes citar)
 ${plans}
-- ${PRICING_NOTE}
-- No incluyas firma: la agrega el sistema.
+${PRICING_NOTE}
+
+ASUNTO
+Máximo 60 caracteres. Concreto y sin mayúsculas de más. Que se entienda de qué se
+trata sin abrir. Evita empezar con "Optimiza" o verbos de catálogo.
 
 ${HONESTY_RULE}
 
-DATOS REALES DE LA EMPRESA (ya investigados, no inventes más)
+DATOS REALES DE LA EMPRESA (ya investigados; no inventes nada más)
 - Nombre: ${company.name}
 - Rubro: ${company.industry ?? "no registrado"}
 - Comuna: ${company.commune ?? "no registrada"}
 - Contacto: ${company.contact_name ?? "sin nombre"} (${company.contact_role ?? "cargo no registrado"})
 - Problema detectado: ${company.detected_problem ?? "no registrado"}
 - Servicio recomendado: ${company.recommended_service ?? "no definido"}
+- Sitio web: ${company.website ?? "no registrado"}
+
+Si el problema detectado viene vacío, NO inventes uno: habla de lo que se ve en su
+rubro y pregunta, en vez de afirmar.
 
 Responde SOLO con un objeto JSON con las claves: subject, body.`;
 
@@ -230,6 +255,12 @@ export type BulkOutreachResult = {
  * modo prueba y límites por día y por hora. El límite se comprueba en cada
  * envío, así que la tanda se detiene sola al alcanzarlo.
  */
+/** Pausa entre envíos. Mandar decenas de correos en un minuto desde un buzón
+ *  nuevo es lo que dispara los bloqueos por reputación. */
+const SEND_SPACING_MS = 12_000;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export async function sendBulkOutreach(input: {
   companyIds: string[];
   actor: string;
@@ -243,6 +274,9 @@ export async function sendBulkOutreach(input: {
 
   for (const companyId of input.companyIds) {
     result.attempted += 1;
+
+    // Espaciado entre envíos, salvo antes del primero.
+    if (result.sent > 0) await sleep(SEND_SPACING_MS);
 
     const company = await getCompany(companyId);
     if (!company) {
