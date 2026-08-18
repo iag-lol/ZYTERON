@@ -67,9 +67,9 @@ export function DraftApproval() {
           text:
             action === "discard"
               ? "Borrador descartado."
-              : payload.redirected
-                ? "Enviado en MODO PRUEBA: llegó al correo de pruebas, no al cliente."
-                : "Respuesta enviada al cliente dentro del hilo original.",
+              : payload.scheduledAt
+                ? `Aprobada y programada para el ${new Date(payload.scheduledAt).toLocaleString("es-CL", { timeZone: "America/Santiago" })}. Sale desde la cola, dentro del hilo original.`
+                : "Aprobada y encolada. Recibirá su hora en el próximo ciclo.",
         });
         await load();
       } catch (error) {

@@ -71,7 +71,15 @@ export async function POST(request: Request) {
   // La cola procesa como máximo UN correo por ejecución. Nunca en paralelo:
   // el despacho simultáneo fue lo que generó la ráfaga rechazada.
   const queue = settings.zara_paused
-    ? { released: 0, analyzed: 0, scheduled: 0, sent: 0, detail: "Zara está pausada." }
+    ? {
+        released: 0,
+        confirmed: 0,
+        enqueuedFollowups: 0,
+        analyzed: 0,
+        scheduled: 0,
+        sent: 0,
+        detail: "Zara está pausada.",
+      }
     : await runQueueCycle();
 
   const dormant = await detectDormantOpportunities();
@@ -81,7 +89,7 @@ export async function POST(request: Request) {
     await supabase.from("sales_webhook_log").insert({
       status: "PROCESADO",
       resource: "cron",
-      detail: `enviados=${queue.sent} analizados=${queue.analyzed} programados=${queue.scheduled} dormidas=${dormant.length} ms=${Date.now() - startedAt}`,
+      detail: `enviados=${queue.sent} confirmados=${queue.confirmed} seguimientos=${queue.enqueuedFollowups} analizados=${queue.analyzed} dormidas=${dormant.length} ms=${Date.now() - startedAt}`,
     });
   } catch {
     // best-effort

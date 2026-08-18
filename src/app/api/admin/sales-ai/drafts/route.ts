@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { sendCommercialEmail } from "@/lib/sales-ai/mailer";
+import { enqueueSend, scheduleQueueItem } from "@/lib/sales-ai/queue";
 import { logSalesEvent } from "@/lib/sales-ai/repository";
 import { SALES_EVENT_TYPES } from "@/lib/sales-ai/types";
 
@@ -157,46 +157,57 @@ export async function POST(request: Request) {
         replyToGraphMessageId = (original?.graph_message_id as string) ?? null;
       }
 
-      const sent = await sendCommercialEmail({
-        companyId: draft.company_id as string,
+      // Aprobar encola: el despacho lo hace el trabajador con reserva global.
+      const enqueued = await enqueueSend({
+        companyId: (draft.company_id as string) ?? "",
+        kind: "RESPUESTA",
         threadId: (draft.thread_id as string) ?? null,
-        recipient,
+        draftId: draft.id as string,
+        recipientEmail: recipient,
         subject,
         body,
         replyToGraphMessageId,
-        actor,
+        readyToSchedule: true,
+        createdBy: actor,
       });
 
-      if (!sent.ok) {
+      if (!enqueued.ok || !enqueued.id) {
         await supabase
           .from("sales_drafts")
-          .update({ status: "ERROR", error_detail: sent.error })
+          .update({ status: "ERROR", error_detail: enqueued.error })
           .eq("id", draft.id);
-        return NextResponse.json({ error: sent.error }, { status: 400 });
+        return NextResponse.json({ error: enqueued.error }, { status: 400 });
       }
+
+      const scheduled = await scheduleQueueItem(enqueued.id, { reviewedBy: actor });
 
       await supabase
         .from("sales_drafts")
         .update({
-          status: "ENVIADO",
+          status: "APROBADO",
           subject,
           body,
           approved_by: actor,
           approved_at: new Date().toISOString(),
-          sent_at: new Date().toISOString(),
         })
         .eq("id", draft.id);
 
       await logSalesEvent({
         companyId: draft.company_id as string,
-        type: SALES_EVENT_TYPES.DRAFT_SENT,
-        title: "Respuesta aprobada y enviada",
-        detail: `${subject} · aprobada por ${actor}`,
+        type: SALES_EVENT_TYPES.DRAFT_APPROVED,
+        title: "Respuesta aprobada y encolada",
+        detail: scheduled.ok
+          ? `${subject} · sale el ${new Date(scheduled.scheduledAt!).toLocaleString("es-CL")}`
+          : `${subject} · en cola`,
         actor,
         isAutomated: false,
       });
 
-      return NextResponse.json({ ok: true, redirected: sent.redirected });
+      return NextResponse.json({
+        ok: true,
+        scheduledAt: scheduled.scheduledAt ?? null,
+      });
+
     }
 
     return NextResponse.json({ error: "Acción no reconocida." }, { status: 400 });

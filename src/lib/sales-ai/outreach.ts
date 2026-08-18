@@ -1,16 +1,6 @@
 import "server-only";
 
-import { z } from "zod";
-
-import { siteConfig } from "@/config/site";
-import { PLAN_PRICES, PRICING_NOTE } from "@/config/pricing";
-import { canRunAiTask, recordAiUsage } from "./budget";
-import { getSalesSettings } from "./settings";
 import { getCompany, logSalesEvent } from "./repository";
-import { sendCommercialEmail } from "./mailer";
-import { scheduleFollowupSequence } from "./followups";
-import { HONESTY_RULE } from "./zara-identity";
-import { findForbiddenClientTerms } from "./rules";
 import { SALES_EVENT_TYPES } from "./types";
 
 /**
@@ -19,14 +9,9 @@ import { SALES_EVENT_TYPES } from "./types";
  * programa la secuencia de seguimientos.
  */
 
-const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 
-const outreachSchema = z.object({
-  subject: z.string().min(1).max(160),
-  body: z.string().min(1).max(2000),
-});
 
-export type OutreachDraft = z.infer<typeof outreachSchema>;
+export type OutreachDraft = { subject: string; body: string };
 
 /** Mensaje base por código: si no hay presupuesto de IA, igual se puede contactar. */
 function buildFallbackOutreach(company: {
@@ -53,142 +38,59 @@ function buildFallbackOutreach(company: {
  * Genera el mensaje de primer contacto. Usa solo datos ya investigados del
  * CRM: no vuelve a investigar la empresa, que es lo que encarecería el proceso.
  */
+/**
+ * Genera la vista previa del primer contacto.
+ *
+ * Delega en composeOutreach para que exista UNA sola ruta de redacción, con
+ * json_schema estricto y el mismo control de calidad. Antes había un segundo
+ * generador con json_object que podía producir correos que no pasaban el
+ * control.
+ */
 export async function generateOutreach(companyId: string): Promise<{
   ok: boolean;
   draft?: OutreachDraft;
   usedAi: boolean;
+  requiresReview?: boolean;
+  reviewReason?: string;
   error?: string;
 }> {
   const company = await getCompany(companyId);
   if (!company) return { ok: false, usedAi: false, error: "La empresa no existe." };
 
-  const fallback = buildFallbackOutreach(company);
+  const { composeOutreach } = await import("./composer");
+  const composed = await composeOutreach(companyId);
 
-  const budget = await canRunAiTask("BULK");
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-
-  if (!budget.allowed || !apiKey) {
-    return { ok: true, draft: fallback, usedAi: false };
-  }
-
-  const settings = await getSalesSettings();
-  const model = process.env.SALES_AI_MODEL?.trim() || settings.ai_model;
-
-  const plans = Object.entries(PLAN_PRICES)
-    .slice(0, 5)
-    .map(([id, price]) => `- ${id}: ${price}`)
-    .join("\n");
-
-  const systemPrompt = `Eres ${settings.zara_name}, ${settings.zara_role} de ${siteConfig.legalName}, empresa chilena de desarrollo web con oficina en ${siteConfig.address.display}.
-
-Escribes el PRIMER correo en frío a ${company.name}. Nunca te han visto antes: tienes
-que ganarte la respuesta en diez segundos de lectura.
-
-ESTRUCTURA OBLIGATORIA (4 párrafos cortos, máximo 110 palabras en total)
-1. Una frase que demuestre que MIRASTE su negocio en concreto. Menciona ${company.name}
-   por su nombre y algo específico de su rubro u operación. Nada de generalidades.
-2. El problema concreto que detectaste, en términos de negocio, no de tecnología.
-   Di qué les está costando hoy: consultas que se pierden, tiempo del equipo, etc.
-3. Qué haría Zyteron, concreto y acotado. Si el precio del servicio está en la lista
-   de abajo, menciónalo con el "desde". Un precio real genera más respuestas que
-   "conversemos".
-4. Una sola pregunta de cierre, fácil de contestar con una línea.
-
-PROHIBIDO ABSOLUTAMENTE
-- Frases de consultor vacías: "es crucial", "te propongo considerar", "optimizar
-  procesos", "potenciar", "sinergia", "solución integral", "llevar al siguiente nivel".
-- Empezar con "Espero que se encuentre muy bien" o similares.
-- Listas de funcionalidades genéricas sin decir qué problema resuelven.
-- Prometer resultados, plazos, descuentos o casos de éxito que no te dimos.
-- Escribir un correo que serviría igual para cualquier otra empresa. Si al leerlo
-  puedes cambiar el nombre por otra empresa y sigue funcionando, está MAL redactado.
-
-TONO
-Chileno neutro, profesional y directo. Tuteo. Como escribe una ejecutiva con oficio
-que respeta el tiempo del otro. Sin adjetivos de marketing.
-
-PRECIOS REALES (los únicos que puedes citar)
-${plans}
-${PRICING_NOTE}
-
-ASUNTO
-Máximo 60 caracteres. Concreto y sin mayúsculas de más. Que se entienda de qué se
-trata sin abrir. Evita empezar con "Optimiza" o verbos de catálogo.
-
-${HONESTY_RULE}
-
-DATOS REALES DE LA EMPRESA (ya investigados; no inventes nada más)
-- Nombre: ${company.name}
-- Rubro: ${company.industry ?? "no registrado"}
-- Comuna: ${company.commune ?? "no registrada"}
-- Contacto: ${company.contact_name ?? "sin nombre"} (${company.contact_role ?? "cargo no registrado"})
-- Problema detectado: ${company.detected_problem ?? "no registrado"}
-- Servicio recomendado: ${company.recommended_service ?? "no definido"}
-- Sitio web: ${company.website ?? "no registrado"}
-
-Si el problema detectado viene vacío, NO inventes uno: habla de lo que se ve en su
-rubro y pregunta, en vez de afirmar.
-
-Responde SOLO con un objeto JSON con las claves: subject, body.`;
-
-  try {
-    const response = await fetch(OPENAI_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model,
-        temperature: 0.7,
-        max_tokens: 500,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Redacta el primer correo para ${company.name}.` },
-        ],
-      }),
-    });
-
-    if (!response.ok) return { ok: true, draft: fallback, usedAi: false };
-
-    const payload = (await response.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-      usage?: { prompt_tokens?: number; completion_tokens?: number };
+  if (composed.ok && composed.content) {
+    return {
+      ok: true,
+      usedAi: true,
+      requiresReview: composed.requiresReview,
+      reviewReason: composed.reviewReason,
+      draft: { subject: composed.content.subject, body: composed.content.body_text },
     };
-
-    await recordAiUsage({
-      companyId,
-      action: "GENERATE_OUTREACH",
-      model,
-      promptTokens: payload.usage?.prompt_tokens ?? 0,
-      completionTokens: payload.usage?.completion_tokens ?? 0,
-      result: "OK",
-    });
-
-    const parsed = outreachSchema.safeParse(
-      JSON.parse(payload.choices?.[0]?.message?.content ?? "{}"),
-    );
-    if (!parsed.success) return { ok: true, draft: fallback, usedAi: false };
-
-    // Control de terminología antes de mostrarlo siquiera.
-    if (findForbiddenClientTerms(parsed.data.body).length > 0) {
-      return { ok: true, draft: fallback, usedAi: false };
-    }
-
-    return { ok: true, draft: parsed.data, usedAi: true };
-  } catch {
-    return { ok: true, draft: fallback, usedAi: false };
   }
+
+  // Sin IA disponible se ofrece un borrador base para editar a mano; queda
+  // marcado como pendiente de revisión porque no pasó el control de calidad.
+  return {
+    ok: true,
+    usedAi: false,
+    requiresReview: true,
+    reviewReason: composed.reviewReason ?? composed.error,
+    draft: buildFallbackOutreach(company),
+  };
 }
 
 export type OutreachSendResult = {
   ok: boolean;
   error?: string;
-  redirected?: boolean;
-  followupsScheduled?: number;
+  /** Hora asignada por la cola. El envío ocurre después, de a uno. */
+  scheduledAt?: string;
 };
 
 /**
- * Envía el primer contacto y deja la empresa en CONTACTADO con su secuencia de
- * seguimientos programada. Sin este paso los seguimientos nunca existirían.
+ * Encola el primer contacto ya redactado y lo programa.
+ * No envía: el despacho lo hace el trabajador de la cola, de a uno.
  */
 export async function sendOutreach(input: {
   companyId: string;
@@ -202,38 +104,35 @@ export async function sendOutreach(input: {
     return { ok: false, error: "La empresa no tiene correo registrado." };
   }
 
-  const sent = await sendCommercialEmail({
+  const { enqueueSend, scheduleQueueItem } = await import("./queue");
+
+  const enqueued = await enqueueSend({
     companyId: input.companyId,
-    recipient: company.primary_email,
+    kind: "PRIMER_CONTACTO",
+    recipientEmail: company.primary_email,
     subject: input.subject,
     body: input.body,
-    actor: input.actor,
-    isCampaign: true,
+    readyToSchedule: true,
+    createdBy: input.actor,
   });
 
-  if (!sent.ok) return { ok: false, error: sent.error };
+  if (!enqueued.ok || !enqueued.id) {
+    return { ok: false, error: enqueued.error ?? "No se pudo encolar." };
+  }
 
-  const { updateCompany } = await import("./repository");
-  await updateCompany(
-    input.companyId,
-    { status: "CONTACTADO", last_interaction_at: new Date().toISOString() },
-    { actor: input.actor, reason: "Primer contacto enviado" },
-  );
-
-  const followupsScheduled = await scheduleFollowupSequence({
-    companyId: input.companyId,
-  }).catch(() => 0);
+  const scheduled = await scheduleQueueItem(enqueued.id, { reviewedBy: input.actor });
+  if (!scheduled.ok) return { ok: false, error: scheduled.error };
 
   await logSalesEvent({
     companyId: input.companyId,
-    type: SALES_EVENT_TYPES.EMAIL_SENT,
-    title: "Primer contacto enviado",
-    detail: `${input.subject} · ${followupsScheduled} seguimientos programados`,
+    type: SALES_EVENT_TYPES.DRAFT_APPROVED,
+    title: "Primer contacto aprobado y programado",
+    detail: `${input.subject} · sale el ${new Date(scheduled.scheduledAt!).toLocaleString("es-CL")}`,
     actor: input.actor,
     isAutomated: false,
   });
 
-  return { ok: true, redirected: sent.redirected, followupsScheduled };
+  return { ok: true, scheduledAt: scheduled.scheduledAt };
 }
 
 // ---------------------------------------------------------------------------

@@ -57,7 +57,17 @@ create table if not exists public.sales_send_queue (
   bounce_detail text,
 
   graph_message_id text,
+  -- El NDR de Microsoft cita el internetMessageId, no el id interno de Graph.
+  -- Se guardan ambos: este para correlacionar rebotes, el otro para operar.
+  graph_internet_message_id text,
   graph_conversation_id text,
+  -- Mensaje al que responde, para que las respuestas salgan dentro del hilo.
+  reply_to_graph_message_id text,
+
+  -- Marca los envíos redirigidos por test_mode: no consumen cupo real, no
+  -- inician el calentamiento y no cambian el estado del prospecto.
+  is_test boolean not null default false,
+  confirmed_at timestamptz,
 
   attempts integer not null default 0,
   max_attempts integer not null default 1,
@@ -75,6 +85,19 @@ create table if not exists public.sales_send_queue (
   updated_at timestamptz not null default now()
 );
 
+-- ---------------------------------------------------------------------------
+-- Actualización de instalaciones anteriores
+-- ---------------------------------------------------------------------------
+-- "create table if not exists" no toca una tabla que ya existe, así que en una
+-- instalación previa estas columnas nunca se agregarían y el resto de la
+-- migración fallaría al referenciarlas.
+alter table public.sales_send_queue
+  add column if not exists graph_internet_message_id text,
+  add column if not exists reply_to_graph_message_id text,
+  add column if not exists is_test boolean not null default false,
+  add column if not exists confirmed_at timestamptz;
+
+
 comment on table public.sales_send_queue is
   'Cola de envíos comerciales. Un solo correo se procesa a la vez y su hora se fija al programar.';
 
@@ -91,6 +114,15 @@ create index if not exists sales_send_queue_company_idx
 create unique index if not exists sales_send_queue_graph_uidx
   on public.sales_send_queue (graph_message_id)
   where graph_message_id is not null;
+
+create index if not exists sales_send_queue_internet_id_idx
+  on public.sales_send_queue (graph_internet_message_id)
+  where graph_internet_message_id is not null;
+
+-- Confirmación sin rebote a las 24 horas.
+create index if not exists sales_send_queue_pending_confirm_idx
+  on public.sales_send_queue (accepted_at)
+  where status = 'ACEPTADO_POR_MICROSOFT';
 
 -- Un mismo prospecto no puede tener dos primeros contactos vivos a la vez.
 create unique index if not exists sales_send_queue_one_active_idx
@@ -114,9 +146,29 @@ alter table public.sales_send_queue enable row level security;
 -- Si dos crons se ejecutan a la vez, SKIP LOCKED hace que solo uno obtenga la
 -- fila y el otro reciba el conjunto vacío.
 -- ---------------------------------------------------------------------------
+-- Clave fija del bloqueo global de despacho. Cualquier operación que reserve o
+-- programe un envío debe tomarla, para que las comprobaciones y la escritura
+-- ocurran dentro de la misma sección crítica.
+create or replace function public.sales_dispatch_lock_key()
+returns bigint language sql immutable as $$ select 918273645123456789::bigint $$;
+
+-- ---------------------------------------------------------------------------
+-- Reserva atómica del siguiente envío
+-- ---------------------------------------------------------------------------
+-- FOR UPDATE SKIP LOCKED por sí solo NO basta: dos transacciones podían
+-- comprobar "no hay envíos en curso" y a continuación reservar filas
+-- DISTINTAS, produciendo dos envíos simultáneos. Por eso lo primero es tomar un
+-- bloqueo global de transacción; quien no lo obtiene se retira de inmediato.
+--
+-- Con el bloqueo retenido se verifican, en la misma sección crítica:
+--   · que no haya otro envío en curso;
+--   · el cupo diario (sin contar los de prueba);
+--   · la separación mínima desde el último aceptado;
+-- y recién entonces se reserva la fila.
+-- ---------------------------------------------------------------------------
 create or replace function public.sales_claim_next_send(
   p_daily_limit integer,
-  p_min_gap_seconds integer default 60
+  p_min_gap_seconds integer default 2100
 )
 returns setof public.sales_send_queue
 language plpgsql
@@ -127,7 +179,11 @@ declare
   v_sent_today integer;
   v_last_send timestamptz;
 begin
-  -- Un solo correo en procesamiento a la vez.
+  -- Bloqueo global: si otra transacción está despachando, esta se retira.
+  if not pg_try_advisory_xact_lock(public.sales_dispatch_lock_key()) then
+    return;
+  end if;
+
   select count(*) into v_in_progress
   from public.sales_send_queue
   where status = 'PROCESANDO'
@@ -137,18 +193,19 @@ begin
     return;
   end if;
 
-  -- Cupo diario: cuenta lo ya aceptado o enviado hoy.
+  -- Cupo diario. Los envíos de prueba no consumen cupo real.
   select count(*) into v_sent_today
   from public.sales_send_queue
   where status in ('ACEPTADO_POR_MICROSOFT','ENVIADO_SIN_REBOTE','REBOTADO')
-    and accepted_at >= date_trunc('day', now() at time zone 'America/Santiago')
-        at time zone 'America/Santiago';
+    and is_test = false
+    and accepted_at >= (date_trunc('day', now() at time zone 'America/Santiago')
+                        at time zone 'America/Santiago');
 
   if v_sent_today >= p_daily_limit then
     return;
   end if;
 
-  -- Nunca dos correos en el mismo minuto.
+  -- Separación mínima absoluta desde el último envío aceptado.
   select max(accepted_at) into v_last_send
   from public.sales_send_queue
   where accepted_at is not null;
@@ -179,6 +236,96 @@ begin
   returning * into v_claimed;
 
   return next v_claimed;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Programación atómica de la hora de envío
+-- ---------------------------------------------------------------------------
+-- La aplicación propone una hora (con su reparto por franjas y su aleatoriedad)
+-- y esta función la ajusta bajo el mismo bloqueo global, garantizando que dos
+-- crons nunca asignen el mismo minuto ni una separación menor a la mínima.
+-- Devuelve la hora finalmente asignada, o NULL si no pudo tomar el bloqueo.
+-- ---------------------------------------------------------------------------
+create or replace function public.sales_schedule_send(
+  p_id uuid,
+  p_candidate timestamptz,
+  p_min_gap_seconds integer default 2100,
+  p_reviewed_by text default null
+)
+returns timestamptz
+language plpgsql
+as $$
+declare
+  v_last timestamptz;
+  v_final timestamptz;
+begin
+  if not pg_try_advisory_xact_lock(public.sales_dispatch_lock_key()) then
+    return null;
+  end if;
+
+  -- Última hora ya comprometida, considerando también lo aceptado.
+  select greatest(
+           coalesce(max(scheduled_at) filter (where status in ('PROGRAMADO','PROCESANDO')), to_timestamp(0)),
+           coalesce(max(accepted_at), to_timestamp(0))
+         )
+    into v_last
+  from public.sales_send_queue;
+
+  v_final := greatest(p_candidate, now());
+
+  if v_last is not null and v_last > to_timestamp(0) then
+    v_final := greatest(v_final, v_last + make_interval(secs => p_min_gap_seconds));
+  end if;
+
+  -- Ningún otro envío puede quedar en el mismo minuto.
+  while exists (
+    select 1 from public.sales_send_queue
+    where id <> p_id
+      and status in ('PROGRAMADO','PROCESANDO')
+      and date_trunc('minute', scheduled_at) = date_trunc('minute', v_final)
+  ) loop
+    v_final := v_final + interval '1 minute';
+  end loop;
+
+  update public.sales_send_queue
+  set status = 'PROGRAMADO',
+      scheduled_at = v_final,
+      requires_review = false,
+      reviewed_by = coalesce(p_reviewed_by, reviewed_by),
+      reviewed_at = case when p_reviewed_by is not null then now() else reviewed_at end
+  where id = p_id
+    and status in ('PENDIENTE_ANALISIS','PENDIENTE_REVISION');
+
+  if not found then
+    return null;
+  end if;
+
+  return v_final;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Confirmación sin rebote a las 24 horas
+-- ---------------------------------------------------------------------------
+-- La ausencia de NDR no prueba entrega ni apertura: solo que en 24 horas nadie
+-- devolvió el mensaje. Por eso el estado se llama ENVIADO_SIN_REBOTE.
+create or replace function public.sales_confirm_delivered(p_hours integer default 24)
+returns integer
+language plpgsql
+as $$
+declare
+  v_count integer;
+begin
+  update public.sales_send_queue
+  set status = 'ENVIADO_SIN_REBOTE',
+      confirmed_at = now()
+  where status = 'ACEPTADO_POR_MICROSOFT'
+    and accepted_at is not null
+    and accepted_at < now() - make_interval(hours => p_hours);
+
+  get diagnostics v_count = row_count;
+  return v_count;
 end;
 $$;
 
@@ -217,12 +364,40 @@ insert into public.sales_settings (key, value, description) values
   ('pause_reason', '""'::jsonb,
    'Motivo de la última pausa automática, para mostrarlo en el panel.'),
   ('last_bounce_code', '""'::jsonb, 'Último código SMTP de rebote recibido.'),
-  ('queue_min_gap_seconds', '60'::jsonb, 'Separación mínima entre dos envíos.')
+  ('queue_min_gap_seconds', '2100'::jsonb,
+   'Separación mínima absoluta entre envíos, en segundos. 2100 = 35 minutos.')
 on conflict (key) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- Corrección de la separación mínima
+-- ---------------------------------------------------------------------------
+-- El insert de arriba no pisa lo que ya existe, y una instalación anterior dejó
+-- esta clave en 60 segundos. Sin esta corrección, la barrera de 35 minutos
+-- quedaría escrita en el código pero nunca se aplicaría: la reserva lee el
+-- valor de la base, y seguiría separando los envíos por un minuto.
+do $$
+declare
+  v_actual integer;
+begin
+  select (value #>> '{}')::integer into v_actual
+  from public.sales_settings where key = 'queue_min_gap_seconds';
+
+  if v_actual is not null and v_actual < 2100 then
+    update public.sales_settings
+    set value = '2100'::jsonb,
+        description = 'Separación mínima absoluta entre envíos, en segundos. 2100 = 35 minutos.'
+    where key = 'queue_min_gap_seconds';
+
+    raise notice 'Separación mínima corregida de % a 2100 segundos (35 minutos).', v_actual;
+  end if;
+end $$;
 
 -- ============================================================================
 -- ROLLBACK FASE 4
 -- drop function if exists public.sales_claim_next_send(integer, integer);
+-- drop function if exists public.sales_schedule_send(uuid, timestamptz, integer, text);
+-- drop function if exists public.sales_confirm_delivered(integer);
+-- drop function if exists public.sales_dispatch_lock_key();
 -- drop function if exists public.sales_release_stuck_sends();
 -- drop table if exists public.sales_send_queue cascade;
 -- ============================================================================

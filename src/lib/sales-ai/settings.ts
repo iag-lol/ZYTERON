@@ -30,6 +30,19 @@ export type SalesSettings = {
   bounce_max_attempts: number;
   /** Secreto compartido con Microsoft para validar los webhooks. NUNCA se expone. */
   webhook_client_state: string;
+
+  // --- Cola de envíos (fase 4) ---
+  /** Separación mínima absoluta entre envíos, en segundos. 2100 = 35 minutos. */
+  queue_min_gap_seconds: number;
+  /** Fecha del primer envío REAL. Los de prueba no la inician. */
+  warmup_started_on: string | null;
+  /** Límite diario aprobado a mano. Sin esto el automatismo no pasa de 15. */
+  warmup_manual_override: number | null;
+  /** Motivo de la última pausa, para mostrarlo en el panel. */
+  pause_reason: string;
+  /** Último código SMTP de rebote recibido. */
+  last_bounce_code: string;
+  bulk_batch_size: number;
 };
 
 /**
@@ -61,6 +74,12 @@ export const DEFAULT_SALES_SETTINGS: SalesSettings = {
   zara_signature: "",
   bounce_max_attempts: 2,
   webhook_client_state: "",
+  queue_min_gap_seconds: 2100,
+  warmup_started_on: null,
+  warmup_manual_override: null,
+  pause_reason: "",
+  last_bounce_code: "",
+  bulk_batch_size: 10,
 };
 
 /**

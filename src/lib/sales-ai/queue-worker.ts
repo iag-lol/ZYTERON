@@ -3,6 +3,8 @@ import "server-only";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   claimNextSend,
+  confirmDeliveredWithoutBounce,
+  enqueueSend,
   markAccepted,
   markSendError,
   releaseStuckSends,
@@ -10,7 +12,7 @@ import {
   type QueueItem,
 } from "./queue";
 import { composeOutreach } from "./composer";
-import { sendCommercialEmail } from "./mailer";
+import { createDispatchTicket, sendCommercialEmail } from "./mailer";
 import { getCompany, logSalesEvent } from "./repository";
 import { getSalesSettings } from "./settings";
 import { evaluateFollowupGuards } from "./rules";
@@ -26,6 +28,9 @@ import { SALES_EVENT_TYPES } from "./types";
 
 export type WorkerResult = {
   released: number;
+  /** Aceptados que cumplieron 24 h sin NDR. */
+  confirmed: number;
+  enqueuedFollowups: number;
   analyzed: number;
   scheduled: number;
   sent: number;
@@ -121,6 +126,99 @@ export async function processPendingAnalysis(limit = 3): Promise<{ analyzed: num
   return { analyzed, scheduled };
 }
 
+/**
+ * Encola los seguimientos vencidos.
+ *
+ * Reemplaza al antiguo runDueFollowups, que enviaba en bucle. Aquí solo se
+ * encolan: el despacho lo hace el trabajador de a uno y con reserva global.
+ */
+export async function enqueueDueFollowups(limit = 10): Promise<number> {
+  const settings = await getSalesSettings();
+  if (settings.zara_paused) return 0;
+
+  const { supabase } = createSupabaseServerClient();
+
+  const { data: due } = await supabase
+    .from("sales_followups")
+    .select("id, company_id, thread_id, campaign_id, sequence_step")
+    .eq("status", "PENDIENTE")
+    .lte("scheduled_for", new Date().toISOString())
+    .order("scheduled_for", { ascending: true })
+    .limit(limit);
+
+  let enqueued = 0;
+
+  for (const followup of due ?? []) {
+    const companyId = followup.company_id as string;
+    const company = await getCompany(companyId);
+
+    if (!company) {
+      await supabase
+        .from("sales_followups")
+        .update({ status: "CANCELADO", cancel_reason: "La empresa ya no existe." })
+        .eq("id", followup.id);
+      continue;
+    }
+
+    // Se revalida en el momento: pudo responder desde que se programó.
+    const { data: inbound } = await supabase
+      .from("sales_messages")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("direction", "INBOUND")
+      .limit(1);
+
+    const guard = evaluateFollowupGuards({
+      status: company.status,
+      doNotContact: company.do_not_contact,
+      emailInvalid: company.email_invalid,
+      hasEmail: Boolean(company.primary_email),
+      alreadyReplied: (inbound?.length ?? 0) > 0,
+    });
+
+    if (!guard.shouldSend) {
+      await supabase
+        .from("sales_followups")
+        .update({ status: "CANCELADO", cancel_reason: guard.reason })
+        .eq("id", followup.id);
+
+      await logSalesEvent({
+        companyId,
+        type: SALES_EVENT_TYPES.FOLLOWUP_CANCELLED,
+        title: `Seguimiento ${followup.sequence_step} cancelado`,
+        detail: guard.reason,
+        actor: "SYSTEM",
+      });
+      continue;
+    }
+
+    // Evita duplicados: si ya hay un envío vivo para este seguimiento, no se
+    // encola otro. El índice único de la cola es la segunda barrera.
+    const { data: existing } = await supabase
+      .from("sales_send_queue")
+      .select("id")
+      .eq("followup_id", followup.id)
+      .in("status", ["PENDIENTE_ANALISIS", "PENDIENTE_REVISION", "PROGRAMADO", "PROCESANDO"])
+      .limit(1);
+
+    if ((existing?.length ?? 0) > 0) continue;
+
+    const result = await enqueueSend({
+      companyId,
+      kind: "SEGUIMIENTO",
+      threadId: (followup.thread_id as string) ?? null,
+      campaignId: (followup.campaign_id as string) ?? null,
+      followupId: followup.id as string,
+      recipientEmail: company.primary_email,
+      createdBy: "ZARA",
+    });
+
+    if (result.ok) enqueued += 1;
+  }
+
+  return enqueued;
+}
+
 /** Comprueba, justo antes de enviar, que el envío siga teniendo sentido. */
 async function stillValid(item: QueueItem): Promise<{ ok: boolean; reason?: string }> {
   if (!item.company_id) return { ok: false, reason: "Sin empresa asociada." };
@@ -195,6 +293,8 @@ export async function processOneSend(): Promise<{ sent: number; detail: string }
     recipient,
     subject: item.subject,
     body: item.body,
+    replyToGraphMessageId: item.kind === "RESPUESTA" ? item.reply_to_graph_message_id : null,
+    ticket: createDispatchTicket(item.id),
   });
 
   if (!result.ok) {
@@ -202,27 +302,118 @@ export async function processOneSend(): Promise<{ sent: number; detail: string }
     return { sent: 0, detail: `Fallo de envío: ${result.error}` };
   }
 
-  await markAccepted(item.id, {
-    messageId: result.messageId,
-    conversationId: result.conversationId,
-  });
+  const isTest = Boolean(result.redirected);
+
+  await markAccepted(
+    item.id,
+    {
+      messageId: result.messageId,
+      internetMessageId: result.internetMessageId,
+      conversationId: result.conversationId,
+    },
+    { isTest },
+  );
 
   await logSalesEvent({
     companyId: item.company_id,
     type: SALES_EVENT_TYPES.EMAIL_SENT,
-    title: "Correo aceptado por Microsoft",
-    detail: `${item.subject}${result.redirected ? " · MODO PRUEBA" : ""}`,
+    title: isTest ? "Correo de prueba aceptado" : "Correo aceptado por Microsoft",
+    detail: `${item.subject}${isTest ? " · MODO PRUEBA, no llegó al prospecto" : ""}`,
     actor: "ZARA",
   });
 
-  return { sent: 1, detail: `Aceptado para ${recipient}` };
+  // Los efectos comerciales solo ocurren con un envío REAL: en modo prueba el
+  // prospecto nunca recibió nada, así que no cambia de estado.
+  if (!isTest && item.company_id) {
+    await applyAcceptedSideEffects(item);
+  }
+
+  return {
+    sent: 1,
+    detail: isTest ? `Prueba aceptada (destino real ${recipient})` : `Aceptado para ${recipient}`,
+  };
+}
+
+/**
+ * Efectos de un primer contacto o seguimiento realmente aceptado.
+ * Nunca se ejecuta en modo prueba.
+ */
+async function applyAcceptedSideEffects(item: QueueItem): Promise<void> {
+  const { supabase } = createSupabaseServerClient();
+  if (!item.company_id) return;
+
+  if (item.kind === "PRIMER_CONTACTO") {
+    await supabase
+      .from("sales_companies")
+      .update({ status: "CONTACTADO", last_interaction_at: new Date().toISOString() })
+      .eq("id", item.company_id);
+
+    await logSalesEvent({
+      companyId: item.company_id,
+      type: SALES_EVENT_TYPES.STATUS_CHANGED,
+      title: "Estado: NUEVO → CONTACTADO",
+      detail: "Primer contacto aceptado por Microsoft.",
+      actor: "ZARA",
+    });
+
+    // La secuencia de seguimientos nace del primer contacto real.
+    const { scheduleFollowupSequence } = await import("./followups");
+    const scheduled = await scheduleFollowupSequence({
+      companyId: item.company_id,
+      threadId: item.thread_id,
+      campaignId: item.campaign_id,
+    }).catch(() => 0);
+
+    if (scheduled > 0) {
+      await logSalesEvent({
+        companyId: item.company_id,
+        type: SALES_EVENT_TYPES.FOLLOWUP_SCHEDULED,
+        title: `${scheduled} seguimientos programados`,
+        actor: "ZARA",
+      });
+    }
+
+    // Contador de la campaña que originó el envío.
+    if (item.campaign_id) {
+      const { data: campaign } = await supabase
+        .from("sales_campaigns")
+        .select("sent_count")
+        .eq("id", item.campaign_id)
+        .maybeSingle();
+
+      await supabase
+        .from("sales_campaigns")
+        .update({ sent_count: Number(campaign?.sent_count ?? 0) + 1 })
+        .eq("id", item.campaign_id);
+
+      await supabase
+        .from("sales_campaign_targets")
+        .update({ status: "ENVIADO", sent_at: new Date().toISOString() })
+        .eq("campaign_id", item.campaign_id)
+        .eq("company_id", item.company_id);
+    }
+  }
+
+  if (item.kind === "SEGUIMIENTO" && item.followup_id) {
+    await supabase
+      .from("sales_followups")
+      .update({ status: "ENVIADO", sent_at: new Date().toISOString() })
+      .eq("id", item.followup_id);
+
+    await supabase
+      .from("sales_companies")
+      .update({ last_interaction_at: new Date().toISOString() })
+      .eq("id", item.company_id);
+  }
 }
 
 /** Ciclo completo que ejecuta el cron. */
 export async function runQueueCycle(): Promise<WorkerResult> {
   const released = await releaseStuckSends();
+  const confirmed = await confirmDeliveredWithoutBounce(24);
+  const enqueuedFollowups = await enqueueDueFollowups();
   const { analyzed, scheduled } = await processPendingAnalysis(3);
   const { sent, detail } = await processOneSend();
 
-  return { released, analyzed, scheduled, sent, detail };
+  return { released, confirmed, enqueuedFollowups, analyzed, scheduled, sent, detail };
 }

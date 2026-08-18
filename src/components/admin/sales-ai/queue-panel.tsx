@@ -12,6 +12,7 @@ type Stats = {
   scheduled: number;
   processing: number;
   acceptedToday: number;
+  accepted: number;
   sentWithoutBounce: number;
   bounced: number;
   errors: number;
@@ -97,7 +98,8 @@ export function QueuePanel({
     { label: "Esperando revisión", value: stats.pendingReview },
     { label: "Programados", value: stats.scheduled },
     { label: "Enviados hoy", value: stats.acceptedToday },
-    { label: "Aceptados por Microsoft", value: stats.sentWithoutBounce },
+    { label: "Aceptados por Microsoft", value: stats.accepted },
+    { label: "Sin rebote a 24 h", value: stats.sentWithoutBounce },
     { label: "Rebotados", value: stats.bounced },
     { label: "Con error", value: stats.errors },
     { label: "En curso", value: stats.processing },

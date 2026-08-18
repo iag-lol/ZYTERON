@@ -2,12 +2,9 @@ import "server-only";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSalesSettings } from "./settings";
-import { sendCommercialEmail } from "./mailer";
 import { notifySalesEvent } from "./notifications";
 import { logSalesEvent } from "./repository";
 import { SALES_EVENT_TYPES } from "./types";
-import { canRunAiTask } from "./budget";
-import { buildCompanyContext } from "./zara-brain";
 
 /**
  * Motor de seguimientos. La programación y las verificaciones son código puro:
@@ -126,188 +123,13 @@ export async function shouldSendFollowup(followupId: string): Promise<FollowupCh
   return { shouldSend: true, reason: "Corresponde enviar." };
 }
 
-/** Texto base del seguimiento cuando no se personaliza con IA. */
-function buildFallbackFollowup(step: number, companyName: string): { subject: string; body: string } {
-  const variants = [
-    {
-      subject: `Seguimiento · ${companyName}`,
-      body: `Hola,\n\nTe escribí hace unos días por la propuesta de presencia web para ${companyName}. ¿Alcanzaste a revisarla?\n\nSi te sirve, puedo enviarte un par de ejemplos de proyectos similares o coordinar una llamada breve para resolver dudas.`,
-    },
-    {
-      subject: `¿Seguimos adelante, ${companyName}?`,
-      body: `Hola,\n\nQuedo atenta por si el proyecto sigue en pie. Si el momento no es el adecuado, dímelo sin problema y lo retomamos cuando corresponda.\n\nSi prefieres, puedo prepararte una propuesta acotada para partir por lo esencial.`,
-    },
-    {
-      subject: `Último mensaje sobre tu proyecto web`,
-      body: `Hola,\n\nEste es mi último correo para no seguir ocupando tu bandeja. Si más adelante retoman el proyecto, quedo disponible.\n\nCualquier cosa, respondes este mismo correo y lo vemos.`,
-    },
-  ];
-
-  return variants[Math.min(step - 1, variants.length - 1)];
-}
-
-export type RunFollowupsResult = {
-  evaluated: number;
-  sent: number;
-  cancelled: number;
-  skipped: number;
-  errors: number;
-};
 
 /**
- * Procesa los seguimientos vencidos. Pensado para ejecutarse desde un cron.
+ * El despacho de seguimientos se movió a la cola (enqueueDueFollowups en
+ * queue-worker). Antes esta función enviaba hasta 25 correos en bucle, que fue
+ * una de las dos fuentes de la ráfaga rechazada por Microsoft.
  */
-export async function runDueFollowups(limit = 25): Promise<RunFollowupsResult> {
-  const result: RunFollowupsResult = { evaluated: 0, sent: 0, cancelled: 0, skipped: 0, errors: 0 };
-  const settings = await getSalesSettings();
 
-  if (settings.zara_paused) {
-    return result;
-  }
-
-  const { supabase } = createSupabaseServerClient();
-  const { data: due } = await supabase
-    .from("sales_followups")
-    .select("id, company_id, thread_id, sequence_step")
-    .eq("status", "PENDIENTE")
-    .lte("scheduled_for", new Date().toISOString())
-    .order("scheduled_for", { ascending: true })
-    .limit(limit);
-
-  for (const followup of due ?? []) {
-    result.evaluated += 1;
-
-    const check = await shouldSendFollowup(followup.id as string);
-    if (!check.shouldSend) {
-      await supabase
-        .from("sales_followups")
-        .update({ status: "CANCELADO", cancel_reason: check.reason })
-        .eq("id", followup.id);
-
-      await logSalesEvent({
-        companyId: followup.company_id as string,
-        type: SALES_EVENT_TYPES.FOLLOWUP_CANCELLED,
-        title: `Seguimiento ${followup.sequence_step} cancelado`,
-        detail: check.reason,
-        actor: "SYSTEM",
-      });
-      result.cancelled += 1;
-      continue;
-    }
-
-    const { data: company } = await supabase
-      .from("sales_companies")
-      .select("id, name, primary_email, detected_problem, recommended_service")
-      .eq("id", followup.company_id)
-      .maybeSingle();
-
-    if (!company?.primary_email) {
-      result.skipped += 1;
-      continue;
-    }
-
-    // Texto base por código; se personaliza con IA solo si hay presupuesto.
-    let { subject, body } = buildFallbackFollowup(
-      Number(followup.sequence_step ?? 1),
-      company.name as string,
-    );
-
-    const budget = await canRunAiTask("BULK");
-    if (budget.allowed) {
-      try {
-        const context = await buildCompanyContext(company.id as string);
-        const { personalizeFollowup } = await import("./zara-brain-followup");
-        const personalized = await personalizeFollowup({
-          companyId: company.id as string,
-          step: Number(followup.sequence_step ?? 1),
-          context,
-        });
-        if (personalized) {
-          subject = personalized.subject;
-          body = personalized.body;
-        }
-      } catch {
-        // Si falla la personalización se usa el texto base: el seguimiento igual sale.
-      }
-    }
-
-    const sent = await sendCommercialEmail({
-      companyId: company.id as string,
-      threadId: (followup.thread_id as string) ?? null,
-      recipient: company.primary_email as string,
-      subject,
-      body,
-      actor: undefined,
-    });
-
-    if (sent.ok) {
-      await supabase
-        .from("sales_followups")
-        .update({ status: "ENVIADO", sent_at: new Date().toISOString() })
-        .eq("id", followup.id);
-
-      await logSalesEvent({
-        companyId: company.id as string,
-        type: SALES_EVENT_TYPES.FOLLOWUP_SENT,
-        title: `Seguimiento ${followup.sequence_step} enviado`,
-        detail: subject,
-        actor: "ZARA",
-      });
-      result.sent += 1;
-    } else {
-      await supabase
-        .from("sales_followups")
-        .update({ status: "OMITIDO", cancel_reason: sent.error })
-        .eq("id", followup.id);
-      result.errors += 1;
-    }
-  }
-
-  // Tras el último seguimiento sin respuesta, la empresa pasa a EN PAUSA.
-  await pauseExhaustedProspects();
-
-  return result;
-}
-
-/** Pasa a EN_PAUSA a quienes agotaron la secuencia sin responder. */
-async function pauseExhaustedProspects() {
-  const { supabase } = createSupabaseServerClient();
-
-  const { data: candidates } = await supabase
-    .from("sales_companies")
-    .select("id")
-    .eq("status", "CONTACTADO")
-    .limit(100);
-
-  for (const company of candidates ?? []) {
-    const { data: pending } = await supabase
-      .from("sales_followups")
-      .select("id")
-      .eq("company_id", company.id)
-      .eq("status", "PENDIENTE")
-      .limit(1);
-
-    if ((pending?.length ?? 0) > 0) continue;
-
-    const { data: sent } = await supabase
-      .from("sales_followups")
-      .select("id")
-      .eq("company_id", company.id)
-      .eq("status", "ENVIADO")
-      .limit(1);
-
-    if ((sent?.length ?? 0) === 0) continue;
-
-    await supabase.from("sales_companies").update({ status: "EN_PAUSA" }).eq("id", company.id);
-    await logSalesEvent({
-      companyId: company.id as string,
-      type: SALES_EVENT_TYPES.STATUS_CHANGED,
-      title: "Estado: CONTACTADO → EN_PAUSA",
-      detail: "Se agotó la secuencia de seguimientos sin respuesta.",
-      actor: "SYSTEM",
-    });
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Oportunidades dormidas

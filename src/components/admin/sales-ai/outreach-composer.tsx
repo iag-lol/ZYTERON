@@ -70,11 +70,14 @@ export function OutreachComposer({
       if (!res.ok) throw new Error(payload.error || "No se pudo enviar.");
 
       setSent(true);
+      const when = payload.scheduledAt
+        ? new Date(payload.scheduledAt).toLocaleString("es-CL", { timeZone: "America/Santiago" })
+        : null;
       setFeedback({
         tone: "ok",
-        text: payload.redirected
-          ? `Enviado en MODO PRUEBA (no llegó a ${companyName}). Se programaron ${payload.followupsScheduled ?? 0} seguimientos.`
-          : `Enviado a ${companyName}. Se programaron ${payload.followupsScheduled ?? 0} seguimientos.`,
+        text: when
+          ? `Programado para ${companyName}. Sale el ${when}; el envío ocurre desde la cola, de a uno.`
+          : `Encolado para ${companyName}. Recibirá su hora en el próximo ciclo.`,
       });
     } catch (error) {
       setFeedback({ tone: "error", text: (error as Error).message });
@@ -164,7 +167,7 @@ export function OutreachComposer({
               ) : (
                 <Send className="h-4 w-4" />
               )}
-              Enviar y programar seguimientos
+              Aprobar y programar envío
             </Button>
             <Button
               onClick={() => void generate()}

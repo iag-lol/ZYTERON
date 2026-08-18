@@ -99,7 +99,9 @@ export default async function ActividadIaPage() {
               {rows.map((row) => (
                 <tr key={row.id} className="border-b border-slate-100">
                   <td className="p-3 text-xs text-slate-500">
-                    {new Date(row.created_at).toLocaleString("es-CL")}
+                    {new Date(row.created_at).toLocaleString("es-CL", {
+                      timeZone: "America/Santiago",
+                    })}
                   </td>
                   <td className="p-3 font-semibold text-slate-800">{row.action}</td>
                   <td className="p-3 text-xs text-slate-600">{row.model ?? "—"}</td>

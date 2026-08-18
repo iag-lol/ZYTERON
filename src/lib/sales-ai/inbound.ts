@@ -2,7 +2,7 @@ import "server-only";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getConversationMessages, getMessage, type GraphMessage } from "./graph-client";
-import { markEmailInvalid, sendCommercialEmail } from "./mailer";
+import { markEmailInvalid } from "./mailer";
 import { classifyBounce, detectAutoReply, detectBounce, detectOptOut } from "./rules";
 import { analyzeIncomingEmail, decideAction, draftReply } from "./zara-brain";
 import { getZaraProfile } from "./zara-identity";
@@ -191,16 +191,36 @@ export async function processInboundMessage(graphMessageId: string): Promise<Inb
     const codeMatch = bodyFull.match(/\b5\.\d\.\d{1,3}\b/);
     const bounceCode = codeMatch?.[0] ?? "desconocido";
 
-    // Se vincula con el envío original de la cola usando el identificador de
-    // Graph que Microsoft cita en el NDR.
+    // El NDR cita el internetMessageId del mensaje original, con formato
+    // <algo@dominio>. Ese es el identificador que permite ubicar la fila de la
+    // cola, la empresa, la campaña y el seguimiento asociados.
     const originalIdMatch = bodyFull.match(/Message-ID:\s*<([^>]+)>/i);
-    await markBounced({
-      graphMessageId: originalIdMatch?.[1] ?? null,
+    const internetMessageId = originalIdMatch?.[1] ? `<${originalIdMatch[1]}>` : null;
+
+    const bounceResult = await markBounced({
+      internetMessageId,
       companyId,
       code: bounceCode,
       kind,
       detail: `${subject} · ${body.slice(0, 400)}`,
     });
+
+    // Un bloqueo del tenant pausa aunque no se haya podido relacionar con
+    // ninguna empresa: el problema es global, no de un destinatario.
+    if (kind === "POLICY" && !bounceResult.paused) {
+      const { updateSalesSetting } = await import("./settings");
+      await updateSalesSetting("zara_paused", true, "SYSTEM");
+      await updateSalesSetting(
+        "pause_reason",
+        `Bloqueo de entrega ${bounceCode} sin empresa asociada. Revisa SPF, DKIM y DMARC.`,
+        "SYSTEM",
+      );
+      await notifySalesEvent({
+        priority: "ALTA",
+        title: `Zara pausada · ${bounceCode}`,
+        detail: "Bloqueo de entrega recibido sin poder asociarlo a un prospecto.",
+      });
+    }
 
     if (kind === "HARD" && companyId) {
       await markEmailInvalid(companyId, `Dirección inexistente: ${subject}`);
@@ -449,48 +469,46 @@ export async function processInboundMessage(graphMessageId: string): Promise<Inb
         actor: "ZARA",
       });
 
-      // Envío automático: solo si la configuración lo permite, el análisis no
-      // exige revisión y hay a quién responder. Antes esta rama nunca enviaba
-      // nada, así que "respuesta automática" no hacía efecto.
+      // Respuesta automática: se ENCOLA con prioridad, nunca se envía aquí.
+      // Antes esta rama llamaba directo al envío y se saltaba la reserva
+      // global, que es lo que permitía envíos simultáneos.
       if (!requiresApproval && replyTo && createdDraft?.id) {
-        const sent = await sendCommercialEmail({
-          companyId,
+        const { enqueueSend, scheduleQueueItem } = await import("./queue");
+
+        const enqueued = await enqueueSend({
+          companyId: companyId ?? "",
+          kind: "RESPUESTA",
           threadId,
-          recipient: replyTo,
+          draftId: createdDraft.id as string,
+          recipientEmail: replyTo,
           subject: draft.data.subject,
           body: draft.data.body,
           replyToGraphMessageId: message.id,
+          readyToSchedule: true,
+          createdBy: "ZARA",
         });
 
-        if (sent.ok) {
+        if (enqueued.ok && enqueued.id) {
+          const scheduled = await scheduleQueueItem(enqueued.id);
           await supabase
             .from("sales_drafts")
-            .update({
-              status: "ENVIADO",
-              auto_sent: true,
-              sent_at: new Date().toISOString(),
-              approved_by: "ZARA (automático)",
-              approved_at: new Date().toISOString(),
-            })
+            .update({ status: "APROBADO", auto_sent: true, approved_by: "ZARA (automático)", approved_at: new Date().toISOString() })
             .eq("id", createdDraft.id);
 
           await logSalesEvent({
             companyId,
-            type: SALES_EVENT_TYPES.DRAFT_SENT,
-            title: "Respuesta enviada automáticamente",
-            detail: `${draft.data.subject} · confianza ${data.confidence.toFixed(2)}`,
+            type: SALES_EVENT_TYPES.DRAFT_APPROVED,
+            title: "Respuesta automática encolada",
+            detail: scheduled.ok
+              ? `Programada para ${new Date(scheduled.scheduledAt!).toLocaleString("es-CL")}`
+              : "Queda en cola a la espera de hora.",
             actor: "ZARA",
           });
         } else {
-          await supabase
-            .from("sales_drafts")
-            .update({ status: "PENDIENTE", error_detail: sent.error })
-            .eq("id", createdDraft.id);
-
           await notifySalesEvent({
             priority: "ALTA",
-            title: "No se pudo enviar la respuesta automática",
-            detail: `${sent.error}. El borrador quedó esperando aprobación.`,
+            title: "No se pudo encolar la respuesta automática",
+            detail: `${enqueued.error}. El borrador quedó esperando aprobación.`,
             companyId,
           });
         }
