@@ -249,3 +249,71 @@ describe("cola · confirmación sin rebote a 24 horas", () => {
     assert.equal(bounced, 1);
   });
 });
+
+describe("cola · un solo envío vivo por prospecto y tipo", () => {
+  /**
+   * Refleja el índice sales_send_queue_one_active_idx, que es único sobre
+   * (company_id, kind) para los estados vivos. Detectó un error real en el
+   * script de pruebas SQL, que insertaba tres envíos del mismo tipo para una
+   * sola empresa.
+   */
+  const ACTIVE = ["PENDIENTE_ANALISIS", "PENDIENTE_REVISION", "PROGRAMADO", "PROCESANDO"];
+
+  function canInsert(
+    existing: Array<{ companyId: string; kind: string; status: string }>,
+    row: { companyId: string; kind: string; status: string },
+  ) {
+    if (!ACTIVE.includes(row.status)) return true;
+    return !existing.some(
+      (item) =>
+        item.companyId === row.companyId && item.kind === row.kind && ACTIVE.includes(item.status),
+    );
+  }
+
+  const existing = [{ companyId: "c1", kind: "PRIMER_CONTACTO", status: "PROGRAMADO" }];
+
+  it("rechaza un segundo primer contacto vivo para la misma empresa", () => {
+    const result = canInsert(existing, {
+      companyId: "c1",
+      kind: "PRIMER_CONTACTO",
+      status: "PROGRAMADO",
+    });
+    assert.equal(result, false, "no puede haber dos envíos vivos del mismo tipo");
+  });
+
+  it("permite otro tipo de envío para la misma empresa", () => {
+    const result = canInsert(existing, {
+      companyId: "c1",
+      kind: "SEGUIMIENTO",
+      status: "PROGRAMADO",
+    });
+    assert.equal(result, true);
+  });
+
+  it("permite el mismo tipo para otra empresa", () => {
+    const result = canInsert(existing, {
+      companyId: "c2",
+      kind: "PRIMER_CONTACTO",
+      status: "PROGRAMADO",
+    });
+    assert.equal(result, true);
+  });
+
+  it("permite reencolar cuando el anterior ya terminó", () => {
+    const finished = [{ companyId: "c1", kind: "PRIMER_CONTACTO", status: "ACEPTADO_POR_MICROSOFT" }];
+    const result = canInsert(finished, {
+      companyId: "c1",
+      kind: "PRIMER_CONTACTO",
+      status: "PROGRAMADO",
+    });
+    assert.equal(result, true, "un envío cerrado no debe bloquear uno nuevo");
+  });
+
+  it("un envío cancelado tampoco bloquea", () => {
+    const cancelled = [{ companyId: "c1", kind: "PRIMER_CONTACTO", status: "CANCELADO" }];
+    assert.equal(
+      canInsert(cancelled, { companyId: "c1", kind: "PRIMER_CONTACTO", status: "PROGRAMADO" }),
+      true,
+    );
+  });
+});
