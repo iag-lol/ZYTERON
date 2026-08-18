@@ -7,7 +7,7 @@ import { siteConfig } from "@/config/site";
 import { canRunAiTask, recordAiUsage, type TaskPriority } from "./budget";
 import { getSalesSettings } from "./settings";
 import { getCompany, getCompanyTimeline } from "./repository";
-import { requiresHumanByPolicy } from "./rules";
+import { analysisSchema, requiresHumanByPolicy, type EmailAnalysis } from "./rules";
 
 /**
  * Cerebro de Zara. No es un prompt gigante: es una capa acotada que recibe
@@ -21,39 +21,9 @@ const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 // Esquema de análisis (sección 8 del encargo)
 // ---------------------------------------------------------------------------
 
-export const analysisSchema = z.object({
-  intent: z.enum([
-    "CONSULTA_PRECIO",
-    "SOLICITA_REUNION",
-    "SOLICITA_COTIZACION",
-    "INTERESADO",
-    "NO_INTERESADO",
-    "PIDE_NO_CONTACTAR",
-    "RECLAMO",
-    "NEGOCIACION",
-    "PREGUNTA_TECNICA",
-    "FUERA_DE_ALCANCE",
-    "OTRO",
-  ]),
-  confidence: z.number().min(0).max(1),
-  lead_status: z.enum([
-    "CONTACTADO",
-    "RESPONDIO",
-    "INTERESADO",
-    "PRESUPUESTO_ENVIADO",
-    "NEGOCIACION",
-    "GANADO",
-    "PERDIDO",
-    "EN_PAUSA",
-  ]),
-  potential: z.enum(["BAJO", "MEDIO", "POTENCIAL", "ALTO"]),
-  summary: z.string().min(1).max(600),
-  recommended_action: z.string().min(1).max(300),
-  requires_human: z.boolean(),
-  reason: z.string().max(400),
-});
-
-export type EmailAnalysis = z.infer<typeof analysisSchema>;
+// El esquema de análisis vive en rules.ts: es validación pura y así se puede
+// probar sin arrastrar el runtime del servidor.
+export { analysisSchema, type EmailAnalysis } from "./rules";
 
 export const draftSchema = z.object({
   subject: z.string().min(1).max(200),

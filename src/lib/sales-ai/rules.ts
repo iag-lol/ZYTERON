@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /**
  * Reglas comerciales puras: sin base de datos, sin red y sin `server-only`.
  *
@@ -367,3 +369,79 @@ export function normalizePotential(value?: string): "BAJO" | "MEDIO" | "POTENCIA
   if (raw.startsWith("BAJ")) return "BAJO";
   return "MEDIO";
 }
+
+// ---------------------------------------------------------------------------
+// Esquema de análisis de correo
+// ---------------------------------------------------------------------------
+
+const INTENTS = [
+  "CONSULTA_PRECIO",
+  "SOLICITA_REUNION",
+  "SOLICITA_COTIZACION",
+  "INTERESADO",
+  "NO_INTERESADO",
+  "PIDE_NO_CONTACTAR",
+  "RECLAMO",
+  "NEGOCIACION",
+  "PREGUNTA_TECNICA",
+  "FUERA_DE_ALCANCE",
+  "RESPUESTA_AUTOMATICA",
+  "OTRO",
+] as const;
+
+const LEAD_STATUSES = [
+  "CONTACTADO",
+  "RESPONDIO",
+  "INTERESADO",
+  "PRESUPUESTO_ENVIADO",
+  "NEGOCIACION",
+  "GANADO",
+  "PERDIDO",
+  "EN_PAUSA",
+] as const;
+
+const POTENTIALS = ["BAJO", "MEDIO", "POTENCIAL", "ALTO"] as const;
+
+/**
+ * Convierte a un valor conocido en vez de rechazar la respuesta completa.
+ *
+ * Un modelo que devuelve una etiqueta ligeramente distinta hacía fallar todo
+ * el análisis y se perdían los tokens ya gastados. Ahora se normaliza a la
+ * opción más cercana y, si no hay forma de saberlo, cae en el valor seguro.
+ */
+function tolerantEnum<T extends readonly string[]>(options: T, fallback: T[number]) {
+  return z.preprocess((value) => {
+    const raw = String(value ?? "")
+      .trim()
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[\s-]+/g, "_");
+
+    if ((options as readonly string[]).includes(raw)) return raw;
+
+    // Coincidencia parcial: cubre variantes como "CONSULTA DE PRECIO".
+    const partial = (options as readonly string[]).find(
+      (option) => raw.includes(option) || option.includes(raw),
+    );
+    return partial ?? fallback;
+  }, z.enum(options as unknown as [string, ...string[]]));
+}
+
+export const analysisSchema = z.object({
+  intent: tolerantEnum(INTENTS, "OTRO"),
+  // Un modelo puede devolver 85 en vez de 0.85; se normaliza a 0-1.
+  confidence: z.preprocess((value) => {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return 0;
+    return parsed > 1 ? Math.min(parsed / 100, 1) : Math.max(parsed, 0);
+  }, z.number().min(0).max(1)),
+  lead_status: tolerantEnum(LEAD_STATUSES, "RESPONDIO"),
+  potential: tolerantEnum(POTENTIALS, "MEDIO"),
+  summary: z.string().min(1).max(600),
+  recommended_action: z.string().min(1).max(300),
+  requires_human: z.preprocess((value) => Boolean(value), z.boolean()),
+  reason: z.string().max(400).default(""),
+});
+
+export type EmailAnalysis = z.infer<typeof analysisSchema>;
