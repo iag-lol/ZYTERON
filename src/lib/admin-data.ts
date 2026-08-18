@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import {
   getClients,
   getProjects,
@@ -9,6 +11,7 @@ import {
   getTaxDocuments,
   getVisits,
   getWebVisits,
+  getWebVisitTotals,
   type Client,
   type ClientRequest,
   type EnrichedQuote,
@@ -132,6 +135,8 @@ function buildSnapshot(base: {
   requests: ClientRequest[];
   taxDocuments: TaxDocument[];
   webVisits: WebVisit[];
+  /** Totales exactos contados en la base; evitan depender del largo de la muestra. */
+  webVisitTotals?: { total: number; today: number };
 }): AdminSnapshot {
   const rawLeads = base.leads ?? [];
   const quotes = base.quotes ?? [];
@@ -212,15 +217,20 @@ function buildSnapshot(base: {
     .map((item) => String(item.createdAt || "").trim())
     .filter((value) => isValidDate(value));
 
-  const totalVisits = usingWebFallback ? fallbackVisitCandidates.length : webVisits.length;
+  // Los totales vienen de un COUNT en la base: antes se calculaban con el
+  // largo del arreglo, así que quedaban topados por el límite de la consulta.
+  const totalVisits = usingWebFallback
+    ? fallbackVisitCandidates.length
+    : (base.webVisitTotals?.total ?? webVisits.length);
 
   const todayVisits = usingWebFallback
     ? fallbackVisitCandidates.filter((value) => new Date(value).getTime() >= todayStart).length
-    : webVisits.filter((visit) => {
-        if (!visit.createdAt) return false;
-        const ts = new Date(visit.createdAt).getTime();
-        return !Number.isNaN(ts) && ts >= todayStart;
-      }).length;
+    : (base.webVisitTotals?.today ??
+        webVisits.filter((visit) => {
+          if (!visit.createdAt) return false;
+          const ts = new Date(visit.createdAt).getTime();
+          return !Number.isNaN(ts) && ts >= todayStart;
+        }).length);
 
   const uniqueIps = usingWebFallback
     ? 0
@@ -330,7 +340,7 @@ function buildSnapshot(base: {
   };
 }
 
-export async function getAdminSnapshot(): Promise<AdminSnapshot> {
+async function loadAdminSnapshot(): Promise<AdminSnapshot> {
   try {
     // Reconciliación defensiva EN SEGUNDO PLANO: ya no bloquea la carga del
     // dashboard (antes se ejecutaba con await en cada visita y lo hacía lento).
@@ -338,18 +348,29 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
       console.warn("[admin/snapshot] syncWonQuotesCrossModules falló (segundo plano):", syncError);
     });
 
-    const [leads, quotes, visits, sales, clients, projects, requests, taxDocuments, webVisits] =
-      await Promise.all([
-        fetchLeads(),
-        getQuotes(),
-        getVisits(),
-        getSales(),
-        getClients(),
-        getProjects(),
-        getRequests(),
-        getTaxDocuments(),
-        getWebVisits(),
-      ]);
+    const [
+      leads,
+      quotes,
+      visits,
+      sales,
+      clients,
+      projects,
+      requests,
+      taxDocuments,
+      webVisits,
+      webVisitTotals,
+    ] = await Promise.all([
+      fetchLeads(),
+      getQuotes(),
+      getVisits(),
+      getSales(),
+      getClients(),
+      getProjects(),
+      getRequests(),
+      getTaxDocuments(),
+      getWebVisits(),
+      getWebVisitTotals(),
+    ]);
 
     return buildSnapshot({
       leads,
@@ -361,6 +382,7 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
       requests,
       taxDocuments,
       webVisits,
+      webVisitTotals,
     });
   } catch {
     return buildSnapshot({
@@ -378,3 +400,13 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
 }
 
 export type { Client, ClientRequest, EnrichedQuote as Quote, Lead, Project, Sale, TaxDocument, Visit, WebVisit };
+
+/**
+ * Snapshot del panel, memoizado por petición.
+ *
+ * Cuatro páginas del admin (dashboard, cotizaciones, ventas y reportes) piden
+ * este snapshot, y sin memoización cada llamada dentro de un mismo render
+ * repetía las diez consultas. `cache` de React las colapsa en una sola sin
+ * introducir datos obsoletos entre peticiones distintas.
+ */
+export const getAdminSnapshot = cache(loadAdminSnapshot);

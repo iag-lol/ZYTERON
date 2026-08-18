@@ -291,11 +291,20 @@ export type WebVisit = {
 
 export type EnrichedQuote = ReturnType<typeof enrichQuoteRecord>;
 
+/**
+ * Techo de filas para las tablas del panel. Sin él, cada carga del admin se
+ * vuelve más lenta a medida que crece el histórico, aunque en pantalla solo se
+ * muestren los registros recientes.
+ */
+export const ADMIN_ROW_LIMIT = 1000;
+
 type SelectOptions = {
   orderBy?: string;
   ascending?: boolean;
   limit?: number;
   filters?: Record<string, string | number | null | undefined>;
+  /** Acota por fecha en el servidor, para no traer histórico completo. */
+  gte?: { column: string; value: string };
 };
 
 function readEnvValue(...names: string[]) {
@@ -487,11 +496,41 @@ async function runSelectQuery(
     query = query.order(options.orderBy, { ascending: options.ascending ?? false });
   }
 
+  if (options.gte) {
+    query = query.gte(options.gte.column, options.gte.value);
+  }
+
   if (options.limit) {
     query = query.limit(options.limit);
   }
 
   return query;
+}
+
+/**
+ * Cuenta filas SIN transferirlas (head: true). Es órdenes de magnitud más
+ * barato que traer los registros solo para hacer `.length`, y además entrega
+ * el total real en vez de quedar topado por el límite de la consulta.
+ */
+export async function countRows(
+  table: string,
+  filters: { gte?: { column: string; value: string } } = {},
+): Promise<number> {
+  try {
+    const { supabase } = createSupabaseServerClient();
+    let query = supabase
+      .schema("public")
+      .from(table)
+      .select("*", { count: "exact", head: true });
+
+    if (filters.gte) query = query.gte(filters.gte.column, filters.gte.value);
+
+    const { count, error } = await query;
+    if (error) return 0;
+    return count ?? 0;
+  } catch {
+    return 0;
+  }
 }
 
 export async function safeSelect<T>(table: string, select: string, options: SelectOptions = {}) {
@@ -613,7 +652,7 @@ export async function getQuotes() {
   const rows = await safeSelect<QuoteRecord>(
     "Quote",
     "id, userId, name, email, phone, company, message, subtotal, discount, total, status, createdAt",
-    { orderBy: "createdAt" },
+    { orderBy: "createdAt", limit: ADMIN_ROW_LIMIT },
   );
 
   return rows.map((row) => {
@@ -710,14 +749,17 @@ export async function findOrCreateClientByEmail(input: {
 }
 
 export async function getVisits() {
-  return safeSelect<Visit>("Visit", "id, clientId, date, notes, status, createdAt", { orderBy: "date" });
+  return safeSelect<Visit>("Visit", "id, clientId, date, notes, status, createdAt", {
+    orderBy: "date",
+    limit: ADMIN_ROW_LIMIT,
+  });
 }
 
 export async function getSales() {
   return safeSelect<Sale>(
     "Sale",
     "id, clientId, total, createdAt, description, paymentMethod, invoiceRef",
-    { orderBy: "createdAt" },
+    { orderBy: "createdAt", limit: ADMIN_ROW_LIMIT },
   );
 }
 
@@ -795,7 +837,7 @@ export async function getProjects() {
   return safeSelect<Project>(
     "Project",
     "id, clientId, quoteId, saleId, title, serviceArea, status, priority, startDate, startTime, endDate, endTime, description, scope, hourlyRate, estimatedHours, actualHours, totalCharge, owner, createdAt",
-    { orderBy: "createdAt" },
+    { orderBy: "createdAt", limit: ADMIN_ROW_LIMIT },
   );
 }
 
@@ -803,7 +845,7 @@ export async function getRequests() {
   return safeSelect<ClientRequest>(
     "ClientRequest",
     "id, clientId, projectId, subject, channel, priority, status, description, dueDate, createdAt",
-    { orderBy: "createdAt" },
+    { orderBy: "createdAt", limit: ADMIN_ROW_LIMIT },
   );
 }
 
@@ -811,7 +853,7 @@ export async function getTaxDocuments() {
   return safeSelect<TaxDocument>(
     "TaxDocument",
     "id, clientId, projectId, quoteId, saleId, type, documentNumber, siiFolio, issueDate, dueDate, netAmount, taxAmount, totalAmount, status, paymentStatus, emissionMethod, pdfUrl, xmlUrl, notes, createdAt",
-    { orderBy: "issueDate" },
+    { orderBy: "issueDate", limit: ADMIN_ROW_LIMIT },
   );
 }
 
@@ -823,12 +865,34 @@ export async function getTaxDocuments() {
  * columnas más largas de la tabla y nadie las lee, así que transferirlas
  * multiplicaba el peso de cada carga del panel sin aportar nada.
  */
-export async function getWebVisits(limit = 5000) {
+/** Días de visitas que se traen para calcular rutas y visitantes únicos. */
+export const WEB_VISIT_WINDOW_DAYS = 30;
+
+/**
+ * Muestra reciente de visitas. Antes traía 5.000 filas en CADA carga del admin
+ * solo para contar y sacar el top de rutas, y la tabla crece con cada pageview
+ * del sitio público. Ahora se acota a una ventana y los totales exactos se
+ * obtienen con countRows, que no transfiere datos.
+ */
+export async function getWebVisits(limit = 1200) {
+  const since = new Date(Date.now() - WEB_VISIT_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
   return safeSelect<WebVisit>(
     "WebVisit",
-    "id, path, ip, ipHash, sessionId, createdAt",
-    { orderBy: "createdAt", limit },
+    "id, path, ipHash, sessionId, createdAt",
+    { orderBy: "createdAt", limit, gte: { column: "createdAt", value: since } },
   );
+}
+
+export async function getWebVisitTotals() {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const [total, today] = await Promise.all([
+    countRows("WebVisit"),
+    countRows("WebVisit", { gte: { column: "createdAt", value: todayStart.toISOString() } }),
+  ]);
+
+  return { total, today };
 }
 
 /**
