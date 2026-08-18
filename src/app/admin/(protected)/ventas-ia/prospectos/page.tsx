@@ -3,6 +3,7 @@ import { Building2, Mail, Phone, Sparkles } from "lucide-react";
 
 import { listCompanies } from "@/lib/sales-ai/repository";
 import { SALES_STATUSES, SALES_STATUS_LABELS, SALES_POTENTIALS, type SalesStatus, type SalesPotential } from "@/lib/sales-ai/types";
+import { BulkOutreach } from "@/components/admin/sales-ai/bulk-outreach";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +85,17 @@ export default async function ProspectosPage({ searchParams }: PageProps) {
           </p>
         </div>
       ) : null}
+
+      <BulkOutreach
+        candidates={companies
+          .filter((company) => company.status === "NUEVO" && !company.do_not_contact)
+          .map((company) => ({
+            id: company.id,
+            name: company.name,
+            email: company.primary_email,
+            potential: company.potential,
+          }))}
+      />
 
       <form className="flex flex-wrap gap-2" action="/admin/ventas-ia/prospectos">
         <input
