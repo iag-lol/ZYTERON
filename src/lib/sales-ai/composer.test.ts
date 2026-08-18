@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { checkOutreachQuality, outreachContentSchema, type OutreachContent } from "./rules";
+import {
+  checkOutreachQuality,
+  factAuditResponseSchema,
+  outreachContentSchema,
+  type OutreachContent,
+} from "./rules";
 
 /** Correo de referencia que sí cumple: 140-220 palabras y nombra la empresa. */
 function buildValidContent(overrides: Partial<OutreachContent> = {}): OutreachContent {
@@ -116,6 +121,29 @@ describe("esquema estricto del correo", () => {
 
   it("rechaza un cuerpo demasiado corto para ser profesional", () => {
     const result = outreachContentSchema.safeParse(buildValidContent({ body_text: "Hola." }));
+    assert.equal(result.success, false);
+  });
+});
+
+describe("auditoría factual del primer contacto", () => {
+  it("acepta una auditoría sin afirmaciones inventadas", () => {
+    const result = factAuditResponseSchema.safeParse({ supported: true, unsupported_claims: [] });
+    assert.equal(result.success, true);
+  });
+
+  it("conserva las afirmaciones no respaldadas para revisión humana", () => {
+    const result = factAuditResponseSchema.safeParse({
+      supported: false,
+      unsupported_claims: ["Afirma una presencia activa en redes sociales que no está registrada."],
+    });
+    assert.equal(result.success, true);
+    assert.deepEqual(result.success && result.data.unsupported_claims, [
+      "Afirma una presencia activa en redes sociales que no está registrada.",
+    ]);
+  });
+
+  it("rechaza una respuesta incompleta del auditor", () => {
+    const result = factAuditResponseSchema.safeParse({ supported: true });
     assert.equal(result.success, false);
   });
 });
