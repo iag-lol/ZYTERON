@@ -6,7 +6,12 @@ import { canRunAiTask, recordAiUsage } from "./budget";
 import { getSalesSettings } from "./settings";
 import { getCompany } from "./repository";
 import { HONESTY_RULE } from "./zara-identity";
-import { checkOutreachQuality, outreachContentSchema, type OutreachContent } from "./rules";
+import {
+  checkOutreachQuality,
+  factAuditResponseSchema,
+  outreachContentSchema,
+  type OutreachContent,
+} from "./rules";
 
 /**
  * Redacción del primer contacto con salida estructurada.
@@ -22,6 +27,12 @@ const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 
 type RepairResult = {
   content?: OutreachContent;
+  error?: string;
+};
+
+type FactAuditResult = {
+  supported: boolean;
+  unsupportedClaims: string[];
   error?: string;
 };
 
@@ -61,6 +72,23 @@ const RESPONSE_SCHEMA = {
   },
 } as const;
 
+const FACT_AUDIT_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["supported", "unsupported_claims"],
+  properties: {
+    supported: {
+      type: "boolean",
+      description: "true únicamente si todas las afirmaciones del correo están respaldadas por los datos entregados.",
+    },
+    unsupported_claims: {
+      type: "array",
+      items: { type: "string" },
+      description: "Afirmaciones, elogios, resultados o funcionalidades que no estén respaldados por los datos.",
+    },
+  },
+} as const;
+
 export type ComposeResult = {
   ok: boolean;
   content?: OutreachContent;
@@ -83,7 +111,7 @@ Escribes el PRIMER correo en frío a ${company.name}. No te conocen. Tienes que 
 
 ESTRUCTURA DEL CUERPO (bloques cortos separados por línea en blanco)
 1. Saludo profesional: 2 a 8 palabras.
-2. Observación concreta y verdadera sobre ${company.name}: 25 a 35 palabras. Debe notarse que miraste su negocio.
+2. Observación concreta y verdadera sobre ${company.name}: 25 a 35 palabras. Debe ser una paráfrasis fiel del rubro, problema detectado, servicio recomendado u observaciones entregadas abajo.
 3. El problema u oportunidad, en términos de negocio: 25 a 35 palabras sobre qué les cuesta hoy en tiempo, consultas perdidas u orden.
 4. Qué haría Zyteron: 35 a 50 palabras, concreto y acotado.
 5. Beneficios comerciales claros: 25 a 40 palabras, sin exagerar.
@@ -103,6 +131,10 @@ PROHIBIDO
 - Emojis, mayúsculas de más o lenguaje de promoción.
 - Escribir algo que serviría igual para otra empresa. Si al cambiar el nombre el correo sigue funcionando, está MAL.
 - Incluir firma: la agrega el sistema.
+- Decir "he visto", "he notado", "he observado", "se destaca", "su compromiso" o cualquier elogio si esa observación no aparece literalmente en los datos.
+- Agregar tendencias de mercado, cualidades de la empresa, contenido de su web, especialidades, redes sociales, volúmenes, resultados esperados o capacidades que no estén escritas en los datos.
+- Presentar como resultado que aumentarán ventas, visitas, cierres o satisfacción. Describe beneficios solo como objetivos operativos: ordenar, centralizar, facilitar o reducir trabajo manual cuando se desprendan del problema registrado.
+- Convertir el nombre o el rubro en un supuesto. El nombre "tienda", "clínica" o "constructora" no demuestra catálogo, especialidades, calidad, trayectoria ni presencia digital.
 
 PRECIOS (los únicos citables; úsalos solo si vienen al caso)
 ${plans}
@@ -231,6 +263,157 @@ async function repairOutreachContent(input: {
   });
 
   return { content: validation.data };
+}
+
+/**
+ * Auditoría factual separada de la redacción. Structured Outputs valida la
+ * forma y el control local valida largo/spam; esta segunda lectura responde la
+ * pregunta semántica que el código no puede resolver con expresiones regulares:
+ * si el texto afirmó algo que no estaba en la ficha del prospecto.
+ *
+ * Falla de forma cerrada: si la auditoría no puede ejecutarse o no devuelve un
+ * resultado válido, el correo queda para revisión humana y nunca se programa.
+ */
+async function auditOutreachFacts(input: {
+  companyId: string;
+  company: NonNullable<Awaited<ReturnType<typeof getCompany>>>;
+  content: OutreachContent;
+  apiKey: string;
+  model: string;
+}): Promise<FactAuditResult> {
+  const budget = await canRunAiTask("NORMAL");
+  if (!budget.allowed) {
+    return {
+      supported: false,
+      unsupportedClaims: [],
+      error: budget.reason || "No hay presupuesto disponible para la verificación factual.",
+    };
+  }
+
+  const sourceOfTruth = {
+    company: input.company.name,
+    industry: input.company.industry,
+    commune: input.company.commune,
+    region: input.company.region,
+    contact_name: input.company.contact_name,
+    contact_role: input.company.contact_role,
+    website: input.company.website,
+    detected_problem: input.company.detected_problem,
+    recommended_service: input.company.recommended_service,
+    potential: input.company.potential,
+    score: input.company.score,
+    notes: input.company.notes,
+    approved_pricing: PLAN_PRICES,
+    pricing_note: PRICING_NOTE,
+  };
+
+  let response: Response;
+  try {
+    response = await fetch(OPENAI_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${input.apiKey}` },
+      body: JSON.stringify({
+        model: input.model,
+        temperature: 0,
+        max_tokens: 500,
+        response_format: {
+          type: "json_schema",
+          json_schema: { name: "outreach_fact_audit", strict: true, schema: FACT_AUDIT_SCHEMA },
+        },
+        messages: [
+          {
+            role: "system",
+            content: `Eres un auditor factual estricto de correo comercial. Compara el asunto y el cuerpo exclusivamente con la FUENTE DE VERDAD entregada.
+
+Marca supported=false si aparece cualquiera de estos casos:
+- elogios, cualidades, trayectoria, especialidades, catálogo, redes sociales, contenido web o tendencias de mercado no escritos en la fuente;
+- resultados esperados como aumentar ventas, visitas, cierres o satisfacción, aunque se expresen como posibilidad;
+- precios, plazos, descuentos, clientes o cifras no escritos en la fuente;
+- funcionalidades que excedan el servicio recomendado;
+- una inferencia basada solamente en el nombre o rubro de la empresa.
+
+Acepta paráfrasis fieles y beneficios operativos prudentes que se desprendan directamente del problema y del servicio registrado. Ante duda, supported=false. Devuelve cada afirmación no respaldada de forma breve y concreta. Si supported=true, unsupported_claims debe ser [].`,
+          },
+          {
+            role: "user",
+            content: `FUENTE DE VERDAD:\n${JSON.stringify(sourceOfTruth)}\n\nCORREO:\n${JSON.stringify({ subject: input.content.subject, body: input.content.body_text })}`,
+          },
+        ],
+      }),
+    });
+  } catch {
+    return {
+      supported: false,
+      unsupportedClaims: [],
+      error: "No se pudo ejecutar la verificación factual.",
+    };
+  }
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    await recordAiUsage({
+      companyId: input.companyId,
+      action: "AUDIT_OUTREACH_FACTS",
+      model: input.model,
+      promptTokens: 0,
+      completionTokens: 0,
+      result: "ERROR",
+      errorDetail: `HTTP ${response.status}: ${detail.slice(0, 200)}`,
+    });
+    return {
+      supported: false,
+      unsupportedClaims: [],
+      error: `La verificación factual respondió ${response.status}.`,
+    };
+  }
+
+  const payload = (await response.json().catch(() => null)) as {
+    choices?: Array<{ message?: { content?: string } }>;
+    usage?: { prompt_tokens?: number; completion_tokens?: number };
+  } | null;
+  const promptTokens = payload?.usage?.prompt_tokens ?? 0;
+  const completionTokens = payload?.usage?.completion_tokens ?? 0;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(payload?.choices?.[0]?.message?.content ?? "{}");
+  } catch {
+    parsed = null;
+  }
+
+  const validation = factAuditResponseSchema.safeParse(parsed);
+  if (!validation.success) {
+    await recordAiUsage({
+      companyId: input.companyId,
+      action: "AUDIT_OUTREACH_FACTS",
+      model: input.model,
+      promptTokens,
+      completionTokens,
+      result: "ERROR",
+      errorDetail: `Esquema inválido: ${validation.error.issues[0]?.message}`,
+    });
+    return {
+      supported: false,
+      unsupportedClaims: [],
+      error: "La verificación factual no devolvió un resultado válido.",
+    };
+  }
+
+  const supported = validation.data.supported && validation.data.unsupported_claims.length === 0;
+  await recordAiUsage({
+    companyId: input.companyId,
+    action: "AUDIT_OUTREACH_FACTS",
+    model: input.model,
+    promptTokens,
+    completionTokens,
+    result: supported ? "OK" : "SKIPPED",
+    errorDetail: supported ? undefined : validation.data.unsupported_claims.join(" · ").slice(0, 1000),
+  });
+
+  return {
+    supported,
+    unsupportedClaims: validation.data.unsupported_claims,
+  };
 }
 
 export async function composeOutreach(companyId: string): Promise<ComposeResult> {
@@ -388,8 +571,25 @@ export async function composeOutreach(companyId: string): Promise<ComposeResult>
     }
   }
 
+  let factAuditReason: string | undefined;
+  if (!content.requires_review && issues.length === 0 && content.confidence >= 0.7) {
+    const audit = await auditOutreachFacts({
+      companyId,
+      company,
+      content,
+      apiKey,
+      model,
+    });
+
+    if (!audit.supported) {
+      factAuditReason = audit.unsupportedClaims.length
+        ? `Verificación factual: ${audit.unsupportedClaims.join(" · ")}`
+        : `Verificación factual: ${audit.error || "no fue posible confirmar que todas las afirmaciones estén respaldadas."}`;
+    }
+  }
+
   const requiresReview =
-    content.requires_review || issues.length > 0 || content.confidence < 0.7;
+    content.requires_review || issues.length > 0 || content.confidence < 0.7 || Boolean(factAuditReason);
 
   const reviewReason = issues.length
     ? [
@@ -400,7 +600,7 @@ export async function composeOutreach(companyId: string): Promise<ComposeResult>
       ? content.review_reason || "El modelo pidió revisión humana."
       : content.confidence < 0.7
         ? `Confianza baja (${content.confidence.toFixed(2)}).`
-        : repairError;
+        : factAuditReason || repairError;
 
   return { ok: true, content, requiresReview, reviewReason };
 }
