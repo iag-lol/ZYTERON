@@ -5,14 +5,13 @@ import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
 import { isEncryptionConfigured } from "@/lib/sales-ai/crypto";
 import {
   buildAuthorizeUrl,
-  createSubscription,
   deleteSubscription,
+  ensureSubscription,
   getMailAccount,
   isGraphConfigured,
   renewSubscription,
 } from "@/lib/sales-ai/graph-client";
-import { getSalesSettings, updateSalesSetting } from "@/lib/sales-ai/settings";
-import { siteConfig } from "@/config/site";
+import { getSalesSettings } from "@/lib/sales-ai/settings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -73,17 +72,14 @@ export async function POST(request: Request) {
     const account = await getMailAccount();
 
     if (body.action === "subscribe") {
-      // El clientState valida que la notificación viene realmente de nuestra suscripción.
-      const clientState = randomBytes(24).toString("hex");
-      await updateSalesSetting("webhook_client_state" as never, clientState, actor);
-
-      const notificationUrl = `${siteConfig.url}/api/sales-ai/webhook`;
-      const subscription = await createSubscription(notificationUrl, clientState);
-
+      // ensureSubscription genera el clientState en el servidor y lo guarda:
+      // nunca se devuelve al navegador.
+      const subscription = await ensureSubscription({ actor });
       return NextResponse.json({
         ok: true,
-        subscriptionId: subscription.id,
-        expiresAt: subscription.expirationDateTime,
+        subscriptionId: subscription.subscriptionId,
+        expiresAt: subscription.expiresAt,
+        renewed: subscription.renewed,
       });
     }
 

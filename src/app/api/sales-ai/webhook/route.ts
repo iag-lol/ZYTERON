@@ -73,7 +73,7 @@ export async function POST(request: Request) {
   }
 
   const settings = await getSalesSettings();
-  const expectedState = (settings as unknown as { webhook_client_state?: string }).webhook_client_state ?? "";
+  const expectedState = settings.webhook_client_state ?? "";
 
   // Procesamos en segundo plano: Microsoft exige respuesta en menos de 3 s.
   const accepted: string[] = [];

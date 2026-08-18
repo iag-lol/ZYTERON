@@ -28,6 +28,8 @@ export type SalesSettings = {
   zara_role: string;
   zara_signature: string;
   bounce_max_attempts: number;
+  /** Secreto compartido con Microsoft para validar los webhooks. NUNCA se expone. */
+  webhook_client_state: string;
 };
 
 /**
@@ -58,7 +60,22 @@ export const DEFAULT_SALES_SETTINGS: SalesSettings = {
   zara_role: "Ejecutiva Comercial",
   zara_signature: "",
   bounce_max_attempts: 2,
+  webhook_client_state: "",
 };
+
+/**
+ * Claves que jamás deben viajar al navegador. Se filtran en cualquier respuesta
+ * de API aunque el endpoint exija sesión de administrador.
+ */
+export const SECRET_SETTING_KEYS = new Set<keyof SalesSettings>(["webhook_client_state"]);
+
+/** Devuelve la configuración sin los valores secretos, apta para el frontend. */
+export function redactSecretSettings(settings: SalesSettings): Omit<SalesSettings, "webhook_client_state"> & {
+  webhook_client_state_configured: boolean;
+} {
+  const { webhook_client_state, ...safe } = settings;
+  return { ...safe, webhook_client_state_configured: Boolean(webhook_client_state) };
+}
 
 const CACHE_TTL_MS = 30_000;
 let cache: { value: SalesSettings; expiresAt: number } | null = null;
