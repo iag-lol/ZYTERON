@@ -342,7 +342,10 @@ export function enrichQuoteRecord(record: QuoteRecord) {
     totalAmount: typeof record.total === "number" ? record.total : meta.grandTotal,
     subtotalAmount: typeof record.subtotal === "number" ? record.subtotal : meta.subtotal,
     discountAmount: typeof record.discount === "number" ? record.discount : meta.totalDescuento,
-    pdfUrl: meta.pdfPublicUrl || `/admin/cotizaciones/${record.id}/pdf`,
+    // Siempre la ruta que genera el PDF al momento: el archivo del bucket es
+    // una copia histórica congelada con el diseño de su época, y servirla
+    // hacía que ningún rediseño se viera en cotizaciones ya creadas.
+    pdfUrl: `/admin/cotizaciones/${record.id}/pdf`,
   };
 }
 
