@@ -116,7 +116,12 @@ function escapeHtml(value: string) {
 
 function formatDate(value?: string | null) {
   if (!value) return "—";
-  const parsed = new Date(value);
+  // "2026-09-18" sin hora se parsea como medianoche UTC y en Chile retrocede
+  // un día: el correo mostraría una fecha distinta a la del PDF adjunto.
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  const parsed = dateOnly
+    ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
+    : new Date(value);
   if (Number.isNaN(parsed.getTime())) return "—";
   return parsed.toLocaleDateString("es-CL", {
     day: "2-digit",
