@@ -4,7 +4,7 @@ import { siteConfig } from "@/config/site";
 import { buildDefaultQuoteTerms, currencyCLP, type QuoteLineItem, type QuoteMeta } from "@/lib/admin/quote";
 
 /**
- * Cotización comercial en una sola hoja A4.
+ * Cotización comercial en una sola hoja tamaño carta.
  *
  * Este documento se comparte con clientes: todo el diseño está al servicio de
  * que la propuesta se lea completa de un vistazo. La página se arma en tres
@@ -27,7 +27,8 @@ type QuotePdfInput = {
 
 type Color = ReturnType<typeof rgb>;
 
-const PAGE_SIZE: [number, number] = [595.28, 841.89];
+// Formato carta (8,5 x 11"), el estándar comercial chileno para imprimir.
+const PAGE_SIZE: [number, number] = [612, 792];
 const PAGE_WIDTH = PAGE_SIZE[0];
 const PAGE_HEIGHT = PAGE_SIZE[1];
 const MARGIN = 40;
@@ -305,25 +306,33 @@ function drawGradientBand(page: PDFPage, x: number, y: number, width: number, he
 let logoBytesCache: Uint8Array | null | undefined;
 
 /**
- * El logo se incrusta desde el PNG de 512px del sitio. pdf-lib no acepta SVG,
- * y este PNG ya existe, pesa 18 KB y se ve nítido al tamaño del encabezado.
+ * pdf-lib no acepta SVG, así que el logo se incrusta desde PNG. Se prefiere
+ * public/logo-cotizacion.png (el arte oficial de la marca a buena resolución);
+ * si no existe, se usa el ícono del sitio para no dejar el encabezado vacío.
  */
 async function loadLogoBytes(): Promise<Uint8Array | null> {
   if (logoBytesCache !== undefined) return logoBytesCache;
-  try {
-    const [{ readFile }, path] = await Promise.all([import("node:fs/promises"), import("node:path")]);
-    const bytes = await readFile(path.join(process.cwd(), "public", "icon-512.png"));
-    logoBytesCache = new Uint8Array(bytes);
-  } catch {
-    logoBytesCache = null;
+  const [{ readFile }, path] = await Promise.all([import("node:fs/promises"), import("node:path")]);
+  for (const candidate of ["logo-cotizacion.png", "icon-512.png"]) {
+    try {
+      const bytes = await readFile(path.join(process.cwd(), "public", candidate));
+      logoBytesCache = new Uint8Array(bytes);
+      return logoBytesCache;
+    } catch {
+      // Se intenta el siguiente candidato.
+    }
   }
+  logoBytesCache = null;
   return logoBytesCache;
 }
 
-function drawLogo(page: PDFPage, image: PDFImage | null, fontBold: PDFFont, x: number, y: number, size: number) {
+/** Dibuja el logo ajustado a la altura dada, sin deformarlo. Devuelve el ancho usado. */
+function drawLogo(page: PDFPage, image: PDFImage | null, fontBold: PDFFont, x: number, y: number, size: number): number {
   if (image) {
-    page.drawImage(image, { x, y, width: size, height: size });
-    return;
+    const ratio = image.width > 0 && image.height > 0 ? image.width / image.height : 1;
+    const width = Math.min(size * ratio, size * 1.8);
+    page.drawImage(image, { x, y, width, height: size });
+    return width;
   }
   // Sin logo disponible, un monograma sobrio evita un hueco en el encabezado.
   page.drawEllipse({
@@ -343,6 +352,7 @@ function drawLogo(page: PDFPage, image: PDFImage | null, fontBold: PDFFont, x: n
     font: fontBold,
     color: colors.white,
   });
+  return size;
 }
 
 // ---------------------------------------------------------------------------
@@ -364,9 +374,9 @@ function drawHeader(page: PDFPage, fonts: Fonts, input: QuotePdfInput, logo: PDF
 
   const logoSize = 46;
   const logoTop = PAGE_HEIGHT - 5 - 22;
-  drawLogo(page, logo, fonts.bold, MARGIN, logoTop - logoSize, logoSize);
+  const logoWidth = drawLogo(page, logo, fonts.bold, MARGIN, logoTop - logoSize, logoSize);
 
-  const brandX = MARGIN + logoSize + 12;
+  const brandX = MARGIN + logoWidth + 12;
   drawTracked({
     page,
     text: "ZYTERON",
@@ -998,18 +1008,16 @@ export async function generateQuotePdf(input: QuotePdfInput) {
   const notes = safeText(input.meta.notes);
   if (notes) y = drawSummary(page, fonts, notes, y);
 
-  // Todo fluye de arriba hacia abajo; el espacio libre queda al final, como
-  // en cualquier documento. La tabla recibe como límite el espacio mínimo que
-  // exigen totales y términos sobre el pie de página.
+  // El cierre comercial queda anclado al pie de la hoja: condiciones de pago
+  // y totales distribuidos abajo, y términos + firma al final. El espacio
+  // libre queda entre la tabla y el cierre.
   const terms = measureTermsZone(input.meta, fonts);
-  const termsFloor = 84 + terms.height;
+  const termsTop = 84 + terms.height;
   const middleHeight = measureMiddleZone(input.meta);
+  const middleTop = termsTop + 16 + middleHeight;
 
-  const tableEnd = drawItemsTable(page, fonts, input.meta.items ?? [], y, termsFloor + 14 + middleHeight + 16);
-  let middleTop = tableEnd - 16;
-  if (middleTop - middleHeight < termsFloor + 12) middleTop = termsFloor + 12 + middleHeight;
+  drawItemsTable(page, fonts, input.meta.items ?? [], y, middleTop + 14);
   drawMiddleZone(page, fonts, input, middleTop);
-  const termsTop = Math.max(middleTop - middleHeight - 18, termsFloor);
   drawTermsZone(page, fonts, terms.termsLines, termsTop);
   drawFooter(page, fonts, resolveQuoteNumber(input));
 
