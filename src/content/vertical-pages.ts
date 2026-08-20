@@ -4,6 +4,11 @@
  * rubro respecto de otra, no se publica.
  */
 
+import { PLAN_PRICE_AMOUNTS, ADDON_PRICE_AMOUNTS } from "@/config/pricing";
+
+/** Formatea un monto CLP con separador de miles chileno: 79990 → "$79.990". */
+const clp = (amount: number) => `$${amount.toLocaleString("es-CL")}`;
+
 export type VerticalFaq = {
   question: string;
   answer: string;
@@ -106,6 +111,10 @@ export const verticalPages: VerticalPage[] = [
         answer:
           "Una web formal con datos de la empresa, servicios, cobertura y certificaciones ayuda a acreditar seriedad. No reemplaza los documentos de la licitación, pero sí es lo primero que revisa un comprador cuando evalúa proveedores nuevos.",
       },
+      {
+        question: "¿Cuánto cuesta una página web para una empresa de transporte?",
+        answer: `Un sitio para empresa de transporte cuesta típicamente entre ${clp(PLAN_PRICE_AMOUNTS.pyme)} y ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA, según cobertura, tipos de servicio y el formulario de solicitud de flete que necesites. Un formulario avanzado con origen, destino y tipo de carga suma desde ${clp(ADDON_PRICE_AMOUNTS.advancedForm)} + IVA. Puedes estimar tu caso en la calculadora de precio de página web y luego te entregamos cotización formal.`,
+      },
     ],
     relatedService: { label: "Ver páginas web para empresas", href: "/paginas-web-para-empresas" },
     finalCtaTitle: "¿Tu empresa de transporte necesita recibir solicitudes ordenadas?",
@@ -180,6 +189,10 @@ export const verticalPages: VerticalPage[] = [
         answer:
           "Ambas cosas. El portafolio genera confianza, pero el sitio se estructura para que cada obra termine en un formulario de presupuesto. Sin esa ruta, una web de constructora se queda en catálogo y no genera contactos.",
       },
+      {
+        question: "¿Cuánto cuesta una página web para una constructora?",
+        answer: `Un sitio para constructora cuesta típicamente entre ${clp(PLAN_PRICE_AMOUNTS.pyme)} y ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA según líneas de negocio y cantidad de obras a publicar. Si quieres que tu equipo cargue obras nuevas sin depender de nosotros, el portafolio administrable suma desde ${clp(ADDON_PRICE_AMOUNTS.manageableCatalog)} + IVA. Puedes estimar tu caso en la calculadora de precio de página web y luego te entregamos cotización formal.`,
+      },
     ],
     relatedService: { label: "Ver páginas web para empresas", href: "/paginas-web-para-empresas" },
     finalCtaTitle: "¿Tu constructora necesita un portafolio que genere presupuestos?",
@@ -251,8 +264,11 @@ export const verticalPages: VerticalPage[] = [
       },
       {
         question: "¿Podemos tener un área privada para clientes?",
-        answer:
-          "Sí. Desarrollamos áreas privadas con acceso por usuario para compartir documentos, estados de avance o informes. Es un desarrollo adicional al sitio público y se cotiza según el nivel de permisos y trazabilidad que necesites.",
+        answer: `Sí. Desarrollamos áreas privadas con acceso por usuario para compartir documentos, estados de avance o informes, desde ${clp(ADDON_PRICE_AMOUNTS.clientArea)} + IVA como desarrollo adicional al sitio público. El valor final depende del nivel de permisos y trazabilidad que necesites.`,
+      },
+      {
+        question: "¿Cuánto cuesta una página web para un estudio o consultora?",
+        answer: `Un sitio para estudio profesional cuesta típicamente entre ${clp(PLAN_PRICE_AMOUNTS.pyme)} y ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA, según cantidad de áreas de práctica y perfiles del equipo. El agendamiento de reuniones conectado a tu calendario suma desde ${clp(ADDON_PRICE_AMOUNTS.booking)} + IVA. Puedes estimar tu caso en la calculadora de precio de página web y luego te entregamos cotización formal.`,
       },
     ],
     relatedService: { label: "Ver páginas web para pymes", href: "/paginas-web-para-pymes" },
@@ -327,6 +343,10 @@ export const verticalPages: VerticalPage[] = [
         question: "¿Cuántos productos puede tener el catálogo?",
         answer:
           "No hay un límite técnico relevante. Lo que define el alcance es cómo se cargan y mantienen: una carga inicial acotada con administración manual es más económica, mientras que un catálogo grande conviene sincronizarlo desde tu sistema.",
+      },
+      {
+        question: "¿Cuánto cuesta una página web para una empresa industrial?",
+        answer: `Un sitio industrial B2B cuesta típicamente entre ${clp(PLAN_PRICE_AMOUNTS.pyme)} y ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA según líneas de producto y sectores. El catálogo técnico administrable suma desde ${clp(ADDON_PRICE_AMOUNTS.manageableCatalog)} + IVA y una integración con tu ERP desde ${clp(ADDON_PRICE_AMOUNTS.customApi)} + IVA, según la API disponible. Puedes estimar tu caso en la calculadora de precio de página web y luego te entregamos cotización formal.`,
       },
     ],
     relatedService: { label: "Ver tiendas online y catálogos", href: "/tiendas-online" },

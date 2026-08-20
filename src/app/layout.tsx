@@ -109,7 +109,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="es"
+      lang="es-CL"
       className={cn(geistSans.variable, geistMono.variable, "antialiased h-full")}
     >
       <head>

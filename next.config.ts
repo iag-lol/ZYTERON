@@ -211,6 +211,15 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        // URL padre del cluster vertical (/paginas-web/transporte-logistica,
+        // etc.): no tiene página propia y daba 404. Se resuelve en la portada,
+        // que cubre la intención general "páginas web". Solo coincide con la
+        // ruta exacta, así que las 4 verticales siguen funcionando.
+        source: "/paginas-web",
+        destination: "/",
+        permanent: true,
+      },
+      {
         // Variante corta de la URL de conversión; la canónica es /cotizador.
         source: "/cotizar",
         destination: "/cotizador",

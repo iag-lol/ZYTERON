@@ -7,7 +7,13 @@ import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { PlansShowcase, type ShowcasePlan } from "@/components/planes/plans-showcase";
 import { siteConfig } from "@/config/site";
-import { PLAN_PRICES, PRICING_NOTE } from "@/config/pricing";
+import {
+  ADDONS,
+  AI_SERVICES,
+  MAINTENANCE,
+  PLAN_PRICES,
+  PRICING_NOTE,
+} from "@/config/pricing";
 import {
   buildFaqJsonLd,
   buildPlanPriceSpecificationJsonLd,
@@ -51,7 +57,7 @@ type AdditionalCategory = {
 };
 
 const WHATSAPP_URL =
-  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20orientaci%C3%B3n%20sobre%20sus%20planes`;
+  `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20orientaci%C3%B3n%20sobre%20sus%20planes`;
 
 function buildQuoteHref(projectType: ProjectTypeValue, presetPlan: string) {
   return `/cotizador?tipo=${projectType}&plan=${presetPlan}`;
@@ -329,15 +335,32 @@ const plans: PlanCard[] = [
   },
 ];
 
+/**
+ * Lee un adicional por nombre exacto desde ADDONS (pricing.ts, fuente única).
+ * Si el nombre deja de existir en pricing.ts, la página falla en build y se
+ * detecta la desincronización de inmediato.
+ */
+function addon(name: string, displayName?: string) {
+  const item = ADDONS.find((entry) => entry.name === name);
+  if (!item) throw new Error(`Adicional no encontrado en pricing.ts: ${name}`);
+  return {
+    name: displayName ?? item.name,
+    price: item.note ? `${item.price} (${item.note})` : item.price,
+  };
+}
+
+/** Pasa "Desde $X" a "desde $X" para componer frases de operación mensual. */
+function lowerDesde(price: string) {
+  return price.replace(/^Desde/, "desde");
+}
+
 const additionalCategories: AdditionalCategory[] = [
   {
     title: "Inteligencia Artificial y atención automatizada",
-    items: [
-      { name: "Chat IA informativo para web", price: "Desde $399.990 + IVA · operación desde $49.990/mes" },
-      { name: "Asistente IA de ventas 24/7 (Más solicitado)", price: "Desde $899.990 + IVA · operación desde $99.990/mes" },
-      { name: "Asistente IA para cotizaciones o pedidos (Recomendado)", price: "Desde $1.290.000 + IVA · operación desde $149.990/mes" },
-      { name: "Asistente IA omnicanal Web y WhatsApp", price: "Desde $1.690.000 + IVA · operación desde $199.990/mes" },
-    ],
+    items: AI_SERVICES.map((service) => ({
+      name: service.tag ? `${service.name} (${service.tag})` : service.name,
+      price: service.monthly ? `${service.setup} · operación ${lowerDesde(service.monthly)}` : service.setup,
+    })),
   },
   {
     title: "WhatsApp y comunicación",
@@ -352,12 +375,12 @@ const additionalCategories: AdditionalCategory[] = [
   {
     title: "Funcionalidades para sitios web",
     items: [
-      { name: "Sección adicional", price: "Desde $39.990 + IVA" },
-      { name: "Página adicional", price: "Desde $59.990 + IVA" },
-      { name: "Formulario avanzado", price: "Desde $79.990 + IVA" },
-      { name: "Formulario multipaso", price: "Desde $149.990 + IVA" },
-      { name: "Login de usuarios", price: "Desde $299.990 + IVA" },
-      { name: "Blog administrable", price: "Desde $199.990 + IVA" },
+      addon("Sección adicional"),
+      addon("Página adicional"),
+      addon("Formulario avanzado"),
+      addon("Formulario multipaso"),
+      addon("Login de usuarios"),
+      addon("Blog administrable"),
     ],
   },
   {
@@ -365,61 +388,91 @@ const additionalCategories: AdditionalCategory[] = [
     items: [
       { name: "Carga de productos hasta 20", price: "Desde $59.990 + IVA" },
       { name: "Carga de productos hasta 50", price: "Desde $119.990 + IVA" },
-      { name: "Catálogo administrable", price: "Desde $249.990 + IVA" },
-      { name: "Gestión de stock", price: "Desde $249.990 + IVA" },
+      addon("Catálogo administrable"),
+      addon("Gestión de stock"),
       { name: "Cupones y descuentos", price: "Desde $99.990 + IVA" },
     ],
   },
   {
     title: "Paneles y sistemas",
     items: [
-      { name: "Mini panel administrativo", price: "Desde $349.990 + IVA" },
-      { name: "Panel administrativo completo", price: "Desde $990.000 + IVA" },
-      { name: "Sistema de reservas", price: "Desde $499.990 + IVA" },
-      { name: "Dashboard y estadísticas", price: "Desde $399.990 + IVA" },
+      addon("Mini panel administrativo"),
+      addon("Panel administrativo completo"),
+      addon("Sistema de reservas"),
+      addon("Dashboard y reportes", "Dashboard y estadísticas"),
     ],
   },
   {
     title: "Integraciones",
     items: [
-      { name: "Integración Flow, Webpay o Mercado Pago estándar", price: "Desde $149.990 + IVA" },
-      { name: "Integración API personalizada", price: "Desde $349.990 + IVA" },
+      addon("Integración de pagos (Flow, Webpay, Mercado Pago)"),
+      addon("Integración API personalizada"),
       { name: "Integración con CRM", price: "Desde $299.990 + IVA" },
-      { name: "Automatización por WhatsApp", price: "Desde $249.990 + IVA (más consumo)" },
+      addon("Automatización por WhatsApp"),
     ],
   },
   {
     title: "SEO, analítica y documentos",
     items: [
-      { name: "SEO inicial avanzado", price: "Desde $179.990 + IVA" },
+      addon("SEO inicial avanzado"),
       { name: "SEO mensual", price: "Desde $149.990 + IVA / mes" },
-      { name: "Generador de PDF", price: "Desde $249.990 + IVA" },
-      { name: "Dashboard y reportes", price: "Desde $399.990 + IVA" },
+      addon("Generador de PDF"),
+      addon("Dashboard y reportes"),
       { name: "Exportación Excel o PDF", price: "Desde $99.990 + IVA" },
     ],
   },
 ];
 
-const maintenancePlans = [
+/** Descripciones por plan de mantención; nombres y precios vienen de MAINTENANCE (pricing.ts). */
+const maintenanceDescriptions: Record<string, string> = {
+  "Mantención web básica": "Para sitios simples que necesitan continuidad, ajustes menores y soporte base.",
+  "Mantención web profesional": "Para negocios que necesitan más seguimiento, mejoras y soporte técnico periódico.",
+  "Mantención ecommerce": "Para tiendas online con mayor complejidad, más riesgo operativo y más tareas técnicas.",
+  "Mantención de sistema o IA": "Para sistemas web y asistentes con IA que necesitan monitoreo y continuidad operativa.",
+};
+
+const maintenancePlans = MAINTENANCE.map((plan) => ({
+  name: plan.name,
+  price: plan.price,
+  description: maintenanceDescriptions[plan.name] ?? "Alcance según tipo de proyecto y frecuencia de intervención.",
+}));
+
+/**
+ * Tabla comparativa por tipo de solución. Los precios vienen de PLAN_PRICES y
+ * los plazos son los mismos rangos referenciales publicados en las FAQ del sitio.
+ */
+const solutionComparison = [
   {
-    name: "Mantención básica",
-    price: "Desde $39.990 + IVA / mes",
-    description: "Para sitios simples que necesitan continuidad, ajustes menores y soporte base.",
+    type: "Landing page",
+    who: "Campañas, lanzamientos y servicios que necesitan una sola página enfocada en captar contactos.",
+    price: PLAN_PRICES["web-basica"],
+    deadline: "1 a 2 semanas",
+    href: "/servicios/landing-pages-para-empresas",
+    linkLabel: "Landing pages para empresas",
   },
   {
-    name: "Mantención profesional",
-    price: "Desde $79.990 + IVA / mes",
-    description: "Para negocios que necesitan más seguimiento, mejoras y soporte técnico periódico.",
+    type: "Página web corporativa",
+    who: "Empresas y pymes que necesitan presentar servicios, generar confianza y recibir cotizaciones.",
+    price: PLAN_PRICES.pyme,
+    deadline: "3 a 6 semanas",
+    href: "/paginas-web-para-empresas",
+    linkLabel: "Páginas web para empresas",
   },
   {
-    name: "Mantención ecommerce o sistema web",
-    price: "Desde $129.990 + IVA / mes",
-    description: "Para tiendas y plataformas con mayor complejidad, más riesgo operativo y más tareas técnicas.",
+    type: "Tienda online",
+    who: "Negocios que venden productos y necesitan catálogo, carrito y pagos en línea.",
+    price: PLAN_PRICES.ecommerce,
+    deadline: "3 a 6 semanas",
+    href: "/tiendas-online",
+    linkLabel: "Tiendas online",
   },
   {
-    name: "Soporte prioritario",
-    price: "Desde $99.990 + IVA / mes",
-    description: "Para empresas que necesitan atención más rápida y prioridad frente a incidencias.",
+    type: "Sistema web",
+    who: "Operaciones que necesitan usuarios, registros, reportes y control de procesos internos.",
+    price: PLAN_PRICES.sistema,
+    deadline: "Desde 6 semanas, por etapas",
+    href: "/sistemas-web",
+    linkLabel: "Sistemas web a medida",
   },
 ];
 
@@ -464,7 +517,7 @@ const priceFaqs = [
   },
   {
     q: "¿Trabajan con empresas y proyectos complejos?",
-    a: "Sí. ZYTERON desarrolla webs empresariales, sistemas internos, automatizaciones, paneles y soluciones a medida según diagnóstico técnico.",
+    a: "Sí. Zyteron desarrolla webs empresariales, sistemas internos, automatizaciones, paneles y soluciones a medida según diagnóstico técnico.",
   },
 ];
 
@@ -529,7 +582,7 @@ export default function PlanesPage() {
             Precios de páginas web en Chile y planes para cada negocio
           </h1>
           <p className="mx-auto max-w-4xl text-base text-slate-600 sm:text-lg">
-            Compara desde una web simple de presentación hasta un sitio corporativo, ecommerce o sistema. Publicamos valores base claros y confirmamos cada proyecto mediante una cotización formal.
+            Una página web profesional en Chile parte en {PLAN_PRICES["web-basica"]} en su versión básica; un sitio pyme desde {PLAN_PRICES.pyme.replace("Desde ", "")}, una tienda online con pagos desde {PLAN_PRICES.ecommerce.replace("Desde ", "")} y un sistema web desde {PLAN_PRICES.sistema.replace("Desde ", "")}. Compara cada plan con su alcance y confirma tu proyecto mediante una cotización formal.
           </p>
           <div className="mx-auto max-w-4xl rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-slate-700">
             Los valores publicados son referenciales para proyectos base. El precio final puede variar según secciones, funcionalidades, contenido, integraciones, soporte requerido y nivel de personalización.
@@ -544,6 +597,62 @@ export default function PlanesPage() {
               </a>
             </Button>
           </div>
+        </Container>
+      </section>
+
+      <section className="section-alt py-16">
+        <Container className="space-y-6">
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Guía rápida</p>
+            <h2 className="text-3xl font-extrabold text-slate-900">¿Qué tipo de página web necesita tu negocio?</h2>
+            <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              Compara las cuatro soluciones más contratadas con su precio base y plazo típico, y entra al detalle de la que calza con tu objetivo.
+            </p>
+          </div>
+
+          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <caption className="sr-only">
+                Comparación de tipos de página web: para quién es cada una, precio desde y plazo típico de entrega
+              </caption>
+              <thead>
+                <tr className="bg-slate-100">
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Tipo de solución</th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Para quién es</th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Precio desde</th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Plazo típico</th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Más información</th>
+                </tr>
+              </thead>
+              <tbody>
+                {solutionComparison.map((solution) => (
+                  <tr key={solution.type} className="border-t border-slate-100 align-top">
+                    <th scope="row" className="px-5 py-4 text-sm font-extrabold text-slate-900">
+                      {solution.type}
+                    </th>
+                    <td className="px-5 py-4 leading-relaxed text-slate-600">{solution.who}</td>
+                    <td className="whitespace-nowrap px-5 py-4 font-bold text-blue-700">{solution.price}</td>
+                    <td className="whitespace-nowrap px-5 py-4 text-slate-700">{solution.deadline}</td>
+                    <td className="px-5 py-4">
+                      <Link href={solution.href} className="font-bold text-blue-700 hover:text-blue-800">
+                        {solution.linkLabel}
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <article className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
+            <h3 className="text-lg font-extrabold text-slate-900">¿Tu página web con asistente IA?</h3>
+            <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-700">
+              Cualquiera de estas soluciones puede incluir un asistente con inteligencia artificial que responde consultas de tus clientes 24/7 y captura datos de contacto, {lowerDesde(AI_SERVICES[0].setup)}. Revisa las opciones de IA en la tabla de adicionales más abajo o cotiza directamente la tuya.
+            </p>
+            <Button asChild className="mt-4 bg-blue-700 text-white hover:bg-blue-800">
+              <Link href="/cotizador">Cotizar mi web con IA</Link>
+            </Button>
+          </article>
         </Container>
       </section>
 

@@ -51,6 +51,13 @@ const teamMembers = [
     bio: `Con más de ${siteConfig.business.experienceYears} años de experiencia en tecnología, análisis de procesos, liderazgo operativo y desarrollo de soluciones digitales para empresas, lidera Zyteron con una visión práctica: crear herramientas claras, profesionales y útiles para negocios reales.`,
     // NAP unificado: usamos el correo oficial centralizado en siteConfig en vez de un correo personal.
     contact: siteConfig.contact.email,
+    // Especialidades reales visibles en la bio; el schema Person las propaga como knowsAbout.
+    knowsAbout: [
+      "Tecnología",
+      "Análisis de procesos",
+      "Liderazgo operativo",
+      "Desarrollo de soluciones digitales para empresas",
+    ],
   },
   {
     id: "victor",
@@ -58,6 +65,7 @@ const teamMembers = [
     role: "Desarrollo y soporte TI",
     photo: "/equipo/victor/perfil-web.png",
     bio: "Profesional enfocado en desarrollo web, soporte técnico, mantenimiento de sistemas e implementación TI.",
+    knowsAbout: ["Desarrollo web", "Soporte técnico", "Mantenimiento de sistemas", "Implementación TI"],
   },
   {
     id: "leonel",
@@ -65,6 +73,13 @@ const teamMembers = [
     role: "Análisis, desarrollo y calidad",
     photo: "/equipo/leonel/perfil-web.png",
     bio: "Profesional enfocado en análisis, desarrollo de aplicaciones, integración de sistemas, automatización y control de calidad.",
+    knowsAbout: [
+      "Análisis de sistemas",
+      "Desarrollo de aplicaciones",
+      "Integración de sistemas",
+      "Automatización",
+      "Control de calidad",
+    ],
   },
 ];
 
@@ -139,6 +154,7 @@ export default function QuienesSomosPage() {
             role: member.role,
             description: member.bio,
             photoPath: member.photo,
+            knowsAbout: member.knowsAbout,
           })),
           breadcrumbs: [
             { name: "Inicio", path: "/" },
@@ -179,8 +195,23 @@ export default function QuienesSomosPage() {
         </Container>
       </section>
 
+      {/* Ficha de entidad: párrafo autocontenido con los datos formales de la empresa */}
+      <section className="py-12">
+        <Container>
+          <p className="mx-auto max-w-4xl rounded-3xl border border-slate-200 bg-slate-50 p-8 text-base leading-relaxed text-slate-700">
+            <strong>{siteConfig.legalName}</strong> (RUT {siteConfig.taxId}) es una empresa chilena
+            de desarrollo web fundada en {siteConfig.foundingDate}, con oficina en{" "}
+            {siteConfig.address.streetAddress}, {siteConfig.address.commune},{" "}
+            {siteConfig.address.city}. Desarrolla páginas web, tiendas online, sistemas a medida,
+            automatización y soporte TI para empresas y pymes de todo Chile, con un equipo que suma
+            más de {siteConfig.business.experienceYears} años de experiencia en tecnología, liderado
+            por {siteConfig.representative.name}, {siteConfig.representative.role.toLowerCase()}.
+          </p>
+        </Container>
+      </section>
+
       {/* Quiénes Somos */}
-      <section className="py-16">
+      <section className="pb-16 pt-4">
         <Container className="grid gap-12 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
           <div className="space-y-6">
             <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Quiénes somos</h2>
@@ -359,7 +390,7 @@ export default function QuienesSomosPage() {
             <h3 className="text-2xl font-extrabold text-white">Respaldo y Formalidad</h3>
             <ul className="mt-8 space-y-4 text-slate-300">
               <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-blue-400" /> Equipo con más de {siteConfig.business.experienceYears} años de experiencia en el rubro tecnológico.</li>
-              <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-blue-400" /> Empresa formalmente constituida (ZYTERON SpA).</li>
+              <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-blue-400" /> Empresa formalmente constituida (Zyteron SpA).</li>
               <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-blue-400" /> Facturación electrónica en todos nuestros servicios.</li>
               <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-blue-400" /> Atención oficial por correo corporativo.</li>
               <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-blue-400" /> Canal de comunicación directa vía WhatsApp Business.</li>

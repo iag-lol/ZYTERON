@@ -3,6 +3,9 @@ import { SeoServiceLanding } from "@/components/services/seo-service-landing";
 import { getSeoServicePageBySlug } from "@/content/seo-service-pages";
 import { createPageMetadata } from "@/lib/seo";
 
+// Los casos de éxito destacados vienen de Supabase: ISR igual que /casos-exito.
+export const revalidate = 3600;
+
 const pageData = getSeoServicePageBySlug("soporte-ti");
 
 if (!pageData) {

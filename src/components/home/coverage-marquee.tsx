@@ -1,5 +1,25 @@
 import { MapPin } from "lucide-react";
-import { localPages } from "@/content/local-pages";
+
+/** Ciudades atendidas que se muestran en la cinta, de norte a sur del país. */
+const CITIES = [
+  "Arica",
+  "Iquique",
+  "Calama",
+  "Antofagasta",
+  "Copiapó",
+  "La Serena",
+  "Valparaíso",
+  "Viña del Mar",
+  "Santiago",
+  "Rancagua",
+  "Talca",
+  "Chillán",
+  "Concepción",
+  "Temuco",
+  "Valdivia",
+  "Puerto Montt",
+  "Punta Arenas",
+];
 
 /**
  * Cinta animada con las ciudades atendidas, de Arica a Punta Arenas.
@@ -7,13 +27,9 @@ import { localPages } from "@/content/local-pages";
  * la segunda copia va con aria-hidden para no duplicar contenido accesible.
  */
 export function CoverageMarquee() {
-  const cities = localPages
-    .filter((page) => page.slug !== "region-metropolitana")
-    .map((page) => page.city);
-
   const chips = (hidden: boolean) => (
     <div className="marquee-group" role={hidden ? undefined : "list"} aria-hidden={hidden || undefined}>
-      {cities.map((city) => (
+      {CITIES.map((city) => (
         <span
           key={city}
           role={hidden ? undefined : "listitem"}

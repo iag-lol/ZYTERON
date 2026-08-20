@@ -1,3 +1,8 @@
+import { PLAN_PRICE_AMOUNTS, MAINTENANCE_PRICE_AMOUNTS, ADDON_PRICE_AMOUNTS } from "@/config/pricing";
+
+/** Formatea un monto CLP con separador de miles chileno: 79990 → "$79.990". */
+const clp = (amount: number) => `$${amount.toLocaleString("es-CL")}`;
+
 export type ServiceFaq = {
   question: string;
   answer: string;
@@ -18,6 +23,8 @@ export type ServicePageData = {
   process: string[];
   faqs: ServiceFaq[];
   relatedSlugs: string[];
+  /** Enlaces contextuales fuera de /servicios (recursos, herramientas) con etiqueta descriptiva. */
+  relatedLinks?: { label: string; href: string }[];
 };
 
 export const servicePages: ServicePageData[] = [
@@ -369,14 +376,18 @@ export const servicePages: ServicePageData[] = [
     ],
     faqs: [
       {
+        question: "¿Cuánto cuesta una landing page para campañas en Chile?",
+        answer: `Una landing page de campaña parte desde ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} + IVA como página única de conversión, y cada página adicional (por ejemplo, una variante para test A/B u otra oferta) suma desde ${clp(ADDON_PRICE_AMOUNTS.extraPage)} + IVA. Un formulario avanzado de calificación de leads parte desde ${clp(ADDON_PRICE_AMOUNTS.advancedForm)} + IVA. Una landing simple queda lista en 1 a 2 semanas y entregamos cotización formal antes de iniciar.`,
+      },
+      {
         question: "¿Cuál es la diferencia entre landing y sitio corporativo?",
         answer:
-          "La landing se enfoca en una sola acción comercial y minimiza distracciones para maximizar conversión.",
+          "La landing se enfoca en una sola acción comercial y minimiza distracciones para maximizar conversión: una oferta, una audiencia y un llamado a la acción. El sitio corporativo cubre toda la oferta de la empresa; por eso una campaña de Google Ads o LinkedIn Ads convierte mejor con landing dedicada que apuntando a la portada.",
       },
       {
         question: "¿Pueden integrar la landing con mi CRM?",
         answer:
-          "Sí. Integramos formularios con CRM, correo y automatizaciones según tu stack.",
+          "Sí. Integramos formularios con CRM, correo y automatizaciones según tu stack, y configuramos el tracking de conversiones para que midas costo por lead real de cada campaña, no solo visitas.",
       },
     ],
     relatedSlugs: ["diseno-web-chile", "agencia-diseno-web-chile", "seo-para-empresas-chile"],
@@ -413,14 +424,18 @@ export const servicePages: ServicePageData[] = [
     ],
     faqs: [
       {
+        question: "¿Cuánto cuesta la mantención web mensual en Chile?",
+        answer: `La mantención web básica cuesta desde ${clp(MAINTENANCE_PRICE_AMOUNTS.basic)} + IVA al mes, la profesional desde ${clp(MAINTENANCE_PRICE_AMOUNTS.professional)}, la de ecommerce desde ${clp(MAINTENANCE_PRICE_AMOUNTS.ecommerce)} y la de sistemas o IA desde ${clp(MAINTENANCE_PRICE_AMOUNTS.system)} + IVA al mes. Cada plan combina actualizaciones, monitoreo, seguridad y horas de mejora según la criticidad del sitio; el plan exacto se define tras la auditoría técnica inicial.`,
+      },
+      {
         question: "¿El servicio es solo correctivo o también preventivo?",
         answer:
-          "Es ambos. Corregimos incidentes y trabajamos mejoras preventivas para reducir riesgos futuros.",
+          "Es ambos. Corregimos incidentes y trabajamos mejoras preventivas para reducir riesgos futuros. El plan mensual incluye monitoreo de uptime con alertas, actualizaciones técnicas y un backlog de mejoras priorizado por impacto, con reporte mensual de estado.",
       },
       {
         question: "¿Pueden tomar un sitio desarrollado por otro proveedor?",
         answer:
-          "Sí. Evaluamos el estado actual, definimos riesgos y tomamos continuidad con un plan de estabilización.",
+          "Sí. Partimos con una auditoría técnica que levanta el estado real del sitio: versiones, seguridad, respaldos y deuda acumulada. Con eso definimos riesgos y tomamos continuidad con un plan de estabilización, sin que necesites volver a desarrollar el sitio desde cero.",
       },
     ],
     relatedSlugs: ["desarrollo-web-chile", "seo-para-empresas-chile", "paginas-web-para-pymes"],
@@ -496,6 +511,12 @@ export const servicePages: ServicePageData[] = [
       },
     ],
     relatedSlugs: ["agencia-diseno-web-chile", "desarrollo-web-chile", "mantencion-web-chile"],
+    relatedLinks: [
+      {
+        label: "Checklist SEO para pymes chilenas",
+        href: "/recursos/checklist-seo-pymes-chile",
+      },
+    ],
   },
 ];
 

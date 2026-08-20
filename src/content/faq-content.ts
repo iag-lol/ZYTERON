@@ -1,3 +1,8 @@
+import { PLAN_PRICE_AMOUNTS, MAINTENANCE_PRICE_AMOUNTS } from "@/config/pricing";
+
+/** Formatea un monto CLP con separador de miles chileno: 79990 → "$79.990". */
+const clp = (amount: number) => `$${amount.toLocaleString("es-CL")}`;
+
 export type FaqCategory = {
   title: string;
   items: {
@@ -12,8 +17,7 @@ export const faqCategories: FaqCategory[] = [
     items: [
       {
         question: "¿Cuánto cuesta una página web profesional?",
-        answer:
-          "Depende del alcance, cantidad de secciones, contenido, diseño, integraciones, soporte y nivel de SEO requerido. En Zyteron publicamos valores referenciales y entregamos cotización formal antes de iniciar.",
+        answer: `En Chile una página web profesional cuesta desde ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} + IVA (web básica de presentación); un sitio para pyme parte desde ${clp(PLAN_PRICE_AMOUNTS.pyme)}, uno corporativo desde ${clp(PLAN_PRICE_AMOUNTS.empresa)}, un catálogo por WhatsApp desde ${clp(PLAN_PRICE_AMOUNTS.catalogo)}, una tienda online con carrito y pagos desde ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} y un sistema web a medida desde ${clp(PLAN_PRICE_AMOUNTS.sistema)} + IVA. El valor final depende de secciones, contenido, integraciones y nivel de personalización; en Zyteron entregamos cotización formal por escrito antes de iniciar.`,
       },
       {
         question: "¿Cuánto demora desarrollar una web?",
@@ -47,13 +51,11 @@ export const faqCategories: FaqCategory[] = [
       },
       {
         question: "¿Crean tiendas online?",
-        answer:
-          "Sí. Creamos tiendas online, catálogos digitales y flujos de venta o cotización por WhatsApp según el modelo comercial del negocio.",
+        answer: `Sí. Creamos tiendas online, catálogos digitales y flujos de venta o cotización por WhatsApp según el modelo comercial del negocio. Un catálogo con venta por WhatsApp parte desde ${clp(PLAN_PRICE_AMOUNTS.catalogo)} + IVA y un ecommerce con carrito y pagos online desde ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} + IVA.`,
       },
       {
         question: "¿Desarrollan sistemas internos para empresas?",
-        answer:
-          "Sí. Desarrollamos sistemas web, paneles administrativos, cotizadores, reportes, generación de PDF, registros internos y soluciones a medida por etapas.",
+        answer: `Sí. Desarrollamos sistemas web, paneles administrativos, cotizadores, reportes, generación de PDF, registros internos y soluciones a medida por etapas. Un sistema web administrativo parte desde ${clp(PLAN_PRICE_AMOUNTS.sistema)} + IVA y se puede iniciar con un módulo acotado para escalar después.`,
       },
       {
         question: "¿La web queda adaptada a celular?",
@@ -77,8 +79,7 @@ export const faqCategories: FaqCategory[] = [
       },
       {
         question: "¿Realizan mantención después de entregar el proyecto?",
-        answer:
-          "Sí. Podemos definir soporte post-entrega, mantención mensual, mejoras evolutivas o asistencia técnica según necesidad.",
+        answer: `Sí. Ofrecemos mantención mensual desde ${clp(MAINTENANCE_PRICE_AMOUNTS.basic)} + IVA para webs básicas, desde ${clp(MAINTENANCE_PRICE_AMOUNTS.professional)} para sitios profesionales, desde ${clp(MAINTENANCE_PRICE_AMOUNTS.ecommerce)} para ecommerce y desde ${clp(MAINTENANCE_PRICE_AMOUNTS.system)} + IVA para sistemas o IA, además de soporte post-entrega y mejoras evolutivas según necesidad.`,
       },
       {
         question: "¿Trabajan con empresas fuera de Santiago?",

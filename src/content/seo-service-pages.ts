@@ -1,3 +1,12 @@
+import {
+  PLAN_PRICE_AMOUNTS,
+  MAINTENANCE_PRICE_AMOUNTS,
+  SERVICE_PRICE_AMOUNTS,
+} from "@/config/pricing";
+
+/** Formatea un monto CLP con separador de miles chileno: 79990 → "$79.990". */
+const clp = (amount: number) => `$${amount.toLocaleString("es-CL")}`;
+
 export type SeoServiceFaq = {
   question: string;
   answer: string;
@@ -24,6 +33,11 @@ export type SeoServicePage = {
   secondaryKeywords: string[];
   heroTitle: string;
   heroDescription: string;
+  /**
+   * Respuesta directa a la intención de búsqueda (TL;DR). Se renderiza bajo el
+   * H1: 2-3 frases con precio "Desde" real interpolado desde pricing.ts y plazo típico.
+   */
+  directAnswer?: string;
   problemTitle: string;
   problemDescription: string;
   benefits: string[];
@@ -107,15 +121,17 @@ export const seoServicePages: SeoServicePage[] = [
     heroTitle: "Desarrollo web personalizado para proyectos que necesitan más que una plantilla",
     heroDescription:
       "Hacemos diseño de páginas web y desarrollo web para empresas, pymes y emprendedores de Santiago y todo Chile: sitios profesionales, modernos y rápidos para mostrar tus servicios con confianza, captar consultas y crecer con una base técnica escalable.",
+    directAnswer: `Crear una página web profesional en Chile cuesta desde ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} CLP + IVA y está lista en 1 a 3 semanas; un sitio corporativo completo parte desde ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA y toma 3 a 6 semanas. Zyteron, empresa chilena con oficina en Providencia, Santiago, diseña, desarrolla y publica tu sitio con SEO técnico incluido, y atiende proyectos en todo Chile.`,
     problemTitle: "Una web profesional debe vender confianza, no solo verse bien",
     problemDescription:
-      "Muchas empresas tienen sitios lentos, desordenados o genéricos que no explican bien sus servicios. En Zyteron trabajamos estructura, copy, diseño responsive, SEO base y rutas de conversión para que la web ayude al negocio desde el primer contacto.",
+      "Muchas empresas tienen sitios lentos, desordenados o genéricos que no explican bien sus servicios. Si necesitas hacer una página web para tu negocio, en Zyteron trabajamos estructura, copy, diseño web profesional y responsive, SEO base y rutas de conversión para que la web ayude al negocio desde el primer contacto.",
     benefits: [
       "Mejora la credibilidad de tu empresa frente a clientes nuevos.",
       "Ordena servicios, propuesta de valor y llamados a la acción.",
       "Deja una base técnica preparada para indexación y crecimiento SEO.",
       "Facilita contacto por formulario, correo y WhatsApp.",
       "Permite escalar con blog, páginas internas, sistemas o automatizaciones.",
+      "Te acompaña de punta a punta si es tu primera web: guiamos contenido, dominio, hosting y publicación para crear una página web sin conocimientos técnicos.",
     ],
     includes: [
       "Arquitectura de contenidos por servicios y objetivos comerciales.",
@@ -140,23 +156,22 @@ export const seoServicePages: SeoServicePage[] = [
       },
       {
         question: "¿Cuánto cuesta hacer una página web profesional?",
-        answer:
-          "Hacer una página web depende del alcance, cantidad de páginas, contenido, integraciones y nivel de personalización. Trabajamos con valores referenciales y cotización formal antes de iniciar.",
+        answer: `Hacer una página web profesional en Chile cuesta entre ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} y ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA según alcance: una web básica de presentación parte en ${clp(PLAN_PRICE_AMOUNTS["web-basica"])}, un sitio para pyme con varias secciones en ${clp(PLAN_PRICE_AMOUNTS.pyme)} y un sitio corporativo completo en ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA. El valor final depende de páginas, contenido e integraciones; entregamos cotización formal por escrito antes de iniciar.`,
       },
       {
-        question: "¿La web queda adaptada a celular?",
+        question: "¿El desarrollo incluye diseño web profesional adaptado a celular?",
         answer:
-          "Sí. Todos los desarrollos se trabajan responsive para celular, tablet y escritorio.",
+          "Sí. Cada proyecto incluye diseño web profesional trabajado responsive: el mismo sitio se adapta a celular, tablet y escritorio cuidando legibilidad, velocidad de carga y facilidad de contacto, porque la mayoría de las visitas en Chile llega desde el teléfono.",
       },
       {
-        question: "¿Incluyen SEO?",
+        question: "¿El desarrollo web incluye SEO?",
         answer:
-          "Incluimos una base SEO técnica y on-page: metadata, estructura de encabezados, sitemap, robots, schema cuando corresponde y contenido organizado por intención.",
+          "Sí. Todo desarrollo web de Zyteron incluye base SEO técnica y on-page: metadata, estructura de encabezados, sitemap, robots, schema cuando corresponde y contenido organizado por intención de búsqueda, para que el sitio quede posicionable en Google desde el día uno.",
       },
       {
-        question: "¿Puedo administrar mi sitio web?",
+        question: "¿Podré administrar el contenido de mi sitio web?",
         answer:
-          "Sí, cuando el proyecto lo requiere podemos implementar panel administrativo o estructura editable según alcance.",
+          "Sí, cuando el proyecto lo requiere implementamos panel administrativo o estructura editable para que tu equipo actualice textos, imágenes o productos sin depender de un desarrollador. Se define en el alcance de la cotización.",
       },
       {
         question: "¿Qué información necesito entregar para comenzar?",
@@ -168,6 +183,7 @@ export const seoServicePages: SeoServicePage[] = [
       { label: "Páginas web para pymes", href: "/paginas-web-para-pymes", description: "Soluciones web para pymes chilenas con foco en contacto y presencia profesional." },
       { label: "Páginas web para empresas", href: "/paginas-web-para-empresas", description: "Sitios corporativos con UX, confianza y enfoque comercial." },
       { label: "SEO para empresas", href: "/servicios/seo-para-empresas-chile", description: "Mejoras técnicas y contenido para crecer en tráfico orgánico." },
+      { label: "Mantención web en Chile", href: "/servicios/mantencion-web-chile", description: "Actualizaciones, monitoreo y mejoras continuas después del lanzamiento." },
       { label: "Calculadora de precio", href: "/calculadora-precio-pagina-web", description: "Estima cuánto costaría tu página web antes de cotizar." },
       ...commonRelatedLinks,
     ],
@@ -194,6 +210,7 @@ export const seoServicePages: SeoServicePage[] = [
     heroTitle: "Páginas web profesionales para pymes chilenas",
     heroDescription:
       "Creamos sitios profesionales para pequeñas y medianas empresas que necesitan explicar sus servicios, construir visibilidad en búsquedas relevantes y transformar visitas en consultas por WhatsApp, formulario o correo.",
+    directAnswer: `Una página web para pyme en Chile cuesta entre ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} y ${clp(PLAN_PRICE_AMOUNTS.pyme)} CLP + IVA según secciones y funcionalidades, y está lista en 1 a 3 semanas. Zyteron la diseña, desarrolla y deja posicionable en Google, con contacto por WhatsApp y formulario integrado, atendiendo desde Santiago a pymes de todo Chile.`,
     problemTitle: "Una pyme necesita una web que explique rápido y genere contacto",
     problemDescription:
       "Una web para pyme no debe ser compleja por obligación. Debe mostrar qué haces, por qué confiar, cómo contactarte y qué pasos seguir. Diseñamos estructuras simples de entender, pero sólidas para crecer.",
@@ -222,8 +239,7 @@ export const seoServicePages: SeoServicePage[] = [
     faqs: [
       {
         question: "¿Cuánto cuesta una página web para una pyme en Chile?",
-        answer:
-          "El valor depende de la cantidad de secciones, contenido, administración e integraciones. Publicamos rangos referenciales en la página de planes y confirmamos el precio final en una cotización formal antes de comenzar.",
+        answer: `Una página web para pyme cuesta entre ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} y ${clp(PLAN_PRICE_AMOUNTS.pyme)} + IVA: la web básica de presentación parte en ${clp(PLAN_PRICE_AMOUNTS["web-basica"])}, el plan emprendedor en ${clp(PLAN_PRICE_AMOUNTS.emprendedor)} y el plan pyme, con más secciones y funcionalidades, en ${clp(PLAN_PRICE_AMOUNTS.pyme)} + IVA. El valor final depende de secciones, contenido e integraciones, y lo confirmamos en una cotización formal antes de comenzar.`,
       },
       {
         question: "¿Qué debe incluir una página web para pyme?",
@@ -231,9 +247,9 @@ export const seoServicePages: SeoServicePage[] = [
           "Como base debe explicar qué hace el negocio, a quién ayuda, sus servicios o productos, señales reales de confianza, preguntas frecuentes y una ruta simple hacia WhatsApp, formulario, correo o llamada.",
       },
       {
-        question: "¿Trabajan con pymes y emprendedores?",
+        question: "¿Mi pyme es muy chica para tener página web?",
         answer:
-          "Sí. Adaptamos alcance, contenidos y presupuesto según la etapa real del negocio.",
+          "Ninguna pyme es demasiado chica: trabajamos con emprendedores que parten de cero y con pymes establecidas, ajustando alcance, contenidos y presupuesto a la etapa real del negocio. Se puede partir con una web básica y crecer por etapas.",
       },
       {
         question: "¿Cuánto demora desarrollar una web para pyme?",
@@ -241,14 +257,14 @@ export const seoServicePages: SeoServicePage[] = [
           "Una web simple puede tomar 1 a 3 semanas. Un sitio más completo puede requerir 3 a 6 semanas según contenido y revisiones.",
       },
       {
-        question: "¿Pueden integrar WhatsApp o formularios?",
+        question: "¿La web de mi pyme puede recibir consultas por WhatsApp?",
         answer:
-          "Sí. Dejamos rutas de contacto visibles para facilitar consultas y cotizaciones.",
+          "Sí. Integramos botón de WhatsApp, formulario y correo en puntos visibles del sitio, porque para una pyme chilena WhatsApp suele ser el canal donde se cierran las cotizaciones.",
       },
       {
-        question: "¿Trabajan con empresas fuera de Santiago?",
+        question: "¿Atienden pymes de regiones o solo de Santiago?",
         answer:
-          "Sí. Atendemos pymes de Santiago, Región Metropolitana y otras regiones de Chile en modalidad remota.",
+          "Atendemos pymes de todo Chile. La mayoría de nuestros clientes está en Santiago y la Región Metropolitana, pero el proceso completo —levantamiento, revisiones y entrega— funciona igual de bien en modalidad remota para cualquier región.",
       },
     ],
     relatedLinks: [
@@ -281,6 +297,7 @@ export const seoServicePages: SeoServicePage[] = [
     heroTitle: "Páginas web empresariales diseñadas para generar negocios",
     heroDescription:
       "Diseñamos y desarrollamos sitios corporativos para que clientes, proveedores y equipos de compra entiendan tu oferta, encuentren respaldo real y avancen hacia una consulta o cotización.",
+    directAnswer: `Una página web corporativa para empresa en Chile cuesta desde ${clp(PLAN_PRICE_AMOUNTS.empresa)} CLP + IVA y se entrega en 3 a 6 semanas según cantidad de páginas e integraciones. Zyteron la construye con arquitectura comercial, SEO técnico y medición de conversiones, desde su oficina en Providencia, Santiago, para empresas de todo Chile.`,
     problemTitle: "Una página web empresarial debe apoyar la decisión comercial",
     problemDescription:
       "Una empresa puede ofrecer buenos servicios y aun así perder oportunidades si su sitio se ve antiguo, no explica diferencias o esconde el contacto. Trabajamos arquitectura, contenido, navegación, llamados a la acción y evidencia para convertir la web en un canal comercial serio.",
@@ -315,8 +332,7 @@ export const seoServicePages: SeoServicePage[] = [
       },
       {
         question: "¿Cuánto cuesta una página web para empresa en Chile?",
-        answer:
-          "El precio depende de páginas internas, contenido, integraciones, administración y nivel de personalización. Zyteron publica valores referenciales y entrega una cotización formal con alcance, plazos y condiciones antes de iniciar.",
+        answer: `Un sitio corporativo para empresa cuesta desde ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA, e incluye varias páginas internas, diseño a medida y base SEO. Si el proyecto requiere módulos administrables o un sistema interno, el rango sube desde ${clp(PLAN_PRICE_AMOUNTS.sistema)} + IVA. Zyteron entrega una cotización formal con alcance, plazos y condiciones antes de iniciar.`,
       },
       {
         question: "¿Hacen rediseño de sitios existentes?",
@@ -343,6 +359,7 @@ export const seoServicePages: SeoServicePage[] = [
       { label: "Páginas web para pymes", href: "/paginas-web-para-pymes", description: "Una solución de menor alcance para pequeñas y medianas empresas." },
       { label: "Desarrollo web en Chile", href: "/desarrollo-web", description: "Implementación técnica de sitios rápidos, indexables y escalables." },
       { label: "Sistemas web para empresas", href: "/sistemas-web", description: "Plataformas internas para procesos administrativos y operación." },
+      { label: "Landing pages para campañas", href: "/servicios/landing-pages-para-empresas", description: "Páginas de campaña orientadas a conversión para Google Ads o lanzamientos." },
       ...commonRelatedLinks,
     ],
     serviceType: "Páginas web corporativas para empresas",
@@ -375,6 +392,7 @@ export const seoServicePages: SeoServicePage[] = [
     heroTitle: "Tiendas online preparadas para vender en Chile",
     heroDescription:
       "Hacemos diseño y desarrollo de tiendas online para crear tu tienda virtual en Chile: catálogo online administrable, fichas de producto y flujos de compra o cotización para mostrar productos, recibir pedidos y vender con una experiencia profesional.",
+    directAnswer: `Una tienda online en Chile cuesta desde ${clp(PLAN_PRICE_AMOUNTS.catalogo)} CLP + IVA como catálogo con venta por WhatsApp, y desde ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} + IVA con carrito y pagos por Webpay, Flow o Mercado Pago; la entrega típica toma 3 a 6 semanas. Zyteron la desarrolla con catálogo administrable, base SEO y capacitación para operar, desde Santiago para todo Chile.`,
     problemTitle: "Vender online requiere más que subir productos",
     problemDescription:
       "Una tienda efectiva necesita categorías claras, fichas útiles, confianza, contacto, rendimiento móvil y un flujo de compra coherente con la operación real del negocio.",
@@ -403,9 +421,9 @@ export const seoServicePages: SeoServicePage[] = [
     process: baseProcess,
     faqs: [
       {
-        question: "¿Crean tiendas online?",
+        question: "¿Qué tipos de tiendas online desarrollan?",
         answer:
-          "Sí. Desarrollamos tiendas online, catálogos y flujos de compra o cotización según modelo de negocio.",
+          "Desarrollamos desde catálogos online con venta asistida por WhatsApp hasta ecommerce completos con carrito, pagos online y gestión de stock. El formato se elige según cómo vende hoy tu negocio y cómo quiere operar los pedidos.",
       },
       {
         question: "¿Incluye carga de productos?",
@@ -424,8 +442,7 @@ export const seoServicePages: SeoServicePage[] = [
       },
       {
         question: "¿Cuánto cuesta crear una tienda online en Chile?",
-        answer:
-          "El valor de crear una tienda online en Chile depende de la cantidad de productos, las pasarelas de pago, el diseño y la administración requerida. Entregamos un rango referencial y una cotización formal antes de iniciar.",
+        answer: `Crear una tienda online en Chile cuesta entre ${clp(PLAN_PRICE_AMOUNTS.catalogo)} y ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} + IVA: un catálogo por WhatsApp parte en ${clp(PLAN_PRICE_AMOUNTS.catalogo)} y un ecommerce con carrito y pagos online (Webpay, Flow o Mercado Pago) en ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} + IVA. El valor final depende de la cantidad de productos, las pasarelas y la administración requerida; entregamos cotización formal antes de iniciar.`,
       },
       {
         question: "¿Pueden agregar una tienda online a mi página web actual?",
@@ -472,6 +489,7 @@ export const seoServicePages: SeoServicePage[] = [
     heroTitle: "Sistemas web a medida para digitalizar procesos empresariales",
     heroDescription:
       "Hacemos desarrollo de software y sistemas web a medida para empresas de Santiago y todo Chile: plataformas administrativas, aplicaciones web y paneles de gestión para controlar datos, usuarios, documentos, clientes, reportes y flujos críticos del negocio.",
+    directAnswer: `Un sistema web a medida en Chile cuesta desde ${clp(PLAN_PRICE_AMOUNTS.sistema)} CLP + IVA, y un sistema avanzado con múltiples módulos e integraciones desde ${clp(PLAN_PRICE_AMOUNTS.avanzado)} + IVA, con plazo definido por módulos en la cotización. Zyteron lo desarrolla por etapas, partiendo por el módulo más crítico de tu operación, con soporte desde Santiago para todo Chile.`,
     problemTitle: "Cuando la operación crece, las planillas dejan de ser suficientes",
     problemDescription:
       "Los sistemas web permiten centralizar información, reducir errores, controlar estados y entregar trazabilidad. Desarrollamos soluciones por etapas para resolver primero el proceso de mayor impacto.",
@@ -504,9 +522,8 @@ export const seoServicePages: SeoServicePage[] = [
           "Desarrollamos software a medida en Chile como sistema de inventario, sistema de cotizaciones, control de asistencia, control de flota, sistema de gestión para empresas y paneles administrativos web, según el proceso que necesites ordenar.",
       },
       {
-        question: "¿Desarrollan sistemas internos para empresas?",
-        answer:
-          "Sí. Diseñamos sistemas web personalizados para procesos administrativos, comerciales y operativos.",
+        question: "¿Cuánto cuesta un sistema web a medida en Chile?",
+        answer: `Un sistema web administrativo cuesta desde ${clp(PLAN_PRICE_AMOUNTS.sistema)} + IVA y un sistema avanzado a medida, con múltiples módulos, roles e integraciones, desde ${clp(PLAN_PRICE_AMOUNTS.avanzado)} + IVA. Como el alcance se define por módulos, puedes partir con una primera etapa acotada y escalar; el precio final se confirma en una cotización formal tras el levantamiento del proceso.`,
       },
       {
         question: "¿Puedo partir con un módulo pequeño?",
@@ -547,7 +564,7 @@ export const seoServicePages: SeoServicePage[] = [
     slug: "automatizacion",
     path: "/automatizacion",
     navLabel: "Automatización",
-    metaTitle: "Automatización de procesos para empresas",
+    metaTitle: "Automatización de Procesos para Empresas | Zyteron",
     metaDescription:
       "Automatiza tareas, formularios y WhatsApp para tu empresa en Chile con flujos medibles, alertas y soporte técnico. Conoce nuestra metodología hoy.",
     primaryKeyword: "automatización de procesos para empresas",
@@ -565,6 +582,7 @@ export const seoServicePages: SeoServicePage[] = [
     heroTitle: "Automatización de procesos para empresas que quieren operar con menos fricción",
     heroDescription:
       "Diseñamos la digitalización de procesos con flujos automatizados para reducir tareas administrativas repetitivas, ordenar solicitudes, conectar formularios automatizados, activar notificaciones y mejorar tiempos de respuesta.",
+    directAnswer: `Automatizar un proceso en Chile cuesta desde ${clp(SERVICE_PRICE_AMOUNTS.automationWhatsapp)} CLP + IVA en el caso de la automatización por WhatsApp, la más solicitada por pymes y empresas. Zyteron diagnostica el flujo actual, diseña las reglas y deja la automatización probada con escenarios reales, atendiendo desde Santiago a todo Chile.`,
     problemTitle: "Automatizar no es complicar: es eliminar tareas que consumen tiempo",
     problemDescription:
       "Muchas empresas pierden horas en copiar datos, responder lo mismo, revisar solicitudes manualmente o enviar avisos repetitivos. La automatización permite crear procesos más claros y trazables.",
@@ -595,6 +613,10 @@ export const seoServicePages: SeoServicePage[] = [
         question: "¿Qué procesos se pueden automatizar?",
         answer:
           "Formularios, avisos por correo, respuestas iniciales, derivaciones, generación de documentos, estados de atención y flujos de seguimiento.",
+      },
+      {
+        question: "¿Cuánto cuesta automatizar un proceso en mi empresa?",
+        answer: `La automatización por WhatsApp, la más solicitada, cuesta desde ${clp(SERVICE_PRICE_AMOUNTS.automationWhatsapp)} + IVA de implementación, más los costos de consumo del proveedor de mensajería. Otras automatizaciones —formularios, notificaciones, generación de PDF— se cotizan según el flujo; entregamos el valor exacto en una cotización formal después del diagnóstico.`,
       },
       {
         question: "¿Pueden integrar WhatsApp?",
@@ -630,6 +652,7 @@ export const seoServicePages: SeoServicePage[] = [
     relatedLinks: [
       { label: "Sistemas web", href: "/sistemas-web", description: "Crea paneles y módulos para operar procesos internos." },
       { label: "Automatización WhatsApp", href: "/automatizacion-whatsapp-empresas", description: "Flujos de atención y pre-calificación para WhatsApp." },
+      { label: "Landing pages para campañas", href: "/servicios/landing-pages-para-empresas", description: "Páginas de campaña que alimentan tus flujos automatizados con leads." },
       { label: "Soporte TI", href: "/soporte-ti", description: "Acompañamiento técnico para continuidad operativa." },
       ...commonRelatedLinks,
     ],
@@ -661,6 +684,7 @@ export const seoServicePages: SeoServicePage[] = [
     heroTitle: "Soporte TI para pymes y empresas que necesitan continuidad operativa",
     heroDescription:
       "Damos soporte TI y soporte informático en Chile: asistencia técnica, soporte técnico remoto, configuración, mantención computacional, correo corporativo, hosting y orientación tecnológica para mantener tu operación diaria estable.",
+    directAnswer: `El soporte TI para pymes en Chile cuesta desde ${clp(SERVICE_PRICE_AMOUNTS.supportTi)} CLP + IVA por requerimiento, y la mantención web mensual desde ${clp(MAINTENANCE_PRICE_AMOUNTS.basic)} + IVA. Zyteron atiende de forma remota a empresas de todo Chile y coordina soporte presencial en Santiago cuando el requerimiento lo necesita.`,
     problemTitle: "Un problema técnico pequeño puede frenar ventas, atención y productividad",
     problemDescription:
       "El soporte TI debe resolver incidentes, pero también prevenir problemas repetidos. Trabajamos con diagnóstico, prioridad y recomendaciones concretas para empresas que no siempre tienen equipo técnico interno.",
@@ -689,9 +713,8 @@ export const seoServicePages: SeoServicePage[] = [
     process: baseProcess,
     faqs: [
       {
-        question: "¿Realizan mantención después de entregar un proyecto?",
-        answer:
-          "Sí. Podemos definir soporte post-entrega o planes recurrentes de mantención y mejoras.",
+        question: "¿Qué planes de mantención ofrecen después de entregar un proyecto?",
+        answer: `Ofrecemos mantención web básica desde ${clp(MAINTENANCE_PRICE_AMOUNTS.basic)} + IVA al mes, profesional desde ${clp(MAINTENANCE_PRICE_AMOUNTS.professional)}, para ecommerce desde ${clp(MAINTENANCE_PRICE_AMOUNTS.ecommerce)} y para sistemas o IA desde ${clp(MAINTENANCE_PRICE_AMOUNTS.system)} + IVA al mes. Cada plan combina actualizaciones, monitoreo y horas de mejora según la criticidad de tu operación.`,
       },
       {
         question: "¿El soporte TI es solo para páginas web?",
@@ -709,9 +732,8 @@ export const seoServicePages: SeoServicePage[] = [
           "Sí. Podemos atender muchos requerimientos de forma remota para empresas y pymes de distintas regiones de Chile.",
       },
       {
-        question: "¿Puedo contratar soporte mensual?",
-        answer:
-          "Sí. Se puede evaluar un esquema recurrente según volumen de requerimientos y criticidad de la operación.",
+        question: "¿Cuánto cuesta el soporte TI para una pyme?",
+        answer: `El soporte TI parte desde ${clp(SERVICE_PRICE_AMOUNTS.supportTi)} + IVA por requerimiento puntual. Para necesidades recurrentes conviene un esquema mensual, que se cotiza según volumen de requerimientos y criticidad de la operación, con valores de referencia desde ${clp(MAINTENANCE_PRICE_AMOUNTS.basic)} + IVA al mes.`,
       },
       {
         question: "¿El soporte incluye recomendaciones preventivas?",
@@ -721,6 +743,7 @@ export const seoServicePages: SeoServicePage[] = [
     ],
     relatedLinks: [
       { label: "Soporte TI Santiago", href: "/soporte-ti-pymes-santiago", description: "Landing local para soporte técnico de pymes en Santiago." },
+      { label: "Mantención web en Chile", href: "/servicios/mantencion-web-chile", description: "Planes mensuales de actualizaciones, monitoreo y mejoras para tu sitio." },
       { label: "Desarrollo web", href: "/desarrollo-web", description: "Mejora tu presencia digital y base técnica web." },
       { label: "Automatización", href: "/automatizacion", description: "Reduce tareas manuales con flujos digitales." },
       ...commonRelatedLinks,

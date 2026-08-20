@@ -2,24 +2,22 @@ import type { Metadata } from "next";
 import { defaultOpenGraph, defaultTwitter } from "@/config/seo";
 import { siteConfig } from "@/config/site";
 import { getAbsoluteOgImageUrl } from "@/config/og";
-import { PLAN_PRICE_AMOUNTS } from "@/config/pricing";
+import { PLANS } from "@/config/pricing";
 import {
   buildAbsoluteUrl as buildAbsoluteUrlFromSchema,
   buildPrimaryOgImageUrl as buildPrimaryOgImageUrlFromSchema,
-  computeAggregateRatingFromReviews,
-  getAggregateRatingSchema,
   getBlogPostingSchema,
   getBreadcrumbSchema,
   getFAQSchema,
   getLocalBusinessSchema,
-  getLocalLandingSchema,
   getOrganizationSchema,
   getPersonSchema,
   getServiceSchema,
   getWebPageSchema,
 } from "@/lib/schema";
-import type { PublicReview } from "@/lib/web-control-types";
 
+// Sin campo keywords a propósito: el sitio no emite meta keywords (señal
+// obsoleta que Google ignora y que sólo delata sobre-optimización).
 type SeoMetadataInput = {
   title: string;
   description: string;
@@ -27,7 +25,6 @@ type SeoMetadataInput = {
   noIndex?: boolean;
   ogImagePath?: string;
   ogImageAlt?: string;
-  keywords?: string[];
 };
 
 type BreadcrumbItem = {
@@ -40,6 +37,7 @@ type WebPageJsonLdInput = {
   title: string;
   description: string;
   breadcrumbs?: BreadcrumbItem[];
+  pageType?: "WebPage" | "AboutPage" | "ContactPage" | "CollectionPage";
 };
 
 type ServiceJsonLdInput = {
@@ -146,7 +144,6 @@ export function createPageMetadata({
   path,
   ogImagePath,
   ogImageAlt,
-  keywords,
   noIndex = false,
 }: SeoMetadataInput): Metadata {
   const url = buildAbsoluteUrl(path);
@@ -163,7 +160,6 @@ export function createPageMetadata({
       absolute: title,
     },
     description,
-    keywords,
     alternates: {
       canonical: url,
     },
@@ -216,8 +212,9 @@ export function buildWebPageJsonLd({
   title,
   description,
   breadcrumbs = [],
+  pageType = "WebPage",
 }: WebPageJsonLdInput) {
-  return getWebPageSchema({ path, title, description, breadcrumbs });
+  return getWebPageSchema({ path, title, description, breadcrumbs, pageType });
 }
 
 export function buildServiceJsonLd({
@@ -272,6 +269,7 @@ type AboutPageJsonLdInput = {
     role: string;
     description?: string;
     photoPath?: string;
+    knowsAbout?: string[];
   }>;
   breadcrumbs?: BreadcrumbItem[];
 };
@@ -306,6 +304,7 @@ export function buildAboutPageJsonLd({
         description: member.description,
         image: member.photoPath,
         url: pageUrl,
+        knowsAbout: member.knowsAbout,
       }),
     ),
   ];
@@ -323,7 +322,7 @@ export function buildAboutPageJsonLd({
 export function buildContactPageJsonLd(path: string, description: string) {
   return getWebPageSchema({
     path,
-    title: "Contacto ZYTERON",
+    title: "Contacto Zyteron",
     description,
     pageType: "ContactPage",
   });
@@ -359,120 +358,61 @@ export function buildLocalBusinessJsonLd(path = "/", description = siteConfig.de
   return getLocalBusinessSchema({ path, description });
 }
 
-export function buildAggregateRatingJsonLd(reviews: PublicReview[], itemUrl = "/") {
-  const aggregate = computeAggregateRatingFromReviews(reviews);
-  if (!aggregate) return null;
-  return getAggregateRatingSchema({
-    ratingValue: aggregate.ratingValue,
-    reviewCount: aggregate.reviewCount,
-    itemName: siteConfig.legalName,
-    itemType: "Organization",
-    itemUrl,
-  });
+/**
+ * Extrae el monto numérico en CLP de un precio publicado ("Desde $219.990 +
+ * IVA" → 219990). Leer el mismo string visible garantiza que el dato
+ * estructurado nunca se desincronice de lo que la página muestra.
+ */
+function parseClpAmount(price: string): number | null {
+  // Solo el primer monto con "$": un string con dos cifras (p. ej. precio +
+  // mensualidad) no debe concatenar sus dígitos en un número inválido.
+  const match = price.match(/\$\s*([\d.]+)/);
+  if (!match) return null;
+  const amount = Number.parseInt(match[1].replaceAll(".", ""), 10);
+  return Number.isFinite(amount) && amount > 0 ? amount : null;
 }
 
-export function buildLocalLandingJsonLd(input: Parameters<typeof getLocalLandingSchema>[0]) {
-  return getLocalLandingSchema(input);
-}
-
+/**
+ * OfferCatalog de /planes construido iterando PLANS (fuente única de precios):
+ * nombres y montos salen del mismo arreglo que renderiza la página, y cada
+ * Offer queda conectada a la Organization vía seller/provider.
+ */
 export function buildPlanPriceSpecificationJsonLd(path: string) {
   const pageUrl = buildAbsoluteUrl(path);
+  const organizationRef = { "@id": `${siteConfig.url}/#organization` };
 
   return {
     "@context": "https://schema.org",
     "@type": "OfferCatalog",
     "@id": `${pageUrl}#price-specifications`,
-    name: "Planes referenciales ZYTERON",
+    name: "Planes referenciales de Zyteron",
     url: pageUrl,
-    itemListElement: [
-      {
+    itemListElement: PLANS.map((plan) => {
+      const minPrice = parseClpAmount(plan.price);
+
+      return {
         "@type": "Offer",
-        name: "Web Básica de Presentación",
+        name: plan.name,
+        url: pageUrl,
         priceCurrency: "CLP",
-        priceSpecification: {
-          "@type": "PriceSpecification",
-          priceCurrency: "CLP",
-          minPrice: PLAN_PRICE_AMOUNTS["web-basica"],
-          valueAddedTaxIncluded: false,
+        availability: "https://schema.org/InStock",
+        seller: organizationRef,
+        itemOffered: {
+          "@type": "Service",
+          name: plan.name,
+          provider: organizationRef,
         },
-      },
-      {
-        "@type": "Offer",
-        name: "Plan Emprendedor",
-        priceCurrency: "CLP",
-        priceSpecification: {
-          "@type": "PriceSpecification",
-          priceCurrency: "CLP",
-          minPrice: PLAN_PRICE_AMOUNTS.emprendedor,
-          valueAddedTaxIncluded: false,
-        },
-      },
-      {
-        "@type": "Offer",
-        name: "Plan Pyme",
-        priceCurrency: "CLP",
-        priceSpecification: {
-          "@type": "PriceSpecification",
-          priceCurrency: "CLP",
-          minPrice: PLAN_PRICE_AMOUNTS.pyme,
-          valueAddedTaxIncluded: false,
-        },
-      },
-      {
-        "@type": "Offer",
-        name: "Plan Empresa",
-        priceCurrency: "CLP",
-        priceSpecification: {
-          "@type": "PriceSpecification",
-          priceCurrency: "CLP",
-          minPrice: PLAN_PRICE_AMOUNTS.empresa,
-          valueAddedTaxIncluded: false,
-        },
-      },
-      {
-        "@type": "Offer",
-        name: "Catálogo por WhatsApp",
-        priceCurrency: "CLP",
-        priceSpecification: {
-          "@type": "PriceSpecification",
-          priceCurrency: "CLP",
-          minPrice: PLAN_PRICE_AMOUNTS.catalogo,
-          valueAddedTaxIncluded: false,
-        },
-      },
-      {
-        "@type": "Offer",
-        name: "Ecommerce con carrito y pagos",
-        priceCurrency: "CLP",
-        priceSpecification: {
-          "@type": "PriceSpecification",
-          priceCurrency: "CLP",
-          minPrice: PLAN_PRICE_AMOUNTS.ecommerce,
-          valueAddedTaxIncluded: false,
-        },
-      },
-      {
-        "@type": "Offer",
-        name: "Sistema Web / Panel Administrativo",
-        priceCurrency: "CLP",
-        priceSpecification: {
-          "@type": "PriceSpecification",
-          priceCurrency: "CLP",
-          minPrice: PLAN_PRICE_AMOUNTS.sistema,
-          valueAddedTaxIncluded: false,
-        },
-      },
-      {
-        "@type": "Offer",
-        name: "Sistema Avanzado / Desarrollo a medida",
-        priceCurrency: "CLP",
-        priceSpecification: {
-          "@type": "PriceSpecification",
-          priceCurrency: "CLP",
-          minPrice: PLAN_PRICE_AMOUNTS.avanzado,
-          valueAddedTaxIncluded: false,
-        },
-      },
-    ],
+        ...(minPrice
+          ? {
+              priceSpecification: {
+                "@type": "PriceSpecification",
+                priceCurrency: "CLP",
+                minPrice,
+                valueAddedTaxIncluded: false,
+              },
+            }
+          : {}),
+      };
+    }),
   };
 }

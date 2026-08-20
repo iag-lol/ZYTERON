@@ -6,7 +6,7 @@ import { LocationMap } from "./location-map";
 import { siteConfig } from "@/config/site";
 
 const WHATSAPP_URL =
-  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20p%C3%A1gina%20web%20para%20mi%20empresa.`;
+  `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20cotizar%20una%20p%C3%A1gina%20web%20para%20mi%20empresa.`;
 
 const COPYRIGHT_YEAR = 2026;
 
@@ -15,10 +15,12 @@ const footerColumns = [
     title: "Páginas web",
     items: [
       { label: "Páginas web Santiago", href: "/paginas-web-santiago" },
+      { label: "Desarrollo web Santiago", href: "/desarrollo-web-santiago" },
       { label: "Páginas web para empresas", href: "/paginas-web-para-empresas" },
       { label: "Páginas web para pymes", href: "/paginas-web-para-pymes" },
       { label: "Desarrollo web", href: "/desarrollo-web" },
       { label: "Tiendas online", href: "/tiendas-online" },
+      { label: "Landing pages", href: "/servicios/landing-pages-para-empresas" },
       { label: "Calculadora de precio", href: "/calculadora-precio-pagina-web" },
       { label: "Cotizar página web", href: "/cotizador" },
     ],
@@ -28,6 +30,7 @@ const footerColumns = [
     items: [
       { label: "Sistemas web a medida", href: "/sistemas-web" },
       { label: "SEO para empresas", href: "/servicios/seo-para-empresas-chile" },
+      { label: "Mantención de sitios web", href: "/servicios/mantencion-web-chile" },
       { label: "Automatización", href: "/automatizacion" },
       { label: "Soporte TI", href: "/soporte-ti" },
       { label: "Planes y precios", href: "/planes" },
@@ -40,6 +43,8 @@ const footerColumns = [
       { label: "Nosotros", href: "/quienes-somos" },
       { label: "Casos de éxito", href: "/casos-exito" },
       { label: "Demos de páginas web", href: "/demos" },
+      { label: "Becas web para pymes", href: "/becas-web-pyme" },
+      { label: "Recursos y guías", href: "/recursos" },
       { label: "Blog", href: "/blog" },
       { label: "Preguntas frecuentes", href: "/faq" },
       { label: "Contacto", href: "/contacto" },

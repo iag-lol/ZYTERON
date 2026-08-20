@@ -18,6 +18,7 @@ import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { siteConfig } from "@/config/site";
+import { PLAN_PRICE_AMOUNTS } from "@/config/pricing";
 import {
   buildFaqJsonLd,
   buildLocalBusinessJsonLd,
@@ -38,7 +39,20 @@ import { HomeFaqAccordion } from "@/components/home/home-faq";
 export const revalidate = 3600;
 
 const WHATSAPP_BASE =
-  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20p%C3%A1gina%20web%20para%20mi%20empresa.`;
+  `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20cotizar%20una%20p%C3%A1gina%20web%20para%20mi%20empresa.`;
+
+/** Monto de pricing.ts en formato chileno: "$219.990". */
+const clpAmount = (id: keyof typeof PLAN_PRICE_AMOUNTS) =>
+  `$${PLAN_PRICE_AMOUNTS[id].toLocaleString("es-CL")}`;
+
+/**
+ * Formato visible de precio: "Desde $XXX.XXX CLP + IVA". La Web Básica es
+ * precio fijo de pago único en pricing.ts, por lo que va sin "Desde".
+ */
+const planPriceClp = (id: keyof typeof PLAN_PRICE_AMOUNTS) =>
+  id === "web-basica"
+    ? `${clpAmount(id)} CLP + IVA (pago único)`
+    : `Desde ${clpAmount(id)} CLP + IVA`;
 
 export const metadata: Metadata = createPageMetadata({
   title: "Páginas Web Profesionales en Chile para Empresas y Pymes",
@@ -158,6 +172,7 @@ const serviceGroups = [
       "Paneles administrativos",
       "Sistemas internos a medida",
       "Cotizadores con PDF",
+      "Asistentes con IA para ventas y atención",
       "Automatización de WhatsApp",
       "Integración de pagos",
       "Soporte TI para continuidad",
@@ -169,7 +184,7 @@ const demoCards = [
   {
     name: "Demo tienda online de ropa",
     desc: "Demo visual para marcas que quieren vender online con diseño personalizado y responsive.",
-    tech: "Desde $599.990 CLP + IVA · Catálogo, carrito y pagos online",
+    tech: `${planPriceClp("ecommerce")} · Catálogo, carrito y pagos online`,
     gallery: [
       "/demos/tienda-ropa/tienda-ropa-01.png",
       "/demos/tienda-ropa/tienda-ropa-02.png",
@@ -208,6 +223,7 @@ const planCards = [
   {
     name: "Plan Básico",
     target: "Para presencia inicial",
+    price: planPriceClp("web-basica"),
     includes: [
       "Sitio base profesional",
       "Secciones esenciales",
@@ -218,6 +234,7 @@ const planCards = [
   {
     name: "Plan Medio",
     target: "Para negocios que necesitan una web más completa",
+    price: planPriceClp("pyme"),
     includes: [
       "Más secciones y contenidos",
       "Mejor estructura comercial",
@@ -228,6 +245,7 @@ const planCards = [
   {
     name: "Plan Avanzado",
     target: "Para empresas que requieren mayor alcance funcional",
+    price: planPriceClp("empresa"),
     includes: [
       "Arquitectura extensa",
       "Formularios y funciones adicionales",
@@ -237,7 +255,8 @@ const planCards = [
   },
   {
     name: "Plan Sistema",
-    target: "Desde precio referencial para soluciones a medida",
+    target: "Soluciones a medida para operaciones más exigentes",
+    price: planPriceClp("sistema"),
     includes: [
       "Diagnóstico técnico y funcional",
       "Alcance personalizado",
@@ -250,11 +269,11 @@ const planCards = [
 const homeFaqs = [
   {
     q: "¿Cuánto cuesta el diseño de una página web profesional?",
-    a: "Depende del alcance, cantidad de secciones, contenido, integraciones y soporte. Publicamos valores referenciales y siempre entregamos cotización formal antes de iniciar.",
+    a: `Una página web profesional parte desde ${clpAmount("web-basica")} CLP + IVA en su versión básica. Un sitio corporativo más completo parte desde ${clpAmount("empresa")} CLP + IVA, una tienda online desde ${clpAmount("ecommerce")} CLP + IVA y un sistema web a medida desde ${clpAmount("sistema")} CLP + IVA. El valor final depende del alcance, y siempre recibes una cotización formal con el detalle antes de iniciar.`,
   },
   {
     q: "¿Cuánto demora una página web?",
-    a: "Depende del alcance. Una landing puede tomar 1 a 2 semanas y un sitio corporativo más completo 3 a 6 semanas.",
+    a: "Una landing puede estar publicada en 1 a 2 semanas y un sitio corporativo más completo entre 3 y 6 semanas. En la cotización te confirmamos el plazo exacto para tu proyecto.",
   },
   {
     q: "¿Puedo pagar por etapas?",
@@ -270,11 +289,11 @@ const homeFaqs = [
   },
   {
     q: "¿La web queda adaptada a celular?",
-    a: "Sí. Todo proyecto web se trabaja responsive para celular, tablet y escritorio.",
+    a: "Sí. Cada web se entrega responsive para que tus clientes naveguen y coticen con comodidad desde celular, tablet o computador.",
   },
   {
     q: "¿Hacen tiendas online?",
-    a: "Sí, desarrollamos tiendas online adaptadas al tipo de negocio y catálogo.",
+    a: `Sí. Implementamos tiendas online con catálogo, carrito y pagos, desde ${clpAmount("ecommerce")} CLP + IVA, adaptadas a tu tipo de negocio y forma de vender.`,
   },
   {
     q: "¿Integran pagos?",
@@ -282,11 +301,11 @@ const homeFaqs = [
   },
   {
     q: "¿Incluyen SEO?",
-    a: "Incluimos base SEO técnica y on-page: estructura, metadata, sitemap, robots, schema cuando corresponde y contenido organizado.",
+    a: "Sí. Cada web se entrega con base SEO técnica y on-page lista para posicionar en Google: estructura, metadata, sitemap y contenido organizado por intención de búsqueda.",
   },
   {
     q: "¿Hacen sistemas personalizados?",
-    a: "Sí. Diseñamos sistemas internos y soluciones a medida por módulo y alcance.",
+    a: `Sí. Diseñamos sistemas internos y paneles a medida, desde ${clpAmount("sistema")} CLP + IVA, con módulos por etapa según el alcance de tu operación.`,
   },
   {
     q: "¿Entregan soporte después?",
@@ -302,11 +321,11 @@ const homeFaqs = [
   },
   {
     q: "¿Emiten factura o boleta?",
-    a: "Cuando corresponde, podemos emitir documento tributario según el servicio contratado.",
+    a: "Sí. Emitimos boleta o factura según el servicio contratado, para que respaldes la inversión de tu empresa con documento tributario.",
   },
   {
     q: "¿Qué necesito para comenzar?",
-    a: "Objetivo del proyecto, información base del negocio y alcance inicial para preparar una cotización formal.",
+    a: "Solo el objetivo de tu proyecto y la información base de tu negocio. Con eso preparamos una cotización formal, sin compromiso y con el alcance detallado.",
   },
 ];
 
@@ -386,6 +405,30 @@ const clientTypes = [
     description:
       "Paneles y automatizaciones para controlar información, procesos, documentos y reportes internos.",
     href: "/sistemas-web",
+  },
+  {
+    title: "Páginas web para transporte y logística",
+    description:
+      "Webs que presentan flota, cobertura y servicios logísticos con formularios pensados para captar carga y contratos.",
+    href: "/paginas-web/transporte-logistica",
+  },
+  {
+    title: "Páginas web para constructoras",
+    description:
+      "Sitios que muestran obras, especialidades y respaldo técnico para participar en licitaciones y captar mandantes.",
+    href: "/paginas-web/constructoras",
+  },
+  {
+    title: "Páginas web para servicios profesionales",
+    description:
+      "Webs para consultoras, estudios y especialistas que necesitan transmitir confianza y agendar reuniones.",
+    href: "/paginas-web/servicios-profesionales",
+  },
+  {
+    title: "Páginas web para industria B2B",
+    description:
+      "Sitios industriales con fichas técnicas y catálogo de productos para generar cotizaciones entre empresas.",
+    href: "/paginas-web/industria-b2b",
   },
 ];
 
@@ -653,6 +696,24 @@ export default async function Home() {
         </Container>
       </section>
 
+      {/* ── Qué es Zyteron: declaración de entidad citable ── */}
+      <section className="bg-white pt-14">
+        <Container>
+          <Reveal>
+            <div className="mx-auto max-w-4xl rounded-2xl border border-blue-100 bg-blue-50/60 p-6 sm:p-8">
+              <p className="text-sm leading-relaxed text-slate-700 sm:text-base">
+                <strong className="font-extrabold text-slate-900">Zyteron</strong> ({siteConfig.legalName}) es
+                una empresa chilena de desarrollo web con oficina en {siteConfig.address.streetAddress},{" "}
+                {siteConfig.address.commune}, {siteConfig.address.city}. Creamos páginas web
+                profesionales, tiendas online y sistemas a medida para pymes y empresas de todo Chile, con
+                planes desde {clpAmount("web-basica")} CLP + IVA, cotización formal, boleta o factura y
+                soporte post-entrega.
+              </p>
+            </div>
+          </Reveal>
+        </Container>
+      </section>
+
       {/* ── Empresas que confían ── */}
       <section className="bg-white py-14">
         <Container className="space-y-8">
@@ -818,7 +879,7 @@ export default async function Home() {
           <Reveal className="space-y-2 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Confianza empresarial</p>
             <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Por qué confiar en ZYTERON
+              Por qué confiar en Zyteron
             </h2>
           </Reveal>
 
@@ -962,6 +1023,7 @@ export default async function Home() {
                 <article className="card-premium flex h-full flex-col p-6">
                   <h3 className="text-lg font-extrabold text-slate-900">{plan.name}</h3>
                   <p className="mt-1 text-sm text-slate-600">{plan.target}</p>
+                  <p className="mt-3 text-xl font-extrabold text-blue-700">{plan.price}</p>
                   <div className="my-4 h-px bg-slate-200" />
                   <div className="flex-1 space-y-2">
                     {plan.includes.map((item) => (

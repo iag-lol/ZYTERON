@@ -14,12 +14,6 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Checklist SEO gratuito para pymes chilenas: revisa indexación, contenido, SEO local, autoridad, datos estructurados y conversiones de tu sitio web.",
   path,
-  keywords: [
-    "checklist seo pymes chile",
-    "auditoria seo chile",
-    "seo para pymes",
-    "posicionamiento web chile",
-  ],
 });
 
 const sections = [
@@ -182,6 +176,18 @@ export default function ChecklistSeoPymesChilePage() {
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">{faq.answer}</p>
                 </article>
               ))}
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-2xl font-extrabold text-slate-900">Sigue con estas guías</h2>
+            <div className="flex flex-wrap gap-3">
+              <Button asChild variant="outline">
+                <Link href="/recursos/como-elegir-empresa-desarrollo-web-chile">Cómo elegir una empresa de desarrollo web</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/recursos/wordpress-vs-web-a-medida-chile">WordPress vs desarrollo a medida</Link>
+              </Button>
             </div>
           </section>
         </Container>

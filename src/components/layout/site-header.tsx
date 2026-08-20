@@ -11,7 +11,7 @@ import { Container } from "./container";
 import { PortalAccessLink } from "./portal-access-link";
 
 const WHATSAPP_URL =
-  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20p%C3%A1gina%20web%20para%20mi%20empresa.`;
+  `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20cotizar%20una%20p%C3%A1gina%20web%20para%20mi%20empresa.`;
 
 const primaryNavItems = [
   { href: "/", label: "Inicio" },
@@ -33,6 +33,7 @@ const servicesHubItem = { href: "/desarrollo-web", label: "Todo sobre páginas w
 
 const servicesNavItems = [
   { href: "/paginas-web-santiago", label: "Páginas Web Santiago" },
+  { href: "/desarrollo-web-santiago", label: "Desarrollo Web Santiago" },
   { href: "/paginas-web-para-empresas", label: "Páginas Web para Empresas" },
   { href: "/paginas-web-para-pymes", label: "Páginas Web para Pymes" },
   { href: "/tiendas-online", label: "Tiendas Online" },
@@ -276,7 +277,7 @@ export function SiteHeader() {
                 <div
                   className={cn(
                     "overflow-hidden transition-all duration-300 ease-in-out",
-                    mobileServicesOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                    mobileServicesOpen ? "max-h-[32rem] opacity-100" : "max-h-0 opacity-0"
                   )}
                 >
                   <div className="mt-1 rounded-2xl border border-slate-100 bg-slate-50/50 p-2 mx-1">

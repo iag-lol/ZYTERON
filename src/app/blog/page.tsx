@@ -4,8 +4,12 @@ import { ArrowRight, Clock3, Tag } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
-import { getBlogListItems, pickRecommendedFromPublished } from "@/lib/content/blog-merge";
-import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import {
+  getBlogListItems,
+  pickRecommendedFromPublished,
+  type BlogListItem,
+} from "@/lib/content/blog-merge";
+import { buildAbsoluteUrl, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Blog para empresas sobre web, sistemas y SEO",
@@ -17,6 +21,30 @@ export const metadata: Metadata = createPageMetadata({
 // El admin invalida esta ruta al publicar. ISR evita consultar la base en cada
 // visita y mantiene una actualización de respaldo una vez por hora.
 export const revalidate = 3600;
+
+/**
+ * ItemList con los artículos publicados que la página lista: permite que
+ * crawlers y asistentes IA descubran el corpus editorial completo desde /blog,
+ * igual que el ItemList de /casos-exito.
+ */
+function buildBlogItemListJsonLd(posts: BlogListItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "@id": `${buildAbsoluteUrl("/blog")}#posts`,
+    name: "Artículos del blog de Zyteron",
+    itemListElement: posts.map((post, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "BlogPosting",
+        headline: post.title,
+        description: post.excerpt,
+        url: buildAbsoluteUrl(`/blog/${post.slug}`),
+      },
+    })),
+  };
+}
 
 const categories = [
   "Desarrollo web",
@@ -40,13 +68,17 @@ export default async function BlogPage() {
         data={buildWebPageJsonLd({
           path: "/blog",
           title: "Blog para empresas y pymes",
-          description: "Hub de contenidos comerciales y técnicos de ZYTERON.",
+          description: "Hub de contenidos comerciales y técnicos de Zyteron.",
+          pageType: "CollectionPage",
           breadcrumbs: [
             { name: "Inicio", path: "/" },
             { name: "Blog", path: "/blog" },
           ],
         })}
       />
+      {posts.length > 0 ? (
+        <JsonLd id="blog-itemlist-schema" data={buildBlogItemListJsonLd(posts)} />
+      ) : null}
 
       <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-20">
         <Container className="space-y-5">

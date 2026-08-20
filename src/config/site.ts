@@ -13,6 +13,9 @@ export const siteConfig = {
   url: "https://www.zyteron.cl",
   locale: "es-CL",
   foundingDate: "2024",
+  // Propuesta de valor visible en el hero de la portada; se reutiliza como
+  // slogan de la Organization en el schema. Mantener sincronizada con page.tsx.
+  slogan: "Páginas web profesionales para empresas que necesitan vender",
   description:
     "Desarrollamos páginas web, sistemas digitales, automatizaciones y soporte TI para empresas y pymes de Santiago, Región Metropolitana y todo Chile, con foco en claridad comercial y operación estable.",
   address: {
@@ -43,6 +46,9 @@ export const siteConfig = {
     areaServed: "Chile",
     primaryArea: "Santiago y Región Metropolitana",
     experienceYears: 7,
+    // Integrantes visibles del equipo en /quienes-somos; alimenta
+    // numberOfEmployees en el schema de la Organization.
+    teamSize: 3,
     serviceTypes: [
       "Desarrollo web",
       "Sistemas web",
@@ -51,6 +57,15 @@ export const siteConfig = {
       "Automatización",
       "Soporte TI",
       "SEO técnico",
+    ],
+    // Términos exactos de las páginas de servicio publicadas; amplían
+    // knowsAbout de la Organization con contenido visible del sitio.
+    expertiseTopics: [
+      "páginas web para pymes en Chile",
+      "páginas web para empresas",
+      "tiendas online con Webpay",
+      "automatización de WhatsApp",
+      "desarrollo web Santiago",
     ],
   },
   social: {

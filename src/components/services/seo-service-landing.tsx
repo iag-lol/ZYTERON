@@ -6,6 +6,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { PLAN_PRICE_AMOUNTS, SERVICE_PRICE_AMOUNTS } from "@/config/pricing";
 import { siteConfig } from "@/config/site";
 import type { SeoServicePage } from "@/content/seo-service-pages";
+import { getFeaturedCaseItems, type CaseListItem } from "@/lib/content/cases-merge";
 import {
   buildFaqJsonLd,
   buildServiceJsonLd,
@@ -297,11 +298,17 @@ function formatClp(value: number) {
   return `$${new Intl.NumberFormat("es-CL").format(value)}`;
 }
 
-export function SeoServiceLanding({ page }: Props) {
+export async function SeoServiceLanding({ page }: Props) {
   const deepContent = deepContentBySlug[page.slug];
   const serviceLabel = deepContent?.serviceLabel ?? page.navLabel.toLowerCase();
-  // El contenido curado se eliminó; los casos reales viven en /casos-exito (Supabase).
-  const relatedCaseStudies: { slug: string; industry: string; title: string; summary: string }[] = [];
+  // Evidencia comercial: casos publicados en Supabase (admin /casos). Si la
+  // consulta falla o aún no hay casos, la sección muestra un fallback a /demos.
+  let relatedCaseStudies: CaseListItem[] = [];
+  try {
+    relatedCaseStudies = await getFeaturedCaseItems(3);
+  } catch {
+    relatedCaseStudies = [];
+  }
   const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(
     `Hola Zyteron, quiero cotizar ${page.navLabel} para mi empresa.`,
   )}`;
@@ -357,6 +364,14 @@ export function SeoServiceLanding({ page }: Props) {
               <h1 className="max-w-5xl text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl">
                 {page.heroTitle}
               </h1>
+              {page.directAnswer ? (
+                <div className="max-w-4xl rounded-2xl border border-blue-100 bg-blue-50 p-5">
+                  <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Respuesta directa</p>
+                  <p className="mt-2 text-sm font-medium leading-relaxed text-slate-800 sm:text-base">
+                    {page.directAnswer}
+                  </p>
+                </div>
+              ) : null}
               <p className="max-w-4xl text-base leading-relaxed text-slate-600 sm:text-lg">
                 {page.heroDescription}
               </p>
@@ -589,16 +604,20 @@ export function SeoServiceLanding({ page }: Props) {
             </Container>
           </section>
 
+        </>
+      ) : null}
+
+      <section className="bg-white py-16">
+        <Container className="space-y-8">
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Aplicaciones reales</p>
+            <h2 className="text-3xl font-extrabold text-slate-900">Casos de uso reales</h2>
+            <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              Documentamos casos de empresas reales para mostrar problemas frecuentes y cómo se resolvieron.
+            </p>
+          </div>
           {relatedCaseStudies.length > 0 ? (
-          <section className="bg-white py-16">
-            <Container className="space-y-8">
-              <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Aplicaciones reales</p>
-                <h2 className="text-3xl font-extrabold text-slate-900">Casos de uso reales</h2>
-                <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-                  Documentamos casos de empresas reales para mostrar problemas frecuentes y cómo se resolvieron.
-                </p>
-              </div>
+            <>
               <div className="grid gap-5 md:grid-cols-3">
                 {relatedCaseStudies.map((caseStudy) => (
                   <Link
@@ -606,20 +625,43 @@ export function SeoServiceLanding({ page }: Props) {
                     href={`/casos-exito/${caseStudy.slug}`}
                     className="card-premium p-5 transition-colors hover:border-blue-200"
                   >
-                    <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">{caseStudy.industry}</p>
-                    <h3 className="text-base font-extrabold leading-snug text-slate-900">{caseStudy.title}</h3>
+                    <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">{caseStudy.badgePrimary}</p>
+                    <h3 className="text-base font-extrabold leading-snug text-slate-900">{caseStudy.heading}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-slate-600">{caseStudy.summary}</p>
                     <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
-                      Ver caso anónimo <ArrowRight className="h-4 w-4" />
+                      Ver caso completo <ArrowRight className="h-4 w-4" />
                     </span>
                   </Link>
                 ))}
               </div>
-            </Container>
-          </section>
-          ) : null}
-        </>
-      ) : null}
+              <Link href="/casos-exito" className="inline-flex items-center gap-1 text-sm font-bold text-blue-700 hover:text-blue-800">
+                Ver todos los casos de éxito <ArrowRight className="h-4 w-4" />
+              </Link>
+            </>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              <Link href="/casos-exito" className="card-premium block p-5 transition-colors hover:border-blue-200">
+                <h3 className="text-base font-extrabold text-slate-900">Casos de éxito de clientes</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  Revisa proyectos reales que hemos desarrollado para empresas y pymes en Chile, con el problema, la solución y los resultados.
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
+                  Ver casos de éxito <ArrowRight className="h-4 w-4" />
+                </span>
+              </Link>
+              <Link href="/demos" className="card-premium block p-5 transition-colors hover:border-blue-200">
+                <h3 className="text-base font-extrabold text-slate-900">Demos navegables</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  Abre y navega ejemplos funcionales de páginas web y tiendas online para imaginar cómo puede quedar la tuya.
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
+                  Ver demos <ArrowRight className="h-4 w-4" />
+                </span>
+              </Link>
+            </div>
+          )}
+        </Container>
+      </section>
 
       <section className="section-alt py-16">
         <Container className="space-y-8">

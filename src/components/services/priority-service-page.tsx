@@ -1,10 +1,28 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, MessageCircle } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import {
+  AI_SERVICES,
+  ADDON_PRICE_AMOUNTS,
+  MAINTENANCE,
+  PLAN_PRICES,
+  SERVICE_PRICE_AMOUNTS,
+  type PricedItem,
+} from "@/config/pricing";
 import { siteConfig } from "@/config/site";
 import type { PriorityServicePage } from "@/content/priority-service-pages";
+import { getBreadcrumbs } from "@/lib/schema";
 import {
   buildFaqJsonLd,
   buildServiceJsonLd,
@@ -12,13 +30,79 @@ import {
 } from "@/lib/seo";
 
 const WHATSAPP_URL =
-  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.`;
+  `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.`;
+
+function formatClp(value: number) {
+  return `$${new Intl.NumberFormat("es-CL").format(value)}`;
+}
+
+/** Convierte "Desde $X + IVA / mes" en "desde $X + IVA / mes" para componer notas. */
+function lowerDesde(price: string) {
+  return price.replace(/^Desde/, "desde");
+}
+
+/**
+ * Precios referenciales visibles por página, siempre leídos desde
+ * src/config/pricing.ts (fuente única). Si un slug no está en el mapa se
+ * muestran los planes base de páginas web.
+ */
+const pricingBySlug: Record<string, PricedItem[]> = {
+  "paginas-web-santiago": [
+    { name: "Web básica de presentación", price: PLAN_PRICES["web-basica"], note: "pago único" },
+    { name: "Plan Pyme", price: PLAN_PRICES.pyme },
+    { name: "Plan Empresa", price: PLAN_PRICES.empresa },
+  ],
+  "desarrollo-web-santiago": [
+    { name: "Web básica de presentación", price: PLAN_PRICES["web-basica"], note: "pago único" },
+    { name: "Web corporativa (Plan Empresa)", price: PLAN_PRICES.empresa },
+    { name: "Sistema web administrativo", price: PLAN_PRICES.sistema },
+  ],
+  "automatizacion-whatsapp-empresas": [
+    {
+      name: "Automatización por WhatsApp",
+      price: `Desde ${formatClp(SERVICE_PRICE_AMOUNTS.automationWhatsapp)} + IVA`,
+      note: "más costos de consumo",
+    },
+    ...AI_SERVICES.slice(0, 2).map((service) => ({
+      name: service.name,
+      price: service.setup,
+      note: service.monthly ? `operación ${lowerDesde(service.monthly)}` : undefined,
+    })),
+  ],
+  "cotizador-web-pdf": [
+    { name: "Generador de PDF (módulo)", price: `Desde ${formatClp(ADDON_PRICE_AMOUNTS.pdfGenerator)} + IVA` },
+    { name: "Sistema web administrativo", price: PLAN_PRICES.sistema },
+    ...AI_SERVICES.slice(2, 3).map((service) => ({
+      name: service.name,
+      price: service.setup,
+      note: service.monthly ? `operación ${lowerDesde(service.monthly)}` : undefined,
+    })),
+  ],
+  "soporte-ti-pymes-santiago": [
+    { name: "Soporte TI para pymes", price: `Desde ${formatClp(SERVICE_PRICE_AMOUNTS.supportTi)} + IVA` },
+    ...MAINTENANCE.slice(0, 2),
+  ],
+};
+
+const defaultPricing: PricedItem[] = [
+  { name: "Web básica de presentación", price: PLAN_PRICES["web-basica"], note: "pago único" },
+  { name: "Plan Pyme", price: PLAN_PRICES.pyme },
+  { name: "Plan Empresa", price: PLAN_PRICES.empresa },
+];
 
 type Props = {
   page: PriorityServicePage;
 };
 
 export function PriorityServicePageTemplate({ page }: Props) {
+  // Mismo recorrido que el BreadcrumbList JSON-LD emitido más abajo:
+  // Inicio / Servicios / página actual.
+  const breadcrumbItems = [
+    ...getBreadcrumbs("/servicios"),
+    { name: page.title, path: page.path },
+  ];
+  const pricingItems = pricingBySlug[page.slug] ?? defaultPricing;
+
   return (
     <main className="bg-white">
       <JsonLd
@@ -55,6 +139,27 @@ export function PriorityServicePageTemplate({ page }: Props) {
 
       <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-18 sm:py-20">
         <Container className="space-y-5">
+          <Breadcrumb aria-label="Breadcrumb">
+            <BreadcrumbList className="gap-1.5 text-xs font-semibold text-slate-500">
+              {breadcrumbItems.map((item, index) => {
+                const isLast = index === breadcrumbItems.length - 1;
+                return (
+                  <Fragment key={item.path}>
+                    <BreadcrumbItem>
+                      {isLast ? (
+                        <BreadcrumbPage className="font-semibold text-slate-700">{item.name}</BreadcrumbPage>
+                      ) : (
+                        <BreadcrumbLink asChild className="hover:text-blue-700">
+                          <Link href={item.path}>{item.name}</Link>
+                        </BreadcrumbLink>
+                      )}
+                    </BreadcrumbItem>
+                    {isLast ? null : <BreadcrumbSeparator className="text-slate-300" />}
+                  </Fragment>
+                );
+              })}
+            </BreadcrumbList>
+          </Breadcrumb>
           <div className="badge-blue w-fit">
             <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
             Servicio especializado
@@ -62,6 +167,14 @@ export function PriorityServicePageTemplate({ page }: Props) {
           <h1 className="max-w-5xl text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
             {page.heroTitle}
           </h1>
+          {page.directAnswer ? (
+            <div className="max-w-4xl rounded-2xl border border-blue-100 bg-blue-50 p-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Respuesta directa</p>
+              <p className="mt-2 text-sm font-medium leading-relaxed text-slate-800 sm:text-base">
+                {page.directAnswer}
+              </p>
+            </div>
+          ) : null}
           <p className="max-w-4xl text-base leading-relaxed text-slate-600 sm:text-lg">
             {page.heroDescription}
           </p>
@@ -152,6 +265,15 @@ export function PriorityServicePageTemplate({ page }: Props) {
           <article className="card-premium p-6">
             <h2 className="mb-3 text-xl font-extrabold text-slate-900">Enlaces útiles</h2>
             <div className="space-y-2 text-sm">
+              {page.relatedLinks?.map((link) => (
+                <Link
+                  key={`${link.href}-${link.label}`}
+                  href={link.href}
+                  className="block rounded-lg border border-slate-200 bg-slate-50 p-3 font-bold text-slate-900 transition-colors hover:border-blue-200 hover:bg-white"
+                >
+                  {link.label}
+                </Link>
+              ))}
               <Link href="/planes" className="block rounded-lg border border-slate-200 bg-slate-50 p-3 text-slate-700 hover:bg-slate-100">
                 Ver planes y valores referenciales
               </Link>
@@ -163,6 +285,49 @@ export function PriorityServicePageTemplate({ page }: Props) {
               </Link>
             </div>
           </article>
+        </Container>
+      </section>
+
+      <section className="bg-white pb-16">
+        <Container className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
+          <article className="card-premium p-6">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Inversión referencial</p>
+            <h2 className="mt-1 text-2xl font-extrabold text-slate-900">Precios desde, publicados y sin sorpresas</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              Publicamos valores base para que compares con información real antes de conversar con nosotros. Cada proyecto se confirma con una cotización formal según alcance.
+            </p>
+            <div className="mt-5 grid gap-3">
+              {pricingItems.map((item) => (
+                <div key={item.name} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <div className="flex flex-wrap items-end justify-between gap-2">
+                    <h3 className="text-base font-extrabold text-slate-900">{item.name}</h3>
+                    <p className="text-base font-extrabold text-blue-700">{item.price}</p>
+                  </div>
+                  {item.note ? <p className="mt-1 text-xs leading-relaxed text-slate-500">{item.note}</p> : null}
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <aside className="card-premium p-6">
+            <h3 className="text-lg font-extrabold text-slate-900">¿Quieres un valor para tu caso?</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              En el cotizador seleccionas lo que necesitas y recibes un estimado inmediato. También puedes revisar el detalle completo de planes, adicionales y mantención.
+            </p>
+            <div className="mt-4 grid gap-2">
+              <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
+                <Link href="/cotizador">
+                  Cotizar mi proyecto <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+                <Link href="/planes">Ver todos los planes y precios</Link>
+              </Button>
+            </div>
+            <p className="mt-4 text-xs leading-relaxed text-slate-500">
+              Valores referenciales expresados desde el precio indicado, sin IVA incluido. El precio final depende del alcance real del proyecto.
+            </p>
+          </aside>
         </Container>
       </section>
 

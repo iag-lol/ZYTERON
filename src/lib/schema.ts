@@ -1,6 +1,5 @@
 import { siteConfig } from "@/config/site";
 import { getAbsoluteOgImageUrl } from "@/config/og";
-import type { PublicReview } from "@/lib/web-control-types";
 
 export type SchemaBreadcrumbItem = {
   name: string;
@@ -32,7 +31,7 @@ export type SchemaWebPageInput = {
   title: string;
   description: string;
   breadcrumbs?: SchemaBreadcrumbItem[];
-  pageType?: "WebPage" | "AboutPage" | "ContactPage";
+  pageType?: "WebPage" | "AboutPage" | "ContactPage" | "CollectionPage";
 };
 
 export type SchemaArticleInput = {
@@ -56,27 +55,6 @@ export type SchemaPersonInput = {
   image?: string;
   url?: string;
   knowsAbout?: string[];
-};
-
-export type SchemaAggregateRatingInput = {
-  ratingValue: number;
-  reviewCount: number;
-  itemName?: string;
-  itemType?: "Organization" | "LocalBusiness" | "Service";
-  itemUrl?: string;
-};
-
-export type SchemaLocalLandingInput = {
-  path: string;
-  title: string;
-  description: string;
-  serviceName: string;
-  serviceType: string;
-  locationName: string;
-  region: string;
-  latitude: number;
-  longitude: number;
-  breadcrumbs?: SchemaBreadcrumbItem[];
 };
 
 const ROUTE_LABELS: Record<string, string> = {
@@ -208,9 +186,10 @@ export function getOrganizationSchema() {
       {
         "@type": "Organization",
         "@id": getOrganizationId(),
-        name: siteConfig.legalName,
-        alternateName: siteConfig.name,
+        name: siteConfig.name,
+        alternateName: siteConfig.legalName,
         legalName: siteConfig.legalName,
+        slogan: siteConfig.slogan,
         taxID: siteConfig.taxId,
         url: `${siteConfig.url}/`,
         logo: {
@@ -222,6 +201,10 @@ export function getOrganizationSchema() {
         email: siteConfig.contact.email,
         telephone: siteConfig.contact.phone,
         foundingDate: siteConfig.foundingDate,
+        numberOfEmployees: {
+          "@type": "QuantitativeValue",
+          value: siteConfig.business.teamSize,
+        },
         ...(siteConfig.business.hasPublicOffice ? { address: buildPostalAddress() } : {}),
         founder: {
           "@type": "Person",
@@ -241,7 +224,10 @@ export function getOrganizationSchema() {
           "@type": "Country",
           name: siteConfig.business.areaServed,
         },
-        knowsAbout: siteConfig.business.serviceTypes,
+        knowsAbout: [
+          ...siteConfig.business.serviceTypes,
+          ...siteConfig.business.expertiseTopics,
+        ],
         contactPoint: [buildContactPoint()],
       },
       {
@@ -249,6 +235,8 @@ export function getOrganizationSchema() {
         "@id": getWebsiteId(),
         url: `${siteConfig.url}/`,
         name: siteConfig.name,
+        alternateName: siteConfig.domain,
+        description: siteConfig.description,
         inLanguage: siteConfig.locale,
         publisher: {
           "@id": getOrganizationId(),
@@ -418,13 +406,16 @@ export function getBlogPostingSchema({
   authorId,
 }: SchemaArticleInput) {
   const pageUrl = buildAbsoluteUrl(path);
+  // El @id de una Person sólo se emite si el llamador lo entrega explícito:
+  // asignar por defecto el @id del fundador marcaría a cualquier autor como
+  // la entidad Eduardo Ávila y contaminaría el grafo de personas.
   const authorEntity =
     authorType === "Person"
       ? {
           "@type": "Person",
-          "@id": authorId ?? `${siteConfig.url}/quienes-somos#eduardo-avila`,
+          ...(authorId ? { "@id": authorId } : {}),
           name: authorName ?? siteConfig.representative.name,
-          url: authorUrl ?? `${siteConfig.url}/quienes-somos`,
+          ...(authorUrl ? { url: authorUrl } : {}),
         }
       : {
           "@type": "Organization",
@@ -487,33 +478,6 @@ export function getPersonSchema(person?: Partial<SchemaPersonInput>) {
   };
 }
 
-export function getAggregateRatingSchema({
-  ratingValue,
-  reviewCount,
-  itemName,
-  itemType = "Organization",
-  itemUrl,
-}: SchemaAggregateRatingInput) {
-  const roundedRating = Math.round(ratingValue * 10) / 10;
-  if (!Number.isFinite(roundedRating) || roundedRating <= 0) return null;
-  if (!Number.isFinite(reviewCount) || reviewCount <= 0) return null;
-
-  return {
-    "@context": "https://schema.org",
-    "@type": itemType,
-    "@id": `${buildAbsoluteUrl(itemUrl || "/")}#aggregate-rating`,
-    name: itemName ?? siteConfig.legalName,
-    url: buildAbsoluteUrl(itemUrl || "/"),
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: roundedRating,
-      reviewCount,
-      bestRating: 5,
-      worstRating: 1,
-    },
-  };
-}
-
 export function getWebPageSchema({
   path,
   title,
@@ -549,94 +513,3 @@ export function getWebPageSchema({
   };
 }
 
-export function getLocalLandingSchema({
-  path,
-  title,
-  description,
-  serviceName,
-  serviceType,
-  locationName,
-  region,
-  latitude,
-  longitude,
-  breadcrumbs = [],
-}: SchemaLocalLandingInput) {
-  const pageUrl = buildAbsoluteUrl(path);
-  const graph: Record<string, unknown>[] = [
-    {
-      "@type": "WebPage",
-      "@id": `${pageUrl}#webpage`,
-      url: pageUrl,
-      name: title,
-      description,
-      inLanguage: siteConfig.locale,
-      isPartOf: {
-        "@id": getWebsiteId(),
-      },
-      about: {
-        "@id": getOrganizationId(),
-      },
-    },
-    {
-      "@type": "Service",
-      "@id": `${pageUrl}#service`,
-      name: serviceName,
-      serviceType,
-      description,
-      url: pageUrl,
-      provider: {
-        "@id": getOrganizationId(),
-      },
-      areaServed: [
-        {
-          "@type": "City",
-          name: locationName,
-        },
-        {
-          "@type": "AdministrativeArea",
-          name: region,
-        },
-        {
-          "@type": "Country",
-          name: "Chile",
-        },
-      ],
-    },
-    {
-      "@type": "Place",
-      "@id": `${pageUrl}#place`,
-      name: `${locationName}, ${region}`,
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: locationName,
-        addressRegion: region,
-        addressCountry: siteConfig.address.countryCode,
-      },
-      geo: {
-        "@type": "GeoCoordinates",
-        latitude,
-        longitude,
-      },
-    },
-  ];
-
-  if (breadcrumbs.length) {
-    graph.push(getBreadcrumbSchema(breadcrumbs));
-  }
-
-  return {
-    "@context": "https://schema.org",
-    "@graph": graph,
-  };
-}
-
-export function computeAggregateRatingFromReviews(reviews: PublicReview[]) {
-  const valid = reviews.filter((review) => Number.isFinite(review.rating) && review.rating > 0);
-  if (valid.length === 0) return null;
-
-  const total = valid.reduce((sum, review) => sum + review.rating, 0);
-  return {
-    ratingValue: total / valid.length,
-    reviewCount: valid.length,
-  };
-}

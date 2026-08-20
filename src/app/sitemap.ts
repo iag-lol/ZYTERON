@@ -25,7 +25,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/casos-exito", priority: 0.8, changeFrequency: "monthly" as const },
     { path: "/faq", priority: 0.6, changeFrequency: "monthly" as const },
     { path: "/quienes-somos", priority: 0.6, changeFrequency: "monthly" as const },
+    { path: "/recursos", priority: 0.7, changeFrequency: "monthly" as const },
     { path: "/recursos/checklist-seo-pymes-chile", priority: 0.8, changeFrequency: "monthly" as const },
+    { path: "/recursos/como-elegir-empresa-desarrollo-web-chile", priority: 0.8, changeFrequency: "monthly" as const },
+    { path: "/recursos/wordpress-vs-web-a-medida-chile", priority: 0.8, changeFrequency: "monthly" as const },
     { path: "/becas-web-pyme", priority: 0.5, changeFrequency: "monthly" as const },
   ].map(({ path, priority, changeFrequency }) => ({
     url: `${base}${path}`,

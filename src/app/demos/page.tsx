@@ -5,7 +5,13 @@ import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { DemosGrid } from "@/components/demos/demos-grid";
+import { PLAN_PRICE_AMOUNTS } from "@/config/pricing";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+
+/** Formato visible de precios en demos: "Desde $XXX.XXX CLP + IVA", con montos desde pricing.ts. */
+function demoPrice(planId: keyof typeof PLAN_PRICE_AMOUNTS) {
+  return `Desde $${new Intl.NumberFormat("es-CL").format(PLAN_PRICE_AMOUNTS[planId])} CLP + IVA`;
+}
 
 export const metadata: Metadata = createPageMetadata({
   title: "Ejemplos y demos de páginas web",
@@ -19,9 +25,9 @@ const demoCards = [
     title: "Demo tienda online de ropa",
     description:
       "Tienda online profesional para marcas de ropa: diseño moderno, catálogo, carrito y estructura preparada para pagos online.",
-    tech: "Desde $599.990 CLP + IVA · Responsive · Catálogo · Carrito · Pagos online según requerimiento",
+    tech: `${demoPrice("ecommerce")} · Responsive · Catálogo · Carrito · Pagos online según requerimiento`,
     demoHref: "https://iag-lol.github.io/tienda.mck/",
-    priceFrom: "Desde $599.990 CLP + IVA",
+    priceFrom: demoPrice("ecommerce"),
     gallery: [
       "/demos/tienda-ropa/tienda-ropa-01.png",
       "/demos/tienda-ropa/tienda-ropa-02.png",
@@ -66,9 +72,9 @@ const demoCards = [
     title: "Demo plataforma de cursos con videos",
     description:
       "Plataforma web para publicar cursos de cualquier rubro: presentación de programas, lecciones en video y captación de nuevos alumnos.",
-    tech: "Desde $399.990 CLP · Plataforma de cursos · Lecciones en video · Responsive · Escalable",
+    tech: `${demoPrice("empresa")} · Plataforma de cursos · Lecciones en video · Responsive · Escalable`,
     demoHref: "https://iag-lol.github.io/cursos.mck/",
-    priceFrom: "Desde $399.990 CLP",
+    priceFrom: demoPrice("empresa"),
     galleryPending: true,
     includes: [
       "Landing profesional para vender cursos",
