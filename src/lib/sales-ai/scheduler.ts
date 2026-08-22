@@ -8,9 +8,48 @@
 
 export const SCHEDULER_TIMEZONE = "America/Santiago";
 
-/** Separación mínima y máxima entre dos envíos consecutivos, en minutos. */
+/**
+ * Separación por defecto entre dos envíos consecutivos, en minutos. Se usa
+ * cuando no se declara un objetivo diario; equivale a repartir unos 20 correos
+ * a lo largo del día.
+ */
 export const MIN_GAP_MINUTES = 35;
 export const MAX_GAP_MINUTES = 110;
+
+/**
+ * Piso duro de separación. Por debajo de esto el patrón deja de parecer humano
+ * y se acerca a una ráfaga, que es justo lo que hace que un dominio termine
+ * marcado como spam. Ningún objetivo diario puede saltárselo.
+ */
+export const ABSOLUTE_MIN_GAP_MINUTES = 12;
+
+const DAY_MINUTES = 24 * 60;
+
+/**
+ * Deriva la separación entre envíos a partir de cuántos correos se quieren
+ * repartir en el día.
+ *
+ * La media es simplemente el día dividido por el objetivo, y alrededor de esa
+ * media se abre una ventana de ±50 % para que la separación real siempre sea
+ * irregular: nunca dos envíos al mismo ritmo, que es lo que delata a un robot.
+ *
+ * Con 20 correos diarios devuelve 36-108 minutos, prácticamente la separación
+ * fija que había antes; con 30 baja a 24-72, que es lo que permite completar el
+ * objetivo sin agrupar envíos.
+ */
+export function gapRangeForDailyLimit(dailyLimit?: number | null): {
+  min: number;
+  max: number;
+} {
+  if (!dailyLimit || !Number.isFinite(dailyLimit) || dailyLimit <= 0) {
+    return { min: MIN_GAP_MINUTES, max: MAX_GAP_MINUTES };
+  }
+
+  const average = DAY_MINUTES / dailyLimit;
+  const min = Math.max(ABSOLUTE_MIN_GAP_MINUTES, Math.round(average * 0.5));
+  const max = Math.max(min + 1, Math.round(average * 1.5));
+  return { min, max };
+}
 
 /**
  * Reparto del día. Los porcentajes son los solicitados: la mayoría en horario
@@ -79,6 +118,11 @@ export type ScheduleOptions = {
   now?: Date;
   random?: () => number;
   timeZone?: string;
+  /**
+   * Correos que se quieren repartir en el día. La separación se calcula a
+   * partir de este número; si se omite se usa el rango por defecto.
+   */
+  dailyLimit?: number | null;
 };
 
 /**
@@ -101,7 +145,8 @@ export function computeNextSendAt(options: ScheduleOptions = {}): Date {
       ? options.lastScheduledAt
       : now;
 
-  const gap = randomBetween(MIN_GAP_MINUTES, MAX_GAP_MINUTES, random);
+  const range = gapRangeForDailyLimit(options.dailyLimit);
+  const gap = randomBetween(range.min, range.max, random);
   let candidate = new Date(base.getTime() + gap * 60_000);
 
   const targetBand = pickBand(random);
@@ -121,7 +166,7 @@ export function computeNextSendAt(options: ScheduleOptions = {}): Date {
   }
 
   // Nunca en el pasado ni antes de la separación mínima.
-  const earliest = new Date(base.getTime() + MIN_GAP_MINUTES * 60_000);
+  const earliest = new Date(base.getTime() + range.min * 60_000);
   return candidate.getTime() < earliest.getTime() ? earliest : candidate;
 }
 
@@ -134,7 +179,12 @@ export function computeNextSendAt(options: ScheduleOptions = {}): Date {
  */
 export function rescheduleBacklog(
   count: number,
-  options: { now?: Date; random?: () => number; timeZone?: string } = {},
+  options: {
+    now?: Date;
+    random?: () => number;
+    timeZone?: string;
+    dailyLimit?: number | null;
+  } = {},
 ): Date[] {
   const dates: Date[] = [];
   let last: Date | null = null;
@@ -145,6 +195,7 @@ export function rescheduleBacklog(
       now: options.now,
       random: options.random,
       timeZone: options.timeZone,
+      dailyLimit: options.dailyLimit,
     });
     dates.push(next);
     last = next;

@@ -2,12 +2,14 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  ABSOLUTE_MIN_GAP_MINUTES,
   BANDS,
   MAX_GAP_MINUTES,
   MIN_GAP_MINUTES,
   bandForMinute,
   computeNextSendAt,
   effectiveDailyLimit,
+  gapRangeForDailyLimit,
   minutesOfDayInZone,
   pickBand,
   rescheduleBacklog,
@@ -166,5 +168,65 @@ describe("calentamiento · tope automático corregido", () => {
     const result = effectiveDailyLimit({ warmupStartedOn: null, configuredDailyLimit: 30 });
     assert.equal(result.limit, 10);
     assert.match(result.stage, /primer envío real/);
+  });
+});
+
+describe("cadencia · la separación se deriva del objetivo diario", () => {
+  it("sin objetivo declarado conserva el rango histórico", () => {
+    const range = gapRangeForDailyLimit(undefined);
+    assert.equal(range.min, MIN_GAP_MINUTES);
+    assert.equal(range.max, MAX_GAP_MINUTES);
+  });
+
+  it("con 30 diarios acorta la separación lo suficiente para completarlos", () => {
+    const range = gapRangeForDailyLimit(30);
+    // Con la separación media el día tiene que dar para los 30 envíos.
+    const media = (range.min + range.max) / 2;
+    assert.ok(
+      (24 * 60) / media >= 30,
+      `con separación media de ${media} min solo caben ${Math.floor((24 * 60) / media)} envíos`,
+    );
+  });
+
+  it("con 20 diarios se mantiene cerca de la cadencia previa", () => {
+    const range = gapRangeForDailyLimit(20);
+    assert.ok(range.min >= 30 && range.min <= 40, `mínimo inesperado: ${range.min}`);
+    assert.ok(range.max >= 100 && range.max <= 115, `máximo inesperado: ${range.max}`);
+  });
+
+  it("nunca baja del piso de seguridad, por alto que sea el objetivo", () => {
+    for (const objetivo of [60, 200, 1000]) {
+      const range = gapRangeForDailyLimit(objetivo);
+      assert.ok(
+        range.min >= ABSOLUTE_MIN_GAP_MINUTES,
+        `${objetivo} diarios produjo una separación de ${range.min} min`,
+      );
+    }
+  });
+
+  it("reparte 30 envíos sin agrupar dos en el mismo minuto", () => {
+    const now = new Date("2026-08-22T12:00:00.000Z");
+    const dates = rescheduleBacklog(30, { now, random: Math.random, dailyLimit: 30 });
+    const minutos = dates.map((date) => Math.floor(date.getTime() / 60_000));
+    assert.equal(new Set(minutos).size, 30, "hay envíos programados en el mismo minuto");
+
+    for (let index = 1; index < dates.length; index += 1) {
+      const gap = (dates[index].getTime() - dates[index - 1].getTime()) / 60_000;
+      assert.ok(
+        gap >= ABSOLUTE_MIN_GAP_MINUTES,
+        `separación de ${gap} min por debajo del piso de seguridad`,
+      );
+    }
+  });
+
+  it("la separación es irregular: no repite el mismo intervalo", () => {
+    const now = new Date("2026-08-22T12:00:00.000Z");
+    const dates = rescheduleBacklog(20, { now, random: Math.random, dailyLimit: 30 });
+    const gaps = dates
+      .slice(1)
+      .map((date, index) => (date.getTime() - dates[index].getTime()) / 60_000);
+
+    // Un patrón fijo delataría automatización: se exige variedad real.
+    assert.ok(new Set(gaps).size > 5, `sólo ${new Set(gaps).size} separaciones distintas`);
   });
 });

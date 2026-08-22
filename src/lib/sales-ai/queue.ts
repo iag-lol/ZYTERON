@@ -2,7 +2,13 @@ import "server-only";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSalesSettings, updateSalesSetting } from "./settings";
-import { computeNextSendAt, effectiveDailyLimit, rescheduleBacklog } from "./scheduler";
+import {
+  ABSOLUTE_MIN_GAP_MINUTES,
+  computeNextSendAt,
+  effectiveDailyLimit,
+  gapRangeForDailyLimit,
+  rescheduleBacklog,
+} from "./scheduler";
 import { logSalesEvent } from "./repository";
 import { notifySalesEvent } from "./notifications";
 import { SALES_EVENT_TYPES } from "./types";
@@ -152,13 +158,24 @@ export async function scheduleQueueItem(
   try {
     const { supabase } = createSupabaseServerClient();
     const settings = await getSalesSettings();
-    const gap = Number(settings.queue_min_gap_seconds) || 2100;
+
+    // La separación se deriva del objetivo diario: repartir 30 correos exige
+    // huecos más cortos que repartir 20. El piso configurable actúa como tope
+    // de seguridad, nunca como el valor que manda, porque un piso mayor que la
+    // separación necesaria haría imposible completar el objetivo del día.
+    const { limit: dailyLimit } = await getEffectiveDailyLimit();
+    const range = gapRangeForDailyLimit(dailyLimit);
+    const configuredFloor = Number(settings.queue_min_gap_seconds) || 0;
+    const gap = Math.max(
+      ABSOLUTE_MIN_GAP_MINUTES * 60,
+      Math.min(configuredFloor || range.min * 60, range.min * 60),
+    );
 
     // La aplicación propone la hora (franjas + aleatoriedad) y la función SQL
     // la ajusta bajo el bloqueo global: así dos crons no pueden asignar el
     // mismo minuto ni una separación menor a la mínima.
     const lastScheduledAt = await getLastScheduledAt();
-    const candidate = computeNextSendAt({ lastScheduledAt });
+    const candidate = computeNextSendAt({ lastScheduledAt, dailyLimit });
 
     const { data, error } = await supabase.rpc("sales_schedule_send", {
       p_id: id,
@@ -455,7 +472,11 @@ export async function rescheduleOverdue(): Promise<number> {
   const overdue = data ?? [];
   if (overdue.length === 0) return 0;
 
-  const dates = rescheduleBacklog(overdue.length);
+  // El atraso se reparte con la misma cadencia que el resto: si se recalculara
+  // con la separación por defecto, reactivar Zara con cola acumulada volvería a
+  // agrupar los envíos.
+  const { limit: backlogDailyLimit } = await getEffectiveDailyLimit();
+  const dates = rescheduleBacklog(overdue.length, { dailyLimit: backlogDailyLimit });
 
   for (let index = 0; index < overdue.length; index += 1) {
     await supabase
