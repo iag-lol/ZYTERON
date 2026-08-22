@@ -89,13 +89,50 @@ const nextConfig: NextConfig = {
       // páginas principales. Los redirects permanentes concentran sus señales
       // y evitan que Google siga rastreando versiones equivalentes.
       {
-        source: "/blog/diferencia-pagina-web-tienda-online-sistema-web",
-        destination: "/blog/pagina-web-tienda-online-o-sistema-web-cual-necesita-tu-empresa",
+        source: "/blog/seo-para-pymes-chile",
+        destination: "/servicios/seo-para-empresas-chile",
+        permanent: true,
+      },
+      // Artículos históricos que Google indexó y que hoy responden 404 porque su
+      // contenido se retiró del código. Los que tienen un reemplazo claro se
+      // consolidan aquí; el resto se restaura en su misma URL desde la base.
+      // Todos los destinos son rutas estáticas: nunca dependen de la base de
+      // datos, así que un redirect no puede terminar en 404.
+      {
+        // Canibalizaba con /blog/cuanto-cuesta-pagina-web-empresa-chile. /planes
+        // es la URL canónica de la intención "precio página web Chile".
+        source: "/blog/cuanto-cuesta-una-pagina-web-en-chile",
+        destination: "/planes",
         permanent: true,
       },
       {
-        source: "/blog/seo-para-pymes-chile",
-        destination: "/servicios/seo-para-empresas-chile",
+        source: "/blog/como-elegir-agencia-diseno-web-chile",
+        destination: "/recursos/como-elegir-empresa-desarrollo-web-chile",
+        permanent: true,
+      },
+      {
+        source: "/blog/elegir-wordpress-nextjs-saas-web-empresa-chile",
+        destination: "/recursos/wordpress-vs-web-a-medida-chile",
+        permanent: true,
+      },
+      {
+        source: "/blog/diseno-web-chile-vs-plantillas",
+        destination: "/recursos/wordpress-vs-web-a-medida-chile",
+        permanent: true,
+      },
+      {
+        source: "/blog/landing-pages-para-empresas-checklist",
+        destination: "/servicios/landing-pages-para-empresas",
+        permanent: true,
+      },
+      {
+        source: "/blog/mantencion-web-chile-que-incluye",
+        destination: "/servicios/mantencion-web-chile",
+        permanent: true,
+      },
+      {
+        source: "/blog/por-que-empresa-necesita-web-profesional",
+        destination: "/paginas-web-para-empresas",
         permanent: true,
       },
       {

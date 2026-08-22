@@ -97,6 +97,11 @@ const commonRelatedLinks: SeoServiceRelatedLink[] = [
     description: "Revisa problemas reales resueltos con sistemas, automatización, ecommerce y SEO.",
   },
   {
+    label: "Guías y recursos",
+    href: "/recursos",
+    description: "Cómo elegir proveedor, qué exigir en una cotización y qué revisar antes de contratar.",
+  },
+  {
     label: "Contacto",
     href: "/contacto",
     description: "Solicita una orientación inicial para definir el alcance de tu proyecto.",
@@ -360,6 +365,10 @@ export const seoServicePages: SeoServicePage[] = [
       { label: "Desarrollo web en Chile", href: "/desarrollo-web", description: "Implementación técnica de sitios rápidos, indexables y escalables." },
       { label: "Sistemas web para empresas", href: "/sistemas-web", description: "Plataformas internas para procesos administrativos y operación." },
       { label: "Landing pages para campañas", href: "/servicios/landing-pages-para-empresas", description: "Páginas de campaña orientadas a conversión para Google Ads o lanzamientos." },
+      { label: "Páginas web para constructoras", href: "/paginas-web/constructoras", description: "Sitio corporativo enfocado en mostrar obra ejecutada y capacidad técnica." },
+      { label: "Páginas web para empresas industriales", href: "/paginas-web/industria-b2b", description: "Catálogo técnico, fichas de producto y captación de clientes B2B." },
+      { label: "Páginas web para servicios profesionales", href: "/paginas-web/servicios-profesionales", description: "Sitios para estudios y consultoras que necesitan agendar y calificar consultas." },
+      { label: "Páginas web para transporte y logística", href: "/paginas-web/transporte-logistica", description: "Presencia comercial para operadores de carga, flotas y distribución." },
       ...commonRelatedLinks,
     ],
     serviceType: "Páginas web corporativas para empresas",
