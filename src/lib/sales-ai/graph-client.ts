@@ -5,6 +5,7 @@ import { randomBytes } from "node:crypto";
 
 import { siteConfig } from "@/config/site";
 import { decryptSecret, encryptSecret, isEncryptionConfigured } from "./crypto";
+import { parseGraphSuccessResponse } from "./graph-response";
 
 /**
  * Cliente de Microsoft Graph para el buzón comercial de Zara.
@@ -252,8 +253,7 @@ export async function graphFetch<T>(
     throw new Error(message);
   }
 
-  if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+  return parseGraphSuccessResponse<T>(response);
 }
 
 // ---------------------------------------------------------------------------
