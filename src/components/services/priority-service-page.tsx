@@ -48,12 +48,12 @@ function lowerDesde(price: string) {
  */
 const pricingBySlug: Record<string, PricedItem[]> = {
   "paginas-web-santiago": [
-    { name: "Web básica de presentación", price: PLAN_PRICES["web-basica"], note: "pago único" },
+    { name: "Web básica de presentación", price: PLAN_PRICES["web-basica"] },
     { name: "Plan Pyme", price: PLAN_PRICES.pyme },
     { name: "Plan Empresa", price: PLAN_PRICES.empresa },
   ],
   "desarrollo-web-santiago": [
-    { name: "Web básica de presentación", price: PLAN_PRICES["web-basica"], note: "pago único" },
+    { name: "Web básica de presentación", price: PLAN_PRICES["web-basica"] },
     { name: "Web corporativa (Plan Empresa)", price: PLAN_PRICES.empresa },
     { name: "Sistema web administrativo", price: PLAN_PRICES.sistema },
   ],
@@ -85,7 +85,7 @@ const pricingBySlug: Record<string, PricedItem[]> = {
 };
 
 const defaultPricing: PricedItem[] = [
-  { name: "Web básica de presentación", price: PLAN_PRICES["web-basica"], note: "pago único" },
+  { name: "Web básica de presentación", price: PLAN_PRICES["web-basica"] },
   { name: "Plan Pyme", price: PLAN_PRICES.pyme },
   { name: "Plan Empresa", price: PLAN_PRICES.empresa },
 ];

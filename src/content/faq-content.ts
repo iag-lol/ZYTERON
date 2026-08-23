@@ -55,7 +55,7 @@ export const faqCategories: FaqCategory[] = [
       },
       {
         question: "¿Desarrollan sistemas internos para empresas?",
-        answer: `Sí. Desarrollamos sistemas web, paneles administrativos, cotizadores, reportes, generación de PDF, registros internos y soluciones a medida por etapas. Un sistema web administrativo parte desde ${clp(PLAN_PRICE_AMOUNTS.sistema)} + IVA y se puede iniciar con un módulo acotado para escalar después.`,
+        answer: `Sí. Desarrollamos sistemas web, paneles administrativos, cotizadores, reportes, generación de PDF, registros internos y soluciones a medida por etapas. Un sistema web administrativo parte desde ${clp(PLAN_PRICE_AMOUNTS.sistema)} + IVA y se puede iniciar con un módulo acotado para escalar después. Si tu organización necesita ir más lejos, seguimos con intranet corporativa desde ${clp(PLAN_PRICE_AMOUNTS.intranet)} + IVA, plataforma de control operacional desde ${clp(PLAN_PRICE_AMOUNTS.operacional)} + IVA y plataformas corporativas integradas desde ${clp(PLAN_PRICE_AMOUNTS.corporativa)} + IVA.`,
       },
       {
         question: "¿La web queda adaptada a celular?",

@@ -1,8 +1,18 @@
 import { z } from "zod";
+import { PLAN_PRICE_AMOUNTS, clp } from "@/config/pricing";
 import { siteConfig } from "@/config/site";
 import { buildQuoteMeta, parseQuoteMessage, serializeQuoteMessage, type QuoteMeta } from "@/lib/admin/quote";
 
 export const QUOTE_REQUEST_KIND = "WEB_QUOTE_REQUEST";
+
+/**
+ * Sobre este monto una solicitud deja de tener estimación automática y pasa a
+ * levantamiento técnico y comercial. El cotizador del sitio usa el mismo umbral.
+ */
+export const CORPORATE_QUOTE_THRESHOLD = 5_000_000;
+
+/** Texto único que se muestra cuando el proyecto supera el tope corporativo. */
+export const CORPORATE_QUOTE_MESSAGE = "Proyecto sujeto a levantamiento técnico y comercial.";
 export const QUOTE_REQUEST_WHATSAPP_E164 = siteConfig.contact.whatsapp;
 export const QUOTE_REQUEST_WHATSAPP_PUBLIC = siteConfig.social.whatsapp;
 
@@ -22,6 +32,9 @@ export type BudgetRangeValue =
   | "100000-300000"
   | "300000-700000"
   | "mas-700000"
+  | "700000-2000000"
+  | "2000000-5000000"
+  | "mas-5000000"
   | "no-claro";
 export type DeadlineValue = "urgente" | "esta-semana" | "este-mes" | "sin-apuro" | "no-claro";
 export type UrgencyValue = "bajo" | "medio" | "alto";
@@ -115,12 +128,21 @@ export const BINARY_CHOICE_LABELS: Record<BinaryChoice, string> = {
   "no-se": "No sé",
 };
 
+/**
+ * Tramos de presupuesto del cliente. Los tramos altos se anclan a la escalera
+ * publicada en `@/config/pricing` para no ofrecer rangos que contradigan /planes.
+ * Los tramos antiguos se conservan tal cual porque hay solicitudes ya guardadas
+ * con esos valores.
+ */
 export const BUDGET_RANGE_LABELS: Record<BudgetRangeValue, string> = {
   "menos-50000": "Menos de $50.000",
   "50000-100000": "$50.000 a $100.000",
   "100000-300000": "$100.000 a $300.000",
   "300000-700000": "$300.000 a $700.000",
   "mas-700000": "Más de $700.000",
+  "700000-2000000": `${clp(PLAN_PRICE_AMOUNTS.ecommerce)} a ${clp(PLAN_PRICE_AMOUNTS.sistema)}`,
+  "2000000-5000000": `${clp(PLAN_PRICE_AMOUNTS.sistema)} a ${clp(CORPORATE_QUOTE_THRESHOLD)}`,
+  "mas-5000000": `Más de ${clp(CORPORATE_QUOTE_THRESHOLD)}`,
   "no-claro": "No tengo claro",
 };
 
@@ -190,6 +212,9 @@ export const quoteRequestSchema = z.object({
     "100000-300000",
     "300000-700000",
     "mas-700000",
+    "700000-2000000",
+    "2000000-5000000",
+    "mas-5000000",
     "no-claro",
   ]),
   deadline: z.enum(["urgente", "esta-semana", "este-mes", "sin-apuro", "no-claro"]),
@@ -259,18 +284,32 @@ export function formatCurrencyCLP(value: number) {
   }).format(Math.max(0, Math.round(value)));
 }
 
+/**
+ * Valor referencial del tramo, usado para ordenar y priorizar solicitudes en el
+ * panel. Los tramos altos se anclan a la escalera publicada.
+ */
 export function budgetRangeToEstimate(value: BudgetRangeValue) {
   if (value === "menos-50000") return 50000;
   if (value === "50000-100000") return 100000;
   if (value === "100000-300000") return 300000;
   if (value === "300000-700000") return 700000;
   if (value === "mas-700000") return 900000;
+  if (value === "700000-2000000") return PLAN_PRICE_AMOUNTS.sistema;
+  if (value === "2000000-5000000") return CORPORATE_QUOTE_THRESHOLD;
+  if (value === "mas-5000000") return PLAN_PRICE_AMOUNTS.enterprise;
   return 150000;
+}
+
+/** Los tramos que superan el tope corporativo siempre entran como prioridad alta. */
+export function isCorporateBudgetRange(value: BudgetRangeValue) {
+  return budgetRangeToEstimate(value) >= CORPORATE_QUOTE_THRESHOLD;
 }
 
 export function computeRequestPriority(input: { urgency: UrgencyValue; budgetRange: BudgetRangeValue }): RequestPriority {
   if (input.urgency === "alto") return "Alta";
+  if (isCorporateBudgetRange(input.budgetRange)) return "Alta";
   if (input.budgetRange === "mas-700000" || input.budgetRange === "300000-700000") return "Alta";
+  if (input.budgetRange === "700000-2000000") return "Alta";
   if (input.budgetRange === "100000-300000" || input.budgetRange === "no-claro") return "Media";
   return "Baja";
 }

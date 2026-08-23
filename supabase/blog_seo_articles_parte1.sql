@@ -12,6 +12,9 @@
 -- re-ejecutar sin duplicar ni pisar ediciones hechas en /admin/blog.
 --
 -- Precios copiados desde src/config/pricing.ts (fuente única).
+-- Precios actualizados a la escalera comercial 2026 (src/config/pricing.ts).
+-- OJO: si estos artículos ya están publicados en producción, este seed NO los
+-- corrige (ON CONFLICT DO NOTHING). Para eso está blog_actualizacion_precios_2026.sql.
 -- El contenido es Markdown compatible con src/lib/markdown.ts:
 -- sólo ##/###, listas, negrita, enlaces y citas (sin tablas pipe,
 -- que ese renderizador no soporta).
@@ -29,7 +32,7 @@ values (
   'cuanto-cuesta-pagina-web-empresa-chile',
   '¿Cuánto cuesta una página web para una empresa en Chile? Precios 2026',
   'Guía de precios 2026 con valores reales: cuánto cuesta una web básica, un sitio corporativo, una tienda online y un sistema a medida en Chile, más los costos anexos que conviene presupuestar.',
-  $md$En 2026, una página web para una empresa en Chile cuesta desde $79.990 + IVA en su versión más simple (una web profesional de una página), entre $129.990 y $219.990 + IVA para sitios de emprendedores y pymes, desde $399.990 + IVA para un sitio corporativo completo, desde $599.990 + IVA si necesitas una tienda online con carrito y pagos, y desde $1.290.000 + IVA cuando el proyecto es un sistema web a medida. El precio final depende del alcance: cantidad de páginas, funcionalidades, integraciones y nivel de personalización. En esta guía revisamos qué incluye cada nivel, los rangos que se manejan en el mercado chileno y los costos anexos que conviene tener en el presupuesto desde el día uno.
+  $md$En 2026, una página web para una empresa en Chile cuesta desde $99.990 + IVA en su versión más simple (una web profesional de una página), entre $179.990 y $299.990 + IVA para sitios de emprendedores y pymes, desde $549.990 + IVA para un sitio corporativo completo, desde $749.990 + IVA si necesitas una tienda online con carrito y pagos, y desde $1.990.000 + IVA cuando el proyecto es un sistema web a medida. El precio final depende del alcance: cantidad de páginas, funcionalidades, integraciones y nivel de personalización. En esta guía revisamos qué incluye cada nivel, los rangos que se manejan en el mercado chileno y los costos anexos que conviene tener en el presupuesto desde el día uno.
 
 ## Los rangos que se manejan en el mercado chileno
 
@@ -37,7 +40,7 @@ Cuando cotizas una página web en Chile, las propuestas pueden variar muchísimo
 
 - **Plantillas autoadministradas** (constructores tipo arrastrar y soltar): pagas una mensualidad y armas el sitio tú mismo. Parece barato al inicio, pero el costo es tu tiempo, el resultado suele verse genérico y el SEO parte en desventaja.
 - **Freelancers**: como referencia general del mercado, los sitios simples suelen moverse entre $100.000 y $400.000. Funciona bien cuando el proyecto es acotado y el profesional es serio; el riesgo habitual es la continuidad del soporte después de la entrega.
-- **Agencias y estudios de desarrollo**: como referencia general, sitios corporativos entre $400.000 y $2.000.000 según alcance, y proyectos a medida (tiendas complejas, sistemas, integraciones) desde $1.000.000 hacia arriba. Aquí pagas por proceso, diseño propio, SEO desde la base y soporte real.
+- **Agencias y estudios de desarrollo**: como referencia general, sitios corporativos entre $400.000 y $2.000.000 según alcance, y proyectos a medida (tiendas complejas, sistemas, integraciones) desde $1.500.000 hacia arriba. Aquí pagas por proceso, diseño propio, SEO desde la base y soporte real.
 
 Con esos rangos en mente, veamos precios concretos por tipo de proyecto.
 
@@ -45,32 +48,32 @@ Con esos rangos en mente, veamos precios concretos por tipo de proyecto.
 
 Estos son los valores vigentes de Zyteron, útiles como referencia del mercado formal chileno. Se expresan "desde", no incluyen IVA, y el detalle siempre actualizado de cada plan está en [la página de planes](/planes):
 
-- **Web Básica**: $79.990 + IVA, pago único. Una página profesional con tu oferta, datos de contacto y botón de WhatsApp.
-- **Plan Emprendedor**: Desde $129.990 + IVA. Sitio de varias secciones para partir con presencia seria.
-- **Plan Pyme**: Desde $219.990 + IVA. Sitio corporativo con páginas de servicios, formulario y SEO local básico.
-- **Plan Empresa**: Desde $399.990 + IVA. Sitio corporativo completo, más páginas, más contenido y estructura SEO más profunda.
-- **Catálogo por WhatsApp**: Desde $299.990 + IVA. Catálogo de productos donde el pedido llega directo a tu WhatsApp.
-- **Ecommerce con carrito y pagos**: Desde $599.990 + IVA. Tienda online con carrito, pagos en línea y gestión de productos.
-- **Sistema web administrativo**: Desde $1.290.000 + IVA. Software a medida para operar tu negocio (pedidos, clientes, reservas, reportes).
-- **Sistema avanzado a medida**: Desde $2.490.000 + IVA. Proyectos con múltiples módulos, roles e integraciones.
+- **Web Básica**: desde $99.990 + IVA. Una página profesional con tu oferta, datos de contacto y botón de WhatsApp.
+- **Plan Emprendedor**: Desde $179.990 + IVA. Sitio de varias secciones para partir con presencia seria.
+- **Plan Pyme**: Desde $299.990 + IVA. Sitio corporativo con páginas de servicios, formulario y SEO local básico.
+- **Plan Empresa**: Desde $549.990 + IVA. Sitio corporativo completo, más páginas, más contenido y estructura SEO más profunda.
+- **Catálogo por WhatsApp**: Desde $349.990 + IVA. Catálogo de productos donde el pedido llega directo a tu WhatsApp.
+- **Ecommerce con carrito y pagos**: Desde $749.990 + IVA. Tienda online con carrito, pagos en línea y gestión de productos.
+- **Sistema web administrativo**: Desde $1.990.000 + IVA. Software a medida para operar tu negocio (pedidos, clientes, reservas, reportes).
+- **Sistema avanzado a medida**: Desde $3.490.000 + IVA. Proyectos con múltiples módulos, roles e integraciones.
 
 ## Qué incluye cada nivel (y cuándo conviene)
 
 ### Web básica: para existir bien en Google y WhatsApp
 
-Es la puerta de entrada: una página única con tu propuesta, fotos reales, datos de contacto y botón de WhatsApp. Conviene cuando recién estás partiendo o cuando hoy dependes solo de redes sociales y necesitas un lugar propio donde recibir a los clientes que te buscan. Con $79.990 + IVA de pago único resuelves presencia, seriedad y contacto directo.
+Es la puerta de entrada: una página única con tu propuesta, fotos reales, datos de contacto y botón de WhatsApp. Conviene cuando recién estás partiendo o cuando hoy dependes solo de redes sociales y necesitas un lugar propio donde recibir a los clientes que te buscan. Desde $99.990 + IVA resuelves presencia, seriedad y contacto directo.
 
 ### Sitio corporativo: para empresas que cotizan y venden servicios
 
-Entre $129.990 y $399.990 + IVA según alcance. Aquí ya hablamos de varias páginas (inicio, servicios, quiénes somos, contacto), formulario de cotización, SEO local para aparecer en búsquedas de tu rubro y comuna, y un diseño alineado con tu marca. Es el nivel que más contratan las pymes chilenas que viven de cotizaciones: constructoras, servicios profesionales, clínicas, empresas de mantención.
+Entre $179.990 y $549.990 + IVA según alcance. Aquí ya hablamos de varias páginas (inicio, servicios, quiénes somos, contacto), formulario de cotización, SEO local para aparecer en búsquedas de tu rubro y comuna, y un diseño alineado con tu marca. Es el nivel que más contratan las pymes chilenas que viven de cotizaciones: constructoras, servicios profesionales, clínicas, empresas de mantención.
 
 ### Tienda online: para vender con carrito y pago en línea
 
-Desde $599.990 + IVA. Incluye catálogo de productos, carrito, integración de pagos chilenos (Webpay, Flow, Mercado Pago), cálculo de despacho y panel para administrar productos y pedidos. Si tu volumen aún es bajo, el [catálogo por WhatsApp](/tiendas-online) desde $299.990 + IVA es un excelente paso intermedio: el cliente arma su pedido y te llega directo al teléfono.
+Desde $749.990 + IVA. Incluye catálogo de productos, carrito, integración de pagos chilenos (Webpay, Flow, Mercado Pago), cálculo de despacho y panel para administrar productos y pedidos. Si tu volumen aún es bajo, el [catálogo por WhatsApp](/tiendas-online) desde $349.990 + IVA es un excelente paso intermedio: el cliente arma su pedido y te llega directo al teléfono.
 
 ### Sistema web a medida: para ordenar la operación del negocio
 
-Desde $1.290.000 + IVA (y desde $2.490.000 + IVA en proyectos avanzados). Aquí el sitio deja de ser una vitrina y pasa a ser una herramienta de trabajo: reservas de horas, seguimiento de pedidos, portal de clientes, control de stock, reportes. Se cotiza por alcance, y por eso el "desde" es más relevante que nunca: dos sistemas pueden costar el doble o el triple uno del otro según módulos y usuarios. Puedes ver ejemplos concretos en [sistemas web](/sistemas-web).
+Desde $1.990.000 + IVA (y desde $3.490.000 + IVA en proyectos avanzados). Aquí el sitio deja de ser una vitrina y pasa a ser una herramienta de trabajo: reservas de horas, seguimiento de pedidos, portal de clientes, control de stock, reportes. Se cotiza por alcance, y por eso el "desde" es más relevante que nunca: dos sistemas pueden costar el doble o el triple uno del otro según módulos y usuarios. Puedes ver ejemplos concretos en [sistemas web](/sistemas-web).
 
 ## Los costos anexos que casi nadie te cuenta al cotizar
 
@@ -81,7 +84,7 @@ El desarrollo es el costo principal, pero un presupuesto honesto incluye estos �
 - **Certificado SSL (el candado)**: hoy debería venir incluido con el hosting sin costo adicional. Si te lo cobran aparte como ítem caro, pregunta por qué.
 - **Correo corporativo** (contacto@tuempresa.cl): algunos hostings lo incluyen; los servicios profesionales tipo Google Workspace o Microsoft 365 se pagan por usuario al mes.
 - **Comisiones de la pasarela de pagos**: si vendes online, Webpay, Flow o Mercado Pago cobran un porcentaje por venta. No es un costo del sitio, pero sí de tu operación.
-- **Mantención**: actualizaciones, respaldos, seguridad y cambios menores. En Zyteron va desde $39.990 + IVA al mes en sitios simples, desde $79.990 + IVA la mantención profesional, desde $129.990 + IVA en ecommerce y desde $199.990 + IVA en sistemas o proyectos con IA.
+- **Mantención**: actualizaciones, respaldos, seguridad y cambios menores. En Zyteron va desde $49.990 + IVA al mes en sitios simples, desde $99.990 + IVA la mantención profesional, desde $169.990 + IVA en ecommerce y desde $299.990 + IVA en sistemas o proyectos con IA.
 
 ## Por qué dos cotizaciones "iguales" pueden diferir tanto
 
@@ -117,7 +120,7 @@ Depende del proveedor y del plan; por eso conviene preguntarlo explícitamente a
 
 Porque el valor final depende del alcance: cantidad de páginas, funcionalidades, integraciones y personalización. El "desde" es el punto de partida real del plan; una cotización seria siempre detalla qué incluye ese valor y cuánto suma cada extra.
 
-La conclusión práctica: en Chile puedes tener una web profesional desde $79.990 + IVA, un sitio corporativo serio en torno a los $219.990 + IVA, y proyectos de venta u operación desde $599.990 + IVA hacia arriba. Lo importante es partir por el objetivo comercial (que te encuentren, que te coticen, que te compren) y dimensionar el sitio para eso, ni más ni menos.
+La conclusión práctica: en Chile puedes tener una web profesional desde $99.990 + IVA, un sitio corporativo serio en torno a los $299.990 + IVA, y proyectos de venta u operación desde $749.990 + IVA hacia arriba. Lo importante es partir por el objetivo comercial (que te encuentren, que te coticen, que te compren) y dimensionar el sitio para eso, ni más ni menos.
 
 ## Sigue aprendiendo
 
@@ -130,7 +133,7 @@ La conclusión práctica: en Chile puedes tener una web profesional desde $79.99
   'Eduardo Ávila',
   'published',
   'Cuánto cuesta una página web en Chile 2026 | Precios reales',
-  'Precios reales 2026: una web básica parte en $79.990 + IVA, un sitio pyme desde $219.990, uno corporativo desde $399.990 y una tienda online desde $599.990.',
+  'Precios reales 2026: una web básica parte en $99.990 + IVA, un sitio pyme desde $299.990, uno corporativo desde $549.990 y una tienda online desde $749.990.',
   now(),
   now(),
   now()
@@ -249,7 +252,7 @@ Ninguno de estos extras reemplaza la base: primero el checklist, después las ca
 
 ## Cuánto cuesta tener todo esto bien hecho
 
-Un sitio que cumple este checklist completo está al alcance de cualquier pyme: en Zyteron el Plan Pyme parte desde $219.990 + IVA e incluye la base de este checklist, y puedes ver todas las alternativas en [la página de planes](/planes). Si quieres un número para tu caso específico, el [cotizador online](/cotizador) te entrega un valor referencial en minutos, y en [páginas web para pymes](/paginas-web-para-pymes) encuentras cómo trabajamos este segmento.
+Un sitio que cumple este checklist completo está al alcance de cualquier pyme: en Zyteron el Plan Pyme parte desde $299.990 + IVA e incluye la base de este checklist, y puedes ver todas las alternativas en [la página de planes](/planes). Si quieres un número para tu caso específico, el [cotizador online](/cotizador) te entrega un valor referencial en minutos, y en [páginas web para pymes](/paginas-web-para-pymes) encuentras cómo trabajamos este segmento.
 
 ## Sigue aprendiendo
 
@@ -281,13 +284,13 @@ values (
   'diferencia-pagina-web-tienda-online-sistema-web',
   'Página web, tienda online o sistema web: cuál necesita tu negocio',
   'Las tres opciones resuelven problemas distintos: la página web genera contactos, la tienda online vende y cobra, y el sistema web ordena tu operación. Comparativa con precios reales y casos chilenos.',
-  $md$La diferencia está en el objetivo: una **página web** informa y genera contactos (desde $79.990 + IVA), una **tienda online** vende productos y cobra en línea (desde $599.990 + IVA), y un **sistema web** ordena la operación interna de tu negocio: pedidos, reservas, clientes, stock (desde $1.290.000 + IVA). La mayoría de los negocios chilenos parte con una página web y va sumando capas a medida que crece. En esta guía comparamos las tres opciones con precios reales, casos de uso típicos y tres preguntas para decidir sin equivocarte.
+  $md$La diferencia está en el objetivo: una **página web** informa y genera contactos (desde $99.990 + IVA), una **tienda online** vende productos y cobra en línea (desde $749.990 + IVA), y un **sistema web** ordena la operación interna de tu negocio: pedidos, reservas, clientes, stock (desde $1.990.000 + IVA). La mayoría de los negocios chilenos parte con una página web y va sumando capas a medida que crece. En esta guía comparamos las tres opciones con precios reales, casos de uso típicos y tres preguntas para decidir sin equivocarte.
 
 ## Página web: que te encuentren y te coticen
 
 Una página web (o sitio corporativo) es tu presencia oficial en internet: quién eres, qué haces, dónde atiendes y cómo contactarte. Su trabajo es aparecer cuando alguien busca tu servicio en Google y convertir esa visita en una cotización por formulario o WhatsApp.
 
-**Precio de referencia**: desde $79.990 + IVA una web básica de una página, desde $129.990 a $219.990 + IVA un sitio para emprendedores y pymes, y desde $399.990 + IVA un sitio corporativo completo, según alcance. El detalle por plan está en [/planes](/planes).
+**Precio de referencia**: desde $99.990 + IVA una web básica de una página, desde $179.990 a $299.990 + IVA un sitio para emprendedores y pymes, y desde $549.990 + IVA un sitio corporativo completo, según alcance. El detalle por plan está en [/planes](/planes).
 
 **Es tu opción si**:
 
@@ -301,7 +304,7 @@ Una página web (o sitio corporativo) es tu presencia oficial en internet: quié
 
 Una tienda online agrega catálogo, carrito de compras, pago en línea (Webpay, Flow, Mercado Pago) y gestión de despacho. Su trabajo es cerrar la venta completa: el cliente elige, paga y tú despachas. Vende a cualquier hora, incluso mientras atiendes el local.
 
-**Precio de referencia**: desde $599.990 + IVA con carrito y pagos integrados. Y hay un paso intermedio muy usado en Chile: el **catálogo por WhatsApp**, desde $299.990 + IVA, donde el cliente arma su pedido en el sitio y te llega directo al teléfono para coordinar pago y entrega. Ambas opciones están explicadas en [tiendas online](/tiendas-online).
+**Precio de referencia**: desde $749.990 + IVA con carrito y pagos integrados. Y hay un paso intermedio muy usado en Chile: el **catálogo por WhatsApp**, desde $349.990 + IVA, donde el cliente arma su pedido en el sitio y te llega directo al teléfono para coordinar pago y entrega. Ambas opciones están explicadas en [tiendas online](/tiendas-online).
 
 **Es tu opción si**:
 
@@ -315,7 +318,7 @@ Una tienda online agrega catálogo, carrito de compras, pago en línea (Webpay, 
 
 Un sistema web es software a tu medida: agenda de horas con confirmación automática, seguimiento de pedidos u órdenes de trabajo, portal donde tus clientes revisan su estado, control de stock, reportes para decidir con datos. Su trabajo no es atraer clientes, sino que la operación deje de depender de planillas, cuadernos y memoria.
 
-**Precio de referencia**: desde $1.290.000 + IVA un sistema administrativo, y desde $2.490.000 + IVA proyectos avanzados con múltiples módulos, roles e integraciones. Se cotiza por alcance: módulos, usuarios e integraciones definen el valor final. Ejemplos concretos en [sistemas web](/sistemas-web).
+**Precio de referencia**: desde $1.990.000 + IVA un sistema administrativo, y desde $3.490.000 + IVA proyectos avanzados con múltiples módulos, roles e integraciones. Se cotiza por alcance: módulos, usuarios e integraciones definen el valor final. Ejemplos concretos en [sistemas web](/sistemas-web).
 
 **Es tu opción si**:
 
@@ -329,7 +332,7 @@ Un sistema web es software a tu medida: agenda de horas con confirmación autom�
 ## Comparativa rápida
 
 - **Objetivo** — Página web: que te encuentren y te coticen. Tienda online: vender y cobrar en línea. Sistema web: operar el negocio con orden.
-- **Precio desde** — Página web: $79.990 + IVA (pyme desde $219.990, corporativo desde $399.990 + IVA). Tienda online: $599.990 + IVA (catálogo WhatsApp desde $299.990 + IVA). Sistema web: $1.290.000 + IVA.
+- **Precio desde** — Página web: desde $99.990 + IVA (pyme desde $299.990, corporativo desde $549.990 + IVA). Tienda online: desde $749.990 + IVA (catálogo WhatsApp desde $349.990 + IVA). Sistema web: desde $1.990.000 + IVA.
 - **Quién lo necesita** — Página web: todo negocio que quiera clientes nuevos. Tienda online: negocios con productos de precio definido. Sistema web: negocios cuya operación desborda las planillas.
 - **Resultado esperable** — Página web: cotizaciones por Google y WhatsApp. Tienda online: ventas cerradas y cobradas 24/7. Sistema web: horas ahorradas, menos errores, información al día.
 - **Se combinan**: sí. Un mismo proyecto puede partir como sitio corporativo y crecer a tienda o sistema sobre la misma base.
@@ -357,7 +360,7 @@ Cada etapa se financia con los resultados de la anterior, y como todo se constru
 
 ## Si estás partiendo, parte simple
 
-La ruta que mejor les resulta a los negocios chilenos es incremental: primero una página web que capte clientes (desde $79.990 + IVA), luego un catálogo o tienda cuando el volumen lo justifique, y un sistema cuando la operación lo pida a gritos. Construir sobre una base bien hecha evita pagar dos veces.
+La ruta que mejor les resulta a los negocios chilenos es incremental: primero una página web que capte clientes (desde $99.990 + IVA), luego un catálogo o tienda cuando el volumen lo justifique, y un sistema cuando la operación lo pida a gritos. Construir sobre una base bien hecha evita pagar dos veces.
 
 Si quieres un valor referencial para tu caso, el [cotizador online](/cotizador) te lo entrega en minutos; y si prefieres conversarlo, en [desarrollo web](/desarrollo-web) está el detalle de cómo trabajamos cada tipo de proyecto.
 

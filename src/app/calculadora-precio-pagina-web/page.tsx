@@ -7,7 +7,14 @@ import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { PriceCalculator } from "@/components/tools/price-calculator";
 import { siteConfig } from "@/config/site";
-import { PRICING_NOTE } from "@/config/pricing";
+import {
+  CORPORATE_SCOPE_NOTE,
+  PLAN_CATALOG,
+  PLAN_PRICE_AMOUNTS,
+  PRICING_NOTE,
+  clp,
+  getPlan,
+} from "@/config/pricing";
 import { buildFaqJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 const PATH = "/calculadora-precio-pagina-web";
@@ -23,39 +30,18 @@ const WHATSAPP_URL = `${siteConfig.social.whatsapp}?text=${encodeURIComponent(
   "Hola Zyteron, usé la calculadora de precio y quiero cotizar mi página web.",
 )}`;
 
-/** Rangos publicados: deben leerse igual que en /planes para no contradecirse. */
-const priceRanges = [
-  {
-    type: "Web básica de una página",
-    range: "$79.990 – $150.000",
-    time: "1 a 2 semanas",
-    forWho: "Emprendedores que necesitan presencia y contacto directo.",
-  },
-  {
-    type: "Página web para pyme",
-    range: "$219.990 – $400.000",
-    time: "2 a 4 semanas",
-    forWho: "Pymes con servicios definidos que quieren captar consultas.",
-  },
-  {
-    type: "Página web corporativa",
-    range: "$399.990 – $900.000",
-    time: "4 a 6 semanas",
-    forWho: "Empresas con varias líneas de negocio y foco B2B.",
-  },
-  {
-    type: "Tienda online",
-    range: "$599.990 – $1.500.000",
-    time: "4 a 8 semanas",
-    forWho: "Negocios que venden productos y necesitan pagos online.",
-  },
-  {
-    type: "Sistema web a medida",
-    range: "$1.290.000 – $4.000.000+",
-    time: "8 a 16 semanas",
-    forWho: "Empresas que digitalizan procesos internos completos.",
-  },
-];
+/**
+ * La escalera publicada se lee completa desde `@/config/pricing`, así la tabla de
+ * esta página nunca puede quedar desalineada con /planes ni con el estimador.
+ */
+const priceRanges = PLAN_CATALOG.map((plan) => ({
+  type: plan.name,
+  price: plan.price,
+  time: plan.deadline,
+  forWho: plan.audience,
+}));
+
+const CORPORATE_THRESHOLD_LABEL = clp(5_000_000);
 
 const priceFactors = [
   {
@@ -117,7 +103,12 @@ const faqs = [
   {
     question: "¿Cuánto cuesta una página web en Chile en 2026?",
     answer:
-      "Una web básica de una página parte en $79.990 + IVA. Una página web para pyme se mueve entre $219.990 y $400.000, un sitio corporativo entre $399.990 y $900.000, una tienda online desde $599.990 y un sistema web a medida desde $1.290.000. El precio final depende de la cantidad de páginas, funcionalidades e integraciones.",
+      `Una web básica de una página parte en ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} + IVA. ` +
+      `Una página web para pyme parte en ${clp(PLAN_PRICE_AMOUNTS.pyme)}, un sitio corporativo en ` +
+      `${clp(PLAN_PRICE_AMOUNTS.empresa)}, una tienda online en ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} y ` +
+      `un sistema web a medida en ${clp(PLAN_PRICE_AMOUNTS.sistema)}. Las plataformas corporativas parten en ` +
+      `${clp(PLAN_PRICE_AMOUNTS.intranet)} y llegan hasta ${clp(PLAN_PRICE_AMOUNTS.enterprise)} según arquitectura. ` +
+      "Todos los valores son sin IVA y el precio final depende de páginas, funcionalidades e integraciones.",
   },
   {
     question: "¿Por qué hay agencias que cobran $50.000 y otras $2.000.000?",
@@ -127,7 +118,8 @@ const faqs = [
   {
     question: "¿La estimación de la calculadora es el precio final?",
     answer:
-      "No. Es una estimación referencial construida con nuestros precios reales publicados, pensada para que tengas un orden de magnitud antes de conversar. El precio final se cierra después de una reunión de levantamiento, y queda por escrito en una cotización formal sin costo.",
+      "Es una estimación referencial construida con nuestros precios publicados, pensada para que tengas un orden de magnitud antes de conversar. El precio final se cierra después de una reunión de levantamiento y queda por escrito en una cotización formal sin costo. " +
+      `Cuando la configuración supera ${CORPORATE_THRESHOLD_LABEL} + IVA, la calculadora ya no entrega una cifra automática: ese tipo de proyecto se define en un levantamiento técnico y comercial.`,
   },
   {
     question: "¿Qué costos adicionales debo considerar además del desarrollo?",
@@ -142,7 +134,10 @@ const faqs = [
   {
     question: "¿Cuánto demora el desarrollo?",
     answer:
-      "Una web básica toma entre 1 y 2 semanas. Una web de pyme entre 2 y 4 semanas, un sitio corporativo entre 4 y 6, una tienda online entre 4 y 8, y un sistema a medida entre 8 y 16 semanas. El plazo real depende de la rapidez con que se aprueben contenidos y revisiones.",
+      `Una web básica toma ${getPlan("web-basica").deadline}. Una web de pyme ${getPlan("pyme").deadline}, ` +
+      `un sitio corporativo ${getPlan("empresa").deadline}, una tienda online ${getPlan("ecommerce").deadline} y ` +
+      `un sistema a medida ${getPlan("sistema").deadline.toLowerCase()}. Las plataformas corporativas avanzan por etapas ` +
+      `(${getPlan("intranet").deadline.toLowerCase()}). El plazo real depende de la rapidez con que se aprueben contenidos y revisiones.`,
   },
 ];
 
@@ -204,12 +199,12 @@ export default function CalculadoraPrecioPaginaWebPage() {
               Referencia de mercado
             </p>
             <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
-              Cuánto cuesta cada tipo de página web en Chile
+              Cuánto cuesta cada tipo de proyecto en Chile
             </h2>
             <p className="text-sm leading-relaxed text-slate-600">
-              Estos son los rangos con los que trabajamos, expresados en pesos chilenos y sin IVA.
-              Publicarlos permite que compares con información concreta en vez de pedir tres
-              cotizaciones a ciegas.
+              Esta es la escalera completa con la que trabajamos, desde una presencia web inicial hasta
+              una plataforma corporativa a medida. Los valores están en pesos chilenos, se expresan
+              desde el precio indicado y no incluyen IVA.
             </p>
           </div>
 
@@ -221,7 +216,7 @@ export default function CalculadoraPrecioPaginaWebPage() {
                     Tipo de proyecto
                   </th>
                   <th scope="col" className="p-3 font-extrabold text-slate-900">
-                    Rango referencial
+                    Precio referencial
                   </th>
                   <th scope="col" className="p-3 font-extrabold text-slate-900">
                     Plazo estimado
@@ -235,7 +230,7 @@ export default function CalculadoraPrecioPaginaWebPage() {
                 {priceRanges.map((row) => (
                   <tr key={row.type} className="border-b border-slate-100 align-top">
                     <td className="p-3 font-semibold text-slate-900">{row.type}</td>
-                    <td className="p-3 font-semibold text-blue-700">{row.range}</td>
+                    <td className="p-3 font-semibold text-blue-700">{row.price}</td>
                     <td className="p-3 text-slate-600">{row.time}</td>
                     <td className="p-3 text-slate-600">{row.forWho}</td>
                   </tr>
@@ -243,7 +238,13 @@ export default function CalculadoraPrecioPaginaWebPage() {
               </tbody>
             </table>
           </div>
-          <p className="text-xs leading-relaxed text-slate-500">{PRICING_NOTE}</p>
+          <div className="space-y-2">
+            <p className="text-xs leading-relaxed text-slate-500">{PRICING_NOTE}</p>
+            <p className="text-xs leading-relaxed text-slate-500">
+              Sobre {CORPORATE_THRESHOLD_LABEL} + IVA el estimador deja de entregar una cifra automática:{" "}
+              {CORPORATE_SCOPE_NOTE}
+            </p>
+          </div>
         </Container>
       </section>
 

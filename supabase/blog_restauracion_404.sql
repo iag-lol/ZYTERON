@@ -17,6 +17,9 @@
 -- sin duplicar ni pisar ediciones hechas en /admin/blog.
 --
 -- Precios copiados desde src/config/pricing.ts (fuente única).
+-- Precios actualizados a la escalera comercial 2026 (src/config/pricing.ts).
+-- OJO: si estos artículos ya están publicados en producción, este seed NO los
+-- corrige (ON CONFLICT DO NOTHING). Para eso está blog_actualizacion_precios_2026.sql.
 -- El contenido es Markdown compatible con src/lib/markdown.ts:
 -- sólo ##/###, listas, negrita, enlaces y citas (sin tablas pipe, que
 -- ese renderizador no soporta: las comparativas van como listas).
@@ -262,11 +265,11 @@ Un buen alcance de primera etapa se lanza en semanas, no en un año, y resuelve 
 
 Los valores de referencia dependen del alcance, y por eso siempre se expresan "desde":
 
-- **Mini panel administrativo**: desde $349.990 + IVA. Sirve cuando necesitas administrar un conjunto acotado de registros (productos, solicitudes, clientes) sin flujos complejos.
-- **Panel administrativo completo**: desde $990.000 + IVA, como servicio adicional sobre un sitio existente.
-- **Sistema web administrativo**: desde $1.290.000 + IVA. Es el punto de partida de un sistema propio con usuarios, estados, reportes y documentos.
-- **Sistema avanzado a medida**: desde $2.490.000 + IVA, para proyectos con múltiples módulos, roles e integraciones.
-- **Complementos frecuentes**: dashboard y reportes desde $399.990 + IVA, generador de PDF desde $249.990 + IVA, integración de API personalizada desde $349.990 + IVA.
+- **Mini panel administrativo**: desde $499.990 + IVA. Sirve cuando necesitas administrar un conjunto acotado de registros (productos, solicitudes, clientes) sin flujos complejos.
+- **Panel administrativo completo**: desde $1.290.000 + IVA, como servicio adicional sobre un sitio existente.
+- **Sistema web administrativo**: desde $1.990.000 + IVA. Es el punto de partida de un sistema propio con usuarios, estados, reportes y documentos.
+- **Sistema avanzado a medida**: desde $3.490.000 + IVA, para proyectos con múltiples módulos, roles e integraciones.
+- **Complementos frecuentes**: dashboard y reportes desde $549.990 + IVA, generador de PDF desde $349.990 + IVA, integración de API personalizada desde $499.990 + IVA.
 
 El detalle actualizado está en [la página de planes](/planes), y si quieres un valor referencial para tu caso, el [cotizador](/cotizador) lo entrega en minutos. Lo importante al comparar propuestas es que el alcance esté escrito: módulos incluidos, cantidad de usuarios, qué queda fuera y qué pasa con el soporte después de la entrega.
 
@@ -326,7 +329,7 @@ values (
   'soporte-ti-pymes-santiago-que-buscar-evitar',
   'Soporte TI para pymes en Santiago: qué buscar y qué evitar',
   'Cómo elegir soporte TI para una pyme en Santiago: qué debe incluir el servicio, qué preguntar antes de firmar, señales de alerta y cuándo conviene pasar de la atención puntual a un esquema mensual.',
-  $md$Un buen soporte TI para una pyme en Santiago se reconoce por cuatro cosas: diagnostica antes de prometer una solución, tiene tiempos de respuesta y alcance por escrito, deja registro de lo que hizo y propone mejoras preventivas proporcionales al tamaño del negocio. Lo que conviene evitar es lo contrario: el técnico que solo aparece cuando algo se cayó, cobra por hora sin explicar qué hizo y deja la operación dependiendo de su memoria. En Zyteron el soporte TI parte desde $49.990 + IVA por requerimiento puntual, y desde $39.990 + IVA al mes cuando la necesidad es recurrente. Esta guía explica qué revisar antes de contratar y cómo saber si el esquema que tienes hoy te está costando más de lo que crees.
+  $md$Un buen soporte TI para una pyme en Santiago se reconoce por cuatro cosas: diagnostica antes de prometer una solución, tiene tiempos de respuesta y alcance por escrito, deja registro de lo que hizo y propone mejoras preventivas proporcionales al tamaño del negocio. Lo que conviene evitar es lo contrario: el técnico que solo aparece cuando algo se cayó, cobra por hora sin explicar qué hizo y deja la operación dependiendo de su memoria. En Zyteron el soporte TI parte desde $49.990 + IVA por requerimiento puntual, y desde $49.990 + IVA al mes cuando la necesidad es recurrente. Esta guía explica qué revisar antes de contratar y cómo saber si el esquema que tienes hoy te está costando más de lo que crees.
 
 ## El patrón que hay que romper: soporte solo cuando algo falla
 
@@ -400,7 +403,7 @@ La atención por requerimiento funciona bien cuando los incidentes son esporádi
 - Existe un equipo con rotación, y cada ingreso o salida implica gestionar accesos.
 - Hay una tienda online o un sistema con clientes conectados, donde una caída tiene costo directo.
 
-Los valores de referencia: soporte TI desde $49.990 + IVA por requerimiento puntual, mantención mensual desde $39.990 + IVA para sitios simples, desde $79.990 + IVA para mantención profesional, desde $129.990 + IVA en ecommerce y desde $199.990 + IVA en sistemas. El detalle está en [soporte TI](/soporte-ti) y en [la página de planes](/planes).
+Los valores de referencia: soporte TI desde $49.990 + IVA por requerimiento puntual, mantención mensual desde $49.990 + IVA para sitios simples, desde $99.990 + IVA para mantención profesional, desde $169.990 + IVA en ecommerce y desde $299.990 + IVA en sistemas. El detalle está en [soporte TI](/soporte-ti) y en [la página de planes](/planes).
 
 ## Preguntas frecuentes
 
@@ -450,7 +453,7 @@ values (
   'vender-online-chile-sin-shopify-alternativas-pymes',
   'Cómo vender online en Chile sin Shopify: alternativas para pymes',
   'Cuatro alternativas a Shopify para vender online en Chile: catálogo con pedido por WhatsApp, tienda a medida, WooCommerce y plataformas locales. Con costos, ventajas y limitaciones de cada una.',
-  $md$Se puede vender online en Chile sin Shopify con cuatro alternativas concretas: un catálogo digital con pedido por WhatsApp (desde $299.990 + IVA), una tienda a medida integrada a tu sitio (desde $599.990 + IVA), WooCommerce sobre WordPress, o una plataforma local con pasarelas chilenas ya integradas. La decisión no se toma por moda ni por precio de lista: depende de cuántos productos manejas, si el stock es estable, si necesitas cobrar en línea y quién va a administrar la tienda todos los días. Muchas pymes chilenas pagan una plataforma completa antes de tener ordenados productos, fotos, precios y despacho, y terminan con una tienda cara que vende poco.
+  $md$Se puede vender online en Chile sin Shopify con cuatro alternativas concretas: un catálogo digital con pedido por WhatsApp (desde $349.990 + IVA), una tienda a medida integrada a tu sitio (desde $749.990 + IVA), WooCommerce sobre WordPress, o una plataforma local con pasarelas chilenas ya integradas. La decisión no se toma por moda ni por precio de lista: depende de cuántos productos manejas, si el stock es estable, si necesitas cobrar en línea y quién va a administrar la tienda todos los días. Muchas pymes chilenas pagan una plataforma completa antes de tener ordenados productos, fotos, precios y despacho, y terminan con una tienda cara que vende poco.
 
 ## Antes de elegir plataforma: ordena la operación
 
@@ -474,7 +477,7 @@ Es la opción que mejor funciona en Chile para negocios que están partiendo o q
 
 **Limitaciones**: la venta no se cierra sola, alguien tiene que responder. Si te llegan cincuenta pedidos al día, este modelo se satura.
 
-**Precio de referencia**: desde $299.990 + IVA. Está desarrollado en detalle en [tienda online sin inventario](/blog/tienda-online-sin-inventario-catalogo-whatsapp).
+**Precio de referencia**: desde $349.990 + IVA. Está desarrollado en detalle en [tienda online sin inventario](/blog/tienda-online-sin-inventario-catalogo-whatsapp).
 
 ## Alternativa 2: tienda a medida integrada a tu sitio
 
@@ -486,7 +489,7 @@ Una tienda desarrollada dentro de tu propio sitio, con catálogo, carrito, pagos
 
 **Limitaciones**: mayor inversión inicial y dependencia de un equipo que la mantenga. No es la opción para validar una idea.
 
-**Precio de referencia**: desde $599.990 + IVA con carrito y pagos integrados. Los complementos más pedidos son gestión de stock desde $249.990 + IVA e integración de pagos (Flow, Webpay, Mercado Pago) desde $149.990 + IVA. Todo el detalle está en [tiendas online](/tiendas-online).
+**Precio de referencia**: desde $749.990 + IVA con carrito y pagos integrados. Los complementos más pedidos son gestión de stock desde $399.990 + IVA e integración de pagos (Flow, Webpay, Mercado Pago) desde $199.990 + IVA. Todo el detalle está en [tiendas online](/tiendas-online).
 
 ## Alternativa 3: WooCommerce sobre WordPress
 
@@ -523,7 +526,7 @@ Cualquiera sea la alternativa, el presupuesto real de vender online incluye:
 - **Despacho.** Definir tarifas, zonas y plazos antes de lanzar. Un costo de envío que aparece recién al final del carrito es la principal causa de compras abandonadas.
 - **Fotos y descripciones.** Es el trabajo que más se subestima y el que más influye en la conversión. Fotos consistentes, mismo fondo, mismo encuadre.
 - **Documento tributario.** Emitir boleta o factura por las ventas online es obligación, no opción. Conviene resolverlo desde el primer pedido.
-- **Mantención.** Desde $129.990 + IVA al mes en ecommerce, para actualizaciones, respaldos y seguridad.
+- **Mantención.** Desde $169.990 + IVA al mes en ecommerce, para actualizaciones, respaldos y seguridad.
 
 ## Cómo partir sin sobreinvertir
 
@@ -585,7 +588,7 @@ values (
   'panel-administrativo-vs-excel-salto-digital',
   'Panel administrativo vs Excel: cuándo dar el salto digital',
   'Excel deja de alcanzar cuando aparecen versiones contradictorias, falta historial y los reportes se arman a mano. Siete señales concretas, comparación honesta y cómo calcular si el salto se paga.',
-  $md$Excel deja de alcanzar cuando aparecen versiones contradictorias del mismo archivo, cuando nadie puede decir quién modificó un dato ni cuándo, cuando los permisos son todo o nada, y cuando los reportes se arman copiando y pegando cada mes. Un panel administrativo resuelve exactamente esas cuatro cosas: centraliza el dato, registra la historia, asigna permisos por rol y genera reportes solos. El salto conviene cuando el costo del desorden (horas perdidas, errores, decisiones con información vieja) supera el costo de construir una primera versión acotada, que parte desde $349.990 + IVA en un mini panel y desde $1.290.000 + IVA en un sistema completo.
+  $md$Excel deja de alcanzar cuando aparecen versiones contradictorias del mismo archivo, cuando nadie puede decir quién modificó un dato ni cuándo, cuando los permisos son todo o nada, y cuando los reportes se arman copiando y pegando cada mes. Un panel administrativo resuelve exactamente esas cuatro cosas: centraliza el dato, registra la historia, asigna permisos por rol y genera reportes solos. El salto conviene cuando el costo del desorden (horas perdidas, errores, decisiones con información vieja) supera el costo de construir una primera versión acotada, que parte desde $499.990 + IVA en un mini panel y desde $1.990.000 + IVA en un sistema completo.
 
 ## Excel es mejor de lo que dicen (y ese es el problema)
 
@@ -617,7 +620,7 @@ Con dos o tres de estas señales todavía se puede ordenar la planilla. Con cinc
 
 ## Comparación honesta, punto por punto
 
-- **Costo inicial** — Excel: prácticamente cero. Panel: inversión de proyecto, desde $349.990 + IVA en versiones acotadas.
+- **Costo inicial** — Excel: prácticamente cero. Panel: inversión de proyecto, desde $499.990 + IVA en versiones acotadas.
 - **Tiempo de puesta en marcha** — Excel: inmediato. Panel: semanas, según alcance.
 - **Flexibilidad para cambiar algo** — Excel: total e instantánea. Panel: requiere ajuste del desarrollo.
 - **Permisos** — Excel: limitados, en la práctica todo o nada. Panel: por rol y por sección.
@@ -654,7 +657,7 @@ Antes de programar conviene tomarse una semana para escribir el flujo real: qué
 
 Sí: un buen panel administrativo mantiene la exportación a Excel. No se trata de eliminar la planilla, sino de que deje de ser la fuente de la verdad.
 
-Los valores de referencia: mini panel administrativo desde $349.990 + IVA, panel administrativo completo desde $990.000 + IVA, sistema web administrativo desde $1.290.000 + IVA y dashboard con reportes desde $399.990 + IVA. El detalle actualizado está en [planes](/planes) y puedes estimar tu caso en el [cotizador](/cotizador).
+Los valores de referencia: mini panel administrativo desde $499.990 + IVA, panel administrativo completo desde $1.290.000 + IVA, sistema web administrativo desde $1.990.000 + IVA y dashboard con reportes desde $549.990 + IVA. El detalle actualizado está en [planes](/planes) y puedes estimar tu caso en el [cotizador](/cotizador).
 
 ## Preguntas frecuentes
 
@@ -758,11 +761,11 @@ Si respondiste "sitio completo" en tres o más preguntas, ya tienes la decisión
 
 Los valores dependen del alcance y se expresan "desde":
 
-- **Web Básica**: $79.990 + IVA, pago único. Una página profesional con tu oferta, contacto y WhatsApp. Es el punto de entrada más cercano a una landing.
-- **Plan Emprendedor**: desde $129.990 + IVA. Sitio de varias secciones para partir con presencia seria.
-- **Plan Pyme**: desde $219.990 + IVA. Sitio corporativo con páginas de servicios, formulario y SEO local básico.
-- **Plan Empresa**: desde $399.990 + IVA. Sitio corporativo completo, con más páginas, más contenido y estructura SEO más profunda.
-- **Página adicional**: desde $59.990 + IVA, cuando quieres crecer sobre un sitio existente.
+- **Web Básica**: desde $99.990 + IVA. Una página profesional con tu oferta, contacto y WhatsApp. Es el punto de entrada más cercano a una landing.
+- **Plan Emprendedor**: desde $179.990 + IVA. Sitio de varias secciones para partir con presencia seria.
+- **Plan Pyme**: desde $299.990 + IVA. Sitio corporativo con páginas de servicios, formulario y SEO local básico.
+- **Plan Empresa**: desde $549.990 + IVA. Sitio corporativo completo, con más páginas, más contenido y estructura SEO más profunda.
+- **Página adicional**: desde $79.990 + IVA, cuando quieres crecer sobre un sitio existente.
 
 El detalle actualizado está en [la página de planes](/planes) y puedes obtener un valor referencial para tu caso en el [cotizador](/cotizador). Cómo trabajamos las páginas de campaña está en [landing pages para empresas](/servicios/landing-pages-para-empresas).
 
@@ -975,7 +978,7 @@ values (
   'tienda-online-sin-inventario-catalogo-whatsapp',
   'Tienda online sin inventario: catálogo + venta por WhatsApp',
   'Cómo vender sin administrar stock: catálogo digital con pedido por WhatsApp, para productos personalizados, bajo pedido o con stock variable. Qué debe tener cada ficha y cuándo dar el paso al carrito.',
-  $md$Una tienda online sin inventario es un catálogo digital donde el cliente ve los productos con fotos, precios y condiciones, y el pedido se cierra por WhatsApp en vez de un carrito con pago automático. Funciona especialmente bien en negocios chilenos que venden productos personalizados, bajo pedido, con stock variable o con ticket alto que requiere asesoría. Cuesta desde $299.990 + IVA, se lanza en semanas y evita el trabajo permanente de mantener un inventario en línea al día. Es, además, la mejor forma de validar demanda antes de invertir en un ecommerce completo desde $599.990 + IVA.
+  $md$Una tienda online sin inventario es un catálogo digital donde el cliente ve los productos con fotos, precios y condiciones, y el pedido se cierra por WhatsApp en vez de un carrito con pago automático. Funciona especialmente bien en negocios chilenos que venden productos personalizados, bajo pedido, con stock variable o con ticket alto que requiere asesoría. Cuesta desde $349.990 + IVA, se lanza en semanas y evita el trabajo permanente de mantener un inventario en línea al día. Es, además, la mejor forma de validar demanda antes de invertir en un ecommerce completo desde $749.990 + IVA.
 
 ## El problema de montar la tienda completa demasiado temprano
 
@@ -1017,7 +1020,7 @@ El enlace de WhatsApp de cada producto debe abrir la conversación con un texto 
 2. **Te dice qué producto le interesa** antes de la primera respuesta, lo que acorta la conversación a la mitad.
 3. **Te da datos.** Sabes qué productos generan consultas y cuáles no, información que después define qué cargas primero en la tienda completa.
 
-Conviene además tener respuestas guardadas para las tres o cuatro preguntas que siempre llegan, y un mensaje automático fuera de horario que comprometa cuándo respondes. La automatización de este flujo está explicada en [automatización](/automatizacion) y parte desde $249.990 + IVA.
+Conviene además tener respuestas guardadas para las tres o cuatro preguntas que siempre llegan, y un mensaje automático fuera de horario que comprometa cuándo respondes. La automatización de este flujo está explicada en [automatización](/automatizacion) y parte desde $349.990 + IVA.
 
 ## Sí, Google indexa un catálogo sin carrito
 
@@ -1053,7 +1056,7 @@ Las señales de que el catálogo se te quedó chico:
 - Pierdes ventas fuera del horario de atención.
 - Necesitas control de stock porque estás vendiendo lo que no tienes.
 
-En ese punto conviene sumar carrito, pasarela de pagos (integración desde $149.990 + IVA) y gestión de stock (desde $249.990 + IVA), o pasar directo a un ecommerce completo desde $599.990 + IVA. Las alternativas están comparadas en [tiendas online](/tiendas-online) y en [cómo vender online sin Shopify](/blog/vender-online-chile-sin-shopify-alternativas-pymes).
+En ese punto conviene sumar carrito, pasarela de pagos (integración desde $199.990 + IVA) y gestión de stock (desde $399.990 + IVA), o pasar directo a un ecommerce completo desde $749.990 + IVA. Las alternativas están comparadas en [tiendas online](/tiendas-online) y en [cómo vender online sin Shopify](/blog/vender-online-chile-sin-shopify-alternativas-pymes).
 
 Lo importante es que ese paso se dé **sobre la misma base**: si el catálogo se construyó con estructura de URLs limpia y control de metadatos, sumar el carrito no obliga a rehacer el sitio ni a perder el posicionamiento ganado.
 
@@ -1132,7 +1135,7 @@ Un aumento de tráfico puede incluso ser mala señal, si viene de búsquedas inf
 
 Suma todo lo que la web te costó en el período que estás midiendo:
 
-- Desarrollo del sitio, prorrateado según su vida útil. Si el sitio costó $399.990 + IVA y esperas que sirva tres años, son unos $11.100 mensuales.
+- Desarrollo del sitio, prorrateado según su vida útil. Si el sitio costó $549.990 + IVA y esperas que sirva tres años, son unos $15.300 mensuales.
 - Dominio y hosting anuales.
 - Mantención mensual, si la tienes contratada.
 - Contenido, SEO y publicidad del período.

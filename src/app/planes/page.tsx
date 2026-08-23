@@ -1,32 +1,56 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Fragment } from "react";
-import { ArrowRight, Check, CircleDollarSign } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  Check,
+  ChevronDown,
+  CircleDollarSign,
+  LayoutDashboard,
+  ShieldCheck,
+  ShoppingCart,
+  Sparkles,
+} from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { PlansShowcase, type ShowcasePlan } from "@/components/planes/plans-showcase";
 import { siteConfig } from "@/config/site";
 import {
-  ADDONS,
+  ADDON_CATEGORIES,
+  AI_CONSUMPTION_NOTE,
   AI_SERVICES,
-  MAINTENANCE,
-  PLAN_PRICES,
+  CORPORATE_SCOPE_NOTE,
+  MAINTENANCE_CATALOG,
+  MAINTENANCE_EXCLUSIONS,
+  PLAN_CATALOG,
   PRICING_NOTE,
+  addonsByCategory,
+  clp,
+  getPlan,
+  plansByBlock,
+  type Addon,
+  type Plan,
+  type PlanBlock,
 } from "@/config/pricing";
 import {
+  buildAbsoluteUrl,
   buildFaqJsonLd,
-  buildPlanPriceSpecificationJsonLd,
   buildWebPageJsonLd,
   createPageMetadata,
 } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Planes y Precios de Páginas Web en Chile",
+  title: "Precios de páginas web y sistemas en Chile",
   description:
-    "Precios de páginas web en Chile: web básica, plan pyme, sitio corporativo, ecommerce y sistemas. Valores referenciales, alcance por plan y calculadora de precio.",
+    "Cuánto cuesta una página web en Chile: precios de desarrollo web, ecommerce, software a medida, intranet y sistemas de gestión para empresas, por nivel.",
   path: "/planes",
 });
+
+// ---------------------------------------------------------------------------
+// Enlaces y utilidades
+// ---------------------------------------------------------------------------
 
 type ProjectTypeValue =
   | "web-basica"
@@ -34,515 +58,460 @@ type ProjectTypeValue =
   | "tienda-online"
   | "sistema-web";
 
-type PlanCard = {
-  id: string;
-  name: string;
-  price: string;
-  priceNote?: string;
-  tag: string;
-  audience: string;
-  description: string;
-  includes: string[];
-  excludes: string[];
-  availableAddons?: string[];
-  notes?: string[];
-  ctaLabel: string;
-  projectType: ProjectTypeValue;
-  presetPlan: string;
-};
-
-type AdditionalCategory = {
-  title: string;
-  items: Array<{ name: string; price: string }>;
-};
-
 const WHATSAPP_URL =
   `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20orientaci%C3%B3n%20sobre%20sus%20planes`;
 
-function buildQuoteHref(projectType: ProjectTypeValue, presetPlan: string) {
-  return `/cotizador?tipo=${projectType}&plan=${presetPlan}`;
-}
+/** Ancla de la sección donde vive cada bloque de la escalera. */
+const BLOCK_ANCHOR: Record<PlanBlock, string> = {
+  web: "paginas-web",
+  ecommerce: "ecommerce",
+  sistemas: "sistemas",
+  corporativo: "corporativo",
+};
 
-const plans: PlanCard[] = [
-  {
-    id: "web-basica",
-    name: "Web Básica de Presentación",
-    price: PLAN_PRICES["web-basica"],
-    priceNote: "pago único",
-    tag: "Ideal para comenzar",
-    audience:
-      "Emprendedores, profesionales independientes y negocios pequeños que recién comienzan y necesitan presencia online seria sin una inversión alta.",
-    description:
-      "Una página simple, profesional y clara para mostrar tu negocio, generar confianza y recibir contactos por WhatsApp.",
-    includes: [
-      "Una sola página tipo presentación",
-      "Diseño profesional en modo claro",
-      "Diseño responsivo para celular, tablet y computador",
-      "Sección de inicio",
-      "Sección de servicios o información del negocio",
-      "Sección de contacto",
-      "Botón directo a WhatsApp",
-      "Enlaces a redes sociales",
-      "Formulario simple de contacto",
-      "SEO básico inicial",
-      "Optimización básica de carga",
-      "Publicación inicial",
-    ],
-    excludes: [
-      "Dominio",
-      "Hosting externo pagado",
-      "Tienda online",
-      "Carrito de compras",
-      "Pasarela de pago",
-      "Panel administrativo",
-      "Blog",
-      "Login de usuarios",
-      "Sistemas internos",
-      "Automatizaciones avanzadas",
-      "Redacción completa de textos",
-      "Carga masiva de contenido",
-      "Mantención mensual",
-    ],
-    notes: [
-      "Dominio .cl o .com se cotiza aparte según disponibilidad.",
-      "Puedes comenzar con este plan y luego mejorar tu web cuando tu negocio crezca.",
-    ],
-    availableAddons: ["Dominio y hosting", "Secciones adicionales", "Formulario avanzado"],
-    ctaLabel: "Solicitar web básica",
-    projectType: "web-basica",
-    presetPlan: "web-basica-presentacion",
-  },
-  {
-    id: "emprendedor",
-    name: "Plan Emprendedor",
-    price: PLAN_PRICES["emprendedor"],
-    tag: "Web inicial",
-    audience:
-      "Para emprendedores, técnicos, servicios pequeños, negocios locales y profesionales independientes que necesitan una web inicial más completa que una página básica.",
-    description:
-      "Una propuesta inicial con más estructura visual, más flexibilidad de secciones y mejor base comercial que la web básica.",
-    includes: [
-      "Landing page más completa o sitio simple",
-      "Más estructura visual que la web básica",
-      "Secciones adicionales según alcance",
-      "Formulario de contacto",
-      "WhatsApp",
-      "Redes sociales",
-      "SEO inicial",
-      "Asesoría de estructura",
-      "Diseño responsive",
-      "Publicación inicial",
-    ],
-    excludes: [
-      "Tienda online",
-      "Panel administrativo",
-      "Login de usuarios",
-      "Sistemas internos",
-      "Automatizaciones complejas",
-      "Pasarelas de pago",
-    ],
-    availableAddons: ["Secciones extra", "SEO inicial avanzado", "Dominio y correos corporativos"],
-    ctaLabel: "Cotizar plan emprendedor",
-    projectType: "web-profesional",
-    presetPlan: "plan-emprendedor",
-  },
-  {
-    id: "pyme",
-    name: "Plan Pyme",
-    price: PLAN_PRICES["pyme"],
-    tag: "Más solicitado",
-    audience:
-      "Para negocios que necesitan una web más completa, ordenada y enfocada en generar confianza, mostrar servicios, responder dudas y recibir consultas.",
-    description:
-      "Es el plan recomendado cuando la web ya debe cumplir un rol comercial claro y sostener la imagen del negocio.",
-    includes: [
-      "Sitio web corporativo o comercial",
-      "Varias secciones informativas",
-      "Diseño profesional y responsive",
-      "Formulario de contacto",
-      "Botón WhatsApp",
-      "Galería, servicios o catálogo básico",
-      "Estructura SEO inicial",
-      "Integración con redes sociales",
-      "Optimización visual y comercial",
-      "Sección de preguntas frecuentes",
-      "Llamados a la acción estratégicos",
-    ],
-    excludes: [
-      "Panel administrativo completo",
-      "Pasarela de pago incluida siempre",
-      "Tienda online avanzada",
-      "Automatizaciones complejas",
-      "Sistemas internos personalizados",
-    ],
-    availableAddons: ["Catálogo administrable", "Integración de pagos", "Reportes o dashboard"],
-    ctaLabel: "Cotizar plan pyme",
-    projectType: "web-profesional",
-    presetPlan: "plan-pyme",
-  },
-  {
-    id: "empresa",
-    name: "Plan Empresa",
-    price: PLAN_PRICES["empresa"],
-    tag: "Mayor estructura",
-    audience:
-      "Para empresas, colegios, instituciones, oficinas, clínicas, talleres, transportes, constructoras y servicios B2B.",
-    description:
-      "Una presencia digital más seria, con mayor estructura, páginas internas y preparación para analítica y comunicación formal.",
-    includes: [
-      "Web corporativa completa",
-      "Páginas internas estructuradas",
-      "Secciones de confianza y respaldo",
-      "Formularios más completos",
-      "SEO inicial",
-      "Optimización responsive",
-      "Redacción base profesional",
-      "Integración con WhatsApp y redes",
-      "Preparación para analítica web",
-      "Capacitación básica si corresponde",
-    ],
-    excludes: [
-      "Desarrollo de sistema a medida",
-      "Login de usuarios",
-      "Reportes internos",
-      "Flujos automatizados avanzados",
-      "Integraciones complejas",
-    ],
-    availableAddons: ["Panel administrativo", "Automatización de formularios", "Integraciones API"],
-    ctaLabel: "Solicitar propuesta formal",
-    projectType: "web-profesional",
-    presetPlan: "plan-empresa",
-  },
-  {
-    id: "catalogo",
-    name: "Catálogo por WhatsApp",
-    price: PLAN_PRICES["catalogo"],
-    tag: "Venta por WhatsApp",
-    audience:
-      "Para negocios que quieren mostrar sus productos de forma ordenada y recibir pedidos directamente por WhatsApp.",
-    description:
-      "Catálogo digital claro con fichas de productos y contacto directo por WhatsApp, sin carrito ni pagos online.",
-    includes: [
-      "Catálogo con categorías y fichas de productos",
-      "Diseño responsive",
-      "Botón de pedido o contacto por WhatsApp",
-      "Carga inicial limitada de productos",
-      "Estructura SEO para productos",
-    ],
-    excludes: [
-      "Carrito de compras",
-      "Pagos en línea",
-      "Panel administrativo completo",
-      "Carga masiva de productos",
-    ],
-    availableAddons: ["Carga adicional de productos", "Catálogo administrable"],
-    notes: [
-      "El cliente entrega fotografías, precios, stock, categorías y descripciones correctamente organizadas.",
-    ],
-    ctaLabel: "Cotizar catálogo",
-    projectType: "tienda-online",
-    presetPlan: "catalogo-whatsapp",
-  },
-  {
-    id: "ecommerce",
-    name: "Ecommerce con carrito y pagos",
-    price: PLAN_PRICES["ecommerce"],
-    tag: "Venta online",
-    audience:
-      "Para negocios que quieren vender online con carrito de compras y pagos en línea integrados.",
-    description:
-      "Tienda con carrito, gestión de productos y pagos online (Flow, Webpay o Mercado Pago) según alcance.",
-    includes: [
-      "Tienda con carrito de compras",
-      "Gestión de productos y categorías",
-      "Integración de medios de pago",
-      "Diseño responsive",
-      "Estructura SEO para productos",
-      "Carga inicial limitada de productos",
-    ],
-    excludes: [
-      "Carga masiva de productos",
-      "Cupones o descuentos avanzados",
-      "Facturación electrónica automática",
-      "Integraciones externas no definidas",
-    ],
-    availableAddons: ["Gestión de stock", "Cupones y descuentos", "Integración de despacho", "Catálogo administrable"],
-    notes: [
-      "El cliente entrega fotografías, precios, stock, categorías y descripciones correctamente organizadas.",
-    ],
-    ctaLabel: "Cotizar ecommerce",
-    projectType: "tienda-online",
-    presetPlan: "ecommerce-carrito-pagos",
-  },
-  {
-    id: "sistema",
-    name: "Sistema Web / Panel Administrativo",
-    price: PLAN_PRICES["sistema"],
-    tag: "Procesos internos",
-    audience:
-      "Para empresas, pymes o instituciones que necesitan paneles administrativos, usuarios, registros, reportes y control de procesos.",
-    description:
-      "Este plan aplica cuando ya no basta una web comercial y se necesita operar datos, roles, estados y documentos internos.",
-    includes: [
-      "Paneles administrativos",
-      "Usuarios y roles",
-      "Registros y formularios internos",
-      "Reportes",
-      "PDF y Excel según alcance",
-      "Base de datos",
-      "Estados de procesos",
-      "Seguridad básica",
-      "Capacitación de uso",
-    ],
-    excludes: [
-      "Integraciones complejas no definidas",
-      "Automatizaciones avanzadas fuera de alcance",
-      "Múltiples módulos críticos sin diagnóstico previo",
-    ],
-    availableAddons: ["Exportación Excel/PDF", "Roles avanzados", "Mini paneles adicionales"],
-    ctaLabel: "Agendar diagnóstico",
-    projectType: "sistema-web",
-    presetPlan: "sistema-web-panel-administrativo",
-  },
-  {
-    id: "avanzado",
-    name: "Sistema Avanzado / Desarrollo a medida",
-    price: PLAN_PRICES["avanzado"],
-    tag: "Proyecto crítico",
-    audience:
-      "Para empresas con procesos más complejos, múltiples módulos, integraciones, automatizaciones y operación crítica.",
-    description:
-      "Aquí hablamos de soluciones a medida con arquitectura más robusta, etapas de implementación y mayor análisis funcional.",
-    includes: [
-      "Arquitectura personalizada",
-      "Múltiples módulos",
-      "Integraciones externas",
-      "Automatizaciones",
-      "Reportes avanzados",
-      "Paneles por perfil de usuario",
-      "Exportación Excel/PDF",
-      "Gestión documental y notificaciones",
-      "Roadmap por etapas según prioridad",
-    ],
-    excludes: [
-      "Precio cerrado sin levantamiento técnico",
-      "Implementación total sin diagnóstico previo",
-    ],
-    availableAddons: ["Fases por módulo", "Integraciones externas", "Notificaciones y documentos automáticos"],
-    ctaLabel: "Solicitar evaluación técnica",
-    projectType: "sistema-web",
-    presetPlan: "sistema-avanzado",
-  },
-];
+const BLOCK_LABEL: Record<PlanBlock, string> = {
+  web: "Páginas web",
+  ecommerce: "Ecommerce",
+  sistemas: "Sistemas y automatización",
+  corporativo: "Soluciones corporativas",
+};
+
+/** Tipo de proyecto con el que el cotizador arranca precargado. */
+function quoteType(plan: Plan): ProjectTypeValue {
+  if (plan.block === "ecommerce") return "tienda-online";
+  if (plan.block === "sistemas" || plan.block === "corporativo") return "sistema-web";
+  return plan.id === "web-basica" ? "web-basica" : "web-profesional";
+}
 
 /**
- * Lee un adicional por nombre exacto desde ADDONS (pricing.ts, fuente única).
- * Si el nombre deja de existir en pricing.ts, la página falla en build y se
- * detecta la desincronización de inmediato.
+ * Destino del botón de cada plan. Los proyectos corporativos parten con una
+ * conversación de levantamiento, no con un formulario de precio; el resto entra
+ * al cotizador con el tipo y el plan ya seleccionados y el origen conservado.
  */
-function addon(name: string, displayName?: string) {
-  const item = ADDONS.find((entry) => entry.name === name);
-  if (!item) throw new Error(`Adicional no encontrado en pricing.ts: ${name}`);
-  return {
-    name: displayName ?? item.name,
-    price: item.note ? `${item.price} (${item.note})` : item.price,
-  };
+function planCtaHref(plan: Plan) {
+  if (plan.block === "corporativo") {
+    return `/contacto?servicio=sistemas-web&plan=${plan.id}&origen=planes`;
+  }
+  return `/cotizador?tipo=${quoteType(plan)}&plan=${plan.id}&origen=planes`;
 }
 
-/** Pasa "Desde $X" a "desde $X" para componer frases de operación mensual. */
+/** El único adicional de precio cerrado se muestra sin la palabra Desde. */
+function addonPrice(item: Addon) {
+  return item.note === "precio cerrado" ? `${clp(item.amount)} + IVA` : item.price;
+}
+
+/** Pasa "Desde $X" a "desde $X" para componer frases corridas. */
 function lowerDesde(price: string) {
   return price.replace(/^Desde/, "desde");
 }
 
-const additionalCategories: AdditionalCategory[] = [
+const webPlans = plansByBlock("web");
+const ecommercePlans = plansByBlock("ecommerce");
+const systemPlans = plansByBlock("sistemas");
+const corporatePlans = plansByBlock("corporativo");
+
+const entryPlan = getPlan("web-basica");
+const pymePlan = getPlan("pyme");
+const storePlan = getPlan("ecommerce");
+const systemPlan = getPlan("sistema");
+const intranetPlan = getPlan("intranet");
+const enterprisePlan = getPlan("enterprise");
+
+// ---------------------------------------------------------------------------
+// Contenido de la página
+// ---------------------------------------------------------------------------
+
+/** Resumen de la escalera en el hero: de la presencia web a la plataforma corporativa. */
+const ladderSummary = [
   {
-    title: "Inteligencia Artificial y atención automatizada",
-    items: AI_SERVICES.map((service) => ({
-      name: service.tag ? `${service.name} (${service.tag})` : service.name,
-      price: service.monthly ? `${service.setup} · operación ${lowerDesde(service.monthly)}` : service.setup,
-    })),
+    label: "Páginas web",
+    price: clp(entryPlan.amount),
+    detail: "Presencia profesional y captación de consultas",
+    href: `#${BLOCK_ANCHOR.web}`,
   },
   {
-    title: "WhatsApp y comunicación",
-    items: [
-      { name: "Botón personalizado de WhatsApp", price: "Desde $39.990 + IVA" },
-      { name: "Formulario conectado a WhatsApp", price: "Desde $79.990 + IVA" },
-      { name: "Notificaciones automáticas por WhatsApp Business API", price: "Desde $249.990 + IVA · soporte desde $49.990/mes" },
-      { name: "Chatbot de WhatsApp con menú automático", price: "Desde $399.990 + IVA · soporte desde $59.990/mes" },
-      { name: "Automatización de seguimiento de clientes", price: "Desde $349.990 + IVA" },
-    ],
+    label: "Ecommerce",
+    price: clp(storePlan.amount),
+    detail: "Catálogo, carrito, pagos y panel de pedidos",
+    href: `#${BLOCK_ANCHOR.ecommerce}`,
   },
   {
-    title: "Funcionalidades para sitios web",
-    items: [
-      addon("Sección adicional"),
-      addon("Página adicional"),
-      addon("Formulario avanzado"),
-      addon("Formulario multipaso"),
-      addon("Login de usuarios"),
-      addon("Blog administrable"),
-    ],
+    label: "Sistemas y automatización",
+    price: clp(systemPlan.amount),
+    detail: "Usuarios, procesos, reportes y trazabilidad",
+    href: `#${BLOCK_ANCHOR.sistemas}`,
   },
   {
-    title: "Ecommerce",
-    items: [
-      { name: "Carga de productos hasta 20", price: "Desde $59.990 + IVA" },
-      { name: "Carga de productos hasta 50", price: "Desde $119.990 + IVA" },
-      addon("Catálogo administrable"),
-      addon("Gestión de stock"),
-      { name: "Cupones y descuentos", price: "Desde $99.990 + IVA" },
-    ],
-  },
-  {
-    title: "Paneles y sistemas",
-    items: [
-      addon("Mini panel administrativo"),
-      addon("Panel administrativo completo"),
-      addon("Sistema de reservas"),
-      addon("Dashboard y reportes", "Dashboard y estadísticas"),
-    ],
-  },
-  {
-    title: "Integraciones",
-    items: [
-      addon("Integración de pagos (Flow, Webpay, Mercado Pago)"),
-      addon("Integración API personalizada"),
-      { name: "Integración con CRM", price: "Desde $299.990 + IVA" },
-      addon("Automatización por WhatsApp"),
-    ],
-  },
-  {
-    title: "SEO, analítica y documentos",
-    items: [
-      addon("SEO inicial avanzado"),
-      { name: "SEO mensual", price: "Desde $149.990 + IVA / mes" },
-      addon("Generador de PDF"),
-      addon("Dashboard y reportes"),
-      { name: "Exportación Excel o PDF", price: "Desde $99.990 + IVA" },
-    ],
+    label: "Plataformas corporativas",
+    price: clp(intranetPlan.amount),
+    detail: "Intranet, control operacional e integración de áreas",
+    href: `#${BLOCK_ANCHOR.corporativo}`,
   },
 ];
 
-/** Descripciones por plan de mantención; nombres y precios vienen de MAINTENANCE (pricing.ts). */
-const maintenanceDescriptions: Record<string, string> = {
-  "Mantención web básica": "Para sitios simples que necesitan continuidad, ajustes menores y soporte base.",
-  "Mantención web profesional": "Para negocios que necesitan más seguimiento, mejoras y soporte técnico periódico.",
-  "Mantención ecommerce": "Para tiendas online con mayor complejidad, más riesgo operativo y más tareas técnicas.",
-  "Mantención de sistema o IA": "Para sistemas web y asistentes con IA que necesitan monitoreo y continuidad operativa.",
-};
+/** Selector por necesidad: cada objetivo lleva al bloque que lo resuelve. */
+const needSelector: Array<{ need: string; detail: string; href: string }> = [
+  {
+    need: "Presencia web",
+    detail: "Existir en Google y transmitir seriedad desde el primer contacto.",
+    href: `#${BLOCK_ANCHOR.web}`,
+  },
+  {
+    need: "Generar clientes",
+    detail: "Convertir visitas en consultas y cotizaciones reales.",
+    href: `#${BLOCK_ANCHOR.web}`,
+  },
+  {
+    need: "Vender online",
+    detail: "Catálogo administrable, carrito y pagos chilenos.",
+    href: `#${BLOCK_ANCHOR.ecommerce}`,
+  },
+  {
+    need: "Automatizar procesos",
+    detail: "Reemplazar tareas manuales, planillas y correos sueltos.",
+    href: `#${BLOCK_ANCHOR.sistemas}`,
+  },
+  {
+    need: "Crear un sistema interno",
+    detail: "Usuarios, registros, estados, reportes y panel de gestión.",
+    href: `#${BLOCK_ANCHOR.sistemas}`,
+  },
+  {
+    need: "Crear una intranet",
+    detail: "Portal interno con documentos, solicitudes y aprobaciones.",
+    href: `#${BLOCK_ANCHOR.corporativo}`,
+  },
+  {
+    need: "Controlar operaciones",
+    detail: "Sucursales, personal en terreno, activos, evidencias y KPI.",
+    href: `#${BLOCK_ANCHOR.corporativo}`,
+  },
+  {
+    need: "Integrar varias áreas",
+    detail: "Una sola plataforma para departamentos y sistemas que hoy no conversan.",
+    href: `#${BLOCK_ANCHOR.corporativo}`,
+  },
+];
 
-const maintenancePlans = MAINTENANCE.map((plan) => ({
-  name: plan.name,
-  price: plan.price,
-  description: maintenanceDescriptions[plan.name] ?? "Alcance según tipo de proyecto y frecuencia de intervención.",
-}));
+/** Qué debe tener listo el cliente antes de vender en línea. */
+const ecommerceChecklist = [
+  "Fotografías, precios, categorías y descripciones de los productos",
+  "Definición de stock y de quién lo administra",
+  "Comunas o zonas de despacho y costo por zona",
+  "Cuenta con la pasarela de pago que se va a integrar",
+  "Política de cambios, devoluciones y despacho",
+];
+
+/** Cómo avanza un proyecto de sistema antes de tener precio final. */
+const systemProcess = [
+  {
+    title: "Levantamiento funcional",
+    detail: "Revisamos cómo opera hoy el proceso, quién participa y dónde se pierde tiempo.",
+  },
+  {
+    title: "Definición de alcance",
+    detail: "Se acuerdan módulos, perfiles de usuario, integraciones y volumen de operación.",
+  },
+  {
+    title: "Cotización formal",
+    detail: "Con el alcance definido se emite una propuesta con valor, etapas y plazos.",
+  },
+  {
+    title: "Desarrollo por etapas",
+    detail: "Se entrega en fases utilizables, partiendo por lo que más impacta la operación.",
+  },
+];
+
+/** Qué incluye realmente un proyecto corporativo: es lo que sostiene el valor. */
+const corporateScopeStages = [
+  {
+    title: "Levantamiento funcional",
+    detail: "Entrevistas con las áreas involucradas y registro de la operación real, no la teórica.",
+  },
+  {
+    title: "Análisis de procesos",
+    detail: "Se ordenan flujos, responsables, estados, excepciones y reglas de negocio.",
+  },
+  {
+    title: "Arquitectura de la solución",
+    detail: "Definición de módulos, integraciones y crecimiento futuro de la plataforma.",
+  },
+  {
+    title: "Modelo de base de datos",
+    detail: "Estructura de datos pensada para volumen, consultas y reportería posterior.",
+  },
+  {
+    title: "Desarrollo a medida",
+    detail: "Cada módulo se construye sobre el proceso de la organización, no sobre una plantilla.",
+  },
+  {
+    title: "Seguridad",
+    detail: "Autenticación, cifrado de credenciales, respaldos y buenas prácticas de acceso.",
+  },
+  {
+    title: "Perfiles y permisos",
+    detail: "Cada rol ve y ejecuta solamente lo que le corresponde dentro de la plataforma.",
+  },
+  {
+    title: "Pruebas",
+    detail: "Validación funcional por módulo y revisión con usuarios clave antes de liberar.",
+  },
+  {
+    title: "Implementación",
+    detail: "Carga inicial de datos, configuración por área y puesta en marcha controlada.",
+  },
+  {
+    title: "Documentación",
+    detail: "Manuales de uso y documentación técnica de la plataforma entregada.",
+  },
+  {
+    title: "Capacitación cuando corresponde",
+    detail: "Sesiones con los equipos que van a operar el sistema todos los días.",
+  },
+  {
+    title: "Despliegue",
+    detail: "Publicación en el entorno definido, con monitoreo y respaldos activos.",
+  },
+  {
+    title: "Soporte posterior",
+    detail: "Continuidad operativa, corrección de incidencias y evolución por etapas.",
+  },
+];
 
 /**
- * Tabla comparativa por tipo de solución. Los precios vienen de PLAN_PRICES y
- * los plazos son los mismos rangos referenciales publicados en las FAQ del sitio.
+ * Tabla comparativa por tipo de solución. Precios y plazos vienen de
+ * pricing.ts, así que un cambio de tarifa se refleja aquí solo.
  */
 const solutionComparison = [
   {
     type: "Landing page",
     who: "Campañas, lanzamientos y servicios que necesitan una sola página enfocada en captar contactos.",
-    price: PLAN_PRICES["web-basica"],
-    deadline: "1 a 2 semanas",
+    price: entryPlan.price,
+    deadline: entryPlan.deadline,
     href: "/servicios/landing-pages-para-empresas",
     linkLabel: "Landing pages para empresas",
   },
   {
     type: "Página web corporativa",
     who: "Empresas y pymes que necesitan presentar servicios, generar confianza y recibir cotizaciones.",
-    price: PLAN_PRICES.pyme,
-    deadline: "3 a 6 semanas",
+    price: pymePlan.price,
+    deadline: pymePlan.deadline,
     href: "/paginas-web-para-empresas",
     linkLabel: "Páginas web para empresas",
   },
   {
     type: "Tienda online",
     who: "Negocios que venden productos y necesitan catálogo, carrito y pagos en línea.",
-    price: PLAN_PRICES.ecommerce,
-    deadline: "3 a 6 semanas",
+    price: storePlan.price,
+    deadline: storePlan.deadline,
     href: "/tiendas-online",
     linkLabel: "Tiendas online",
   },
   {
-    type: "Sistema web",
+    type: "Sistema web a medida",
     who: "Operaciones que necesitan usuarios, registros, reportes y control de procesos internos.",
-    price: PLAN_PRICES.sistema,
-    deadline: "Desde 6 semanas, por etapas",
+    price: systemPlan.price,
+    deadline: systemPlan.deadline,
     href: "/sistemas-web",
     linkLabel: "Sistemas web a medida",
   },
-];
-
-const planGuide = [
-  "Si solo necesitas una página simple para mostrar tu negocio: Web Básica de Presentación.",
-  "Si quieres una web inicial más completa: Plan Emprendedor.",
-  "Si tienes una pyme y necesitas generar confianza: Plan Pyme.",
-  "Si representas una empresa, colegio o institución: Plan Empresa.",
-  "Si vendes productos o necesitas catálogo: Catálogo / Tienda Online.",
-  "Si necesitas usuarios, registros, reportes o procesos internos: Sistema Web.",
-  "Si necesitas integraciones, automatizaciones o múltiples módulos: Sistema Avanzado.",
+  {
+    type: "Plataforma corporativa",
+    who: "Organizaciones que necesitan intranet, control operacional, trazabilidad e integración entre áreas.",
+    price: intranetPlan.price,
+    deadline: intranetPlan.deadline,
+    href: "/automatizacion",
+    linkLabel: "Automatización de procesos",
+  },
 ];
 
 const priceFaqs = [
   {
     q: "¿Cuánto cuesta una página web en Chile?",
-    a: `Los valores publicados por Zyteron son: Web Básica, ${PLAN_PRICES["web-basica"]}; Plan Pyme, ${PLAN_PRICES.pyme}; y Plan Empresa, ${PLAN_PRICES.empresa}. Son referencias: el precio final depende de páginas, contenido, administración e integraciones.`,
+    a: `Los valores publicados por Zyteron parten en ${entryPlan.price} para una web de presentación, ${pymePlan.price} para un sitio corporativo orientado a captar clientes y ${getPlan("empresa").price} para una arquitectura web empresarial. Son referencias: el valor final depende de páginas, contenido, administración e integraciones.`,
+  },
+  {
+    q: "¿Cuánto cuesta un software a medida en Chile?",
+    a: `Un sistema web con usuarios, base de datos y panel de gestión parte en ${lowerDesde(systemPlan.price)}, y una plataforma corporativa integrada puede llegar a ${lowerDesde(enterprisePlan.price)} según cantidad de módulos, perfiles, integraciones y volumen de operación. El valor exacto se define después del levantamiento funcional y técnico.`,
+  },
+  {
+    q: "¿Cuánto cuesta desarrollar una intranet empresarial?",
+    a: `Una intranet corporativa parte en ${lowerDesde(intranetPlan.price)} e incluye portal interno, perfiles y permisos, documentación, formularios, solicitudes con aprobaciones, notificaciones y auditoría. El valor final depende de las áreas involucradas, la cantidad de usuarios y las integraciones con los servicios que la empresa ya utiliza.`,
+  },
+  {
+    q: "¿Cuál es la diferencia entre una página web y un sistema web?",
+    a: "Una página web comunica: presenta la empresa, sus servicios y recibe consultas. Un sistema web opera: tiene usuarios con distintos niveles de acceso, base de datos, registros, estados, reportes y trazabilidad de lo que hace cada persona. Cuando la necesidad es administrar información y procesos, corresponde un sistema.",
+  },
+  {
+    q: "¿Pueden digitalizar un proceso que hoy vive en Excel?",
+    a: "Sí, es uno de los proyectos más frecuentes. En el levantamiento revisamos las planillas actuales, los campos que se usan de verdad, quién carga la información y qué reportes se necesitan, y con eso se define el sistema, la migración de los datos históricos y las etapas de puesta en marcha.",
+  },
+  {
+    q: "¿Pueden hacer sistemas con distintos niveles de usuario?",
+    a: "Sí. Los sistemas se construyen con roles y permisos, de manera que cada perfil accede solo a los módulos, registros y acciones que le corresponden. Los perfiles concretos y sus atribuciones se definen durante el levantamiento junto con la organización.",
+  },
+  {
+    q: "¿Pueden integrarse con el software que la empresa ya usa?",
+    a: "En general sí, siempre que el sistema actual disponga de API, webhooks o exportaciones. Trabajamos integraciones con pasarelas de pago, CRM, ERP, Microsoft 365, Google Workspace, WhatsApp Business y correo. La factibilidad de cada integración se confirma revisando la documentación técnica del proveedor.",
+  },
+  {
+    q: "¿Trabajan con empresas de múltiples sucursales?",
+    a: "Sí. Las plataformas pueden operar en modo multisucursal e incluso multiempresa, con información separada por unidad, permisos por sede y reportería consolidada para la gerencia. El modelo exacto se define según la estructura real de la organización.",
+  },
+  {
+    q: "¿Pueden crear dashboards gerenciales?",
+    a: "Sí. Los sistemas incluyen paneles con indicadores, filtros por periodo y exportación a PDF o Excel. Los indicadores se definen con la empresa en el levantamiento, para que el dashboard muestre las cifras con las que efectivamente se toman decisiones.",
+  },
+  {
+    q: "¿Los sistemas permiten auditoría y trazabilidad?",
+    a: "Sí. Se pueden registrar las acciones relevantes con usuario, fecha y detalle del cambio, además del historial por registro. El nivel de auditoría se ajusta a lo que la organización necesita conservar y al volumen de operación.",
+  },
+  {
+    q: "¿Un proyecto empresarial puede desarrollarse por etapas?",
+    a: "Sí, y es la forma recomendada. Se prioriza el módulo que más impacta la operación, se pone en marcha y luego se avanza con los siguientes. Así la inversión se distribuye en el tiempo y cada etapa entrega algo utilizable.",
+  },
+  {
+    q: "¿Hay soporte después de implementar?",
+    a: `Sí. La continuidad se contrata como mantención mensual, desde ${lowerDesde(MAINTENANCE_CATALOG[0].price)} para sitios web y desde ${lowerDesde(MAINTENANCE_CATALOG[3].price)} para sistemas, con planes de soporte corporativo y enterprise para plataformas críticas. Incluye monitoreo, respaldos, corrección de incidencias y acompañamiento a los usuarios según el plan.`,
   },
   {
     q: "¿Los precios publicados son finales?",
-    a: "No. Son valores base para proyectos referenciales. El precio final depende del alcance real, secciones, integraciones, contenido, soporte requerido y nivel de personalización.",
+    a: "Son valores de referencia para proyectos base. El precio final se confirma en la cotización formal, según alcance, secciones, módulos, integraciones, contenido, soporte requerido y nivel de personalización.",
   },
   {
     q: "¿La web básica incluye dominio?",
-    a: "No. El dominio .cl o .com se cotiza aparte según disponibilidad y necesidad del proyecto.",
+    a: "El dominio .cl o .com se contrata aparte, según disponibilidad, y queda a nombre de tu empresa. Te acompañamos en la compra y en la configuración para dejarlo apuntando al sitio.",
   },
   {
     q: "¿El Plan Emprendedor es igual a la Web Básica?",
-    a: "No. La Web Básica es una sola página de entrada. El Plan Emprendedor permite una estructura más completa y mayor flexibilidad de secciones.",
+    a: `La Web Básica es una página de presentación enfocada en existir en Google y recibir consultas. El Plan Emprendedor, ${lowerDesde(getPlan("emprendedor").price)}, entrega un sitio multipágina con más secciones, galería y estructura comercial para explicar toda la oferta.`,
   },
   {
-    q: "¿La tienda online incluye pagos en línea siempre?",
-    a: "No siempre. La preparación o integración de medios de pago se define según alcance, proveedor y complejidad del proyecto.",
+    q: "¿La tienda online incluye pagos en línea?",
+    a: "El Ecommerce Profesional contempla la integración con Flow, Webpay o Mercado Pago según el alcance acordado. La cuenta con la pasarela la contrata la empresa y las comisiones por venta las cobra el proveedor de pago.",
   },
   {
     q: "¿Un sitio web incluye panel administrativo?",
-    a: "No necesariamente. Los paneles, usuarios, reportes, bases de datos y procesos internos pertenecen a planes de sistema o se cotizan aparte.",
+    a: "Los sitios web se entregan optimizados para su objetivo comercial. Los paneles, usuarios, bases de datos y reportes pertenecen a los planes de sistema o se agregan como adicional, según lo que necesites administrar por tu cuenta.",
   },
   {
     q: "¿Puedo partir con un plan simple y luego crecer?",
-    a: "Sí. De hecho, la Web Básica y el Plan Emprendedor están pensados para comenzar con orden y luego evolucionar según el crecimiento del negocio.",
+    a: "Sí. La escalera está pensada exactamente para eso: se puede comenzar con una web de presentación y avanzar hacia un sitio corporativo, una tienda online o un sistema interno reutilizando el trabajo ya realizado.",
   },
   {
-    q: "¿Trabajan con empresas y proyectos complejos?",
-    a: "Sí. Zyteron desarrolla webs empresariales, sistemas internos, automatizaciones, paneles y soluciones a medida según diagnóstico técnico.",
+    q: "¿Qué costos van por separado?",
+    a: PRICING_NOTE,
   },
 ];
 
-/**
- * Los tres planes que se muestran de entrada: el recorrido natural de compra,
- * de tener presencia a vender en línea. El resto del catálogo queda tras el
- * botón "ver más". Cambiar este arreglo cambia la vitrina.
- */
-const FEATURED_IDS = ["web-basica", "pyme", "ecommerce"];
+/** Los tres planes destacados de la vitrina de páginas web. */
+const FEATURED_WEB_IDS = ["web-basica", "pyme", "empresa"];
 
-/** Adapta un plan del catálogo al formato resumido de la vitrina. */
-function toShowcase(id: string): ShowcasePlan {
-  const plan = plans.find((item) => item.id === id);
-  if (!plan) throw new Error(`Plan desconocido en la vitrina: ${id}`);
+/** Adapta un plan del catálogo al formato resumido de la vitrina interactiva. */
+function toShowcase(plan: Plan): ShowcasePlan {
   return {
     id: plan.id,
     name: plan.name,
     price: plan.price,
-    priceNote: plan.priceNote,
-    tag: plan.tag,
+    tag: plan.tag ?? BLOCK_LABEL[plan.block],
     audience: plan.audience,
-    description: plan.description,
-    includes: plan.includes,
-    quoteHref: buildQuoteHref(plan.projectType, plan.presetPlan),
+    description: plan.summary,
+    includes: plan.features,
+    cta: plan.cta,
+    quoteHref: planCtaHref(plan),
   };
+}
+
+/**
+ * OfferCatalog de la página: se construye desde PLAN_CATALOG para que los datos
+ * estructurados afirmen exactamente los mismos planes y valores que están
+ * visibles más abajo.
+ */
+const planesUrl = buildAbsoluteUrl("/planes");
+const organizationRef = { "@id": `${siteConfig.url}/#organization` };
+
+const planOfferCatalogJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "OfferCatalog",
+  "@id": `${planesUrl}#price-specifications`,
+  name: "Planes y precios referenciales de Zyteron",
+  url: planesUrl,
+  itemListElement: PLAN_CATALOG.map((plan) => ({
+    "@type": "Offer",
+    name: plan.name,
+    description: plan.summary,
+    category: BLOCK_LABEL[plan.block],
+    url: `${planesUrl}#${BLOCK_ANCHOR[plan.block]}`,
+    priceCurrency: "CLP",
+    availability: "https://schema.org/InStock",
+    seller: organizationRef,
+    itemOffered: {
+      "@type": "Service",
+      name: plan.name,
+      description: plan.summary,
+      provider: organizationRef,
+    },
+    priceSpecification: {
+      "@type": "PriceSpecification",
+      priceCurrency: "CLP",
+      minPrice: plan.amount,
+      valueAddedTaxIncluded: false,
+    },
+  })),
+};
+
+// ---------------------------------------------------------------------------
+// Piezas reutilizables
+// ---------------------------------------------------------------------------
+
+function PlanFeatures({ features, columns = false }: { features: string[]; columns?: boolean }) {
+  return (
+    <ul className={columns ? "grid gap-2 sm:grid-cols-2" : "space-y-2"}>
+      {features.map((feature) => (
+        <li key={feature} className="flex gap-2 text-sm leading-6 text-slate-600">
+          <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden="true" />
+          <span>{feature}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function PlanCta({ plan }: { plan: Plan }) {
+  return (
+    <Button asChild className="w-full bg-blue-700 font-bold text-white hover:bg-blue-800">
+      <Link href={planCtaHref(plan)}>
+        {plan.cta} <ArrowRight className="h-4 w-4" aria-hidden="true" />
+      </Link>
+    </Button>
+  );
+}
+
+function AddonRows({ items }: { items: Addon[] }) {
+  return (
+    <div className="space-y-2">
+      {items.map((item) => (
+        <div
+          key={item.id}
+          className="flex flex-wrap items-start justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
+        >
+          <span className="text-sm text-slate-700">
+            {item.name}
+            {item.note && item.note !== "precio cerrado" ? (
+              <span className="block text-xs text-slate-500">{item.note}</span>
+            ) : null}
+          </span>
+          <span className="text-sm font-bold text-blue-700">
+            {addonPrice(item)}
+            {item.monthly ? <span className="block text-xs font-semibold text-slate-500">{item.monthly}</span> : null}
+            {item.note === "precio cerrado" ? (
+              <span className="block text-xs font-semibold text-slate-500">precio cerrado</span>
+            ) : null}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function PlanesPage() {
@@ -552,9 +521,9 @@ export default function PlanesPage() {
         id="planes-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/planes",
-          title: "Precios de páginas web en Chile: planes y valores",
+          title: "Precios de páginas web y sistemas en Chile",
           description:
-            "Precios referenciales para páginas web, ecommerce y sistemas, con alcance claro y cotización formal según cada proyecto.",
+            "Valores referenciales de páginas web, ecommerce, sistemas a medida y plataformas corporativas, con alcance por nivel y cotización formal según proyecto.",
           breadcrumbs: [
             { name: "Inicio", path: "/" },
             { name: "Planes", path: "/planes" },
@@ -570,26 +539,50 @@ export default function PlanesPage() {
           })),
         )}
       />
-      <JsonLd id="planes-price-specification-schema" data={buildPlanPriceSpecificationJsonLd("/planes")} />
+      <JsonLd id="planes-price-specification-schema" data={planOfferCatalogJsonLd} />
 
-      <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-20">
+      {/* 1. Hero ------------------------------------------------------------ */}
+      <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-16 sm:py-20">
         <Container className="space-y-6 text-center">
           <div className="badge-blue mx-auto w-fit">
             <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
             Planes y cotización profesional
           </div>
-          <h1 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">
-            Precios de páginas web en Chile y planes para cada negocio
+          <h1 className="text-3xl font-extrabold text-slate-900 sm:text-5xl">
+            Precios de páginas web y sistemas en Chile
           </h1>
           <p className="mx-auto max-w-4xl text-base text-slate-600 sm:text-lg">
-            Una página web profesional en Chile parte en {PLAN_PRICES["web-basica"]} en su versión básica; un sitio pyme desde {PLAN_PRICES.pyme.replace("Desde ", "")}, una tienda online con pagos desde {PLAN_PRICES.ecommerce.replace("Desde ", "")} y un sistema web desde {PLAN_PRICES.sistema.replace("Desde ", "")}. Compara cada plan con su alcance y confirma tu proyecto mediante una cotización formal.
+            Una escalera completa de desarrollo web en Chile: desde una página profesional para existir en Google,
+            {" "}{lowerDesde(entryPlan.price)}, hasta plataformas corporativas a medida para automatizar procesos,
+            controlar operaciones e integrar varias áreas de la organización.
           </p>
-          <div className="mx-auto max-w-4xl rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-slate-700">
-            Los valores publicados son referenciales para proyectos base. El precio final puede variar según secciones, funcionalidades, contenido, integraciones, soporte requerido y nivel de personalización.
-          </div>
+
+          <ol className="mx-auto grid max-w-5xl gap-3 text-left sm:grid-cols-2 lg:grid-cols-4">
+            {ladderSummary.map((step, index) => (
+              <li key={step.label}>
+                <a
+                  href={step.href}
+                  className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white/90 p-4 transition-colors hover:border-blue-300 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">
+                    Nivel {index + 1}
+                  </span>
+                  <span className="mt-1 text-sm font-extrabold text-slate-900">{step.label}</span>
+                  <span className="mt-1 text-base font-extrabold text-blue-700">Desde {step.price} + IVA</span>
+                  <span className="mt-1 text-xs leading-5 text-slate-500">{step.detail}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+
+          <p className="mx-auto max-w-4xl rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-slate-700">
+            Todos los valores se expresan desde el monto indicado y no incluyen IVA. El precio final se confirma en la
+            cotización formal, según alcance, módulos, integraciones y volumen de operación.
+          </p>
+
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/cotizador">Cotizar ahora</Link>
+              <Link href="/cotizador?origen=planes">Cotizar mi proyecto</Link>
             </Button>
             <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
@@ -600,27 +593,524 @@ export default function PlanesPage() {
         </Container>
       </section>
 
-      <section className="section-alt py-16">
+      {/* 2. Selector por necesidad ------------------------------------------ */}
+      <section className="section-alt py-14" aria-labelledby="selector-necesidad">
         <Container className="space-y-6">
           <div className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Guía rápida</p>
-            <h2 className="text-3xl font-extrabold text-slate-900">¿Qué tipo de página web necesita tu negocio?</h2>
+            <h2 id="selector-necesidad" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+              ¿Qué necesita tu empresa?
+            </h2>
             <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Compara las cuatro soluciones más contratadas con su precio base y plazo típico, y entra al detalle de la que calza con tu objetivo.
+              Elige el objetivo más parecido al tuyo y te llevamos directo al nivel de solución que lo resuelve.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {needSelector.map((option) => (
+              <a
+                key={option.need}
+                href={option.href}
+                className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-blue-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+              >
+                <span className="text-sm font-extrabold text-slate-900">{option.need}</span>
+                <span className="mt-1 text-xs leading-5 text-slate-500">{option.detail}</span>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">
+                  Ver planes <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </span>
+              </a>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* 3. Bloque A: páginas web ------------------------------------------- */}
+      <section id={BLOCK_ANCHOR.web} className="scroll-mt-24 bg-white py-16" aria-labelledby="bloque-web">
+        <Container className="space-y-6">
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Bloque 1 · Presencia y captación</p>
+            <h2 id="bloque-web" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+              Páginas web para empresas y pymes
+            </h2>
+            <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              Cuatro niveles para pasar de no existir en Google a tener un sitio corporativo que genera consultas.
+              Todos incluyen diseño responsive, SEO técnico base y analítica.
+            </p>
+          </div>
+
+          <PlansShowcase
+            featured={webPlans.filter((plan) => FEATURED_WEB_IDS.includes(plan.id)).map(toShowcase)}
+            rest={webPlans.filter((plan) => !FEATURED_WEB_IDS.includes(plan.id)).map(toShowcase)}
+          />
+
+          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <caption className="sr-only">
+                Planes de páginas web: para quién es cada uno, precio desde, plazo referencial y cómo cotizarlo
+              </caption>
+              <thead>
+                <tr className="bg-slate-100">
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Plan</th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Para quién es</th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Precio</th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Plazo referencial</th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Cotizar</th>
+                </tr>
+              </thead>
+              <tbody>
+                {webPlans.map((plan) => (
+                  <tr key={plan.id} className="border-t border-slate-100 align-top">
+                    <th scope="row" className="px-5 py-4 text-sm font-extrabold text-slate-900">
+                      {plan.name}
+                    </th>
+                    <td className="px-5 py-4 leading-relaxed text-slate-600">{plan.audience}</td>
+                    <td className="whitespace-nowrap px-5 py-4 font-bold text-blue-700">{plan.price}</td>
+                    <td className="whitespace-nowrap px-5 py-4 text-slate-700">{plan.deadline}</td>
+                    <td className="px-5 py-4">
+                      <Link
+                        href={planCtaHref(plan)}
+                        className="inline-flex items-center gap-1 font-bold text-blue-700 hover:text-blue-800"
+                      >
+                        {plan.cta} <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Container>
+      </section>
+
+      {/* 4. Bloque B: ecommerce --------------------------------------------- */}
+      <section id={BLOCK_ANCHOR.ecommerce} className="scroll-mt-24 section-alt py-16" aria-labelledby="bloque-ecommerce">
+        <Container className="space-y-6">
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Bloque 2 · Venta en línea</p>
+            <h2 id="bloque-ecommerce" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+              Ecommerce con catálogo, pagos y panel de pedidos
+            </h2>
+            <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              Para vender en línea con medios de pago chilenos y administrar productos, stock y pedidos desde un panel
+              propio.
+            </p>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
+            {ecommercePlans.map((plan) => (
+              <article key={plan.id} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">
+                      <ShoppingCart className="h-3.5 w-3.5" aria-hidden="true" /> Tienda online
+                    </p>
+                    <h3 className="mt-2 text-xl font-extrabold text-slate-900 sm:text-2xl">{plan.name}</h3>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">{plan.summary}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-extrabold text-slate-900">{plan.price}</p>
+                    <p className="text-xs text-slate-500">{plan.deadline}</p>
+                  </div>
+                </div>
+
+                <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">{plan.audience}</p>
+
+                <div className="mt-5">
+                  <PlanFeatures features={plan.features} columns />
+                </div>
+
+                <div className="mt-6 sm:max-w-xs">
+                  <PlanCta plan={plan} />
+                </div>
+              </article>
+            ))}
+
+            <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="text-base font-extrabold text-slate-900">Qué conviene tener listo antes de vender</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Mientras más ordenada llegue la información del catálogo, más rápido queda operativa la tienda.
+              </p>
+              <div className="mt-4 space-y-2">
+                {ecommerceChecklist.map((item) => (
+                  <div key={item} className="flex items-start gap-2 text-sm leading-6 text-slate-600">
+                    <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden="true" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-xs leading-5 text-slate-500">
+                Las comisiones por venta las cobra la pasarela de pago y la cuenta de comercio la contrata tu empresa.
+              </p>
+              <Link
+                href="/tiendas-online"
+                className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700 hover:text-blue-800"
+              >
+                Ver cómo trabajamos las tiendas online <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
+            </aside>
+          </div>
+        </Container>
+      </section>
+
+      {/* 5. Bloque C: sistemas ---------------------------------------------- */}
+      <section id={BLOCK_ANCHOR.sistemas} className="scroll-mt-24 bg-white py-16" aria-labelledby="bloque-sistemas">
+        <Container className="space-y-6">
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Bloque 3 · Operación y procesos</p>
+            <h2 id="bloque-sistemas" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+              Sistemas, automatización y plataformas empresariales
+            </h2>
+            <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              Software a medida para operar: usuarios con permisos, base de datos propia, registros, automatizaciones,
+              reportería y trazabilidad. Cada proyecto parte con un levantamiento técnico y se cierra con una cotización
+              formal, porque el valor depende de los módulos y del volumen real de operación.
+            </p>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-2">
+            {systemPlans.map((plan) => (
+              <article
+                key={plan.id}
+                className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7"
+              >
+                <p className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">
+                  <LayoutDashboard className="h-3.5 w-3.5" aria-hidden="true" /> Sistema web
+                </p>
+                <h3 className="mt-2 text-xl font-extrabold text-slate-900">{plan.name}</h3>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{plan.summary}</p>
+
+                <div className="mt-4 border-y border-slate-100 py-4">
+                  <p className="text-2xl font-extrabold text-slate-900">{plan.price}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">{plan.deadline}</p>
+                </div>
+
+                <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">{plan.audience}</p>
+
+                <div className="mt-4">
+                  <PlanFeatures features={plan.features} columns />
+                </div>
+
+                {plan.requiresDiscovery ? (
+                  <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">
+                    {CORPORATE_SCOPE_NOTE}
+                  </p>
+                ) : null}
+
+                <div className="flex-1" />
+                <div className="mt-5">
+                  <PlanCta plan={plan} />
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:grid-cols-2 lg:grid-cols-4">
+            {systemProcess.map((step, index) => (
+              <article key={step.title}>
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">Etapa {index + 1}</p>
+                <h3 className="mt-1 text-sm font-extrabold text-slate-900">{step.title}</h3>
+                <p className="mt-1 text-xs leading-5 text-slate-600">{step.detail}</p>
+              </article>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* 6. Bloque D: soluciones corporativas -------------------------------- */}
+      <section
+        id={BLOCK_ANCHOR.corporativo}
+        className="scroll-mt-24 border-y-4 border-blue-800 bg-slate-50 bg-grid-light py-16"
+        aria-labelledby="bloque-corporativo"
+      >
+        <Container className="space-y-8">
+          <div className="space-y-3">
+            <p className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-800">
+              <Building2 className="h-3.5 w-3.5" aria-hidden="true" /> Bloque 4 · Desarrollo corporativo
+            </p>
+            <h2 id="bloque-corporativo" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+              Soluciones Corporativas y Control Interno
+            </h2>
+            <p className="max-w-5xl text-sm leading-relaxed text-slate-700 sm:text-base">
+              Plataformas desarrolladas a medida para centralizar información, automatizar procesos, controlar
+              operaciones y entregar trazabilidad a organizaciones que requieren herramientas más avanzadas que un
+              software estándar.
+            </p>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-2">
+            {corporatePlans.map((plan) => (
+              <article
+                key={plan.id}
+                className="flex h-full flex-col rounded-3xl border border-blue-200 border-t-4 border-t-blue-800 bg-white p-6 shadow-md shadow-blue-100/60 sm:p-7"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-xl font-extrabold text-slate-900">{plan.name}</h3>
+                  {plan.tag ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-800 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+                      <Sparkles className="h-3 w-3" aria-hidden="true" /> {plan.tag}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-1.5 text-sm leading-6 text-slate-600">{plan.summary}</p>
+
+                <div className="mt-4 border-y border-slate-100 py-4">
+                  <p className="text-2xl font-extrabold text-slate-900">{plan.price}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">{plan.deadline}</p>
+                </div>
+
+                <p className="mt-4 rounded-xl bg-blue-50 px-4 py-3 text-sm text-slate-700">{plan.audience}</p>
+
+                <div className="mt-4">
+                  <PlanFeatures features={plan.features} columns />
+                </div>
+
+                {plan.requiresDiscovery ? (
+                  <p className="mt-4 flex items-start gap-2 rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-3 text-xs leading-5 text-slate-700">
+                    <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-blue-800" aria-hidden="true" />
+                    <span>{CORPORATE_SCOPE_NOTE}</span>
+                  </p>
+                ) : null}
+
+                <div className="flex-1" />
+                <div className="mt-5">
+                  <PlanCta plan={plan} />
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <article className="rounded-3xl border border-blue-200 bg-white p-6 shadow-sm sm:p-8">
+            <h3 className="text-lg font-extrabold text-slate-900 sm:text-xl">
+              Qué implica un proyecto corporativo y por qué tiene ese valor
+            </h3>
+            <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-600">
+              Una plataforma corporativa no es una web con más pantallas: es un desarrollo construido sobre la operación
+              real de la organización. Estas son las etapas que se ejecutan y que sostienen la inversión.
+            </p>
+            <ol className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {corporateScopeStages.map((stage, index) => (
+                <li key={stage.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700">
+                    {String(index + 1).padStart(2, "0")}
+                  </p>
+                  <h4 className="mt-1 text-sm font-extrabold text-slate-900">{stage.title}</h4>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">{stage.detail}</p>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600">
+              Los proyectos corporativos se desarrollan por etapas utilizables, de modo que la organización empieza a
+              operar con el primer módulo mientras avanza el resto de la plataforma.
+            </p>
+          </article>
+        </Container>
+      </section>
+
+      {/* 7. Bloque E: funcionalidades adicionales ---------------------------- */}
+      <section id="adicionales" className="scroll-mt-24 bg-white py-16" aria-labelledby="bloque-adicionales">
+        <Container className="space-y-8">
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Bloque 5 · Adicionales</p>
+            <h2 id="bloque-adicionales" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+              Funcionalidades adicionales
+            </h2>
+            <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              Cualquier plan se puede ampliar con inteligencia artificial, integraciones, paneles o automatizaciones.
+              Estos valores se suman al proyecto base según lo que realmente necesites.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-extrabold text-slate-900">Inteligencia artificial aplicada al negocio</h3>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {AI_SERVICES.map((service) => (
+                <article
+                  key={service.name}
+                  className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className="text-sm font-extrabold text-slate-900">{service.name}</h4>
+                    {service.tag ? (
+                      <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700">
+                        {service.tag}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{service.description}</p>
+                  <div className="flex-1" />
+                  <div className="mt-4 border-t border-slate-100 pt-3">
+                    <p className="text-base font-extrabold text-blue-700">{service.setup}</p>
+                    {service.monthly ? (
+                      <p className="text-xs font-semibold text-slate-500">Operación {lowerDesde(service.monthly)}</p>
+                    ) : null}
+                  </div>
+                </article>
+              ))}
+            </div>
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              {AI_CONSUMPTION_NOTE}
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-extrabold text-slate-900">Adicionales por categoría</h3>
+
+            {/* Escritorio: tabla completa */}
+            <div className="hidden overflow-x-auto rounded-2xl border border-slate-200 bg-white md:block">
+              <table className="w-full min-w-[640px] text-left text-sm">
+                <caption className="sr-only">
+                  Funcionalidades adicionales por categoría, con su valor referencial y su costo mensual cuando aplica
+                </caption>
+                <thead className="sr-only">
+                  <tr>
+                    <th scope="col">Adicional</th>
+                    <th scope="col">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ADDON_CATEGORIES.map((category) => (
+                    <Fragment key={category}>
+                      <tr className="border-t border-slate-200 bg-slate-100 first:border-t-0">
+                        <th colSpan={2} scope="colgroup" className="px-5 py-3 text-sm font-extrabold text-slate-900">
+                          {category}
+                        </th>
+                      </tr>
+                      {addonsByCategory(category).map((item) => (
+                        <tr key={item.id} className="border-t border-slate-100">
+                          <td className="px-5 py-3 text-slate-700">
+                            {item.name}
+                            {item.note && item.note !== "precio cerrado" ? (
+                              <span className="block text-xs text-slate-500">{item.note}</span>
+                            ) : null}
+                          </td>
+                          <td className="px-5 py-3 text-right font-bold text-blue-700">
+                            {addonPrice(item)}
+                            {item.monthly ? (
+                              <span className="block text-xs font-semibold text-slate-500">{item.monthly}</span>
+                            ) : null}
+                            {item.note === "precio cerrado" ? (
+                              <span className="block text-xs font-semibold text-slate-500">precio cerrado</span>
+                            ) : null}
+                          </td>
+                        </tr>
+                      ))}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Móvil: acordeones nativos */}
+            <div className="grid gap-3 md:hidden">
+              {ADDON_CATEGORIES.map((category) => (
+                <details
+                  key={category}
+                  className="faq-item rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                >
+                  <summary className="flex cursor-pointer items-center justify-between gap-3 rounded-lg text-sm font-extrabold text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
+                    {category}
+                    <ChevronDown className="faq-chevron h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                  </summary>
+                  <div className="mt-3">
+                    <AddonRows items={addonsByCategory(category)} />
+                  </div>
+                </details>
+              ))}
+            </div>
+
+            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600">
+              {PRICING_NOTE}
+            </p>
+          </div>
+        </Container>
+      </section>
+
+      {/* 8. Bloque F: mantención -------------------------------------------- */}
+      <section id="mantencion" className="scroll-mt-24 section-alt py-16" aria-labelledby="bloque-mantencion">
+        <Container className="space-y-6">
+          <div className="space-y-2">
+            <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-600">
+              <CircleDollarSign className="h-4 w-4" aria-hidden="true" /> Bloque 6 · Continuidad
+            </p>
+            <h2 id="bloque-mantencion" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+              Mantención y continuidad operativa
+            </h2>
+            <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              Después de la entrega, la mantención mensual mantiene el proyecto seguro, respaldado y funcionando. El
+              plan se elige según el tipo de solución y su criticidad.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {MAINTENANCE_CATALOG.map((plan) => (
+              <article key={plan.name} className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h3 className="text-base font-extrabold text-slate-900">{plan.name}</h3>
+                <p className="mt-1 text-lg font-extrabold text-blue-700">{plan.price}</p>
+                <ul className="mt-3 space-y-2">
+                  {plan.includes.map((item) => (
+                    <li key={item} className="flex gap-2 text-sm leading-6 text-slate-600">
+                      <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden="true" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+
+          <article className="rounded-3xl border border-amber-200 bg-amber-50 p-6">
+            <h3 className="text-lg font-extrabold text-slate-900">Qué es soporte y qué es desarrollo nuevo</h3>
+            <p className="mt-2 max-w-4xl text-sm leading-6 text-amber-900">
+              La mantención cubre la continuidad de lo que ya está entregado. Todo lo que amplía el alcance se cotiza
+              como proyecto, con su propio levantamiento y plazo:
+            </p>
+            <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+              {MAINTENANCE_EXCLUSIONS.map((item) => (
+                <li key={item} className="flex gap-2 rounded-xl bg-white/70 px-4 py-2.5 text-sm text-slate-700">
+                  <ArrowRight className="mt-1 h-3.5 w-3.5 shrink-0 text-amber-700" aria-hidden="true" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
+                <Link href="/cotizador?tipo=soporte-ti&origen=planes">Cotizar mantención</Link>
+              </Button>
+              <Button asChild variant="outline" className="border-slate-300 bg-white text-slate-800 hover:bg-slate-50">
+                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                  Consultar por WhatsApp
+                </a>
+              </Button>
+            </div>
+          </article>
+        </Container>
+      </section>
+
+      {/* 9. Comparativa de tipos de solución --------------------------------- */}
+      <section className="bg-white py-16" aria-labelledby="comparativa">
+        <Container className="space-y-6">
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Comparativa</p>
+            <h2 id="comparativa" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+              Qué tipo de solución corresponde a cada necesidad
+            </h2>
+            <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              Compara las cinco familias de proyecto con su valor de entrada y su plazo referencial, y entra al detalle
+              de la que calza con tu objetivo.
             </p>
           </div>
 
           <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <table className="w-full min-w-[760px] text-left text-sm">
+            <table className="w-full min-w-[820px] text-left text-sm">
               <caption className="sr-only">
-                Comparación de tipos de página web: para quién es cada una, precio desde y plazo típico de entrega
+                Comparación de tipos de solución: para quién es cada una, precio desde y plazo referencial de entrega
               </caption>
               <thead>
                 <tr className="bg-slate-100">
                   <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Tipo de solución</th>
                   <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Para quién es</th>
                   <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Precio desde</th>
-                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Plazo típico</th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Plazo referencial</th>
                   <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Más información</th>
                 </tr>
               </thead>
@@ -632,7 +1122,7 @@ export default function PlanesPage() {
                     </th>
                     <td className="px-5 py-4 leading-relaxed text-slate-600">{solution.who}</td>
                     <td className="whitespace-nowrap px-5 py-4 font-bold text-blue-700">{solution.price}</td>
-                    <td className="whitespace-nowrap px-5 py-4 text-slate-700">{solution.deadline}</td>
+                    <td className="px-5 py-4 text-slate-700">{solution.deadline}</td>
                     <td className="px-5 py-4">
                       <Link href={solution.href} className="font-bold text-blue-700 hover:text-blue-800">
                         {solution.linkLabel}
@@ -643,205 +1133,45 @@ export default function PlanesPage() {
               </tbody>
             </table>
           </div>
-
-          <article className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-            <h3 className="text-lg font-extrabold text-slate-900">¿Tu página web con asistente IA?</h3>
-            <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-700">
-              Cualquiera de estas soluciones puede incluir un asistente con inteligencia artificial que responde consultas de tus clientes 24/7 y captura datos de contacto, {lowerDesde(AI_SERVICES[0].setup)}. Revisa las opciones de IA en la tabla de adicionales más abajo o cotiza directamente la tuya.
-            </p>
-            <Button asChild className="mt-4 bg-blue-700 text-white hover:bg-blue-800">
-              <Link href="/cotizador">Cotizar mi web con IA</Link>
-            </Button>
-          </article>
         </Container>
       </section>
 
-      <section className="bg-white py-16">
-        <Container className="space-y-4">
-          <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Planes principales</p>
-            <h2 className="text-3xl font-extrabold text-slate-900">Planes y valores de páginas web para comenzar</h2>
-            <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Ordenamos los planes para que sea más fácil distinguir una web de entrada, una web comercial más completa, una solución para empresa y un sistema interno.
-            </p>
-          </div>
-
-          <PlansShowcase
-            featured={FEATURED_IDS.map(toShowcase)}
-            rest={plans.filter((plan) => !FEATURED_IDS.includes(plan.id)).map((plan) => toShowcase(plan.id))}
-          />
-
-          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            Cada valor es referencial y se confirma según alcance, contenido, integraciones, soporte y complejidad real del proyecto.
-          </p>
-        </Container>
-      </section>
-
-      <section className="section-alt py-16">
-        <Container className="space-y-6">
-          <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Adicionales</p>
-            <h2 className="text-3xl font-extrabold text-slate-900">Funcionalidades y servicios opcionales</h2>
-            <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Si tu proyecto necesita más alcance, estas mejoras se cotizan aparte según complejidad y volumen real.
-            </p>
-          </div>
-
-          <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white md:block">
-            <table className="w-full text-left text-sm">
-              <tbody>
-                {additionalCategories.map((category) => (
-                  <Fragment key={category.title}>
-                    <tr key={`${category.title}-title`} className="border-t border-slate-200 first:border-t-0 bg-slate-100">
-                      <th colSpan={2} className="px-5 py-3 text-sm font-extrabold text-slate-900">
-                        {category.title}
-                      </th>
-                    </tr>
-                    {category.items.map((item) => (
-                      <tr key={item.name} className="border-t border-slate-100">
-                        <td className="px-5 py-3 text-slate-700">{item.name}</td>
-                        <td className="px-5 py-3 text-right font-bold text-blue-700">{item.price}</td>
-                      </tr>
-                    ))}
-                  </Fragment>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="grid gap-4 md:hidden">
-            {additionalCategories.map((category) => (
-              <article key={category.title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h3 className="text-base font-extrabold text-slate-900">{category.title}</h3>
-                <div className="mt-3 space-y-2">
-                  {category.items.map((item) => (
-                    <div
-                      key={item.name}
-                      className="flex items-start justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
-                    >
-                      <span className="text-sm text-slate-700">{item.name}</span>
-                      <span className="text-sm font-bold text-blue-700">{item.price}</span>
-                    </div>
-                  ))}
-                </div>
-              </article>
-            ))}
-          </div>
-
-          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
-            Valores referenciales. El precio final puede variar según complejidad, vistas, integraciones, volumen de contenido y soporte requerido.
-          </p>
-        </Container>
-      </section>
-
-      <section className="bg-white py-16">
-        <Container className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-          <article className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.15em] text-cyan-700">
-              <CircleDollarSign className="h-4 w-4" />
-              Mantención mensual
-            </div>
-            <h2 className="text-2xl font-extrabold text-slate-900">Mantenciones mensuales claras y coherentes</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Evitamos precios contradictorios y dejamos una estructura simple para sitios, ecommerce y sistemas.
-            </p>
-            <div className="mt-5 grid gap-3">
-              {maintenancePlans.map((plan) => (
-                <div
-                  key={plan.name}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
-                >
-                  <div className="flex flex-wrap items-end justify-between gap-2">
-                    <h3 className="text-base font-extrabold text-slate-900">{plan.name}</h3>
-                    <p className="text-base font-extrabold text-blue-700">{plan.price}</p>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{plan.description}</p>
-                </div>
-              ))}
-            </div>
-          </article>
-
-          <article className="rounded-[2rem] border border-slate-200 bg-slate-50 p-6 shadow-sm">
-            <h3 className="text-xl font-extrabold text-slate-900">Qué considerar antes de contratar mantención</h3>
-            <div className="mt-4 space-y-2 text-sm text-slate-700">
-              {[
-                "El alcance depende del tipo de proyecto y frecuencia de intervención.",
-                "No incluye rediseños completos ni desarrollo de nuevas plataformas.",
-                "Automatizaciones, integraciones complejas y nuevos módulos se cotizan aparte.",
-                "Puede incluir soporte técnico, continuidad operativa y mejoras menores según el plan.",
-              ].map((item) => (
-                <div key={item} className="flex items-start gap-2">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-5 grid gap-2 sm:grid-cols-2">
-              <Button asChild className="bg-blue-700 text-white hover:bg-blue-800">
-                <Link href="/cotizador?tipo=soporte-ti">Cotizar soporte</Link>
-              </Button>
-              <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-white">
-                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                  Consultar mantención
-                </a>
-              </Button>
-            </div>
-          </article>
-
-          <p className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-xs leading-relaxed text-slate-500">
-            {PRICING_NOTE}
-          </p>
-        </Container>
-      </section>
-
-      <section className="section-alt py-16">
-        <Container className="space-y-6">
-          <h2 className="text-2xl font-extrabold text-slate-900">¿Qué plan necesito?</h2>
-          <div className="grid gap-3 md:grid-cols-2">
-            {planGuide.map((item) => (
-              <div key={item} className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-700">
-                {item}
-              </div>
-            ))}
-          </div>
-
-          <article className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-            <h3 className="text-lg font-extrabold text-slate-900">¿No sabes qué plan elegir?</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-700">
-              Podemos revisar tu caso y recomendar una estructura según objetivo, presupuesto y funcionalidades necesarias.
-            </p>
-            <Button asChild className="mt-4 bg-blue-700 text-white hover:bg-blue-800">
-              <Link href="/cotizador?tipo=no-seguro">Solicitar orientación</Link>
-            </Button>
-          </article>
-        </Container>
-      </section>
-
-      <section className="bg-white py-16">
+      {/* 10. Preguntas frecuentes ------------------------------------------- */}
+      <section className="section-alt py-16" aria-labelledby="faq-planes">
         <Container className="space-y-5">
-          <h2 className="text-2xl font-extrabold text-slate-900">Preguntas frecuentes sobre planes y precios</h2>
-          <div className="grid gap-4 md:grid-cols-2">
+          <h2 id="faq-planes" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+            Preguntas frecuentes sobre precios, sistemas y desarrollo a medida
+          </h2>
+          <div className="grid gap-3 lg:grid-cols-2">
             {priceFaqs.map((item) => (
-              <article key={item.q} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h3 className="text-sm font-bold text-slate-900">{item.q}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{item.a}</p>
-              </article>
+              <details key={item.q} className="faq-item rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <summary className="flex cursor-pointer items-center justify-between gap-3 rounded-lg text-sm font-extrabold text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
+                  <h3 className="text-sm font-extrabold text-slate-900">{item.q}</h3>
+                  <ChevronDown className="faq-chevron h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                </summary>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{item.a}</p>
+              </details>
             ))}
           </div>
         </Container>
       </section>
 
+      {/* 11. CTA final ------------------------------------------------------- */}
       <section className="section-blue py-16 text-white">
         <Container className="space-y-4 text-center">
-          <h2 className="text-3xl font-extrabold">Solicita una propuesta formal</h2>
+          <h2 className="text-2xl font-extrabold sm:text-3xl">Solicita una propuesta formal</h2>
           <p className="mx-auto max-w-3xl text-sm text-blue-100 sm:text-base">
-            Si tu negocio necesita una web más clara, una tienda online o un sistema interno, podemos preparar una propuesta alineada con el alcance real.
+            Ya sea una página web, una tienda online o una plataforma corporativa a medida, preparamos una propuesta
+            con alcance, etapas y plazos alineados con tu operación real.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            <Button asChild className="bg-white text-blue-800 hover:bg-blue-50">
-              <Link href="/cotizador">
-                Ir al cotizador <ArrowRight className="h-4 w-4" />
+            <Button asChild className="bg-white font-bold text-blue-800 hover:bg-blue-50">
+              <Link href="/cotizador?origen=planes">
+                Ir al cotizador <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
+            </Button>
+            <Button asChild className="bg-blue-900/40 font-bold text-white ring-1 ring-white/40 hover:bg-blue-900/60">
+              <Link href="/contacto?servicio=sistemas-web&origen=planes">Solicitar levantamiento corporativo</Link>
             </Button>
             <Button
               asChild
@@ -853,6 +1183,7 @@ export default function PlanesPage() {
               </a>
             </Button>
           </div>
+          <p className="mx-auto max-w-4xl text-xs leading-5 text-blue-100/90">{PRICING_NOTE}</p>
         </Container>
       </section>
     </main>

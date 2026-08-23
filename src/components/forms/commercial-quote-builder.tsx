@@ -24,6 +24,20 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
+import {
+  ADDON_CATALOG,
+  ADDON_PRICE_AMOUNTS,
+  AI_SERVICES,
+  CORPORATE_SCOPE_NOTE,
+  PLAN_CATALOG,
+  PLAN_PRICE_AMOUNTS,
+  PRICING_NOTE,
+  SERVICE_PRICE_AMOUNTS,
+  clp,
+  fromPrice,
+  monthlyPrice,
+  type AddonId,
+} from "@/config/pricing";
 import { siteConfig } from "@/config/site";
 import { trackQuoteRequestConversion, trackQuoteRequestSubmit } from "@/lib/analytics/google-ads";
 
@@ -42,12 +56,16 @@ export type ProjectTypeValue =
   | "no-seguro";
 
 type BinaryChoice = "si" | "no" | "no-se";
+/** Debe mantenerse alineado con `BudgetRangeValue` de `@/lib/quote-requests`. */
 type BudgetRangeValue =
   | "menos-50000"
   | "50000-100000"
   | "100000-300000"
   | "300000-700000"
   | "mas-700000"
+  | "700000-2000000"
+  | "2000000-5000000"
+  | "mas-5000000"
   | "no-claro";
 type DeadlineValue = "urgente" | "esta-semana" | "este-mes" | "sin-apuro" | "no-claro";
 type UrgencyValue = "bajo" | "medio" | "alto";
@@ -94,6 +112,8 @@ type FormState = {
   hasDomain: BinaryChoice | "";
   hasContent: BinaryChoice | "";
   detailValues: Record<string, string | string[]>;
+  /** Necesidades de proyecto seleccionadas por grupo de alcance. */
+  scopeValues: Record<string, string[]>;
   projectComment: string;
   budgetRange: BudgetRangeValue | "";
   deadline: DeadlineValue | "";
@@ -107,9 +127,22 @@ type FormState = {
   honeypot: string;
 };
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 const DIRECT_WHATSAPP_URL = siteConfig.social.whatsapp;
 const CHILE_WHATSAPP_REGEX = /^(?:\+?56)?(?:\s?9)?(?:[\s-]?\d){8}$/;
+
+/**
+ * Tope corporativo: sobre este monto el cotizador no entrega una cifra automática y
+ * la solicitud pasa a levantamiento. Debe coincidir con `CORPORATE_QUOTE_THRESHOLD`
+ * de `@/lib/quote-requests`, que no se importa aquí porque es un módulo de servidor.
+ */
+const CORPORATE_ESTIMATE_THRESHOLD = 5_000_000;
+const CORPORATE_ESTIMATE_MESSAGE = "Proyecto sujeto a levantamiento técnico y comercial.";
+
+/** Límites del backend (`quoteRequestSchema`) que este formulario debe respetar. */
+const MAX_PROJECT_ANSWERS = 20;
+const MAX_ANSWER_VALUE_LENGTH = 600;
+
 const ALLOWED_PROJECT_TYPES = new Set<ProjectTypeValue>([
   "web-basica",
   "web-profesional",
@@ -119,6 +152,11 @@ const ALLOWED_PROJECT_TYPES = new Set<ProjectTypeValue>([
   "soporte-ti",
   "no-seguro",
 ]);
+
+/**
+ * Etiquetas del parámetro `?plan=`. Se generan desde la escalera publicada y se
+ * conservan los slugs antiguos para no romper enlaces ya publicados.
+ */
 const PLAN_LABELS: Record<string, string> = {
   "web-basica-presentacion": "Web Básica de Presentación",
   "plan-emprendedor": "Plan Emprendedor",
@@ -127,7 +165,18 @@ const PLAN_LABELS: Record<string, string> = {
   "catalogo-tienda-online": "Catálogo / Tienda Online",
   "sistema-web-panel-administrativo": "Sistema Web / Panel Administrativo",
   "sistema-avanzado": "Sistema Avanzado / Desarrollo a medida",
+  ...Object.fromEntries(PLAN_CATALOG.map((plan) => [plan.id, plan.name])),
 };
+
+const ADDON_BY_ID = new Map(ADDON_CATALOG.map((item) => [item.id, item]));
+
+function addonLabel(id: AddonId) {
+  return ADDON_BY_ID.get(id)?.name ?? id;
+}
+
+function addonMonthlyAmount(id: AddonId) {
+  return ADDON_BY_ID.get(id)?.monthlyAmount ?? 0;
+}
 
 function normalizeProjectType(value: string | null) {
   return value && ALLOWED_PROJECT_TYPES.has(value as ProjectTypeValue)
@@ -148,43 +197,62 @@ function getServerSearch() {
   return "";
 }
 
+/**
+ * Precio base de referencia de cada tarjeta. Es también la base del estimador del
+ * cotizador, por eso sale siempre de la escalera publicada.
+ */
+const PROJECT_BASE_AMOUNTS: Record<ProjectTypeValue, number> = {
+  "web-basica": PLAN_PRICE_AMOUNTS["web-basica"],
+  "web-profesional": PLAN_PRICE_AMOUNTS.pyme,
+  "tienda-online": PLAN_PRICE_AMOUNTS.ecommerce,
+  "sistema-web": PLAN_PRICE_AMOUNTS.sistema,
+  automatizacion: SERVICE_PRICE_AMOUNTS.automationWhatsapp,
+  "soporte-ti": 0,
+  "no-seguro": 0,
+};
+
 const projectCards: ProjectCard[] = [
   {
     value: "web-basica",
     label: "Web básica de presentación",
     description: "Una página simple para mostrar tu negocio y recibir contactos.",
     icon: MonitorSmartphone,
-    priceHint: "Desde $79.990 + IVA",
+    priceHint: fromPrice(PROJECT_BASE_AMOUNTS["web-basica"]),
   },
   {
     value: "web-profesional",
     label: "Página web profesional",
     description: "Sitio más completo para empresas, servicios o pymes.",
     icon: PanelsTopLeft,
+    priceHint: fromPrice(PROJECT_BASE_AMOUNTS["web-profesional"]),
   },
   {
     value: "tienda-online",
     label: "Tienda online",
     description: "Catálogo, productos, carrito o ventas por WhatsApp.",
     icon: ShoppingCart,
+    priceHint: fromPrice(PROJECT_BASE_AMOUNTS["tienda-online"]),
   },
   {
     value: "sistema-web",
     label: "Sistema web interno",
     description: "Paneles, registros, reportes, usuarios o control de procesos.",
     icon: LayoutDashboard,
+    priceHint: fromPrice(PROJECT_BASE_AMOUNTS["sistema-web"]),
   },
   {
     value: "automatizacion",
     label: "Automatización",
     description: "Formularios, correos, WhatsApp, reportes o flujos automáticos.",
     icon: Bot,
+    priceHint: fromPrice(PROJECT_BASE_AMOUNTS.automatizacion),
   },
   {
     value: "soporte-ti",
     label: "Soporte TI",
     description: "Ayuda técnica, configuración, correos, dominios o herramientas.",
     icon: Wrench,
+    priceHint: fromPrice(SERVICE_PRICE_AMOUNTS.supportTi),
   },
   {
     value: "no-seguro",
@@ -224,12 +292,24 @@ const contentOptions: Option[] = [
   { value: "no-se", label: "Necesito ayuda" },
 ];
 
+/**
+ * Tramos de presupuesto. Los tramos altos se anclan a la escalera publicada para
+ * que el cliente se ubique en el mismo mapa de precios que ve en /planes.
+ */
 const budgetOptions: Option[] = [
   { value: "menos-50000", label: "Menos de $50.000" },
   { value: "50000-100000", label: "$50.000 a $100.000" },
   { value: "100000-300000", label: "$100.000 a $300.000" },
   { value: "300000-700000", label: "$300.000 a $700.000" },
-  { value: "mas-700000", label: "Más de $700.000" },
+  {
+    value: "700000-2000000",
+    label: `${clp(PLAN_PRICE_AMOUNTS.ecommerce)} a ${clp(PLAN_PRICE_AMOUNTS.sistema)}`,
+  },
+  {
+    value: "2000000-5000000",
+    label: `${clp(PLAN_PRICE_AMOUNTS.sistema)} a ${clp(CORPORATE_ESTIMATE_THRESHOLD)}`,
+  },
+  { value: "mas-5000000", label: `Más de ${clp(CORPORATE_ESTIMATE_THRESHOLD)}` },
   { value: "no-claro", label: "No tengo claro" },
 ];
 
@@ -496,6 +576,153 @@ const detailConfigs: Record<ProjectTypeValue, DetailField[]> = {
   ],
 };
 
+type ScopeItem = {
+  value: string;
+  label: string;
+  amount: number;
+  monthlyAmount?: number;
+  note?: string;
+};
+
+type ScopeGroup = {
+  key: string;
+  label: string;
+  description: string;
+  items: ScopeItem[];
+};
+
+const scopeAddon = (id: AddonId): ScopeItem => ({
+  value: id,
+  label: addonLabel(id),
+  amount: ADDON_PRICE_AMOUNTS[id],
+  monthlyAmount: addonMonthlyAmount(id) || undefined,
+  note: ADDON_BY_ID.get(id)?.note,
+});
+
+/**
+ * Necesidades de proyecto. Cada opción es un servicio real del catálogo publicado:
+ * nombre y precio salen de `@/config/pricing`, nunca de valores escritos a mano.
+ */
+const SCOPE_GROUPS: ScopeGroup[] = [
+  {
+    key: "modules",
+    label: "Módulos y funcionalidades",
+    description: "Qué debe poder hacer la plataforma.",
+    items: [
+      scopeAddon("miniAdminPanel"),
+      scopeAddon("fullAdminPanel"),
+      scopeAddon("booking"),
+      scopeAddon("advancedSearch"),
+      scopeAddon("multiStepForm"),
+      scopeAddon("blog"),
+      scopeAddon("multiLanguage"),
+    ],
+  },
+  {
+    key: "users",
+    label: "Usuarios y accesos",
+    description: "Quién entra y con qué credenciales.",
+    items: [scopeAddon("userLogin"), scopeAddon("clientArea"), scopeAddon("sso")],
+  },
+  {
+    key: "roles",
+    label: "Roles y permisos",
+    description: "Qué puede ver y hacer cada perfil.",
+    items: [scopeAddon("roles"), scopeAddon("auditLog")],
+  },
+  {
+    key: "branches",
+    label: "Sucursales y multiempresa",
+    description: "Si la operación se divide en varias unidades.",
+    items: [scopeAddon("multiBranch")],
+  },
+  {
+    key: "operations",
+    label: "Operaciones y flujos de trabajo",
+    description: "Solicitudes internas y aprobaciones.",
+    items: [scopeAddon("approvals"), scopeAddon("advancedForm")],
+  },
+  {
+    key: "documents",
+    label: "Documentos",
+    description: "Generación, archivo y control documental.",
+    items: [scopeAddon("docManagement"), scopeAddon("pdfGenerator"), scopeAddon("excelExport")],
+  },
+  {
+    key: "dashboards",
+    label: "Dashboards, reportes y SEO",
+    description: "Cómo mides la operación y la visibilidad.",
+    items: [
+      scopeAddon("dashboardReports"),
+      scopeAddon("advancedAnalytics"),
+      scopeAddon("advancedSeo"),
+      scopeAddon("technicalSeo"),
+      scopeAddon("seoMonthly"),
+    ],
+  },
+  {
+    key: "integrations",
+    label: "Integraciones",
+    description: "Con qué sistemas debe conversar.",
+    items: [
+      scopeAddon("crm"),
+      scopeAddon("erp"),
+      scopeAddon("workspace"),
+      scopeAddon("payments"),
+    ],
+  },
+  {
+    key: "api",
+    label: "API y conexiones",
+    description: "Cuando el desarrollo debe exponer o consumir datos.",
+    items: [scopeAddon("customApi"), scopeAddon("webhooks")],
+  },
+  {
+    key: "automations",
+    label: "Automatizaciones",
+    description: "Lo que debería ocurrir sin que nadie lo haga a mano.",
+    items: [
+      scopeAddon("whatsappButton"),
+      scopeAddon("whatsappForm"),
+      scopeAddon("whatsappAutomation"),
+      scopeAddon("whatsappNotifications"),
+      scopeAddon("whatsappChatbot"),
+      scopeAddon("followupAutomation"),
+      scopeAddon("cartRecovery"),
+    ],
+  },
+  {
+    key: "ecommerce",
+    label: "Ecommerce",
+    description: "Catálogo, ventas y despacho.",
+    items: [
+      scopeAddon("manageableCatalog"),
+      scopeAddon("products20"),
+      scopeAddon("products50"),
+      scopeAddon("products100"),
+      scopeAddon("stock"),
+      scopeAddon("coupons"),
+      scopeAddon("logistics"),
+    ],
+  },
+  {
+    key: "ai",
+    label: "Inteligencia artificial",
+    description: "Atención y procesos asistidos por IA.",
+    items: AI_SERVICES.map((service, index) => ({
+      value: `ia-${index}`,
+      label: service.name,
+      amount: service.setupAmount,
+      monthlyAmount: service.monthlyAmount,
+      note: "el consumo de modelos de IA se cobra por separado",
+    })),
+  },
+];
+
+const SCOPE_ITEM_BY_VALUE = new Map(
+  SCOPE_GROUPS.flatMap((group) => group.items.map((item) => [item.value, item] as const)),
+);
+
 const initialFormState: FormState = {
   projectType: "",
   businessName: "",
@@ -506,6 +733,7 @@ const initialFormState: FormState = {
   hasDomain: "",
   hasContent: "",
   detailValues: {},
+  scopeValues: {},
   projectComment: "",
   budgetRange: "",
   deadline: "",
@@ -561,10 +789,84 @@ function buildProjectAnswers(projectType: ProjectTypeValue | "", detailValues: R
     .filter((item): item is { key: string; label: string; value: string } => Boolean(item));
 }
 
+type QuoteAnswer = { key: string; label: string; value: string };
+
+function selectedScopeGroups(scopeValues: Record<string, string[]>) {
+  return SCOPE_GROUPS.map((group) => ({
+    group,
+    items: group.items.filter((item) => (scopeValues[group.key] || []).includes(item.value)),
+  })).filter((entry) => entry.items.length > 0);
+}
+
+function selectedScopeItems(scopeValues: Record<string, string[]>) {
+  return Object.entries(scopeValues).flatMap(([, values]) =>
+    values.map((value) => SCOPE_ITEM_BY_VALUE.get(value)).filter((item): item is ScopeItem => Boolean(item)),
+  );
+}
+
+function buildScopeAnswers(scopeValues: Record<string, string[]>): QuoteAnswer[] {
+  return selectedScopeGroups(scopeValues).map(({ group, items }) => ({
+    key: `alcance-${group.key}`,
+    label: group.label,
+    value: items.map((item) => item.label).join(", ").slice(0, MAX_ANSWER_VALUE_LENGTH),
+  }));
+}
+
+/**
+ * Estimación referencial: base del tipo de proyecto más las necesidades marcadas.
+ * Sobre el tope corporativo deja de entregarse una cifra automática.
+ */
+function computeEstimate(projectType: ProjectTypeValue | "", scopeValues: Record<string, string[]>) {
+  const base = projectType ? PROJECT_BASE_AMOUNTS[projectType] : 0;
+  const items = selectedScopeItems(scopeValues);
+  const setupTotal = items.reduce((sum, item) => sum + item.amount, 0);
+  const monthlyTotal = items.reduce((sum, item) => sum + (item.monthlyAmount || 0), 0);
+  const oneTimeTotal = base + setupTotal;
+
+  return {
+    base,
+    setupTotal,
+    monthlyTotal,
+    oneTimeTotal,
+    selectedCount: items.length,
+    hasEstimate: oneTimeTotal > 0,
+    requiresDiscovery: oneTimeTotal > CORPORATE_ESTIMATE_THRESHOLD,
+  };
+}
+
+/** El backend acepta hasta 20 respuestas: las que sobran se condensan en una sola. */
+function packProjectAnswers(answers: QuoteAnswer[]): QuoteAnswer[] {
+  if (answers.length <= MAX_PROJECT_ANSWERS) return answers;
+  const head = answers.slice(0, MAX_PROJECT_ANSWERS - 1);
+  const rest = answers.slice(MAX_PROJECT_ANSWERS - 1);
+  head.push({
+    key: "alcance-adicional",
+    label: "Alcance adicional",
+    value: rest
+      .map((item) => `${item.label}: ${item.value}`)
+      .join(" | ")
+      .slice(0, MAX_ANSWER_VALUE_LENGTH),
+  });
+  return head;
+}
+
 function readSummary(form: FormState, initialPlanLabel?: string) {
   const answers = buildProjectAnswers(form.projectType, form.detailValues);
   const topAnswer = answers[0]?.value || "";
-  return [initialPlanLabel ? `Plan sugerido: ${initialPlanLabel}` : "", projectTypeLabels[form.projectType as ProjectTypeValue] || "", topAnswer, form.projectComment.trim()]
+  const estimate = computeEstimate(form.projectType, form.scopeValues);
+  const estimateLabel = estimate.requiresDiscovery
+    ? "Requiere levantamiento"
+    : estimate.hasEstimate
+      ? fromPrice(estimate.oneTimeTotal)
+      : "";
+
+  return [
+    initialPlanLabel ? `Plan sugerido: ${initialPlanLabel}` : "",
+    projectTypeLabels[form.projectType as ProjectTypeValue] || "",
+    topAnswer,
+    estimateLabel,
+    form.projectComment.trim(),
+  ]
     .filter(Boolean)
     .join(" · ")
     .slice(0, 220);
@@ -679,6 +981,7 @@ const stepMeta = [
   { label: "Proyecto", shortLabel: "Proyecto", icon: Globe },
   { label: "Negocio", shortLabel: "Negocio", icon: BriefcaseBusiness },
   { label: "Detalles", shortLabel: "Detalles", icon: LayoutDashboard },
+  { label: "Alcance", shortLabel: "Alcance", icon: Sparkles },
   { label: "Presupuesto", shortLabel: "Presupuesto", icon: Clock3 },
   { label: "Contacto", shortLabel: "Contacto", icon: MessageCircle },
   { label: "Resumen", shortLabel: "Resumen", icon: CheckCircle2 },
@@ -713,7 +1016,7 @@ function StepIndicator({ step }: { step: number }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex max-w-[8.5rem] flex-wrap items-center justify-end gap-1.5">
             {stepMeta.map((item, index) => {
               const current = index + 1;
               const active = current === step;
@@ -721,7 +1024,7 @@ function StepIndicator({ step }: { step: number }) {
               return (
                 <span
                   key={item.label}
-                  className={`flex h-8 w-8 items-center justify-center rounded-full border text-[11px] font-bold ${
+                  className={`flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-bold ${
                     completed
                       ? "border-blue-600 bg-blue-600 text-white"
                       : active
@@ -776,6 +1079,14 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
   const initialProjectType = normalizeProjectType(searchParams.get("tipo"));
   const planParam = searchParams.get("plan")?.trim();
   const initialPlanLabel = planParam ? PLAN_LABELS[planParam] : undefined;
+  // La calculadora puede llegar con una estimación previa o marcando el proyecto
+  // como corporativo. Se conserva como contexto comercial de la solicitud.
+  const previousEstimateRaw = Number(searchParams.get("estimado"));
+  const previousEstimate =
+    Number.isFinite(previousEstimateRaw) && previousEstimateRaw > 0
+      ? Math.round(previousEstimateRaw)
+      : 0;
+  const arrivesAsCorporate = searchParams.get("alcance") === "corporativo";
   const hasPreset = Boolean(initialProjectType);
   const [started, setStarted] = useState(hasPreset);
   const [step, setStep] = useState(hasPreset ? 2 : 1);
@@ -790,15 +1101,79 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
     [form.projectType],
   );
 
-  const summaryAnswers = useMemo(
+  const detailAnswers = useMemo(
     () => buildProjectAnswers(form.projectType, form.detailValues),
     [form.detailValues, form.projectType],
+  );
+
+  const scopeAnswers = useMemo(() => buildScopeAnswers(form.scopeValues), [form.scopeValues]);
+
+  const estimate = useMemo(
+    () => computeEstimate(form.projectType, form.scopeValues),
+    [form.projectType, form.scopeValues],
+  );
+
+  // El proyecto entra a levantamiento si su estimación supera el tope corporativo
+  // o si el cliente ya declara un presupuesto de ese orden.
+  const requiresDiscovery =
+    estimate.requiresDiscovery || arrivesAsCorporate || form.budgetRange === "mas-5000000";
+
+  const estimateLabel = requiresDiscovery
+    ? CORPORATE_ESTIMATE_MESSAGE
+    : estimate.hasEstimate
+      ? fromPrice(estimate.oneTimeTotal)
+      : "Se define con tu selección";
+
+  const estimateAnswers = useMemo<QuoteAnswer[]>(() => {
+    const answers: QuoteAnswer[] = [
+      {
+        key: "estimacion",
+        label: "Estimación referencial",
+        value: requiresDiscovery
+          ? CORPORATE_ESTIMATE_MESSAGE
+          : estimate.hasEstimate
+            ? fromPrice(estimate.oneTimeTotal)
+            : "Por definir con el cliente",
+      },
+    ];
+
+    if (estimate.monthlyTotal > 0) {
+      answers.push({
+        key: "estimacion-mensual",
+        label: "Servicios recurrentes estimados",
+        value: monthlyPrice(estimate.monthlyTotal),
+      });
+    }
+
+    if (previousEstimate > 0) {
+      answers.push({
+        key: "estimacion-calculadora",
+        label: "Estimación previa de la calculadora",
+        value: fromPrice(previousEstimate),
+      });
+    }
+
+    if (requiresDiscovery) {
+      answers.push({
+        key: "modalidad",
+        label: "Modalidad",
+        value: CORPORATE_SCOPE_NOTE.slice(0, MAX_ANSWER_VALUE_LENGTH),
+      });
+    }
+
+    return answers;
+  }, [estimate.hasEstimate, estimate.monthlyTotal, estimate.oneTimeTotal, previousEstimate, requiresDiscovery]);
+
+  const summaryAnswers = useMemo(
+    () => packProjectAnswers([...detailAnswers, ...estimateAnswers, ...scopeAnswers]),
+    [detailAnswers, estimateAnswers, scopeAnswers],
   );
 
   const summaryItems = useMemo(
     () => [
       ...(initialPlanLabel ? [infoLine("Plan de referencia", initialPlanLabel)] : []),
       infoLine("Tipo de proyecto", form.projectType ? projectTypeLabels[form.projectType] : ""),
+      infoLine("Estimación referencial", estimateLabel),
       infoLine("Negocio", form.businessName),
       infoLine("Rubro", form.businessRubro),
       infoLine("Ciudad o región", form.businessCity),
@@ -813,7 +1188,7 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
       infoLine("WhatsApp", form.contactWhatsapp),
       infoLine("Email", form.contactEmail),
     ],
-    [form, initialPlanLabel],
+    [form, initialPlanLabel, estimateLabel],
   );
 
   function clearFieldError(key: string) {
@@ -845,6 +1220,23 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
     const current = Array.isArray(form.detailValues[key]) ? (form.detailValues[key] as string[]) : [];
     const next = current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
     updateDetailValue(key, next);
+  }
+
+  function toggleScopeValue(groupKey: string, value: string) {
+    setForm((prev) => {
+      const current = prev.scopeValues[groupKey] || [];
+      const next = current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value];
+      return {
+        ...prev,
+        scopeValues: { ...prev.scopeValues, [groupKey]: next },
+      };
+    });
+  }
+
+  function clearScope() {
+    setForm((prev) => ({ ...prev, scopeValues: {} }));
   }
 
   function resetFlow() {
@@ -889,13 +1281,16 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
       }
     }
 
-    if (step === 4) {
+    // El paso 4 (alcance) es opcional a propósito: suma contexto comercial sin
+    // bloquear el envío de quien todavía no sabe qué módulos necesita.
+
+    if (step === 5) {
       if (!form.budgetRange) nextErrors.budgetRange = "Selecciona un presupuesto aproximado.";
       if (!form.deadline) nextErrors.deadline = "Selecciona un plazo ideal.";
       if (!form.urgency) nextErrors.urgency = "Selecciona un nivel de urgencia.";
     }
 
-    if (step === 5) {
+    if (step === 6) {
       if (!form.contactName.trim()) {
         nextErrors.contactName = "Ingresa tu nombre para poder contactarte.";
       }
@@ -916,6 +1311,11 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
     setStep((prev) => Math.min(TOTAL_STEPS, prev + 1));
   }
 
+  /**
+   * El detalle de alcance viaja dentro de `projectAnswers`, que el backend ya
+   * acepta. Así se enriquece el lead sin cambiar el contrato del formulario.
+   */
+
   async function handleSubmit() {
     if (submitting) return;
 
@@ -932,7 +1332,10 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
       hasLogo: form.hasLogo,
       hasDomain: form.hasDomain,
       hasContent: form.hasContent,
-      projectSummary: readSummary(form, initialPlanLabel),
+      projectSummary: (requiresDiscovery
+        ? `${CORPORATE_ESTIMATE_MESSAGE} ${readSummary(form, initialPlanLabel)}`
+        : readSummary(form, initialPlanLabel)
+      ).slice(0, 240),
       projectAnswers: summaryAnswers,
       projectComment: form.projectComment.trim(),
       budgetRange: form.budgetRange,
@@ -1059,6 +1462,7 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                   "Qué necesitas crear",
                   "Datos de tu negocio",
                   "Detalles del proyecto según tu caso",
+                  "Necesidades: módulos, usuarios, integraciones e IA",
                   "Presupuesto, plazo y contacto",
                 ].map((item, index) => (
                   <div key={item} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4">
@@ -1348,6 +1752,93 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
             <div className="space-y-6">
               <StepHeader
                 step={4}
+                title="Necesidades del proyecto"
+                description="Marca lo que tu operación necesita. Con esto armamos una propuesta con módulos concretos en vez de una descripción general. Si no lo tienes claro, puedes continuar sin marcar nada."
+              />
+
+              <div className="space-y-6">
+                {SCOPE_GROUPS.map((group) => {
+                  const values = form.scopeValues[group.key] || [];
+                  return (
+                    <div key={group.key} className="space-y-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">{group.label}</p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">{group.description}</p>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {group.items.map((item) => {
+                          const active = values.includes(item.value);
+                          return (
+                            <button
+                              key={item.value}
+                              type="button"
+                              onClick={() => toggleScopeValue(group.key, item.value)}
+                              aria-pressed={active}
+                              className={`flex min-h-12 items-start gap-3 rounded-2xl border p-4 text-left transition-all ${
+                                active
+                                  ? "border-blue-500 bg-blue-50 ring-2 ring-blue-100"
+                                  : "border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50"
+                              }`}
+                            >
+                              <span
+                                className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                                  active
+                                    ? "border-blue-600 bg-blue-600 text-white"
+                                    : "border-slate-300 bg-white"
+                                }`}
+                              >
+                                {active ? <CheckCircle2 className="h-3 w-3" /> : null}
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block text-sm font-semibold text-slate-900">
+                                  {item.label}
+                                </span>
+                                <span className="mt-1 block text-xs font-semibold text-slate-500">
+                                  {fromPrice(item.amount)}
+                                  {item.monthlyAmount
+                                    ? ` · ${clp(item.monthlyAmount)} + IVA / mes`
+                                    : ""}
+                                </span>
+                                {item.note ? (
+                                  <span className="mt-1 block text-xs leading-5 text-slate-500">
+                                    {item.note}
+                                  </span>
+                                ) : null}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm leading-6 text-slate-600">
+                  {estimate.selectedCount > 0
+                    ? `${estimate.selectedCount} ${estimate.selectedCount === 1 ? "necesidad marcada" : "necesidades marcadas"}.`
+                    : "Aún no marcas necesidades. También puedes describirlas en el comentario del paso anterior."}
+                </p>
+                {estimate.selectedCount > 0 ? (
+                  <button
+                    type="button"
+                    onClick={clearScope}
+                    className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-white sm:min-h-0"
+                  >
+                    Limpiar selección
+                  </button>
+                ) : null}
+              </div>
+
+              <p className="text-xs leading-6 text-slate-500">{PRICING_NOTE}</p>
+            </div>
+          ) : null}
+
+          {step === 5 ? (
+            <div className="space-y-6">
+              <StepHeader
+                step={5}
                 title="Presupuesto y plazo"
                 description="Esto nos ayuda a recomendarte una opción adecuada."
               />
@@ -1369,10 +1860,10 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
             </div>
           ) : null}
 
-          {step === 5 ? (
+          {step === 6 ? (
             <div className="space-y-6">
               <StepHeader
-                step={5}
+                step={6}
                 title="Datos de contacto"
                 description="Con esto podremos responderte por el canal que te resulte más cómodo."
               />
@@ -1455,13 +1946,38 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
             </div>
           ) : null}
 
-          {step === 6 ? (
+          {step === 7 ? (
             <div className="space-y-6">
               <StepHeader
-                step={6}
+                step={7}
                 title="Resumen antes de enviar"
-                description="Revisaremos tu solicitud y te responderemos con una propuesta clara según lo que necesitas."
+                description={
+                  requiresDiscovery
+                    ? "Por el alcance que marcaste, tu solicitud entra como proyecto corporativo: la revisamos con el equipo técnico y comercial antes de proponerte un valor."
+                    : "Revisaremos tu solicitud y te responderemos con una propuesta clara según lo que necesitas."
+                }
               />
+
+              <div
+                className={`rounded-[1.5rem] border p-5 ${
+                  requiresDiscovery ? "border-blue-200 bg-blue-50" : "border-slate-200 bg-white"
+                }`}
+              >
+                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
+                  {requiresDiscovery ? "Proyecto corporativo" : "Estimación referencial"}
+                </p>
+                <p className="mt-2 text-2xl font-extrabold leading-snug text-slate-900">
+                  {estimateLabel}
+                </p>
+                {estimate.monthlyTotal > 0 ? (
+                  <p className="mt-2 text-sm font-semibold text-slate-700">
+                    Más {monthlyPrice(estimate.monthlyTotal)} en servicios recurrentes.
+                  </p>
+                ) : null}
+                <p className="mt-3 text-xs leading-6 text-slate-500">
+                  {requiresDiscovery ? CORPORATE_SCOPE_NOTE : PRICING_NOTE}
+                </p>
+              </div>
 
               <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
                 <div className="grid gap-4 md:grid-cols-2">
@@ -1525,10 +2041,10 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
               className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 sm:w-auto"
             >
               <ArrowLeft className="h-4 w-4" />
-              {step === 1 ? "Volver" : step === 6 ? "Volver y editar" : "Anterior"}
+              {step === 1 ? "Volver" : step === TOTAL_STEPS ? "Volver y editar" : "Anterior"}
             </button>
 
-            {step < 6 ? (
+            {step < TOTAL_STEPS ? (
               <button
                 type="button"
                 onClick={goNext}
@@ -1551,13 +2067,32 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                   </>
                 ) : (
                   <>
-                    Enviar cotización
+                    {requiresDiscovery ? "Solicitar levantamiento" : "Enviar cotización"}
                     <Send className="h-4 w-4" />
                   </>
                 )}
               </button>
             )}
           </div>
+        </div>
+
+        <div
+          className={`rounded-[2rem] border p-5 shadow-sm lg:hidden ${
+            requiresDiscovery ? "border-blue-200 bg-blue-50" : "border-slate-200 bg-white"
+          }`}
+        >
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+            {requiresDiscovery ? "Proyecto corporativo" : "Estimación referencial"}
+          </p>
+          <p className="mt-2 text-lg font-extrabold leading-snug text-slate-900">{estimateLabel}</p>
+          {estimate.monthlyTotal > 0 ? (
+            <p className="mt-2 text-sm font-semibold text-slate-700">
+              Más {monthlyPrice(estimate.monthlyTotal)} en servicios recurrentes.
+            </p>
+          ) : null}
+          <p className="mt-3 text-xs leading-6 text-slate-500">
+            {requiresDiscovery ? CORPORATE_SCOPE_NOTE : PRICING_NOTE}
+          </p>
         </div>
 
         <details className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm lg:hidden">
@@ -1575,6 +2110,31 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
 
       <aside className="hidden lg:block">
         <div className="sticky top-24 space-y-5">
+          <div
+            className={`rounded-[2rem] border p-6 shadow-sm ${
+              requiresDiscovery ? "border-blue-200 bg-blue-50" : "border-slate-200 bg-white"
+            }`}
+          >
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              {requiresDiscovery ? "Proyecto corporativo" : "Estimación referencial"}
+            </p>
+            <p className="mt-2 text-xl font-extrabold leading-snug text-slate-900">{estimateLabel}</p>
+            {estimate.monthlyTotal > 0 ? (
+              <p className="mt-2 text-sm font-semibold text-slate-700">
+                Más {monthlyPrice(estimate.monthlyTotal)} en servicios recurrentes.
+              </p>
+            ) : null}
+            {estimate.selectedCount > 0 ? (
+              <p className="mt-2 text-sm text-slate-500">
+                {estimate.selectedCount}{" "}
+                {estimate.selectedCount === 1 ? "necesidad marcada" : "necesidades marcadas"}.
+              </p>
+            ) : null}
+            <p className="mt-3 text-xs leading-6 text-slate-500">
+              {requiresDiscovery ? CORPORATE_SCOPE_NOTE : PRICING_NOTE}
+            </p>
+          </div>
+
           <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-start gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">

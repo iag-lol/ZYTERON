@@ -1,6 +1,7 @@
 import { siteConfig } from "@/config/site";
 import {
   PLANS,
+  PLAN_CATALOG,
   ADDONS,
   AI_SERVICES,
   MAINTENANCE,
@@ -60,6 +61,11 @@ function buildLlmsMarkdown(): string {
       `- ${service.name}: implementación ${service.setup}${service.monthly ? `, mensualidad ${service.monthly}` : ""}. ${service.description}`,
   ).join("\n");
 
+  // Los plazos salen del mismo catálogo que los precios: si cambia el alcance de
+  // un plan, la ficha que leen los asistentes de IA no queda desfasada.
+  const deadlinesSection = PLAN_CATALOG.map(
+    (plan) => `- ${plan.name}: ${plan.deadline}.`,
+  ).join("\n");
   const maintenanceSection = MAINTENANCE.map(
     (item) => `- ${item.name}: ${item.price}`,
   ).join("\n");
@@ -95,9 +101,8 @@ ${maintenanceSection}
 
 ## Plazos típicos de entrega
 
-- Landing o web simple: 1 a 2 semanas.
-- Sitio corporativo completo: 3 a 6 semanas, según contenido, revisiones e integraciones.
-- Tiendas online y sistemas a medida: se cotizan con plazo definido según alcance.
+${deadlinesSection}
+- Los proyectos corporativos se desarrollan por etapas y su plazo se define en el levantamiento.
 
 ## Proceso de trabajo
 

@@ -12,10 +12,13 @@
 -- re-ejecutar sin duplicar. Contenido en markdown compatible con
 -- src/lib/markdown.ts (## y ###, listas, negrita, enlaces; sin tablas).
 -- Precios alineados con src/config/pricing.ts (fuente única):
---   sistema $1.290.000 · avanzado $2.490.000 · fullAdminPanel $990.000
---   booking $499.990 · dashboardReports $399.990 · whatsappAutomation $249.990
---   catalogo $299.990 · mantención system $199.990/mes · IA omnicanal
---   $1.690.000 + $199.990/mes · asistente IA ventas $899.990 + $99.990/mes.
+--   sistema $1.990.000 · avanzado $3.490.000 · fullAdminPanel $1.290.000
+--   booking $649.990 · dashboardReports $549.990 · whatsappAutomation $349.990
+--   catalogo $349.990 · mantención system $299.990/mes · IA omnicanal
+--   $2.490.000 + $249.990/mes · asistente IA ventas $1.190.000 + $129.990/mes.
+-- Precios actualizados a la escalera comercial 2026 (src/config/pricing.ts).
+-- OJO: si estos artículos ya están publicados en producción, este seed NO los
+-- corrige (ON CONFLICT DO NOTHING). Para eso está blog_actualizacion_precios_2026.sql.
 -- =========================================================
 
 -- =========================================================
@@ -29,7 +32,7 @@ values (
   'que-es-sistema-web-a-medida',
   'Qué es un sistema web a medida y cuándo lo necesita tu empresa',
   'Cuando las planillas Excel, los correos y los grupos de WhatsApp dejan de dar abasto, un sistema web a medida ordena la operación completa. Qué es, cuánto cuesta en Chile y cómo saber si tu empresa ya lo necesita.',
-  $md$Un sistema web a medida es un software construido específicamente para los procesos de tu empresa —cotizaciones, inventario, documentos, personal, vehículos, clientes— al que tu equipo accede desde cualquier navegador, sin instalar programas. Lo necesitas cuando las planillas Excel, los correos y los grupos de WhatsApp dejan de dar abasto: datos duplicados, versiones perdidas y horas de trabajo manual que podrían automatizarse. En Chile, un sistema web administrativo parte desde $1.290.000 CLP + IVA y suele estar operativo en varias semanas, no años.
+  $md$Un sistema web a medida es un software construido específicamente para los procesos de tu empresa —cotizaciones, inventario, documentos, personal, vehículos, clientes— al que tu equipo accede desde cualquier navegador, sin instalar programas. Lo necesitas cuando las planillas Excel, los correos y los grupos de WhatsApp dejan de dar abasto: datos duplicados, versiones perdidas y horas de trabajo manual que podrían automatizarse. En Chile, un sistema web administrativo parte desde $1.990.000 CLP + IVA y suele estar operativo en varias semanas, no años.
 
 En esta guía te explicamos qué es exactamente, en qué se diferencia de una página web o de un software genérico, cuáles son las señales de que tu empresa ya lo necesita, ejemplos concretos de empresas chilenas y los rangos de inversión y plazos reales para que puedas planificar con números sobre la mesa.
 
@@ -85,11 +88,11 @@ Estos tres son puntos de partida frecuentes, no un límite: cotizadores internos
 
 Los rangos referenciales con los que trabajamos en Zyteron son:
 
-- **Sistema web administrativo**: desde $1.290.000 CLP + IVA. Cubre un sistema con usuarios, roles, módulos de gestión y panel de administración para ordenar una operación concreta.
-- **Sistema avanzado a medida**: desde $2.490.000 CLP + IVA. Para operaciones con más módulos, integraciones con otros servicios, flujos de aprobación complejos o mayor volumen de usuarios.
-- **Mantención mensual de sistema**: desde $199.990 CLP + IVA al mes, para que el sistema evolucione con el negocio, se mantenga seguro y tenga soporte.
+- **Sistema web administrativo**: desde $1.990.000 CLP + IVA. Cubre un sistema con usuarios, roles, módulos de gestión y panel de administración para ordenar una operación concreta.
+- **Sistema avanzado a medida**: desde $3.490.000 CLP + IVA. Para operaciones con más módulos, integraciones con otros servicios, flujos de aprobación complejos o mayor volumen de usuarios.
+- **Mantención mensual de sistema**: desde $299.990 CLP + IVA al mes, para que el sistema evolucione con el negocio, se mantenga seguro y tenga soporte.
 
-También es posible partir más acotado: si ya tienes una página web, módulos como un panel administrativo completo (desde $990.000 CLP + IVA), un sistema de reservas (desde $499.990 CLP + IVA) o un dashboard de reportes (desde $399.990 CLP + IVA) resuelven una parte del problema sin abordar todo de una vez.
+También es posible partir más acotado: si ya tienes una página web, módulos como un panel administrativo completo (desde $1.290.000 CLP + IVA), un sistema de reservas (desde $649.990 CLP + IVA) o un dashboard de reportes (desde $549.990 CLP + IVA) resuelven una parte del problema sin abordar todo de una vez.
 
 El precio final depende del alcance: cantidad de pantallas, módulos, usuarios, integraciones y nivel de personalización. Por eso los valores se expresan "desde" y la cifra seria sale de una conversación sobre tu proceso, no de una tabla genérica.
 
@@ -127,7 +130,7 @@ Si las respuestas apuntan en la misma dirección, el paso siguiente no es firmar
   'Eduardo Ávila',
   'published',
   'Qué es un sistema web a medida y cuándo lo necesitas',
-  'Qué es un sistema web a medida, las señales de que tu Excel quedó chico, ejemplos chilenos, precios desde $1.290.000 CLP + IVA y plazos reales por fase.',
+  'Qué es un sistema web a medida, las señales de que tu Excel quedó chico, ejemplos chilenos, precios desde $1.990.000 CLP + IVA y plazos reales por fase.',
   now()
 )
 on conflict (slug) do nothing;
@@ -261,7 +264,7 @@ values (
   'automatizacion-whatsapp-empresas-casos-reales-chile',
   'Automatización de WhatsApp para empresas: qué resuelve y cuánto cuesta en Chile',
   'WhatsApp es el canal donde los clientes chilenos cotizan, preguntan y compran. Qué problemas resuelve automatizarlo, cómo se conecta con tu página web y los precios de referencia en Chile.',
-  $md$La automatización de WhatsApp permite que una empresa responda consultas, entregue información de productos y haga seguimiento de cotizaciones de forma automática, a cualquier hora, sin depender de que alguien esté con el teléfono en la mano. En Chile, una automatización de WhatsApp parte desde $249.990 CLP + IVA como módulo de un sitio web, y las soluciones con asistente de inteligencia artificial que atienden web y WhatsApp a la vez parten desde $1.690.000 CLP + IVA más un cargo mensual.
+  $md$La automatización de WhatsApp permite que una empresa responda consultas, entregue información de productos y haga seguimiento de cotizaciones de forma automática, a cualquier hora, sin depender de que alguien esté con el teléfono en la mano. En Chile, una automatización de WhatsApp parte desde $349.990 CLP + IVA como módulo de un sitio web, y las soluciones con asistente de inteligencia artificial que atienden web y WhatsApp a la vez parten desde $2.490.000 CLP + IVA más un cargo mensual.
 
 WhatsApp es el canal donde el cliente chileno cotiza, pregunta y reclama. Esa es su fuerza y también su problema: cuando todas las conversaciones dependen de una persona respondiendo a mano, las consultas se pierden de noche y los fines de semana, y las ventas se enfrían esperando respuesta. Veamos qué resuelve la automatización, con casos de uso concretos, y cuánto cuesta cada nivel.
 
@@ -283,7 +286,7 @@ Funciona especialmente bien para empresas de servicios —técnicos, salud, cons
 
 Si tu equipo responde todos los días las mismas preguntas —precio, disponibilidad, características—, esa conversación se puede estructurar. Dos niveles habituales:
 
-- **Catálogo por WhatsApp**: el cliente navega productos con fotos y precios y arma su pedido conversando. Como proyecto parte desde $299.990 CLP + IVA.
+- **Catálogo por WhatsApp**: el cliente navega productos con fotos y precios y arma su pedido conversando. Como proyecto parte desde $349.990 CLP + IVA.
 - **Asistente que cotiza**: un asistente con inteligencia artificial conversa, entiende lo que el cliente necesita, calcula un preliminar y genera la solicitud de cotización, que queda registrada para que el equipo la cierre.
 
 El beneficio no es solo velocidad: cada cotización queda registrada con los datos completos, en vez de dispersa en el historial del teléfono de alguien.
@@ -318,10 +321,10 @@ Menos de lo que parece. Para una automatización seria conviene contar con:
 
 Los valores de referencia con los que trabajamos en Zyteron, según el nivel de la solución:
 
-- **Automatización por WhatsApp** (módulo para un sitio web: respuestas y flujos estructurados): desde $249.990 CLP + IVA, más costos de consumo de mensajería.
-- **Catálogo por WhatsApp** (proyecto con catálogo navegable y pedidos por conversación): desde $299.990 CLP + IVA.
-- **Asistente IA de ventas y atención al cliente** (atención 24/7 con calificación de clientes y panel de prospectos): desde $899.990 CLP + IVA de implementación, más desde $99.990 CLP + IVA mensuales.
-- **Asistente IA omnicanal Web y WhatsApp** (un solo asistente en ambos canales, historial centralizado y flujos automatizados): desde $1.690.000 CLP + IVA de implementación, más desde $199.990 CLP + IVA mensuales.
+- **Automatización por WhatsApp** (módulo para un sitio web: respuestas y flujos estructurados): desde $349.990 CLP + IVA, más costos de consumo de mensajería.
+- **Catálogo por WhatsApp** (proyecto con catálogo navegable y pedidos por conversación): desde $349.990 CLP + IVA.
+- **Asistente IA de ventas y atención al cliente** (atención 24/7 con calificación de clientes y panel de prospectos): desde $1.190.000 CLP + IVA de implementación, más desde $129.990 CLP + IVA mensuales.
+- **Asistente IA omnicanal Web y WhatsApp** (un solo asistente en ambos canales, historial centralizado y flujos automatizados): desde $2.490.000 CLP + IVA de implementación, más desde $249.990 CLP + IVA mensuales.
 
 Dos precisiones importantes para presupuestar bien:
 
@@ -359,7 +362,7 @@ WhatsApp ya es el canal de venta de facto de las empresas chilenas; automatizarl
   'Eduardo Ávila',
   'published',
   'Automatización de WhatsApp para empresas en Chile',
-  'Qué resuelve automatizar WhatsApp en tu empresa: respuesta inmediata, cotizaciones y seguimiento. Precios en Chile desde $249.990 CLP + IVA y cómo partir.',
+  'Qué resuelve automatizar WhatsApp en tu empresa: respuesta inmediata, cotizaciones y seguimiento. Precios en Chile desde $349.990 CLP + IVA y cómo partir.',
   now()
 )
 on conflict (slug) do nothing;

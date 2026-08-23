@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 
-import { PLAN_PRICES, ADDONS, PRICING_NOTE, MAINTENANCE } from "@/config/pricing";
+import { PLAN_CATALOG, ADDONS, PRICING_NOTE, MAINTENANCE } from "@/config/pricing";
 import { siteConfig } from "@/config/site";
 import { canRunAiTask, recordAiUsage, type TaskPriority } from "./budget";
 import { getSalesSettings } from "./settings";
@@ -116,9 +116,11 @@ export { requiresHumanByPolicy } from "./rules";
 // ---------------------------------------------------------------------------
 
 function buildPricingContext(): string {
-  const plans = Object.entries(PLAN_PRICES)
-    .map(([id, price]) => `- ${id}: ${price}`)
-    .join("\n");
+  // Se usa el nombre comercial, no el identificador interno: Zara le cita esto
+  // a un prospecto y "operacional" no significa nada para él.
+  const plans = PLAN_CATALOG.map(
+    (plan) => `- ${plan.name}: ${plan.price} · ${plan.audience}`,
+  ).join("\n");
   const addons = ADDONS.slice(0, 12)
     .map((item) => `- ${item.name}: ${item.price}`)
     .join("\n");

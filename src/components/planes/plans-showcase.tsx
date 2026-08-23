@@ -25,6 +25,8 @@ export type ShowcasePlan = {
   description: string;
   includes: string[];
   quoteHref: string;
+  /** Texto del botón. Cambia por nivel: no se cotiza igual una web que una plataforma. */
+  cta?: string;
 };
 
 export function PlansShowcase({
@@ -100,7 +102,7 @@ export function PlansShowcase({
                     : "border border-slate-200 bg-white text-slate-800 hover:bg-slate-50",
                 )}
               >
-                <MessageCircle className="h-4 w-4" /> Cotizar este plan
+                <MessageCircle className="h-4 w-4" /> {plan.cta ?? "Cotizar este plan"}
               </button>
               <Link
                 href={plan.quoteHref}
@@ -120,7 +122,11 @@ export function PlansShowcase({
           aria-expanded={showAll}
           className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-[13.5px] font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
         >
-          {showAll ? "Ocultar los demás planes" : `Ver los ${rest.length} planes restantes`}
+          {showAll
+            ? "Ocultar los demás planes"
+            : rest.length === 1
+              ? "Ver el otro plan"
+              : `Ver los ${rest.length} planes restantes`}
           <ChevronDown className={cn("h-4 w-4 transition-transform", showAll && "rotate-180")} />
         </button>
         {!showAll && (

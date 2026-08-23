@@ -46,13 +46,11 @@ const clpAmount = (id: keyof typeof PLAN_PRICE_AMOUNTS) =>
   `$${PLAN_PRICE_AMOUNTS[id].toLocaleString("es-CL")}`;
 
 /**
- * Formato visible de precio: "Desde $XXX.XXX CLP + IVA". La Web Básica es
- * precio fijo de pago único en pricing.ts, por lo que va sin "Desde".
+ * Formato visible de precio: "Desde $XXX.XXX CLP + IVA". Toda la escalera de
+ * pricing.ts se publica "Desde", porque el valor final depende del alcance.
  */
 const planPriceClp = (id: keyof typeof PLAN_PRICE_AMOUNTS) =>
-  id === "web-basica"
-    ? `${clpAmount(id)} CLP + IVA (pago único)`
-    : `Desde ${clpAmount(id)} CLP + IVA`;
+  `Desde ${clpAmount(id)} CLP + IVA`;
 
 export const metadata: Metadata = createPageMetadata({
   title: "Páginas Web Profesionales en Chile para Empresas y Pymes",
@@ -167,10 +165,12 @@ const serviceGroups = [
     icon: <Settings className="h-5 w-5" />,
     href: "/sistemas-web",
     description:
-      "Extensiones para tu solución web: ordenar procesos internos y reducir tareas manuales.",
+      "Desde un panel administrativo hasta intranets y plataformas corporativas: ordena procesos internos y reduce tareas manuales.",
     items: [
       "Paneles administrativos",
       "Sistemas internos a medida",
+      "Intranets corporativas y portales internos",
+      "Plataformas de control operacional multisucursal",
       "Cotizadores con PDF",
       "Asistentes con IA para ventas y atención",
       "Automatización de WhatsApp",
@@ -266,10 +266,37 @@ const planCards = [
   },
 ];
 
+/**
+ * Nivel corporativo de la escalera de pricing.ts. No entra a la grilla de 4
+ * tarjetas: se muestra como bloque aparte para no romper el layout.
+ */
+const corporatePlans: { name: string; id: keyof typeof PLAN_PRICE_AMOUNTS; detail: string }[] = [
+  {
+    name: "Intranet Corporativa Pro",
+    id: "intranet",
+    detail: "Perfiles, documentación, solicitudes y aprobaciones para toda la organización.",
+  },
+  {
+    name: "Plataforma de Control Operacional",
+    id: "operacional",
+    detail: "Sucursales, activos, tareas en terreno y KPI en un solo lugar.",
+  },
+  {
+    name: "Plataforma Corporativa Integrada",
+    id: "corporativa",
+    detail: "Varias áreas y departamentos operando sobre la misma plataforma.",
+  },
+  {
+    name: "Enterprise 360",
+    id: "enterprise",
+    detail: "Arquitectura empresarial a medida, con tus sistemas conectados entre sí.",
+  },
+];
+
 const homeFaqs = [
   {
     q: "¿Cuánto cuesta el diseño de una página web profesional?",
-    a: `Una página web profesional parte desde ${clpAmount("web-basica")} CLP + IVA en su versión básica. Un sitio corporativo más completo parte desde ${clpAmount("empresa")} CLP + IVA, una tienda online desde ${clpAmount("ecommerce")} CLP + IVA y un sistema web a medida desde ${clpAmount("sistema")} CLP + IVA. El valor final depende del alcance, y siempre recibes una cotización formal con el detalle antes de iniciar.`,
+    a: `Una página web profesional parte desde ${clpAmount("web-basica")} CLP + IVA en su versión básica. Un sitio para pyme parte desde ${clpAmount("pyme")} CLP + IVA y un sitio corporativo más completo desde ${clpAmount("empresa")} CLP + IVA. Si además necesitas vender, una tienda online con carrito y pagos parte desde ${clpAmount("ecommerce")} CLP + IVA, y un sistema web a medida desde ${clpAmount("sistema")} CLP + IVA. El valor final depende del alcance, y siempre recibes una cotización formal con el detalle antes de iniciar.`,
   },
   {
     q: "¿Cuánto demora una página web?",
@@ -293,7 +320,7 @@ const homeFaqs = [
   },
   {
     q: "¿Hacen tiendas online?",
-    a: `Sí. Implementamos tiendas online con catálogo, carrito y pagos, desde ${clpAmount("ecommerce")} CLP + IVA, adaptadas a tu tipo de negocio y forma de vender.`,
+    a: `Sí. Un catálogo digital con venta por WhatsApp parte desde ${clpAmount("catalogo")} CLP + IVA y una tienda online con carrito y pagos, desde ${clpAmount("ecommerce")} CLP + IVA, adaptada a tu tipo de negocio y forma de vender.`,
   },
   {
     q: "¿Integran pagos?",
@@ -305,7 +332,11 @@ const homeFaqs = [
   },
   {
     q: "¿Hacen sistemas personalizados?",
-    a: `Sí. Diseñamos sistemas internos y paneles a medida, desde ${clpAmount("sistema")} CLP + IVA, con módulos por etapa según el alcance de tu operación.`,
+    a: `Sí. Diseñamos sistemas internos y paneles a medida, desde ${clpAmount("sistema")} CLP + IVA, y sistemas avanzados con varios módulos, roles e integraciones desde ${clpAmount("avanzado")} CLP + IVA, con módulos por etapa según el alcance de tu operación.`,
+  },
+  {
+    q: "¿Desarrollan intranets y plataformas corporativas?",
+    a: `Sí. Cuando la operación crece, la escalera continúa con intranet corporativa desde ${clpAmount("intranet")} CLP + IVA, plataforma de control operacional para sucursales y personal en terreno desde ${clpAmount("operacional")} CLP + IVA, plataforma corporativa integrada desde ${clpAmount("corporativa")} CLP + IVA y arquitectura Enterprise 360 desde ${clpAmount("enterprise")} CLP + IVA. Cada proyecto parte con un levantamiento funcional y se construye por etapas, con entregas revisables.`,
   },
   {
     q: "¿Entregan soporte después?",
@@ -379,6 +410,13 @@ const solutionsByNeed = [
     href: "/sistemas-web",
     cta: "Ver sistemas web",
   },
+  {
+    title: "Mi operación necesita una plataforma corporativa",
+    description:
+      "Desarrollamos intranets, control operacional multisucursal y plataformas que integran varias áreas, con levantamiento previo y entrega por etapas.",
+    href: "/sistemas-web",
+    cta: "Ver desarrollo corporativo",
+  },
 ];
 
 const clientTypes = [
@@ -403,7 +441,7 @@ const clientTypes = [
   {
     title: "Sistemas web para empresas",
     description:
-      "Paneles y automatizaciones para controlar información, procesos, documentos y reportes internos.",
+      "Paneles, intranets y automatizaciones para controlar información, procesos, documentos y reportes internos.",
     href: "/sistemas-web",
   },
   {
@@ -705,9 +743,10 @@ export default async function Home() {
                 <strong className="font-extrabold text-slate-900">Zyteron</strong> ({siteConfig.legalName}) es
                 una empresa chilena de desarrollo web con oficina en {siteConfig.address.streetAddress},{" "}
                 {siteConfig.address.commune}, {siteConfig.address.city}. Creamos páginas web
-                profesionales, tiendas online y sistemas a medida para pymes y empresas de todo Chile, con
-                planes desde {clpAmount("web-basica")} CLP + IVA, cotización formal, boleta o factura y
-                soporte post-entrega.
+                profesionales, tiendas online, sistemas a medida y plataformas corporativas para pymes y
+                empresas de todo Chile: desde planes web desde {clpAmount("web-basica")} CLP + IVA hasta
+                intranets y plataformas de gestión desde {clpAmount("intranet")} CLP + IVA, siempre con
+                cotización formal, boleta o factura y soporte post-entrega.
               </p>
             </div>
           </Reveal>
@@ -1040,6 +1079,39 @@ export default async function Home() {
               </Reveal>
             ))}
           </div>
+
+          <Reveal>
+            <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-6 sm:p-8">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div className="max-w-2xl space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-widest text-blue-600">
+                    Desarrollo corporativo
+                  </p>
+                  <h3 className="text-balance text-xl font-extrabold text-slate-900 sm:text-2xl">
+                    Cuando tu empresa necesita una plataforma, no una web
+                  </h3>
+                  <p className="text-sm leading-relaxed text-slate-700">
+                    En Zyteron también desarrollamos intranets y plataformas de gestión para organizaciones con
+                    varias áreas, sucursales o sistemas que deben conversar entre sí. Partimos con un levantamiento
+                    funcional y construimos por etapas, para que veas resultados en cada entrega.
+                  </p>
+                </div>
+                <Button asChild className="shrink-0 bg-blue-700 font-bold text-white hover:bg-blue-800">
+                  <Link href="/planes">Ver desarrollo corporativo</Link>
+                </Button>
+              </div>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {corporatePlans.map((plan) => (
+                  <div key={plan.id} className="rounded-xl border border-blue-100 bg-white p-4">
+                    <p className="text-sm font-extrabold text-slate-900">{plan.name}</p>
+                    <p className="mt-1 text-sm font-extrabold text-blue-700">{planPriceClp(plan.id)}</p>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-600">{plan.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Reveal>
 
           <p className="text-center text-xs text-slate-500">
             Los valores pueden variar según requerimientos, funcionalidades, integraciones y alcance del proyecto.

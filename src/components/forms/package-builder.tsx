@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PLAN_PRICE_AMOUNTS, clp } from "@/config/pricing";
 import { siteConfig } from "@/config/site";
 import { trackQuoteRequestConversion, trackQuoteRequestSubmit } from "@/lib/analytics/google-ads";
 import { formatStableDateEsCl } from "@/lib/stable-date";
@@ -683,7 +684,7 @@ export function PackageBuilder({ plans, extras, discounts, reviews, showReviewsS
                 id="builder-budget"
                 value={form.budget}
                 onChange={(event) => setForm((prev) => ({ ...prev, budget: event.target.value }))}
-                placeholder="Ej: $180.000 - $350.000"
+                placeholder={`Ej: ${clp(PLAN_PRICE_AMOUNTS.pyme)} - ${clp(PLAN_PRICE_AMOUNTS.ecommerce)}`}
               />
             </div>
             <div className="space-y-1.5">

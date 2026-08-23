@@ -508,6 +508,7 @@ export const seoServicePages: SeoServicePage[] = [
       "Paneles con roles, estados, registros y reportes.",
       "Generación de PDF, notificaciones o integraciones cuando aplica.",
       "Escalabilidad por módulos según presupuesto y prioridad.",
+      "Un mismo camino de crecimiento: del primer panel a una intranet corporativa o una plataforma multiárea, sin rehacer lo construido.",
     ],
     includes: [
       "Levantamiento funcional del proceso actual.",
@@ -522,6 +523,7 @@ export const seoServicePages: SeoServicePage[] = [
       "Pymes que trabajan con planillas dispersas y buscan software para pymes en Chile.",
       "Equipos que requieren sistema de inventario, control de asistencia o control de flota.",
       "Negocios que requieren software a medida propio en vez de herramientas genéricas.",
+      "Organizaciones que ya necesitan una intranet corporativa, control operacional multisucursal o una plataforma que integre varios departamentos.",
     ],
     process: baseProcess,
     faqs: [
@@ -532,12 +534,16 @@ export const seoServicePages: SeoServicePage[] = [
       },
       {
         question: "¿Cuánto cuesta un sistema web a medida en Chile?",
-        answer: `Un sistema web administrativo cuesta desde ${clp(PLAN_PRICE_AMOUNTS.sistema)} + IVA y un sistema avanzado a medida, con múltiples módulos, roles e integraciones, desde ${clp(PLAN_PRICE_AMOUNTS.avanzado)} + IVA. Como el alcance se define por módulos, puedes partir con una primera etapa acotada y escalar; el precio final se confirma en una cotización formal tras el levantamiento del proceso.`,
+        answer: `Un sistema web administrativo cuesta desde ${clp(PLAN_PRICE_AMOUNTS.sistema)} + IVA y un sistema avanzado a medida, con múltiples módulos, roles e integraciones, desde ${clp(PLAN_PRICE_AMOUNTS.avanzado)} + IVA. Para operaciones corporativas la escalera continúa con intranet corporativa desde ${clp(PLAN_PRICE_AMOUNTS.intranet)} + IVA, plataforma de control operacional desde ${clp(PLAN_PRICE_AMOUNTS.operacional)} + IVA, plataforma corporativa integrada desde ${clp(PLAN_PRICE_AMOUNTS.corporativa)} + IVA y arquitectura Enterprise 360 desde ${clp(PLAN_PRICE_AMOUNTS.enterprise)} + IVA. Como el alcance se define por módulos, puedes partir con una primera etapa acotada y escalar; el precio final se confirma en una cotización formal tras el levantamiento del proceso.`,
       },
       {
         question: "¿Puedo partir con un módulo pequeño?",
         answer:
           "Sí. Recomendamos iniciar por el módulo más crítico y luego escalar por etapas.",
+      },
+      {
+        question: "¿Desarrollan intranets y plataformas corporativas?",
+        answer: `Sí. Cuando la operación supera un sistema de gestión, seguimos la misma metodología en escala corporativa: intranet corporativa con perfiles, documentación, solicitudes y aprobaciones desde ${clp(PLAN_PRICE_AMOUNTS.intranet)} + IVA; plataforma de control operacional para sucursales, activos y personal en terreno desde ${clp(PLAN_PRICE_AMOUNTS.operacional)} + IVA; plataforma corporativa integrada que reúne varios departamentos desde ${clp(PLAN_PRICE_AMOUNTS.corporativa)} + IVA; y arquitectura Enterprise 360, con varios sistemas conectados entre sí, desde ${clp(PLAN_PRICE_AMOUNTS.enterprise)} + IVA. Todos parten con un levantamiento funcional y se construyen por etapas, para que veas resultados en cada entrega.`,
       },
       {
         question: "¿Incluye usuarios y permisos?",

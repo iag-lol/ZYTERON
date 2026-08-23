@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { defaultOpenGraph, defaultTwitter } from "@/config/seo";
 import { siteConfig } from "@/config/site";
 import { getAbsoluteOgImageUrl } from "@/config/og";
-import { PLANS } from "@/config/pricing";
+import { PLAN_CATALOG } from "@/config/pricing";
 import {
   buildAbsoluteUrl as buildAbsoluteUrlFromSchema,
   buildPrimaryOgImageUrl as buildPrimaryOgImageUrlFromSchema,
@@ -358,22 +358,9 @@ export function buildLocalBusinessJsonLd(path = "/", description = siteConfig.de
   return getLocalBusinessSchema({ path, description });
 }
 
-/**
- * Extrae el monto numérico en CLP de un precio publicado ("Desde $219.990 +
- * IVA" → 219990). Leer el mismo string visible garantiza que el dato
- * estructurado nunca se desincronice de lo que la página muestra.
- */
-function parseClpAmount(price: string): number | null {
-  // Solo el primer monto con "$": un string con dos cifras (p. ej. precio +
-  // mensualidad) no debe concatenar sus dígitos en un número inválido.
-  const match = price.match(/\$\s*([\d.]+)/);
-  if (!match) return null;
-  const amount = Number.parseInt(match[1].replaceAll(".", ""), 10);
-  return Number.isFinite(amount) && amount > 0 ? amount : null;
-}
 
 /**
- * OfferCatalog de /planes construido iterando PLANS (fuente única de precios):
+ * OfferCatalog de /planes construido iterando PLAN_CATALOG (fuente única):
  * nombres y montos salen del mismo arreglo que renderiza la página, y cada
  * Offer queda conectada a la Organization vía seller/provider.
  */
@@ -387,32 +374,28 @@ export function buildPlanPriceSpecificationJsonLd(path: string) {
     "@id": `${pageUrl}#price-specifications`,
     name: "Planes referenciales de Zyteron",
     url: pageUrl,
-    itemListElement: PLANS.map((plan) => {
-      const minPrice = parseClpAmount(plan.price);
-
-      return {
-        "@type": "Offer",
+    itemListElement: PLAN_CATALOG.map((plan) => ({
+      "@type": "Offer",
+      name: plan.name,
+      description: plan.summary,
+      url: pageUrl,
+      priceCurrency: "CLP",
+      availability: "https://schema.org/InStock",
+      seller: organizationRef,
+      itemOffered: {
+        "@type": "Service",
         name: plan.name,
-        url: pageUrl,
+        description: plan.summary,
+        provider: organizationRef,
+      },
+      // El monto viene del catálogo, no de parsear la etiqueta visible: así el
+      // dato estructurado no puede desincronizarse del precio publicado.
+      priceSpecification: {
+        "@type": "PriceSpecification",
         priceCurrency: "CLP",
-        availability: "https://schema.org/InStock",
-        seller: organizationRef,
-        itemOffered: {
-          "@type": "Service",
-          name: plan.name,
-          provider: organizationRef,
-        },
-        ...(minPrice
-          ? {
-              priceSpecification: {
-                "@type": "PriceSpecification",
-                priceCurrency: "CLP",
-                minPrice,
-                valueAddedTaxIncluded: false,
-              },
-            }
-          : {}),
-      };
-    }),
+        minPrice: plan.amount,
+        valueAddedTaxIncluded: false,
+      },
+    })),
   };
 }
