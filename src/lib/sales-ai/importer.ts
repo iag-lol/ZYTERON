@@ -11,6 +11,7 @@ import {
   normalizePhone,
   normalizeRut,
 } from "./repository";
+import { decideImportRow } from "./rules";
 import { SALES_EVENT_TYPES } from "./types";
 
 /**
@@ -260,23 +261,45 @@ export async function buildImportPreview(
 
 export type ImportResult = {
   batchId: string;
+  /** Empresas nuevas creadas en el CRM. */
   imported: number;
+  /** Empresas que quedaron en cola esperando análisis de Zara. */
+  queued: number;
+  /** Importadas pero sin correo: entran al CRM y nunca a la cola de envío. */
+  withoutEmail: number;
+  /** Ya existían en el CRM. */
+  duplicates: number;
+  /** Filas descartadas por formato (sin nombre, correo ilegible). */
+  invalid: number;
+  /** Direcciones que pidieron no ser contactadas. */
+  optedOut: number;
   skipped: number;
   errors: number;
+  /**
+   * Empresas que se importaron pero no se pudieron encolar (por ejemplo porque
+   * ya tenían un envío vivo). Quedan en el CRM para revisión manual.
+   */
+  pendingReview: number;
+  /** Hora del próximo envío ya programado, si la cola tiene alguno. */
+  nextScheduledAt: string | null;
 };
 
 /**
- * Importa las filas seleccionadas. Los duplicados nunca se importan ni se
- * contactan automáticamente: quedan registrados en el lote para trazabilidad.
+ * Importa el archivo y deja a Zara trabajando.
+ *
+ * Crea las empresas nuevas y, para cada una que tenga correo, inserta un
+ * trabajo PENDIENTE_ANALISIS en la cola. Aquí NO se llama a la IA, NO se
+ * redacta y NO se envía nada: eso lo hace el cron después, de a pocos. Así un
+ * archivo de 100 empresas se resuelve en una petición HTTP corta y sin ráfaga.
  */
 export async function executeImport(options: {
   fileName: string;
   mapping: Record<string, ImportFieldKey | "">;
   preview: ImportPreview;
-  includeWithoutEmail: boolean;
   actor: string;
 }): Promise<ImportResult> {
   const { supabase } = createSupabaseServerClient();
+  const { enqueueSend } = await import("./queue");
 
   const { data: batch, error: batchError } = await supabase
     .from("sales_import_batches")
@@ -295,16 +318,43 @@ export async function executeImport(options: {
   if (batchError) throw new Error(batchError.message);
   const batchId = String(batch.id);
 
-  const importable = options.preview.rows.filter(
-    (row) => row.status === "VALIDO" || (options.includeWithoutEmail && row.status === "SIN_EMAIL"),
-  );
+  // La regla vive en rules.decideImportRow para poder comprobarse aislada.
+  const importable = options.preview.rows.filter((row) => decideImportRow(row.status).shouldImport);
 
   let imported = 0;
+  let queued = 0;
+  let withoutEmail = 0;
   let errors = 0;
+  let pendingReview = 0;
+  let raceSkipped = 0;
 
   for (const row of importable) {
     try {
-      await createCompany(
+      const email = normalizeEmail(row.data.primary_email);
+
+      // Segunda verificación dentro de la propia importación. La vista previa
+      // pudo calcularse hace minutos: entre medio otra importación simultánea
+      // o un opt-out reciente pueden haber cambiado el panorama. Sin esto, dos
+      // importaciones en paralelo crearían la misma empresa dos veces.
+      if (await isOptedOut(email)) {
+        raceSkipped += 1;
+        continue;
+      }
+
+      const duplicate = await findDuplicate({
+        taxId: row.data.tax_id,
+        email: row.data.primary_email,
+        website: row.data.website,
+        phone: row.data.phone,
+        name: row.data.name,
+      });
+
+      if (duplicate) {
+        raceSkipped += 1;
+        continue;
+      }
+
+      const company = await createCompany(
         {
           name: row.data.name,
           legal_name: row.data.legal_name ?? null,
@@ -313,7 +363,7 @@ export async function executeImport(options: {
           commune: row.data.commune ?? null,
           region: row.data.region ?? null,
           website: row.data.website ?? null,
-          primary_email: normalizeEmail(row.data.primary_email),
+          primary_email: email,
           phone: normalizePhone(row.data.phone) ? row.data.phone : null,
           whatsapp: row.data.whatsapp ?? null,
           contact_name: row.data.contact_name ?? null,
@@ -336,10 +386,50 @@ export async function executeImport(options: {
         },
       );
       imported += 1;
-    } catch {
-      errors += 1;
+
+      if (!decideImportRow(row.status).shouldQueue || !email) {
+        withoutEmail += 1;
+        continue;
+      }
+
+            // readyToSchedule en false deja el trabajo en PENDIENTE_ANALISIS: el cron
+      // lo redactará y programará después. El índice único de la tabla impide
+      // que dos importaciones simultáneas creen dos envíos vivos para la misma
+      // empresa, así que aquí no hace falta bloquear nada.
+      const enqueued = await enqueueSend({
+        companyId: company.id,
+        kind: "PRIMER_CONTACTO",
+        recipientEmail: email,
+        readyToSchedule: false,
+        createdBy: options.actor,
+      });
+
+      if (enqueued.ok) {
+        queued += 1;
+      } else {
+        pendingReview += 1;
+      }
+    } catch (error) {
+      // Una violación de restricción única aquí significa que otra importación
+      // ganó la carrera y creó la empresa primero: es un duplicado, no un fallo.
+      const message = error instanceof Error ? error.message : "";
+      if (/duplicate key|already exists|23505/i.test(message)) {
+        raceSkipped += 1;
+      } else {
+        errors += 1;
+      }
     }
   }
+
+  // Sirve para decirle al administrador cuándo sale el próximo correo sin que
+  // tenga que abrir la cola.
+  const { data: nextItem } = await supabase
+    .from("sales_send_queue")
+    .select("scheduled_at")
+    .eq("status", "PROGRAMADO")
+    .not("scheduled_at", "is", null)
+    .order("scheduled_at", { ascending: true })
+    .limit(1);
 
   await supabase
     .from("sales_import_batches")
@@ -352,7 +442,14 @@ export async function executeImport(options: {
   return {
     batchId,
     imported,
+    queued,
+    withoutEmail,
+    duplicates: options.preview.duplicates + raceSkipped,
+    invalid: options.preview.invalid,
+    optedOut: options.preview.optedOut,
     skipped: options.preview.total - imported,
     errors,
+    pendingReview,
+    nextScheduledAt: (nextItem?.[0]?.scheduled_at as string | undefined) ?? null,
   };
 }

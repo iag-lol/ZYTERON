@@ -47,6 +47,19 @@ type ImportPreview = {
   rows: RowValidation[];
 };
 
+type ImportResult = {
+  imported: number;
+  queued: number;
+  withoutEmail: number;
+  duplicates: number;
+  invalid: number;
+  optedOut: number;
+  skipped: number;
+  errors: number;
+  pendingReview: number;
+  nextScheduledAt: string | null;
+};
+
 const IMPORT_FIELDS: Array<{ key: string; label: string; required?: boolean }> = [
   { key: "name", label: "Nombre empresa", required: true },
   { key: "legal_name", label: "Razón social" },
@@ -81,11 +94,28 @@ export function ProspectImporter() {
   const [parsed, setParsed] = useState<ParseResponse | null>(null);
   const [mapping, setMapping] = useState<Record<string, FieldKey>>({});
   const [preview, setPreview] = useState<ImportPreview | null>(null);
-  const [includeWithoutEmail, setIncludeWithoutEmail] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ imported: number; skipped: number; errors: number } | null>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  /**
+   * Valida el archivo. Recibe el mapeo por parámetro porque cuando se encadena
+   * justo después de leer el archivo, el estado todavía no se actualizó.
+   */
+  const requestPreview = useCallback(
+    async (source: ParseResponse, mappingToUse: Record<string, FieldKey>) => {
+      const res = await fetch("/api/admin/sales-ai/import?step=preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rows: source.rows, mapping: mappingToUse }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo validar el archivo.");
+      return data.preview as ImportPreview;
+    },
+    [],
+  );
 
   const handleFile = useCallback(async (file: File) => {
     setBusy(true);
@@ -100,15 +130,26 @@ export function ProspectImporter() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo leer el archivo.");
 
-      setParsed(data as ParseResponse);
-      setMapping((data as ParseResponse).suggestedMapping);
-      setStep(2);
+      const sheet = data as ParseResponse;
+      setParsed(sheet);
+      setMapping(sheet.suggestedMapping);
+
+      // Si el nombre de la empresa se reconoció sin ambigüedad, no tiene
+      // sentido pedirle al administrador que confirme columna por columna:
+      // se valida de inmediato y se pasa directo a revisar el resultado.
+      const nombreReconocido = Object.values(sheet.suggestedMapping).includes("name");
+      if (nombreReconocido) {
+        setPreview(await requestPreview(sheet, sheet.suggestedMapping));
+        setStep(3);
+      } else {
+        setStep(2);
+      }
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setBusy(false);
     }
-  }, []);
+  }, [requestPreview]);
 
   const runPreview = useCallback(async () => {
     if (!parsed) return;
@@ -139,12 +180,7 @@ export function ProspectImporter() {
       const res = await fetch("/api/admin/sales-ai/import?step=import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileName: parsed.fileName,
-          mapping,
-          preview,
-          includeWithoutEmail,
-        }),
+        body: JSON.stringify({ fileName: parsed.fileName, mapping, preview }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo importar.");
@@ -155,10 +191,12 @@ export function ProspectImporter() {
     } finally {
       setBusy(false);
     }
-  }, [parsed, preview, mapping, includeWithoutEmail]);
+  }, [parsed, preview, mapping]);
 
   const hasNameMapped = Object.values(mapping).includes("name");
-  const importableCount = (preview?.valid ?? 0) + (includeWithoutEmail ? (preview?.withoutEmail ?? 0) : 0);
+  // Las empresas sin correo también se importan al CRM; simplemente nunca
+  // entran a la cola de envío.
+  const importableCount = (preview?.valid ?? 0) + (preview?.withoutEmail ?? 0);
 
   function reset() {
     setStep(1);
@@ -174,7 +212,7 @@ export function ProspectImporter() {
     <div className="space-y-6">
       {/* Pasos */}
       <ol className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-        {["Subir archivo", "Mapear columnas", "Revisar", "Importar"].map((label, index) => {
+        {["Subir archivo", "Mapear columnas", "Revisar", "Listo"].map((label, index) => {
           const value = (index + 1) as 1 | 2 | 3 | 4;
           const active = step === value;
           const done = step > value;
@@ -342,18 +380,10 @@ export function ProspectImporter() {
           </div>
 
           {preview.withoutEmail > 0 ? (
-            <label className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm">
-              <input
-                type="checkbox"
-                checked={includeWithoutEmail}
-                onChange={(event) => setIncludeWithoutEmail(event.target.checked)}
-                className="mt-0.5 h-4 w-4"
-              />
-              <span className="text-slate-700">
-                Importar también las {preview.withoutEmail} empresas sin email. Quedarán en el CRM
-                para gestión manual, pero Zara no podrá enviarles correo.
-              </span>
-            </label>
+            <p className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-slate-700">
+              {preview.withoutEmail} empresas no traen correo. Se importan igual al CRM para
+              gestionarlas por otro canal, pero Zara no las pondrá en la cola de envío.
+            </p>
           ) : null}
 
           <div className="max-h-[420px] overflow-auto rounded-xl border border-slate-200 bg-white">
@@ -401,10 +431,10 @@ export function ProspectImporter() {
               className="gap-2 bg-emerald-600 font-bold text-white hover:bg-emerald-700"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
-              Importar {importableCount} {importableCount === 1 ? "empresa" : "empresas"}
+              Importar y comenzar
             </Button>
             <Button variant="outline" onClick={() => setStep(2)} disabled={busy}>
-              Volver al mapeo
+              Ajustar columnas
             </Button>
           </div>
         </div>
@@ -412,21 +442,52 @@ export function ProspectImporter() {
 
       {/* Paso 4 */}
       {step === 4 && result ? (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-8 text-center">
-          <Check className="mx-auto h-10 w-10 text-emerald-600" />
-          <h2 className="mt-3 text-lg font-bold text-slate-900">Importación completada</h2>
-          <p className="mt-2 text-sm text-slate-700">
-            Se importaron <strong>{result.imported}</strong> empresas. Se omitieron{" "}
-            <strong>{result.skipped}</strong> (duplicados, sin datos o con opt-out)
-            {result.errors > 0 ? ` y ${result.errors} fallaron.` : "."}
-          </p>
-          <p className="mt-2 text-xs text-slate-600">
-            Ningún prospecto fue contactado automáticamente. Revísalos en Prospectos antes de iniciar
-            una campaña.
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-3">
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-8 text-center">
+            <Check className="mx-auto h-10 w-10 text-emerald-600" />
+            <h2 className="mt-3 text-lg font-bold text-slate-900">Importación completada</h2>
+            <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-700">
+              Zara comenzó a procesar automáticamente las empresas válidas. Los correos serán
+              analizados y programados gradualmente respetando el modo de prueba, los límites y la
+              cola segura.
+            </p>
+            {result.nextScheduledAt ? (
+              <p className="mt-3 text-sm font-semibold text-emerald-800">
+                Próximo envío programado:{" "}
+                {new Date(result.nextScheduledAt).toLocaleString("es-CL")}
+              </p>
+            ) : (
+              <p className="mt-3 text-xs text-slate-600">
+                Todavía no hay un envío con hora asignada: el análisis se hace en las próximas
+                ejecuciones automáticas.
+              </p>
+            )}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { label: "Empresas importadas", value: result.imported },
+              { label: "En cola para análisis", value: result.queued },
+              { label: "Sin correo", value: result.withoutEmail },
+              { label: "Duplicados omitidos", value: result.duplicates },
+              { label: "Registros inválidos", value: result.invalid },
+              { label: "Pidieron no ser contactadas", value: result.optedOut },
+              { label: "Pendientes de revisión", value: result.pendingReview },
+              { label: "Con error", value: result.errors },
+            ].map((card) => (
+              <div key={card.label} className="rounded-xl border border-slate-200 bg-white p-4">
+                <p className="text-xs font-semibold text-slate-500">{card.label}</p>
+                <p className="mt-1 text-2xl font-extrabold text-slate-900">{card.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-3">
             <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/admin/ventas-ia/prospectos">Ver prospectos</Link>
+              <Link href="/admin/ventas-ia/bandeja">Ver la cola</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/admin/ventas-ia/prospectos">Ver pendientes de revisión</Link>
             </Button>
             <Button variant="outline" onClick={reset}>
               Importar otro archivo

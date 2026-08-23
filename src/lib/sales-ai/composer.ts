@@ -115,8 +115,7 @@ ESTRUCTURA DEL CUERPO (bloques cortos separados por línea en blanco)
 3. El problema u oportunidad, en términos de negocio: 25 a 35 palabras sobre qué les cuesta hoy en tiempo, consultas perdidas u orden.
 4. Qué haría Zyteron: 35 a 50 palabras, concreto y acotado.
 5. Beneficios comerciales claros: 25 a 40 palabras, sin exagerar.
-6. Una sola pregunta de cierre, simple de responder: 10 a 20 palabras.
-7. Una línea educada indicando que pueden pedir no recibir más correos: 12 a 20 palabras.
+6. Una sola pregunta de cierre, simple de responder: 10 a 20 palabras. Con esto termina el correo.
 
 LARGO: entre 140 y 220 palabras. Ni una línea de relleno.
 El campo body_text ES el correo final completo: desarrolla todos los bloques anteriores
@@ -131,6 +130,7 @@ PROHIBIDO
 - Emojis, mayúsculas de más o lenguaje de promoción.
 - Escribir algo que serviría igual para otra empresa. Si al cambiar el nombre el correo sigue funcionando, está MAL.
 - Incluir firma: la agrega el sistema.
+- Agregar cualquier línea de baja, exclusión o "si no desean recibir más correos": el correo termina en la pregunta de cierre.
 - Decir "he visto", "he notado", "he observado", "se destaca", "su compromiso" o cualquier elogio si esa observación no aparece literalmente en los datos.
 - Agregar tendencias de mercado, cualidades de la empresa, contenido de su web, especialidades, redes sociales, volúmenes, resultados esperados o capacidades que no estén escritas en los datos.
 - Presentar como resultado que aumentarán ventas, visitas, cierres o satisfacción. Describe beneficios solo como objetivos operativos: ordenar, centralizar, facilitar o reducir trabajo manual cuando se desprendan del problema registrado.

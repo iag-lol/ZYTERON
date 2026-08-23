@@ -564,6 +564,28 @@ const EMPTY_PHRASES = [
   /hoy en d[ií]a las empresas/i,
 ];
 
+/**
+ * Líneas de baja o exclusión en el correo saliente.
+ *
+ * Se retiraron a propósito del texto: el correo termina en la pregunta de
+ * cierre. Esto NO toca la protección de entrada: si alguien responde pidiendo
+ * no ser contactado, inbound.ts lo registra igual y cancela envíos y
+ * seguimientos. Este control existe solo para que el modelo no reintroduzca la
+ * frase por su cuenta.
+ */
+const OPT_OUT_PHRASES = [
+  /no recibir m[aá]s correos/i,
+  /no desean recibir/i,
+  /prefieren no recibir/i,
+  /prefiere no recibir/i,
+  /darse de baja/i,
+  /dar de baja/i,
+  /baja de (?:esta|la) lista/i,
+  /h[aá]ganmelo saber si no/i,
+  /av[ií]seme si no (?:desea|quiere|quieren|desean)/i,
+  /si no (?:desea|desean|quiere|quieren) que (?:le|les) escriba/i,
+];
+
 export type OutreachQualityIssue = { field: string; reason: string };
 
 /**
@@ -618,5 +640,57 @@ export function checkOutreachQuality(
     issues.push({ field: "body_text", reason: "Menciona terminología técnica no permitida hacia clientes." });
   }
 
+  for (const pattern of OPT_OUT_PHRASES) {
+    if (pattern.test(body)) {
+      issues.push({
+        field: "body_text",
+        reason: "Incluye una línea de baja o exclusión; el correo debe terminar en la pregunta de cierre.",
+      });
+      break;
+    }
+  }
+
   return issues;
+}
+
+// ---------------------------------------------------------------------------
+// Importación de prospectos
+// ---------------------------------------------------------------------------
+
+export type ImportRowStatus = "VALIDO" | "DUPLICADO" | "SIN_EMAIL" | "INVALIDO" | "OPT_OUT";
+
+export type ImportRowDecision = {
+  /** Si la empresa se crea en el CRM. */
+  shouldImport: boolean;
+  /** Si además entra a la cola para que Zara la contacte. */
+  shouldQueue: boolean;
+  reason: string;
+};
+
+/**
+ * Qué hacer con cada fila del archivo.
+ *
+ * Se mantiene aquí, sin acceso a base de datos, para que la regla que decide a
+ * quién se le escribe pueda comprobarse de forma aislada. Importar y encolar
+ * son decisiones distintas a propósito: una empresa sin correo es un contacto
+ * válido para el CRM, pero nunca puede entrar a la cola de envío.
+ */
+export function decideImportRow(status: ImportRowStatus): ImportRowDecision {
+  switch (status) {
+    case "VALIDO":
+      return { shouldImport: true, shouldQueue: true, reason: "Empresa nueva con correo." };
+    case "SIN_EMAIL":
+      return {
+        shouldImport: true,
+        shouldQueue: false,
+        reason: "Sin correo: entra al CRM, nunca a la cola de envío.",
+      };
+    case "DUPLICADO":
+      return { shouldImport: false, shouldQueue: false, reason: "Ya existe en el CRM." };
+    case "OPT_OUT":
+      return { shouldImport: false, shouldQueue: false, reason: "Pidió no ser contactada." };
+    case "INVALIDO":
+    default:
+      return { shouldImport: false, shouldQueue: false, reason: "Fila sin datos utilizables." };
+  }
 }

@@ -17,9 +17,11 @@ const MAX_FILE_BYTES = 8 * 1024 * 1024; // 8 MB
 /**
  * Paso 1: subir el archivo y obtener encabezados + mapeo sugerido.
  * Paso 2 (?step=preview): validar y detectar duplicados.
- * Paso 3 (?step=import): importar las filas confirmadas.
+ * Paso 3 (?step=import): importar y dejar a Zara trabajando.
  *
- * Ninguno de estos pasos usa IA: son lectura de archivo y consultas a BD.
+ * Ninguno de estos pasos usa IA ni envía correo: son lectura de archivo,
+ * consultas a la base y la inserción de trabajos pendientes en la cola. La
+ * redacción y el envío ocurren después, en el cron, de a pocos por ejecución.
  */
 export async function POST(request: Request) {
   const auth = await requirePortalAdminApiSession();
@@ -58,7 +60,6 @@ export async function POST(request: Request) {
       mapping?: Record<string, ImportFieldKey | "">;
       fileName?: string;
       preview?: ImportPreview;
-      includeWithoutEmail?: boolean;
     };
 
     if (step === "preview") {
@@ -77,7 +78,6 @@ export async function POST(request: Request) {
         fileName: body.fileName ?? "importacion.xlsx",
         mapping: body.mapping,
         preview: body.preview,
-        includeWithoutEmail: Boolean(body.includeWithoutEmail),
         actor,
       });
       return NextResponse.json({ result });

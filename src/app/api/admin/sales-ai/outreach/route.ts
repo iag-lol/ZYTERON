@@ -32,7 +32,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Cuerpo inválido." }, { status: 400 });
   }
 
-  // El contacto masivo recibe una lista en vez de un identificador único.
+  // Acción heredada. Ya no forma parte del flujo principal: al importar, Zara
+  // encola sola las empresas elegibles. Se conserva por compatibilidad y sigue
+  // pasando por la misma cola segura (los envíos entran en PENDIENTE_ANALISIS),
+  // así que no permite saltarse el ritmo ni los límites.
   if (body.action === "bulk") {
     const ids = Array.isArray(body.companyIds) ? body.companyIds.filter(Boolean) : [];
     if (ids.length === 0) {

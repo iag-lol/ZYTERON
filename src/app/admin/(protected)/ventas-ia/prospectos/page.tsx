@@ -3,7 +3,6 @@ import { Building2, Mail, Phone, Sparkles } from "lucide-react";
 
 import { listCompanies } from "@/lib/sales-ai/repository";
 import { SALES_STATUSES, SALES_STATUS_LABELS, SALES_POTENTIALS, type SalesStatus, type SalesPotential } from "@/lib/sales-ai/types";
-import { BulkOutreach } from "@/components/admin/sales-ai/bulk-outreach";
 
 export const dynamic = "force-dynamic";
 
@@ -86,16 +85,30 @@ export default async function ProspectosPage({ searchParams }: PageProps) {
         </div>
       ) : null}
 
-      <BulkOutreach
-        candidates={companies
-          .filter((company) => company.status === "NUEVO" && !company.do_not_contact)
-          .map((company) => ({
-            id: company.id,
-            name: company.name,
-            email: company.primary_email,
-            potential: company.potential,
-          }))}
-      />
+      {/* La selección manual se retiró del flujo: al importar, Zara encola sola
+          las empresas elegibles y el cron las procesa de a pocas. Contactar en
+          tandas desde aquí permitía saltarse ese ritmo. */}
+      <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-5">
+        <p className="text-sm font-bold text-slate-900">Zara contacta sola</p>
+        <p className="mt-1 text-sm text-slate-700">
+          No hace falta seleccionar empresas. Al importar un archivo, las que tengan correo entran
+          automáticamente en la cola y se analizan, redactan y programan de forma gradual.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-3">
+          <Link
+            href="/admin/ventas-ia/importar"
+            className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800"
+          >
+            Importar prospectos
+          </Link>
+          <Link
+            href="/admin/ventas-ia/bandeja"
+            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Ver la cola
+          </Link>
+        </div>
+      </div>
 
       <form className="flex flex-wrap gap-2" action="/admin/ventas-ia/prospectos">
         <input
@@ -141,8 +154,8 @@ export default async function ProspectosPage({ searchParams }: PageProps) {
           <Sparkles className="mx-auto h-9 w-9 text-slate-400" />
           <h2 className="mt-3 text-base font-bold text-slate-900">Todavía no hay prospectos</h2>
           <p className="mx-auto mt-1 max-w-md text-sm text-slate-600">
-            Sube un Excel con empresas investigadas para empezar. Zara no contacta a nadie hasta que
-            tú lo autorices.
+            Sube un Excel con empresas investigadas. Al confirmar la importación, Zara las analiza
+            y programa el primer contacto de forma gradual, respetando los límites configurados.
           </p>
           <Link
             href="/admin/ventas-ia/importar"
