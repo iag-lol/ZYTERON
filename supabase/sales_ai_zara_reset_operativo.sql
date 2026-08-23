@@ -67,18 +67,41 @@
 -- mental antes de confirmar: si estos números no cuadran con lo esperado,
 -- NO ejecutar el BLOQUE 2.
 -- ============================================================================
-select 'sales_send_queue'       as tabla, count(*) as filas_a_eliminar from public.sales_send_queue
-union all select 'sales_campaign_targets', count(*) from public.sales_campaign_targets
-union all select 'sales_drafts',           count(*) from public.sales_drafts
-union all select 'sales_followups',        count(*) from public.sales_followups
-union all select 'sales_messages',         count(*) from public.sales_messages
-union all select 'sales_threads',          count(*) from public.sales_threads
-union all select 'sales_events',           count(*) from public.sales_events
-union all select 'sales_proposals',        count(*) from public.sales_proposals
-union all select 'sales_campaigns',        count(*) from public.sales_campaigns
-union all select 'sales_import_batches',   count(*) from public.sales_import_batches
-union all select 'sales_webhook_log',      count(*) from public.sales_webhook_log
-union all select 'sales_companies',        count(*) from public.sales_companies
+-- Cuenta solo las tablas que existan de verdad. Una instalación puede no tener
+-- todas las fases aplicadas (por ejemplo, sales_webhook_log llega en la fase 2),
+-- y en ese caso un conteo directo fallaría con "relation does not exist" sin
+-- llegar a mostrar nada. query_to_xml permite contar de forma dinámica dentro de
+-- un SELECT de solo lectura.
+select
+  t.tabla,
+  case
+    when to_regclass('public.' || quote_ident(t.tabla)) is null then null
+    else (
+      xpath(
+        '/row/cnt/text()',
+        query_to_xml(format('select count(*) as cnt from public.%I', t.tabla), false, true, '')
+      )
+    )[1]::text::bigint
+  end                                                   as filas_a_eliminar,
+  case
+    when to_regclass('public.' || quote_ident(t.tabla)) is null
+      then 'NO EXISTE EN ESTA BASE (se omitirá)'
+    else 'presente'
+  end                                                   as estado
+from unnest(array[
+  'sales_send_queue',
+  'sales_campaign_targets',
+  'sales_drafts',
+  'sales_followups',
+  'sales_messages',
+  'sales_threads',
+  'sales_events',
+  'sales_proposals',
+  'sales_campaigns',
+  'sales_import_batches',
+  'sales_webhook_log',
+  'sales_companies'
+]) as t(tabla)
 order by 1;
 
 
@@ -153,6 +176,9 @@ declare
   v_antes        bigint;
   v_despues      bigint;
   v_resumen      text := '';
+  -- Tablas operativas que no existen en esta base. Se informan al final para
+  -- que quede claro qué no se tocó y por qué.
+  v_ausentes     text[] := array[]::text[];
   -- Fotografía previa de las conservadas. Se guarda en una variable jsonb y no
   -- en una tabla auxiliar: así el script no crea ningún objeto en la base.
   v_guarda       jsonb  := '{}'::jsonb;
@@ -165,11 +191,24 @@ begin
       coalesce(quote_literal(v_confirmacion), 'NULL');
   end if;
 
-  -- 2) Verificación de esquema: si falta alguna tabla, se aborta antes de tocar
-  --    datos. Evita reinicios "a medias" sobre una instalación incompleta.
-  foreach v_tabla in array v_operativas || v_conservadas loop
+  -- 2) Verificación de esquema.
+  --    Una instalación puede tener aplicadas solo algunas fases: por ejemplo,
+  --    sales_webhook_log llega con la fase 2. Una tabla operativa que no existe
+  --    simplemente no tiene filas que borrar, así que se omite y se informa, en
+  --    vez de impedir el reinicio completo.
+  --    En cambio, si falta una tabla CONSERVADA sí se aborta: sin ella no se
+  --    puede comprobar que la configuración, los opt-outs y los costos hayan
+  --    sobrevivido, que es la garantía central de este script.
+  foreach v_tabla in array v_conservadas loop
     if to_regclass('public.' || quote_ident(v_tabla)) is null then
-      raise exception 'REINICIO ABORTADO: falta la tabla public.% . Ejecuta antes las migraciones de Zara.', v_tabla;
+      raise exception 'REINICIO ABORTADO: falta la tabla conservada public.% . Sin ella no se puede garantizar que se preserve. Ejecuta antes supabase/sales_ai_zara.sql.', v_tabla;
+    end if;
+  end loop;
+
+  foreach v_tabla in array v_operativas loop
+    if to_regclass('public.' || quote_ident(v_tabla)) is null then
+      v_ausentes := v_ausentes || v_tabla;
+      raise notice 'OMITIDA  % : no existe en esta base', rpad(v_tabla, 24);
     end if;
   end loop;
 
@@ -183,6 +222,7 @@ begin
   -- 4) Conteo previo de lo que se va a eliminar (queda en el log del bloque,
   --    además del BLOQUE 1 que lo muestra como tabla).
   foreach v_tabla in array v_operativas loop
+    if v_tabla = any(v_ausentes) then continue; end if;
     execute format('select count(*) from public.%I', v_tabla) into v_antes;
     raise notice 'A ELIMINAR % : % filas', rpad(v_tabla, 24), v_antes;
   end loop;
@@ -190,6 +230,7 @@ begin
   -- 5) Borrado en orden de FK. DELETE, nunca TRUNCATE: TRUNCATE ... CASCADE
   --    podría arrastrar tablas conservadas y además reinicia secuencias.
   foreach v_tabla in array v_operativas loop
+    if v_tabla = any(v_ausentes) then continue; end if;
     execute format('delete from public.%I', v_tabla);
     get diagnostics v_borradas = row_count;
     v_total := v_total + v_borradas;
@@ -211,6 +252,11 @@ begin
     end if;
   end loop;
 
+  if array_length(v_ausentes, 1) is not null then
+    v_resumen := v_resumen || format(
+      E'\n  Omitidas por no existir en esta base: %s', array_to_string(v_ausentes, ', '));
+  end if;
+
   raise notice 'REINICIO COMPLETADO. Total de filas eliminadas: %.%', v_total, v_resumen;
 end
 $$;
@@ -223,38 +269,51 @@ $$;
 -- filas. La columna "resultado" marca OK / REVISAR para no tener que leer los
 -- números uno por uno.
 -- ============================================================================
-with conteos(tabla, rol, filas) as (
-  select 'sales_send_queue',       'OPERATIVA',  count(*) from public.sales_send_queue
-  union all select 'sales_campaign_targets', 'OPERATIVA',  count(*) from public.sales_campaign_targets
-  union all select 'sales_drafts',           'OPERATIVA',  count(*) from public.sales_drafts
-  union all select 'sales_followups',        'OPERATIVA',  count(*) from public.sales_followups
-  union all select 'sales_messages',         'OPERATIVA',  count(*) from public.sales_messages
-  union all select 'sales_threads',          'OPERATIVA',  count(*) from public.sales_threads
-  union all select 'sales_events',           'OPERATIVA',  count(*) from public.sales_events
-  union all select 'sales_proposals',        'OPERATIVA',  count(*) from public.sales_proposals
-  union all select 'sales_campaigns',        'OPERATIVA',  count(*) from public.sales_campaigns
-  union all select 'sales_import_batches',   'OPERATIVA',  count(*) from public.sales_import_batches
-  union all select 'sales_webhook_log',      'OPERATIVA',  count(*) from public.sales_webhook_log
-  union all select 'sales_companies',        'OPERATIVA',  count(*) from public.sales_companies
-  union all select 'sales_settings',         'CONSERVADA', count(*) from public.sales_settings
-  union all select 'sales_mail_account',     'CONSERVADA', count(*) from public.sales_mail_account
-  union all select 'sales_opt_outs',         'CONSERVADA', count(*) from public.sales_opt_outs
-  union all select 'sales_ai_activity',      'CONSERVADA', count(*) from public.sales_ai_activity
-  union all select 'sales_ai_budget_usage',  'CONSERVADA', count(*) from public.sales_ai_budget_usage
-)
+-- Igual que el BLOQUE 1: cuenta de forma dinámica y salta las tablas que no
+-- existan, para que la verificación funcione en instalaciones parciales.
 select
-  rol,
-  tabla,
-  filas,
+  t.tabla,
+  t.rol,
   case
-    when rol = 'OPERATIVA'  and filas = 0 then 'OK - vaciada'
-    when rol = 'OPERATIVA'                then 'REVISAR - quedaron filas'
-    -- sales_mail_account puede tener 0 filas legítimamente si el buzón nunca se
-    -- conectó; por eso las conservadas solo informan, no fallan por estar vacías.
-    else 'OK - intacta (' || filas || ' filas)'
+    when to_regclass('public.' || quote_ident(t.tabla)) is null then null
+    else (
+      xpath(
+        '/row/cnt/text()',
+        query_to_xml(format('select count(*) as cnt from public.%I', t.tabla), false, true, '')
+      )
+    )[1]::text::bigint
+  end as filas,
+  case
+    when to_regclass('public.' || quote_ident(t.tabla)) is null then 'NO EXISTE (omitida)'
+    when t.rol = 'OPERATIVA' and (
+      xpath('/row/cnt/text()', query_to_xml(format('select count(*) as cnt from public.%I', t.tabla), false, true, ''))
+    )[1]::text::bigint = 0 then 'OK vaciada'
+    when t.rol = 'OPERATIVA' then 'REVISAR: quedaron filas'
+    when (
+      xpath('/row/cnt/text()', query_to_xml(format('select count(*) as cnt from public.%I', t.tabla), false, true, ''))
+    )[1]::text::bigint > 0 then 'OK conservada'
+    else 'REVISAR: quedó vacía'
   end as resultado
-from conteos
-order by rol, tabla;
+from (values
+  ('sales_send_queue','OPERATIVA'),
+  ('sales_campaign_targets','OPERATIVA'),
+  ('sales_drafts','OPERATIVA'),
+  ('sales_followups','OPERATIVA'),
+  ('sales_messages','OPERATIVA'),
+  ('sales_threads','OPERATIVA'),
+  ('sales_events','OPERATIVA'),
+  ('sales_proposals','OPERATIVA'),
+  ('sales_campaigns','OPERATIVA'),
+  ('sales_import_batches','OPERATIVA'),
+  ('sales_webhook_log','OPERATIVA'),
+  ('sales_companies','OPERATIVA'),
+  ('sales_settings','CONSERVADA'),
+  ('sales_mail_account','CONSERVADA'),
+  ('sales_opt_outs','CONSERVADA'),
+  ('sales_ai_activity','CONSERVADA'),
+  ('sales_ai_budget_usage','CONSERVADA')
+) as t(tabla, rol)
+order by t.rol, t.tabla;
 
 
 -- ============================================================================
