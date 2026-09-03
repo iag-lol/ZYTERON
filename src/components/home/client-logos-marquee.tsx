@@ -38,10 +38,15 @@ export function ClientLogosMarquee() {
       <Image
         src={logo.src}
         alt={hidden ? "" : `Logo de ${logo.name}, empresa que trabajó con Zyteron`}
-        width={logo.width}
-        height={logo.height}
-        unoptimized
-        loading="eager"
+        // Se declaran al tamaño en que se muestran (64px de alto), no al del
+        // archivo: así Next genera un srcset corto de 1x/2x en vez de veinte
+        // candidatos por logo, que en una cinta de 24 copias inflaba el HTML.
+        width={Math.round((logo.width / logo.height) * 64)}
+        height={64}
+        quality={80}
+        // Solo la primera copia visible entra en la carga inicial: el resto son
+        // duplicados de la animación y la segunda tanda del carrusel.
+        loading={hidden || copy > 1 ? "lazy" : "eager"}
         className="h-12 w-auto max-w-none sm:h-16"
       />
     </span>
