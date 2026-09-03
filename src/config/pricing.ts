@@ -783,3 +783,336 @@ export const MAINTENANCE: PricedItem[] = MAINTENANCE_CATALOG.map((item) => ({
   name: item.name,
   price: item.price,
 }));
+
+// ---------------------------------------------------------------------------
+// Plataformas de gestión de flota con GPS
+// ---------------------------------------------------------------------------
+
+/**
+ * Estas plataformas se cotizan aparte de la escalera principal y por eso viven
+ * en su propio catálogo: no son "una web más cara" sino un desarrollo a medida
+ * con equipamiento físico y un costo mensual por vehículo.
+ *
+ * Deliberadamente NO entran en PLAN_CATALOG: ese arreglo alimenta el catálogo de
+ * ofertas estructuradas de /planes, y mezclar aquí un producto que además
+ * requiere hardware e instalación produciría datos estructurados equívocos.
+ */
+
+export const FLEET_PRICE_AMOUNTS = {
+  "flota-pequena": 3_490_000,
+  "flota-mediana": 4_990_000,
+  "flota-grande": 6_990_000,
+} as const;
+
+export type FleetPlanId = keyof typeof FLEET_PRICE_AMOUNTS;
+
+/** Equipamiento por vehículo. Son precios cerrados por unidad, no "desde". */
+export const FLEET_HARDWARE_AMOUNTS = {
+  /** Equipo GPS configurado, registrado, parametrizado e integrado. */
+  gps: 94_990,
+  /** Instalación profesional estándar en vehículo o camión. */
+  installation: 72_990,
+} as const;
+
+export const FLEET_HARDWARE_TOTAL =
+  FLEET_HARDWARE_AMOUNTS.gps + FLEET_HARDWARE_AMOUNTS.installation;
+
+/** Mantención mensual de la plataforma. Igual en los tres niveles. */
+export const FLEET_PLATFORM_MAINTENANCE = 59_990;
+
+/** El servicio mensual por vehículo baja a mayor tamaño de flota. */
+export const FLEET_MONTHLY_PER_VEHICLE: Record<FleetPlanId, number> = {
+  "flota-pequena": 7_990,
+  "flota-mediana": 6_990,
+  "flota-grande": 5_990,
+};
+
+export type FleetPlan = {
+  id: FleetPlanId;
+  name: string;
+  /** Rango de vehículos al que apunta. */
+  range: string;
+  amount: number;
+  price: string;
+  summary: string;
+  /** Qué agrega respecto del nivel anterior; en el primero es la base. */
+  featuresTitle: string;
+  features: string[];
+  /** Bloques opcionales que solo tienen los niveles superiores. */
+  portals?: Array<{ title: string; intro: string; items: string[] }>;
+  monthlyPerVehicle: number;
+  cta: string;
+  tag?: "Empresarial";
+};
+
+export const FLEET_PLANS: FleetPlan[] = [
+  {
+    id: "flota-pequena",
+    name: "Flota Pequeña",
+    range: "Para operaciones de 1 a 10 vehículos",
+    amount: FLEET_PRICE_AMOUNTS["flota-pequena"],
+    price: fromPrice(FLEET_PRICE_AMOUNTS["flota-pequena"]),
+    summary: "Desarrollo e implementación de plataforma personalizada.",
+    featuresTitle: "La plataforma considera",
+    features: [
+      "Plataforma desarrollada específicamente para la empresa",
+      "Dashboard operacional",
+      "Monitoreo GPS en tiempo real",
+      "Visualización de vehículos sobre mapa",
+      "Estado de vehículos",
+      "Historial de posiciones",
+      "Historial de recorridos por fecha y horario",
+      "Reconstrucción de rutas",
+      "Geocercas",
+      "Alertas de entrada y salida de geocercas",
+      "Alertas de detenciones prolongadas",
+      "Zonas autorizadas de descanso",
+      "Alertas por detenciones fuera de zonas autorizadas",
+      "Gestión de vehículos",
+      "Gestión de conductores",
+      "Asignación de vehículo y conductor",
+      "Gestión básica de clientes",
+      "Órdenes de trabajo",
+      "Seguimiento de estados de órdenes",
+      "Registro de fechas y horarios",
+      "Panel administrativo",
+      "Roles y permisos",
+      "Reportería operacional",
+      "Gestión documental básica",
+      "Diseño responsive",
+      "Uso desde computador, tablet y celular",
+      "Configuración inicial",
+      "Capacitación inicial",
+    ],
+    monthlyPerVehicle: FLEET_MONTHLY_PER_VEHICLE["flota-pequena"],
+    cta: "Cotizar Flota Pequeña",
+  },
+  {
+    id: "flota-mediana",
+    name: "Flota Mediana",
+    range: "Para operaciones de 11 a 30 vehículos",
+    amount: FLEET_PRICE_AMOUNTS["flota-mediana"],
+    price: fromPrice(FLEET_PRICE_AMOUNTS["flota-mediana"]),
+    summary:
+      "Plataforma operacional personalizada para empresas con mayor volumen de vehículos, usuarios, clientes y procesos.",
+    featuresTitle: "Todo lo de Flota Pequeña, más",
+    features: [
+      "Dashboard operacional avanzado",
+      "Gestión avanzada de clientes",
+      "Gestión avanzada de conductores",
+      "Múltiples usuarios",
+      "Roles personalizados",
+      "Permisos por área",
+      "Órdenes de trabajo avanzadas",
+      "Estados de órdenes personalizados",
+      "Asignación de servicios",
+      "Seguimiento completo de cumplimiento",
+      "Línea de tiempo de órdenes",
+      "Origen y destino",
+      "Prioridades",
+      "Evidencias y fotografías",
+      "Observaciones",
+      "Documentos asociados",
+      "Historial ampliado",
+      "Alertas personalizadas",
+      "Gestión documental avanzada",
+      "Alertas de vencimiento",
+      "Indicadores operacionales y estadísticas",
+      "Exportación de información",
+      "Reportes avanzados",
+      "Integraciones mediante API cuando corresponda",
+    ],
+    portals: [
+      {
+        title: "Portal para conductores",
+        intro:
+          "La plataforma puede incorporar un acceso independiente para conductores, donde revisan lo que les corresponde:",
+        items: [
+          "Vehículo asignado",
+          "Servicios",
+          "Órdenes de trabajo",
+          "Horarios",
+          "Inicio y finalización de tareas",
+          "Estados",
+          "Evidencias y fotografías",
+          "Documentos",
+          "Observaciones",
+        ],
+      },
+      {
+        title: "Portal para clientes",
+        intro:
+          "Cuando la operación lo requiera, cada cliente puede tener un acceso independiente y ver únicamente la información autorizada de su empresa:",
+        items: [
+          "Sus servicios",
+          "Sus órdenes de trabajo",
+          "Estado actual",
+          "Vehículo asignado",
+          "Seguimiento de servicios",
+          "Historial",
+          "Evidencias",
+          "Documentación",
+        ],
+      },
+    ],
+    monthlyPerVehicle: FLEET_MONTHLY_PER_VEHICLE["flota-mediana"],
+    cta: "Cotizar Flota Mediana",
+  },
+  {
+    id: "flota-grande",
+    name: "Flota Grande",
+    range: "Desde 31 vehículos",
+    amount: FLEET_PRICE_AMOUNTS["flota-grande"],
+    price: fromPrice(FLEET_PRICE_AMOUNTS["flota-grande"]),
+    summary:
+      "Desarrollo de plataforma empresarial personalizada para operaciones donde el sistema se transforma en una herramienta central de gestión y control.",
+    featuresTitle: "Todo lo anterior, más",
+    features: [
+      "Múltiples centros operacionales",
+      "Múltiples sucursales",
+      "Múltiples clientes",
+      "Gran cantidad de vehículos y usuarios",
+      "Perfiles de administrador, supervisor, conductor y cliente",
+      "Roles personalizados y permisos avanzados",
+      "Dashboard ejecutivo",
+      "Dashboard operacional",
+      "Indicadores de gestión (KPI)",
+      "Trazabilidad",
+      "Auditoría de movimientos",
+      "Gestión avanzada de órdenes",
+      "Control de cumplimiento",
+      "Automatizaciones",
+      "Alertas avanzadas",
+      "Geocercas múltiples y zonas operacionales",
+      "Integraciones mediante API",
+      "Integración con sistemas externos cuando sea técnicamente posible",
+      "Reportes avanzados y exportaciones",
+      "Gestión documental",
+      "Portal para clientes",
+      "Portal para conductores",
+      "Seguimiento de servicios",
+      "Infraestructura escalable",
+      "Históricos y respaldos",
+      "Monitoreo de infraestructura",
+      "Soporte técnico",
+    ],
+    monthlyPerVehicle: FLEET_MONTHLY_PER_VEHICLE["flota-grande"],
+    cta: "Cotizar Flota Grande",
+    tag: "Empresarial",
+  },
+];
+
+/** Filas de la tabla comparativa. El orden es pequeña, mediana, grande. */
+export const FLEET_COMPARISON: Array<{ feature: string; values: [string, string, string] }> = [
+  { feature: "Vehículos", values: ["1–10", "11–30", "31 o más"] },
+  { feature: "Desarrollo personalizado", values: ["Sí", "Sí", "Sí"] },
+  { feature: "GPS en tiempo real", values: ["Sí", "Sí", "Sí"] },
+  { feature: "Historial de rutas", values: ["Sí", "Sí", "Sí"] },
+  { feature: "Geocercas", values: ["Sí", "Sí", "Sí"] },
+  { feature: "Alertas", values: ["Sí", "Avanzadas", "Avanzadas"] },
+  { feature: "Órdenes de trabajo", values: ["Sí", "Avanzadas", "Avanzadas"] },
+  { feature: "Conductores", values: ["Sí", "Sí", "Sí"] },
+  { feature: "Clientes", values: ["Básico", "Avanzado", "Avanzado"] },
+  { feature: "Portal de clientes", values: ["Opcional", "Disponible", "Disponible"] },
+  { feature: "Portal de conductores", values: ["Opcional", "Disponible", "Disponible"] },
+  { feature: "Gestión documental", values: ["Básica", "Avanzada", "Avanzada"] },
+  { feature: "API e integraciones", values: ["Opcional", "Disponible", "Avanzada"] },
+  {
+    feature: "Dashboards",
+    values: ["Operacional", "Avanzado", "Ejecutivo y operacional"],
+  },
+  {
+    feature: "Valor de desarrollo",
+    values: [
+      fromPrice(FLEET_PRICE_AMOUNTS["flota-pequena"]),
+      fromPrice(FLEET_PRICE_AMOUNTS["flota-mediana"]),
+      fromPrice(FLEET_PRICE_AMOUNTS["flota-grande"]),
+    ],
+  },
+  {
+    feature: "GPS por vehículo",
+    values: [
+      `${clp(FLEET_HARDWARE_AMOUNTS.gps)} + IVA`,
+      `${clp(FLEET_HARDWARE_AMOUNTS.gps)} + IVA`,
+      `${clp(FLEET_HARDWARE_AMOUNTS.gps)} + IVA`,
+    ],
+  },
+  {
+    feature: "Instalación por vehículo",
+    values: [
+      `${clp(FLEET_HARDWARE_AMOUNTS.installation)} + IVA`,
+      `${clp(FLEET_HARDWARE_AMOUNTS.installation)} + IVA`,
+      `${clp(FLEET_HARDWARE_AMOUNTS.installation)} + IVA`,
+    ],
+  },
+  {
+    feature: "Mensual por vehículo",
+    values: [
+      `${clp(FLEET_MONTHLY_PER_VEHICLE["flota-pequena"])} + IVA`,
+      `${clp(FLEET_MONTHLY_PER_VEHICLE["flota-mediana"])} + IVA`,
+      `${clp(FLEET_MONTHLY_PER_VEHICLE["flota-grande"])} + IVA`,
+    ],
+  },
+  {
+    feature: "Mantención de plataforma",
+    values: [
+      `${clp(FLEET_PLATFORM_MAINTENANCE)} + IVA / mes`,
+      `${clp(FLEET_PLATFORM_MAINTENANCE)} + IVA / mes`,
+      `${clp(FLEET_PLATFORM_MAINTENANCE)} + IVA / mes`,
+    ],
+  },
+];
+
+/** Qué cubre el costo mensual, para que no se lea como una cuota sin contenido. */
+export const FLEET_MONTHLY_INCLUDES = [
+  "Hosting de la plataforma",
+  "Base de datos",
+  "Servidor GPS",
+  "Recepción de información GPS",
+  "SIM M2M",
+  "Conectividad móvil",
+  "Procesamiento de posiciones",
+  "Almacenamiento",
+  "Respaldos",
+  "Certificados SSL",
+  "Monitoreo de infraestructura",
+  "Mantención técnica",
+  "Corrección de errores",
+  "Actualizaciones de seguridad",
+  "Administración de los servicios ya existentes",
+  "Soporte remoto",
+];
+
+/** Lo que la mantención NO cubre. Evita discusiones después de firmar. */
+export const FLEET_MAINTENANCE_EXCLUSIONS = [
+  "Nuevos módulos",
+  "Cambios estructurales",
+  "Nuevas integraciones",
+  "Desarrollo de nuevas funcionalidades",
+  "Automatizaciones adicionales",
+  "Modificaciones mayores al flujo operacional",
+  "Nuevos portales",
+  "Cambios completos de diseño",
+];
+
+/** De qué depende el precio final de cada plataforma. */
+export const FLEET_SCOPE_FACTORS = [
+  "Cantidad de módulos",
+  "Cantidad de usuarios",
+  "Procesos involucrados",
+  "Automatizaciones",
+  "Integraciones",
+  "Portales",
+  "Reportes",
+  "Infraestructura",
+  "Complejidad operacional",
+  "Cantidad de vehículos",
+];
+
+export const FLEET_INSTALLATION_NOTE =
+  "Las instalaciones especiales, maquinaria, sensores adicionales, trabajos eléctricos especiales, " +
+  "traslados fuera de cobertura o requerimientos adicionales se cotizan por separado.";
+
+export const FLEET_CUSTOM_NOTE =
+  "Cada proyecto se desarrolla específicamente según la operación del cliente. No corresponde a una " +
+  "plataforma GPS genérica o compartida.";

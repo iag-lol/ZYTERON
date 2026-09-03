@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import {
   ADDON_CATALOG,
+  FLEET_PLANS,
   ADDON_PRICE_AMOUNTS,
   AI_SERVICES,
   CORPORATE_SCOPE_NOTE,
@@ -166,6 +167,10 @@ const PLAN_LABELS: Record<string, string> = {
   "sistema-web-panel-administrativo": "Sistema Web / Panel Administrativo",
   "sistema-avanzado": "Sistema Avanzado / Desarrollo a medida",
   ...Object.fromEntries(PLAN_CATALOG.map((plan) => [plan.id, plan.name])),
+  // Las plataformas de flota viven en su propio catálogo, fuera de la escalera
+  // principal, así que se agregan aquí para que el formulario reconozca el plan
+  // con el que llegó el cliente.
+  ...Object.fromEntries(FLEET_PLANS.map((plan) => [plan.id, plan.name])),
 };
 
 const ADDON_BY_ID = new Map(ADDON_CATALOG.map((item) => [item.id, item]));
