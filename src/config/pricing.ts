@@ -799,9 +799,9 @@ export const MAINTENANCE: PricedItem[] = MAINTENANCE_CATALOG.map((item) => ({
  */
 
 export const FLEET_PRICE_AMOUNTS = {
-  "flota-pequena": 3_490_000,
-  "flota-mediana": 4_990_000,
-  "flota-grande": 6_990_000,
+  "flota-pequena": 3_990_000,
+  "flota-mediana": 5_990_000,
+  "flota-grande": 7_990_000,
 } as const;
 
 export type FleetPlanId = keyof typeof FLEET_PRICE_AMOUNTS;
@@ -817,10 +817,21 @@ export const FLEET_HARDWARE_AMOUNTS = {
 export const FLEET_HARDWARE_TOTAL =
   FLEET_HARDWARE_AMOUNTS.gps + FLEET_HARDWARE_AMOUNTS.installation;
 
-/** Mantención mensual de la plataforma. Igual en los tres niveles. */
+/**
+ * Mantención mensual de la plataforma. Es FIJA POR CLIENTE, no por vehículo, y
+ * se factura aparte de la infraestructura: cubrir el software y sostener la
+ * conectividad de cada equipo son dos cosas distintas.
+ */
 export const FLEET_PLATFORM_MAINTENANCE = 59_990;
 
-/** El servicio mensual por vehículo baja a mayor tamaño de flota. */
+/**
+ * Servicio mensual por vehículo. No es el chip: es la porción de
+ * infraestructura que consume cada vehículo conectado (conectividad,
+ * recepción y procesamiento de posiciones, servidor, base de datos,
+ * almacenamiento histórico, eventos y respaldos). Por eso escala con la
+ * cantidad de vehículos activos, y por eso el precio unitario baja cuando la
+ * flota crece y los recursos se reparten mejor.
+ */
 export const FLEET_MONTHLY_PER_VEHICLE: Record<FleetPlanId, number> = {
   "flota-pequena": 7_990,
   "flota-mediana": 6_990,
@@ -1063,25 +1074,89 @@ export const FLEET_COMPARISON: Array<{ feature: string; values: [string, string,
   },
 ];
 
-/** Qué cubre el costo mensual, para que no se lea como una cuota sin contenido. */
-export const FLEET_MONTHLY_INCLUDES = [
-  "Hosting de la plataforma",
-  "Base de datos",
+/**
+ * Qué sostiene el valor mensual POR VEHÍCULO.
+ *
+ * Se lista el servicio contratado, nunca el proveedor ni el costo interno de
+ * cada pieza: el cliente contrata "infraestructura, GPS y conectividad", y así
+ * la infraestructura puede crecer o cambiar de proveedor sin tener que
+ * renegociar la descripción comercial.
+ */
+export const FLEET_VEHICLE_INFRA_INCLUDES = [
+  "SIM M2M e internet móvil",
+  "Comunicación GPS 24/7",
   "Servidor GPS",
-  "Recepción de información GPS",
-  "SIM M2M",
-  "Conectividad móvil",
+  "Hosting",
+  "Base de datos",
   "Procesamiento de posiciones",
+  "Historial de recorridos",
   "Almacenamiento",
+  "Alertas",
+  "Geocercas",
+  "Eventos",
   "Respaldos",
-  "Certificados SSL",
-  "Monitoreo de infraestructura",
-  "Mantención técnica",
-  "Corrección de errores",
-  "Actualizaciones de seguridad",
-  "Administración de los servicios ya existentes",
-  "Soporte remoto",
+  "Infraestructura cloud",
+  "Seguridad",
+  "Monitoreo técnico",
 ];
+
+/** Qué cubre la mantención fija de la plataforma. */
+export const FLEET_MAINTENANCE_INCLUDES = [
+  "Mantención técnica de la plataforma",
+  "Corrección de errores",
+  "Revisión de funcionamiento",
+  "Actualizaciones de seguridad",
+  "Compatibilidad",
+  "Soporte remoto",
+  "Mantención de las funciones existentes",
+  "Revisión de las integraciones contratadas",
+];
+
+/** Tramos de precio por vehículo. El primero que calce manda. */
+export const FLEET_TIERS: Array<{
+  id: FleetPlanId;
+  label: string;
+  min: number;
+  max: number | null;
+  perVehicle: number;
+}> = [
+  { id: "flota-pequena", label: "Flota Pequeña", min: 1, max: 10, perVehicle: 7_990 },
+  { id: "flota-mediana", label: "Flota Mediana", min: 11, max: 30, perVehicle: 6_990 },
+  { id: "flota-grande", label: "Flota Grande", min: 31, max: null, perVehicle: 5_990 },
+];
+
+/** Tramo que corresponde a una cantidad de vehículos. */
+export function fleetTierFor(vehicles: number) {
+  const count = Math.max(1, Math.floor(vehicles || 0));
+  return FLEET_TIERS.find((tier) => count >= tier.min && (tier.max === null || count <= tier.max))
+    ?? FLEET_TIERS[FLEET_TIERS.length - 1];
+}
+
+/** Cálculo completo para una flota: equipamiento inicial y operación mensual. */
+export function fleetQuote(vehicles: number) {
+  const count = Math.max(1, Math.floor(vehicles || 0));
+  const tier = fleetTierFor(count);
+  const infrastructure = count * tier.perVehicle;
+
+  return {
+    count,
+    tier,
+    /** Operación mensual. */
+    infrastructure,
+    maintenance: FLEET_PLATFORM_MAINTENANCE,
+    monthlyTotal: infrastructure + FLEET_PLATFORM_MAINTENANCE,
+    /** Equipamiento inicial, sin el desarrollo: ese siempre parte "desde". */
+    gps: count * FLEET_HARDWARE_AMOUNTS.gps,
+    installation: count * FLEET_HARDWARE_AMOUNTS.installation,
+    hardwareTotal: count * FLEET_HARDWARE_TOTAL,
+    /** Desarrollo referencial del tramo, para componer la inversión inicial. */
+    development: FLEET_PRICE_AMOUNTS[tier.id],
+    initialInvestment: FLEET_PRICE_AMOUNTS[tier.id] + count * FLEET_HARDWARE_TOTAL,
+  };
+}
+
+/** Ejemplos publicados. Se calculan, no se escriben a mano. */
+export const FLEET_EXAMPLES = [10, 25, 50].map((vehicles) => fleetQuote(vehicles));
 
 /** Lo que la mantención NO cubre. Evita discusiones después de firmar. */
 export const FLEET_MAINTENANCE_EXCLUSIONS = [
@@ -1112,6 +1187,16 @@ export const FLEET_SCOPE_FACTORS = [
 export const FLEET_INSTALLATION_NOTE =
   "Las instalaciones especiales, maquinaria, sensores adicionales, trabajos eléctricos especiales, " +
   "traslados fuera de cobertura o requerimientos adicionales se cotizan por separado.";
+
+/** El mensual depende del consumo real, no de una tarifa plana. */
+export const FLEET_INFRA_VOLUME_NOTE =
+  "El valor mensual de infraestructura está asociado a la cantidad de vehículos activos, por el consumo " +
+  "proporcional de conectividad, procesamiento GPS, servidor, base de datos, almacenamiento e infraestructura cloud.";
+
+export const FLEET_INFRA_SCOPE_NOTE =
+  "Los precios indicados corresponden a configuraciones estándar. Grandes volúmenes de información, alta " +
+  "frecuencia de transmisión, almacenamiento histórico extendido, cámaras, sensores, CAN Bus u otros " +
+  "requerimientos pueden modificar el valor de infraestructura.";
 
 export const FLEET_CUSTOM_NOTE =
   "Cada proyecto se desarrolla específicamente según la operación del cliente. No corresponde a una " +
