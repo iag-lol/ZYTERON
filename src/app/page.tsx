@@ -733,25 +733,6 @@ export default async function Home() {
         </Container>
       </section>
 
-      {/* ── Qué es Zyteron: declaración de entidad citable ── */}
-      <section className="bg-white pt-14">
-        <Container>
-          <Reveal>
-            <div className="mx-auto max-w-4xl rounded-2xl border border-blue-100 bg-blue-50/60 p-6 sm:p-8">
-              <p className="text-sm leading-relaxed text-slate-700 sm:text-base">
-                <strong className="font-extrabold text-slate-900">Zyteron</strong> ({siteConfig.legalName}) es
-                una empresa chilena de desarrollo web con oficina en {siteConfig.address.streetAddress},{" "}
-                {siteConfig.address.commune}, {siteConfig.address.city}. Creamos páginas web
-                profesionales, tiendas online, sistemas a medida y plataformas corporativas para pymes y
-                empresas de todo Chile: desde planes web desde {clpAmount("web-basica")} CLP + IVA hasta
-                intranets y plataformas de gestión desde {clpAmount("intranet")} CLP + IVA, siempre con
-                cotización formal, boleta o factura y soporte post-entrega.
-              </p>
-            </div>
-          </Reveal>
-        </Container>
-      </section>
-
       {/* ── Cobertura nacional ── */}
       <section id="cobertura" className="section-alt scroll-mt-24 py-20">
         <Container className="space-y-10">
