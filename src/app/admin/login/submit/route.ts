@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ADMIN_FALLBACK, ADMIN_SESSION_VALUE, COOKIE_KEY } from "@/lib/auth/admin-constants";
+import { adminCookieOptions, createAdminSessionToken } from "@/lib/auth/admin-session";
 
 async function parsePwd(req: Request) {
   const contentType = (req.headers.get("content-type") || "").toLowerCase();
@@ -21,25 +21,20 @@ async function parsePwd(req: Request) {
 
 export async function POST(req: Request) {
   const { pwd, isJson } = await parsePwd(req);
-  const pass = process.env.ADMIN_PASSWORD || ADMIN_FALLBACK;
-  if (!pwd || pwd !== pass) {
+  const pass = process.env.ADMIN_PASSWORD;
+  const token = pwd && pass && pwd === pass ? await createAdminSessionToken() : null;
+
+  if (!token) {
     if (!isJson) {
       const url = new URL("/admin/login?error=1", req.url);
       return NextResponse.redirect(url, { status: 303 });
     }
     return NextResponse.json({ ok: false }, { status: 401 });
   }
+
   const res = isJson
     ? NextResponse.json({ ok: true })
     : NextResponse.redirect(new URL("/admin", req.url), { status: 303 });
-  res.cookies.set({
-    name: COOKIE_KEY,
-    value: ADMIN_SESSION_VALUE,
-    path: "/",
-    httpOnly: true,
-    sameSite: "lax",
-    maxAge: 60 * 60 * 12,
-    secure: process.env.NODE_ENV === "production",
-  });
+  res.cookies.set(adminCookieOptions(token));
   return res;
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { COOKIE_KEY } from "@/lib/auth/admin-constants";
+import { clearedAdminCookie } from "@/lib/auth/admin-session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 function clearAdminSession(req: Request) {
   // 303 obliga al navegador a pedir /admin/login con GET, sin reenviar el POST.
   const res = NextResponse.redirect(new URL("/admin/login", req.url), { status: 303 });
-  res.cookies.set({ name: COOKIE_KEY, value: "", path: "/", maxAge: 0 });
+  res.cookies.set(clearedAdminCookie());
   return res;
 }
 
