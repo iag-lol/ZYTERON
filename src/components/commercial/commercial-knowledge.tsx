@@ -113,7 +113,7 @@ function CompanyTab() {
         <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50 p-4">
           <p className="text-[10px] font-bold uppercase tracking-wider text-blue-600">Representante</p>
           <p className="mt-1 text-[13px] font-extrabold text-blue-950">
-            {companyIdentity.representative.name} · {companyIdentity.representative.role}
+            {companyIdentity.representative.role}
           </p>
           <p className="mt-1 text-[12px] leading-5 text-blue-900/80">
             {companyIdentity.representative.description}

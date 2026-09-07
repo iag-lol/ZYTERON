@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { renderMarkdown } from "@/lib/markdown";
 import { formatStableLongDateEsCl } from "@/lib/stable-date";
 import type { DbBlogPost } from "@/lib/admin/blog-cases-repository";
-import { siteConfig } from "@/config/site";
 
 type RelatedService = { href: string; label: string; signals: string[] };
 
@@ -39,7 +38,7 @@ export function DbBlogArticle({ post }: { post: DbBlogPost }) {
   const html = renderMarkdown(post.content);
   const publishedDate = formatStableLongDateEsCl(post.publishedAt ?? post.createdAt ?? "");
   const modifiedDate = formatStableLongDateEsCl(post.updatedAt ?? post.publishedAt ?? post.createdAt ?? "");
-  const authorName = post.author?.trim() || siteConfig.representative.name;
+  const authorName = post.author?.trim() || "Equipo Zyteron";
   const relatedServices = getRelatedServices(post);
   const contactHref = `/contacto?origen=blog&item=${encodeURIComponent(post.slug)}`;
 

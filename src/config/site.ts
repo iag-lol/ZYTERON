@@ -79,7 +79,11 @@ export const siteConfig = {
     whatsapp: ZYTERON_WHATSAPP_URL,
   },
   representative: {
-    name: "Eduardo Ávila",
+    // Nombre del representante legal: nunca se guarda en el código fuente.
+    // Solo se resuelve si `ZYTERON_REPRESENTATIVE_NAME` está definida en el
+    // entorno de despliegue (igual que ZYTERON_REPRESENTATIVE_RUT); si no,
+    // queda vacío y debe informarse manualmente por contrato en el panel.
+    name: process.env.ZYTERON_REPRESENTATIVE_NAME?.trim() || "",
     role: "Fundador y Líder de Proyectos",
     description:
       "Fundador de Zyteron con más de 7 años de experiencia en tecnología, análisis de procesos, liderazgo operativo y desarrollo de soluciones digitales para empresas en Chile.",

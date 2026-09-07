@@ -33,7 +33,6 @@ import { softBlueBlurDataUrl } from "@/lib/image-placeholders";
 import { Reveal } from "@/components/home/reveal";
 import { CountUp } from "@/components/home/count-up";
 import { ScrollProgress } from "@/components/home/scroll-progress";
-import { ClientLogosMarquee } from "@/components/home/client-logos-marquee";
 import { HomeFaqAccordion } from "@/components/home/home-faq";
 
 export const revalidate = 3600;
@@ -749,24 +748,6 @@ export default async function Home() {
                 cotización formal, boleta o factura y soporte post-entrega.
               </p>
             </div>
-          </Reveal>
-        </Container>
-      </section>
-
-      {/* ── Empresas que confían ── */}
-      <section className="bg-white py-14">
-        <Container className="space-y-8">
-          <Reveal className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Confianza real</p>
-            <h2 className="text-balance text-2xl font-extrabold text-slate-900 sm:text-3xl">
-              Empresas que ya trabajaron con Zyteron
-            </h2>
-            <p className="mx-auto max-w-2xl text-sm text-slate-600 sm:text-base">
-              Sistemas internos, plataformas y páginas web desarrolladas para operaciones reales en Chile.
-            </p>
-          </Reveal>
-          <Reveal delay={100}>
-            <ClientLogosMarquee />
           </Reveal>
         </Container>
       </section>

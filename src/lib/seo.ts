@@ -11,7 +11,6 @@ import {
   getFAQSchema,
   getLocalBusinessSchema,
   getOrganizationSchema,
-  getPersonSchema,
   getServiceSchema,
   getWebPageSchema,
 } from "@/lib/schema";
@@ -263,32 +262,19 @@ type AboutPageJsonLdInput = {
   path: string;
   title: string;
   description: string;
-  team: Array<{
-    id: string;
-    name: string;
-    role: string;
-    description?: string;
-    photoPath?: string;
-    knowsAbout?: string[];
-  }>;
   breadcrumbs?: BreadcrumbItem[];
 };
 
 /**
- * Schema para /quienes-somos: AboutPage + Person por cada integrante visible
- * del equipo, enlazados a la Organization. Los @id de las personas deben
- * calzar con los usados en defaultJsonLdOrganization (founder) para que
- * Google consolide la entidad en un solo grafo.
+ * Schema para /quienes-somos: sólo AboutPage + Organization. No se emiten
+ * entidades Person: el sitio no expone perfiles individuales del equipo.
  */
 export function buildAboutPageJsonLd({
   path,
   title,
   description,
-  team,
   breadcrumbs = [],
 }: AboutPageJsonLdInput) {
-  const pageUrl = buildAbsoluteUrl(path);
-
   const graph: Record<string, unknown>[] = [
     ...(getWebPageSchema({
       path,
@@ -296,17 +282,6 @@ export function buildAboutPageJsonLd({
       description,
       pageType: "AboutPage",
     })["@graph"] as Record<string, unknown>[]),
-    ...team.map((member) =>
-      getPersonSchema({
-        id: `${pageUrl}#${member.id}`,
-        name: member.name,
-        jobTitle: member.role,
-        description: member.description,
-        image: member.photoPath,
-        url: pageUrl,
-        knowsAbout: member.knowsAbout,
-      }),
-    ),
   ];
 
   if (breadcrumbs.length) {

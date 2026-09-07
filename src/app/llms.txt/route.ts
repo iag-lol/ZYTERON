@@ -75,7 +75,7 @@ function buildLlmsMarkdown(): string {
 > ${siteConfig.legalName} (RUT ${siteConfig.taxId}) es una empresa chilena de desarrollo web fundada en ${siteConfig.foundingDate}, con oficina en ${address.display}; desarrolla páginas web, tiendas online, sistemas a medida, automatización y soporte TI para empresas y pymes de todo Chile.
 
 Sitio web: ${siteConfig.url}
-Equipo con más de ${business.experienceYears} años de experiencia en desarrollo y tecnología, liderado por ${siteConfig.representative.name} (${siteConfig.representative.role}).
+Equipo con más de ${business.experienceYears} años de experiencia en desarrollo y tecnología.
 
 ## Servicios y páginas canónicas
 

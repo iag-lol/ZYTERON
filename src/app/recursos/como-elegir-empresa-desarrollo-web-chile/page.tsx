@@ -4,7 +4,6 @@ import { AlertTriangle, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
-import { siteConfig } from "@/config/site";
 import { PLAN_PRICES } from "@/config/pricing";
 import { buildArticleJsonLd, buildFaqJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
@@ -141,10 +140,7 @@ export default function ComoElegirEmpresaDesarrolloWebChilePage() {
             "12 criterios verificables, señales de alerta y preguntas frecuentes para contratar un desarrollo web en Chile con seguridad.",
           datePublished: "2026-08-20T12:00:00-04:00",
           dateModified: "2026-08-20T12:00:00-04:00",
-          authorName: siteConfig.representative.name,
-          authorType: "Person",
-          authorUrl: `${siteConfig.url}/quienes-somos`,
-          authorId: `${siteConfig.url}/quienes-somos#eduardo-avila`,
+          authorName: "Equipo Zyteron",
         })}
       />
       <JsonLd id="elegir-empresa-web-faq-schema" data={buildFaqJsonLd(faqs)} />
@@ -159,7 +155,7 @@ export default function ComoElegirEmpresaDesarrolloWebChilePage() {
             Para elegir bien una empresa de desarrollo web en Chile, verifica cinco cosas antes de pagar: portafolio con sitios reales en línea, precios o rangos publicados, contrato con factura, plazos y alcance por escrito, y que el dominio y el código queden a tu nombre. Esta guía desarrolla esos puntos en 12 criterios verificables, más las señales de alerta que anticipan un mal proyecto.
           </p>
           <p className="text-sm font-semibold text-slate-500">
-            Publicado por Eduardo Ávila · Zyteron SpA · 20 de agosto de 2026
+            Publicado por Equipo Zyteron · Zyteron SpA · 20 de agosto de 2026
           </p>
         </Container>
       </section>

@@ -45,25 +45,14 @@ function resolveArticleAuthor(author: string | null) {
     };
   }
 
-  // El @id del fundador sólo se asigna si el autor firmado ES esa persona;
-  // cualquier otro autor se emite como Person sin @id para no fusionar
-  // identidades distintas en la misma entidad del grafo.
-  const isFounder =
-    normalized.localeCompare(siteConfig.representative.name, "es", { sensitivity: "base" }) === 0;
-
-  return isFounder
-    ? {
-        name: siteConfig.representative.name,
-        type: "Person" as const,
-        url: `${siteConfig.url}/quienes-somos`,
-        id: `${siteConfig.url}/quienes-somos#eduardo-avila`,
-      }
-    : {
-        name: normalized,
-        type: "Person" as const,
-        url: undefined,
-        id: undefined,
-      };
+  // Cualquier autor firmado se emite como Person sin @id: no se enlazan
+  // perfiles individuales del equipo en el grafo de datos estructurados.
+  return {
+    name: normalized,
+    type: "Person" as const,
+    url: undefined,
+    id: undefined,
+  };
 }
 
 export async function generateMetadata({ params }: BlogDetailProps): Promise<Metadata> {

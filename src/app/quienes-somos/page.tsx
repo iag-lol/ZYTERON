@@ -1,25 +1,19 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import {
   CheckCircle2,
-  Building2,
-  Cpu,
   MonitorSmartphone,
   ShoppingCart,
   LayoutDashboard,
   Zap,
   LifeBuoy,
   TrendingUp,
-  Users,
-  Workflow,
   Sparkles,
   MessageCircle,
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildAboutPageJsonLd, createPageMetadata } from "@/lib/seo";
-import { softBlueBlurDataUrl } from "@/lib/image-placeholders";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
 
@@ -34,52 +28,20 @@ const WHATSAPP_ADVISORY_URL = `${siteConfig.social.whatsapp}?text=${encodeURICom
   "Hola, vengo de la página de Zyteron y necesito asesoría para un proyecto digital",
 )}`;
 
-const leaderExpertise = [
-  { icon: Cpu, label: "Tecnología" },
-  { icon: Workflow, label: "Análisis de procesos" },
-  { icon: Users, label: "Liderazgo operativo" },
-  { icon: MonitorSmartphone, label: "Soluciones digitales" },
-  { icon: Building2, label: "Negocios reales" },
-];
-
-const teamMembers = [
+// Roles del equipo mostrados de forma genérica: sin nombres ni fotos
+// individuales de las personas.
+const teamRoles = [
   {
-    id: "eduardo-avila",
-    name: "Eduardo Ávila",
-    role: "Fundador y líder de proyectos",
-    photo: "/equipo/eduardo-avila/perfil-web.png",
-    bio: `Con más de ${siteConfig.business.experienceYears} años de experiencia en tecnología, análisis de procesos, liderazgo operativo y desarrollo de soluciones digitales para empresas, lidera Zyteron con una visión práctica: crear herramientas claras, profesionales y útiles para negocios reales.`,
-    // NAP unificado: usamos el correo oficial centralizado en siteConfig en vez de un correo personal.
-    contact: siteConfig.contact.email,
-    // Especialidades reales visibles en la bio; el schema Person las propaga como knowsAbout.
-    knowsAbout: [
-      "Tecnología",
-      "Análisis de procesos",
-      "Liderazgo operativo",
-      "Desarrollo de soluciones digitales para empresas",
-    ],
+    role: "Dirección y liderazgo de proyectos",
+    desc: `Más de ${siteConfig.business.experienceYears} años de experiencia en tecnología, análisis de procesos, liderazgo operativo y desarrollo de soluciones digitales para empresas, con una visión práctica: crear herramientas claras, profesionales y útiles para negocios reales.`,
   },
   {
-    id: "victor",
-    name: "Víctor",
     role: "Desarrollo y soporte TI",
-    photo: "/equipo/victor/perfil-web.png",
-    bio: "Profesional enfocado en desarrollo web, soporte técnico, mantenimiento de sistemas e implementación TI.",
-    knowsAbout: ["Desarrollo web", "Soporte técnico", "Mantenimiento de sistemas", "Implementación TI"],
+    desc: "Desarrollo web, soporte técnico, mantenimiento de sistemas e implementación TI.",
   },
   {
-    id: "leonel",
-    name: "Leonel",
     role: "Análisis, desarrollo y calidad",
-    photo: "/equipo/leonel/perfil-web.png",
-    bio: "Profesional enfocado en análisis, desarrollo de aplicaciones, integración de sistemas, automatización y control de calidad.",
-    knowsAbout: [
-      "Análisis de sistemas",
-      "Desarrollo de aplicaciones",
-      "Integración de sistemas",
-      "Automatización",
-      "Control de calidad",
-    ],
+    desc: "Análisis de sistemas, desarrollo de aplicaciones, integración de sistemas, automatización y control de calidad.",
   },
 ];
 
@@ -137,8 +99,6 @@ const reasons = [
 ];
 
 export default function QuienesSomosPage() {
-  const [leader, ...team] = teamMembers;
-
   return (
     <main className="bg-white">
       <JsonLd
@@ -148,14 +108,6 @@ export default function QuienesSomosPage() {
           title: "Empresa de desarrollo web en Santiago | Zyteron SpA",
           description:
             "Conoce Zyteron SpA, empresa chilena de desarrollo web, sistemas digitales, automatización y soporte tecnológico.",
-          team: teamMembers.map((member) => ({
-            id: member.id,
-            name: member.name,
-            role: member.role,
-            description: member.bio,
-            photoPath: member.photo,
-            knowsAbout: member.knowsAbout,
-          })),
           breadcrumbs: [
             { name: "Inicio", path: "/" },
             { name: "Quiénes somos", path: "/quienes-somos" },
@@ -204,8 +156,7 @@ export default function QuienesSomosPage() {
             {siteConfig.address.streetAddress}, {siteConfig.address.commune},{" "}
             {siteConfig.address.city}. Desarrolla páginas web, tiendas online, sistemas a medida,
             automatización y soporte TI para empresas y pymes de todo Chile, con un equipo que suma
-            más de {siteConfig.business.experienceYears} años de experiencia en tecnología, liderado
-            por {siteConfig.representative.name}, {siteConfig.representative.role.toLowerCase()}.
+            más de {siteConfig.business.experienceYears} años de experiencia en tecnología.
           </p>
         </Container>
       </section>
@@ -255,71 +206,14 @@ export default function QuienesSomosPage() {
             </p>
           </div>
 
-          {/* Tarjeta Líder (Destacada) */}
-          <article className="group relative mx-auto max-w-5xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-md transition-shadow hover:shadow-xl">
-            <div className="grid md:grid-cols-[0.8fr_1.2fr]">
-              <div className="relative w-full overflow-hidden bg-slate-100 aspect-[4/5] sm:aspect-auto">
-                <Image
-                  src={leader.photo}
-                  alt="Eduardo Ávila, fundador de Zyteron SpA, empresa de desarrollo web en Santiago Chile"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 40vw"
-                  quality={95}
-                  placeholder="blur"
-                  blurDataURL={softBlueBlurDataUrl}
-                  className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
-                  priority
-                />
-              </div>
-
-              <div className="relative z-20 flex flex-col justify-center p-8 md:p-12">
-                <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Representante</p>
-                <h3 className="mt-2 text-3xl font-extrabold text-slate-900 sm:text-4xl">{leader.name}</h3>
-                <p className="mt-1 text-base font-semibold text-blue-700">{leader.role}</p>
-
-                <p className="mt-6 leading-relaxed text-slate-600">{leader.bio}</p>
-
-                <ul className="mt-8 flex flex-wrap gap-2">
-                  {leaderExpertise.map(({ icon: Icon, label }) => (
-                    <li
-                      key={label}
-                      className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-                    >
-                      <Icon className="h-4 w-4 text-blue-600" aria-hidden />
-                      {label}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </article>
-
-          {/* Tarjetas Resto del Equipo */}
-          <div className="mx-auto grid max-w-4xl gap-6 sm:grid-cols-2">
-            {team.map((member) => (
+          <div className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {teamRoles.map((member) => (
               <article
-                key={member.name}
-                className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+                key={member.role}
+                className="flex flex-col rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md"
               >
-                <div className="relative aspect-square w-full overflow-hidden bg-slate-100">
-                    <Image
-                      src={member.photo}
-                      alt={`${member.name}, ${member.role} en Zyteron SpA, empresa de desarrollo web en Santiago Chile`}
-                      fill
-                    sizes="(max-width: 640px) 100vw, 50vw"
-                    quality={85}
-                    loading="lazy"
-                    placeholder="blur"
-                    blurDataURL={softBlueBlurDataUrl}
-                    className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
-                  />
-                </div>
-
-                <div className="flex flex-1 flex-col p-6">
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-blue-600">{member.role}</p>
-                  <h3 className="mt-1 text-2xl font-extrabold text-slate-900">{member.name}</h3>
-                  <p className="mt-4 leading-relaxed text-slate-600">{member.bio}</p>
-                </div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-blue-600">{member.role}</p>
+                <p className="mt-4 leading-relaxed text-slate-600">{member.desc}</p>
               </article>
             ))}
           </div>

@@ -4,7 +4,6 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
-import { siteConfig } from "@/config/site";
 import { buildArticleJsonLd, buildFaqJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 const path = "/recursos/checklist-seo-pymes-chile";
@@ -111,10 +110,7 @@ export default function ChecklistSeoPymesChilePage() {
           description: "Checklist práctico para revisar indexación, contenido, autoridad y medición SEO.",
           datePublished: "2026-07-11T12:00:00-04:00",
           dateModified: "2026-07-11T12:00:00-04:00",
-          authorName: siteConfig.representative.name,
-          authorType: "Person",
-          authorUrl: `${siteConfig.url}/quienes-somos`,
-          authorId: `${siteConfig.url}/quienes-somos#eduardo-avila`,
+          authorName: "Equipo Zyteron",
         })}
       />
       <JsonLd id="checklist-seo-faq-schema" data={buildFaqJsonLd(faqs)} />
@@ -128,7 +124,7 @@ export default function ChecklistSeoPymesChilePage() {
           <p className="max-w-3xl text-lg leading-relaxed text-slate-600">
             Usa esta lista para detectar problemas de indexación, contenido, enlazado, autoridad y medición que pueden limitar el crecimiento orgánico de una web empresarial.
           </p>
-          <p className="text-sm font-semibold text-slate-500">Publicado por Eduardo Ávila · Zyteron SpA · 11 de julio de 2026</p>
+          <p className="text-sm font-semibold text-slate-500">Publicado por Equipo Zyteron · Zyteron SpA · 11 de julio de 2026</p>
         </Container>
       </section>
 

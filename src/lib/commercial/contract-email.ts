@@ -1,4 +1,3 @@
-import { siteConfig } from "@/config/site";
 import { CONTRACT_COMPANY, CONTRACT_TYPE_INFO, type ContractTypeId } from "@/config/contracts";
 import { recordAudit } from "@/lib/commercial/audit";
 import { commercialDb } from "@/lib/commercial/store";
@@ -55,8 +54,6 @@ Si detectas algún dato incorrecto, no firmes el documento. Responde este correo
 
 Saludos,
 
-${siteConfig.representative.name}
-${siteConfig.representative.role}
 ${CONTRACT_COMPANY.legalName}
 ${CONTRACT_COMPANY.email}
 ${CONTRACT_COMPANY.phone}

@@ -47,16 +47,6 @@ export type SchemaArticleInput = {
   authorId?: string;
 };
 
-export type SchemaPersonInput = {
-  id?: string;
-  name: string;
-  jobTitle: string;
-  description?: string;
-  image?: string;
-  url?: string;
-  knowsAbout?: string[];
-};
-
 const ROUTE_LABELS: Record<string, string> = {
   blog: "Blog",
   "casos-exito": "Casos de éxito",
@@ -206,13 +196,6 @@ export function getOrganizationSchema() {
           value: siteConfig.business.teamSize,
         },
         ...(siteConfig.business.hasPublicOffice ? { address: buildPostalAddress() } : {}),
-        founder: {
-          "@type": "Person",
-          "@id": `${siteConfig.url}/quienes-somos#eduardo-avila`,
-          name: siteConfig.representative.name,
-          jobTitle: siteConfig.representative.role,
-          url: `${siteConfig.url}/quienes-somos`,
-        },
         sameAs: [
           siteConfig.social.linkedin,
           siteConfig.social.instagram,
@@ -406,15 +389,14 @@ export function getBlogPostingSchema({
   authorId,
 }: SchemaArticleInput) {
   const pageUrl = buildAbsoluteUrl(path);
-  // El @id de una Person sólo se emite si el llamador lo entrega explícito:
-  // asignar por defecto el @id del fundador marcaría a cualquier autor como
-  // la entidad Eduardo Ávila y contaminaría el grafo de personas.
+  // El @id de una Person sólo se emite si el llamador lo entrega explícito,
+  // para no fusionar identidades distintas en la misma entidad del grafo.
   const authorEntity =
     authorType === "Person"
       ? {
           "@type": "Person",
           ...(authorId ? { "@id": authorId } : {}),
-          name: authorName ?? siteConfig.representative.name,
+          name: authorName ?? siteConfig.name,
           ...(authorUrl ? { url: authorUrl } : {}),
         }
       : {
@@ -452,31 +434,6 @@ export function getBlogPostingSchema({
   };
 }
 
-export function getPersonSchema(person?: Partial<SchemaPersonInput>) {
-  const id = person?.id ?? `${siteConfig.url}/quienes-somos#eduardo-avila`;
-  const url = person?.url ?? `${siteConfig.url}/quienes-somos`;
-
-  return {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    "@id": id,
-    name: person?.name ?? siteConfig.representative.name,
-    jobTitle: person?.jobTitle ?? siteConfig.representative.role,
-    ...(person?.description ?? siteConfig.representative.description
-      ? { description: person?.description ?? siteConfig.representative.description }
-      : {}),
-    ...(person?.image ? { image: buildAbsoluteUrl(person.image) } : {}),
-    url,
-    worksFor: {
-      "@id": getOrganizationId(),
-    },
-    ...(person?.knowsAbout?.length
-      ? {
-          knowsAbout: person.knowsAbout,
-        }
-      : {}),
-  };
-}
 
 export function getWebPageSchema({
   path,
