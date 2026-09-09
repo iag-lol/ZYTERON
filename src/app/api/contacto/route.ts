@@ -29,13 +29,6 @@ const contactSchema = z.object({
   company: z.string().trim().max(140, "Empresa demasiado larga").optional().or(z.literal("")),
   projectType: z.string().trim().min(2, "Selecciona tipo de proyecto").max(120, "Tipo de proyecto inválido"),
   budget: z.string().trim().max(80, "Presupuesto demasiado largo").optional().or(z.literal("")),
-  expectedDate: z.string().trim().max(40, "Fecha inválida").optional().or(z.literal("")),
-  needDomain: z.enum(["si", "no", "no-se"]).default("no-se"),
-  needHosting: z.enum(["si", "no", "no-se"]).default("no-se"),
-  needPayments: z.enum(["si", "no", "no-se"]).default("no-se"),
-  needAdminPanel: z.enum(["si", "no", "no-se"]).default("no-se"),
-  needCustomSystem: z.enum(["si", "no", "no-se"]).default("no-se"),
-  needTaxDocument: z.enum(["si", "no", "no-se"]).default("no-se"),
   service: z.string().trim().max(500, "Servicio demasiado largo").optional().or(z.literal("")),
   marketingSource: z.string().trim().max(600, "Origen comercial demasiado largo").optional().or(z.literal("")),
   message: z
@@ -58,12 +51,6 @@ function extractRequestIp(req: Request) {
 function normalizeOptional(value?: string) {
   const normalized = value?.trim();
   return normalized ? normalized : null;
-}
-
-function humanizeChoice(value: "si" | "no" | "no-se") {
-  if (value === "si") return "Sí";
-  if (value === "no") return "No";
-  return "No definido";
 }
 
 function checkRateLimit(ip: string) {
@@ -204,13 +191,6 @@ export async function POST(req: Request) {
     const detailLines = [
       `Tipo de proyecto: ${data.projectType}`,
       `Presupuesto estimado: ${data.budget?.trim() || "No definido"}`,
-      `Fecha esperada: ${data.expectedDate?.trim() || "No definida"}`,
-      `Necesita dominio: ${humanizeChoice(data.needDomain)}`,
-      `Necesita hosting: ${humanizeChoice(data.needHosting)}`,
-      `Necesita pagos online: ${humanizeChoice(data.needPayments)}`,
-      `Necesita panel administrativo: ${humanizeChoice(data.needAdminPanel)}`,
-      `Necesita sistema a medida: ${humanizeChoice(data.needCustomSystem)}`,
-      `Requiere documento tributario: ${humanizeChoice(data.needTaxDocument)}`,
       `Origen comercial: ${data.marketingSource?.trim() || "Acceso directo"}`,
       "",
       `Requerimiento: ${data.message.trim()}`,
@@ -223,13 +203,6 @@ export async function POST(req: Request) {
       submittedFrom: referer,
       projectType: data.projectType,
       budget: data.budget,
-      expectedDate: data.expectedDate,
-      needDomain: data.needDomain,
-      needHosting: data.needHosting,
-      needPayments: data.needPayments,
-      needAdminPanel: data.needAdminPanel,
-      needCustomSystem: data.needCustomSystem,
-      needTaxDocument: data.needTaxDocument,
     });
 
     const leadId = randomUUID();

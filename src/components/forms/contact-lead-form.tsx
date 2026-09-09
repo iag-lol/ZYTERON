@@ -101,13 +101,6 @@ export function ContactLeadForm() {
       body: JSON.stringify({
         ...values,
         service: values.projectType,
-        expectedDate: "",
-        needDomain: "no-se",
-        needHosting: "no-se",
-        needPayments: "no-se",
-        needAdminPanel: "no-se",
-        needCustomSystem: "no-se",
-        needTaxDocument: "no-se",
         marketingSource: readMarketingSource(),
       }),
     });
