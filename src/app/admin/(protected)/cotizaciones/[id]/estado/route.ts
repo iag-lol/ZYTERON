@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
+import {
+  isOperationsSchemaMissingError,
+  syncClientProcessFromQuoteStatus,
+} from "@/lib/admin/operations";
 import { syncWonQuoteById, updateRows } from "@/lib/admin/repository";
+import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
 
 type AllowedStatus = "PENDING" | "SENT" | "WON" | "LOST";
 
 function normalizeStatus(value: unknown): AllowedStatus | null {
-  const status = String(value || "").trim().toUpperCase();
+  const status = String(value || "")
+    .trim()
+    .toUpperCase();
   if (status === "PENDING" || status === "SENT" || status === "WON" || status === "LOST") {
     return status;
   }
@@ -18,6 +25,8 @@ function safeRedirectPath(value: unknown) {
 }
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
+  const auth = await requirePortalAdminApiSession();
+  if (auth.error) return auth.error;
   const { id } = await context.params;
   const formData = await request.formData();
   const nextStatus = normalizeStatus(formData.get("status"));
@@ -31,6 +40,15 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
   try {
     await updateRows("Quote", { status: nextStatus }, { id });
+
+    try {
+      await syncClientProcessFromQuoteStatus({
+        quoteId: id,
+        actorId: auth.legacy ? null : auth.session.user.id,
+      });
+    } catch (error) {
+      if (!isOperationsSchemaMissingError(error)) throw error;
+    }
 
     if (nextStatus === "WON") {
       await syncWonQuoteById(id);

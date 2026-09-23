@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
+import {
+  isOperationsSchemaMissingError,
+  syncClientProcessFromQuoteStatus,
+} from "@/lib/admin/operations";
 import { buildQuoteMeta, parseQuoteMessage, serializeQuoteMessage } from "@/lib/admin/quote";
 import { generateQuotePdf } from "@/lib/admin/quote-pdf";
-import { findOrCreateClientByEmail, insertRow, safeSelectSingle, updateRows } from "@/lib/admin/repository";
+import { findOrCreateClientByEmail, syncWonQuoteById, updateRows } from "@/lib/admin/repository";
+import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
 import { ZYTERON_QUOTE_BUCKET } from "@/lib/company";
 import { normalizeQuoteMetaPayment } from "@/lib/payments/quote-payments";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -26,7 +31,12 @@ type QuoteBody = {
 function getErrorMessage(error: unknown) {
   if (error instanceof Error && error.message) return error.message;
   if (error && typeof error === "object") {
-    const candidate = error as { message?: unknown; details?: unknown; hint?: unknown; code?: unknown };
+    const candidate = error as {
+      message?: unknown;
+      details?: unknown;
+      hint?: unknown;
+      code?: unknown;
+    };
     const parts = [candidate.message, candidate.details, candidate.hint, candidate.code]
       .filter((value) => typeof value === "string" && value.trim().length > 0)
       .map((value) => String(value).trim());
@@ -41,17 +51,10 @@ function normalizeStatus(status?: string | null) {
     .toUpperCase();
 }
 
-function toDateOnly(value?: string | null) {
-  if (!value) return null;
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    const fallback = String(value).trim();
-    return fallback.length >= 10 ? fallback.slice(0, 10) : null;
-  }
-  return parsed.toISOString().slice(0, 10);
-}
-
 export async function POST(req: Request) {
+  const auth = await requirePortalAdminApiSession();
+  if (auth.error) return auth.error;
+
   try {
     const body = (await req.json()) as QuoteBody;
     const { name, email, phone, company, message, subtotal, discount, total, status } = body || {};
@@ -80,7 +83,10 @@ export async function POST(req: Request) {
             paymentBillingType === "SUBSCRIPTION"
               ? true
               : Boolean(body.paymentChannel || rawMeta.payment?.channelConfigured),
-          planMode: paymentBillingType === "SUBSCRIPTION" ? "FULL" : body.paymentPlanMode || rawMeta.payment?.planMode,
+          planMode:
+            paymentBillingType === "SUBSCRIPTION"
+              ? "FULL"
+              : body.paymentPlanMode || rawMeta.payment?.planMode,
           splitPercentInitial:
             typeof body.splitPercentInitial === "number"
               ? body.splitPercentInitial
@@ -125,11 +131,16 @@ export async function POST(req: Request) {
         status: status || "PENDING",
         createdAt,
       })
-      .select("id, createdAt, name, email, phone, company, message, subtotal, discount, total, status")
+      .select(
+        "id, createdAt, name, email, phone, company, message, subtotal, discount, total, status",
+      )
       .single();
 
     if (error || !data) {
-      return NextResponse.json({ error: getErrorMessage(error) || "No se pudo guardar la cotizacion" }, { status: 500 });
+      return NextResponse.json(
+        { error: getErrorMessage(error) || "No se pudo guardar la cotizacion" },
+        { status: 500 },
+      );
     }
 
     let pdfUrl = `/admin/cotizaciones/${data.id}/pdf`;
@@ -171,10 +182,10 @@ export async function POST(req: Request) {
 
     const nextMeta = normalizeQuoteMetaPayment(
       buildQuoteMeta({
-      ...meta,
-      pdfStoragePath,
-      pdfPublicUrl: pdfUrl,
-      pdfGeneratedAt: new Date().toISOString(),
+        ...meta,
+        pdfStoragePath,
+        pdfPublicUrl: pdfUrl,
+        pdfGeneratedAt: new Date().toISOString(),
       }),
     );
 
@@ -191,63 +202,19 @@ export async function POST(req: Request) {
       console.error("[quote-submit] quote metadata update failed:", getErrorMessage(error));
     }
 
-    const quoteStatus = normalizeStatus(data.status);
-    if (quoteStatus === "WON") {
-      try {
-        const quoteCode = meta.quoteNumber || `COT-${data.id.slice(0, 8).toUpperCase()}`;
-        const invoiceRef = `COT:${data.id}`;
-        const existingSale = await safeSelectSingle<{ id: string }>("Sale", "id", { invoiceRef });
-
-        let saleId = existingSale?.id ?? null;
-        if (!saleId) {
-          const createdSale = await insertRow<{ id: string }>(
-            "Sale",
-            {
-              clientId: clientId || null,
-              total: Math.max(0, Math.round(typeof data.total === "number" ? data.total : meta.grandTotal || 0)),
-              description: `Venta generada automáticamente desde cotización ${quoteCode}`,
-              paymentMethod: meta.paymentMethod || null,
-              invoiceRef,
-              createdAt: createdAt,
-            },
-            "id",
-          );
-          saleId = createdSale.id;
-        }
-
-        const existingTaxDoc = await safeSelectSingle<{ id: string }>("TaxDocument", "id", { quoteId: data.id });
-        if (!existingTaxDoc) {
-          const subtotalAmount = Math.max(0, Math.round(typeof data.subtotal === "number" ? data.subtotal : meta.subtotal || 0));
-          const taxAmount = Math.max(0, Math.round(meta.iva || 0));
-          const totalAmount = Math.max(0, Math.round(typeof data.total === "number" ? data.total : meta.grandTotal || 0));
-          // En esta app, subtotal ya viene con descuentos aplicados.
-          const netAmount = subtotalAmount;
-
-          await insertRow(
-            "TaxDocument",
-            {
-              clientId: clientId || null,
-              quoteId: data.id,
-              saleId: saleId || null,
-              type: "Factura",
-              issueDate: toDateOnly(meta.quoteDate || data.createdAt) || createdAt.slice(0, 10),
-              dueDate: toDateOnly(meta.validUntil),
-              netAmount,
-              taxAmount,
-              totalAmount,
-              status: "Pendiente",
-              paymentStatus: "Pendiente",
-              emissionMethod: "Generado automático desde cotización ganada",
-              notes: `Documento tributario automático para ${quoteCode}`,
-              createdAt: createdAt,
-            },
-            "id",
-          );
-        }
-      } catch (error) {
-        // Si falla la sincronización comercial/tributaria, la cotización sigue creada.
-        console.error("[quote-submit] won-automation failed:", getErrorMessage(error));
+    try {
+      await syncClientProcessFromQuoteStatus({
+        quoteId: data.id,
+        actorId: auth.legacy ? null : auth.session.user.id,
+      });
+    } catch (error) {
+      if (!isOperationsSchemaMissingError(error)) {
+        console.error("[quote-submit] process sync failed:", getErrorMessage(error));
       }
+    }
+
+    if (normalizeStatus(data.status) === "WON") {
+      await syncWonQuoteById(data.id);
     }
 
     return NextResponse.json({

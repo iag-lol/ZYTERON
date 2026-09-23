@@ -1,7 +1,21 @@
-import { getCheckoutOrder, markCheckoutEmailSent, markCheckoutStockHandled, setCheckoutFlowStatus } from "@/lib/checkout/orders";
+import {
+  getCheckoutOrder,
+  markCheckoutEmailSent,
+  markCheckoutStockHandled,
+  setCheckoutFlowStatus,
+} from "@/lib/checkout/orders";
+import {
+  isOperationsSchemaMissingError,
+  syncClientProcessFromQuoteStatus,
+} from "@/lib/admin/operations";
 import { syncWonQuoteById } from "@/lib/admin/repository";
 import { deductStockFromCheckout } from "@/lib/checkout/stock";
-import { getFlowPaymentStatus, isFlowApproved, isFlowRejected, mapFlowStatusLabel } from "@/lib/payments/flow";
+import {
+  getFlowPaymentStatus,
+  isFlowApproved,
+  isFlowRejected,
+  mapFlowStatusLabel,
+} from "@/lib/payments/flow";
 import { sendCheckoutStatusEmail } from "@/lib/notifications/purchase-status";
 import { sendPurchaseWhatsappNotification } from "@/lib/notifications/purchase-whatsapp";
 import { ZYTERON_COMPANY } from "@/lib/company";
@@ -50,6 +64,15 @@ function parseAlertEmails(rawValue: string | undefined) {
   );
 }
 
+async function syncApprovedOrder(orderId: string) {
+  await syncWonQuoteById(orderId);
+  try {
+    await syncClientProcessFromQuoteStatus({ quoteId: orderId });
+  } catch (error) {
+    if (!isOperationsSchemaMissingError(error)) throw error;
+  }
+}
+
 export async function processFlowToken(token: string) {
   const status = await getFlowPaymentStatus(token);
   const orderId = String(status.commerceOrder || "").trim();
@@ -78,9 +101,10 @@ export async function processFlowToken(token: string) {
         orderId,
         stockDiscountedAt: new Date().toISOString(),
         stockDiscountedUnits: stockResult.deductedUnits,
-        stockDiscountError: stockResult.warnings.length > 0 ? stockResult.warnings.join(" | ") : null,
+        stockDiscountError:
+          stockResult.warnings.length > 0 ? stockResult.warnings.join(" | ") : null,
       });
-      await syncWonQuoteById(orderId);
+      await syncApprovedOrder(orderId);
     } catch (error) {
       await markCheckoutStockHandled({
         orderId,
@@ -93,7 +117,7 @@ export async function processFlowToken(token: string) {
     }
   } else if (isFlowApproved(status.status)) {
     try {
-      await syncWonQuoteById(orderId);
+      await syncApprovedOrder(orderId);
     } catch (error) {
       console.error("[checkout] quote won sync failed", {
         orderId,
@@ -103,8 +127,10 @@ export async function processFlowToken(token: string) {
   }
 
   const afterStatusOrder = (await getCheckoutOrder(orderId)) || updated;
-  const shouldSendApproved = isFlowApproved(status.status) && !afterStatusOrder.meta.mail.approvedSentAt;
-  const shouldSendRejected = isFlowRejected(status.status) && !afterStatusOrder.meta.mail.rejectedSentAt;
+  const shouldSendApproved =
+    isFlowApproved(status.status) && !afterStatusOrder.meta.mail.approvedSentAt;
+  const shouldSendRejected =
+    isFlowRejected(status.status) && !afterStatusOrder.meta.mail.rejectedSentAt;
   const shouldSendPending =
     !isFlowApproved(status.status) &&
     !isFlowRejected(status.status) &&

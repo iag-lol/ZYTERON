@@ -3,17 +3,30 @@ import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
+function requireSeedAdminPassword() {
+  const password = String(process.env.SEED_ADMIN_PASSWORD || "").trim();
+  const passwordBytes = Buffer.byteLength(password, "utf8");
+  if (passwordBytes < 16 || passwordBytes > 72) {
+    throw new Error("SEED_ADMIN_PASSWORD es obligatorio y debe contener entre 16 y 72 bytes.");
+  }
+  return password;
+}
+
 async function main() {
-  const adminPassword = await bcrypt.hash("AdminZyteron!2026", 10);
+  const adminEmail = String(process.env.SEED_ADMIN_EMAIL || "admin@zyteron.com")
+    .trim()
+    .toLowerCase();
+  const adminPassword = await bcrypt.hash(requireSeedAdminPassword(), 12);
 
   const admin = await prisma.user.upsert({
-    where: { email: "admin@zyteron.com" },
-    update: {},
+    where: { email: adminEmail },
+    update: { passwordHash: adminPassword },
     create: {
-      email: "admin@zyteron.com",
+      email: adminEmail,
       name: "Administrador Zyteron",
       role: Role.ADMIN,
       passwordHash: adminPassword,
+      emailVerifiedAt: new Date(),
       company: "Zyteron",
     },
   });
@@ -50,8 +63,7 @@ async function main() {
     {
       slug: "landing-pages",
       name: "Landing pages que convierten",
-      description:
-        "Diseño y desarrollo de landing pages enfocadas en conversión, velocidad y SEO.",
+      description: "Diseño y desarrollo de landing pages enfocadas en conversión, velocidad y SEO.",
       shortCopy: "Landing page optimizada para captar leads en días, no semanas.",
       features: [
         "Estructura AIDA + SEO on-page",
@@ -107,8 +119,7 @@ async function main() {
     {
       slug: "seo-intermedio",
       name: "SEO Intermedio",
-      description:
-        "Plan de crecimiento con contenidos, enlazado interno y optimización continua.",
+      description: "Plan de crecimiento con contenidos, enlazado interno y optimización continua.",
       shortCopy: "SEO mensual con foco en negocio y rankings.",
       features: [
         "Contenido optimizado mensual",
@@ -277,8 +288,7 @@ async function main() {
     {
       slug: "combo-empresa-pro",
       name: "Combo Empresa Pro",
-      description:
-        "Sitio corporativo + dominio + 5 correos + SEO intermedio + 1 visita.",
+      description: "Sitio corporativo + dominio + 5 correos + SEO intermedio + 1 visita.",
       price: 1290000,
       discountPct: 12,
       featured: true,

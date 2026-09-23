@@ -2,7 +2,10 @@ import Link from "next/link";
 import { FileDigit } from "lucide-react";
 import { requirePortalSession } from "@/lib/auth/portal-session";
 import { enrichQuoteRecord } from "@/lib/admin/quote";
-import { normalizeQuoteMetaPayment, quotePaymentVisibleInPortal } from "@/lib/payments/quote-payments";
+import {
+  normalizeQuoteMetaPayment,
+  quotePaymentVisibleInPortal,
+} from "@/lib/payments/quote-payments";
 import { QuotePaymentActions } from "@/components/portal/panel/quote-payment-actions";
 import { prisma } from "@/lib/prisma";
 import { currencyCLP } from "@/lib/portal/data";
@@ -59,7 +62,9 @@ export default async function PortalCotizacionesPage({ searchParams }: PageProps
       meta: normalizeQuoteMetaPayment(enriched.meta),
     };
   });
-  const actionableQuotes = quotes.filter((quote) => quotePaymentVisibleInPortal(quote.status, quote.meta.payment));
+  const actionableQuotes = quotes.filter((quote) =>
+    quotePaymentVisibleInPortal(quote.status, quote.meta.payment),
+  );
 
   return (
     <section className="space-y-4">
@@ -77,11 +82,13 @@ export default async function PortalCotizacionesPage({ searchParams }: PageProps
             displayNumber: quote.displayNumber,
             status: quote.status || "PENDING",
             totalAmount: quote.totalAmount,
-            pdfUrl: quote.pdfUrl,
+            pdfUrl: `/api/portal/quotes/${quote.id}/pdf`,
             payment: quote.meta.payment,
           }))}
           paymentResult={
-            query?.payment_result === "paid" || query?.payment_result === "pending" || query?.payment_result === "error"
+            query?.payment_result === "paid" ||
+            query?.payment_result === "pending" ||
+            query?.payment_result === "error"
               ? query.payment_result
               : null
           }
@@ -91,7 +98,7 @@ export default async function PortalCotizacionesPage({ searchParams }: PageProps
       ) : null}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="grid grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr] gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-slate-500">
+        <div className="grid grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr] gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 text-[11px] font-bold tracking-widest text-slate-500 uppercase">
           <span>Referencia</span>
           <span>Estado</span>
           <span>Fecha</span>
@@ -106,7 +113,10 @@ export default async function PortalCotizacionesPage({ searchParams }: PageProps
         ) : (
           <div className="divide-y divide-slate-100">
             {quotes.map((quote) => (
-              <div key={quote.id} className="grid grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr] items-center gap-3 px-4 py-3 text-sm">
+              <div
+                key={quote.id}
+                className="grid grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr] items-center gap-3 px-4 py-3 text-sm"
+              >
                 <div>
                   <p className="font-semibold text-slate-900">{quote.displayNumber}</p>
                   <p className="text-xs text-slate-500">{quote.name || "Cotización web"}</p>
@@ -115,7 +125,9 @@ export default async function PortalCotizacionesPage({ searchParams }: PageProps
                   {quote.status}
                 </span>
                 <span className="text-slate-600">{formatDate(quote.createdAt)}</span>
-                <div className="text-right font-semibold text-slate-900">{currencyCLP(quote.totalAmount || 0)}</div>
+                <div className="text-right font-semibold text-slate-900">
+                  {currencyCLP(quote.totalAmount || 0)}
+                </div>
               </div>
             ))}
           </div>
@@ -124,8 +136,12 @@ export default async function PortalCotizacionesPage({ searchParams }: PageProps
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <p className="text-sm text-slate-600">
-          Si necesitas una cotización actualizada o descargar un documento firmado, solicita apoyo en{" "}
-          <Link className="font-semibold text-blue-700 hover:text-blue-800" href="/portal-clientes/panel/asistencia">
+          Si necesitas una cotización actualizada o descargar un documento firmado, solicita apoyo
+          en{" "}
+          <Link
+            className="font-semibold text-blue-700 hover:text-blue-800"
+            href="/portal-clientes/panel/asistencia"
+          >
             Asistencia y Ayuda
           </Link>
           .

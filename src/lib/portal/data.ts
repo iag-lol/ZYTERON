@@ -1,6 +1,5 @@
 import { AccountStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { decryptSecret, maskSecret } from "@/lib/security/secret-crypto";
 
 export function currencyCLP(value: number) {
   return new Intl.NumberFormat("es-CL", {
@@ -155,7 +154,16 @@ export async function getClientPortalSnapshot(userId: string) {
       where: { userId },
       orderBy: { createdAt: "desc" },
       take: 80,
-      include: {
+      select: {
+        id: true,
+        serviceName: true,
+        username: true,
+        secretCiphertext: true,
+        url: true,
+        notes: true,
+        isSensitive: true,
+        createdAt: true,
+        updatedAt: true,
         project: {
           select: { id: true, title: true },
         },
@@ -169,17 +177,14 @@ export async function getClientPortalSnapshot(userId: string) {
   ]);
 
   const safeCredentials = credentials.map((cred) => {
-    const secret = decryptSecret({
-      ciphertext: cred.secretCiphertext,
-      iv: cred.secretIv,
-      tag: cred.secretTag,
-    });
     return {
       id: cred.id,
       project: cred.project,
       serviceName: cred.serviceName,
       username: cred.username,
-      secretMasked: secret ? maskSecret(secret) : null,
+      // El listado nunca descifra secretos. La revelación exige contraseña +
+      // código de un solo uso en su endpoint dedicado y queda auditada.
+      secretMasked: cred.secretCiphertext ? "••••••••" : null,
       url: cred.url,
       notes: cred.notes,
       isSensitive: cred.isSensitive,
@@ -218,7 +223,9 @@ export async function getPortalClientsAdminOverview(filters?: {
         ? { emailVerifiedAt: null }
         : {}),
     ...(filters?.status && filters.status !== "all" ? { accountStatus: filters.status } : {}),
-    ...(filters?.company ? { company: { contains: filters.company, mode: "insensitive" as const } } : {}),
+    ...(filters?.company
+      ? { company: { contains: filters.company, mode: "insensitive" as const } }
+      : {}),
     ...(search
       ? {
           OR: [
@@ -284,33 +291,59 @@ export async function getPortalAdminClientDetail(clientId: string) {
   });
   if (!user) return null;
 
-  const [quotes, projects, sales, documents, taxDocuments, tickets, credentials, requests, comms, audit] =
-    await Promise.all([
-      prisma.quote.findMany({ where: { userId: clientId }, orderBy: { createdAt: "desc" }, take: 100 }),
-      prisma.project.findMany({ where: { clientId }, orderBy: { createdAt: "desc" }, take: 100 }),
-      prisma.sale.findMany({ where: { clientId }, orderBy: { createdAt: "desc" }, take: 100 }),
-      prisma.clientDocument.findMany({ where: { userId: clientId }, orderBy: { createdAt: "desc" }, take: 100 }),
-      prisma.taxDocument.findMany({ where: { clientId }, orderBy: { createdAt: "desc" }, take: 100 }),
-      prisma.supportTicket.findMany({
-        where: { userId: clientId },
-        orderBy: { updatedAt: "desc" },
-        take: 100,
-        include: { messages: { orderBy: { createdAt: "asc" }, take: 50 } },
-      }),
-      prisma.clientCredential.findMany({
-        where: { userId: clientId },
-        orderBy: { createdAt: "desc" },
-        take: 100,
-        include: { project: { select: { id: true, title: true } } },
-      }),
-      prisma.portalRequest.findMany({ where: { userId: clientId }, orderBy: { createdAt: "desc" }, take: 100 }),
-      prisma.clientCommunication.findMany({ where: { userId: clientId }, orderBy: { createdAt: "desc" }, take: 100 }),
-      prisma.clientAuditLog.findMany({
-        where: { targetUserId: clientId },
-        orderBy: { createdAt: "desc" },
-        take: 120,
-      }),
-    ]);
+  const [
+    quotes,
+    projects,
+    sales,
+    documents,
+    taxDocuments,
+    tickets,
+    credentials,
+    requests,
+    comms,
+    audit,
+  ] = await Promise.all([
+    prisma.quote.findMany({
+      where: { userId: clientId },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
+    prisma.project.findMany({ where: { clientId }, orderBy: { createdAt: "desc" }, take: 100 }),
+    prisma.sale.findMany({ where: { clientId }, orderBy: { createdAt: "desc" }, take: 100 }),
+    prisma.clientDocument.findMany({
+      where: { userId: clientId },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
+    prisma.taxDocument.findMany({ where: { clientId }, orderBy: { createdAt: "desc" }, take: 100 }),
+    prisma.supportTicket.findMany({
+      where: { userId: clientId },
+      orderBy: { updatedAt: "desc" },
+      take: 100,
+      include: { messages: { orderBy: { createdAt: "asc" }, take: 50 } },
+    }),
+    prisma.clientCredential.findMany({
+      where: { userId: clientId },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      include: { project: { select: { id: true, title: true } } },
+    }),
+    prisma.portalRequest.findMany({
+      where: { userId: clientId },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
+    prisma.clientCommunication.findMany({
+      where: { userId: clientId },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
+    prisma.clientAuditLog.findMany({
+      where: { targetUserId: clientId },
+      orderBy: { createdAt: "desc" },
+      take: 120,
+    }),
+  ]);
 
   const safeCredentials = credentials.map((cred) => ({
     id: cred.id,

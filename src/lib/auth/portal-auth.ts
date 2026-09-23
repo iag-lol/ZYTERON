@@ -7,11 +7,15 @@ import { AccountStatus, AuthProvider, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 function normalizeEmail(value?: string | null) {
-  return String(value || "").trim().toLowerCase();
+  return String(value || "")
+    .trim()
+    .toLowerCase();
 }
 
 function isEnabled(value?: string) {
-  const normalized = String(value || "").trim().toLowerCase();
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
   return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
 }
 
@@ -145,56 +149,56 @@ export const portalAuthOptions: NextAuthOptions = {
   providers: (() => {
     const providers: NextAuthOptions["providers"] = [
       CredentialsProvider({
-      name: "Credenciales",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        const email = normalizeEmail(credentials?.email);
-        const password = String(credentials?.password || "");
-        if (!email || !password) return null;
+        name: "Credenciales",
+        credentials: {
+          email: { label: "Email", type: "email" },
+          password: { label: "Password", type: "password" },
+        },
+        async authorize(credentials) {
+          const email = normalizeEmail(credentials?.email);
+          const password = String(credentials?.password || "");
+          if (!email || !password) return null;
 
-        const user = await prisma.user.findUnique({
-          where: { email },
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            role: true,
-            accountStatus: true,
-            emailVerifiedAt: true,
-            passwordHash: true,
-          },
-        });
-        if (!user) return null;
-        if (user.accountStatus !== AccountStatus.ACTIVE) return null;
-        if (!user.emailVerifiedAt) return null;
-        if (!user.passwordHash || user.passwordHash.length < 20) return null;
+          const user = await prisma.user.findUnique({
+            where: { email },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              role: true,
+              accountStatus: true,
+              emailVerifiedAt: true,
+              passwordHash: true,
+            },
+          });
+          if (!user) return null;
+          if (user.accountStatus !== AccountStatus.ACTIVE) return null;
+          if (!user.emailVerifiedAt) return null;
+          if (!user.passwordHash || user.passwordHash.length < 20) return null;
 
-        let ok = false;
-        try {
-          ok = await compare(password, user.passwordHash);
-        } catch (error) {
-          console.error("[portal/auth/credentials] Error al comparar password hash.", error);
-          ok = false;
-        }
-        if (!ok) return null;
+          let ok = false;
+          try {
+            ok = await compare(password, user.passwordHash);
+          } catch (error) {
+            console.error("[portal/auth/credentials] Error al comparar password hash.", error);
+            ok = false;
+          }
+          if (!ok) return null;
 
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { lastLoginAt: new Date() },
-        });
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() },
+          });
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          accountStatus: user.accountStatus,
-          emailVerifiedAt: user.emailVerifiedAt.toISOString(),
-        } as AuthUser;
-      },
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            accountStatus: user.accountStatus,
+            emailVerifiedAt: user.emailVerifiedAt.toISOString(),
+          } as AuthUser;
+        },
       }),
     ];
     if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
@@ -262,7 +266,12 @@ export const portalAuthOptions: NextAuthOptions = {
     },
     async jwt({ token, user }) {
       const email = normalizeEmail(user?.email || token.email);
-      if (!email) return token;
+      if (!email) {
+        token.role = Role.CLIENT;
+        token.accountStatus = AccountStatus.DISABLED;
+        token.emailVerifiedAt = null;
+        return token;
+      }
 
       try {
         const dbUser = await prisma.user.findUnique({
@@ -274,12 +283,19 @@ export const portalAuthOptions: NextAuthOptions = {
             emailVerifiedAt: true,
           },
         });
-        if (!dbUser) return token;
+        if (!dbUser) {
+          token.role = Role.CLIENT;
+          token.accountStatus = AccountStatus.DISABLED;
+          token.emailVerifiedAt = null;
+          return token;
+        }
 
         token.sub = dbUser.id;
         token.role = dbUser.role;
         token.accountStatus = dbUser.accountStatus;
-        token.emailVerifiedAt = dbUser.emailVerifiedAt ? dbUser.emailVerifiedAt.toISOString() : null;
+        token.emailVerifiedAt = dbUser.emailVerifiedAt
+          ? dbUser.emailVerifiedAt.toISOString()
+          : null;
         return token;
       } catch (error) {
         if (isDbConnectionPrismaError(error)) {
@@ -295,6 +311,11 @@ export const portalAuthOptions: NextAuthOptions = {
         } else {
           console.error("[portal/auth/jwt] Error resolviendo usuario para token.", error);
         }
+        // Falla cerrada: si no podemos revalidar la cuenta, una sesión antigua
+        // no conserva permisos ni acceso a datos privados.
+        token.role = Role.CLIENT;
+        token.accountStatus = AccountStatus.DISABLED;
+        token.emailVerifiedAt = null;
         return token;
       }
     },
@@ -303,7 +324,7 @@ export const portalAuthOptions: NextAuthOptions = {
         session.user.id = String(token.sub || "");
         session.user.role = (token.role as Role | undefined) || Role.CLIENT;
         session.user.accountStatus =
-          (token.accountStatus as AccountStatus | undefined) || AccountStatus.ACTIVE;
+          (token.accountStatus as AccountStatus | undefined) || AccountStatus.DISABLED;
         session.user.emailVerifiedAt = (token.emailVerifiedAt as string | null | undefined) || null;
       }
       return session;

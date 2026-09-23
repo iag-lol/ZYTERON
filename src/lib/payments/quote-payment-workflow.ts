@@ -1,9 +1,29 @@
 import { randomUUID } from "node:crypto";
-import type { QuoteMeta, QuotePaymentProof, QuotePaymentStage, QuotePaymentStageKey } from "@/lib/admin/quote";
+import {
+  assertExternalPaymentMatches,
+  isFinanceSchemaUnavailableError,
+  recordClientPayment,
+  type ClientPaymentMethod,
+  type ClientPaymentSource,
+} from "@/lib/admin/client-finance";
+import {
+  isOperationsSchemaMissingError,
+  syncClientProcessFromQuoteStatus,
+} from "@/lib/admin/operations";
+import type {
+  QuoteMeta,
+  QuotePaymentProof,
+  QuotePaymentStage,
+  QuotePaymentStageKey,
+} from "@/lib/admin/quote";
 import { enrichQuoteRecord, serializeQuoteMessage, type QuoteRecord } from "@/lib/admin/quote";
 import { syncWonQuoteById } from "@/lib/admin/repository";
 import { ZYTERON_COMPANY } from "@/lib/company";
-import { sendQuotePaymentReadyEmail, sendQuotePaymentStatusEmail, sendQuoteTransferProofAlertEmail } from "@/lib/notifications/quote-payment";
+import {
+  sendQuotePaymentReadyEmail,
+  sendQuotePaymentStatusEmail,
+  sendQuoteTransferProofAlertEmail,
+} from "@/lib/notifications/quote-payment";
 import {
   createFlowCustomer,
   createFlowPayment,
@@ -40,6 +60,68 @@ type PortalQuoteLegalAcceptance = {
   acceptTerms: true;
   acceptPrivacy: true;
 };
+
+async function recordQuotePaymentInLedger(input: {
+  quote: QuoteWithPayment;
+  stage: QuotePaymentStage;
+  receivableStageKey?: string;
+  strictQuoteStage?: boolean;
+  targetTotalAmount?: number;
+  amount: number;
+  method: ClientPaymentMethod;
+  source: ClientPaymentSource;
+  idempotencyKey: string;
+  reference?: string;
+  provider?: string;
+  providerPaymentId?: string;
+  commerceOrder?: string;
+  proofUrl?: string;
+  receivedAt?: Date;
+  metadata?: Record<string, unknown>;
+}) {
+  if (!input.quote.userId) return null;
+
+  try {
+    return await recordClientPayment({
+      clientId: input.quote.userId,
+      quoteId: input.quote.id,
+      quoteStageKey: input.receivableStageKey || input.stage.key,
+      strictQuoteStage: input.strictQuoteStage,
+      targetTotalAmount: Math.round(input.targetTotalAmount ?? input.stage.amount),
+      amount: Math.round(input.amount),
+      method: input.method,
+      source: input.source,
+      idempotencyKey: input.idempotencyKey,
+      reference: input.reference,
+      provider: input.provider,
+      providerPaymentId: input.providerPaymentId,
+      commerceOrder: input.commerceOrder,
+      proofUrl: input.proofUrl,
+      receivedAt: input.receivedAt,
+      metadata: {
+        quoteId: input.quote.id,
+        quoteStageKey: input.stage.key,
+        receivableStageKey: input.receivableStageKey || input.stage.key,
+        ...(input.metadata || {}),
+      },
+    });
+  } catch (error) {
+    // Durante el despliegue escalonado, el flujo legado continúa funcionando
+    // hasta que la migración financiera esté aplicada. Cualquier otro error sí
+    // detiene la acreditación para evitar inconsistencias silenciosas.
+    if (isFinanceSchemaUnavailableError(error)) {
+      console.warn("[quote-payment] finance ledger unavailable; legacy payment state preserved");
+      return null;
+    }
+    throw error;
+  }
+}
+
+function optionalPaymentDate(value?: string) {
+  if (!value) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
 
 function toQuoteRecord(quote: {
   id: string;
@@ -116,12 +198,30 @@ async function saveQuotePaymentMeta(input: {
     where: { id: input.quote.id },
     data: {
       message: serializeQuoteMessage(input.meta),
-      status: (input.status || input.quote.status || "PENDING") as "PENDING" | "SENT" | "WON" | "LOST",
+      status: (input.status || input.quote.status || "PENDING") as
+        | "PENDING"
+        | "SENT"
+        | "WON"
+        | "LOST",
       total: input.meta.grandTotal,
       subtotal: input.meta.subtotal,
       discount: input.meta.totalDescuento,
     },
   });
+
+  if (input.status) {
+    try {
+      await syncClientProcessFromQuoteStatus({ quoteId: input.quote.id });
+    } catch (error) {
+      if (!isOperationsSchemaMissingError(error)) {
+        console.error("[quote-payment] operation sync failed", {
+          quoteId: input.quote.id,
+          status: input.status,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  }
 }
 
 function buildPortalQuotePaymentsUrl(baseUrl: string, params?: Record<string, string>) {
@@ -151,7 +251,9 @@ function mergeQuotePaymentSubscription(
 
 function assertPortalQuoteLegalAcceptance(input?: PortalQuoteLegalAcceptance) {
   if (input?.acceptTerms !== true || input.acceptPrivacy !== true) {
-    throw new Error("Debes aceptar los términos y condiciones y la política de privacidad antes de continuar.");
+    throw new Error(
+      "Debes aceptar los términos y condiciones y la política de privacidad antes de continuar.",
+    );
   }
 }
 
@@ -233,9 +335,14 @@ async function createPortalCommunication(input: {
   });
 }
 
-async function notifyStageReady(quote: QuoteWithPayment, stage: QuotePaymentStage, baseUrl: string) {
+async function notifyStageReady(
+  quote: QuoteWithPayment,
+  stage: QuotePaymentStage,
+  baseUrl: string,
+) {
   const portalUrl = `${baseUrl}/portal-clientes/panel/cotizaciones`;
-  const channelLabel = stage.paymentChannel === "TRANSFER" ? "Transferencia bancaria" : "Pago online Flow";
+  const channelLabel =
+    stage.paymentChannel === "TRANSFER" ? "Transferencia bancaria" : "Pago online Flow";
   await createPortalNotification({
     userId: quote.userId,
     title: "Pago pendiente",
@@ -349,10 +456,10 @@ export async function createQuoteFlowCheckout(input: {
     mode: "FLOW",
   });
   const flow = await createFlowPayment({
-      commerceOrder,
-      subject: `${quote.displayNumber} · ${stage.label}`,
-      amount: stage.amount,
-      email: quoteEmail,
+    commerceOrder,
+    subject: `${quote.displayNumber} · ${stage.label}`,
+    amount: stage.amount,
+    email: quoteEmail,
     urlConfirmation: `${baseUrl}/api/portal/payments/quotes/flow/confirmation`,
     urlReturn: `${baseUrl}/api/portal/payments/quotes/flow/return`,
     paymentMethod: 9,
@@ -382,7 +489,10 @@ export async function createQuoteFlowCheckout(input: {
   await saveQuotePaymentMeta({
     quote,
     meta: nextMeta,
-    status: quote.status === "PENDING" ? "SENT" : (quote.status as "SENT" | "WON" | "LOST" | undefined) || "SENT",
+    status:
+      quote.status === "PENDING"
+        ? "SENT"
+        : (quote.status as "SENT" | "WON" | "LOST" | undefined) || "SENT",
   });
 
   return {
@@ -476,7 +586,10 @@ export async function createQuoteFlowSubscriptionStart(input: {
   await saveQuotePaymentMeta({
     quote,
     meta: nextMeta,
-    status: quote.status === "PENDING" ? "SENT" : (quote.status as "SENT" | "WON" | "LOST" | undefined) || "SENT",
+    status:
+      quote.status === "PENDING"
+        ? "SENT"
+        : (quote.status as "SENT" | "WON" | "LOST" | undefined) || "SENT",
   });
 
   return {
@@ -497,7 +610,9 @@ export async function processQuoteFlowPaymentToken(token: string, req?: Request)
     throw new Error("Cotización asociada al pago no encontrada.");
   }
 
-  const currentStage = (quote.meta.payment?.stages || []).find((stage) => stage.key === parsed.stageKey);
+  const currentStage = (quote.meta.payment?.stages || []).find(
+    (stage) => stage.key === parsed.stageKey,
+  );
   if (!currentStage) {
     throw new Error("Etapa de pago no disponible en la cotización.");
   }
@@ -506,8 +621,33 @@ export async function processQuoteFlowPaymentToken(token: string, req?: Request)
   let payment = quote.meta.payment || {};
 
   if (isFlowApproved(status.status)) {
+    assertExternalPaymentMatches({
+      expectedAmount: currentStage.amount,
+      reportedAmount: status.amount,
+      reportedCurrency: status.currency,
+    });
+    const stageWasAlreadyPaid = currentStage.status === "PAID";
+    const commerceOrder = String(status.commerceOrder || "");
+    await recordQuotePaymentInLedger({
+      quote,
+      stage: currentStage,
+      amount: status.amount ?? currentStage.amount,
+      method: "CARD",
+      source: "FLOW",
+      idempotencyKey: `flow:${status.flowOrder ?? commerceOrder}`,
+      reference: status.payer,
+      provider: "FLOW",
+      providerPaymentId: status.flowOrder === undefined ? undefined : String(status.flowOrder),
+      commerceOrder,
+      metadata: {
+        flowStatus: status.status,
+        subject: status.subject,
+      },
+    });
     const beforeFinalReady = Boolean(
-      (payment.stages || []).find((stage) => stage.key === "FINAL" && stage.dueEnabled && stage.status === "READY"),
+      (payment.stages || []).find(
+        (stage) => stage.key === "FINAL" && stage.dueEnabled && stage.status === "READY",
+      ),
     );
     payment = markQuoteStagePaid(payment, parsed.stageKey, {
       approvedAt: new Date().toISOString(),
@@ -533,24 +673,27 @@ export async function processQuoteFlowPaymentToken(token: string, req?: Request)
       status: allPaid ? "WON" : "SENT",
     });
 
-    if (allPaid) {
+    if (allPaid && !stageWasAlreadyPaid) {
       await syncWonQuoteById(quote.id);
     }
 
-    const paidStage = (payment.stages || []).find((stage) => stage.key === parsed.stageKey) || currentStage;
-    await notifyStageStatus({
-      quote,
-      stage: paidStage,
-      title: "Pago validado",
-      intro: "tu pago fue confirmado correctamente y quedó aplicado a tu cotización.",
-      type: "SUCCESS",
-      baseUrl,
-    });
+    const paidStage =
+      (payment.stages || []).find((stage) => stage.key === parsed.stageKey) || currentStage;
+    if (!stageWasAlreadyPaid) {
+      await notifyStageStatus({
+        quote,
+        stage: paidStage,
+        title: "Pago validado",
+        intro: "tu pago fue confirmado correctamente y quedó aplicado a tu cotización.",
+        type: "SUCCESS",
+        baseUrl,
+      });
+    }
 
     const afterFinalReady = (payment.stages || []).find(
       (stage) => stage.key === "FINAL" && stage.dueEnabled && stage.status === "READY",
     );
-    if (!beforeFinalReady && afterFinalReady) {
+    if (!stageWasAlreadyPaid && !beforeFinalReady && afterFinalReady) {
       const refreshedQuote = await getQuoteWithPayment(quote.id);
       if (refreshedQuote) {
         await notifyStageReady(refreshedQuote, afterFinalReady, baseUrl);
@@ -588,7 +731,8 @@ export async function processQuoteFlowPaymentToken(token: string, req?: Request)
       status: quote.status === "WON" ? "WON" : "SENT",
     });
 
-    const rejectedStage = (payment.stages || []).find((stage) => stage.key === parsed.stageKey) || currentStage;
+    const rejectedStage =
+      (payment.stages || []).find((stage) => stage.key === parsed.stageKey) || currentStage;
     await notifyStageStatus({
       quote,
       stage: rejectedStage,
@@ -621,7 +765,10 @@ export async function activateQuoteFlowSubscriptionFromToken(input: {
   }
 
   const baseUrl = resolveBaseUrl(input.req);
-  if (quote.meta.payment.subscription?.status === "ACTIVE" && quote.meta.payment.subscription?.subscriptionId) {
+  if (
+    quote.meta.payment.subscription?.status === "ACTIVE" &&
+    quote.meta.payment.subscription?.subscriptionId
+  ) {
     return {
       ok: true as const,
       redirectUrl: buildPortalQuotePaymentsUrl(baseUrl, {
@@ -647,7 +794,10 @@ export async function activateQuoteFlowSubscriptionFromToken(input: {
     await saveQuotePaymentMeta({
       quote,
       meta: failedMeta,
-      status: quote.status === "WON" ? "WON" : (quote.status as "PENDING" | "SENT" | "LOST" | undefined) || "SENT",
+      status:
+        quote.status === "WON"
+          ? "WON"
+          : (quote.status as "PENDING" | "SENT" | "LOST" | undefined) || "SENT",
     });
 
     return {
@@ -714,12 +864,14 @@ export async function activateQuoteFlowSubscriptionFromToken(input: {
   });
   await syncWonQuoteById(quote.id);
 
-  const paidStage = (nextMeta.payment?.stages || []).find((stage) => stage.key === "FULL") || currentStage;
+  const paidStage =
+    (nextMeta.payment?.stages || []).find((stage) => stage.key === "FULL") || currentStage;
   await notifyStageStatus({
     quote,
     stage: paidStage,
     title: "Suscripción activa",
-    intro: "tu suscripción mensual fue activada correctamente y Flow realizará el cobro del total de la cotización cada mes.",
+    intro:
+      "tu suscripción mensual fue activada correctamente y Flow realizará el cobro del total de la cotización cada mes.",
     type: "SUCCESS",
     baseUrl,
   });
@@ -745,13 +897,50 @@ export async function processQuoteSubscriptionChargeConfirmation(input: {
   }
 
   const status = await getFlowPaymentStatus(input.token);
+  if (isFlowApproved(status.status)) {
+    const stage = (quote.meta.payment.stages || []).find((item) => item.key === "FULL");
+    if (!stage) throw new Error("Etapa mensual no disponible en la cotización.");
+    const expectedAmount = Math.round(
+      quote.meta.payment.subscription?.amount || stage.amount || quote.totalAmount,
+    );
+    assertExternalPaymentMatches({
+      expectedAmount,
+      reportedAmount: status.amount,
+      reportedCurrency: status.currency,
+    });
+    const commerceOrder = String(status.commerceOrder || "");
+    const providerKey = String(status.flowOrder ?? commerceOrder);
+    if (!providerKey) throw new Error("Flow no informó un identificador para el cobro mensual.");
+    await recordQuotePaymentInLedger({
+      quote,
+      stage,
+      receivableStageKey: `SUBSCRIPTION:${providerKey}`,
+      strictQuoteStage: true,
+      targetTotalAmount: expectedAmount,
+      amount: status.amount ?? expectedAmount,
+      method: "CARD",
+      source: "SUBSCRIPTION",
+      idempotencyKey: `flow:${providerKey}`,
+      reference: status.payer,
+      provider: "FLOW",
+      providerPaymentId: status.flowOrder === undefined ? undefined : String(status.flowOrder),
+      commerceOrder,
+      metadata: {
+        flowStatus: status.status,
+        subscriptionId: quote.meta.payment.subscription?.subscriptionId,
+      },
+    });
+  }
   const payment = normalizeQuoteMetaPayment({
     ...quote.meta,
     payment: {
       ...(quote.meta.payment || {}),
       subscription: {
         ...(quote.meta.payment?.subscription || {}),
-        status: quote.meta.payment?.subscription?.status === "ACTIVE" ? "ACTIVE" : quote.meta.payment?.subscription?.status,
+        status:
+          quote.meta.payment?.subscription?.status === "ACTIVE"
+            ? "ACTIVE"
+            : quote.meta.payment?.subscription?.status,
         updatedAt: new Date().toISOString(),
         lastPaymentAt: new Date().toISOString(),
         lastPaymentStatus: mapFlowStatusLabel(status.status),
@@ -823,7 +1012,9 @@ export async function submitQuoteTransferProof(input: {
     const bytes = Buffer.from(await input.file.arrayBuffer());
 
     const { data: buckets } = await supabase.storage.listBuckets();
-    const bucketExists = (buckets || []).some((bucket) => bucket.name === ZYTERON_PAYMENT_PROOF_BUCKET);
+    const bucketExists = (buckets || []).some(
+      (bucket) => bucket.name === ZYTERON_PAYMENT_PROOF_BUCKET,
+    );
     if (!bucketExists) {
       await supabase.storage.createBucket(ZYTERON_PAYMENT_PROOF_BUCKET, {
         public: true,
@@ -831,10 +1022,12 @@ export async function submitQuoteTransferProof(input: {
       });
     }
 
-    const upload = await supabase.storage.from(ZYTERON_PAYMENT_PROOF_BUCKET).upload(uploadName, bytes, {
-      contentType: input.file.type || "application/octet-stream",
-      upsert: false,
-    });
+    const upload = await supabase.storage
+      .from(ZYTERON_PAYMENT_PROOF_BUCKET)
+      .upload(uploadName, bytes, {
+        contentType: input.file.type || "application/octet-stream",
+        upsert: false,
+      });
     if (upload.error) {
       throw new Error(`No se pudo subir el comprobante: ${upload.error.message}`);
     }
@@ -863,7 +1056,10 @@ export async function submitQuoteTransferProof(input: {
       ...quote.meta,
       payment,
     },
-    status: quote.status === "PENDING" ? "SENT" : (quote.status as "SENT" | "WON" | "LOST" | undefined) || "SENT",
+    status:
+      quote.status === "PENDING"
+        ? "SENT"
+        : (quote.status as "SENT" | "WON" | "LOST" | undefined) || "SENT",
   });
 
   await createPortalNotification({
@@ -913,13 +1109,32 @@ export async function reviewQuoteTransferProof(input: {
     throw new Error("No hay comprobantes pendientes para esta etapa.");
   }
   const realIndex = proofs.length - 1 - lastPendingIndex;
+  const pendingProof = proofs[realIndex];
   proofs[realIndex] = {
-    ...proofs[realIndex],
+    ...pendingProof,
     status: input.action === "APPROVE" ? "APPROVED" : "REJECTED",
     reviewedAt: new Date().toISOString(),
     reviewedBy: input.actorId || undefined,
     reviewNote: input.reviewNote,
   };
+
+  if (input.action === "APPROVE") {
+    await recordQuotePaymentInLedger({
+      quote,
+      stage,
+      amount: pendingProof.amount,
+      method: "BANK_TRANSFER",
+      source: "TRANSFER_PROOF",
+      idempotencyKey: `transfer-proof:${pendingProof.id}`,
+      reference: pendingProof.reference,
+      proofUrl: pendingProof.fileUrl,
+      receivedAt: optionalPaymentDate(pendingProof.transferDate),
+      metadata: {
+        proofId: pendingProof.id,
+        reviewedBy: input.actorId || undefined,
+      },
+    });
+  }
 
   let payment = quote.meta.payment || {};
   payment = {
@@ -994,7 +1209,10 @@ export async function enableQueuedQuoteStage(input: {
       ...quote.meta,
       payment,
     },
-    status: quote.status === "PENDING" ? "SENT" : (quote.status as "SENT" | "WON" | "LOST" | undefined) || "SENT",
+    status:
+      quote.status === "PENDING"
+        ? "SENT"
+        : (quote.status as "SENT" | "WON" | "LOST" | undefined) || "SENT",
   });
 
   const enabledStage = (payment.stages || []).find((stage) => stage.key === input.stageKey);

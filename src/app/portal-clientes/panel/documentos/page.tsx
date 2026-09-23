@@ -35,7 +35,7 @@ export default async function PortalDocumentosPage() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="grid grid-cols-[1.2fr_0.8fr_0.6fr_auto] gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-slate-500">
+          <div className="grid grid-cols-[1.2fr_0.8fr_0.6fr_auto] gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 text-[11px] font-bold tracking-widest text-slate-500 uppercase">
             <span>Documento</span>
             <span>Categoría</span>
             <span>Fecha</span>
@@ -43,16 +43,21 @@ export default async function PortalDocumentosPage() {
           </div>
           <div className="divide-y divide-slate-100">
             {docs.map((doc) => (
-              <div key={doc.id} className="grid grid-cols-[1.2fr_0.8fr_0.6fr_auto] items-center gap-3 px-4 py-3 text-sm">
+              <div
+                key={doc.id}
+                className="grid grid-cols-[1.2fr_0.8fr_0.6fr_auto] items-center gap-3 px-4 py-3 text-sm"
+              >
                 <div>
                   <p className="font-semibold text-slate-900">{doc.title}</p>
-                  {doc.description ? <p className="text-xs text-slate-500">{doc.description}</p> : null}
+                  {doc.description ? (
+                    <p className="text-xs text-slate-500">{doc.description}</p>
+                  ) : null}
                 </div>
                 <span className="text-slate-600">{doc.category}</span>
                 <span className="text-slate-500">{formatDate(doc.createdAt)}</span>
                 <div className="text-right">
                   <Link
-                    href={doc.fileUrl}
+                    href={`/api/portal/documents/${doc.id}/download`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
@@ -69,4 +74,3 @@ export default async function PortalDocumentosPage() {
     </section>
   );
 }
-

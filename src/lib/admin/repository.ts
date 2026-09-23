@@ -4,7 +4,14 @@ import type { WorkOrder as PrismaWorkOrderModel } from "@prisma/client";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import { buildQuoteMeta, enrichQuoteRecord, parseQuoteMessage, serializeQuoteMessage, type QuoteMeta, type QuoteRecord } from "@/lib/admin/quote";
+import {
+  buildQuoteMeta,
+  enrichQuoteRecord,
+  parseQuoteMessage,
+  serializeQuoteMessage,
+  type QuoteMeta,
+  type QuoteRecord,
+} from "@/lib/admin/quote";
 import { normalizeQuoteMetaPayment } from "@/lib/payments/quote-payments";
 
 export type Lead = {
@@ -321,7 +328,7 @@ function readEnvValue(...names: string[]) {
     const trimmed = value.trim();
     if (!trimmed) continue;
     if (
-      (trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
+      (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
       (trimmed.startsWith("'") && trimmed.endsWith("'"))
     ) {
       return trimmed.slice(1, -1).trim();
@@ -340,7 +347,12 @@ function shouldThrowReadError(options: SelectOptions) {
 function toErrorMessage(error: unknown) {
   if (error instanceof Error && error.message) return error.message;
   if (error && typeof error === "object") {
-    const candidate = error as { message?: unknown; details?: unknown; hint?: unknown; code?: unknown };
+    const candidate = error as {
+      message?: unknown;
+      details?: unknown;
+      hint?: unknown;
+      code?: unknown;
+    };
     const parts = [candidate.message, candidate.details, candidate.hint, candidate.code]
       .filter((value) => typeof value === "string" && value.trim().length > 0)
       .map((value) => String(value).trim());
@@ -376,10 +388,10 @@ function isMissingRelationError(message?: string) {
   const normalized = message?.toLowerCase();
   return Boolean(
     normalized &&
-      (normalized.includes("could not find the table") ||
-        (normalized.includes("relation") && normalized.includes("does not exist")) ||
-        (normalized.includes("column") && normalized.includes("does not exist")) ||
-        normalized.includes("schema cache")),
+    (normalized.includes("could not find the table") ||
+      (normalized.includes("relation") && normalized.includes("does not exist")) ||
+      (normalized.includes("column") && normalized.includes("does not exist")) ||
+      normalized.includes("schema cache")),
   );
 }
 
@@ -400,17 +412,6 @@ function isClientReviewWriteFallbackError(error: unknown) {
     isMissingClientReviewRelationError(error) ||
     (message.includes("column") && message.includes("does not exist")) ||
     message.includes("cannot update view")
-  );
-}
-
-function shouldUseAnonWriteFallback(error: unknown) {
-  const message = toErrorMessage(error).toLowerCase();
-  return (
-    message.includes("row-level security") ||
-    message.includes("42501") ||
-    message.includes("supabase_url o keys válidas") ||
-    message.includes("supabase_url o keys validas") ||
-    message.includes("no configuradas en el servidor")
   );
 }
 
@@ -531,10 +532,7 @@ export async function countRows(
 ): Promise<number> {
   try {
     const { supabase } = createSupabaseServerClient();
-    let query = supabase
-      .schema("public")
-      .from(table)
-      .select("*", { count: "exact", head: true });
+    let query = supabase.schema("public").from(table).select("*", { count: "exact", head: true });
 
     if (filters.gte) query = query.gte(filters.gte.column, filters.gte.value);
 
@@ -571,14 +569,20 @@ export async function safeSelect<T>(table: string, select: string, options: Sele
         return (data ?? []) as T[];
       }
       if (!isMissingRelationError(error.message)) {
-        logReadError(table, `${toErrorMessage(primaryReadError)} | anon fallback: ${error.message}`);
+        logReadError(
+          table,
+          `${toErrorMessage(primaryReadError)} | anon fallback: ${error.message}`,
+        );
       }
       if (shouldThrowReadError(options)) {
         throw new Error(`No fue posible leer ${table}: ${error.message}`);
       }
       return [] as T[];
     } catch (fallbackError) {
-      logReadError(table, `${toErrorMessage(primaryReadError)} | anon fallback error: ${toErrorMessage(fallbackError)}`);
+      logReadError(
+        table,
+        `${toErrorMessage(primaryReadError)} | anon fallback error: ${toErrorMessage(fallbackError)}`,
+      );
       if (shouldThrowReadError(options)) {
         throw fallbackError instanceof Error
           ? fallbackError
@@ -599,7 +603,11 @@ export async function safeSelect<T>(table: string, select: string, options: Sele
   return [] as T[];
 }
 
-export async function safeSelectSingle<T>(table: string, select: string, filters: Record<string, string | number>) {
+export async function safeSelectSingle<T>(
+  table: string,
+  select: string,
+  filters: Record<string, string | number>,
+) {
   const rows = await safeSelect<T>(table, select, { filters, limit: 1 });
   return rows[0] ?? null;
 }
@@ -609,14 +617,23 @@ export async function insertRow<T>(table: string, payload: Record<string, unknow
   const rowPayload = Object.prototype.hasOwnProperty.call(payload, "id")
     ? payload
     : { id: randomUUID(), ...payload };
-  const { data, error } = await supabase.schema("public").from(table).insert(rowPayload).select(select).single();
+  const { data, error } = await supabase
+    .schema("public")
+    .from(table)
+    .insert(rowPayload)
+    .select(select)
+    .single();
   if (error) {
     throw new Error(toErrorMessage(error));
   }
   return data as T;
 }
 
-export async function updateRows(table: string, payload: Record<string, unknown>, filters: Record<string, string | number>) {
+export async function updateRows(
+  table: string,
+  payload: Record<string, unknown>,
+  filters: Record<string, string | number>,
+) {
   const { supabase } = createSupabaseServerClient();
   let query = supabase.schema("public").from(table).update(payload);
 
@@ -635,29 +652,7 @@ export async function updateRowsWithFallback(
   payload: Record<string, unknown>,
   filters: Record<string, string | number>,
 ) {
-  try {
-    await updateRows(table, payload, filters);
-    return;
-  } catch (error) {
-    if (!shouldUseAnonWriteFallback(error)) {
-      throw error;
-    }
-  }
-
-  const supabase = createSupabaseAnonServerClient();
-  if (!supabase) {
-    throw new Error("No hay cliente anonimo de Supabase disponible para actualizar.");
-  }
-
-  let query = supabase.from(table).update(payload);
-  for (const [key, value] of Object.entries(filters)) {
-    query = query.eq(key, value);
-  }
-
-  const { error } = await query;
-  if (error) {
-    throw new Error(toErrorMessage(error));
-  }
+  await updateRows(table, payload, filters);
 }
 
 export async function deleteRows(table: string, filters: Record<string, string | number>) {
@@ -731,7 +726,9 @@ export async function findOrCreateClientByEmail(input: {
   rut?: string | null;
   contactName?: string | null;
 }) {
-  const existing = await safeSelectSingle<Client>("User", "id, email, name", { email: input.email });
+  const existing = await safeSelectSingle<Client>("User", "id, email, name", {
+    email: input.email,
+  });
   if (existing) {
     await updateRows(
       "User",
@@ -902,11 +899,11 @@ export const WEB_VISIT_WINDOW_DAYS = 30;
  */
 export async function getWebVisits(limit = 1200) {
   const since = new Date(Date.now() - WEB_VISIT_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
-  return safeSelect<WebVisit>(
-    "WebVisit",
-    "id, path, ipHash, sessionId, createdAt",
-    { orderBy: "createdAt", limit, gte: { column: "createdAt", value: since } },
-  );
+  return safeSelect<WebVisit>("WebVisit", "id, path, ipHash, sessionId, createdAt", {
+    orderBy: "createdAt",
+    limit,
+    gte: { column: "createdAt", value: since },
+  });
 }
 
 export async function getWebVisitTotals() {
@@ -965,6 +962,7 @@ export async function getContactLeads() {
 type WonQuoteRow = {
   id: string;
   userId?: string | null;
+  processId?: string | null;
   name?: string | null;
   email?: string | null;
   phone?: string | null;
@@ -976,18 +974,13 @@ type WonQuoteRow = {
 };
 
 function isWonQuoteStatus(value?: string | null) {
-  const normalized = String(value || "").trim().toUpperCase();
+  const normalized = String(value || "")
+    .trim()
+    .toUpperCase();
   if (!normalized) return false;
   if (normalized === "WON") return true;
   if (normalized === "GANADA" || normalized === "GANADO") return true;
   return normalized.includes("WON") || normalized.includes("GANAD");
-}
-
-function toDateOnly(value?: string | null) {
-  if (!value) return new Date().toISOString().slice(0, 10);
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return new Date().toISOString().slice(0, 10);
-  return parsed.toISOString().slice(0, 10);
 }
 
 async function syncOneWonQuote(quote: WonQuoteRow) {
@@ -1010,13 +1003,10 @@ async function syncOneWonQuote(quote: WonQuoteRow) {
   const existingSale = await safeSelectSingle<{
     id: string;
     clientId?: string | null;
+    processId?: string | null;
     total?: number | null;
     description?: string | null;
-  }>(
-    "Sale",
-    "id, clientId, total, description",
-    { invoiceRef },
-  );
+  }>("Sale", "id, clientId, processId, total, description", { invoiceRef });
 
   let saleId = existingSale?.id ?? null;
   if (!saleId) {
@@ -1024,6 +1014,7 @@ async function syncOneWonQuote(quote: WonQuoteRow) {
       "Sale",
       {
         clientId: clientId || null,
+        processId: quote.processId || null,
         total: quoteTotal,
         description: `Venta sincronizada desde cotización WON ${quote.id}`,
         paymentMethod: null,
@@ -1038,6 +1029,9 @@ async function syncOneWonQuote(quote: WonQuoteRow) {
     if (clientId && !existingSale?.clientId) {
       salePatch.clientId = clientId;
     }
+    if (quote.processId && !existingSale?.processId) {
+      salePatch.processId = quote.processId;
+    }
     if (typeof existingSale?.total !== "number" || Math.round(existingSale.total) !== quoteTotal) {
       salePatch.total = quoteTotal;
     }
@@ -1049,66 +1043,16 @@ async function syncOneWonQuote(quote: WonQuoteRow) {
     }
   }
 
-  const subtotalAmount = Math.max(
-    0,
-    Math.round(typeof quote.subtotal === "number" ? quote.subtotal : 0),
-  );
-  const taxAmount = Math.max(0, quoteTotal - subtotalAmount);
-  const existingTaxDoc = await safeSelectSingle<{
-    id: string;
-    saleId?: string | null;
-    netAmount?: number | null;
-    taxAmount?: number | null;
-    totalAmount?: number | null;
-  }>("TaxDocument", "id, saleId, netAmount, taxAmount, totalAmount", {
-    quoteId: quote.id,
-  });
-
-  if (!existingTaxDoc) {
-    await insertRow(
-      "TaxDocument",
-      {
-        clientId: clientId || null,
-        quoteId: quote.id,
-        saleId: saleId || null,
-        type: "Factura",
-        issueDate: toDateOnly(quote.createdAt),
-        dueDate: null,
-        netAmount: subtotalAmount,
-        taxAmount,
-        totalAmount: quoteTotal,
-        status: "Pendiente",
-        paymentStatus: "Pendiente",
-        emissionMethod: "Sincronización automática desde cotización WON",
-        notes: `Auto-sync quote ${quote.id}`,
-        createdAt: quote.createdAt || new Date().toISOString(),
-      },
-      "id",
-    );
-  } else {
-    const taxPatch: Record<string, unknown> = {};
-    if (saleId && !existingTaxDoc.saleId) {
-      taxPatch.saleId = saleId;
-    }
-    if (Math.round(existingTaxDoc.netAmount || 0) !== subtotalAmount) {
-      taxPatch.netAmount = subtotalAmount;
-    }
-    if (Math.round(existingTaxDoc.taxAmount || 0) !== taxAmount) {
-      taxPatch.taxAmount = taxAmount;
-    }
-    if (Math.round(existingTaxDoc.totalAmount || 0) !== quoteTotal) {
-      taxPatch.totalAmount = quoteTotal;
-    }
-    if (Object.keys(taxPatch).length > 0) {
-      await updateRows("TaxDocument", taxPatch, { id: existingTaxDoc.id });
-    }
-  }
+  // La aceptación comercial crea/actualiza la venta, pero nunca fabrica una
+  // factura. El documento tributario se emite explícitamente desde SII y se
+  // vincula a la misma cuenta por cobrar; así WON, pagado y facturado dejan de
+  // ser estados intercambiables.
 }
 
 export async function syncWonQuoteById(quoteId: string) {
   const quote = await safeSelectSingle<WonQuoteRow>(
     "Quote",
-    "id, userId, name, email, phone, company, subtotal, total, status, createdAt",
+    "id, userId, processId, name, email, phone, company, subtotal, total, status, createdAt",
     { id: quoteId },
   );
 
@@ -1128,7 +1072,7 @@ export async function syncWonQuoteById(quoteId: string) {
 export async function syncWonQuotesCrossModules(limit = 1000) {
   const candidateQuotes = await safeSelect<WonQuoteRow>(
     "Quote",
-    "id, userId, name, email, phone, company, subtotal, total, status, createdAt",
+    "id, userId, processId, name, email, phone, company, subtotal, total, status, createdAt",
     { orderBy: "createdAt", limit },
   );
   const wonQuotes = candidateQuotes.filter((quote) => isWonQuoteStatus(quote.status));
@@ -1151,11 +1095,10 @@ export async function getPublicPlans() {
 }
 
 export async function getPublicExtras() {
-  return safeSelect<ExtraRecord>(
-    "Extra",
-    "id, slug, name, category, description, options, price",
-    { orderBy: "name", ascending: true },
-  );
+  return safeSelect<ExtraRecord>("Extra", "id, slug, name, category, description, options, price", {
+    orderBy: "name",
+    ascending: true,
+  });
 }
 
 export async function getPublicProducts() {
@@ -1223,7 +1166,11 @@ async function runClientReviewWrite(operation: (table: string) => Promise<void>)
   await operation("client_review");
 }
 
-async function updateClientReviewStatus(table: string, id: string, status: "PENDING" | "APPROVED" | "REJECTED") {
+async function updateClientReviewStatus(
+  table: string,
+  id: string,
+  status: "PENDING" | "APPROVED" | "REJECTED",
+) {
   const { supabase } = createSupabaseServerClient();
   const { data, error } = await supabase
     .from(table)
@@ -1330,7 +1277,9 @@ export async function getProductPublicMetaMap() {
         slug,
         imageUrl: typeof parsed?.imageUrl === "string" ? parsed.imageUrl.trim() || null : null,
         publicDescription:
-          typeof parsed?.publicDescription === "string" ? parsed.publicDescription.trim() || null : null,
+          typeof parsed?.publicDescription === "string"
+            ? parsed.publicDescription.trim() || null
+            : null,
         published: typeof parsed?.published === "boolean" ? parsed.published : true,
       };
     } catch {
@@ -1384,7 +1333,8 @@ export async function getProductAdminMetaMap() {
             : 0,
         onOffer: typeof parsed?.onOffer === "boolean" ? parsed.onOffer : false,
         isCombo: typeof parsed?.isCombo === "boolean" ? parsed.isCombo : false,
-        comboLabel: typeof parsed?.comboLabel === "string" ? parsed.comboLabel.trim() || null : null,
+        comboLabel:
+          typeof parsed?.comboLabel === "string" ? parsed.comboLabel.trim() || null : null,
         comboItems: Array.isArray(parsed?.comboItems)
           ? parsed.comboItems.map((item) => String(item || "").trim()).filter(Boolean)
           : [],
@@ -1393,7 +1343,9 @@ export async function getProductAdminMetaMap() {
             ? Math.max(0, Math.round(parsed.costPrice))
             : null,
         discountStartsAt:
-          typeof parsed?.discountStartsAt === "string" ? parsed.discountStartsAt.trim() || null : null,
+          typeof parsed?.discountStartsAt === "string"
+            ? parsed.discountStartsAt.trim() || null
+            : null,
         discountEndsAt:
           typeof parsed?.discountEndsAt === "string" ? parsed.discountEndsAt.trim() || null : null,
         notes: typeof parsed?.notes === "string" ? parsed.notes.trim() || null : null,
@@ -1422,7 +1374,9 @@ export async function upsertProductAdminMetaBySlug(slug: string, meta: ProductAd
     throw new Error("Slug de producto inválido para metadata administrativa.");
   }
 
-  const statusCandidate = String(meta.status || "ACTIVE").trim().toUpperCase();
+  const statusCandidate = String(meta.status || "ACTIVE")
+    .trim()
+    .toUpperCase();
   const status = ["DRAFT", "ACTIVE", "PAUSED", "SOLD_OUT"].includes(statusCandidate)
     ? statusCandidate
     : "ACTIVE";
@@ -1460,7 +1414,11 @@ export async function deleteProductAdminMetaBySlug(slug: string) {
   await deleteRows("Setting", { key: toProductAdminSettingKey(cleanSlug) });
 }
 
-export async function upsertSetting(input: { key: string; value: string; type?: "TEXT" | "JSON" | "BOOLEAN" }) {
+export async function upsertSetting(input: {
+  key: string;
+  value: string;
+  type?: "TEXT" | "JSON" | "BOOLEAN";
+}) {
   const key = input.key.trim();
   if (!key) {
     throw new Error("Setting key inválida.");
@@ -1503,10 +1461,14 @@ export async function getClientWorkspace(clientId: string) {
       filters: { clientId },
       orderBy: "date",
     }),
-    safeSelect<Sale>("Sale", "id, clientId, total, createdAt, description, paymentMethod, invoiceRef", {
-      filters: { clientId },
-      orderBy: "createdAt",
-    }),
+    safeSelect<Sale>(
+      "Sale",
+      "id, clientId, total, createdAt, description, paymentMethod, invoiceRef",
+      {
+        filters: { clientId },
+        orderBy: "createdAt",
+      },
+    ),
     safeSelect<Project>(
       "Project",
       "id, clientId, quoteId, saleId, title, serviceArea, status, priority, startDate, startTime, endDate, endTime, description, scope, hourlyRate, estimatedHours, actualHours, totalCharge, owner, createdAt",

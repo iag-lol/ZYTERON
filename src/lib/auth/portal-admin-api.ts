@@ -3,7 +3,9 @@ import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { ADMIN_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin-session";
+import { isActiveVerifiedPortalAdmin } from "@/lib/auth/portal-admin-access";
 import { portalAuthOptions } from "@/lib/auth/portal-auth";
+import { prisma } from "@/lib/prisma";
 
 export async function requirePortalAdminApiSession() {
   const cookieStore = await cookies();
@@ -24,6 +26,30 @@ export async function requirePortalAdminApiSession() {
   if (!session?.user?.id) {
     return { error: NextResponse.json({ error: "No autenticado." }, { status: 401 }) };
   }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        role: true,
+        accountStatus: true,
+        emailVerifiedAt: true,
+      },
+    });
+
+    if (!user || !isActiveVerifiedPortalAdmin(user)) {
+      return { error: NextResponse.json({ error: "No autorizado." }, { status: 403 }) };
+    }
+  } catch (error) {
+    console.error("[portal/admin/auth] No fue posible validar la cuenta administrativa.", error);
+    return {
+      error: NextResponse.json(
+        { error: "No fue posible validar la sesión administrativa." },
+        { status: 503 },
+      ),
+    };
+  }
+
   if (session.user.role !== Role.ADMIN && session.user.role !== Role.SUPERADMIN) {
     return { error: NextResponse.json({ error: "No autorizado." }, { status: 403 }) };
   }

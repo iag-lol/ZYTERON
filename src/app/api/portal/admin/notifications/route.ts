@@ -1,20 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { Role } from "@prisma/client";
+import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
 import { prisma } from "@/lib/prisma";
 import { logPortalAdminAction } from "@/lib/portal/audit";
-
-const ADMIN_COOKIE = "zyteron_admin_token";
-
-function isAdminRequest(req: Request): boolean {
-  const cookieHeader = req.headers.get("cookie") || "";
-  const cookies = Object.fromEntries(
-    cookieHeader.split(";").map((c) => {
-      const [key, ...rest] = c.trim().split("=");
-      return [key, rest.join("=")];
-    }),
-  );
-  return Boolean(cookies[ADMIN_COOKIE]);
-}
 
 const sendNotificationSchema = z.object({
   userId: z.string().trim().min(1, "ID de cliente requerido."),
@@ -33,9 +22,8 @@ const sendNotificationSchema = z.object({
 });
 
 export async function POST(req: Request) {
-  if (!isAdminRequest(req)) {
-    return NextResponse.json({ error: "No autorizado." }, { status: 403 });
-  }
+  const auth = await requirePortalAdminApiSession();
+  if (auth.error) return auth.error;
 
   try {
     const body = await req.json();
@@ -47,12 +35,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // Verify the target user exists
+    // Verify the target user exists and is a client account.
     const targetUser = await prisma.user.findUnique({
       where: { id: parsed.data.userId },
-      select: { id: true },
+      select: { id: true, role: true },
     });
-    if (!targetUser) {
+    if (!targetUser || targetUser.role !== Role.CLIENT) {
       return NextResponse.json({ error: "Cliente no encontrado." }, { status: 404 });
     }
 
@@ -68,7 +56,7 @@ export async function POST(req: Request) {
 
     // Audit log
     await logPortalAdminAction({
-      actorId: null,
+      actorId: auth.legacy ? null : auth.session.user.id,
       targetUserId: parsed.data.userId,
       action: "ADMIN_NOTIFICATION_SENT",
       entityType: "ClientNotification",

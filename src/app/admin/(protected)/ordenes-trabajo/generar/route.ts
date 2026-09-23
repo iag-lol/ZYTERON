@@ -38,9 +38,11 @@ function resolveRequestOrigin(request: Request) {
   return requestUrl.origin;
 }
 
-function shouldBePending(status?: string | null) {
-  const normalized = String(status || "").trim().toUpperCase();
-  return normalized === "PENDING" || normalized === "SENT";
+function isApprovedForExecution(status?: string | null, totalPaid = 0) {
+  const normalized = String(status || "")
+    .trim()
+    .toUpperCase();
+  return normalized === "WON" || totalPaid > 0;
 }
 
 function buildWorkOrderCode(quoteId: string) {
@@ -61,13 +63,9 @@ function normalizeDateOnly(value?: string | null) {
 }
 
 function normalizeScope(items: string[]) {
-  const cleaned = items
-    .map((item) => String(item || "").trim())
-    .filter((item) => item.length > 0);
+  const cleaned = items.map((item) => String(item || "").trim()).filter((item) => item.length > 0);
   return cleaned.length > 0 ? cleaned : ["Ejecución de alcance según cotización aprobada."];
 }
-
-
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -82,14 +80,19 @@ export async function POST(request: Request) {
   }
 
   try {
-    const [quote, existing] = await Promise.all([getQuoteById(quoteId), getWorkOrderByQuoteId(quoteId)]);
+    const [quote, existing] = await Promise.all([
+      getQuoteById(quoteId),
+      getWorkOrderByQuoteId(quoteId),
+    ]);
 
     if (!quote) {
       redirectUrl.searchParams.set("ot_not_found", "1");
       return NextResponse.redirect(redirectUrl, { status: 303 });
     }
 
-    const existingStatus = String(existing?.status || "").trim().toUpperCase();
+    const existingStatus = String(existing?.status || "")
+      .trim()
+      .toUpperCase();
     if (existing && existingStatus !== "CANCELLED") {
       redirectUrl.searchParams.set("ot_exists", "1");
       return NextResponse.redirect(redirectUrl, { status: 303 });
@@ -97,7 +100,7 @@ export async function POST(request: Request) {
 
     const isWeb = isWebCheckoutQuote(quote);
     if (source === "MANUAL_QUOTE") {
-      if (isWeb || !shouldBePending(quote.status)) {
+      if (isWeb || !isApprovedForExecution(quote.status, quote.meta.payment?.totalPaid || 0)) {
         redirectUrl.searchParams.set("ot_invalid_quote", "1");
         return NextResponse.redirect(redirectUrl, { status: 303 });
       }
@@ -135,25 +138,82 @@ export async function POST(request: Request) {
         ? `Pedido web asociado. Documento: ${checkoutMeta?.customer.documentType || "N/A"}`
         : `Cotización manual asociada. Estado comercial: ${String(quote.status || "PENDING").toUpperCase()}`;
 
-    await prisma.workOrder.create({
-      data: {
-        id,
-        code: buildWorkOrderCode(quote.id),
-        source,
-        status: "ACTIVE",
-        priority: source === "WEB_ORDER" ? "HIGH" : "NORMAL",
-        quoteId: quote.id,
-        clientId,
-        title,
-        description,
-        scope,
-        plannedDate: plannedDate ? new Date(plannedDate) : null,
-        dueDate: dueDate ? new Date(dueDate) : null,
-        estimatedHours: source === "WEB_ORDER" ? 6 : 12,
-        budget: Math.max(0, Math.round(quote.totalAmount || 0)),
-        notes,
-        pdfUrl: `/admin/ordenes-trabajo/${id}/pdf`,
-      },
+    await prisma.$transaction(async (tx) => {
+      const quoteRow = await tx.quote.findUnique({
+        where: { id: quote.id },
+        select: { processId: true },
+      });
+      const existingProject = await tx.project.findFirst({
+        where: { quoteId: quote.id },
+        select: { id: true },
+      });
+
+      const project =
+        existingProject ||
+        (await tx.project.create({
+          data: {
+            clientId,
+            quoteId: quote.id,
+            processId: quoteRow?.processId || null,
+            title:
+              quote.company || quote.name ? `Proyecto · ${quote.company || quote.name}` : title,
+            serviceArea: source === "WEB_ORDER" ? "Implementación web" : "Servicios digitales",
+            status: "Planificado",
+            priority: source === "WEB_ORDER" ? "Alta" : "Normal",
+            startDate: plannedDate ? new Date(plannedDate) : null,
+            endDate: dueDate ? new Date(dueDate) : null,
+            description,
+            scope: scope.join("\n"),
+            estimatedHours: source === "WEB_ORDER" ? 6 : 12,
+            totalCharge: Math.max(0, Math.round(quote.totalAmount || 0)),
+            owner: "Equipo Zyteron",
+          },
+          select: { id: true },
+        }));
+
+      await tx.workOrder.create({
+        data: {
+          id,
+          code: buildWorkOrderCode(quote.id),
+          source,
+          status: "ACTIVE",
+          priority: source === "WEB_ORDER" ? "HIGH" : "NORMAL",
+          quoteId: quote.id,
+          projectId: project.id,
+          clientId,
+          processId: quoteRow?.processId || null,
+          title,
+          description,
+          scope,
+          plannedDate: plannedDate ? new Date(plannedDate) : null,
+          dueDate: dueDate ? new Date(dueDate) : null,
+          estimatedHours: source === "WEB_ORDER" ? 6 : 12,
+          budget: Math.max(0, Math.round(quote.totalAmount || 0)),
+          notes,
+          pdfUrl: `/admin/ordenes-trabajo/${id}/pdf`,
+        },
+      });
+
+      if (quoteRow?.processId) {
+        await tx.clientProcess.update({
+          where: { id: quoteRow.processId },
+          data: {
+            stage: "WORK_ORDER",
+            nextAction: "Asignar responsable, hitos y fecha de inicio del proyecto",
+            version: { increment: 1 },
+          },
+        });
+        await tx.clientProcessEvent.create({
+          data: {
+            processId: quoteRow.processId,
+            eventType: "WORK_ORDER_CREATED",
+            toStage: "WORK_ORDER",
+            title: `OT ${buildWorkOrderCode(quote.id)} creada`,
+            notes: "Se creó la orden de trabajo y la planificación inicial del proyecto.",
+            metadata: { quoteId: quote.id, workOrderId: id, projectId: project.id },
+          },
+        });
+      }
     });
 
     redirectUrl.searchParams.set("ot_created", "1");
@@ -166,7 +226,10 @@ export async function POST(request: Request) {
       message: error instanceof Error ? error.message : String(error || "unknown error"),
     });
     redirectUrl.searchParams.set("ot_error", "1");
-    redirectUrl.searchParams.set("error_detail", error instanceof Error ? error.message : "unknown");
+    redirectUrl.searchParams.set(
+      "error_detail",
+      error instanceof Error ? error.message : "unknown",
+    );
     return NextResponse.redirect(redirectUrl, { status: 303 });
   }
 }

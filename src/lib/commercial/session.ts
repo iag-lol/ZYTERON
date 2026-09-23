@@ -1,6 +1,10 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import {
+  requireCommercialSessionSecret,
+  resolveCommercialSessionSecret,
+} from "@/lib/commercial/session-secret";
 import { getCommercialUserById, type CommercialUser } from "@/lib/commercial/store";
 
 /**
@@ -14,25 +18,18 @@ const MAX_AGE = 60 * 60 * 12; // 12 horas
 
 type SessionPayload = { id: string; role: string; rut: string; exp: number };
 
-function secret(): string {
-  return (
-    process.env.COMMERCIAL_SESSION_SECRET ||
-    process.env.NEXTAUTH_SECRET ||
-    "zyteron-comercial-dev-secret"
-  ).trim();
-}
-
 function b64url(input: string) {
   return Buffer.from(input, "utf8").toString("base64url");
 }
 function fromB64url(input: string) {
   return Buffer.from(input, "base64url").toString("utf8");
 }
-function sign(data: string) {
-  return createHmac("sha256", secret()).update(data).digest("base64url");
+function sign(data: string, secret: string) {
+  return createHmac("sha256", secret).update(data).digest("base64url");
 }
 
 export function createSessionToken(user: Pick<CommercialUser, "id" | "role" | "rut">): string {
+  const secret = requireCommercialSessionSecret();
   const payload: SessionPayload = {
     id: user.id,
     role: user.role,
@@ -40,14 +37,16 @@ export function createSessionToken(user: Pick<CommercialUser, "id" | "role" | "r
     exp: Math.floor(Date.now() / 1000) + MAX_AGE,
   };
   const data = b64url(JSON.stringify(payload));
-  return `${data}.${sign(data)}`;
+  return `${data}.${sign(data, secret)}`;
 }
 
 export function verifySessionToken(token?: string | null): SessionPayload | null {
   if (!token || !token.includes(".")) return null;
+  const secret = resolveCommercialSessionSecret();
+  if (!secret) return null;
   const [data, sig] = token.split(".");
   if (!data || !sig) return null;
-  const expected = sign(data);
+  const expected = sign(data, secret);
   try {
     if (expected.length !== sig.length) return null;
     if (!timingSafeEqual(Buffer.from(expected), Buffer.from(sig))) return null;

@@ -1,13 +1,22 @@
 import { NextResponse } from "next/server";
-import { buildQuoteMeta, parseQuoteMessage, serializeQuoteMessage, type QuoteLineItem } from "@/lib/admin/quote";
+import {
+  isOperationsSchemaMissingError,
+  syncClientProcessFromQuoteStatus,
+} from "@/lib/admin/operations";
+import {
+  buildQuoteMeta,
+  parseQuoteMessage,
+  serializeQuoteMessage,
+  type QuoteLineItem,
+} from "@/lib/admin/quote";
 import { generateQuotePdf } from "@/lib/admin/quote-pdf";
 import {
   findOrCreateClientByEmail,
   getQuoteById,
   syncWonQuoteById,
-  syncWonQuotesCrossModules,
   updateRows,
 } from "@/lib/admin/repository";
+import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
 import { ZYTERON_QUOTE_BUCKET } from "@/lib/company";
 import { normalizeQuoteMetaPayment } from "@/lib/payments/quote-payments";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -42,7 +51,12 @@ type QuoteUpdateBody = {
 function getErrorMessage(error: unknown) {
   if (error instanceof Error && error.message) return error.message;
   if (error && typeof error === "object") {
-    const candidate = error as { message?: unknown; details?: unknown; hint?: unknown; code?: unknown };
+    const candidate = error as {
+      message?: unknown;
+      details?: unknown;
+      hint?: unknown;
+      code?: unknown;
+    };
     const parts = [candidate.message, candidate.details, candidate.hint, candidate.code]
       .filter((value) => typeof value === "string" && value.trim().length > 0)
       .map((value) => String(value).trim());
@@ -85,6 +99,9 @@ function normalizeItems(items: QuoteLineItem[] | undefined) {
 }
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
+  const auth = await requirePortalAdminApiSession();
+  if (auth.error) return auth.error;
+
   try {
     const { id } = await context.params;
     const current = await getQuoteById(id);
@@ -105,12 +122,16 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
     const items = normalizeItems(body.items);
     if (items.length === 0) {
-      return NextResponse.json({ error: "Debes ingresar al menos 1 item válido." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Debes ingresar al menos 1 item válido." },
+        { status: 400 },
+      );
     }
 
     const includeIva = body.includeIva ?? current.meta.includeIva ?? true;
     const providedTerms = text(body.terms);
-    const ivaRate = typeof body.ivaRate === "number" ? body.ivaRate : current.meta.ivaRate ?? 0.19;
+    const ivaRate =
+      typeof body.ivaRate === "number" ? body.ivaRate : (current.meta.ivaRate ?? 0.19);
     const subtotal = items.reduce((acc, item) => {
       const gross = item.qty * item.unitPrice;
       const discount = gross * ((item.discountPct || 0) / 100);
@@ -141,46 +162,51 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
     const paymentBillingType = body.paymentBillingType || current.meta.payment?.billingType;
     const paymentBase =
-      paymentBillingType && paymentBillingType !== current.meta.payment?.billingType ? {} : current.meta.payment;
+      paymentBillingType && paymentBillingType !== current.meta.payment?.billingType
+        ? {}
+        : current.meta.payment;
     const meta = normalizeQuoteMetaPayment(
       buildQuoteMeta({
-      ...parseQuoteMessage(current.message),
-      clientRut: text(body.clientRut) || current.meta.clientRut,
-      clientAddress: text(body.clientAddress) || current.meta.clientAddress,
-      clientCity: text(body.clientCity) || current.meta.clientCity,
-      clientContact: text(body.clientContact) || current.meta.clientContact || name,
-      quoteNumber: text(body.quoteNumber) || current.meta.quoteNumber,
-      quoteDate: text(body.quoteDate) || current.meta.quoteDate || current.issuedAt,
-      validUntil: text(body.validUntil) || current.meta.validUntil,
-      validityDays: text(body.validityDays) || current.meta.validityDays,
-      paymentMethod: text(body.paymentMethod) || current.meta.paymentMethod,
-      paymentTerms: text(body.paymentTerms) || current.meta.paymentTerms,
-      includeIva,
-      ivaRate,
-      items,
-      subtotal: Math.max(0, Math.round(subtotal)),
-      totalDescuento: Math.max(0, Math.round(totalDescuento)),
-      iva: Math.max(0, Math.round(iva)),
-      grandTotal: Math.max(0, Math.round(grandTotal)),
-      notes: text(body.notes) || current.meta.notes,
-      terms: providedTerms || undefined,
-      payment: {
-        ...paymentBase,
-        billingType: paymentBillingType,
-        defaultChannel:
-          paymentBillingType === "SUBSCRIPTION"
-            ? "FLOW"
-            : body.paymentChannel || current.meta.payment?.defaultChannel,
-        channelConfigured:
-          paymentBillingType === "SUBSCRIPTION"
-            ? true
-            : Boolean(body.paymentChannel || current.meta.payment?.channelConfigured),
-        planMode: paymentBillingType === "SUBSCRIPTION" ? "FULL" : body.paymentPlanMode || current.meta.payment?.planMode,
-        splitPercentInitial:
-          typeof body.splitPercentInitial === "number"
-            ? body.splitPercentInitial
-            : current.meta.payment?.splitPercentInitial,
-      },
+        ...parseQuoteMessage(current.message),
+        clientRut: text(body.clientRut) || current.meta.clientRut,
+        clientAddress: text(body.clientAddress) || current.meta.clientAddress,
+        clientCity: text(body.clientCity) || current.meta.clientCity,
+        clientContact: text(body.clientContact) || current.meta.clientContact || name,
+        quoteNumber: text(body.quoteNumber) || current.meta.quoteNumber,
+        quoteDate: text(body.quoteDate) || current.meta.quoteDate || current.issuedAt,
+        validUntil: text(body.validUntil) || current.meta.validUntil,
+        validityDays: text(body.validityDays) || current.meta.validityDays,
+        paymentMethod: text(body.paymentMethod) || current.meta.paymentMethod,
+        paymentTerms: text(body.paymentTerms) || current.meta.paymentTerms,
+        includeIva,
+        ivaRate,
+        items,
+        subtotal: Math.max(0, Math.round(subtotal)),
+        totalDescuento: Math.max(0, Math.round(totalDescuento)),
+        iva: Math.max(0, Math.round(iva)),
+        grandTotal: Math.max(0, Math.round(grandTotal)),
+        notes: text(body.notes) || current.meta.notes,
+        terms: providedTerms || undefined,
+        payment: {
+          ...paymentBase,
+          billingType: paymentBillingType,
+          defaultChannel:
+            paymentBillingType === "SUBSCRIPTION"
+              ? "FLOW"
+              : body.paymentChannel || current.meta.payment?.defaultChannel,
+          channelConfigured:
+            paymentBillingType === "SUBSCRIPTION"
+              ? true
+              : Boolean(body.paymentChannel || current.meta.payment?.channelConfigured),
+          planMode:
+            paymentBillingType === "SUBSCRIPTION"
+              ? "FULL"
+              : body.paymentPlanMode || current.meta.payment?.planMode,
+          splitPercentInitial:
+            typeof body.splitPercentInitial === "number"
+              ? body.splitPercentInitial
+              : current.meta.payment?.splitPercentInitial,
+        },
       }),
     );
 
@@ -240,10 +266,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
     const metaWithPdf = normalizeQuoteMetaPayment(
       buildQuoteMeta({
-      ...meta,
-      pdfStoragePath,
-      pdfPublicUrl: pdfUrl,
-      pdfGeneratedAt: new Date().toISOString(),
+        ...meta,
+        pdfStoragePath,
+        pdfPublicUrl: pdfUrl,
+        pdfGeneratedAt: new Date().toISOString(),
       }),
     );
 
@@ -255,12 +281,17 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       { id },
     );
 
-    // Cuando queda ganada, forzar sincronización inmediata a Ventas para este ID.
+    try {
+      await syncClientProcessFromQuoteStatus({
+        quoteId: id,
+        actorId: auth.legacy ? null : auth.session.user.id,
+      });
+    } catch (error) {
+      if (!isOperationsSchemaMissingError(error)) throw error;
+    }
+
     if (status === "WON") {
       await syncWonQuoteById(id);
-    } else {
-      // Mantener reconciliación global como defensa para otros flujos.
-      await syncWonQuotesCrossModules();
     }
 
     return NextResponse.json({

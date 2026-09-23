@@ -1,6 +1,21 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Banknote, CalendarDays, CheckCircle2, CircleAlert, ClipboardCheck, ClipboardPlus, Download, ExternalLink, FileEdit, Mail, MapPin, Phone, ReceiptText } from "lucide-react";
+import {
+  ArrowLeft,
+  Banknote,
+  CalendarDays,
+  CheckCircle2,
+  CircleAlert,
+  ClipboardCheck,
+  ClipboardPlus,
+  Download,
+  ExternalLink,
+  FileEdit,
+  Mail,
+  MapPin,
+  Phone,
+  ReceiptText,
+} from "lucide-react";
 import { currencyCLP } from "@/lib/admin/quote";
 import { getQuoteById, getWorkOrderByQuoteId } from "@/lib/admin/repository";
 import { QuoteSendEmailButton } from "@/components/admin/quote-send-email-button";
@@ -22,7 +37,7 @@ type Params = {
 function infoRow(label: string, value?: string | null) {
   return (
     <div className="space-y-1">
-      <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+      <p className="text-[11px] font-bold tracking-widest text-slate-400 uppercase">{label}</p>
       <p className="text-sm font-medium text-slate-800">{value || "—"}</p>
     </div>
   );
@@ -37,7 +52,9 @@ export default async function CotizacionDetallePage({ params }: Params) {
   }
 
   const isRequestQuote = isQuoteRequestMeta(quote.meta);
-  const canGenerateOt = isManualQuote(quote) && ["PENDING", "SENT"].includes(String(quote.status || "").toUpperCase());
+  const quoteAccepted = String(quote.status || "").toUpperCase() === "WON";
+  const hasConfirmedAdvance = (quote.meta.payment?.totalPaid || 0) > 0;
+  const canGenerateOt = isManualQuote(quote) && (quoteAccepted || hasConfirmedAdvance);
   const requestSummaryText = isRequestQuote
     ? [
         `Código: ${quote.meta.quoteCode || quote.displayNumber}`,
@@ -66,12 +83,17 @@ export default async function CotizacionDetallePage({ params }: Params) {
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+            <p className="text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase">
               {isRequestQuote ? "Solicitud web" : "Ficha comercial"}
             </p>
-            <h1 className="mt-1 text-2xl font-extrabold text-slate-900">{quote.meta.quoteCode || quote.displayNumber}</h1>
+            <h1 className="mt-1 text-2xl font-extrabold text-slate-900">
+              {quote.meta.quoteCode || quote.displayNumber}
+            </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Cliente {quote.meta.contactCompany || quote.company || quote.name} · Estado {isRequestQuote ? requestStageLabel(quote.meta.requestStage) : quote.status || "PENDING"}
+              Cliente {quote.meta.contactCompany || quote.company || quote.name} · Estado{" "}
+              {isRequestQuote
+                ? requestStageLabel(quote.meta.requestStage)
+                : quote.status || "PENDING"}
             </p>
           </div>
         </div>
@@ -80,7 +102,9 @@ export default async function CotizacionDetallePage({ params }: Params) {
           {isRequestQuote ? (
             <>
               <a
-                href={whatsappPublicLink(quote.meta.contactWhatsappE164 || quote.meta.contactWhatsapp || quote.phone)}
+                href={whatsappPublicLink(
+                  quote.meta.contactWhatsappE164 || quote.meta.contactWhatsapp || quote.phone,
+                )}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
@@ -149,22 +173,37 @@ export default async function CotizacionDetallePage({ params }: Params) {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Tipo de proyecto</p>
-                  <p className="mt-2 text-lg font-extrabold text-slate-900">{quote.meta.projectTypeLabel || "Solicitud web"}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{quote.meta.shortSummary || "Sin resumen adicional."}</p>
+                  <p className="text-[11px] font-bold tracking-widest text-slate-400 uppercase">
+                    Tipo de proyecto
+                  </p>
+                  <p className="mt-2 text-lg font-extrabold text-slate-900">
+                    {quote.meta.projectTypeLabel || "Solicitud web"}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {quote.meta.shortSummary || "Sin resumen adicional."}
+                  </p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Prioridad</p>
-                  <p className="mt-2 text-lg font-extrabold text-slate-900">{quote.meta.priority || "Media"}</p>
+                  <p className="text-[11px] font-bold tracking-widest text-slate-400 uppercase">
+                    Prioridad
+                  </p>
+                  <p className="mt-2 text-lg font-extrabold text-slate-900">
+                    {quote.meta.priority || "Media"}
+                  </p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Presupuesto {quote.meta.budgetRangeLabel || "no definido"} · plazo {quote.meta.deadlineLabel || "no definido"} · urgencia {quote.meta.urgencyLabel || "no definida"}.
+                    Presupuesto {quote.meta.budgetRangeLabel || "no definido"} · plazo{" "}
+                    {quote.meta.deadlineLabel || "no definido"} · urgencia{" "}
+                    {quote.meta.urgencyLabel || "no definida"}.
                   </p>
                 </div>
               </div>
 
               <div className="mt-5 space-y-3">
                 {quote.meta.projectAnswers?.map((answer) => (
-                  <div key={answer.key} className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <div
+                    key={answer.key}
+                    className="rounded-2xl border border-slate-200 bg-white p-4"
+                  >
                     <p className="text-sm font-bold text-slate-900">{answer.label}</p>
                     <p className="mt-1 text-sm leading-6 text-slate-600">{answer.value}</p>
                   </div>
@@ -172,13 +211,17 @@ export default async function CotizacionDetallePage({ params }: Params) {
                 {quote.meta.projectComment ? (
                   <div className="rounded-2xl border border-slate-200 bg-white p-4">
                     <p className="text-sm font-bold text-slate-900">Comentario breve</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">{quote.meta.projectComment}</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      {quote.meta.projectComment}
+                    </p>
                   </div>
                 ) : null}
                 {quote.meta.additionalMessage ? (
                   <div className="rounded-2xl border border-slate-200 bg-white p-4">
                     <p className="text-sm font-bold text-slate-900">Mensaje adicional</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">{quote.meta.additionalMessage}</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      {quote.meta.additionalMessage}
+                    </p>
                   </div>
                 ) : null}
               </div>
@@ -191,10 +234,28 @@ export default async function CotizacionDetallePage({ params }: Params) {
                   infoRow("Negocio", quote.meta.businessName),
                   infoRow("Rubro", quote.meta.businessRubro),
                   infoRow("Ciudad o región", quote.meta.businessCity),
-                  infoRow("Tiene web", BINARY_CHOICE_LABELS[(quote.meta.hasWebsite as "si" | "no" | "no-se") || "no-se"]),
-                  infoRow("Tiene logo", BINARY_CHOICE_LABELS[(quote.meta.hasLogo as "si" | "no" | "no-se") || "no-se"]),
-                  infoRow("Tiene dominio", BINARY_CHOICE_LABELS[(quote.meta.hasDomain as "si" | "no" | "no-se") || "no-se"]),
-                  infoRow("Tiene textos e imágenes", BINARY_CHOICE_LABELS[(quote.meta.hasContent as "si" | "no" | "no-se") || "no-se"]),
+                  infoRow(
+                    "Tiene web",
+                    BINARY_CHOICE_LABELS[
+                      (quote.meta.hasWebsite as "si" | "no" | "no-se") || "no-se"
+                    ],
+                  ),
+                  infoRow(
+                    "Tiene logo",
+                    BINARY_CHOICE_LABELS[(quote.meta.hasLogo as "si" | "no" | "no-se") || "no-se"],
+                  ),
+                  infoRow(
+                    "Tiene dominio",
+                    BINARY_CHOICE_LABELS[
+                      (quote.meta.hasDomain as "si" | "no" | "no-se") || "no-se"
+                    ],
+                  ),
+                  infoRow(
+                    "Tiene textos e imágenes",
+                    BINARY_CHOICE_LABELS[
+                      (quote.meta.hasContent as "si" | "no" | "no-se") || "no-se"
+                    ],
+                  ),
                 ].map((node, index) => (
                   <div key={index}>{node}</div>
                 ))}
@@ -209,7 +270,7 @@ export default async function CotizacionDetallePage({ params }: Params) {
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-slate-200">
-              <div className="grid grid-cols-[2.4fr_0.8fr_1fr_0.8fr_1fr] gap-3 bg-slate-50 px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-slate-400">
+              <div className="grid grid-cols-[2.4fr_0.8fr_1fr_0.8fr_1fr] gap-3 bg-slate-50 px-4 py-3 text-[11px] font-bold tracking-widest text-slate-400 uppercase">
                 <span>Concepto</span>
                 <span>Cant.</span>
                 <span>Precio unit.</span>
@@ -219,7 +280,8 @@ export default async function CotizacionDetallePage({ params }: Params) {
               <div className="divide-y divide-slate-100">
                 {quote.meta.items.map((item) => {
                   const total =
-                    item.qty * item.unitPrice - item.qty * item.unitPrice * ((item.discountPct || 0) / 100);
+                    item.qty * item.unitPrice -
+                    item.qty * item.unitPrice * ((item.discountPct || 0) / 100);
                   return (
                     <div
                       key={`${quote.id}-${item.id ?? item.description}`}
@@ -227,7 +289,9 @@ export default async function CotizacionDetallePage({ params }: Params) {
                     >
                       <div>
                         <p className="font-semibold text-slate-900">{item.description}</p>
-                        <p className="text-xs text-slate-500">{item.detail || item.unit || "Servicio"}</p>
+                        <p className="text-xs text-slate-500">
+                          {item.detail || item.unit || "Servicio"}
+                        </p>
                       </div>
                       <span className="text-slate-700">{item.qty}</span>
                       <span className="text-slate-700">{currencyCLP(item.unitPrice)}</span>
@@ -276,7 +340,9 @@ export default async function CotizacionDetallePage({ params }: Params) {
                   </p>
                   <p className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-slate-400" />
-                    {[quote.meta.clientAddress, quote.meta.clientCity || quote.meta.businessCity].filter(Boolean).join(", ") || "Sin dirección"}
+                    {[quote.meta.clientAddress, quote.meta.clientCity || quote.meta.businessCity]
+                      .filter(Boolean)
+                      .join(", ") || "Sin dirección"}
                   </p>
                   {isRequestQuote && quote.meta.currentWebsite ? (
                     <a
@@ -304,11 +370,23 @@ export default async function CotizacionDetallePage({ params }: Params) {
                 </div>
                 <div className="flex items-center justify-between text-blue-800">
                   <span>Correo</span>
-                  <span>{INTEGRATION_STATUS_LABELS[(quote.meta.emailStatus as "pending" | "sent" | "failed") || "pending"]}</span>
+                  <span>
+                    {
+                      INTEGRATION_STATUS_LABELS[
+                        (quote.meta.emailStatus as "pending" | "sent" | "failed") || "pending"
+                      ]
+                    }
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-blue-800">
                   <span>WhatsApp</span>
-                  <span>{INTEGRATION_STATUS_LABELS[(quote.meta.whatsappStatus as "pending" | "sent" | "failed") || "pending"]}</span>
+                  <span>
+                    {
+                      INTEGRATION_STATUS_LABELS[
+                        (quote.meta.whatsappStatus as "pending" | "sent" | "failed") || "pending"
+                      ]
+                    }
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-blue-800">
                   <span>Prioridad</span>
@@ -318,9 +396,13 @@ export default async function CotizacionDetallePage({ params }: Params) {
               <div className="mt-5 rounded-2xl bg-white p-4 text-sm text-blue-800">
                 <p className="flex items-center gap-2">
                   <CalendarDays className="h-4 w-4 text-blue-600" />
-                  Recibida {new Date(quote.meta.submittedAt || quote.issuedAt).toLocaleDateString("es-CL")}
+                  Recibida{" "}
+                  {new Date(quote.meta.submittedAt || quote.issuedAt).toLocaleDateString("es-CL")}
                 </p>
-                <p className="mt-2">Presupuesto {quote.meta.budgetRangeLabel || "no definido"} · plazo {quote.meta.deadlineLabel || "no definido"}</p>
+                <p className="mt-2">
+                  Presupuesto {quote.meta.budgetRangeLabel || "no definido"} · plazo{" "}
+                  {quote.meta.deadlineLabel || "no definido"}
+                </p>
               </div>
             </section>
           ) : (
@@ -352,7 +434,10 @@ export default async function CotizacionDetallePage({ params }: Params) {
                     <CalendarDays className="h-4 w-4 text-blue-600" />
                     Emisión {new Date(quote.issuedAt).toLocaleDateString("es-CL")}
                   </p>
-                  <p className="mt-2">Validez {quote.meta.validityDays || "30 días"} · Pago {quote.meta.paymentMethod || "Transferencia"}</p>
+                  <p className="mt-2">
+                    Validez {quote.meta.validityDays || "30 días"} · Pago{" "}
+                    {quote.meta.paymentMethod || "Transferencia"}
+                  </p>
                 </div>
               </section>
 
@@ -365,13 +450,17 @@ export default async function CotizacionDetallePage({ params }: Params) {
                   <div className="flex items-center justify-between">
                     <span>Modalidad</span>
                     <span className="font-semibold">
-                      {quote.meta.payment?.billingType === "SUBSCRIPTION" ? "Suscripción mensual" : "Pago único"}
+                      {quote.meta.payment?.billingType === "SUBSCRIPTION"
+                        ? "Suscripción mensual"
+                        : "Pago único"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span>Canal</span>
                     <span className="font-semibold">
-                      {quote.meta.payment?.defaultChannel === "TRANSFER" ? "Transferencia bancaria" : "Flow online"}
+                      {quote.meta.payment?.defaultChannel === "TRANSFER"
+                        ? "Transferencia bancaria"
+                        : "Flow online"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -380,31 +469,40 @@ export default async function CotizacionDetallePage({ params }: Params) {
                       {quote.meta.payment?.billingType === "SUBSCRIPTION"
                         ? "Cobro mensual recurrente"
                         : quote.meta.payment?.planMode === "DELIVERY"
-                        ? "Contraentrega"
-                        : quote.meta.payment?.planMode === "SPLIT"
-                          ? `${quote.meta.payment?.splitPercentInitial || 50}% inicio / ${quote.meta.payment?.splitPercentFinal || 50}% final`
-                          : "Pago completo"}
+                          ? "Contraentrega"
+                          : quote.meta.payment?.planMode === "SPLIT"
+                            ? `${quote.meta.payment?.splitPercentInitial || 50}% inicio / ${quote.meta.payment?.splitPercentFinal || 50}% final`
+                            : "Pago completo"}
                     </span>
                   </div>
                   {quote.meta.payment?.billingType === "SUBSCRIPTION" ? (
                     <div className="flex items-center justify-between">
                       <span>Estado suscripción</span>
-                      <span className="font-semibold">{quote.meta.payment?.subscription?.status || "PENDING"}</span>
+                      <span className="font-semibold">
+                        {quote.meta.payment?.subscription?.status || "PENDING"}
+                      </span>
                     </div>
                   ) : null}
-                  {quote.meta.payment?.billingType === "SUBSCRIPTION" && quote.meta.payment?.subscription?.nextInvoiceDate ? (
+                  {quote.meta.payment?.billingType === "SUBSCRIPTION" &&
+                  quote.meta.payment?.subscription?.nextInvoiceDate ? (
                     <div className="flex items-center justify-between">
                       <span>Próximo cobro</span>
-                      <span className="font-semibold">{quote.meta.payment.subscription.nextInvoiceDate}</span>
+                      <span className="font-semibold">
+                        {quote.meta.payment.subscription.nextInvoiceDate}
+                      </span>
                     </div>
                   ) : null}
                   <div className="flex items-center justify-between">
                     <span>Pagado</span>
-                    <span className="font-semibold">{currencyCLP(quote.meta.payment?.totalPaid || 0)}</span>
+                    <span className="font-semibold">
+                      {currencyCLP(quote.meta.payment?.totalPaid || 0)}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span>Pendiente</span>
-                    <span className="font-semibold">{currencyCLP(quote.meta.payment?.totalPending || 0)}</span>
+                    <span className="font-semibold">
+                      {currencyCLP(quote.meta.payment?.totalPending || 0)}
+                    </span>
                   </div>
                 </div>
 
@@ -414,7 +512,9 @@ export default async function CotizacionDetallePage({ params }: Params) {
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <p className="text-sm font-bold text-slate-900">{stage.label}</p>
-                          <p className="text-xs text-slate-500">{stage.dueLabel || "Etapa de cobro"}</p>
+                          <p className="text-xs text-slate-500">
+                            {stage.dueLabel || "Etapa de cobro"}
+                          </p>
                         </div>
                         <div className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
                           {stage.status}
@@ -424,11 +524,15 @@ export default async function CotizacionDetallePage({ params }: Params) {
                       <div className="mt-3 grid gap-2 text-sm text-slate-600">
                         <div className="flex items-center justify-between">
                           <span>Monto</span>
-                          <span className="font-semibold text-slate-900">{currencyCLP(stage.amount)}</span>
+                          <span className="font-semibold text-slate-900">
+                            {currencyCLP(stage.amount)}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span>Canal</span>
-                          <span>{stage.paymentChannel === "TRANSFER" ? "Transferencia" : "Flow"}</span>
+                          <span>
+                            {stage.paymentChannel === "TRANSFER" ? "Transferencia" : "Flow"}
+                          </span>
                         </div>
                         {stage.paidAt ? (
                           <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700">
@@ -446,9 +550,16 @@ export default async function CotizacionDetallePage({ params }: Params) {
 
                       <div className="mt-4 flex flex-wrap gap-2">
                         {!stage.dueEnabled && stage.status !== "PAID" ? (
-                          <form action={`/admin/cotizaciones/${quote.id}/payments/enable`} method="post">
+                          <form
+                            action={`/admin/cotizaciones/${quote.id}/payments/enable`}
+                            method="post"
+                          >
                             <input type="hidden" name="stageKey" value={stage.key} />
-                            <input type="hidden" name="redirectTo" value={`/admin/cotizaciones/${quote.id}`} />
+                            <input
+                              type="hidden"
+                              name="redirectTo"
+                              value={`/admin/cotizaciones/${quote.id}`}
+                            />
                             <button
                               type="submit"
                               className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
@@ -459,10 +570,17 @@ export default async function CotizacionDetallePage({ params }: Params) {
                         ) : null}
                         {stage.status === "PENDING_TRANSFER_REVIEW" ? (
                           <>
-                            <form action={`/admin/cotizaciones/${quote.id}/payments/review`} method="post">
+                            <form
+                              action={`/admin/cotizaciones/${quote.id}/payments/review`}
+                              method="post"
+                            >
                               <input type="hidden" name="stageKey" value={stage.key} />
                               <input type="hidden" name="action" value="APPROVE" />
-                              <input type="hidden" name="redirectTo" value={`/admin/cotizaciones/${quote.id}`} />
+                              <input
+                                type="hidden"
+                                name="redirectTo"
+                                value={`/admin/cotizaciones/${quote.id}`}
+                              />
                               <button
                                 type="submit"
                                 className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
@@ -470,10 +588,17 @@ export default async function CotizacionDetallePage({ params }: Params) {
                                 Aprobar transferencia
                               </button>
                             </form>
-                            <form action={`/admin/cotizaciones/${quote.id}/payments/review`} method="post">
+                            <form
+                              action={`/admin/cotizaciones/${quote.id}/payments/review`}
+                              method="post"
+                            >
                               <input type="hidden" name="stageKey" value={stage.key} />
                               <input type="hidden" name="action" value="REJECT" />
-                              <input type="hidden" name="redirectTo" value={`/admin/cotizaciones/${quote.id}`} />
+                              <input
+                                type="hidden"
+                                name="redirectTo"
+                                value={`/admin/cotizaciones/${quote.id}`}
+                              />
                               <button
                                 type="submit"
                                 className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"

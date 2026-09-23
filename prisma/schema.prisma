@@ -2,7 +2,7 @@
 // Stage 1: base models to unblock seeds and future stages
 
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "binary"
 }
 
@@ -11,57 +11,62 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  firstName    String?
-  lastName     String?
-  role         Role     @default(CLIENT)
-  accountStatus AccountStatus @default(ACTIVE)
-  authProvider AuthProvider @default(LOCAL)
+  id              String        @id @default(cuid())
+  email           String        @unique
+  passwordHash    String
+  name            String
+  firstName       String?
+  lastName        String?
+  role            Role          @default(CLIENT)
+  accountStatus   AccountStatus @default(ACTIVE)
+  authProvider    AuthProvider  @default(LOCAL)
   emailVerifiedAt DateTime?
-  lastLoginAt  DateTime?
-  deactivatedAt DateTime?
-  googleId     String?  @unique
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  company      String?
-  phone        String?
-  address      String?
-  city         String?
-  country      String?  @default("Chile")
-  rut          String?
-  contactName  String?
-  industry     String?
-  tier         String?
-  notes        String?
+  lastLoginAt     DateTime?
+  deactivatedAt   DateTime?
+  googleId        String?       @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  company         String?
+  phone           String?
+  address         String?
+  city            String?
+  country         String?       @default("Chile")
+  rut             String?
+  contactName     String?
+  industry        String?
+  tier            String?
+  notes           String?
 
-  leads       Lead[]
-  quotes      Quote[]
-  sales       Sale[]
-  visits      Visit[]
-  sessions    Session[]
-  projects    Project[]
-  requests    ClientRequest[]
-  taxDocuments TaxDocument[]
-  workOrders  WorkOrder[]
-  verificationCodes EmailVerificationCode[]
-  passwordResetCodes PasswordResetCode[]
+  leads                 Lead[]
+  quotes                Quote[]
+  sales                 Sale[]
+  visits                Visit[]
+  sessions              Session[]
+  projects              Project[]
+  requests              ClientRequest[]
+  taxDocuments          TaxDocument[]
+  workOrders            WorkOrder[]
+  verificationCodes     EmailVerificationCode[]
+  passwordResetCodes    PasswordResetCode[]
   credentialRevealCodes CredentialRevealCode[]
-  documents ClientDocument[] @relation("ClientDocuments")
-  uploadedDocuments ClientDocument[] @relation("ClientDocUploadedBy")
-  supportTickets SupportTicket[] @relation("ClientSupportTickets")
-  assignedTickets SupportTicket[] @relation("TicketAssignedTo")
-  supportMessages SupportTicketMessage[]
-  credentials ClientCredential[] @relation("ClientCredentials")
-  createdCredentials ClientCredential[] @relation("CredentialCreatedBy")
-  updatedCredentials ClientCredential[] @relation("CredentialUpdatedBy")
-  notifications ClientNotification[]
-  communications ClientCommunication[]
-  portalRequests PortalRequest[]
-  auditLogs ClientAuditLog[] @relation("AuditActor")
-  affectedAuditLogs ClientAuditLog[] @relation("AuditTarget")
+  documents             ClientDocument[]        @relation("ClientDocuments")
+  uploadedDocuments     ClientDocument[]        @relation("ClientDocUploadedBy")
+  supportTickets        SupportTicket[]         @relation("ClientSupportTickets")
+  assignedTickets       SupportTicket[]         @relation("TicketAssignedTo")
+  supportMessages       SupportTicketMessage[]
+  credentials           ClientCredential[]      @relation("ClientCredentials")
+  createdCredentials    ClientCredential[]      @relation("CredentialCreatedBy")
+  updatedCredentials    ClientCredential[]      @relation("CredentialUpdatedBy")
+  notifications         ClientNotification[]
+  communications        ClientCommunication[]
+  portalRequests        PortalRequest[]
+  auditLogs             ClientAuditLog[]        @relation("AuditActor")
+  affectedAuditLogs     ClientAuditLog[]        @relation("AuditTarget")
+  clientProcesses       ClientProcess[]         @relation("ProcessClient")
+  processEvents         ClientProcessEvent[]    @relation("ProcessEventActor")
+  receivables           Receivable[]
+  payments              Payment[]               @relation("ClientPayments")
+  recordedPayments      Payment[]               @relation("PaymentRecordedBy")
 }
 
 enum Role {
@@ -183,25 +188,29 @@ enum ExtraCategory {
 }
 
 model Quote {
-  id        String       @id @default(cuid())
-  userId    String?
-  user      User?        @relation(fields: [userId], references: [id])
-  planId    String?
-  plan      Plan?        @relation(fields: [planId], references: [id])
-  extras    QuoteExtra[]
-  name      String
-  email     String
-  phone     String?
-  company   String?
-  message   String?
-  subtotal  Int
-  discount  Int          @default(0)
-  total     Int
-  status    QuoteStatus  @default(PENDING)
-  createdAt DateTime     @default(now())
+  id           String           @id @default(cuid())
+  userId       String?
+  user         User?            @relation(fields: [userId], references: [id])
+  planId       String?
+  plan         Plan?            @relation(fields: [planId], references: [id])
+  extras       QuoteExtra[]
+  name         String
+  email        String
+  phone        String?
+  company      String?
+  message      String?
+  subtotal     Int
+  discount     Int              @default(0)
+  total        Int
+  status       QuoteStatus      @default(PENDING)
+  createdAt    DateTime         @default(now())
   taxDocuments TaxDocument[]
-  projects   Project[]
-  // workOrders WorkOrder[]
+  projects     Project[]
+  processId    String?
+  process      ClientProcess?   @relation(fields: [processId], references: [id], onDelete: SetNull)
+  receivables  Receivable[]
+  documents    ClientDocument[]
+  workOrders   WorkOrder[]
 }
 
 model QuoteExtra {
@@ -221,16 +230,18 @@ enum QuoteStatus {
 }
 
 model Lead {
-  id        String   @id @default(cuid())
+  id        String         @id @default(cuid())
   userId    String?
-  user      User?    @relation(fields: [userId], references: [id])
+  user      User?          @relation(fields: [userId], references: [id])
   name      String
   email     String
   phone     String?
   source    String?
   message   String?
   type      LeadType
-  createdAt DateTime @default(now())
+  createdAt DateTime       @default(now())
+  processId String?
+  process   ClientProcess? @relation(fields: [processId], references: [id], onDelete: SetNull)
 }
 
 model WebDiscount {
@@ -312,13 +323,13 @@ model CaseStudy {
 }
 
 model Visit {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   clientId  String?
-  client    User?    @relation(fields: [clientId], references: [id])
+  client    User?     @relation(fields: [clientId], references: [id])
   date      DateTime?
   notes     String?
   status    String?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 }
 
 model Sale {
@@ -332,17 +343,20 @@ model Sale {
   createdAt     DateTime       @default(now())
   projects      Project[]
   taxDocuments  TaxDocument[]
-  // workOrders    WorkOrder[]
+  processId     String?
+  process       ClientProcess? @relation(fields: [processId], references: [id], onDelete: SetNull)
+  receivables   Receivable[]
+  workOrders    WorkOrder[]
 }
 
 model Project {
-  id             String          @id @default(cuid())
+  id             String             @id @default(cuid())
   clientId       String?
-  client         User?           @relation(fields: [clientId], references: [id])
+  client         User?              @relation(fields: [clientId], references: [id])
   quoteId        String?
-  quote          Quote?          @relation(fields: [quoteId], references: [id])
+  quote          Quote?             @relation(fields: [quoteId], references: [id])
   saleId         String?
-  sale           Sale?           @relation(fields: [saleId], references: [id])
+  sale           Sale?              @relation(fields: [saleId], references: [id])
   title          String
   serviceArea    String?
   status         String?
@@ -358,25 +372,32 @@ model Project {
   actualHours    Int?
   totalCharge    Int?
   owner          String?
-  createdAt      DateTime        @default(now())
+  createdAt      DateTime           @default(now())
   requests       ClientRequest[]
   taxDocuments   TaxDocument[]
   supportTickets SupportTicket[]
   credentials    ClientCredential[]
+  processId      String?
+  process        ClientProcess?     @relation(fields: [processId], references: [id], onDelete: SetNull)
+  receivables    Receivable[]
+  documents      ClientDocument[]
+  workOrders     WorkOrder[]
 }
 
 model WorkOrder {
-  id             String   @id @default(cuid())
-  code           String   @unique
-  source         String   @default("MANUAL_QUOTE")
-  status         String   @default("ACTIVE")
-  priority       String   @default("NORMAL")
+  id             String         @id @default(cuid())
+  code           String         @unique
+  source         String         @default("MANUAL_QUOTE")
+  status         String         @default("ACTIVE")
+  priority       String         @default("NORMAL")
   quoteId        String?
-  // quote          Quote?   @relation(fields: [quoteId], references: [id])
+  quote          Quote?         @relation(fields: [quoteId], references: [id], onDelete: SetNull)
   saleId         String?
-  // sale           Sale?    @relation(fields: [saleId], references: [id])
+  sale           Sale?          @relation(fields: [saleId], references: [id], onDelete: SetNull)
+  projectId      String?
+  project        Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
   clientId       String?
-  client         User?    @relation(fields: [clientId], references: [id])
+  client         User?          @relation(fields: [clientId], references: [id])
   title          String
   description    String?
   scope          Json?
@@ -391,35 +412,37 @@ model WorkOrder {
   completedAt    DateTime?
   closedAt       DateTime?
   cancelledAt    DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  processId      String?
+  process        ClientProcess? @relation(fields: [processId], references: [id], onDelete: SetNull)
 }
 
 model ClientRequest {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   clientId    String?
-  client      User?    @relation(fields: [clientId], references: [id])
+  client      User?     @relation(fields: [clientId], references: [id])
   projectId   String?
-  project     Project? @relation(fields: [projectId], references: [id])
+  project     Project?  @relation(fields: [projectId], references: [id])
   subject     String
   channel     String?
   priority    String?
   status      String?
   description String?
   dueDate     DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 }
 
 model TaxDocument {
-  id             String   @id @default(cuid())
+  id             String           @id @default(cuid())
   clientId       String?
-  client         User?    @relation(fields: [clientId], references: [id])
+  client         User?            @relation(fields: [clientId], references: [id])
   projectId      String?
-  project        Project? @relation(fields: [projectId], references: [id])
+  project        Project?         @relation(fields: [projectId], references: [id])
   quoteId        String?
-  quote          Quote?   @relation(fields: [quoteId], references: [id])
+  quote          Quote?           @relation(fields: [quoteId], references: [id])
   saleId         String?
-  sale           Sale?    @relation(fields: [saleId], references: [id])
+  sale           Sale?            @relation(fields: [saleId], references: [id])
   type           String
   documentNumber String?
   siiFolio       String?
@@ -434,145 +457,309 @@ model TaxDocument {
   pdfUrl         String?
   xmlUrl         String?
   notes          String?
-  createdAt      DateTime @default(now())
+  createdAt      DateTime         @default(now())
+  processId      String?
+  process        ClientProcess?   @relation(fields: [processId], references: [id], onDelete: SetNull)
+  receivables    Receivable[]
+  documents      ClientDocument[]
+}
+
+/// Expediente único que ordena el ciclo completo, desde el ingreso comercial
+/// hasta el cierre financiero y la postventa.
+model ClientProcess {
+  id                     String               @id @default(cuid())
+  code                   String               @unique
+  clientId               String?
+  client                 User?                @relation("ProcessClient", fields: [clientId], references: [id], onDelete: Restrict)
+  title                  String
+  stage                  String               @default("INTAKE")
+  status                 String               @default("ACTIVE")
+  outcome                String?
+  priority               String               @default("NORMAL")
+  owner                  String?
+  requiresInitialPayment Boolean              @default(true)
+  nextAction             String?
+  nextActionAt           DateTime?
+  blockedReason          String?
+  lostReason             String?
+  cancelReason           String?
+  version                Int                  @default(1)
+  startedAt              DateTime             @default(now())
+  closedAt               DateTime?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  events                 ClientProcessEvent[]
+  leads                  Lead[]
+  quotes                 Quote[]
+  workOrders             WorkOrder[]
+  projects               Project[]
+  sales                  Sale[]
+  taxDocuments           TaxDocument[]
+  receivables            Receivable[]
+  payments               Payment[]
+  documents              ClientDocument[]
+
+  @@index([clientId, status, stage])
+  @@index([stage, nextActionAt])
+}
+
+model ClientProcessEvent {
+  id        String        @id @default(cuid())
+  processId String
+  process   ClientProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
+  actorId   String?
+  actor     User?         @relation("ProcessEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+  eventType String
+  fromStage String?
+  toStage   String?
+  title     String
+  notes     String?
+  metadata  Json?
+  createdAt DateTime      @default(now())
+
+  @@index([processId, createdAt])
+  @@index([eventType, createdAt])
+}
+
+/// Cuenta por cobrar única. Puede comenzar en la cotización y luego enlazarse
+/// a la venta y al documento tributario sin duplicar el saldo.
+model Receivable {
+  id            String              @id @default(cuid())
+  sourceKey     String              @unique
+  clientId      String
+  client        User                @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  processId     String?
+  process       ClientProcess?      @relation(fields: [processId], references: [id], onDelete: SetNull)
+  quoteId       String?
+  quote         Quote?              @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  saleId        String?
+  sale          Sale?               @relation(fields: [saleId], references: [id], onDelete: SetNull)
+  taxDocumentId String?
+  taxDocument   TaxDocument?        @relation(fields: [taxDocumentId], references: [id], onDelete: SetNull)
+  projectId     String?
+  project       Project?            @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  description   String
+  kind          String              @default("MANUAL")
+  quoteStageKey String?
+  currency      String              @default("CLP")
+  totalAmount   Int
+  status        String              @default("PENDING")
+  issuedAt      DateTime            @default(now())
+  dueAt         DateTime?
+  closedAt      DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  metadata      Json?
+  allocations   PaymentAllocation[]
+
+  @@index([clientId, status, dueAt])
+  @@index([processId])
+  @@index([quoteId])
+  @@index([saleId])
+  @@index([taxDocumentId])
+  @@index([projectId])
+}
+
+/// Movimiento real recibido. Si no se asigna completamente a una cuenta por
+/// cobrar, el remanente queda como crédito/anticipo del cliente.
+model Payment {
+  id                String              @id @default(cuid())
+  clientId          String
+  client            User                @relation("ClientPayments", fields: [clientId], references: [id], onDelete: Restrict)
+  processId         String?
+  process           ClientProcess?      @relation(fields: [processId], references: [id], onDelete: SetNull)
+  amount            Int
+  currency          String              @default("CLP")
+  method            String
+  source            String              @default("MANUAL")
+  status            String              @default("PENDING")
+  reference         String?
+  provider          String?
+  providerPaymentId String?
+  commerceOrder     String?
+  idempotencyKey    String?             @unique
+  receivedAt        DateTime            @default(now())
+  notes             String?
+  proofUrl          String?
+  metadata          Json?
+  recordedById      String?
+  recordedBy        User?               @relation("PaymentRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
+  voidedAt          DateTime?
+  voidReason        String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  allocations       PaymentAllocation[]
+
+  @@unique([provider, providerPaymentId])
+  @@unique([provider, commerceOrder])
+  @@index([clientId, status, receivedAt])
+  @@index([processId])
+  @@index([reference])
+}
+
+model PaymentAllocation {
+  id           String     @id @default(cuid())
+  paymentId    String
+  payment      Payment    @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  receivableId String
+  receivable   Receivable @relation(fields: [receivableId], references: [id], onDelete: Restrict)
+  amount       Int
+  notes        String?
+  createdAt    DateTime   @default(now())
+
+  @@unique([paymentId, receivableId])
+  @@index([receivableId, createdAt])
 }
 
 model EmailVerificationCode {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  email       String
-  codeHash    String
-  expiresAt   DateTime
-  consumedAt  DateTime?
-  attempts    Int      @default(0)
-  sentCount   Int      @default(1)
-  lastSentAt  DateTime @default(now())
-  createdAt   DateTime @default(now())
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email      String
+  codeHash   String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  attempts   Int       @default(0)
+  sentCount  Int       @default(1)
+  lastSentAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
 
   @@index([userId, email, createdAt])
 }
 
 model PasswordResetCode {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  email       String
-  codeHash    String
-  expiresAt   DateTime
-  consumedAt  DateTime?
-  attempts    Int      @default(0)
-  sentCount   Int      @default(1)
-  lastSentAt  DateTime @default(now())
-  createdAt   DateTime @default(now())
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email      String
+  codeHash   String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  attempts   Int       @default(0)
+  sentCount  Int       @default(1)
+  lastSentAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
 
   @@index([userId, email, createdAt])
 }
 
 model ClientDocument {
-  id           String   @id @default(cuid())
-  userId       String
-  user         User     @relation("ClientDocuments", fields: [userId], references: [id], onDelete: Cascade)
-  title        String
-  description  String?
-  category     String
-  fileUrl      String
-  fileName     String?
-  mimeType     String?
-  fileSize     Int?
-  uploadedById String?
-  uploadedBy   User?    @relation("ClientDocUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
-  isPrivate    Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation("ClientDocuments", fields: [userId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  category      String
+  fileUrl       String
+  fileName      String?
+  mimeType      String?
+  fileSize      Int?
+  uploadedById  String?
+  uploadedBy    User?          @relation("ClientDocUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
+  isPrivate     Boolean        @default(true)
+  storagePath   String?
+  projectId     String?
+  project       Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  quoteId       String?
+  quote         Quote?         @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  taxDocumentId String?
+  taxDocument   TaxDocument?   @relation(fields: [taxDocumentId], references: [id], onDelete: SetNull)
+  processId     String?
+  process       ClientProcess? @relation(fields: [processId], references: [id], onDelete: SetNull)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@index([userId, category, createdAt])
+  @@index([projectId, createdAt])
+  @@index([quoteId, createdAt])
+  @@index([taxDocumentId, createdAt])
+  @@index([processId, createdAt])
 }
 
 model SupportTicket {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation("ClientSupportTickets", fields: [userId], references: [id], onDelete: Cascade)
-  projectId     String?
-  project       Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  title         String
-  description   String
-  status        String   @default("OPEN")
-  priority      String   @default("NORMAL")
-  category      String?
-  assignedToId  String?
-  assignedTo    User?    @relation("TicketAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
-  resolvedAt    DateTime?
-  closedAt      DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  messages      SupportTicketMessage[]
+  id           String                 @id @default(cuid())
+  userId       String
+  user         User                   @relation("ClientSupportTickets", fields: [userId], references: [id], onDelete: Cascade)
+  projectId    String?
+  project      Project?               @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  title        String
+  description  String
+  status       String                 @default("OPEN")
+  priority     String                 @default("NORMAL")
+  category     String?
+  assignedToId String?
+  assignedTo   User?                  @relation("TicketAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  resolvedAt   DateTime?
+  closedAt     DateTime?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  messages     SupportTicketMessage[]
 
   @@index([userId, status, createdAt])
 }
 
 model SupportTicketMessage {
-  id          String   @id @default(cuid())
-  ticketId    String
-  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  authorRole  Role
-  message     String
-  isInternal  Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id         String        @id @default(cuid())
+  ticketId   String
+  ticket     SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  authorRole Role
+  message    String
+  isInternal Boolean       @default(false)
+  createdAt  DateTime      @default(now())
 
   @@index([ticketId, createdAt])
 }
 
 model ClientCredential {
-  id                String   @id @default(cuid())
-  userId            String
-  user              User     @relation("ClientCredentials", fields: [userId], references: [id], onDelete: Cascade)
-  projectId         String?
-  project           Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  serviceName       String
-  username          String?
-  secretCiphertext  String?
-  secretIv          String?
-  secretTag         String?
-  url               String?
-  notes             String?
-  isSensitive       Boolean  @default(true)
-  createdById       String?
-  createdBy         User?    @relation("CredentialCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  updatedById       String?
-  updatedBy         User?    @relation("CredentialUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation("ClientCredentials", fields: [userId], references: [id], onDelete: Cascade)
+  projectId        String?
+  project          Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  serviceName      String
+  username         String?
+  secretCiphertext String?
+  secretIv         String?
+  secretTag        String?
+  url              String?
+  notes            String?
+  isSensitive      Boolean  @default(true)
+  createdById      String?
+  createdBy        User?    @relation("CredentialCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById      String?
+  updatedBy        User?    @relation("CredentialUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@index([userId, createdAt])
 }
 
 model ClientNotification {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title       String
-  body        String
-  type        String   @default("INFO")
-  link        String?
-  isRead      Boolean  @default(false)
-  readAt      DateTime?
-  createdAt   DateTime @default(now())
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  type      String    @default("INFO")
+  link      String?
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
 
   @@index([userId, isRead, createdAt])
 }
 
 model ClientCommunication {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subject     String
-  message     String
-  direction   String   @default("OUTBOUND")
-  channel     String   @default("PORTAL")
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject   String
+  message   String
+  direction String   @default("OUTBOUND")
+  channel   String   @default("PORTAL")
+  createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
 }
@@ -594,16 +781,16 @@ model PortalRequest {
 }
 
 model ClientAuditLog {
-  id            String   @id @default(cuid())
-  actorId       String?
-  actor         User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
-  targetUserId  String?
-  targetUser    User?    @relation("AuditTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
-  action        String
-  entityType    String
-  entityId      String?
-  details       Json?
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  actorId      String?
+  actor        User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  targetUserId String?
+  targetUser   User?    @relation("AuditTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+  action       String
+  entityType   String
+  entityId     String?
+  details      Json?
+  createdAt    DateTime @default(now())
 
   @@index([targetUserId, createdAt])
   @@index([actorId, createdAt])
@@ -685,14 +872,13 @@ enum SettingType {
 }
 
 model CredentialRevealCode {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  codeHash    String
-  expiresAt   DateTime
-  consumedAt  DateTime?
-  attempts    Int      @default(0)
-  sentCount   Int      @default(1)
-  lastSentAt  DateTime @default(now())
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash   String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  attempts   Int       @default(0)
+  sentCount  Int       @default(1)
+  lastSentAt DateTime  @default(now())
 }
-
