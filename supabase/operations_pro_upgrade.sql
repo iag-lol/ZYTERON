@@ -660,6 +660,7 @@ begin
     'SupportTicketMessage', 'ClientCredential', 'ClientNotification',
     'ClientCommunication', 'PortalRequest', 'ClientAuditLog', 'ClientProcess',
     'ClientProcessEvent', 'Receivable', 'Payment', 'PaymentAllocation', 'Expense',
+    'WebVisit', 'ClientReview',
     'tax_periods', 'companies', 'transactions', 'business_documents',
     'audit_logs', 'smart_alerts', 'whatsapp_conversations', 'whatsapp_messages',
     'whatsapp_notes', 'whatsapp_quick_replies'
@@ -683,19 +684,8 @@ begin
 end
 $$;
 
--- WebVisit/ClientReview se leen y escriben a través del backend; no exponen
--- acceso directo a PostgREST para evitar enumeración o inserciones abusivas.
-alter table if exists public."WebVisit" enable row level security;
-revoke all privileges on table public."WebVisit" from anon, authenticated;
-grant all privileges on table public."WebVisit" to service_role;
-drop policy if exists webvisit_public_insert on public."WebVisit";
-drop policy if exists webvisit_admin_select_all on public."WebVisit";
-
-alter table if exists public."ClientReview" enable row level security;
-revoke all privileges on table public."ClientReview" from anon, authenticated;
-grant all privileges on table public."ClientReview" to service_role;
-drop policy if exists clientreview_public_insert_pending on public."ClientReview";
-drop policy if exists clientreview_public_select_approved on public."ClientReview";
+-- WebVisit y ClientReview quedan incluidos en el bloque dinámico anterior.
+-- Si alguna tabla no existe en una instalación, se omite sin abortar la migración.
 
 notify pgrst, 'reload schema';
 
