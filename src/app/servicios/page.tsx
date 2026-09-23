@@ -361,7 +361,7 @@ export default async function ServiciosPage() {
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" className="bg-white font-bold text-blue-800 hover:bg-blue-50">
               <Link href="/cotizador">
-                Cotizar página web <ArrowRight className="h-4 w-4" />
+                Cotizar una solución <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">

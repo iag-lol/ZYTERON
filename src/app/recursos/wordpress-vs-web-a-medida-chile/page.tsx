@@ -5,6 +5,7 @@ import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildArticleJsonLd, buildFaqJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import { siteConfig } from "@/config/site";
 
 const path = "/recursos/wordpress-vs-web-a-medida-chile";
 
@@ -129,7 +130,10 @@ export default function WordpressVsWebAMedidaChilePage() {
             "Comparativa honesta de costos iniciales y de mantención, velocidad, seguridad y escalabilidad entre WordPress y el desarrollo web a medida.",
           datePublished: "2026-08-20T12:00:00-04:00",
           dateModified: "2026-08-20T12:00:00-04:00",
-          authorName: "Equipo Zyteron",
+          authorName: siteConfig.legalName,
+          authorType: "Organization",
+          authorUrl: siteConfig.url,
+          authorId: `${siteConfig.url}/#organization`,
         })}
       />
       <JsonLd id="wordpress-vs-medida-faq-schema" data={buildFaqJsonLd(faqs)} />
@@ -144,7 +148,7 @@ export default function WordpressVsWebAMedidaChilePage() {
             La respuesta corta: WordPress conviene para sitios editoriales simples con publicación frecuente y presupuesto acotado; el desarrollo a medida conviene cuando el sitio es un canal comercial que necesita velocidad, seguridad, integraciones o funcionalidades propias. Abajo comparamos ambos caminos criterio por criterio, con la experiencia de proyectos reales del equipo de Zyteron.
           </p>
           <p className="text-sm font-semibold text-slate-500">
-            Publicado por Equipo Zyteron · Zyteron SpA · 20 de agosto de 2026
+            Publicado por Zyteron SpA · 20 de agosto de 2026
           </p>
         </Container>
       </section>

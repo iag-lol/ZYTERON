@@ -27,7 +27,7 @@ const CANONICAL_PAGES: Array<{ path: string; description: string }> = [
   { path: "/paginas-web-para-pymes", description: "Páginas web para pymes chilenas, con foco en captar clientes." },
   { path: "/paginas-web-para-empresas", description: "Páginas web corporativas para empresas en Chile." },
   { path: "/paginas-web-santiago", description: "Páginas web en Santiago y Región Metropolitana." },
-  { path: "/desarrollo-web-santiago", description: "Desarrollo web en Santiago con reuniones presenciales u online." },
+  { path: "/desarrollo-web-santiago", description: "Desarrollo web a medida en Santiago: integraciones, migraciones, plataformas y optimización de rendimiento." },
   { path: "/tiendas-online", description: "Tiendas online y ecommerce con carrito, pagos y conexión a WhatsApp." },
   { path: "/sistemas-web", description: "Sistemas web a medida: paneles administrativos, portales y plataformas internas." },
   { path: "/automatizacion", description: "Automatización de procesos comerciales y operativos." },
@@ -36,6 +36,7 @@ const CANONICAL_PAGES: Array<{ path: string; description: string }> = [
   { path: "/planes", description: "Planes y precios oficiales de páginas web, tiendas y sistemas." },
   { path: "/cotizador", description: "Cotizador online para estimar el valor de un proyecto." },
   { path: "/casos-exito", description: "Casos de éxito y proyectos entregados." },
+  { path: "/politica-editorial", description: "Criterios de autoría, revisión, fuentes y correcciones del contenido." },
   { path: "/quienes-somos", description: "Quiénes somos: equipo, historia y datos formales de Zyteron SpA." },
   { path: "/faq", description: "Preguntas frecuentes sobre precios, plazos y servicios." },
   { path: "/contacto", description: "Contacto y solicitud de cotización." },
@@ -129,6 +130,8 @@ Atendemos clientes en todo Chile, de forma remota o presencial, con base en ${ad
 - Cotizador online: ${abs("/cotizador")}
 - Casos de éxito: ${abs("/casos-exito")}
 - Preguntas frecuentes: ${abs("/faq")}
+- Política editorial: ${abs("/politica-editorial")}
+- Mapa del sitio: ${abs("/mapa-del-sitio")}
 `;
 }
 
@@ -136,6 +139,8 @@ export function GET(): Response {
   return new Response(buildLlmsMarkdown(), {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
+      "X-Robots-Tag": "noindex, follow",
     },
   });
 }

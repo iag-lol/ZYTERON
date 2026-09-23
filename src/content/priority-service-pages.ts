@@ -123,86 +123,92 @@ export const priorityServicePages: PriorityServicePage[] = [
   {
     slug: "desarrollo-web-santiago",
     path: "/desarrollo-web-santiago",
-    title: "Desarrollo web en Santiago para empresas y pymes",
-    metaTitle: "Desarrollo Web en Santiago | Zyteron",
+    title: "Desarrollo web a medida en Santiago para empresas",
+    metaTitle: "Desarrollo Web a Medida en Santiago | Zyteron",
     metaDescription:
-      "Servicio de desarrollo web en Santiago para empresas, pymes y emprendedores: páginas profesionales, arquitectura SEO y enfoque en cotizaciones reales.",
-    heroTitle: "Desarrollo web en Santiago con foco comercial y técnico",
+      "Desarrollo web a medida en Santiago: integraciones con API, CRM o ERP, migraciones y optimización de rendimiento para plataformas empresariales.",
+    heroTitle: "Desarrollo web a medida en Santiago para integrar, migrar y escalar",
     heroDescription:
-      "Diseñamos y desarrollamos sitios web profesionales para empresas, pymes y emprendedores en Santiago. Nuestro enfoque combina estructura comercial, SEO técnico y experiencia de usuario para convertir visitas en oportunidades de negocio.",
-    directAnswer: `El desarrollo web en Santiago cuesta desde ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} CLP + IVA para una web básica y desde ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA para un sitio corporativo, con entrega típica de 1 a 6 semanas. Zyteron desarrolla desde su oficina en Providencia, con reuniones presenciales en Santiago y el mismo proceso en modalidad remota para todo Chile.`,
+      "Desarrollamos soluciones web para empresas que necesitan más que un sitio de presentación: funcionalidades propias, integraciones con sistemas existentes, migraciones cuidadas y mejoras de rendimiento medibles. Trabajamos desde Providencia para organizaciones de Santiago y proyectos remotos en todo Chile.",
+    directAnswer: `Un desarrollo web empresarial a medida en Santiago parte en ${clp(PLAN_PRICE_AMOUNTS.empresa)} CLP + IVA; una integración API personalizada parte en ${clp(ADDON_PRICE_AMOUNTS.customApi)} + IVA y una plataforma con usuarios, base de datos o panel parte en ${clp(PLAN_PRICE_AMOUNTS.sistema)} + IVA. El alcance y el plazo se confirman después de revisar la arquitectura actual, las integraciones y la migración requerida.`,
     context: [
-      "En un mercado competitivo como Santiago, una web no puede ser solo una vitrina. Debe explicar con claridad qué haces, a quién ayudas y por qué elegirte frente a otras opciones. Por eso trabajamos estructura, mensajes y llamados a la acción desde el inicio del proyecto.",
-      "En Zyteron construimos sitios orientados a resultados: mejor indexación, mejor confianza comercial y mejor ruta hacia contacto o cotización. Nuestra oficina está en Antonio Bellet 193, Providencia: coordinamos reuniones presenciales para levantar el alcance cuando el proyecto lo amerita y atendemos de forma remota en toda la Región Metropolitana.",
-      "Cada propuesta se define por alcance real. Esto evita sobrecostos, promesas vagas y retrasos por falta de definición inicial. Primero levantamos requerimientos, luego construimos una hoja de ruta ejecutable.",
+      "Esta página está orientada a proyectos con requerimientos técnicos propios. Si necesitas una web corporativa estándar para presentar servicios y captar consultas, revisa nuestro servicio de páginas web en Santiago. Si necesitas conectar un CRM o ERP, consumir una API, crear lógica de negocio o evolucionar una plataforma existente, este es el servicio adecuado.",
+      "Antes de intervenir un sitio activo levantamos sus URLs, contenidos, analítica, formularios y dependencias. Con ese inventario definimos qué se conserva, qué se reconstruye y qué redirecciones o pruebas son necesarias para migrar sin romper rutas, medición ni procesos comerciales.",
+      "También abordamos rendimiento con datos: revisamos carga, recursos, componentes y experiencia móvil antes de priorizar cambios. Nuestra oficina está en Antonio Bellet 193, Providencia, donde coordinamos sesiones técnicas presenciales para empresas de Santiago cuando el proyecto lo requiere.",
     ],
     benefits: [
-      "Mayor credibilidad comercial desde la primera visita.",
-      "Arquitectura preparada para crecer por servicios y búsquedas locales.",
-      "Carga rápida en mobile y desktop para mejorar experiencia y SEO.",
-      "Canales de conversión claros: formulario, WhatsApp y llamadas a cotizar.",
-      "Base técnica estable para futuras integraciones o automatizaciones.",
+      "Arquitectura definida según funcionalidades, datos y crecimiento previsto.",
+      "Integraciones trazables con APIs, CRM, ERP, pagos o herramientas internas.",
+      "Migración planificada de URLs, contenidos y medición existente.",
+      "Mejoras de rendimiento priorizadas con diagnóstico y pruebas comparables.",
+      "Código modular para evolucionar la solución por etapas.",
     ],
     includes: [
-      "Diagnóstico inicial de objetivo comercial y tipo de cliente.",
-      "Definición de estructura de páginas y jerarquía de contenidos.",
-      "Diseño responsive para celular, tablet y escritorio.",
-      "Implementación con metadata, canonical y datos estructurados.",
-      "Integración de formularios y botón de WhatsApp.",
-      "Publicación y soporte inicial post-entrega según alcance.",
+      "Levantamiento funcional y auditoría de la solución actual.",
+      "Diseño de arquitectura, datos, permisos e integraciones necesarias.",
+      "Desarrollo de componentes y flujos adaptados al proceso de la empresa.",
+      "Integración y pruebas con servicios externos según su documentación.",
+      "Plan de migración, redirecciones y validación de analítica cuando aplica.",
+      "Pruebas funcionales, responsive y de rendimiento antes de publicar.",
     ],
     audience: [
-      "Empresas B2B que necesitan generar más reuniones comerciales.",
-      "Pymes en crecimiento que quieren profesionalizar su presencia digital.",
-      "Emprendedores que requieren una web clara para vender servicios.",
-      "Equipos comerciales que hoy dependen solo de referidos.",
+      "Empresas de Santiago con una plataforma heredada que necesitan modernizar.",
+      "Equipos que deben conectar su web con CRM, ERP, pagos o APIs externas.",
+      "Organizaciones que migran desde WordPress u otra tecnología sin perder rutas útiles.",
+      "Negocios que necesitan funciones propias, paneles o lógica que una plantilla no resuelve.",
     ],
     process: [
-      "Levantamiento de requerimientos y objetivos de negocio.",
-      "Propuesta de alcance, tiempos y cotización formal.",
-      "Diseño de estructura, contenido y bloques de conversión.",
-      "Desarrollo, pruebas y ajustes finales con revisión del cliente.",
-      "Publicación, validación y soporte inicial de operación.",
+      "Inventario del sistema actual, objetivos, usuarios, datos y dependencias.",
+      "Definición de arquitectura, etapas, riesgos y criterios de aceptación.",
+      "Desarrollo iterativo de funcionalidades e integraciones priorizadas.",
+      "Migración controlada y pruebas con escenarios reales del equipo.",
+      "Validación de rendimiento, medición, publicación y estabilización inicial.",
     ],
     faqs: [
       {
-        question: "¿Cuánto cuesta el desarrollo web en Santiago?",
-        answer: `El desarrollo web en Santiago cuesta entre ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} y ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA según alcance: una web básica parte en ${clp(PLAN_PRICE_AMOUNTS["web-basica"])}, un sitio pyme en ${clp(PLAN_PRICE_AMOUNTS.pyme)} y un sitio corporativo en ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA. Si el proyecto requiere un sistema web a medida, el rango parte desde ${clp(PLAN_PRICE_AMOUNTS.sistema)} + IVA. Entregamos cotización formal por escrito antes de iniciar.`,
+        question: "¿Cuánto cuesta un desarrollo web a medida en Santiago?",
+        answer: `Una implementación web empresarial parte en ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA, una integración API personalizada desde ${clp(ADDON_PRICE_AMOUNTS.customApi)} + IVA y un sistema con usuarios, base de datos y panel desde ${clp(PLAN_PRICE_AMOUNTS.sistema)} + IVA. El valor final depende de funciones, datos, proveedores externos y migración; se confirma en una propuesta técnica por etapas.`,
+      },
+      {
+        question: "¿En qué se diferencia de una página web en Santiago?",
+        answer:
+          "Una página web estándar se concentra en presentar la empresa, sus servicios y canales de contacto. El desarrollo a medida agrega requerimientos técnicos propios, como lógica de negocio, integraciones, migración de una plataforma activa, paneles o mejoras profundas de arquitectura y rendimiento.",
+      },
+      {
+        question: "¿Pueden migrar mi sitio actual sin perder sus URLs?",
+        answer:
+          "Sí. Antes de migrar levantamos las URLs y contenidos existentes, identificamos qué debe conservarse y definimos redirecciones para las rutas que cambian. También revisamos formularios, analítica y elementos SEO; la estrategia concreta depende del acceso y del estado de la plataforma actual.",
+      },
+      {
+        question: "¿Integran la web con CRM, ERP, pagos u otras APIs?",
+        answer:
+          "Sí, cuando el proveedor dispone de API, webhooks o un mecanismo de intercambio compatible. Primero revisamos su documentación, autenticación, límites y ambiente de pruebas; con esa información confirmamos factibilidad, alcance y costo.",
+      },
+      {
+        question: "¿Cómo trabajan la optimización de rendimiento?",
+        answer:
+          "Medimos el comportamiento actual, identificamos recursos y componentes costosos y priorizamos cambios según impacto. Después comparamos resultados en condiciones equivalentes; no prometemos una puntuación universal porque depende también del contenido, servicios externos y dispositivo.",
       },
       {
         question: "¿Puedo reunirme con ustedes en Providencia?",
         answer:
-          "Sí. Nuestra oficina está en Antonio Bellet 193, Providencia. Coordinamos reuniones presenciales para el levantamiento del proyecto y seguimiento cuando lo prefieras, o trabajamos todo el proceso por videollamada si te acomoda más.",
-      },
-      {
-        question: "¿Trabajan solo en Santiago?",
-        answer:
-          "Atendemos Santiago y otras regiones de Chile en modalidad remota, manteniendo el mismo proceso de levantamiento y seguimiento.",
-      },
-      {
-        question: "¿Cuánto demora una web corporativa?",
-        answer:
-          "Una web básica o de pocas secciones toma 1 a 3 semanas. Una implementación corporativa estándar toma entre 3 y 6 semanas según secciones, contenido e integraciones; el plazo queda comprometido en la cotización.",
-      },
-      {
-        question: "¿Puedo solicitar mejoras después del lanzamiento?",
-        answer:
-          "Sí. Podemos trabajar por etapas y definir nuevas mejoras con prioridades técnicas y comerciales.",
+          "Sí. Coordinamos reuniones técnicas en nuestra oficina de Antonio Bellet 193, Providencia, y también realizamos todo el levantamiento por videollamada para equipos de Santiago y otras regiones de Chile.",
       },
     ],
     relatedLinks: [
-      { label: "Páginas web en Santiago", href: "/paginas-web-santiago" },
-      { label: "Páginas web para empresas", href: "/paginas-web-para-empresas" },
-      { label: "Páginas web para pymes", href: "/paginas-web-para-pymes" },
-      { label: "Planes y precios de páginas web", href: "/planes" },
-      { label: "Cotiza tu desarrollo web", href: "/cotizador" },
+      { label: "Páginas web estándar en Santiago", href: "/paginas-web-santiago" },
+      { label: "Sistemas web a medida", href: "/sistemas-web" },
+      { label: "Mantención y evolución web", href: "/servicios/mantencion-web-chile" },
+      { label: "SEO técnico para empresas", href: "/servicios/seo-para-empresas-chile" },
+      { label: "WordPress vs. desarrollo a medida", href: "/recursos/wordpress-vs-web-a-medida-chile" },
+      { label: "Cotiza tu desarrollo a medida", href: "/cotizador" },
       { label: "Casos de éxito", href: "/casos-exito" },
     ],
-    serviceType: "desarrollo web santiago",
-    primaryCta: "Solicitar cotización de desarrollo web",
-    finalCtaTitle: "¿Necesitas una web profesional para tu empresa en Santiago?",
+    serviceType: "desarrollo web a medida e integraciones en Santiago",
+    primaryCta: "Solicitar evaluación técnica",
+    finalCtaTitle: "¿Tu empresa necesita integrar, migrar o escalar su plataforma web?",
     finalCtaCopy:
-      "Podemos revisar tu caso y proponerte una estructura de sitio alineada a tu objetivo comercial, presupuesto y nivel de urgencia.",
+      "Revisamos la solución actual, sus dependencias y el resultado que necesitas para proponer etapas, riesgos, plazo y presupuesto con claridad.",
   },
   {
     slug: "automatizacion-whatsapp-empresas",

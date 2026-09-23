@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { getDbCaseStudy } from "@/lib/content/cases-merge";
 import { DbCaseArticle } from "@/components/casos/db-case-article";
 import { buildArticleJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import { siteConfig } from "@/config/site";
 
 type CaseDetailProps = {
   params: Promise<{
@@ -70,7 +71,10 @@ export default async function CaseDetailPage({ params }: CaseDetailProps) {
           datePublished: item.publishedAt ?? item.createdAt ?? new Date().toISOString(),
           dateModified: item.updatedAt ?? undefined,
           image: item.imageUrl || undefined,
-          authorName: "Equipo Zyteron",
+          authorName: siteConfig.legalName,
+          authorType: "Organization",
+          authorUrl: siteConfig.url,
+          authorId: `${siteConfig.url}/#organization`,
         })}
       />
       <DbCaseArticle item={item} />

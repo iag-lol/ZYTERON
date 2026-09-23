@@ -6,7 +6,11 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { PLAN_PRICE_AMOUNTS, SERVICE_PRICE_AMOUNTS } from "@/config/pricing";
 import { siteConfig } from "@/config/site";
 import type { SeoServicePage } from "@/content/seo-service-pages";
-import { getFeaturedCaseItems, type CaseListItem } from "@/lib/content/cases-merge";
+import {
+  getCaseListItemsBySlugs,
+  getFeaturedCaseItems,
+  type CaseListItem,
+} from "@/lib/content/cases-merge";
 import {
   buildFaqJsonLd,
   buildServiceJsonLd,
@@ -305,7 +309,9 @@ export async function SeoServiceLanding({ page }: Props) {
   // consulta falla o aún no hay casos, la sección muestra un fallback a /demos.
   let relatedCaseStudies: CaseListItem[] = [];
   try {
-    relatedCaseStudies = await getFeaturedCaseItems(3);
+    relatedCaseStudies = deepContent
+      ? await getCaseListItemsBySlugs(deepContent.caseStudySlugs)
+      : await getFeaturedCaseItems(3);
   } catch {
     relatedCaseStudies = [];
   }

@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const period = normalizePeriod(url.searchParams.get("period")) || undefined;
   const data = await getAccountingDashboardData(period);
-  const workbook = buildAccountingWorkbook(data);
+  const workbook = await buildAccountingWorkbook(data);
   const fileName = `contador-auditor-${data.selectedPeriod}.xlsx`;
 
   return new NextResponse(workbook, {

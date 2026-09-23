@@ -86,8 +86,8 @@ export default async function CasosExitoPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" className="bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/contacto">
-                Cotizar mi página web <ArrowRight className="h-4 w-4" />
+              <Link href="/contacto?origen=casos-exito">
+                Cotizar un proyecto similar <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
@@ -116,14 +116,15 @@ export default async function CasosExitoPage() {
               Problemas reales transformados en sistemas, datos y control
             </h2>
             <p className="mx-auto max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Cada caso está estructurado con problema, objetivos, solución, implementación, resultados esperados y KPIs posibles.
+              Cada caso documenta el problema, los objetivos, la solución y la implementación. Cuando existe autorización,
+              también publicamos resultados o métricas observadas.
             </p>
           </div>
 
           {items.length === 0 ? (
             <div className="card-premium p-8 text-center">
               <p className="text-sm text-slate-600">
-                Pronto publicaremos casos de éxito documentados de empresas reales.
+                Publicaremos nuevos casos cuando estén documentados y autorizados para difusión.
               </p>
             </div>
           ) : (

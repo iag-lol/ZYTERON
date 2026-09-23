@@ -153,6 +153,7 @@ export function createPageMetadata({
       ? buildAbsoluteUrl(ogImagePath)
       : getAbsoluteOgImageUrl(path);
   const title = formatMetadataTitle(rawTitle);
+  const socialImageAlt = ogImageAlt ?? title;
 
   return {
     title: {
@@ -161,6 +162,9 @@ export function createPageMetadata({
     description,
     alternates: {
       canonical: url,
+      types: {
+        "application/rss+xml": buildAbsoluteUrl("/rss.xml"),
+      },
     },
     openGraph: {
       ...defaultOpenGraph,
@@ -172,7 +176,7 @@ export function createPageMetadata({
           url: socialImage,
           width: 1200,
           height: 630,
-          alt: ogImageAlt ?? `${title} - ${siteConfig.name}`,
+          alt: socialImageAlt,
         },
       ],
     },
@@ -180,7 +184,7 @@ export function createPageMetadata({
       ...defaultTwitter,
       title,
       description,
-      images: [socialImage],
+      images: [{ url: socialImage, alt: socialImageAlt }],
     },
     robots: noIndex
       ? {

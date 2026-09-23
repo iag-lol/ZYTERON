@@ -1,5 +1,17 @@
-import * as XLSX from "xlsx";
+import { Workbook } from "exceljs";
 import type { AccountingDashboardData } from "@/lib/admin/accounting";
+
+type AccountingExportRow = Record<string, string | number>;
+
+function appendRows(workbook: Workbook, name: string, rows: AccountingExportRow[]) {
+  const worksheet = workbook.addWorksheet(name);
+  const headers = Object.keys(rows[0] ?? {});
+
+  if (headers.length === 0) return;
+
+  worksheet.addRow(headers);
+  worksheet.addRows(rows.map((row) => headers.map((header) => row[header] ?? "")));
+}
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("es-CL", {
@@ -20,8 +32,8 @@ function formatDate(value?: string | null) {
   });
 }
 
-export function buildAccountingWorkbook(data: AccountingDashboardData) {
-  const workbook = XLSX.utils.book_new();
+export async function buildAccountingWorkbook(data: AccountingDashboardData): Promise<ArrayBuffer> {
+  const workbook = new Workbook();
 
   const summaryRows = [
     { indicador: "Periodo", valor: data.selectedPeriod },
@@ -103,12 +115,13 @@ export function buildAccountingWorkbook(data: AccountingDashboardData) {
     creado: formatDate(item.created_at),
   }));
 
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(summaryRows), "Resumen");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(periodsRows), "Periodos");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(transactionRows), "Transacciones");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(documentsRows), "Documentos");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(projectsRows), "Proyectos");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(alertRows), "Alertas");
+  appendRows(workbook, "Resumen", summaryRows);
+  appendRows(workbook, "Periodos", periodsRows);
+  appendRows(workbook, "Transacciones", transactionRows);
+  appendRows(workbook, "Documentos", documentsRows);
+  appendRows(workbook, "Proyectos", projectsRows);
+  appendRows(workbook, "Alertas", alertRows);
 
-  return XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+  const output = await workbook.xlsx.writeBuffer();
+  return Uint8Array.from(output as unknown as Uint8Array).buffer;
 }

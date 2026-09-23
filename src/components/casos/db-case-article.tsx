@@ -201,7 +201,7 @@ export function DbCaseArticle({ item }: { item: DbCaseStudy }) {
               </p>
               <Button asChild className="w-full gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800">
                 <Link href={contactHref}>
-                  Cotizar mi página web <ArrowRight className="h-4 w-4" />
+                  Cotizar un proyecto similar <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
             </div>

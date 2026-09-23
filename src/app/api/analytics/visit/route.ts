@@ -1,6 +1,11 @@
-import { createHash, randomUUID } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { insertRow } from "@/lib/admin/repository";
+import {
+  isExcludedWebVisitPath,
+  normalizeWebVisitPath,
+  sanitizeWebVisitReferrer,
+} from "@/lib/analytics/visit-privacy";
 
 type VisitBody = {
   path?: unknown;
@@ -30,6 +35,34 @@ function readRequestIp(request: Request) {
 }
 
 let loggedSupabaseTrackingWarning = false;
+let loggedMissingIpHashSecret = false;
+
+function hashRequestIp(request: Request) {
+  const ip = readRequestIp(request);
+  if (!ip || ip === "unknown") return null;
+
+  const secret = String(
+    process.env.ANALYTICS_IP_HASH_SALT ||
+      process.env.NEXTAUTH_SECRET ||
+      process.env.AUTH_SECRET ||
+      process.env.JWT_SECRET ||
+      process.env.ADMIN_SESSION_SECRET ||
+      process.env.SESSION_SECRET ||
+      "",
+  ).trim();
+
+  if (!secret) {
+    if (!loggedMissingIpHashSecret) {
+      console.warn(
+        "[web-visit-track] No server secret is configured; unique IP hashing is disabled.",
+      );
+      loggedMissingIpHashSecret = true;
+    }
+    return null;
+  }
+
+  return createHmac("sha256", secret).update(`web-visit-ip:${ip}`).digest("hex");
+}
 
 function isSupabaseConfigError(message: string) {
   const normalized = message.toLowerCase();
@@ -42,13 +75,12 @@ function isSupabaseConfigError(message: string) {
 export async function POST(request: Request) {
   try {
     const payload = (await request.json().catch(() => ({}))) as VisitBody;
-    const path = text(payload.path, 300);
-    if (!path || path.startsWith("/admin")) {
+    const path = normalizeWebVisitPath(payload.path);
+    if (!path || isExcludedWebVisitPath(path)) {
       return NextResponse.json({ ok: true });
     }
 
-    const ip = readRequestIp(request);
-    const ipHash = createHash("sha256").update(ip).digest("hex");
+    const ipHash = hashRequestIp(request);
 
     await insertRow(
       "WebVisit",
@@ -56,9 +88,8 @@ export async function POST(request: Request) {
         id: randomUUID(),
         path,
         pageTitle: text(payload.pageTitle, 220) || null,
-        referrer: text(payload.referrer, 500) || null,
+        referrer: sanitizeWebVisitReferrer(payload.referrer) || null,
         userAgent: text(request.headers.get("user-agent"), 500) || null,
-        ip,
         ipHash,
         sessionId: text(payload.sessionId, 120) || null,
         createdAt: new Date().toISOString(),

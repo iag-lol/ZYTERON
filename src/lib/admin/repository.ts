@@ -305,6 +305,13 @@ type SelectOptions = {
   filters?: Record<string, string | number | null | undefined>;
   /** Acota por fecha en el servidor, para no traer histórico completo. */
   gte?: { column: string; value: string };
+  /**
+   * Evita convertir una caída de infraestructura en una lista vacía. Se usa
+   * para contenido público donde `[]` acabaría publicando falsos 404 o un
+   * sitemap incompleto. En el entorno local de Supabase se conserva el
+   * fallback vacío para permitir builds sin Docker.
+   */
+  throwOnError?: boolean;
 };
 
 function readEnvValue(...names: string[]) {
@@ -322,6 +329,12 @@ function readEnvValue(...names: string[]) {
     return trimmed;
   }
   return "";
+}
+
+function shouldThrowReadError(options: SelectOptions) {
+  if (!options.throwOnError) return false;
+  const configuredUrl = readEnvValue("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL").toLowerCase();
+  return !configuredUrl.startsWith("http://localhost:54321");
 }
 
 function toErrorMessage(error: unknown) {
@@ -560,15 +573,28 @@ export async function safeSelect<T>(table: string, select: string, options: Sele
       if (!isMissingRelationError(error.message)) {
         logReadError(table, `${toErrorMessage(primaryReadError)} | anon fallback: ${error.message}`);
       }
+      if (shouldThrowReadError(options)) {
+        throw new Error(`No fue posible leer ${table}: ${error.message}`);
+      }
       return [] as T[];
     } catch (fallbackError) {
       logReadError(table, `${toErrorMessage(primaryReadError)} | anon fallback error: ${toErrorMessage(fallbackError)}`);
+      if (shouldThrowReadError(options)) {
+        throw fallbackError instanceof Error
+          ? fallbackError
+          : new Error(`No fue posible leer ${table}: ${toErrorMessage(fallbackError)}`);
+      }
       return [] as T[];
     }
   }
 
   if (!isMissingRelationError(toErrorMessage(primaryReadError))) {
     logReadError(table, primaryReadError);
+  }
+  if (shouldThrowReadError(options)) {
+    throw primaryReadError instanceof Error
+      ? primaryReadError
+      : new Error(`No fue posible leer ${table}: ${toErrorMessage(primaryReadError)}`);
   }
   return [] as T[];
 }

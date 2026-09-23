@@ -2,23 +2,18 @@ import type { MetadataRoute } from "next";
 import { siteConfig } from "@/config/site";
 
 /**
- * Rutas privadas u operativas que ningún crawler debe indexar.
- * Se replican en la regla general y en las reglas de bots de IA.
+ * Sólo se bloquean endpoints sin contenido HTML útil. Las áreas privadas y las
+ * páginas de resultado de pago ya emiten `noindex`; deben poder rastrearse para
+ * que Google vea esa directiva y las retire del índice. robots.txt no reemplaza
+ * la autenticación y bloquear allí una URL puede dejarla indexada sin snippet.
  */
-const PRIVATE_PATHS = [
-  "/api/",
-  "/admin/",
-  "/portal-clientes/",
-  "/portal-comercial/",
-  "/checkout/",
-  "/pagos/",
-];
+const CRAWL_BLOCKED_PATHS = ["/api/"];
 
 /**
  * Crawlers de asistentes y motores de respuesta con IA. El allow explícito
  * documenta la intención de que el contenido público de Zyteron sea leído,
- * citado y recomendado por estos asistentes, manteniendo cerradas las rutas
- * privadas igual que para el resto de los bots.
+ * citado y recomendado por estos asistentes. Los endpoints de API permanecen
+ * fuera del rastreo igual que para el resto de los bots.
  */
 const AI_CRAWLERS = [
   "GPTBot",
@@ -40,12 +35,12 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: PRIVATE_PATHS,
+        disallow: CRAWL_BLOCKED_PATHS,
       },
       ...AI_CRAWLERS.map((userAgent) => ({
         userAgent,
         allow: "/",
-        disallow: PRIVATE_PATHS,
+        disallow: CRAWL_BLOCKED_PATHS,
       })),
     ],
     sitemap: `${siteConfig.url}/sitemap.xml`,

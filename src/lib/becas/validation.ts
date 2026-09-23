@@ -87,4 +87,5 @@ export const scholarshipApplicationSchema = z.object({
   }
 });
 
-export type ScholarshipApplication = z.infer<typeof scholarshipApplicationSchema>;
+export type ScholarshipApplicationInput = z.input<typeof scholarshipApplicationSchema>;
+export type ScholarshipApplication = z.output<typeof scholarshipApplicationSchema>;

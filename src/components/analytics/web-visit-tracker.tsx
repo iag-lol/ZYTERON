@@ -2,6 +2,11 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
+import {
+  isExcludedWebVisitPath,
+  normalizeWebVisitPath,
+  sanitizeWebVisitReferrer,
+} from "@/lib/analytics/visit-privacy";
 
 const SESSION_KEY = "zyteron_web_session_id";
 
@@ -19,18 +24,17 @@ export function WebVisitTracker() {
   const trackedRef = useRef<string>("");
 
   useEffect(() => {
-    if (!pathname) return;
-    const query = typeof window !== "undefined" ? window.location.search : "";
-    const fullPath = `${pathname}${query || ""}`;
-    if (!fullPath || fullPath.startsWith("/admin")) return;
-    if (trackedRef.current === fullPath) return;
-    trackedRef.current = fullPath;
+    const trackedPath = normalizeWebVisitPath(pathname);
+    if (!trackedPath || isExcludedWebVisitPath(trackedPath)) return;
+    if (trackedRef.current === trackedPath) return;
+    trackedRef.current = trackedPath;
 
     const sessionId = getOrCreateSessionId();
     const body = JSON.stringify({
-      path: fullPath,
+      path: trackedPath,
       pageTitle: typeof document !== "undefined" ? document.title : "",
-      referrer: typeof document !== "undefined" ? document.referrer : "",
+      referrer:
+        typeof document !== "undefined" ? sanitizeWebVisitReferrer(document.referrer) : "",
       sessionId,
     });
 

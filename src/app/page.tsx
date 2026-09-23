@@ -54,7 +54,7 @@ const planPriceClp = (id: keyof typeof PLAN_PRICE_AMOUNTS) =>
 export const metadata: Metadata = createPageMetadata({
   title: "Páginas Web Profesionales en Chile para Empresas y Pymes",
   description:
-    "Creamos páginas web profesionales para empresas y pymes de Santiago, Región Metropolitana y todo Chile: sitios rápidos, con SEO real y enfocados en generar cotizaciones.",
+    "Creamos páginas web profesionales para empresas y pymes de Santiago, Región Metropolitana y todo Chile: sitios rápidos, con base SEO técnica y enfocados en generar cotizaciones.",
   path: "/",
 });
 
@@ -97,9 +97,9 @@ const heroStats = [
     label: "Regiones de Chile con atención remota",
   },
   {
-    value: 100,
-    suffix: "%",
-    label: "Proyectos entregados con diseño responsivo",
+    value: 3,
+    suffix: "",
+    label: "Vistas adaptadas: celular, tablet y computador",
   },
   {
     value: processSteps.length,
@@ -593,7 +593,7 @@ export default async function Home() {
 
             <p className="max-w-2xl text-base font-medium leading-relaxed text-slate-700 [text-shadow:0_1px_10px_rgba(255,255,255,0.7)] sm:text-lg">
               Creamos sitios web rápidos, modernos y orientados a generar contactos para empresas y
-              pymes de Santiago, Región Metropolitana y todo Chile. Diseño profesional, base SEO real
+              pymes de Santiago, Región Metropolitana y todo Chile. Diseño profesional, base SEO técnica
               y una estructura pensada para convertir visitas en cotizaciones.
             </p>
 
@@ -681,7 +681,7 @@ export default async function Home() {
                   <MonitorSmartphone className="h-8 w-8 text-blue-300" />
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  {["Rápida", "Responsiva", "SEO real"].map((tag) => (
+                  {["Rápida", "Responsiva", "SEO técnico"].map((tag) => (
                     <span
                       key={tag}
                       className="rounded-lg border border-blue-100 bg-blue-50 py-2 text-center text-[11px] font-bold text-blue-800"
@@ -698,8 +698,8 @@ export default async function Home() {
                 <Search className="h-4 w-4" />
               </span>
               <span>
-                <span className="block text-[11px] font-extrabold text-slate-900">SEO real</span>
-                <span className="block text-[10px] text-slate-500">Listo para Google</span>
+                <span className="block text-[11px] font-extrabold text-slate-900">Base SEO</span>
+                <span className="block text-[10px] text-slate-500">Rastreo e indexación</span>
               </span>
             </div>
             <div className="animate-float-delayed absolute -bottom-4 left-0 z-20 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-lg shadow-blue-900/10 sm:-left-4">

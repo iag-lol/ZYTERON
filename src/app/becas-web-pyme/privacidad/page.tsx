@@ -1,14 +1,17 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { Container } from "@/components/layout/container";
 import { getBecasSupabaseClient } from "@/lib/becas/supabase-client";
+import { createPageMetadata } from "@/lib/seo";
 import ReactMarkdown from "react-markdown";
 import Link from "next/link";
 
-export const metadata: Metadata = {
-  title: "Política de Privacidad y Vitrina | Becas Web Pyme Zyteron",
+export const metadata: Metadata = createPageMetadata({
+  title: "Política de privacidad de Becas Web Pyme",
   description: "Política de privacidad, tratamiento de datos y condiciones de vitrina de Becas Web Pyme Zyteron.",
-  alternates: { canonical: "https://www.zyteron.cl/becas-web-pyme/privacidad" },
-};
+  path: "/becas-web-pyme/privacidad",
+  ogImagePath: "/becas-web-pyme/opengraph-image",
+  ogImageAlt: "Política de privacidad de Becas Web Pyme de Zyteron",
+});
 
 export const dynamic = "force-dynamic";
 
@@ -120,7 +123,13 @@ Los datos obligatorios se utilizan exclusivamente para gestionar y validar la po
 
         {/* CONTENIDO DE LA POLÍTICA */}
         <div className="prose prose-slate max-w-none rounded-2xl border border-slate-200 bg-white p-8 shadow-sm lg:prose-lg">
-          <ReactMarkdown>{rawPrivacy}</ReactMarkdown>
+          <ReactMarkdown
+            components={{
+              h1: ({ children }) => <h2>{children}</h2>,
+            }}
+          >
+            {rawPrivacy}
+          </ReactMarkdown>
         </div>
 
         {/* SECCIÓN DE RETIRO Y CONTACTO */}

@@ -98,6 +98,7 @@ export async function getPublishedBlogPosts(): Promise<DbBlogPost[]> {
     filters: { status: "published" },
     orderBy: "publishedAt",
     ascending: false,
+    throwOnError: true,
   });
 }
 
@@ -110,7 +111,12 @@ export async function getAllBlogPosts(): Promise<DbBlogPost[]> {
 }
 
 export async function getBlogPostBySlug(slug: string): Promise<DbBlogPost | null> {
-  return safeSelectSingle<DbBlogPost>(BLOG_TABLE, BLOG_COLUMNS, { slug });
+  const rows = await safeSelect<DbBlogPost>(BLOG_TABLE, BLOG_COLUMNS, {
+    filters: { slug },
+    limit: 1,
+    throwOnError: true,
+  });
+  return rows[0] ?? null;
 }
 
 export async function getBlogPostById(id: string): Promise<DbBlogPost | null> {
@@ -220,6 +226,7 @@ export async function deleteBlogPost(id: string): Promise<void> {
 export async function getPublishedCaseStudies(): Promise<DbCaseStudy[]> {
   const rows = await safeSelect<DbCaseStudy>(CASE_TABLE, CASE_COLUMNS, {
     filters: { status: "published" },
+    throwOnError: true,
   });
   return sortCaseStudies(rows);
 }
@@ -242,7 +249,12 @@ function sortCaseStudies(rows: DbCaseStudy[]): DbCaseStudy[] {
 }
 
 export async function getCaseStudyBySlug(slug: string): Promise<DbCaseStudy | null> {
-  return safeSelectSingle<DbCaseStudy>(CASE_TABLE, CASE_COLUMNS, { slug });
+  const rows = await safeSelect<DbCaseStudy>(CASE_TABLE, CASE_COLUMNS, {
+    filters: { slug },
+    limit: 1,
+    throwOnError: true,
+  });
+  return rows[0] ?? null;
 }
 
 export async function getCaseStudyById(id: string): Promise<DbCaseStudy | null> {

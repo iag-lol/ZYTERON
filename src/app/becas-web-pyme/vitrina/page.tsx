@@ -1,23 +1,19 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, AtSign, Building2, MapPin, Sparkles, Store } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { getPublishedScholarshipProfiles } from "@/lib/becas/public-profiles";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Vitrina de Emprendimientos | Becas Web Pyme Zyteron",
+export const metadata: Metadata = createPageMetadata({
+  title: "Vitrina de emprendimientos de Becas Web Pyme",
   description:
     "Conoce los emprendimientos y pymes chilenas que están postulando a las Becas Web Pyme de Zyteron. Negocios reales, historias reales.",
-  robots: { index: true, follow: true },
-  alternates: { canonical: "https://www.zyteron.cl/becas-web-pyme/vitrina" },
-  openGraph: {
-    title: "Vitrina de Emprendimientos | Becas Web Pyme Zyteron",
-    description:
-      "Emprendimientos chilenos que buscan dar el salto digital con Zyteron.",
-    type: "website",
-  },
-};
+  path: "/becas-web-pyme/vitrina",
+  ogImagePath: "/becas-web-pyme/opengraph-image",
+  ogImageAlt: "Vitrina de emprendimientos de Becas Web Pyme de Zyteron",
+});
 
 export const dynamic = "force-dynamic";
 
@@ -253,7 +249,7 @@ export default async function VitrinaPage() {
                           <a
                             href={`https://www.instagram.com/${igHandle}`}
                             target="_blank"
-                            rel="noopener noreferrer"
+                            rel="ugc nofollow noopener noreferrer"
                             className="rounded-[1.35rem] border border-slate-200 bg-[linear-gradient(180deg,#ffffff,#f8fafc)] p-4 transition-colors hover:border-pink-200"
                           >
                             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">

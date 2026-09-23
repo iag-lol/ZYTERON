@@ -54,11 +54,23 @@ const securityHeaders = [
   },
 ];
 
-const nextConfig: NextConfig = {
-  typescript: {
-    // Prisma client types require a generated client — skip build-time TS check for DB layer
-    ignoreBuildErrors: true,
+const privateNoIndexHeaders = [
+  {
+    key: "X-Robots-Tag",
+    value: "noindex, nofollow, noarchive",
   },
+];
+
+const privateHtmlRoutes = [
+  "/admin/:path*",
+  "/portal-clientes/:path*",
+  "/portal-comercial/:path*",
+  "/checkout/:path*",
+  "/pagos/:path*",
+  "/roadmap",
+];
+
+const nextConfig: NextConfig = {
   poweredByHeader: false,
   experimental: {
     optimizePackageImports: ["lucide-react"],
@@ -343,6 +355,10 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      ...privateHtmlRoutes.map((source) => ({
+        source,
+        headers: privateNoIndexHeaders,
+      })),
       {
         source: "/:path*",
         headers: securityHeaders,

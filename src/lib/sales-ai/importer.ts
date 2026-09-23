@@ -1,7 +1,5 @@
 import "server-only";
 
-import * as XLSX from "xlsx";
-
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   createCompany,
@@ -12,6 +10,7 @@ import {
   normalizeRut,
 } from "./repository";
 import { decideImportRow } from "./rules";
+import { parseSpreadsheetRows } from "./spreadsheet-parser";
 import { SALES_EVENT_TYPES } from "./types";
 
 /**
@@ -103,22 +102,8 @@ export type ParsedSheet = {
   suggestedMapping: Record<string, ImportFieldKey | "">;
 };
 
-export function parseSpreadsheet(buffer: ArrayBuffer): ParsedSheet {
-  const workbook = XLSX.read(buffer, { type: "array" });
-  const sheetName = workbook.SheetNames[0];
-  if (!sheetName) throw new Error("El archivo no contiene hojas de cálculo.");
-
-  const sheet = workbook.Sheets[sheetName];
-  const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "", raw: false });
-
-  if (raw.length === 0) throw new Error("La hoja está vacía.");
-
-  const headers = Object.keys(raw[0] ?? {});
-  const rows = raw.map((row) => {
-    const clean: Record<string, string> = {};
-    for (const key of headers) clean[key] = String(row[key] ?? "").trim();
-    return clean;
-  });
+export async function parseSpreadsheet(buffer: ArrayBuffer): Promise<ParsedSheet> {
+  const { headers, rows } = await parseSpreadsheetRows(buffer);
 
   return { headers, rows, suggestedMapping: suggestMapping(headers) };
 }

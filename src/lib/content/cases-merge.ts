@@ -37,6 +37,20 @@ export async function getFeaturedCaseItems(limit = 4): Promise<CaseListItem[]> {
   return items.slice(0, limit);
 }
 
+/**
+ * Casos publicados seleccionados por slug, en el mismo orden editorial recibido.
+ * Los slugs duplicados o que no estén publicados se omiten sin completar el
+ * resultado con casos ajenos al servicio.
+ */
+export async function getCaseListItemsBySlugs(slugs: readonly string[]): Promise<CaseListItem[]> {
+  const items = await getCaseListItems();
+  const itemsBySlug = new Map(items.map((item) => [item.slug, item]));
+
+  return [...new Set(slugs)]
+    .map((slug) => itemsBySlug.get(slug))
+    .filter((item): item is CaseListItem => Boolean(item));
+}
+
 /** Devuelve el caso publicado por slug, o null. */
 export const getDbCaseStudy = cache(async (slug: string): Promise<DbCaseStudy | null> => {
   const item = await getCaseStudyBySlug(slug);

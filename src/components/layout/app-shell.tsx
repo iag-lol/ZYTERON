@@ -1,8 +1,6 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { SiteHeader } from "@/components/layout/site-header";
-import { SiteFooter } from "@/components/layout/site-footer";
 import dynamic from "next/dynamic";
 
 // El asistente es un botón flotante: no hace falta para el primer pintado,
@@ -12,7 +10,13 @@ const AiChatWidget = dynamic(
   { ssr: false },
 );
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+type AppShellProps = {
+  children: React.ReactNode;
+  header: React.ReactNode;
+  footer: React.ReactNode;
+};
+
+export function AppShell({ children, header, footer }: AppShellProps) {
   const pathname = usePathname();
   const isAdminRoute = pathname.startsWith("/admin");
   const isPortalRoute =
@@ -24,9 +28,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <SiteHeader />
+      {header}
       <div className="flex-1">{children}</div>
-      <SiteFooter />
+      {footer}
       <AiChatWidget />
     </div>
   );

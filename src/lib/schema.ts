@@ -72,10 +72,6 @@ const ROUTE_LABELS: Record<string, string> = {
 
 function normalizePath(path: string) {
   if (!path) return "/";
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    const parsed = new URL(path);
-    return parsed.pathname === "/" ? "/" : parsed.pathname.replace(/\/$/, "");
-  }
   if (path === "/") return "/";
   const withoutQuery = path.split("?")[0]?.split("#")[0] || "/";
   const normalized = withoutQuery.startsWith("/") ? withoutQuery : `/${withoutQuery}`;
@@ -140,10 +136,16 @@ function buildContactPoint() {
 }
 
 export function buildAbsoluteUrl(path: string) {
-  const normalized = normalizePath(path);
-  if (normalized.startsWith("http://") || normalized.startsWith("https://")) {
-    return normalized;
+  const candidate = path.trim();
+  if (/^https?:\/\//i.test(candidate)) {
+    try {
+      return new URL(candidate).toString();
+    } catch {
+      // Una URL absoluta malformada cae al tratamiento de ruta interna segura.
+    }
   }
+
+  const normalized = normalizePath(candidate);
   return normalized === "/" ? siteConfig.url : `${siteConfig.url}${normalized}`;
 }
 
@@ -261,7 +263,8 @@ export function getLocalBusinessSchema({
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     "@id": getLocalBusinessId(),
-    name: siteConfig.legalName,
+    name: siteConfig.name,
+    legalName: siteConfig.legalName,
     description,
     url: pageUrl,
     image: buildAbsoluteUrl("/og/home.png"),
@@ -469,4 +472,3 @@ export function getWebPageSchema({
     "@graph": graph,
   };
 }
-

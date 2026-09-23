@@ -53,9 +53,13 @@ const pricingBySlug: Record<string, PricedItem[]> = {
     { name: "Plan Empresa", price: PLAN_PRICES.empresa },
   ],
   "desarrollo-web-santiago": [
-    { name: "Web básica de presentación", price: PLAN_PRICES["web-basica"] },
-    { name: "Web corporativa (Plan Empresa)", price: PLAN_PRICES.empresa },
-    { name: "Sistema web administrativo", price: PLAN_PRICES.sistema },
+    { name: "Desarrollo web empresarial", price: PLAN_PRICES.empresa },
+    {
+      name: "Integración API personalizada",
+      price: `Desde ${formatClp(ADDON_PRICE_AMOUNTS.customApi)} + IVA`,
+      note: "sujeta a revisión de la documentación del proveedor",
+    },
+    { name: "Sistema web con usuarios y panel", price: PLAN_PRICES.sistema },
   ],
   "automatizacion-whatsapp-empresas": [
     {

@@ -65,7 +65,7 @@ export async function POST(req: Request) {
     const result = scholarshipApplicationSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json({ error: "Datos de postulación inválidos", details: result.error.errors }, { status: 400 });
+      return NextResponse.json({ error: "Datos de postulación inválidos", details: result.error.issues }, { status: 400 });
     }
 
     const data = result.data;

@@ -254,7 +254,7 @@ export function ProspectImporter() {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".xlsx,.xls,.csv"
+            accept=".xlsx,.csv"
             className="hidden"
             onChange={(event) => {
               const file = event.target.files?.[0];

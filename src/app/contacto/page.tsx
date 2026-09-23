@@ -5,7 +5,7 @@ import { Mail, MapPin, Clock, FileText, PhoneCall } from "lucide-react";
 import { JsonLd } from "@/components/seo/json-ld";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { siteConfig } from "@/config/site";
-import { buildContactPageJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
+import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Cotizar página web o sistema en Chile",
@@ -74,23 +74,18 @@ export default function ContactoPage() {
   return (
     <main className="bg-white">
       <JsonLd
-        id="contacto-webpage-schema"
+        id="contacto-page-schema"
         data={buildWebPageJsonLd({
           path: "/contacto",
           title: "Cotizar página web o sistema en Chile",
-          description: "Página de contacto para solicitar orientación y una cotización formal.",
+          description:
+            "Página de contacto para solicitudes de cotización de empresas, pymes y emprendedores en Chile.",
+          pageType: "ContactPage",
           breadcrumbs: [
             { name: "Inicio", path: "/" },
             { name: "Contacto", path: "/contacto" },
           ],
         })}
-      />
-      <JsonLd
-        id="contacto-page-schema"
-        data={buildContactPageJsonLd(
-          "/contacto",
-          "Página de contacto para solicitudes de cotización de empresas, pymes y emprendedores en Chile.",
-        )}
       />
       <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-20">
         <Container className="space-y-5 text-center">

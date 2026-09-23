@@ -4,7 +4,11 @@ import { useState } from "react";
 import type { FieldPath } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { scholarshipApplicationSchema, ScholarshipApplication } from "@/lib/becas/validation";
+import {
+  scholarshipApplicationSchema,
+  type ScholarshipApplication,
+  type ScholarshipApplicationInput,
+} from "@/lib/becas/validation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 interface Props {
@@ -22,7 +26,7 @@ export function ApplicationForm({ campaignId, officialInstagram, termsVersion = 
   const [successCode, setSuccessCode] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const { register, handleSubmit, trigger, watch, setValue, setError, clearErrors, formState: { errors } } = useForm<ScholarshipApplication>({
+  const { register, handleSubmit, trigger, watch, setValue, setError, clearErrors, formState: { errors } } = useForm<ScholarshipApplicationInput, unknown, ScholarshipApplication>({
     resolver: zodResolver(scholarshipApplicationSchema),
     defaultValues: {
       campaignId,
@@ -45,7 +49,7 @@ export function ApplicationForm({ campaignId, officialInstagram, termsVersion = 
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const logoStoragePath = watch("logoStoragePath");
 
-  const nextStep = async (fieldsToValidate: FieldPath<ScholarshipApplication>[]) => {
+  const nextStep = async (fieldsToValidate: FieldPath<ScholarshipApplicationInput>[]) => {
     if (step === 4 && isUploadingLogo) {
       setErrorMsg("Espera a que termine la subida del logo antes de continuar.");
       return;

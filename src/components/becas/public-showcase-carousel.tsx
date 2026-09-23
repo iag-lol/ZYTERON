@@ -218,7 +218,7 @@ export function PublicShowcaseCarousel({
                   <a
                     href={`https://www.instagram.com/${instagramHandle}`}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel="ugc nofollow noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-pink-200 hover:text-pink-600"
                   >
                     Ver Instagram

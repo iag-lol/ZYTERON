@@ -46,6 +46,8 @@ const footerColumns = [
       { label: "Becas web para pymes", href: "/becas-web-pyme" },
       { label: "Recursos y guías", href: "/recursos" },
       { label: "Blog", href: "/blog" },
+      { label: "Política editorial", href: "/politica-editorial" },
+      { label: "Mapa del sitio", href: "/mapa-del-sitio" },
       { label: "Preguntas frecuentes", href: "/faq" },
       { label: "Contacto", href: "/contacto" },
     ],

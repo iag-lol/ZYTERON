@@ -13,6 +13,20 @@ const APP_DIR = path.join(SRC_DIR, "app");
  * publicadas, no del árbol de archivos, así que se validan por separado.
  */
 const DB_BACKED = [/^\/blog\/[^/]+$/, /^\/casos-exito\/[^/]+$/];
+const NON_PUBLIC_PREFIXES = [
+  "/admin",
+  "/api",
+  "/portal-clientes",
+  "/portal-comercial",
+  "/checkout",
+  "/pagos",
+] as const;
+
+function isNonPublicRoute(route: string) {
+  return NON_PUBLIC_PREFIXES.some(
+    (prefix) => route === prefix || route.startsWith(`${prefix}/`),
+  );
+}
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -85,6 +99,7 @@ describe("enlaces internos", () => {
 
     for (const [route, files] of collectInternalLinks()) {
       if (route.startsWith("//")) continue; // protocol-relative externo
+      if (isNonPublicRoute(route)) continue; // el test cubre el grafo SEO público
       if (DB_BACKED.some((pattern) => pattern.test(route))) continue;
       if (redirectSources.has(route)) continue; // se valida en redirects.test.ts
       if (routeExists(route)) continue;
@@ -109,6 +124,7 @@ describe("enlaces internos", () => {
 
     const indirectos: string[] = [];
     for (const [route, files] of collectInternalLinks()) {
+      if (isNonPublicRoute(route)) continue;
       const destino = literales.get(route);
       if (!destino) continue;
       // next.config declara las reglas: citarse a sí mismo no es un enlace.

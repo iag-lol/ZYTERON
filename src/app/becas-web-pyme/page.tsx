@@ -22,19 +22,37 @@ type SelectionCriterion = {
   description: string;
 };
 
-async function getActiveCampaign() {
+async function getPublicCampaign() {
   try {
     const supabase = getBecasSupabaseClient();
-    const { data, error } = await supabase
+    const { data: activeCampaign, error: activeError } = await supabase
       .from("scholarship_campaigns")
       .select("*")
       .eq("status", "active")
       .order("created_at", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (error || !data) return null;
-    return data;
+    if (activeError) throw activeError;
+    if (activeCampaign) return activeCampaign;
+
+    const { data, error } = await supabase
+      .from("scholarship_campaigns")
+      .select("*")
+      .in("status", [
+        "paused",
+        "closed",
+        "reviewing",
+        "winner_pending_acceptance",
+        "winner_published",
+        "scheduled",
+      ])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data ?? null;
   } catch (error) {
     console.warn("No se pudo conectar a Supabase para obtener la campaña", error);
     return null;
@@ -42,8 +60,10 @@ async function getActiveCampaign() {
 }
 
 export default async function BecasWebPymePage() {
-  const campaign = await getActiveCampaign();
+  const campaign = await getPublicCampaign();
   const publishedProfiles = await getPublishedScholarshipProfiles(6);
+  const isApplicationsOpen = campaign?.status === "active";
+  const hasPublishedWinner = campaign?.status === "winner_published";
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -69,16 +89,23 @@ export default async function BecasWebPymePage() {
           </p>
 
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            {campaign ? (
+            {isApplicationsOpen ? (
               <ApplicationModal 
                 campaignId={campaign.id} 
                 officialInstagram={campaign.official_instagram_handle} 
                 termsVersion={campaign.terms_version || "v1.0"}
                 privacyVersion={campaign.privacy_version || "v1.0"}
               />
+            ) : campaign && hasPublishedWinner ? (
+              <Link
+                href={`/becas-web-pyme/ganador/${campaign.slug}`}
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-8 py-4 font-bold text-white transition-colors hover:bg-blue-800"
+              >
+                Ver resultado de la edición <ArrowRight className="h-5 w-5" />
+              </Link>
             ) : (
               <button disabled className="rounded-xl bg-slate-700 px-8 py-4 font-bold text-slate-400 opacity-50">
-                Postulaciones Cerradas
+                Postulaciones cerradas
               </button>
             )}
             <a href="#que-incluye" className="rounded-xl border border-slate-300 bg-white px-8 py-4 font-bold text-slate-900 transition-colors hover:bg-slate-50">
@@ -93,7 +120,7 @@ export default async function BecasWebPymePage() {
             </a>
           </div>
 
-          {campaign && campaign.ends_at && (
+          {isApplicationsOpen && campaign.ends_at && (
             <p className="mt-8 text-sm font-semibold tracking-wide text-blue-700">
               Edición {new Date(campaign.starts_at).getFullYear()} · Postulaciones abiertas hasta el {new Date(campaign.ends_at).toLocaleDateString('es-CL')}
             </p>
@@ -235,7 +262,7 @@ export default async function BecasWebPymePage() {
               { weight: "25%", description: "Claridad y completitud de la postulación." },
               { weight: "20%", description: "Factibilidad de desarrollo del proyecto." },
               { weight: "15%", description: "Potencial de impacto para el negocio." }
-            ] as SelectionCriterion[]).map((crit, i: number) => (
+            ] as SelectionCriterion[]).map((crit: SelectionCriterion, i: number) => (
               <div key={i} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <span className="font-medium text-slate-800">{crit.description}</span>
                 <span className="rounded bg-blue-100 px-3 py-1 font-bold text-blue-900">{crit.weight}</span>
@@ -252,7 +279,7 @@ export default async function BecasWebPymePage() {
       <section className="bg-[linear-gradient(180deg,#eff6ff_0%,#dbeafe_100%)] py-24 text-center text-slate-950">
         <Container>
           <h2 className="mb-8 text-3xl font-bold sm:text-4xl">Tu negocio puede ser el próximo proyecto que mostremos con orgullo.</h2>
-          {campaign ? (
+          {campaign && isApplicationsOpen ? (
             <ApplicationModal 
               campaignId={campaign.id} 
               officialInstagram={campaign.official_instagram_handle} 
@@ -260,7 +287,18 @@ export default async function BecasWebPymePage() {
               privacyVersion={campaign.privacy_version || "v1.0"}
               variant="large" 
             />
-          ) : null}
+          ) : campaign && hasPublishedWinner ? (
+            <Link
+              href={`/becas-web-pyme/ganador/${campaign.slug}`}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-8 py-4 font-bold text-white transition-colors hover:bg-blue-800"
+            >
+              Ver resultado de la edición <ArrowRight className="h-5 w-5" />
+            </Link>
+          ) : (
+            <button disabled className="rounded-xl bg-slate-700 px-8 py-4 font-bold text-slate-300 opacity-70">
+              Postulaciones cerradas
+            </button>
+          )}
           <p className="mt-6 text-sm text-slate-600">Revisa las bases, condiciones y política de privacidad antes de enviar tu postulación.</p>
         </Container>
       </section>

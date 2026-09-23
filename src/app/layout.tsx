@@ -9,6 +9,8 @@ import { ConversionEventTracker } from "@/components/analytics/conversion-event-
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { siteConfig } from "@/config/site";
 import { AppShell } from "@/components/layout/app-shell";
+import { SiteFooter } from "@/components/layout/site-footer";
+import { SiteHeader } from "@/components/layout/site-header";
 import { JsonLd } from "@/components/seo/json-ld";
 import { IconSprite } from "@/components/ui/icon-sprite";
 import { WebVisitTracker } from "@/components/analytics/web-visit-tracker";
@@ -18,7 +20,7 @@ import { buildOrganizationGraph, buildPrimaryOgImageUrl } from "@/lib/seo";
 const geistSans = Geist({
   variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: "variable",
   display: "swap",
   preload: true,
 });
@@ -26,13 +28,18 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: "variable",
   display: "swap",
   preload: true,
 });
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
+  applicationName: siteConfig.name,
+  authors: [{ name: siteConfig.legalName, url: siteConfig.url }],
+  creator: siteConfig.legalName,
+  publisher: siteConfig.legalName,
+  category: "technology",
   title: {
     default: "Zyteron | Desarrollo web y sistemas para empresas en Santiago y Chile",
     template: "%s | Zyteron",
@@ -40,10 +47,13 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   alternates: {
     canonical: siteConfig.url,
+    types: {
+      "application/rss+xml": `${siteConfig.url}/rss.xml`,
+    },
   },
   openGraph: {
     type: "website",
-    locale: siteConfig.locale,
+    locale: siteConfig.locale.replace("-", "_"),
     url: siteConfig.url,
     title: "Zyteron | Desarrollo web y sistemas para empresas en Santiago y Chile",
     description: siteConfig.description,
@@ -61,7 +71,12 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Zyteron | Desarrollo web y sistemas para empresas en Santiago y Chile",
     description: siteConfig.description,
-    images: [buildPrimaryOgImageUrl()],
+    images: [
+      {
+        url: buildPrimaryOgImageUrl(),
+        alt: "Zyteron - Desarrollo web, sistemas y soporte TI para empresas",
+      },
+    ],
   },
   robots: {
     index: true,
@@ -140,7 +155,9 @@ export default function RootLayout({
           <WebVisitTracker />
           <ConversionEventTracker />
           <PwaRegister />
-          <AppShell>{children}</AppShell>
+          <AppShell header={<SiteHeader />} footer={<SiteFooter />}>
+            {children}
+          </AppShell>
         </TooltipProvider>
       </body>
     </html>

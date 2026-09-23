@@ -1,15 +1,18 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { Container } from "@/components/layout/container";
 import { siteConfig } from "@/config/site";
 import { getBecasSupabaseClient } from "@/lib/becas/supabase-client";
+import { createPageMetadata } from "@/lib/seo";
 import ReactMarkdown from "react-markdown";
 import PrintButton from "../_components/print-button";
 
-export const metadata: Metadata = {
-  title: "Bases Oficiales | Becas Web Pyme Zyteron",
+export const metadata: Metadata = createPageMetadata({
+  title: "Bases oficiales de Becas Web Pyme",
   description: "Bases y condiciones oficiales para postular a las Becas Web Pyme de Zyteron.",
-  alternates: { canonical: "https://www.zyteron.cl/becas-web-pyme/bases" },
-};
+  path: "/becas-web-pyme/bases",
+  ogImagePath: "/becas-web-pyme/opengraph-image",
+  ogImageAlt: "Bases oficiales de Becas Web Pyme de Zyteron",
+});
 
 export const dynamic = "force-dynamic";
 
@@ -188,7 +191,13 @@ export default async function BasesPage({
 
         {/* CONTENIDO DE LAS BASES */}
         <div className="prose prose-slate max-w-none rounded-2xl border border-slate-200 bg-white p-8 shadow-sm lg:prose-lg print:border-none print:p-0 print:shadow-none print:prose-sm">
-          <ReactMarkdown>{renderedTerms}</ReactMarkdown>
+          <ReactMarkdown
+            components={{
+              h1: ({ children }) => <h2>{children}</h2>,
+            }}
+          >
+            {renderedTerms}
+          </ReactMarkdown>
         </div>
 
         {/* PIE DE PÁGINA / FIRMA EN IMPRESIÓN */}
