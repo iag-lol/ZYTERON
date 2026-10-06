@@ -18,7 +18,8 @@ function escapeHtml(value: string) {
 
 function normalizeFrom() {
   const fallback = `${ZYTERON_COMPANY.brandName} <onboarding@resend.dev>`;
-  const raw = normalizeText(process.env.RESEND_FROM_EMAIL) || normalizeText(process.env.RESEND_FROM);
+  const raw =
+    normalizeText(process.env.RESEND_FROM_EMAIL) || normalizeText(process.env.RESEND_FROM);
   if (!raw) return fallback;
   if (EMAIL_REGEX.test(raw)) return `${ZYTERON_COMPANY.brandName} <${raw}>`;
   if (FROM_WITH_NAME_REGEX.test(raw)) return raw.replace(/\s+/g, " ").trim();
@@ -76,12 +77,7 @@ function renderEmailShell(input: {
 </html>`;
 }
 
-async function sendResendEmail(input: {
-  to: string;
-  subject: string;
-  html: string;
-  text: string;
-}) {
+async function sendResendEmail(input: { to: string; subject: string; html: string; text: string }) {
   const apiKey = normalizeText(process.env.RESEND_API_KEY);
   if (!apiKey) {
     return { sent: false as const, reason: "missing_api_key" as const };
@@ -89,6 +85,7 @@ async function sendResendEmail(input: {
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
+    signal: AbortSignal.timeout(10_000),
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
@@ -212,7 +209,7 @@ export async function sendPortalCredentialRevealCodeEmail(input: {
     </div>`,
   });
 
-  return sendResendEmail({
+  return sendCriticalCredentialEmail({
     to: input.to,
     subject: `Zyteron | Código de seguridad para ${input.serviceName}`,
     html,
@@ -220,3 +217,48 @@ export async function sendPortalCredentialRevealCodeEmail(input: {
   });
 }
 
+async function sendCriticalCredentialEmail(input: Parameters<typeof sendResendEmail>[0]) {
+  // Security messages can arrive in a burst; retry provider throttling only.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const result = await sendResendEmail(input);
+    if (result.sent || !("status" in result) || result.status !== 429 || attempt === 2)
+      return result;
+    await new Promise((resolve) => setTimeout(resolve, 1100 * (attempt + 1)));
+  }
+  return { sent: false as const, reason: "provider_error" as const };
+}
+
+export async function sendPortalCredentialAccessAlertEmail(input: {
+  auditId: string;
+  operation: string;
+  outcome: string;
+  status: number;
+  actorEmail: string;
+  credentialId: string;
+  timestamp: string;
+  forwardedIp: string;
+  userAgent: string;
+}) {
+  const text = [
+    `Registro: ${input.auditId}`,
+    `Fecha UTC: ${input.timestamp}`,
+    `Operación: ${input.operation}`,
+    `Resultado: ${input.outcome} (HTTP ${input.status})`,
+    `Solicitante: ${input.actorEmail}`,
+    `Credencial: ${input.credentialId}`,
+    `IP reportada (no verificada): ${input.forwardedIp || "No disponible"}`,
+    `Navegador reportado (no verificado): ${input.userAgent || "No disponible"}`,
+    "Si no reconoces este intento, revisa la cuenta solicitante. Este aviso no contiene contraseñas ni códigos.",
+  ].join("\n");
+  return sendCriticalCredentialEmail({
+    to: "contacto@zyteron.cl",
+    subject: `Zyteron | Intento de acceso a credenciales: ${input.outcome}`,
+    text,
+    html: renderEmailShell({
+      eyebrow: "Auditoría de seguridad",
+      title: "Intento de acceso a credenciales",
+      intro: "Se registró una solicitud de acceso a credenciales en el portal.",
+      contentHtml: `<pre style="white-space:pre-wrap;overflow-wrap:anywhere;font-family:Arial,sans-serif;font-size:13px;">${escapeHtml(text)}</pre>`,
+    }),
+  });
+}

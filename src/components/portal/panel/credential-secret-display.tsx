@@ -24,9 +24,20 @@ export function CredentialSecretDisplay({
   const [isOpen, setIsOpen] = useState(false);
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
+  const [approvalCode, setApprovalCode] = useState("");
+  const [challengeId, setChallengeId] = useState("");
+
+  function changeDialog(open: boolean) {
+    setIsOpen(open);
+    setPassword("");
+    setCode("");
+    setApprovalCode("");
+    setChallengeId("");
+    setMessage(null);
+  }
   const [pendingCode, startCodeTransition] = useTransition();
   const [pendingReveal, startRevealTransition] = useTransition();
-  
+
   const [isRevealed, setIsRevealed] = useState(false);
   const [revealedSecret, setRevealedSecret] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -49,16 +60,24 @@ export function CredentialSecretDisplay({
 
   async function handleSendCode() {
     startCodeTransition(async () => {
-      const res = await fetch("/api/portal/credentials/send-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credentialId }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok) {
-        setMessage({ text: data.message || "Código enviado a tu correo.", type: "success" });
-      } else {
-        setMessage({ text: data.error || "No se pudo enviar el código.", type: "error" });
+      setChallengeId("");
+      setCode("");
+      setApprovalCode("");
+      try {
+        const res = await fetch("/api/portal/credentials/send-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ credentialId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          setChallengeId(data.challengeId);
+          setMessage({ text: data.message || "Ambos códigos enviados.", type: "success" });
+        } else {
+          setMessage({ text: data.error || "No se pudo enviar el código.", type: "error" });
+        }
+      } catch {
+        setMessage({ text: "No se pudo conectar. Inténtalo nuevamente.", type: "error" });
       }
     });
   }
@@ -66,23 +85,29 @@ export function CredentialSecretDisplay({
   async function handleReveal(e: React.FormEvent) {
     e.preventDefault();
     startRevealTransition(async () => {
-      const res = await fetch(`/api/portal/credentials/${credentialId}/reveal`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password, code }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok) {
-        setRevealedSecret(data.secret);
-        setIsRevealed(true);
-        setTimeLeft(30);
-        setIsOpen(false);
-        // Clean form
-        setPassword("");
-        setCode("");
-        setMessage(null);
-      } else {
-        setMessage({ text: data.error || "Datos incorrectos.", type: "error" });
+      try {
+        const res = await fetch(`/api/portal/credentials/${credentialId}/reveal`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password, code, approvalCode, challengeId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          setRevealedSecret(data.secret);
+          setIsRevealed(true);
+          setTimeLeft(30);
+          setIsOpen(false);
+          // Clean form
+          setPassword("");
+          setCode("");
+          setApprovalCode("");
+          setChallengeId("");
+          setMessage(null);
+        } else {
+          setMessage({ text: data.error || "Datos incorrectos.", type: "error" });
+        }
+      } catch {
+        setMessage({ text: "No se pudo conectar. Inténtalo nuevamente.", type: "error" });
       }
     });
   }
@@ -110,7 +135,7 @@ export function CredentialSecretDisplay({
         <div className="flex items-center justify-between text-xs">
           <span className="font-semibold text-slate-700">Secreto</span>
           {isRevealed ? (
-            <span className="font-mono text-base font-bold text-slate-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+            <span className="rounded border border-amber-200 bg-amber-50 px-2 py-0.5 font-mono text-base font-bold text-slate-900">
               {revealedSecret}
             </span>
           ) : (
@@ -122,11 +147,16 @@ export function CredentialSecretDisplay({
         <div className="flex items-center justify-end gap-2">
           {isRevealed ? (
             <>
-              <span className="text-[10px] font-bold text-rose-600 animate-pulse flex items-center gap-1">
+              <span className="flex animate-pulse items-center gap-1 text-[10px] font-bold text-rose-600">
                 <ShieldAlert className="h-3 w-3" />
                 Ocultando en {timeLeft}s
               </span>
-              <Button size="sm" variant="default" className="h-7 text-[10px] gap-1 bg-blue-600" onClick={handleCopy}>
+              <Button
+                size="sm"
+                variant="default"
+                className="h-7 gap-1 bg-blue-600 text-[10px]"
+                onClick={handleCopy}
+              >
                 <Copy className="h-3 w-3" /> Copiar contraseña
               </Button>
             </>
@@ -134,8 +164,8 @@ export function CredentialSecretDisplay({
             <Button
               size="sm"
               variant="outline"
-              className="h-7 text-[10px] gap-1"
-              onClick={() => setIsOpen(true)}
+              className="h-7 gap-1 text-[10px]"
+              onClick={() => changeDialog(true)}
             >
               <Eye className="h-3 w-3" /> Mostrar secreto
             </Button>
@@ -143,7 +173,12 @@ export function CredentialSecretDisplay({
         </div>
       </div>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => {
+          if (!pendingCode && !pendingReveal) changeDialog(open);
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -151,12 +186,16 @@ export function CredentialSecretDisplay({
               Autenticación Requerida
             </DialogTitle>
             <DialogDescription>
-              Para ver esta credencial, verifica tu identidad ingresando tu contraseña de acceso y el código enviado a tu correo.
+              Para ver esta credencial, ingresa tu contraseña, el código enviado al correo del dueño
+              y el código de autorización enviado a contacto@zyteron.cl. Cada solicitud expira en 5
+              minutos y permite hasta 5 intentos.
             </DialogDescription>
           </DialogHeader>
 
           {message && (
-            <div className={`p-3 text-xs rounded-md ${message.type === "error" ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>
+            <div
+              className={`rounded-md p-3 text-xs ${message.type === "error" ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}
+            >
               {message.text}
             </div>
           )}
@@ -165,7 +204,7 @@ export function CredentialSecretDisplay({
             <div className="space-y-2">
               <Label>Tu contraseña de Login</Label>
               <div className="relative">
-                <KeyRound className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <KeyRound className="absolute top-2.5 left-3 h-4 w-4 text-slate-400" />
                 <Input
                   type="password"
                   required
@@ -179,26 +218,29 @@ export function CredentialSecretDisplay({
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Código 2FA del correo</Label>
+                <Label>Código del correo del dueño</Label>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-6 text-xs text-blue-600 hover:text-blue-700 p-0 hover:bg-transparent"
+                  className="h-6 p-0 text-xs text-blue-600 hover:bg-transparent hover:text-blue-700"
                   onClick={handleSendCode}
-                  disabled={pendingCode}
+                  disabled={pendingCode || pendingReveal}
                 >
                   {pendingCode ? "Enviando..." : "¿Enviar código de nuevo?"}
                 </Button>
               </div>
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <Mail className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <Mail className="absolute top-2.5 left-3 h-4 w-4 text-slate-400" />
                   <Input
                     type="text"
                     required
                     placeholder="123456"
                     maxLength={6}
+                    inputMode="numeric"
+                    pattern="[0-9]{6}"
+                    autoComplete="off"
                     className="pl-9 font-mono tracking-widest"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
@@ -210,18 +252,48 @@ export function CredentialSecretDisplay({
                   variant="secondary"
                   className="shrink-0"
                   onClick={handleSendCode}
-                  disabled={pendingCode}
+                  disabled={pendingCode || pendingReveal}
                 >
                   {pendingCode ? "..." : "Solicitar Código"}
                 </Button>
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor={`approval-${credentialId}`}>Código de contacto@zyteron.cl</Label>
+              <Input
+                id={`approval-${credentialId}`}
+                type="text"
+                required
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                maxLength={6}
+                autoComplete="off"
+                placeholder="Código de autorización"
+                className="font-mono tracking-widest"
+                value={approvalCode}
+                onChange={(e) => setApprovalCode(e.target.value)}
+              />
+              <p className="text-xs text-slate-500">
+                Solicita ambos códigos y coordina la autorización con Zyteron. Todos los intentos
+                quedan registrados y se notifican por correo.
+              </p>
+            </div>
+
             <DialogFooter className="pt-4">
-              <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={pendingCode || pendingReveal}
+                onClick={() => changeDialog(false)}
+              >
                 Cancelar
               </Button>
-              <Button type="submit" className="bg-blue-600" disabled={pendingReveal}>
+              <Button
+                type="submit"
+                className="bg-blue-600"
+                disabled={pendingReveal || pendingCode || !challengeId}
+              >
                 {pendingReveal ? "Verificando..." : "Revelar secreto"}
               </Button>
             </DialogFooter>
