@@ -1,12 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { ADMIN_COOKIE, verifyAdminSessionToken } from "./src/lib/auth/admin-session";
+import { ADMIN_COOKIE, verifyAdminSessionToken } from "./lib/auth/admin-session";
 import {
   configuredRequestOrigins,
   isAllowedMutationOrigin,
   isFlowExternalRoute,
   isUnsafeHttpMethod,
-} from "./src/lib/security/request-origin";
+} from "./lib/security/request-origin";
 
 const AUTH_SECRET =
   process.env.NEXTAUTH_SECRET ||
