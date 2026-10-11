@@ -365,7 +365,7 @@ export function PortalStore({
             </div>
 
             <div className="space-y-1 pt-2">
-              <label className="text-xs font-semibold text-slate-700">Tipo de Documento</label>
+              <label className="text-xs font-semibold text-slate-700">Tipo de comprador</label>
               <select
                 className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 value={form.documentType}
@@ -373,8 +373,8 @@ export function PortalStore({
                   setForm({ ...form, documentType: e.target.value as "BOLETA" | "FACTURA" })
                 }
               >
-                <option value="BOLETA">Boleta Electrónica</option>
-                <option value="FACTURA">Factura Electrónica</option>
+                <option value="BOLETA">Persona</option>
+                <option value="FACTURA">Empresa</option>
               </select>
             </div>
 

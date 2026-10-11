@@ -693,7 +693,7 @@ export function PublicProductsCatalog({ products }: Props) {
               Checkout de compra empresarial
             </DialogTitle>
             <DialogDescription className="text-sm text-slate-600">
-              Completa datos de despacho y documento tributario para pagar online de forma segura.
+              Completa los datos de compra y despacho. Recibirás un comprobante PDF cuando se confirme el pago.
             </DialogDescription>
           </DialogHeader>
 
@@ -866,7 +866,7 @@ export function PublicProductsCatalog({ products }: Props) {
 
             <section className="rounded-xl border border-slate-200 bg-white p-4">
               <p className="text-[11px] font-bold tracking-widest text-slate-500 uppercase">
-                Documento tributario
+                Tipo de comprador
               </p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <button
@@ -874,14 +874,14 @@ export function PublicProductsCatalog({ products }: Props) {
                   onClick={() => setValue("documentType", "BOLETA")}
                   className={`rounded-lg border px-3 py-2 text-sm font-semibold ${checkoutForm.documentType === "BOLETA" ? "border-blue-300 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
                 >
-                  Boleta
+                  Persona
                 </button>
                 <button
                   type="button"
                   onClick={() => setValue("documentType", "FACTURA")}
                   className={`rounded-lg border px-3 py-2 text-sm font-semibold ${checkoutForm.documentType === "FACTURA" ? "border-blue-300 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
                 >
-                  Factura
+                  Empresa
                 </button>
               </div>
 
