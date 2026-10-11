@@ -61,7 +61,16 @@ export function OnlinePaymentLauncher({ items }: Props) {
       method: "POST",
       headers: { "Content-Type": "application/json", "Idempotency-Key": requestRef.current.key },
       body: requestBody,
-    });
+    }).catch(() => null);
+    if (!response) {
+      setSubmitState({
+        status: "error",
+        message:
+          "Se interrumpió la conexión. Consulta el estado antes de volver a intentar; no se repite un cobro automáticamente.",
+      });
+      setLoadingKey(null);
+      return;
+    }
 
     const payload = (await response.json().catch(() => ({}))) as {
       ok?: boolean;

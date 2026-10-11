@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export default async function PaymentOperationsPage() {
   const authorized = await requirePortalAdminApiSession();
   if ("error" in authorized) redirect("/administracion/login");
-  const [inbox, mail, attempts, cancellations] = await Promise.all([
+  const [inbox, mail, attempts, cancellations, creations] = await Promise.all([
     prisma.$queryRaw<
       Array<{ quote_id: string; state: string; attempts: number; created_at: Date }>
     >`SELECT quote_id,state,attempts,created_at FROM zyteron_payment_inbox WHERE state!='DONE' ORDER BY created_at DESC LIMIT 100`,
@@ -24,6 +24,9 @@ export default async function PaymentOperationsPage() {
         maintenance_ack_at: Date | null;
       }>
     >`SELECT quote_id,state,paid_through,maintenance_ack_at FROM zyteron_recurring_lifecycle WHERE state!='ACTIVE' ORDER BY updated_at DESC LIMIT 100`,
+    prisma.$queryRaw<
+      Array<{ quote_id: string; state: string }>
+    >`SELECT quote_id,state FROM zyteron_provider_operation WHERE state='UNKNOWN' OR (state='CREATING' AND created_at<now()-interval '2 minutes') ORDER BY created_at DESC LIMIT 100`,
   ]);
   const reference = (id: string) => (
     <Link
@@ -44,6 +47,21 @@ export default async function PaymentOperationsPage() {
         </p>
       </div>
       <div className="grid gap-5 lg:grid-cols-2">
+        <article className="rounded-2xl border border-slate-200 bg-white p-5">
+          <h2 className="text-lg font-bold">Creación de cobros en revisión</h2>
+          {!creations.length ? (
+            <p className="mt-4 text-sm text-slate-500">Sin creaciones ambiguas.</p>
+          ) : (
+            creations.map((r, i) => (
+              <p className="mt-3 border-t pt-3 text-sm" key={i}>
+                {reference(r.quote_id)} · Verificación manual requerida
+                <span className="block text-slate-500">
+                  Consulta la orden en la pasarela antes de autorizar otro intento.
+                </span>
+              </p>
+            ))
+          )}
+        </article>
         <article className="rounded-2xl border border-slate-200 bg-white p-5">
           <h2 className="text-lg font-bold">Confirmaciones por conciliar</h2>
           {!inbox.length ? (
