@@ -361,11 +361,11 @@ export async function generateCheckoutInvoicePdf(input: Input) {
     yTop: y,
     width: leftWidth,
     height: 112,
-    title: "DATOS DE DESPACHO Y TRIBUTACIÓN",
+    title: "DATOS DE COMPRA Y DESPACHO",
     rows: [
       `Dirección: ${safeText(customer.address)}`,
       `Comuna/Ciudad: ${safeText(customer.commune)} / ${safeText(customer.city)}`,
-      `Documento: ${customer.documentType}`,
+      `Comprador: ${customer.documentType === "FACTURA" ? "Empresa" : "Persona"}`,
       customer.documentType === "FACTURA"
         ? `Empresa: ${safeText(customer.companyName)} · RUT: ${safeText(customer.companyRut)}`
         : "Comprobante de pago",
