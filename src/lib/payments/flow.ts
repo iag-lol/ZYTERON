@@ -1,3 +1,4 @@
+import { normalizeProviderPayment, providerClpAmount } from "./provider-money";
 import { createHmac } from "node:crypto";
 
 export type FlowPaymentCreateInput = {
@@ -551,12 +552,12 @@ export async function getFlowPaymentStatus(token: string): Promise<FlowStatusRes
     commerceOrder: String(body.commerceOrder),
     status: Number(body.status),
     subject: typeof body.subject === "string" ? body.subject : undefined,
-    amount: typeof body.amount === "number" ? body.amount : undefined,
+    amount: providerClpAmount(body.amount),
     currency: typeof body.currency === "string" ? body.currency : undefined,
     payer: typeof body.payer === "string" ? body.payer : undefined,
     paymentData:
       body.paymentData && typeof body.paymentData === "object"
-        ? (body.paymentData as Record<string, unknown>)
+        ? (normalizeProviderPayment(body).paymentData as Record<string, unknown>)
         : undefined,
     pending_info:
       body.pending_info && typeof body.pending_info === "object"
@@ -580,12 +581,24 @@ export async function getFlowSubscription(subscriptionId: string) {
     throw new Error("SUBSCRIPTION_RESPONSE_INVALID");
   return data;
 }
+function normalizeInvoiceMoney(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new Error("SUBSCRIPTION_INVOICE_INVALID");
+  const v = value as Record<string, unknown>;
+  return {
+    ...v,
+    amount: providerClpAmount(v.amount),
+    ...(v.payment && typeof v.payment === "object"
+      ? { payment: normalizeProviderPayment(v.payment as Record<string, unknown>) }
+      : {}),
+  };
+}
 export async function getFlowInvoice(invoiceId: number) {
   if (!Number.isSafeInteger(invoiceId) || invoiceId <= 0)
     throw new Error("SUBSCRIPTION_INVOICE_INVALID");
   const data = await flowGet("/invoice/get", { invoiceId });
   if (data.id !== invoiceId) throw new Error("SUBSCRIPTION_INVOICE_MISMATCH");
-  return data;
+  return normalizeInvoiceMoney(data);
 }
 export async function cancelFlowSubscription(subscriptionId: string) {
   await flowPost("/subscription/cancel", { subscriptionId, at_period_end: 1 });
@@ -600,7 +613,7 @@ export async function getFlowPaymentByOrder(flowOrder: number): Promise<FlowStat
     typeof data.status !== "number"
   )
     throw new Error("PAYMENT_RESPONSE_INVALID");
-  return data as unknown as FlowStatusResult;
+  return normalizeProviderPayment(data) as unknown as FlowStatusResult;
 }
 
 function validatedProviderUrl(value: unknown, base: string) {
@@ -629,7 +642,7 @@ export async function verifyFlowMonthlyPlan(planId: string, amount: number, call
   if (
     data.planId !== planId ||
     data.currency !== "CLP" ||
-    data.amount !== amount ||
+    providerClpAmount(data.amount) !== amount ||
     data.interval !== 3 ||
     data.interval_count !== 1 ||
     data.urlCallback !== callback

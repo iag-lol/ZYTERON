@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from "node:crypto";
+import { normalizeProviderPayment } from "./provider-money";
 import { Temporal } from "@js-temporal/polyfill";
 
 export const digest = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -38,7 +39,8 @@ export type PilotObservation = {
   state: "PENDING" | "CONFIRMED" | "REJECTED" | "CANCELLED";
   paidAt: string | null;
 };
-export function parseObservation(data: Record<string, unknown>): PilotObservation {
+export function parseObservation(raw: Record<string, unknown>): PilotObservation {
+  const data = normalizeProviderPayment(raw);
   const state = ({ 1: "PENDING", 2: "CONFIRMED", 3: "REJECTED", 4: "CANCELLED" } as const)[
     data.status as 1 | 2 | 3 | 4
   ];

@@ -24,7 +24,7 @@ test('missing tokens never authorize access', () => {
 test('test payment requires exact typed evidence and an unambiguous payment time', () => {
  const result=parseObservation(paid);
  assert.equal(result.paidAt,'2026-10-11T15:00:00Z');
- for(const mutation of [{status:'2'}, {flowOrder:'12345'}, {amount:'1000'}, {currency:'USD'}, {amount:1000.01}, {commerceOrder:''}, {paymentData:{...paid.paymentData,date:'not-a-date'}}, {paymentData:{...paid.paymentData,date:'2026-02-30 12:00:00'}}, {paymentData:{...paid.paymentData,date:'2026-09-06 00:30:00'}}]) {
+ for(const mutation of [{status:'2'}, {flowOrder:'12345'}, {amount:'1000.01'}, {currency:'USD'}, {amount:1000.01}, {commerceOrder:''}, {paymentData:{...paid.paymentData,date:'not-a-date'}}, {paymentData:{...paid.paymentData,date:'2026-02-30 12:00:00'}}, {paymentData:{...paid.paymentData,date:'2026-09-06 00:30:00'}}]) {
   assert.throws(()=>parseObservation({...paid,...mutation}));
  }
 });
@@ -49,7 +49,7 @@ test('checkout cannot redirect tokens to alternate hosts or production', () => {
 });
 test('request signature is stable regardless of property insertion order', () => {
  assert.equal(signedParams({commerceOrder:order.id,amount:'1000',apiKey:'test-key'},'test-secret'), signedParams({apiKey:'test-key',amount:'1000',commerceOrder:order.id},'test-secret'));
- assert.notEqual(signedParams({amount:'1000'},'test-secret'),signedParams({amount:'1001'},'test-secret'));
+ assert.notEqual(signedParams({amount:'1000.01'},'test-secret'),signedParams({amount:'1001'},'test-secret'));
 });
 test('live payment creation stays closed until production is explicitly activated', async () => {
  const keys=['FLOW_API_KEY','FLOW_SECRET_KEY','FLOW_API_BASE','FLOW_USE_SANDBOX','FLOW_LIVE_PAYMENTS_ENABLED'] as const;
