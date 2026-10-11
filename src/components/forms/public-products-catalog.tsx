@@ -1,8 +1,25 @@
 "use client";
 
-import { type FormEvent, useMemo, useState } from "react";
-import { AlertTriangle, ArrowRight, Check, CreditCard, Minus, Plus, Search, ShoppingCart, Tag, Trash2 } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { type FormEvent, useMemo, useRef, useState } from "react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Check,
+  CreditCard,
+  Minus,
+  Plus,
+  Search,
+  ShoppingCart,
+  Tag,
+  Trash2,
+} from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { formatRut, isValidRut } from "@/lib/checkout/rut";
 import { formatStableDateEsCl } from "@/lib/stable-date";
 import { trackBeginCheckout } from "@/lib/analytics/google-ads";
@@ -92,8 +109,12 @@ function formatDateTime(value?: string | null) {
 }
 
 function productHasOffer(product: PublicProduct) {
-  if (typeof product.discountActive === "boolean") return product.discountActive || Boolean(product.onOffer);
-  return isDiscountDateActive(product.discountStartsAt, product.discountEndsAt) || Boolean(product.onOffer);
+  if (typeof product.discountActive === "boolean")
+    return product.discountActive || Boolean(product.onOffer);
+  return (
+    isDiscountDateActive(product.discountStartsAt, product.discountEndsAt) ||
+    Boolean(product.onOffer)
+  );
 }
 
 function normalizeText(value: string) {
@@ -110,6 +131,8 @@ export function PublicProductsCatalog({ products }: Props) {
     [products],
   );
 
+  const checkoutRequestId = useRef<string | null>(null);
+  const checkoutRequestBody = useRef("");
   const [qtyById, setQtyById] = useState<Record<string, number>>({});
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
   const [sortMode, setSortMode] = useState<SortMode>("featured");
@@ -283,36 +306,42 @@ export function PublicProductsCatalog({ products }: Props) {
     });
 
     try {
+      const requestBody = JSON.stringify({
+        items: cartItems.map((row) => ({
+          productId: row.product.id,
+          quantity: row.qty,
+        })),
+        checkout: {
+          buyerName: normalizeText(checkoutForm.buyerName),
+          buyerEmail: normalizeText(checkoutForm.buyerEmail),
+          buyerPhone: normalizeText(checkoutForm.buyerPhone),
+          buyerRut: formatRut(checkoutForm.buyerRut),
+          address: normalizeText(checkoutForm.address),
+          commune: normalizeText(checkoutForm.commune),
+          city: normalizeText(checkoutForm.city),
+          comments: normalizeText(checkoutForm.comments),
+          documentType: checkoutForm.documentType,
+          companyName:
+            checkoutForm.documentType === "FACTURA" ? normalizeText(checkoutForm.companyName) : "",
+          companyRut:
+            checkoutForm.documentType === "FACTURA" ? formatRut(checkoutForm.companyRut) : "",
+          companyBusinessLine:
+            checkoutForm.documentType === "FACTURA"
+              ? normalizeText(checkoutForm.companyBusinessLine)
+              : "",
+        },
+      });
+      if (checkoutRequestBody.current !== requestBody) {
+        checkoutRequestId.current = crypto.randomUUID();
+        checkoutRequestBody.current = requestBody;
+      }
       const response = await fetch("/api/checkout/flow/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Idempotency-Key": checkoutRequestId.current!,
         },
-        body: JSON.stringify({
-          items: cartItems.map((row) => ({
-            productId: row.product.id,
-            quantity: row.qty,
-          })),
-          checkout: {
-            buyerName: normalizeText(checkoutForm.buyerName),
-            buyerEmail: normalizeText(checkoutForm.buyerEmail),
-            buyerPhone: normalizeText(checkoutForm.buyerPhone),
-            buyerRut: formatRut(checkoutForm.buyerRut),
-            address: normalizeText(checkoutForm.address),
-            commune: normalizeText(checkoutForm.commune),
-            city: normalizeText(checkoutForm.city),
-            comments: normalizeText(checkoutForm.comments),
-            documentType: checkoutForm.documentType,
-            companyName:
-              checkoutForm.documentType === "FACTURA" ? normalizeText(checkoutForm.companyName) : "",
-            companyRut:
-              checkoutForm.documentType === "FACTURA" ? formatRut(checkoutForm.companyRut) : "",
-            companyBusinessLine:
-              checkoutForm.documentType === "FACTURA"
-                ? normalizeText(checkoutForm.companyBusinessLine)
-                : "",
-          },
-        }),
+        body: requestBody,
       });
 
       const payload = await response.json().catch(() => null);
@@ -338,7 +367,7 @@ export function PublicProductsCatalog({ products }: Props) {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Buscar por nombre, detalle o combo"
-                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-3 pl-9 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-3 pl-9 text-sm text-slate-800 transition outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
@@ -370,7 +399,7 @@ export function PublicProductsCatalog({ products }: Props) {
             <select
               value={sortMode}
               onChange={(event) => setSortMode(event.target.value as SortMode)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-blue-400"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition outline-none focus:border-blue-400"
             >
               <option value="featured">Priorizar destacados</option>
               <option value="price-asc">Precio: menor a mayor</option>
@@ -409,7 +438,12 @@ export function PublicProductsCatalog({ products }: Props) {
                       {imageUrl ? (
                         <div className="mb-4 overflow-hidden rounded-xl border border-slate-100 bg-white">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={imageUrl} alt={product.name} className="h-44 w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]" loading="lazy" />
+                          <img
+                            src={imageUrl}
+                            alt={product.name}
+                            className="h-44 w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                            loading="lazy"
+                          />
                         </div>
                       ) : (
                         <div className="mb-4 flex h-44 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 text-xs font-semibold text-slate-500">
@@ -419,7 +453,9 @@ export function PublicProductsCatalog({ products }: Props) {
 
                       <div className="flex flex-1 flex-col">
                         <div className="mb-2 flex items-start justify-between gap-2">
-                          <h3 className="text-sm font-bold leading-snug text-slate-900">{product.name}</h3>
+                          <h3 className="text-sm leading-snug font-bold text-slate-900">
+                            {product.name}
+                          </h3>
                           <div className="flex flex-col items-end gap-1">
                             {product.featured ? (
                               <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
@@ -439,7 +475,9 @@ export function PublicProductsCatalog({ products }: Props) {
                           </div>
                         </div>
 
-                        <p className="text-xs leading-relaxed text-slate-600">{product.publicDescription || product.description}</p>
+                        <p className="text-xs leading-relaxed text-slate-600">
+                          {product.publicDescription || product.description}
+                        </p>
 
                         <ul className="mt-3 space-y-1 text-xs text-slate-600">
                           <li className="flex items-start gap-2">
@@ -452,9 +490,14 @@ export function PublicProductsCatalog({ products }: Props) {
                               <span>{badge}</span>
                             </li>
                           ))}
-                          {product.isCombo && Array.isArray(product.comboItems) && product.comboItems.length > 0
+                          {product.isCombo &&
+                          Array.isArray(product.comboItems) &&
+                          product.comboItems.length > 0
                             ? product.comboItems.slice(0, 2).map((item) => (
-                                <li key={`${product.id}-${item}`} className="flex items-start gap-2">
+                                <li
+                                  key={`${product.id}-${item}`}
+                                  className="flex items-start gap-2"
+                                >
                                   <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-600" />
                                   <span>{item}</span>
                                 </li>
@@ -465,18 +508,25 @@ export function PublicProductsCatalog({ products }: Props) {
 
                       <div className="mt-auto space-y-1.5 pt-4">
                         {product.discountPct > 0 && discountActive ? (
-                          <p className="text-xs text-slate-400 line-through">{currencyCLP(product.price)}</p>
+                          <p className="text-xs text-slate-400 line-through">
+                            {currencyCLP(product.price)}
+                          </p>
                         ) : null}
-                        <p className="text-2xl font-extrabold tracking-tight text-slate-900">{currencyCLP(finalUnit)}</p>
+                        <p className="text-2xl font-extrabold tracking-tight text-slate-900">
+                          {currencyCLP(finalUnit)}
+                        </p>
 
                         {product.discountPct > 0 && !discountActive && (promoStart || promoEnd) ? (
                           <p className="text-[11px] font-medium text-amber-700">
-                            Promoción programada {promoStart ? `desde ${promoStart}` : ""} {promoEnd ? `hasta ${promoEnd}` : ""}
+                            Promoción programada {promoStart ? `desde ${promoStart}` : ""}{" "}
+                            {promoEnd ? `hasta ${promoEnd}` : ""}
                           </p>
                         ) : null}
 
                         {product.discountPct > 0 && discountActive && promoEnd ? (
-                          <p className="text-[11px] font-medium text-emerald-700">Promoción activa hasta {promoEnd}</p>
+                          <p className="text-[11px] font-medium text-emerald-700">
+                            Promoción activa hasta {promoEnd}
+                          </p>
                         ) : null}
                       </div>
 
@@ -485,7 +535,9 @@ export function PublicProductsCatalog({ products }: Props) {
                           type="button"
                           onClick={() => updateQty(product.id, qty > 0 ? 0 : 1)}
                           className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
-                            qty > 0 ? "bg-slate-900 text-white hover:bg-slate-700" : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                            qty > 0
+                              ? "bg-slate-900 text-white hover:bg-slate-700"
+                              : "bg-blue-50 text-blue-700 hover:bg-blue-100"
                           }`}
                         >
                           {qty > 0 ? "Quitar" : "Agregar"}
@@ -500,7 +552,9 @@ export function PublicProductsCatalog({ products }: Props) {
                             >
                               <Minus className="h-3.5 w-3.5" />
                             </button>
-                            <span className="w-6 text-center text-sm font-semibold text-slate-700">{qty}</span>
+                            <span className="w-6 text-center text-sm font-semibold text-slate-700">
+                              {qty}
+                            </span>
                             <button
                               type="button"
                               className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -510,7 +564,9 @@ export function PublicProductsCatalog({ products }: Props) {
                             </button>
                           </div>
                         ) : (
-                          <span className="text-[11px] font-semibold text-slate-400">No agregado</span>
+                          <span className="text-[11px] font-semibold text-slate-400">
+                            No agregado
+                          </span>
                         )}
                       </div>
                     </article>
@@ -539,15 +595,24 @@ export function PublicProductsCatalog({ products }: Props) {
               </div>
 
               {cartItems.length === 0 ? (
-                <p className="text-sm text-slate-500">Agrega productos al carrito para comprar online.</p>
+                <p className="text-sm text-slate-500">
+                  Agrega productos al carrito para comprar online.
+                </p>
               ) : (
                 <div className="space-y-2 text-sm">
                   {cartItems.map((row) => {
                     const finalUnit = finalUnitPrice(row.product);
                     return (
-                      <div key={`cart-${row.product.id}`} className="flex items-start justify-between gap-2">
-                        <span className="text-slate-600">{row.product.name} x{row.qty}</span>
-                        <span className="font-semibold text-slate-900">{currencyCLP(finalUnit * row.qty)}</span>
+                      <div
+                        key={`cart-${row.product.id}`}
+                        className="flex items-start justify-between gap-2"
+                      >
+                        <span className="text-slate-600">
+                          {row.product.name} x{row.qty}
+                        </span>
+                        <span className="font-semibold text-slate-900">
+                          {currencyCLP(finalUnit * row.qty)}
+                        </span>
                       </div>
                     );
                   })}
@@ -559,19 +624,27 @@ export function PublicProductsCatalog({ products }: Props) {
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Subtotal bruto</span>
-                  <span className="font-semibold text-slate-900">{currencyCLP(summary.subtotal)}</span>
+                  <span className="font-semibold text-slate-900">
+                    {currencyCLP(summary.subtotal)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Descuento</span>
-                  <span className="font-semibold text-emerald-700">-{currencyCLP(summary.totalDiscount)}</span>
+                  <span className="font-semibold text-emerald-700">
+                    -{currencyCLP(summary.totalDiscount)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Subtotal neto</span>
-                  <span className="font-semibold text-slate-900">{currencyCLP(summary.netSubtotal)}</span>
+                  <span className="font-semibold text-slate-900">
+                    {currencyCLP(summary.netSubtotal)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">IVA (19%)</span>
-                  <span className="font-semibold text-slate-900">{currencyCLP(summary.taxAmount)}</span>
+                  <span className="font-semibold text-slate-900">
+                    {currencyCLP(summary.taxAmount)}
+                  </span>
                 </div>
               </div>
 
@@ -579,7 +652,9 @@ export function PublicProductsCatalog({ products }: Props) {
 
               <div className="flex items-center justify-between">
                 <span className="text-base font-bold text-slate-900">Total con IVA</span>
-                <span className="text-xl font-extrabold text-blue-700">{currencyCLP(summary.total)}</span>
+                <span className="text-xl font-extrabold text-blue-700">
+                  {currencyCLP(summary.total)}
+                </span>
               </div>
 
               <button
@@ -614,7 +689,9 @@ export function PublicProductsCatalog({ products }: Props) {
       <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
         <DialogContent className="max-h-[90vh] w-[min(1020px,94vw)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl sm:max-w-[1020px]">
           <DialogHeader className="border-b border-slate-200 bg-slate-50 px-6 py-5">
-            <DialogTitle className="text-xl font-extrabold text-slate-900">Checkout de compra empresarial</DialogTitle>
+            <DialogTitle className="text-xl font-extrabold text-slate-900">
+              Checkout de compra empresarial
+            </DialogTitle>
             <DialogDescription className="text-sm text-slate-600">
               Completa datos de despacho y documento tributario para pagar online de forma segura.
             </DialogDescription>
@@ -622,30 +699,45 @@ export function PublicProductsCatalog({ products }: Props) {
 
           <form onSubmit={startPayment} className="grid gap-5 p-5 lg:grid-cols-[1.05fr_0.95fr]">
             <section className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Resumen detallado del pedido</p>
+              <p className="text-[11px] font-bold tracking-widest text-slate-500 uppercase">
+                Resumen detallado del pedido
+              </p>
               <div className="space-y-2">
                 {cartItems.map((row) => {
                   const finalUnit = finalUnitPrice(row.product);
                   const image = row.product.imageUrl?.trim();
                   return (
-                    <div key={`checkout-${row.product.id}`} className="rounded-xl border border-slate-200 bg-white p-3">
+                    <div
+                      key={`checkout-${row.product.id}`}
+                      className="rounded-xl border border-slate-200 bg-white p-3"
+                    >
                       <div className="flex items-start gap-3">
                         {image ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={image} alt={row.product.name} className="h-14 w-14 rounded-lg border border-slate-200 object-cover" />
+                          <img
+                            src={image}
+                            alt={row.product.name}
+                            className="h-14 w-14 rounded-lg border border-slate-200 object-cover"
+                          />
                         ) : (
                           <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-[10px] font-semibold text-slate-500">
                             SIN IMG
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-bold text-slate-900">{row.product.name}</p>
-                          <p className="text-[11px] text-slate-500">SKU: {row.product.slug} · Stock: {row.product.stock}</p>
+                          <p className="truncate text-sm font-bold text-slate-900">
+                            {row.product.name}
+                          </p>
+                          <p className="text-[11px] text-slate-500">
+                            SKU: {row.product.slug} · Stock: {row.product.stock}
+                          </p>
                           <p className="mt-0.5 text-[11px] text-slate-600">
                             {currencyCLP(finalUnit)} c/u · Cantidad {row.qty}
                           </p>
                         </div>
-                        <p className="text-sm font-extrabold text-blue-700">{currencyCLP(finalUnit * row.qty)}</p>
+                        <p className="text-sm font-extrabold text-blue-700">
+                          {currencyCLP(finalUnit * row.qty)}
+                        </p>
                       </div>
                     </div>
                   );
@@ -655,24 +747,34 @@ export function PublicProductsCatalog({ products }: Props) {
               <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500">Subtotal bruto</span>
-                  <span className="font-semibold text-slate-900">{currencyCLP(summary.subtotal)}</span>
+                  <span className="font-semibold text-slate-900">
+                    {currencyCLP(summary.subtotal)}
+                  </span>
                 </div>
                 <div className="mt-1 flex items-center justify-between">
                   <span className="text-slate-500">Descuento</span>
-                  <span className="font-semibold text-emerald-700">-{currencyCLP(summary.totalDiscount)}</span>
+                  <span className="font-semibold text-emerald-700">
+                    -{currencyCLP(summary.totalDiscount)}
+                  </span>
                 </div>
                 <div className="mt-1 flex items-center justify-between">
                   <span className="text-slate-500">Subtotal neto</span>
-                  <span className="font-semibold text-slate-900">{currencyCLP(summary.netSubtotal)}</span>
+                  <span className="font-semibold text-slate-900">
+                    {currencyCLP(summary.netSubtotal)}
+                  </span>
                 </div>
                 <div className="mt-1 flex items-center justify-between">
                   <span className="text-slate-500">IVA (19%)</span>
-                  <span className="font-semibold text-slate-900">{currencyCLP(summary.taxAmount)}</span>
+                  <span className="font-semibold text-slate-900">
+                    {currencyCLP(summary.taxAmount)}
+                  </span>
                 </div>
                 <div className="mt-2 border-t border-slate-200 pt-2">
                   <div className="flex items-center justify-between">
                     <span className="text-base font-bold text-slate-900">Total a pagar</span>
-                    <span className="text-xl font-extrabold text-blue-700">{currencyCLP(summary.total)}</span>
+                    <span className="text-xl font-extrabold text-blue-700">
+                      {currencyCLP(summary.total)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -680,67 +782,144 @@ export function PublicProductsCatalog({ products }: Props) {
 
             <section className="grid gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-semibold text-slate-700">Nombre comprador *</label>
-                <input value={checkoutForm.buyerName} onChange={(e) => setValue("buyerName", e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-                {formErrors.buyerName ? <p className="mt-1 text-[11px] text-rose-600">{formErrors.buyerName}</p> : null}
+                <label className="mb-1 block text-xs font-semibold text-slate-700">
+                  Nombre comprador *
+                </label>
+                <input
+                  value={checkoutForm.buyerName}
+                  onChange={(e) => setValue("buyerName", e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+                {formErrors.buyerName ? (
+                  <p className="mt-1 text-[11px] text-rose-600">{formErrors.buyerName}</p>
+                ) : null}
               </div>
 
               <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-700">Correo *</label>
-                <input value={checkoutForm.buyerEmail} onChange={(e) => setValue("buyerEmail", e.target.value)} type="email" className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-                {formErrors.buyerEmail ? <p className="mt-1 text-[11px] text-rose-600">{formErrors.buyerEmail}</p> : null}
+                <input
+                  value={checkoutForm.buyerEmail}
+                  onChange={(e) => setValue("buyerEmail", e.target.value)}
+                  type="email"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+                {formErrors.buyerEmail ? (
+                  <p className="mt-1 text-[11px] text-rose-600">{formErrors.buyerEmail}</p>
+                ) : null}
               </div>
 
               <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-700">Teléfono</label>
-                <input value={checkoutForm.buyerPhone} onChange={(e) => setValue("buyerPhone", e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                <input
+                  value={checkoutForm.buyerPhone}
+                  onChange={(e) => setValue("buyerPhone", e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-700">RUT comprador *</label>
-                <input value={checkoutForm.buyerRut} onChange={(e) => setValue("buyerRut", e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-                {formErrors.buyerRut ? <p className="mt-1 text-[11px] text-rose-600">{formErrors.buyerRut}</p> : null}
+                <label className="mb-1 block text-xs font-semibold text-slate-700">
+                  RUT comprador *
+                </label>
+                <input
+                  value={checkoutForm.buyerRut}
+                  onChange={(e) => setValue("buyerRut", e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+                {formErrors.buyerRut ? (
+                  <p className="mt-1 text-[11px] text-rose-600">{formErrors.buyerRut}</p>
+                ) : null}
               </div>
 
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-semibold text-slate-700">Dirección despacho *</label>
-                <input value={checkoutForm.address} onChange={(e) => setValue("address", e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-                {formErrors.address ? <p className="mt-1 text-[11px] text-rose-600">{formErrors.address}</p> : null}
+                <label className="mb-1 block text-xs font-semibold text-slate-700">
+                  Dirección despacho *
+                </label>
+                <input
+                  value={checkoutForm.address}
+                  onChange={(e) => setValue("address", e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+                {formErrors.address ? (
+                  <p className="mt-1 text-[11px] text-rose-600">{formErrors.address}</p>
+                ) : null}
               </div>
 
               <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-700">Comuna</label>
-                <input value={checkoutForm.commune} onChange={(e) => setValue("commune", e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                <input
+                  value={checkoutForm.commune}
+                  onChange={(e) => setValue("commune", e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
               </div>
 
               <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-700">Ciudad</label>
-                <input value={checkoutForm.city} onChange={(e) => setValue("city", e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                <input
+                  value={checkoutForm.city}
+                  onChange={(e) => setValue("city", e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
               </div>
             </section>
 
             <section className="rounded-xl border border-slate-200 bg-white p-4">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Documento tributario</p>
+              <p className="text-[11px] font-bold tracking-widest text-slate-500 uppercase">
+                Documento tributario
+              </p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <button type="button" onClick={() => setValue("documentType", "BOLETA")} className={`rounded-lg border px-3 py-2 text-sm font-semibold ${checkoutForm.documentType === "BOLETA" ? "border-blue-300 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}>Boleta</button>
-                <button type="button" onClick={() => setValue("documentType", "FACTURA")} className={`rounded-lg border px-3 py-2 text-sm font-semibold ${checkoutForm.documentType === "FACTURA" ? "border-blue-300 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}>Factura</button>
+                <button
+                  type="button"
+                  onClick={() => setValue("documentType", "BOLETA")}
+                  className={`rounded-lg border px-3 py-2 text-sm font-semibold ${checkoutForm.documentType === "BOLETA" ? "border-blue-300 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                >
+                  Boleta
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setValue("documentType", "FACTURA")}
+                  className={`rounded-lg border px-3 py-2 text-sm font-semibold ${checkoutForm.documentType === "FACTURA" ? "border-blue-300 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                >
+                  Factura
+                </button>
               </div>
 
               {checkoutForm.documentType === "FACTURA" ? (
                 <div className="mt-4 grid gap-3">
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-slate-700">Nombre empresa *</label>
-                    <input value={checkoutForm.companyName} onChange={(e) => setValue("companyName", e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-                    {formErrors.companyName ? <p className="mt-1 text-[11px] text-rose-600">{formErrors.companyName}</p> : null}
+                    <label className="mb-1 block text-xs font-semibold text-slate-700">
+                      Nombre empresa *
+                    </label>
+                    <input
+                      value={checkoutForm.companyName}
+                      onChange={(e) => setValue("companyName", e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                    {formErrors.companyName ? (
+                      <p className="mt-1 text-[11px] text-rose-600">{formErrors.companyName}</p>
+                    ) : null}
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-slate-700">RUT empresa *</label>
-                    <input value={checkoutForm.companyRut} onChange={(e) => setValue("companyRut", e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-                    {formErrors.companyRut ? <p className="mt-1 text-[11px] text-rose-600">{formErrors.companyRut}</p> : null}
+                    <label className="mb-1 block text-xs font-semibold text-slate-700">
+                      RUT empresa *
+                    </label>
+                    <input
+                      value={checkoutForm.companyRut}
+                      onChange={(e) => setValue("companyRut", e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                    {formErrors.companyRut ? (
+                      <p className="mt-1 text-[11px] text-rose-600">{formErrors.companyRut}</p>
+                    ) : null}
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-semibold text-slate-700">Giro</label>
-                    <input value={checkoutForm.companyBusinessLine} onChange={(e) => setValue("companyBusinessLine", e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                    <input
+                      value={checkoutForm.companyBusinessLine}
+                      onChange={(e) => setValue("companyBusinessLine", e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
                   </div>
                 </div>
               ) : null}
@@ -748,7 +927,11 @@ export function PublicProductsCatalog({ products }: Props) {
 
             <section>
               <label className="mb-1 block text-xs font-semibold text-slate-700">Comentarios</label>
-              <textarea value={checkoutForm.comments} onChange={(e) => setValue("comments", e.target.value)} className="min-h-24 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+              <textarea
+                value={checkoutForm.comments}
+                onChange={(e) => setValue("comments", e.target.value)}
+                className="min-h-24 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
             </section>
 
             {checkoutError ? (
@@ -760,7 +943,11 @@ export function PublicProductsCatalog({ products }: Props) {
               </div>
             ) : null}
 
-            <button type="submit" disabled={isCreatingPayment || cartItems.length === 0} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 sm:col-span-2">
+            <button
+              type="submit"
+              disabled={isCreatingPayment || cartItems.length === 0}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 sm:col-span-2"
+            >
               <CreditCard className="h-4 w-4" />
               {isCreatingPayment ? "Creando pago..." : `Pagar ${currencyCLP(summary.total)}`}
             </button>

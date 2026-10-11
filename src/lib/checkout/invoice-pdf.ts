@@ -23,9 +23,9 @@ const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
 const FOOTER_LIMIT = 86;
 
 const palette = {
-  primary: rgb(0.05, 0.14, 0.38),
-  primaryStrong: rgb(0.03, 0.11, 0.31),
-  accent: rgb(0.05, 0.36, 0.98),
+  primary: rgb(0.09, 0.2, 0.16),
+  primaryStrong: rgb(0.06, 0.15, 0.12),
+  accent: rgb(0.3, 0.45, 0.24),
   success: rgb(0.05, 0.5, 0.28),
   white: rgb(1, 1, 1),
   text: rgb(0.08, 0.11, 0.17),
@@ -286,10 +286,34 @@ function drawTableHeader(ctx: PageContext, y: number) {
     borderWidth: 1,
   });
 
-  page.drawText("Producto", { x: MARGIN + 8, y: y - 12.2, size: 8.8, font: bold, color: palette.muted });
-  page.drawText("Cant.", { x: MARGIN + 330, y: y - 12.2, size: 8.8, font: bold, color: palette.muted });
-  page.drawText("Unitario", { x: MARGIN + 390, y: y - 12.2, size: 8.8, font: bold, color: palette.muted });
-  page.drawText("Total", { x: MARGIN + 472, y: y - 12.2, size: 8.8, font: bold, color: palette.muted });
+  page.drawText("Producto", {
+    x: MARGIN + 8,
+    y: y - 12.2,
+    size: 8.8,
+    font: bold,
+    color: palette.muted,
+  });
+  page.drawText("Cant.", {
+    x: MARGIN + 330,
+    y: y - 12.2,
+    size: 8.8,
+    font: bold,
+    color: palette.muted,
+  });
+  page.drawText("Unitario", {
+    x: MARGIN + 390,
+    y: y - 12.2,
+    size: 8.8,
+    font: bold,
+    color: palette.muted,
+  });
+  page.drawText("Total", {
+    x: MARGIN + 472,
+    y: y - 12.2,
+    size: 8.8,
+    font: bold,
+    color: palette.muted,
+  });
   return y - 22;
 }
 
@@ -344,7 +368,7 @@ export async function generateCheckoutInvoicePdf(input: Input) {
       `Documento: ${customer.documentType}`,
       customer.documentType === "FACTURA"
         ? `Empresa: ${safeText(customer.companyName)} · RUT: ${safeText(customer.companyRut)}`
-        : "Boleta consumidor final",
+        : "Comprobante de pago",
       customer.documentType === "FACTURA" ? `Giro: ${safeText(customer.companyBusinessLine)}` : "",
     ].filter(Boolean),
   });

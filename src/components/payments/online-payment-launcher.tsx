@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,15 +9,15 @@ import { Label } from "@/components/ui/label";
 import { trackBeginCheckout } from "@/lib/analytics/google-ads";
 import type { ServicePaymentItem } from "@/lib/payments/service-catalog";
 
-type SubmitState =
-  | { status: "idle" }
-  | { status: "error"; message: string };
+type SubmitState = { status: "idle" } | { status: "error"; message: string };
 
 type Props = {
   items: ServicePaymentItem[];
 };
 
 export function OnlinePaymentLauncher({ items }: Props) {
+  const router = useRouter();
+  const requestRef = useRef<{ body: string; key: string } | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -26,8 +27,15 @@ export function OnlinePaymentLauncher({ items }: Props) {
   const disabled = useMemo(() => !name.trim() || !email.trim(), [name, email]);
 
   async function handleStartPayment(item: ServicePaymentItem) {
+    if (item.mode === "subscription") {
+      router.push("/clientes/panel/cotizaciones");
+      return;
+    }
     if (disabled) {
-      setSubmitState({ status: "error", message: "Ingresa nombre y correo para continuar con el pago." });
+      setSubmitState({
+        status: "error",
+        message: "Ingresa nombre y correo para continuar con el pago.",
+      });
       return;
     }
 
@@ -39,20 +47,20 @@ export function OnlinePaymentLauncher({ items }: Props) {
       checkout_type: item.mode,
     });
 
-    const endpoint =
-      item.mode === "subscription"
-        ? "/api/payments/subscription/start"
-        : "/api/payments/service/create";
+    const endpoint = "/api/payments/service/create";
 
+    const requestBody = JSON.stringify({
+      serviceKey: item.key,
+      buyerName: name.trim(),
+      buyerEmail: email.trim(),
+      buyerPhone: phone.trim(),
+    });
+    if (requestRef.current?.body !== requestBody)
+      requestRef.current = { body: requestBody, key: crypto.randomUUID() };
     const response = await fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        serviceKey: item.key,
-        buyerName: name.trim(),
-        buyerEmail: email.trim(),
-        buyerPhone: phone.trim(),
-      }),
+      headers: { "Content-Type": "application/json", "Idempotency-Key": requestRef.current.key },
+      body: requestBody,
     });
 
     const payload = (await response.json().catch(() => ({}))) as {
@@ -86,9 +94,12 @@ export function OnlinePaymentLauncher({ items }: Props) {
 
   return (
     <div className="card-premium p-6">
-      <h3 className="text-xl font-extrabold text-slate-900">Pago online de servicios habilitados</h3>
+      <h3 className="text-xl font-extrabold text-slate-900">
+        Pago online de servicios habilitados
+      </h3>
       <p className="mt-1 text-sm text-slate-600">
-        Disponible para diagnóstico, reserva, mensualidades y pagos aprobados. Para desarrollos personalizados, primero cotización.
+        Disponible para diagnóstico, reserva, mensualidades y pagos aprobados. Para desarrollos
+        personalizados, primero cotización.
       </p>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -157,7 +168,8 @@ export function OnlinePaymentLauncher({ items }: Props) {
       ) : null}
 
       <p className="mt-4 text-xs text-slate-500">
-        Valores base sujetos a evaluación. El pago de abono se habilita cuando existe cotización aprobada.
+        Valores base sujetos a evaluación. El pago de abono se habilita cuando existe cotización
+        aprobada.
       </p>
     </div>
   );

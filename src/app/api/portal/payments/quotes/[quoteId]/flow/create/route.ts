@@ -1,3 +1,4 @@
+import { limitedJson } from "@/lib/payments/request-body";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
@@ -15,16 +16,24 @@ const payloadSchema = z.object({
 
 export async function POST(req: Request, { params }: Context) {
   const session = await getServerSession(portalAuthOptions);
-  if (!session?.user?.id || !session.user.email) {
+  if (
+    !session?.user?.id ||
+    !session.user.email ||
+    session.user.accountStatus !== "ACTIVE" ||
+    !session.user.emailVerifiedAt
+  ) {
     return NextResponse.json({ error: "No autenticado." }, { status: 401 });
   }
 
   try {
-    const body = await req.json().catch(() => null);
+    const body = await limitedJson(req);
     const parsedBody = payloadSchema.safeParse(body);
     if (!parsedBody.success) {
       return NextResponse.json(
-        { error: "Debes aceptar los términos y condiciones y la política de privacidad para continuar." },
+        {
+          error:
+            "Debes aceptar los términos y condiciones y la política de privacidad para continuar.",
+        },
         { status: 400 },
       );
     }
@@ -44,8 +53,10 @@ export async function POST(req: Request, { params }: Context) {
       amount: result.amount,
       stageKey: result.stageKey,
     });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "No se pudo iniciar el pago.";
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch {
+    return NextResponse.json(
+      { error: "No se pudo iniciar el pago. Revisa el estado antes de volver a intentarlo." },
+      { status: 400 },
+    );
   }
 }

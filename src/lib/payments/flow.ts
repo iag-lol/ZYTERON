@@ -2,6 +2,8 @@ import { createHmac } from "node:crypto";
 
 export type FlowPaymentCreateInput = {
   commerceOrder: string;
+  quoteId?: string;
+  stageKey?: "FULL" | "DELIVERY" | "INITIAL" | "FINAL";
   subject: string;
   amount: number;
   email: string;
@@ -16,6 +18,7 @@ export type FlowPaymentCreateResult = {
   url: string;
   token: string;
   flowOrder?: number;
+  commerceOrder?: string;
 };
 
 export type FlowStatusResult = {
@@ -99,7 +102,7 @@ function readEnv(...names: string[]) {
     if (!trimmed) continue;
 
     if (
-      (trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
+      (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
       (trimmed.startsWith("'") && trimmed.endsWith("'"))
     ) {
       return trimmed.slice(1, -1).trim();
@@ -127,7 +130,9 @@ function getFlowConfig() {
 
   const sandboxFlag = readEnv("FLOW_USE_SANDBOX").toLowerCase();
   const useSandbox = sandboxFlag === "1" || sandboxFlag === "true" || sandboxFlag === "yes";
-  const base = readEnv("FLOW_API_BASE") || (useSandbox ? "https://sandbox.flow.cl/api" : "https://www.flow.cl/api");
+  const base =
+    readEnv("FLOW_API_BASE") ||
+    (useSandbox ? "https://sandbox.flow.cl/api" : "https://www.flow.cl/api");
   const normalizedBase = base.replace(/\/+$/, "");
   if (!["https://sandbox.flow.cl/api", "https://www.flow.cl/api"].includes(normalizedBase)) {
     throw new Error("La conexión de pagos no tiene un origen autorizado.");
@@ -142,7 +147,9 @@ function getFlowConfig() {
 
 function requirePaymentActivation(base: string) {
   if (base === "https://www.flow.cl/api" && process.env.FLOW_LIVE_PAYMENTS_ENABLED !== "true") {
-    throw new Error("Los cobros reales requieren activar y validar la configuración de producción.");
+    throw new Error(
+      "Los cobros reales requieren activar y validar la configuración de producción.",
+    );
   }
 }
 
@@ -248,7 +255,9 @@ export function isFlowRejected(status: number) {
   return status === 3 || status === 4;
 }
 
-export async function createFlowPayment(input: FlowPaymentCreateInput): Promise<FlowPaymentCreateResult> {
+export async function createFlowPayment(
+  input: FlowPaymentCreateInput,
+): Promise<FlowPaymentCreateResult> {
   const { apiKey, secret, base } = getFlowConfig();
   requirePaymentActivation(base);
 
@@ -267,30 +276,100 @@ export async function createFlowPayment(input: FlowPaymentCreateInput): Promise<
   };
 
   payload.s = signFlowParams(payload, secret);
-  if (!Number.isSafeInteger(input.amount) || input.amount <= 0) throw new Error("Importe de pago inválido.");
+  if (!Number.isSafeInteger(input.amount) || input.amount <= 0)
+    throw new Error("Importe de pago inválido.");
 
-  const response = await fetch(`${base}/payment/create`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "User-Agent": "zyteron-web/1.0",
-    },
-    body: toFormBody(payload),
-    cache: "no-store",
-    redirect: "error",
-    signal: AbortSignal.timeout(8000),
-  });
-
-  const body = (await response.json().catch(() => null)) as Record<string, unknown> | null;
-  if (!response.ok || !body?.url || !body?.token) {
-    throw flowError(response.status, body);
+  for (const value of [input.urlConfirmation, input.urlReturn]) {
+    let origin = "";
+    try {
+      origin = new URL(value).origin;
+    } catch {}
+    if (origin !== "https://www.zyteron.cl") throw new Error("PAYMENT_CALLBACK_ORIGIN_INVALID");
+  }
+  const { parseFlowCommerceOrder } = await import("./quote-payments");
+  const parsed =
+    input.quoteId && input.stageKey
+      ? { quoteId: input.quoteId, stageKey: input.stageKey }
+      : parseFlowCommerceOrder(input.commerceOrder);
+  const callbackPath = new URL(input.urlConfirmation).pathname;
+  const quoteId =
+    callbackPath === "/api/checkout/flow/confirmation"
+      ? input.commerceOrder
+      : callbackPath === "/api/portal/payments/quotes/flow/confirmation"
+        ? parsed?.quoteId
+        : null;
+  if (!quoteId) throw new Error("PAYMENT_PERSISTED_TARGET_REQUIRED");
+  const { prisma } = await import("@/lib/prisma");
+  const quote = await prisma.quote.findUnique({ where: { id: quoteId } });
+  if (!quote) throw new Error("PAYMENT_PERSISTED_TARGET_REQUIRED");
+  let generation = "initial";
+  if (parsed) {
+    const { enrichQuoteRecord } = await import("@/lib/admin/quote");
+    const { normalizeQuoteMetaPayment } = await import("./quote-payments");
+    const meta = normalizeQuoteMetaPayment(
+      enrichQuoteRecord({ ...quote, createdAt: quote.createdAt.toISOString() }).meta,
+    );
+    const stage = meta.payment?.stages?.find((s) => s.key === parsed.stageKey);
+    if (!stage || stage.amount !== input.amount || stage.status === "PAID")
+      throw new Error("PAYMENT_STAGE_MISMATCH");
+    if ([3, 4].includes(stage.flow?.status || 0)) generation = String(stage.flow?.flowOrder);
+  } else {
+    if (quote.total !== input.amount) throw new Error("PAYMENT_AMOUNT_MISMATCH");
+    let m;
+    try {
+      m = JSON.parse(quote.message || "");
+    } catch {
+      throw new Error("PAYMENT_CHECKOUT_INVALID");
+    }
+    if (m.type !== "PRODUCT_CHECKOUT" || m.flow?.status === 2)
+      throw new Error("PAYMENT_CHECKOUT_INVALID");
+    if ([3, 4].includes(m.flow?.status)) throw new Error("PAYMENT_ATTEMPT_FINISHED");
   }
 
-  return {
-    url: String(body.url),
-    token: String(body.token),
-    flowOrder: typeof body.flowOrder === "number" ? body.flowOrder : undefined,
-  };
+  const { onceProviderOperation } = await import("./provider-operation");
+  const created = await onceProviderOperation(
+    quoteId,
+    "payment/" + (parsed?.stageKey || "checkout") + "/" + input.amount + "/" + generation,
+    async () => {
+      const response = await fetch(`${base}/payment/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": "zyteron-web/1.0",
+        },
+        body: toFormBody(payload),
+        cache: "no-store",
+        redirect: "error",
+        signal: AbortSignal.timeout(8000),
+      });
+
+      const body = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+      if (!response.ok || !body?.url || !body?.token) {
+        throw flowError(response.status, body);
+      }
+
+      return {
+        commerceOrder: input.commerceOrder,
+        url: validatedProviderUrl(body.url, base),
+        token: String(body.token),
+        flowOrder: typeof body.flowOrder === "number" ? body.flowOrder : undefined,
+      };
+    },
+  );
+  const { persistPaymentAttempt } = await import("./payment-attempt");
+  await persistPaymentAttempt({
+    token: created.token,
+    quoteId,
+    clientId: quote.userId,
+    kind: parsed ? "QUOTE" : "CHECKOUT",
+    stageKey: parsed?.stageKey,
+    commerceOrder: created.commerceOrder!,
+    flowOrder: created.flowOrder,
+    amount: input.amount,
+  });
+  const { enqueueCallback } = await import("./durable-callbacks");
+  await enqueueCallback(parsed ? "QUOTE" : "CHECKOUT", created.token);
+  return created;
 }
 
 export async function createFlowCustomer(input: {
@@ -320,7 +399,11 @@ export async function createFlowCustomer(input: {
 }
 
 export async function createFlowPlan(input: FlowPlanCreateInput): Promise<FlowPlanCreateResult> {
-  if (!Number.isSafeInteger(input.amount) || input.amount <= 0 || ![1, 2, 3, 4].includes(input.interval)) {
+  if (
+    !Number.isSafeInteger(input.amount) ||
+    input.amount <= 0 ||
+    ![1, 2, 3, 4].includes(input.interval)
+  ) {
     throw new Error("La configuración del plan mensual requiere revisión.");
   }
   const body = await flowPost("/plans/create", {
@@ -380,12 +463,14 @@ export async function registerFlowCustomerCard(input: {
   }
 
   return {
-    url,
+    url: validatedProviderUrl(url, getFlowConfig().base),
     token,
   };
 }
 
-export async function getFlowCustomerRegisterStatus(token: string): Promise<FlowCustomerRegisterStatus> {
+export async function getFlowCustomerRegisterStatus(
+  token: string,
+): Promise<FlowCustomerRegisterStatus> {
   const body = await flowGet("/customer/getRegisterStatus", { token });
 
   return {
@@ -424,7 +509,8 @@ export async function createFlowSubscription(
     customerId,
     status: typeof body.status === "number" ? body.status : undefined,
     paymentLink: typeof body.paymentLink === "string" ? body.paymentLink : undefined,
-    nextInvoiceDate: typeof body.next_invoice_date === "string" ? body.next_invoice_date : undefined,
+    nextInvoiceDate:
+      typeof body.next_invoice_date === "string" ? body.next_invoice_date : undefined,
   };
 }
 
@@ -451,7 +537,12 @@ export async function getFlowPaymentStatus(token: string): Promise<FlowStatusRes
   });
 
   const body = (await response.json().catch(() => null)) as Record<string, unknown> | null;
-  if (!response.ok || !body || typeof body.commerceOrder !== "string" || typeof body.status !== "number") {
+  if (
+    !response.ok ||
+    !body ||
+    typeof body.commerceOrder !== "string" ||
+    typeof body.status !== "number"
+  ) {
     throw flowError(response.status, body);
   }
 
@@ -463,8 +554,86 @@ export async function getFlowPaymentStatus(token: string): Promise<FlowStatusRes
     amount: typeof body.amount === "number" ? body.amount : undefined,
     currency: typeof body.currency === "string" ? body.currency : undefined,
     payer: typeof body.payer === "string" ? body.payer : undefined,
-    paymentData: body.paymentData && typeof body.paymentData === "object" ? (body.paymentData as Record<string, unknown>) : undefined,
-    pending_info: body.pending_info && typeof body.pending_info === "object" ? (body.pending_info as Record<string, unknown>) : undefined,
-    lastError: body.lastError && typeof body.lastError === "object" ? (body.lastError as Record<string, unknown>) : undefined,
+    paymentData:
+      body.paymentData && typeof body.paymentData === "object"
+        ? (body.paymentData as Record<string, unknown>)
+        : undefined,
+    pending_info:
+      body.pending_info && typeof body.pending_info === "object"
+        ? (body.pending_info as Record<string, unknown>)
+        : undefined,
+    lastError:
+      body.lastError && typeof body.lastError === "object"
+        ? (body.lastError as Record<string, unknown>)
+        : undefined,
   };
+}
+
+export async function getFlowSubscription(subscriptionId: string) {
+  const data = await flowGet("/subscription/get", { subscriptionId });
+  if (
+    data.subscriptionId !== subscriptionId ||
+    typeof data.customerId !== "string" ||
+    typeof data.planId !== "string" ||
+    ![0, 1, 2, 4].includes(Number(data.status))
+  )
+    throw new Error("SUBSCRIPTION_RESPONSE_INVALID");
+  return data;
+}
+export async function getFlowInvoice(invoiceId: number) {
+  if (!Number.isSafeInteger(invoiceId) || invoiceId <= 0)
+    throw new Error("SUBSCRIPTION_INVOICE_INVALID");
+  const data = await flowGet("/invoice/get", { invoiceId });
+  if (data.id !== invoiceId) throw new Error("SUBSCRIPTION_INVOICE_MISMATCH");
+  return data;
+}
+export async function cancelFlowSubscription(subscriptionId: string) {
+  await flowPost("/subscription/cancel", { subscriptionId, at_period_end: 1 });
+  return getFlowSubscription(subscriptionId);
+}
+export async function getFlowPaymentByOrder(flowOrder: number): Promise<FlowStatusResult> {
+  if (!Number.isSafeInteger(flowOrder) || flowOrder <= 0) throw new Error("PAYMENT_ORDER_INVALID");
+  const data = await flowGet("/payment/getStatusByFlowOrderExtended", { flowOrder });
+  if (
+    data.flowOrder !== flowOrder ||
+    typeof data.commerceOrder !== "string" ||
+    typeof data.status !== "number"
+  )
+    throw new Error("PAYMENT_RESPONSE_INVALID");
+  return data as unknown as FlowStatusResult;
+}
+
+function validatedProviderUrl(value: unknown, base: string) {
+  let u: URL;
+  try {
+    u = new URL(String(value));
+  } catch {
+    throw new Error("PAYMENT_DESTINATION_INVALID");
+  }
+  const host = base.includes("sandbox") ? "sandbox.flow.cl" : "www.flow.cl";
+  if (
+    u.protocol !== "https:" ||
+    u.hostname !== host ||
+    u.port ||
+    u.username ||
+    u.password ||
+    u.search ||
+    u.hash
+  )
+    throw new Error("PAYMENT_DESTINATION_INVALID");
+  return u.href;
+}
+
+export async function verifyFlowMonthlyPlan(planId: string, amount: number, callback: string) {
+  const data = await flowGet("/plans/get", { planId });
+  if (
+    data.planId !== planId ||
+    data.currency !== "CLP" ||
+    data.amount !== amount ||
+    data.interval !== 3 ||
+    data.interval_count !== 1 ||
+    data.urlCallback !== callback
+  )
+    throw new Error("SUBSCRIPTION_PLAN_MISMATCH");
+  return data;
 }

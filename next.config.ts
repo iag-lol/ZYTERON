@@ -55,6 +55,7 @@ const securityHeaders = [
 ];
 
 const privateNoIndexHeaders = [
+  { key: "Referrer-Policy", value: "no-referrer" },
   {
     key: "X-Robots-Tag",
     value: "noindex, nofollow, noarchive",

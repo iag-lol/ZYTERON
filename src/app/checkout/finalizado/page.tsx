@@ -1,3 +1,6 @@
+import { cookies } from "next/headers";
+import { readCheckoutGrant, CHECKOUT_GRANT_COOKIE } from "@/lib/payments/checkout-grant";
+import { digest } from "@/lib/payments/pilot-protocol";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Clock3, CreditCard, ReceiptText } from "lucide-react";
@@ -17,6 +20,14 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 function resolveStatus(flowStatus: number) {
+  if (flowStatus === 0)
+    return {
+      title: "No pudimos verificar este pago",
+      description:
+        "Ingresa a tu cuenta para revisar tus pagos o contacta a nuestro equipo. No se ha acreditado una compra con este acceso.",
+      tone: "border-slate-200 bg-slate-50 text-slate-900",
+      icon: AlertTriangle,
+    };
   if (flowStatus === 2) {
     return {
       title: "Pago aprobado",
@@ -48,9 +59,14 @@ export default async function CheckoutFinalizadoPage({
 }: {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const params = searchParams ? await searchParams : {};
-  const order = typeof params.order === "string" ? params.order : "";
-  const token = typeof params.token === "string" ? params.token : "";
+  void searchParams;
+  const grant = readCheckoutGrant((await cookies()).get(CHECKOUT_GRANT_COOKIE)?.value);
+  const order = grant?.orderId || "";
+  const stored = order ? await getCheckoutOrder(order).catch(() => null) : null;
+  const token =
+    stored?.meta.flow.token && grant?.tokenHash === digest(stored.meta.flow.token)
+      ? stored.meta.flow.token
+      : "";
   let flowStatus = 0;
   let flowLabel = "En verificación";
   const message = "";
@@ -59,7 +75,16 @@ export default async function CheckoutFinalizadoPage({
     try {
       const candidate = await getCheckoutOrder(order);
       if (candidate?.storage === "db" && samePaymentToken(token, candidate.meta.flow.token)) {
-        const observation = verifyPaymentObservation(await getFlowPaymentStatus(token), { id: candidate.id, amount: candidate.meta.total, flowOrder: candidate.meta.flow.flowOrder, token: candidate.meta.flow.token }, token);
+        const observation = verifyPaymentObservation(
+          await getFlowPaymentStatus(token),
+          {
+            id: candidate.id,
+            amount: candidate.meta.total,
+            flowOrder: candidate.meta.flow.flowOrder,
+            token: candidate.meta.flow.token,
+          },
+          token,
+        );
         flowStatus = observation.status;
         flowLabel = mapFlowStatusLabel(flowStatus);
         orderData = candidate;
@@ -70,10 +95,9 @@ export default async function CheckoutFinalizadoPage({
   }
   const status = resolveStatus(flowStatus);
   const Icon = status.icon;
-  const canDownloadInvoice = flowStatus === 2 && orderData && token && orderData.meta.flow.token === token;
-  const invoiceUrl = canDownloadInvoice
-    ? `/api/checkout/invoice/${encodeURIComponent(order)}?token=${encodeURIComponent(token)}`
-    : "";
+  const canDownloadInvoice =
+    flowStatus === 2 && orderData && token && orderData.meta.flow.token === token;
+  const invoiceUrl = canDownloadInvoice ? `/api/checkout/invoice/${encodeURIComponent(order)}` : "";
   const invoiceLabel = "Descargar comprobante PDF";
 
   const netSubtotal = orderData
@@ -110,14 +134,18 @@ export default async function CheckoutFinalizadoPage({
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Orden</p>
+              <p className="text-[11px] font-bold tracking-widest text-slate-500 uppercase">
+                Orden
+              </p>
               <p className="mt-1 flex items-center gap-2 text-sm font-bold text-slate-900">
                 <ReceiptText className="h-4 w-4 text-blue-700" />
                 {order || "No disponible"}
               </p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Estado del pago</p>
+              <p className="text-[11px] font-bold tracking-widest text-slate-500 uppercase">
+                Estado del pago
+              </p>
               <p className="mt-1 flex items-center gap-2 text-sm font-bold text-slate-900">
                 <CreditCard className="h-4 w-4 text-blue-700" />
                 {flowLabel || "Sin estado"} ({Number.isFinite(flowStatus) ? flowStatus : 0})
@@ -127,15 +155,21 @@ export default async function CheckoutFinalizadoPage({
 
           {orderData ? (
             <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Resumen de compra</p>
+              <p className="text-[11px] font-bold tracking-widest text-slate-500 uppercase">
+                Resumen de compra
+              </p>
               <div className="mt-3 grid gap-1.5 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600">Subtotal bruto</span>
-                  <span className="font-semibold text-slate-900">{money(orderData.meta.subtotal)}</span>
+                  <span className="font-semibold text-slate-900">
+                    {money(orderData.meta.subtotal)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600">Descuento</span>
-                  <span className="font-semibold text-emerald-700">-{money(orderData.meta.discount)}</span>
+                  <span className="font-semibold text-emerald-700">
+                    -{money(orderData.meta.discount)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600">Subtotal neto</span>
@@ -148,7 +182,9 @@ export default async function CheckoutFinalizadoPage({
                 <div className="mt-1 border-t border-slate-200 pt-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-base font-bold text-slate-900">Total pagado</span>
-                    <span className="text-lg font-extrabold text-blue-700">{money(orderData.meta.total)}</span>
+                    <span className="text-lg font-extrabold text-blue-700">
+                      {money(orderData.meta.total)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -156,7 +192,9 @@ export default async function CheckoutFinalizadoPage({
           ) : null}
 
           {message ? (
-            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{message}</div>
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+              {message}
+            </div>
           ) : null}
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -168,7 +206,11 @@ export default async function CheckoutFinalizadoPage({
             <Button asChild className="btn-primary-glow bg-blue-700 text-white hover:bg-blue-800">
               <Link href="/">Volver al inicio</Link>
             </Button>
-            <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+            <Button
+              asChild
+              variant="outline"
+              className="border-slate-300 text-slate-800 hover:bg-slate-50"
+            >
               <Link href="/contacto">Contactar soporte</Link>
             </Button>
           </div>

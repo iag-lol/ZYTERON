@@ -10,7 +10,6 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { JsonLd } from "@/components/seo/json-ld";
 import { IconSprite } from "@/components/ui/icon-sprite";
-import { PublicAnalytics } from "@/components/analytics/public-analytics";
 import { PwaRegister } from "@/components/pwa-register";
 import { buildOrganizationGraph, buildPrimaryOgImageUrl } from "@/lib/seo";
 
@@ -120,18 +119,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="es-CL"
-      className={cn(geistSans.variable, geistMono.variable, "antialiased h-full")}
-    >
-      <head>
-        <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="" />
-      </head>
+    <html lang="es-CL" className={cn(geistSans.variable, geistMono.variable, "h-full antialiased")}>
+      <head></head>
       <body className="min-h-full bg-white text-slate-900">
         <TooltipProvider>
           <IconSprite />
           <JsonLd id="zyteron-organization-schema" data={buildOrganizationGraph()} />
-          <PublicAnalytics />
           <PwaRegister />
           <AppShell header={<SiteHeader />} footer={<SiteFooter />}>
             {children}

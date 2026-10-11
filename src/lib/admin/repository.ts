@@ -984,77 +984,17 @@ function isWonQuoteStatus(value?: string | null) {
 }
 
 async function syncOneWonQuote(quote: WonQuoteRow) {
-  let clientId = quote.userId || null;
-  if (!clientId && quote.email) {
-    clientId = await findOrCreateClientByEmail({
-      name: quote.name || quote.company || quote.email,
-      email: quote.email,
-      company: quote.company || null,
-      phone: quote.phone || null,
-    });
-  }
-
-  if (clientId && quote.userId !== clientId) {
-    await updateRows("Quote", { userId: clientId }, { id: quote.id });
-  }
-
-  const quoteTotal = Math.max(0, Math.round(typeof quote.total === "number" ? quote.total : 0));
-  const invoiceRef = `COT:${quote.id}`;
-  const existingSale = await safeSelectSingle<{
-    id: string;
-    clientId?: string | null;
-    processId?: string | null;
-    total?: number | null;
-    description?: string | null;
-  }>("Sale", "id, clientId, processId, total, description", { invoiceRef });
-
-  let saleId = existingSale?.id ?? null;
-  if (!saleId) {
-    const createdSale = await insertRow<{ id: string }>(
-      "Sale",
-      {
-        clientId: clientId || null,
-        processId: quote.processId || null,
-        total: quoteTotal,
-        description: `Venta sincronizada desde cotización WON ${quote.id}`,
-        paymentMethod: null,
-        invoiceRef,
-        createdAt: quote.createdAt || new Date().toISOString(),
-      },
-      "id",
-    );
-    saleId = createdSale.id;
-  } else {
-    const salePatch: Record<string, unknown> = {};
-    if (clientId && !existingSale?.clientId) {
-      salePatch.clientId = clientId;
-    }
-    if (quote.processId && !existingSale?.processId) {
-      salePatch.processId = quote.processId;
-    }
-    if (typeof existingSale?.total !== "number" || Math.round(existingSale.total) !== quoteTotal) {
-      salePatch.total = quoteTotal;
-    }
-    if (!existingSale?.description?.includes("cotización WON")) {
-      salePatch.description = `Venta sincronizada desde cotización WON ${quote.id}`;
-    }
-    if (Object.keys(salePatch).length > 0) {
-      await updateRows("Sale", salePatch, { id: saleId });
-    }
-  }
-
-  // La aceptación comercial crea/actualiza la venta, pero nunca fabrica una
-  // factura. El documento tributario se emite explícitamente desde SII y se
-  // vincula a la misma cuenta por cobrar; así WON, pagado y facturado dejan de
-  // ser estados intercambiables.
+  const { prisma } = await import("@/lib/prisma");
+  const result = await prisma.$queryRaw<
+    Array<{ synced: boolean }>
+  >`SELECT public.zyteron_sync_verified_quote_sale(${quote.id}) AS synced`;
+  return result[0]?.synced === true;
 }
 
 export async function syncWonQuoteById(quoteId: string) {
-  const quote = await safeSelectSingle<WonQuoteRow>(
-    "Quote",
-    "id, userId, processId, name, email, phone, company, subtotal, total, status, createdAt",
-    { id: quoteId },
-  );
+  const { prisma } = await import("@/lib/prisma");
+  const record = await prisma.quote.findUnique({ where: { id: quoteId } });
+  const quote = record ? { ...record, createdAt: record.createdAt.toISOString() } : null;
 
   if (!quote) {
     throw new Error(`No se encontró la cotización ${quoteId} para sincronizar.`);
@@ -1065,8 +1005,8 @@ export async function syncWonQuoteById(quoteId: string) {
     return { synced: false, reason: "NOT_WON" as const };
   }
 
-  await syncOneWonQuote(quote);
-  return { synced: true, reason: "OK" as const };
+  const synced = await syncOneWonQuote(quote);
+  return { synced, reason: synced ? ("OK" as const) : ("PAYMENT_NOT_CONFIRMED" as const) };
 }
 
 export async function syncWonQuotesCrossModules(limit = 1000) {

@@ -7,6 +7,8 @@ type Environment = Record<string, string | undefined>;
  * consultando el token directamente contra Flow, no mediante Origin.
  */
 const FLOW_EXTERNAL_ROUTES = new Set([
+  "/api/checkout/flow/confirmation",
+  "/api/checkout/flow/return",
   "/api/portal/payments/quotes/flow/confirmation",
   "/api/portal/payments/quotes/flow/return",
   "/api/portal/payments/quotes/subscription/confirmation",

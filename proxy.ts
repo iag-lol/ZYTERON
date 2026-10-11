@@ -21,7 +21,8 @@ export async function proxy(req: NextRequest) {
   const isProtectedMutationScope =
     pathname.startsWith("/administracion") ||
     pathname.startsWith("/api/admin") ||
-    pathname.startsWith("/api/portal");
+    pathname.startsWith("/api/portal") ||
+    pathname.startsWith("/api/checkout");
 
   if (
     !isExternalFlowRequest &&
@@ -33,7 +34,7 @@ export async function proxy(req: NextRequest) {
       referer: req.headers.get("referer"),
       secFetchSite: req.headers.get("sec-fetch-site"),
       allowedOrigins: configuredRequestOrigins(),
-      hasBearerAuthorization: /^Bearer\s+\S+/i.test(req.headers.get("authorization") || ""),
+      hasBearerAuthorization: false, // These routes authenticate cookies, not arbitrary Bearer headers.
     })
   ) {
     if (pathname.startsWith("/api/")) {
@@ -101,6 +102,7 @@ export const config = {
     "/clientes/:path*",
     "/api/admin/:path*",
     "/api/portal/:path*",
+    "/api/checkout/:path*",
   ],
 };
 

@@ -1,5 +1,8 @@
+import { onceProviderOperation } from "./provider-operation";
+import { queueReceipt } from "./payment-outbox";
 import { randomUUID } from "node:crypto";
-import { verifyPaymentObservation } from "./verified-payment";
+import { verifySubscriptionCharge } from "./subscription-evidence";
+import { samePaymentToken, verifyPaymentObservation } from "./verified-payment";
 import {
   assertExternalPaymentMatches,
   isFinanceSchemaUnavailableError,
@@ -31,6 +34,9 @@ import {
   createFlowPlan,
   createFlowSubscription,
   getFlowCustomerRegisterStatus,
+  getFlowSubscription,
+  getFlowInvoice,
+  verifyFlowMonthlyPlan,
   getFlowPaymentStatus,
   isFlowApproved,
   isFlowRejected,
@@ -51,7 +57,7 @@ import {
 } from "@/lib/payments/quote-payments";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { ZYTERON_PAYMENT_PROOF_BUCKET } from "@/lib/company";
+const PRIVATE_PAYMENT_PROOF_BUCKET = "zyteron-payment-proofs-private";
 
 type QuoteWithPayment = ReturnType<typeof enrichQuoteRecord> & {
   meta: QuoteMeta;
@@ -80,7 +86,7 @@ async function recordQuotePaymentInLedger(input: {
   receivedAt?: Date;
   metadata?: Record<string, unknown>;
 }) {
-  if (!input.quote.userId) return null;
+  if (!input.quote.userId) throw new Error("PAYMENT_CLIENT_BINDING_REQUIRED");
 
   try {
     return await recordClientPayment({
@@ -107,12 +113,9 @@ async function recordQuotePaymentInLedger(input: {
       },
     });
   } catch (error) {
-    // Durante el despliegue escalonado, el flujo legado continúa funcionando
-    // hasta que la migración financiera esté aplicada. Cualquier otro error sí
-    // detiene la acreditación para evitar inconsistencias silenciosas.
+    // Without the canonical ledger, no paid state or sale may be fabricated.
     if (isFinanceSchemaUnavailableError(error)) {
-      console.warn("[quote-payment] finance ledger unavailable; legacy payment state preserved");
-      return null;
+      throw new Error("PAYMENT_LEDGER_UNAVAILABLE");
     }
     throw error;
   }
@@ -155,25 +158,8 @@ function toQuoteRecord(quote: {
 }
 
 function resolveBaseUrl(req?: Request) {
-  const candidates = [
-    process.env.FLOW_PUBLIC_BASE_URL,
-    process.env.NEXT_PUBLIC_SITE_URL,
-    process.env.PUBLIC_SITE_URL,
-    process.env.RENDER_EXTERNAL_URL,
-    ZYTERON_COMPANY.website,
-  ];
-
-  for (const candidate of candidates) {
-    const value = String(candidate || "").trim();
-    if (/^https?:\/\//i.test(value)) return value.replace(/\/+$/, "");
-  }
-
-  if (req) {
-    const origin = req.headers.get("origin") || new URL(req.url).origin;
-    if (/^https?:\/\//i.test(origin)) return origin.replace(/\/+$/, "");
-  }
-
-  return ZYTERON_COMPANY.website.replace(/\/+$/, "");
+  void req;
+  return "https://www.zyteron.cl";
 }
 
 async function getQuoteWithPayment(quoteId: string) {
@@ -195,8 +181,8 @@ async function saveQuotePaymentMeta(input: {
   meta: QuoteMeta;
   status?: "PENDING" | "SENT" | "WON" | "LOST";
 }) {
-  await prisma.quote.update({
-    where: { id: input.quote.id },
+  const saved = await prisma.quote.updateMany({
+    where: { id: input.quote.id, message: input.quote.message },
     data: {
       message: serializeQuoteMessage(input.meta),
       status: (input.status || input.quote.status || "PENDING") as
@@ -209,6 +195,8 @@ async function saveQuotePaymentMeta(input: {
       discount: input.meta.totalDescuento,
     },
   });
+
+  if (saved.count !== 1) throw new Error("PAYMENT_QUOTE_VERSION_CHANGED");
 
   if (input.status) {
     try {
@@ -437,6 +425,14 @@ export async function createQuoteFlowCheckout(input: {
     throw new Error("La cotización no está vinculada a tu correo activo.");
   }
 
+  if (!quote.userId) {
+    const bound = await prisma.quote.updateMany({
+      where: { id: quote.id, userId: null, email: { equals: input.email, mode: "insensitive" } },
+      data: { userId: input.userId },
+    });
+    if (bound.count !== 1) throw new Error("PAYMENT_CLIENT_BINDING_CONFLICT");
+    quote.userId = input.userId;
+  }
   const stage = getPayableQuoteStage(quote.meta.payment);
   if (!stage) {
     throw new Error("No hay un pago habilitado para esta cotización.");
@@ -457,6 +453,8 @@ export async function createQuoteFlowCheckout(input: {
     mode: "FLOW",
   });
   const flow = await createFlowPayment({
+    quoteId: quote.id,
+    stageKey: stage.key,
     commerceOrder,
     subject: `${quote.displayNumber} · ${stage.label}`,
     amount: stage.amount,
@@ -477,7 +475,7 @@ export async function createQuoteFlowCheckout(input: {
   const nextMeta = {
     ...acceptedMeta,
     payment: setQuoteStageFlowMeta(acceptedMeta.payment || {}, stage.key, {
-      commerceOrder,
+      commerceOrder: flow.commerceOrder || commerceOrder,
       token: flow.token,
       checkoutUrl: `${flow.url}?token=${encodeURIComponent(flow.token)}`,
       flowOrder: flow.flowOrder,
@@ -524,6 +522,21 @@ export async function createQuoteFlowSubscriptionStart(input: {
     throw new Error("La cotización no está vinculada a tu correo activo.");
   }
 
+  if (!quote.userId) {
+    const bound = await prisma.quote.updateMany({
+      where: { id: quote.id, userId: null, email: { equals: input.email, mode: "insensitive" } },
+      data: { userId: input.userId },
+    });
+    if (bound.count !== 1) throw new Error("PAYMENT_CLIENT_BINDING_CONFLICT");
+    quote.userId = input.userId;
+  }
+  const life = await prisma.$queryRaw<
+    Array<{ state: string }>
+  >`SELECT state FROM zyteron_recurring_lifecycle WHERE quote_id=${quote.id}`;
+  if (life[0] && life[0].state !== "ACTIVE")
+    throw new Error(
+      "Esta suscripción ya tiene una cancelación. La reactivación requiere un nuevo acuerdo.",
+    );
   const payment = quote.meta.payment;
   const stage = getPayableQuoteStage(payment);
   if (!payment || payment.billingType !== "SUBSCRIPTION" || !stage) {
@@ -537,32 +550,40 @@ export async function createQuoteFlowSubscriptionStart(input: {
   const planId = payment.subscription?.planId || buildFlowSubscriptionPlanId(quote.id);
   const planName = payment.subscription?.planName || `${quote.displayNumber} mensual`;
 
-  if (!payment.subscription?.planId) {
-    await createFlowPlan({
-      planId,
-      name: planName,
-      amount: quote.totalAmount,
-      interval: 3,
-      intervalCount: 1,
-      urlCallback: `${baseUrl}/api/portal/payments/quotes/subscription/confirmation?quoteId=${encodeURIComponent(quote.id)}`,
-    });
-  }
+  const { customerId, register } = await onceProviderOperation(
+    quote.id,
+    "monthly-register/" + planId + "/" + quote.totalAmount,
+    async () => {
+      if (!payment.subscription?.planId) {
+        await createFlowPlan({
+          planId,
+          name: planName,
+          amount: quote.totalAmount,
+          interval: 3,
+          intervalCount: 1,
+          urlCallback: `${baseUrl}/api/portal/payments/quotes/subscription/confirmation?quoteId=${encodeURIComponent(quote.id)}`,
+        });
+      }
 
-  const customerId =
-    payment.subscription?.customerId ||
-    (
-      await createFlowCustomer({
-        name: quote.name || "Cliente",
-        email: quoteEmail,
-        externalId: `qsub-${quote.id.slice(0, 8)}-${Date.now().toString(36)}`,
-      })
-    ).customerId;
+      const customerId =
+        payment.subscription?.customerId ||
+        (
+          await createFlowCustomer({
+            name: quote.name || "Cliente",
+            email: quoteEmail,
+            externalId: `qsub-${quote.id.slice(0, 8)}-${Date.now().toString(36)}`,
+          })
+        ).customerId;
 
-  const returnUrl = `${baseUrl}/api/portal/payments/quotes/subscription/return?quoteId=${encodeURIComponent(quote.id)}`;
-  const register = await registerFlowCustomerCard({
-    customerId,
-    urlReturn: returnUrl,
-  });
+      const returnUrl = `${baseUrl}/api/portal/payments/quotes/subscription/return?quoteId=${encodeURIComponent(quote.id)}`;
+      const register = await registerFlowCustomerCard({
+        customerId,
+        urlReturn: returnUrl,
+      });
+
+      return { customerId, register };
+    },
+  );
 
   const acceptedMeta = attachPortalQuoteLegalAcceptance(quote.meta, {
     userId: input.userId,
@@ -601,7 +622,12 @@ export async function createQuoteFlowSubscriptionStart(input: {
 
 export async function processQuoteFlowPaymentToken(token: string, req?: Request) {
   const status = await getFlowPaymentStatus(token);
-  const parsed = parseFlowCommerceOrder(String(status.commerceOrder || ""));
+  const { paymentAttempt, attemptToken, flagAttemptReview } = await import("./payment-attempt");
+  const attempt = await paymentAttempt(token);
+  const parsed =
+    attempt?.kind === "QUOTE" && attempt.stage_key
+      ? { quoteId: attempt.quote_id, stageKey: attempt.stage_key as QuotePaymentStageKey }
+      : parseFlowCommerceOrder(String(status.commerceOrder || ""));
   if (!parsed) {
     throw new Error("Orden Flow no reconocida para cotización.");
   }
@@ -618,12 +644,75 @@ export async function processQuoteFlowPaymentToken(token: string, req?: Request)
     throw new Error("Etapa de pago no disponible en la cotización.");
   }
 
-  verifyPaymentObservation(status, {
-    id: currentStage.flow?.commerceOrder || "",
-    amount: currentStage.amount,
-    flowOrder: currentStage.flow?.flowOrder,
-    token: currentStage.flow?.token,
-  }, token);
+  if (
+    attempt &&
+    (attempt.kind !== "QUOTE" ||
+      attempt.quote_id !== quote.id ||
+      attempt.stage_key !== currentStage.key ||
+      attempt.client_id !== quote.userId)
+  )
+    throw new Error("PAYMENT_ATTEMPT_OWNER_MISMATCH");
+  verifyPaymentObservation(
+    status,
+    attempt
+      ? {
+          id: attempt.commerce_order,
+          amount: attempt.amount,
+          flowOrder: Number(attempt.flow_order),
+          token: attemptToken(attempt),
+        }
+      : {
+          id: currentStage.flow?.commerceOrder || "",
+          amount: currentStage.amount,
+          flowOrder: currentStage.flow?.flowOrder,
+          token: currentStage.flow?.token,
+        },
+    token,
+  );
+  const { parseObservation } = await import("./pilot-protocol");
+  const proof = parseObservation({ ...status });
+  const already = await prisma.payment.findUnique({
+    where: { idempotencyKey: `flow:${status.flowOrder}` },
+  });
+  if (
+    attempt &&
+    status.status === 2 &&
+    (attempt.amount !== currentStage.amount || (currentStage.status === "PAID" && !already))
+  ) {
+    if (!quote.userId || !quote.email) throw new Error("PAYMENT_CLIENT_BINDING_REQUIRED");
+    const recorded = await recordClientPayment({
+      clientId: quote.userId,
+      amount: attempt.amount,
+      method: "CARD",
+      source: "FLOW",
+      provider: "FLOW",
+      providerPaymentId: String(status.flowOrder),
+      commerceOrder: status.commerceOrder,
+      idempotencyKey: `flow:${status.flowOrder}`,
+      receivedAt: new Date(proof.paidAt!),
+      metadata: { quoteId: quote.id, reviewRequired: true, reason: "RETIRED_PAYMENT_ATTEMPT" },
+    });
+    await flagAttemptReview(token);
+    await queueReceipt({
+      quoteId: quote.id,
+      paymentId: recorded.paymentId,
+      recipient: quote.email,
+      amount: attempt.amount,
+    });
+    return {
+      quoteId: quote.id,
+      flowStatus: status.status,
+      flowLabel: "PAGO RECIBIDO · REVISIÓN REQUERIDA",
+      quoteStatus: quote.status,
+    };
+  }
+  if (attempt && status.status !== 2 && !samePaymentToken(token, currentStage.flow?.token))
+    return {
+      quoteId: quote.id,
+      flowStatus: status.status,
+      flowLabel: mapFlowStatusLabel(status.status),
+      quoteStatus: quote.status,
+    };
 
   const baseUrl = resolveBaseUrl(req);
   let payment = quote.meta.payment || {};
@@ -636,7 +725,7 @@ export async function processQuoteFlowPaymentToken(token: string, req?: Request)
     });
     const stageWasAlreadyPaid = currentStage.status === "PAID";
     const commerceOrder = String(status.commerceOrder || "");
-    await recordQuotePaymentInLedger({
+    const recorded = await recordQuotePaymentInLedger({
       quote,
       stage: currentStage,
       amount: status.amount ?? currentStage.amount,
@@ -647,10 +736,18 @@ export async function processQuoteFlowPaymentToken(token: string, req?: Request)
       provider: "FLOW",
       providerPaymentId: status.flowOrder === undefined ? undefined : String(status.flowOrder),
       commerceOrder,
+      receivedAt: new Date(proof.paidAt!),
       metadata: {
         flowStatus: status.status,
         subject: status.subject,
       },
+    });
+    if (!recorded.paymentId || !quote.email) throw new Error("PAYMENT_LEDGER_RESULT_REQUIRED");
+    await queueReceipt({
+      quoteId: quote.id,
+      paymentId: recorded.paymentId,
+      recipient: quote.email,
+      amount: currentStage.amount,
     });
     const beforeFinalReady = Boolean(
       (payment.stages || []).find(
@@ -658,7 +755,7 @@ export async function processQuoteFlowPaymentToken(token: string, req?: Request)
       ),
     );
     payment = markQuoteStagePaid(payment, parsed.stageKey, {
-      approvedAt: new Date().toISOString(),
+      approvedAt: proof.paidAt!,
       flow: {
         commerceOrder: String(status.commerceOrder || ""),
         token,
@@ -685,19 +782,6 @@ export async function processQuoteFlowPaymentToken(token: string, req?: Request)
       await syncWonQuoteById(quote.id);
     }
 
-    const paidStage =
-      (payment.stages || []).find((stage) => stage.key === parsed.stageKey) || currentStage;
-    if (!stageWasAlreadyPaid) {
-      await notifyStageStatus({
-        quote,
-        stage: paidStage,
-        title: "Pago validado",
-        intro: "tu pago fue confirmado correctamente y quedó aplicado a tu cotización.",
-        type: "SUCCESS",
-        baseUrl,
-      });
-    }
-
     const afterFinalReady = (payment.stages || []).find(
       (stage) => stage.key === "FINAL" && stage.dueEnabled && stage.status === "READY",
     );
@@ -716,7 +800,7 @@ export async function processQuoteFlowPaymentToken(token: string, req?: Request)
     };
   }
 
-  if (isFlowRejected(status.status)) {
+  if (isFlowRejected(status.status) && currentStage.status !== "PAID") {
     payment = markQuoteStageRejected(payment, parsed.stageKey, {
       commerceOrder: String(status.commerceOrder || ""),
       token,
@@ -780,17 +864,21 @@ export async function activateQuoteFlowSubscriptionFromToken(input: {
     return {
       ok: true as const,
       redirectUrl: buildPortalQuotePaymentsUrl(baseUrl, {
-        payment_result: "paid",
+        payment_result: "active",
         payment_label: "Suscripción activa",
         payment_message: "La suscripción mensual ya estaba activa.",
       }),
     };
   }
 
+  if (!samePaymentToken(input.token, quote.meta.payment.subscription?.registerToken))
+    throw new Error("SUBSCRIPTION_REGISTRATION_MISMATCH");
   const registerStatus = await getFlowCustomerRegisterStatus(input.token);
   const customerId = String(registerStatus.customerId || "").trim();
   const registerCode = Number.parseInt(String(registerStatus.status || "0"), 10);
 
+  if (customerId && customerId !== quote.meta.payment.subscription?.customerId)
+    throw new Error("SUBSCRIPTION_CUSTOMER_MISMATCH");
   if (!customerId || registerCode !== 1) {
     const failedMeta = mergeQuotePaymentSubscription(quote.meta, {
       status: "FAILED",
@@ -831,15 +919,18 @@ export async function activateQuoteFlowSubscriptionFromToken(input: {
     });
   }
 
-  const subscription = await createFlowSubscription({
+  if (quote.meta.payment.subscription?.amount !== quote.totalAmount)
+    throw new Error("SUBSCRIPTION_TERMS_CHANGED");
+  await verifyFlowMonthlyPlan(
     planId,
-    customerId,
-  });
+    quote.totalAmount,
+    `${baseUrl}/api/portal/payments/quotes/subscription/confirmation?quoteId=${encodeURIComponent(quote.id)}`,
+  );
+  const subscription = await onceProviderOperation(quote.id, "monthly-subscription/" + planId, () =>
+    createFlowSubscription({ planId, customerId }),
+  );
 
-  const payment = markQuoteStagePaid(quote.meta.payment, "FULL", {
-    approvedAt: new Date().toISOString(),
-    paidAt: new Date().toISOString(),
-  });
+  const payment = quote.meta.payment;
   const nextMeta = normalizeQuoteMetaPayment({
     ...quote.meta,
     payment: {
@@ -859,8 +950,7 @@ export async function activateQuoteFlowSubscriptionFromToken(input: {
         registerToken: undefined,
         registerUrl: undefined,
         lastError: undefined,
-        lastPaymentAt: new Date().toISOString(),
-        lastPaymentStatus: "SUSCRIPCION_ACTIVA",
+        lastPaymentStatus: "PENDIENTE_DE_COBRO",
       },
     },
   });
@@ -868,9 +958,8 @@ export async function activateQuoteFlowSubscriptionFromToken(input: {
   await saveQuotePaymentMeta({
     quote,
     meta: nextMeta,
-    status: "WON",
+    status: quote.status === "WON" ? "WON" : "SENT",
   });
-  await syncWonQuoteById(quote.id);
 
   const paidStage =
     (nextMeta.payment?.stages || []).find((stage) => stage.key === "FULL") || currentStage;
@@ -879,7 +968,7 @@ export async function activateQuoteFlowSubscriptionFromToken(input: {
     stage: paidStage,
     title: "Suscripción activa",
     intro:
-      "tu suscripción mensual fue activada correctamente y Flow realizará el cobro del total de la cotización cada mes.",
+      "tu suscripción mensual quedó activada. Cada cobro se acreditará únicamente después de confirmar el pago.",
     type: "SUCCESS",
     baseUrl,
   });
@@ -887,7 +976,7 @@ export async function activateQuoteFlowSubscriptionFromToken(input: {
   return {
     ok: true as const,
     redirectUrl: buildPortalQuotePaymentsUrl(baseUrl, {
-      payment_result: "paid",
+      payment_result: "active",
       payment_label: "Suscripción activa",
       payment_message: "La suscripción mensual quedó activada correctamente.",
     }),
@@ -900,84 +989,96 @@ export async function processQuoteSubscriptionChargeConfirmation(input: {
   req?: Request;
 }) {
   const quote = await getQuoteWithPayment(input.quoteId);
-  if (!quote || !quote.meta.payment || quote.meta.payment.billingType !== "SUBSCRIPTION") {
-    throw new Error("Cotización de suscripción no encontrada.");
-  }
-
+  const binding = quote?.meta.payment?.subscription;
+  if (
+    !quote ||
+    quote.meta.payment?.billingType !== "SUBSCRIPTION" ||
+    !binding?.subscriptionId ||
+    !binding.customerId ||
+    !binding.planId
+  )
+    throw new Error("SUBSCRIPTION_BINDING_REQUIRED");
   const status = await getFlowPaymentStatus(input.token);
+  const remote = await getFlowSubscription(binding.subscriptionId);
+  if (remote.customerId !== binding.customerId || remote.planId !== binding.planId)
+    throw new Error("SUBSCRIPTION_OWNERSHIP_MISMATCH");
+  const invoices = Array.isArray(remote.invoices) ? remote.invoices : [];
+  const linked = invoices.find((value) => {
+    if (!value || typeof value !== "object") return false;
+    const payment = (value as Record<string, unknown>).payment as
+      | Record<string, unknown>
+      | undefined;
+    return payment?.flowOrder === status.flowOrder;
+  }) as Record<string, unknown> | undefined;
+  // Caller-controlled quoteId and an unrelated token can never credit a subscription.
+  if (!linked || !Number.isSafeInteger(linked.id))
+    throw new Error("SUBSCRIPTION_INVOICE_NOT_LINKED");
+  const invoice = await getFlowInvoice(linked.id as number);
   if (isFlowApproved(status.status)) {
-    const stage = (quote.meta.payment.stages || []).find((item) => item.key === "FULL");
-    if (!stage) throw new Error("Etapa mensual no disponible en la cotización.");
-    const expectedAmount = Math.round(
-      quote.meta.payment.subscription?.amount || stage.amount || quote.totalAmount,
-    );
-    assertExternalPaymentMatches({
-      expectedAmount,
-      reportedAmount: status.amount,
-      reportedCurrency: status.currency,
+    const proof = verifySubscriptionCharge({
+      subscription: remote,
+      invoice,
+      status,
+      expected: {
+        subscriptionId: binding.subscriptionId,
+        customerId: binding.customerId,
+        planId: binding.planId,
+        amount: binding.amount || quote.totalAmount,
+      },
     });
-    const commerceOrder = String(status.commerceOrder || "");
-    const providerKey = String(status.flowOrder ?? commerceOrder);
-    if (!providerKey) throw new Error("Flow no informó un identificador para el cobro mensual.");
-    await recordQuotePaymentInLedger({
+    const stage = quote.meta.payment.stages?.find((item) => item.key === "FULL");
+    if (!stage) throw new Error("SUBSCRIPTION_STAGE_REQUIRED");
+    const recorded = await recordQuotePaymentInLedger({
       quote,
       stage,
-      receivableStageKey: `SUBSCRIPTION:${providerKey}`,
+      receivableStageKey: `SUBSCRIPTION:${proof.invoiceId}`,
       strictQuoteStage: true,
-      targetTotalAmount: expectedAmount,
-      amount: status.amount ?? expectedAmount,
+      targetTotalAmount: binding.amount || stage.amount,
+      amount: status.amount!,
       method: "CARD",
       source: "SUBSCRIPTION",
-      idempotencyKey: `flow:${providerKey}`,
-      reference: status.payer,
+      idempotencyKey: `flow:${status.flowOrder}`,
       provider: "FLOW",
-      providerPaymentId: status.flowOrder === undefined ? undefined : String(status.flowOrder),
-      commerceOrder,
+      providerPaymentId: String(status.flowOrder),
+      commerceOrder: status.commerceOrder,
+      receivedAt: new Date(proof.paidAt),
       metadata: {
-        flowStatus: status.status,
-        subscriptionId: quote.meta.payment.subscription?.subscriptionId,
+        subscriptionId: binding.subscriptionId,
+        invoiceId: proof.invoiceId,
+        periodStart: proof.periodStart,
+        periodEnd: proof.periodEnd,
       },
     });
-  }
-  const payment = normalizeQuoteMetaPayment({
-    ...quote.meta,
-    payment: {
-      ...(quote.meta.payment || {}),
-      subscription: {
-        ...(quote.meta.payment?.subscription || {}),
-        status:
-          quote.meta.payment?.subscription?.status === "ACTIVE"
-            ? "ACTIVE"
-            : quote.meta.payment?.subscription?.status,
-        updatedAt: new Date().toISOString(),
-        lastPaymentAt: new Date().toISOString(),
-        lastPaymentStatus: mapFlowStatusLabel(status.status),
-        lastError:
-          isFlowRejected(status.status) && typeof status.lastError === "object" && status.lastError
-            ? JSON.stringify(status.lastError)
-            : undefined,
-      },
-    },
-  }).payment;
-
-  await saveQuotePaymentMeta({
-    quote,
-    meta: {
-      ...quote.meta,
-      payment,
-    },
-    status: quote.status === "LOST" ? "LOST" : "WON",
-  });
-
-  if (isFlowRejected(status.status)) {
+    if (!recorded.paymentId || !quote.email) throw new Error("PAYMENT_LEDGER_RESULT_REQUIRED");
+    await queueReceipt({
+      quoteId: quote.id,
+      paymentId: recorded.paymentId,
+      recipient: quote.email,
+      amount: status.amount!,
+    });
+    const paidThrough =
+      !binding.paidThrough || new Date(proof.periodEnd) > new Date(binding.paidThrough)
+        ? proof.periodEnd
+        : binding.paidThrough;
+    const nextMeta = mergeQuotePaymentSubscription(quote.meta, {
+      lastVerifiedInvoiceId: proof.invoiceId,
+      lastPaymentAt: proof.paidAt,
+      lastPaymentStatus: "PAGADO",
+      paidThrough,
+      updatedAt: new Date().toISOString(),
+    });
+    await saveQuotePaymentMeta({ quote, meta: nextMeta, status: "WON" });
+    await prisma.$queryRaw`SELECT public.zyteron_sync_subscription_sale(${quote.id},${recorded.paymentId},${proof.invoiceId}::bigint)`;
+  } else if (isFlowRejected(status.status)) {
     await createPortalNotification({
       userId: quote.userId,
-      title: "Cobro mensual observado",
-      body: `${quote.displayNumber} registró un intento de cobro mensual no aprobado en Flow.`,
+      title: "Cobro mensual no aprobado",
+      body: `${quote.displayNumber}: el intento no fue aprobado. No se acreditó ningún pago.`,
       type: "WARNING",
       link: "/clientes/panel/cotizaciones",
     });
   }
+  return { flowStatus: status.status };
 }
 
 export async function submitQuoteTransferProof(input: {
@@ -1011,27 +1112,33 @@ export async function submitQuoteTransferProof(input: {
     throw new Error("Esta etapa no está configurada para transferencia.");
   }
 
+  const proofId = randomUUID();
   let fileUrl: string | undefined;
   let fileName: string | undefined;
 
   if (input.file && input.file.size > 0) {
     const { supabase } = createSupabaseServerClient();
-    const uploadName = `${quote.id}/${Date.now()}-${input.file.name.replace(/[^\w.-]+/g, "-")}`;
+    if (
+      input.file.size > 10 * 1024 * 1024 ||
+      !["application/pdf", "image/jpeg", "image/png"].includes(input.file.type)
+    )
+      throw new Error("Formato de comprobante no permitido.");
+    const uploadName = `${quote.id}/${proofId}`;
     const bytes = Buffer.from(await input.file.arrayBuffer());
 
     const { data: buckets } = await supabase.storage.listBuckets();
     const bucketExists = (buckets || []).some(
-      (bucket) => bucket.name === ZYTERON_PAYMENT_PROOF_BUCKET,
+      (bucket) => bucket.name === PRIVATE_PAYMENT_PROOF_BUCKET,
     );
     if (!bucketExists) {
-      await supabase.storage.createBucket(ZYTERON_PAYMENT_PROOF_BUCKET, {
-        public: true,
+      await supabase.storage.createBucket(PRIVATE_PAYMENT_PROOF_BUCKET, {
+        public: false,
         fileSizeLimit: "10485760",
       });
     }
 
     const upload = await supabase.storage
-      .from(ZYTERON_PAYMENT_PROOF_BUCKET)
+      .from(PRIVATE_PAYMENT_PROOF_BUCKET)
       .upload(uploadName, bytes, {
         contentType: input.file.type || "application/octet-stream",
         upsert: false,
@@ -1040,13 +1147,12 @@ export async function submitQuoteTransferProof(input: {
       throw new Error(`No se pudo subir el comprobante: ${upload.error.message}`);
     }
 
-    const publicUrl = supabase.storage.from(ZYTERON_PAYMENT_PROOF_BUCKET).getPublicUrl(uploadName);
-    fileUrl = publicUrl.data.publicUrl;
+    fileUrl = `/api/portal/documents/payment-proof/${encodeURIComponent(quote.id)}/${proofId}`;
     fileName = input.file.name;
   }
 
   const proof: QuotePaymentProof = {
-    id: randomUUID(),
+    id: proofId,
     amount: Math.max(0, Math.round(stage.amount)),
     uploadedAt: new Date().toISOString(),
     transferDate: input.transferDate,

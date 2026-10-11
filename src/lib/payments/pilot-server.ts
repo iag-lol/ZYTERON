@@ -163,7 +163,8 @@ export async function view(cookie: string) {
     verifiedAt: r.verified_at,
     paidAt: r.paid_at,
     emailStatus: r.email_state,
-    receiptAvailable: r.state === "CONFIRMED" && Boolean(r.flow_order && r.verified_at && r.paid_at),
+    receiptAvailable:
+      r.state === "CONFIRMED" && Boolean(r.flow_order && r.verified_at && r.paid_at),
     canPay: p.scope === "PAY" && r.state === "NOT_STARTED",
     environment: "sandbox",
   };
@@ -353,19 +354,29 @@ async function email(id: string) {
 }
 export async function runPilot() {
   if (process.env.ZYTERON_SANDBOX_ENABLED !== "true") return;
-  const { data, error } = await database()
+  const db = database();
+  const pending = await db
     .from(table)
-    .select("id,state")
-    .in("state", ["PENDING", "CONFIRMED"])
-    .order("created_at", { ascending: false })
+    .select("id")
+    .eq("state", "PENDING")
+    .order("created_at", { ascending: true })
     .limit(10);
-  if (error) throw new Error("PILOT_QUEUE_UNAVAILABLE");
-  for (const r of data ?? []) {
+  const confirmed = await db
+    .from(table)
+    .select("id")
+    .eq("state", "CONFIRMED")
+    .in("email_state", ["NOT_SENT", "UNKNOWN", "SENDING"])
+    .order("created_at", { ascending: true })
+    .limit(10);
+  if (pending.error || confirmed.error) throw new Error("PILOT_QUEUE_UNAVAILABLE");
+  for (const r of pending.data ?? []) {
     try {
-      if (r.state === "PENDING") await verify(r.id);
+      await verify(r.id);
+    } catch {}
+  }
+  for (const r of confirmed.data ?? []) {
+    try {
       await email(r.id);
-    } catch {
-      /* durable state is retried with the same email idempotency key */
-    }
+    } catch {}
   }
 }

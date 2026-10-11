@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
+  CalendarDays,
   Bell,
   BriefcaseBusiness,
   Check,
@@ -28,6 +29,7 @@ import {
 const navItems = [
   { href: "/clientes/panel", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/clientes/panel/perfil", label: "Mi perfil", icon: CircleUser },
+  { href: "/clientes/panel/pagos", label: "Pagos y suscripciones", icon: CalendarDays },
   { href: "/clientes/panel/cotizaciones", label: "Cotizaciones", icon: FileDigit },
   { href: "/clientes/panel/proyectos", label: "Proyectos", icon: BriefcaseBusiness },
   { href: "/clientes/panel/documentos", label: "Documentos", icon: FolderOpen },
@@ -75,7 +77,7 @@ function getNotificationTypeConfig(type: string) {
     case "ALERT":
       return { color: "border-rose-200 bg-rose-50", dot: "bg-rose-500" };
     default:
-      return { color: "border-blue-200 bg-blue-50", dot: "bg-blue-500" };
+      return { color: "border-emerald-200 bg-emerald-50", dot: "bg-emerald-500" };
   }
 }
 
@@ -146,9 +148,7 @@ export function PortalPanelShell({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notificationId: notifId }),
       });
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notifId ? { ...n, isRead: true } : n))
-      );
+      setNotifications((prev) => prev.map((n) => (n.id === notifId ? { ...n, isRead: true } : n)));
       setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch {
       // Silent fail
@@ -159,18 +159,18 @@ export function PortalPanelShell({
     <div className="min-h-screen bg-slate-950">
       <div className="grid min-h-screen md:grid-cols-[280px_1fr]">
         <aside
-          className={`fixed inset-y-0 left-0 z-40 w-[280px] border-r border-white/10 bg-slate-950/95 px-4 py-5 backdrop-blur-xl transition-transform md:sticky md:top-0 md:h-screen md:overflow-y-auto md:translate-x-0 scrollbar-none ${
+          className={`scrollbar-none fixed inset-y-0 left-0 z-40 w-[280px] border-r border-white/10 bg-slate-950/95 px-4 py-5 backdrop-blur-xl transition-transform md:sticky md:top-0 md:h-screen md:translate-x-0 md:overflow-y-auto ${
             open ? "translate-x-0" : "-translate-x-full"
           }`}
         >
           <div className="flex items-center justify-between">
             <Link href="/clientes/panel" className="flex items-center gap-2.5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-700/30">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-lg shadow-emerald-700/30">
                 <Sparkles className="h-4.5 w-4.5" />
               </div>
               <div>
                 <p className="text-sm font-extrabold text-white">Portal Clientes</p>
-                <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Zyteron</p>
+                <p className="text-[10px] tracking-[0.18em] text-slate-500 uppercase">Zyteron</p>
               </div>
             </Link>
             <button
@@ -192,21 +192,25 @@ export function PortalPanelShell({
                   onClick={() => setOpen(false)}
                   className={`group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                     active
-                      ? "bg-blue-500/15 text-blue-100"
+                      ? "bg-emerald-500/15 text-emerald-100"
                       : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-100"
                   }`}
                 >
-                  <item.icon className={`h-4 w-4 ${active ? "text-blue-300" : "text-slate-500 group-hover:text-slate-200"}`} />
+                  <item.icon
+                    className={`h-4 w-4 ${active ? "text-emerald-300" : "text-slate-500 group-hover:text-slate-200"}`}
+                  />
                   <span className="flex-1">{item.label}</span>
                 </Link>
               );
             })}
           </nav>
 
-          <div className="mt-6 rounded-2xl border border-blue-500/20 bg-blue-500/10 px-3.5 py-3.5">
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-blue-200">Cuenta activa</p>
+          <div className="mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-3.5">
+            <p className="text-xs font-semibold tracking-[0.15em] text-emerald-200 uppercase">
+              Cuenta activa
+            </p>
             <p className="mt-1 text-sm font-semibold text-white">{userLabel}</p>
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-blue-100/70">
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-100/70">
               <Shield className="h-3 w-3" />
               Sesión segura · Permisos por rol
             </div>
@@ -249,11 +253,11 @@ export function PortalPanelShell({
                   }}
                   className="relative inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
                 >
-                  <Bell className="h-3.5 w-3.5 text-blue-600" />
+                  <Bell className="h-3.5 w-3.5 text-emerald-600" />
                   {unreadCount > 0 ? (
                     <>
                       <span>{unreadCount} nuevas</span>
-                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white animate-pulse-badge">
+                      <span className="animate-pulse-badge absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
                         {unreadCount > 9 ? "9+" : unreadCount}
                       </span>
                     </>
@@ -263,18 +267,18 @@ export function PortalPanelShell({
                 </button>
 
                 {notifOpen ? (
-                  <div className="absolute right-0 top-full z-50 mt-2 w-[340px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl animate-notification-enter sm:w-[380px]">
+                  <div className="animate-notification-enter absolute top-full right-0 z-50 mt-2 w-[340px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl sm:w-[380px]">
                     <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-bold text-slate-900">Notificaciones</p>
                         {unreadCount > 0 ? (
-                          <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
                             {unreadCount} sin leer
                           </span>
                         ) : null}
                       </div>
                     </div>
-                    <div className="max-h-[340px] overflow-y-auto divide-y divide-slate-100">
+                    <div className="max-h-[340px] divide-y divide-slate-100 overflow-y-auto">
                       {notifications.length === 0 ? (
                         <div className="px-4 py-8 text-center text-sm text-slate-500">
                           <Bell className="mx-auto mb-2 h-6 w-6 text-slate-300" />
@@ -287,22 +291,30 @@ export function PortalPanelShell({
                             <div
                               key={notif.id}
                               className={`flex items-start gap-3 px-4 py-3 transition ${
-                                notif.isRead ? "bg-white" : "bg-blue-50/40"
+                                notif.isRead ? "bg-white" : "bg-emerald-50/40"
                               }`}
                             >
-                              <div className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${notif.isRead ? "bg-slate-200" : config.dot}`} />
+                              <div
+                                className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${notif.isRead ? "bg-slate-200" : config.dot}`}
+                              />
                               <div className="min-w-0 flex-1">
-                                <p className={`text-sm ${notif.isRead ? "text-slate-700" : "font-semibold text-slate-900"}`}>
+                                <p
+                                  className={`text-sm ${notif.isRead ? "text-slate-700" : "font-semibold text-slate-900"}`}
+                                >
                                   {notif.title}
                                 </p>
-                                <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{notif.body}</p>
-                                <p className="mt-1 text-[11px] text-slate-400">{timeAgo(notif.createdAt)}</p>
+                                <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">
+                                  {notif.body}
+                                </p>
+                                <p className="mt-1 text-[11px] text-slate-400">
+                                  {timeAgo(notif.createdAt)}
+                                </p>
                               </div>
                               {!notif.isRead ? (
                                 <button
                                   type="button"
                                   onClick={() => markAsRead(notif.id)}
-                                  className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition hover:bg-blue-50 hover:text-blue-600"
+                                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition hover:bg-emerald-50 hover:text-emerald-600"
                                   title="Marcar como leída"
                                 >
                                   <Check className="h-3.5 w-3.5" />
@@ -317,7 +329,7 @@ export function PortalPanelShell({
                       <button
                         type="button"
                         onClick={() => setNotifOpen(false)}
-                        className="text-xs font-semibold text-blue-700 hover:text-blue-800"
+                        className="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
                       >
                         Cerrar
                       </button>
@@ -334,7 +346,7 @@ export function PortalPanelShell({
 
           <footer className="border-t border-slate-200 bg-white px-4 py-3 sm:px-6">
             <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500">
-              <Shield className="h-3 w-3 text-blue-600" />
+              <Shield className="h-3 w-3 text-emerald-600" />
               Zyteron Portal · Gestión privada y segura · Datos aislados por cuenta
             </div>
           </footer>

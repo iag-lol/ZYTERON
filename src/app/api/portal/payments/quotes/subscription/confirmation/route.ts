@@ -1,52 +1,15 @@
-import { NextResponse } from "next/server";
-import { processQuoteSubscriptionChargeConfirmation } from "@/lib/payments/quote-payment-workflow";
-
-async function extractToken(req: Request) {
-  const form = await req.formData().catch(() => null);
-  const token = form?.get("token");
-  if (typeof token === "string" && token.trim()) return token.trim();
-
-  const urlToken = new URL(req.url).searchParams.get("token");
-  if (urlToken?.trim()) return urlToken.trim();
-
-  const raw = await req.text().catch(() => "");
-  if (raw) {
-    const params = new URLSearchParams(raw);
-    const bodyToken = params.get("token");
-    if (bodyToken?.trim()) return bodyToken.trim();
-  }
-
-  return "";
-}
-
-async function handle(req: Request) {
-  const quoteId = new URL(req.url).searchParams.get("quoteId")?.trim() || "";
-  const token = await extractToken(req);
-  if (!quoteId || !token) {
-    return NextResponse.json({ ok: false }, { status: 400 });
-  }
-
-  await processQuoteSubscriptionChargeConfirmation({
-    quoteId,
-    token,
-    req,
-  });
-
-  return NextResponse.json({ ok: true });
-}
-
-export async function GET(req: Request) {
-  try {
-    return await handle(req);
-  } catch {
-    return NextResponse.json({ ok: false }, { status: 400 });
-  }
-}
-
+import { readCallbackToken, enqueueCallback } from "@/lib/payments/durable-callbacks";
+export const runtime = "nodejs";
 export async function POST(req: Request) {
   try {
-    return await handle(req);
+    const token = await readCallbackToken(req);
+    const quoteId = new URL(req.url).searchParams.get("quoteId") || "";
+    await enqueueCallback("SUBSCRIPTION", token, quoteId);
+    return new Response("ok", { status: 200 });
   } catch {
-    return NextResponse.json({ ok: false }, { status: 400 });
+    return new Response("confirmation_unavailable", {
+      status: 503,
+      headers: { "Retry-After": "60" },
+    });
   }
 }

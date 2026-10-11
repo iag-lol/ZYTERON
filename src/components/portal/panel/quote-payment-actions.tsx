@@ -15,7 +15,13 @@ import {
   ShieldCheck,
   UploadCloud,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ZYTERON_COMPANY } from "@/lib/company";
 import {
   privacyIntro,
@@ -27,7 +33,10 @@ import {
   termsLastUpdated,
   termsSections,
 } from "@/content/legal-documents";
-import { quotePaymentIsMarkedPaidInAdmin, quotePaymentVisibleInPortal } from "@/lib/payments/quote-payments";
+import {
+  quotePaymentIsMarkedPaidInAdmin,
+  quotePaymentVisibleInPortal,
+} from "@/lib/payments/quote-payments";
 
 type QuoteStage = {
   key: "FULL" | "DELIVERY" | "INITIAL" | "FINAL";
@@ -107,7 +116,7 @@ function statusStyles(status: QuoteStage["status"]) {
     case "REJECTED":
       return "border-rose-200 bg-rose-50 text-rose-700";
     case "PROCESSING":
-      return "border-blue-200 bg-blue-50 text-blue-700";
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
     case "READY":
       return "border-sky-200 bg-sky-50 text-sky-700";
     default:
@@ -133,11 +142,19 @@ function stageStatusLabel(status: QuoteStage["status"]) {
 }
 
 function canShowFlowPayment(stage: QuoteStage) {
-  return stage.paymentChannel === "FLOW" && stage.dueEnabled && ["READY", "REJECTED", "PROCESSING"].includes(stage.status);
+  return (
+    stage.paymentChannel === "FLOW" &&
+    stage.dueEnabled &&
+    ["READY", "REJECTED", "PROCESSING"].includes(stage.status)
+  );
 }
 
 function canShowTransferPayment(stage: QuoteStage) {
-  return stage.paymentChannel === "TRANSFER" && stage.dueEnabled && ["READY", "REJECTED"].includes(stage.status);
+  return (
+    stage.paymentChannel === "TRANSFER" &&
+    stage.dueEnabled &&
+    ["READY", "REJECTED"].includes(stage.status)
+  );
 }
 
 function paymentChannelLabel(isSubscriptionQuote: boolean, stage: QuoteStage) {
@@ -160,7 +177,34 @@ function paymentContextLabel(stage: QuoteStage, isSubscriptionQuote: boolean) {
   return "Pago completo de la cotización";
 }
 
-export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, paymentLabel }: Props) {
+export function QuotePaymentActions({
+  quotes,
+  paymentResult,
+  paymentMessage,
+  paymentLabel,
+}: Props) {
+  const [financialCode, setFinancialCode] = useState("");
+  const [financialChallenge, setFinancialChallenge] = useState("");
+  const [sendingCode, setSendingCode] = useState(false);
+  async function sendSubscriptionCode() {
+    if (!paymentModal) return;
+    setSendingCode(true);
+    setModalError(null);
+    try {
+      const r = await fetch(`/api/portal/payments/recurring/${paymentModal.quoteId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "send-start-code" }),
+      });
+      const data = await r.json();
+      if (!r.ok || !data.challengeId) throw new Error("No se pudo enviar el código de seguridad.");
+      setFinancialChallenge(data.challengeId);
+    } catch {
+      setModalError("No se pudo enviar el código. Revisa tu cuenta o inténtalo más tarde.");
+    } finally {
+      setSendingCode(false);
+    }
+  }
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<string | null>(paymentMessage || null);
   const [activeStage, setActiveStage] = useState<string | null>(null);
@@ -178,23 +222,27 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
   );
 
   const modalQuote = useMemo(
-    () => (paymentModal ? actionableQuotes.find((quote) => quote.id === paymentModal.quoteId) || null : null),
+    () =>
+      paymentModal
+        ? actionableQuotes.find((quote) => quote.id === paymentModal.quoteId) || null
+        : null,
     [actionableQuotes, paymentModal],
   );
 
   const modalStage = useMemo(
     () =>
       paymentModal && modalQuote
-        ? (modalQuote.payment?.stages || []).find((stage) => stage.key === paymentModal.stageKey) || null
+        ? (modalQuote.payment?.stages || []).find((stage) => stage.key === paymentModal.stageKey) ||
+          null
         : null,
     [modalQuote, paymentModal],
   );
 
   const isModalBusy = Boolean(
     paymentModal &&
-      pending &&
-      (activeStage === `${paymentModal.quoteId}:${paymentModal.stageKey}` ||
-        activeStage === `${paymentModal.quoteId}:SUBSCRIPTION`),
+    pending &&
+    (activeStage === `${paymentModal.quoteId}:${paymentModal.stageKey}` ||
+      activeStage === `${paymentModal.quoteId}:SUBSCRIPTION`),
   );
 
   function closePaymentModal() {
@@ -204,14 +252,24 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
     setLegalState(createEmptyLegalState());
   }
 
-  function openPaymentModal(quoteId: string, stageKey: QuoteStage["key"], mode: "FLOW" | "SUBSCRIPTION") {
+  function openPaymentModal(
+    quoteId: string,
+    stageKey: QuoteStage["key"],
+    mode: "FLOW" | "SUBSCRIPTION",
+  ) {
     setFeedback(null);
     setModalError(null);
     setLegalState(createEmptyLegalState());
+    setFinancialCode("");
+    setFinancialChallenge("");
     setPaymentModal({ quoteId, stageKey, mode });
   }
 
-  async function startFlowPayment(quoteId: string, stageKey: string, legalAcceptance: LegalAcceptancePayload) {
+  async function startFlowPayment(
+    quoteId: string,
+    stageKey: string,
+    legalAcceptance: LegalAcceptancePayload,
+  ) {
     setFeedback(null);
     setModalError(null);
     setActiveStage(`${quoteId}:${stageKey}`);
@@ -221,7 +279,10 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(legalAcceptance),
     });
-    const payload = (await response.json().catch(() => ({}))) as { checkoutUrl?: string; error?: string };
+    const payload = (await response.json().catch(() => ({}))) as {
+      checkoutUrl?: string;
+      error?: string;
+    };
 
     if (!response.ok || !payload.checkoutUrl) {
       const message = payload.error || "No se pudo iniciar el pago online.";
@@ -234,7 +295,10 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
     window.location.assign(payload.checkoutUrl);
   }
 
-  async function startSubscriptionPayment(quoteId: string, legalAcceptance: LegalAcceptancePayload) {
+  async function startSubscriptionPayment(
+    quoteId: string,
+    legalAcceptance: LegalAcceptancePayload,
+  ) {
     setFeedback(null);
     setModalError(null);
     setActiveStage(`${quoteId}:SUBSCRIPTION`);
@@ -242,9 +306,16 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
     const response = await fetch(`/api/portal/payments/quotes/${quoteId}/subscription/start`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(legalAcceptance),
+      body: JSON.stringify({
+        ...legalAcceptance,
+        challengeId: financialChallenge,
+        code: financialCode,
+      }),
     });
-    const payload = (await response.json().catch(() => ({}))) as { redirectUrl?: string; error?: string };
+    const payload = (await response.json().catch(() => ({}))) as {
+      redirectUrl?: string;
+      error?: string;
+    };
 
     if (!response.ok || !payload.redirectUrl) {
       const message = payload.error || "No se pudo iniciar la suscripción mensual.";
@@ -294,12 +365,24 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
 
   function confirmPortalPayment() {
     if (!paymentModal || !modalQuote || !modalStage) {
-      setModalError("No se pudo cargar la información del cobro. Cierra esta ventana e inténtalo nuevamente.");
+      setModalError(
+        "No se pudo cargar la información del cobro. Cierra esta ventana e inténtalo nuevamente.",
+      );
       return;
     }
 
     if (!legalState.acceptTerms || !legalState.acceptPrivacy) {
-      setModalError("Debes aceptar los términos y condiciones y la política de privacidad para continuar.");
+      setModalError(
+        "Debes aceptar los términos y condiciones y la política de privacidad para continuar.",
+      );
+      return;
+    }
+
+    if (
+      paymentModal.mode === "SUBSCRIPTION" &&
+      (!financialChallenge || !/^\d{6}$/.test(financialCode))
+    ) {
+      setModalError("Confirma el código enviado a tu correo para autorizar el cobro mensual.");
       return;
     }
 
@@ -324,7 +407,7 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
               ? "border-emerald-200 bg-emerald-50 text-emerald-700"
               : paymentResult === "error"
                 ? "border-rose-200 bg-rose-50 text-rose-700"
-                : "border-blue-200 bg-blue-50 text-blue-700"
+                : "border-emerald-200 bg-emerald-50 text-emerald-700"
           }`}
         >
           {paymentResult === "paid"
@@ -354,13 +437,19 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
               : "Pago pendiente";
 
         return (
-          <article key={quote.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <article
+            key={quote.id}
+            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+          >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Cobro asociado</p>
+                <p className="text-xs font-bold tracking-widest text-slate-400 uppercase">
+                  Cobro asociado
+                </p>
                 <h3 className="text-base font-extrabold text-slate-900">{quote.displayNumber}</h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  Total cotización {currency(quote.totalAmount)} · pendiente {currency(quote.payment?.totalPending || 0)}
+                  Total cotización {currency(quote.totalAmount)} · pendiente{" "}
+                  {currency(quote.payment?.totalPending || 0)}
                 </p>
               </div>
               <div className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
@@ -377,16 +466,24 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                   note: "",
                   file: null,
                 };
-                const isBusy = pending && (activeStage === key || activeStage === `${quote.id}:SUBSCRIPTION`);
+                const isBusy =
+                  pending && (activeStage === key || activeStage === `${quote.id}:SUBSCRIPTION`);
 
                 return (
-                  <div key={stage.key} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div
+                    key={stage.key}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <p className="text-sm font-bold text-slate-900">{stage.label}</p>
-                        <p className="text-xs text-slate-500">{stage.dueLabel || "Etapa de cobro"}</p>
+                        <p className="text-xs text-slate-500">
+                          {stage.dueLabel || "Etapa de cobro"}
+                        </p>
                       </div>
-                      <div className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusStyles(stage.status)}`}>
+                      <div
+                        className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusStyles(stage.status)}`}
+                      >
                         {stageStatusLabel(stage.status)}
                       </div>
                     </div>
@@ -398,7 +495,7 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                     </div>
 
                     {isSubscriptionQuote ? (
-                      <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+                      <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
                         {subscriptionActive
                           ? `Suscripción mensual activa por ${currency(quote.payment?.subscription?.amount || stage.amount)}${quote.payment?.subscription?.nextInvoiceDate ? ` · próximo cobro ${quote.payment.subscription.nextInvoiceDate}` : ""}.`
                           : `Esta cotización se activará como suscripción mensual por ${currency(quote.payment?.subscription?.amount || stage.amount)}.`}
@@ -434,8 +531,8 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                     {canShowFlowPayment(stage) || canShowTransferPayment(stage) ? (
                       <div className="mt-4 space-y-3">
                         {canShowFlowPayment(stage) ? (
-                          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-                            <p className="text-sm font-semibold text-blue-900">
+                          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                            <p className="text-sm font-semibold text-emerald-900">
                               {isSubscriptionQuote
                                 ? "Revisa el resumen del cobro mensual, valida los términos legales y luego activa tu suscripción."
                                 : "Revisa la información del cobro, valida los términos legales y luego continúa a la pasarela de pago."}
@@ -443,45 +540,78 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                             <button
                               type="button"
                               disabled={pending}
-                              onClick={() => openPaymentModal(quote.id, stage.key, isSubscriptionQuote ? "SUBSCRIPTION" : "FLOW")}
-                              className="mt-3 inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:opacity-60"
+                              onClick={() =>
+                                openPaymentModal(
+                                  quote.id,
+                                  stage.key,
+                                  isSubscriptionQuote ? "SUBSCRIPTION" : "FLOW",
+                                )
+                              }
+                              className="mt-3 inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-60"
                             >
-                              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                              {isSubscriptionQuote ? "Revisar y activar suscripción" : "Revisar pago y continuar"}
+                              {isBusy ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <CreditCard className="h-4 w-4" />
+                              )}
+                              {isSubscriptionQuote
+                                ? "Revisar y activar suscripción"
+                                : "Revisar pago y continuar"}
                             </button>
                           </div>
                         ) : (
                           <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-3">
                             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                              <p className="text-sm font-bold text-slate-900">Datos para transferencia</p>
+                              <p className="text-sm font-bold text-slate-900">
+                                Datos para transferencia
+                              </p>
                               <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
                                 <div className="grid grid-cols-[1.3fr_1fr] border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm">
                                   <span className="font-semibold text-slate-700">Banco</span>
-                                  <span className="text-right font-semibold text-slate-900">{ZYTERON_COMPANY.transferBank}</span>
+                                  <span className="text-right font-semibold text-slate-900">
+                                    {ZYTERON_COMPANY.transferBank}
+                                  </span>
                                 </div>
                                 <div className="grid grid-cols-[1.3fr_1fr] border-b border-slate-200 px-4 py-3 text-sm">
                                   <span className="font-semibold text-slate-700">RUT</span>
-                                  <span className="text-right font-semibold text-slate-900">{ZYTERON_COMPANY.rut}</span>
+                                  <span className="text-right font-semibold text-slate-900">
+                                    {ZYTERON_COMPANY.rut}
+                                  </span>
                                 </div>
                                 <div className="grid grid-cols-[1.3fr_1fr] border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm">
                                   <span className="font-semibold text-slate-700">Razón social</span>
-                                  <span className="text-right font-semibold text-slate-900">Zyteron Spa</span>
+                                  <span className="text-right font-semibold text-slate-900">
+                                    Zyteron Spa
+                                  </span>
                                 </div>
                                 <div className="grid grid-cols-[1.3fr_1fr] border-b border-slate-200 px-4 py-3 text-sm">
-                                  <span className="font-semibold text-slate-700">Correo electrónico</span>
-                                  <span className="text-right font-semibold text-blue-700">{ZYTERON_COMPANY.transferAccountEmail}</span>
+                                  <span className="font-semibold text-slate-700">
+                                    Correo electrónico
+                                  </span>
+                                  <span className="text-right font-semibold text-emerald-700">
+                                    {ZYTERON_COMPANY.transferAccountEmail}
+                                  </span>
                                 </div>
                                 <div className="grid grid-cols-[1.3fr_1fr] border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm">
-                                  <span className="font-semibold text-slate-700">Tipo de cuenta</span>
-                                  <span className="text-right font-semibold text-slate-900">{ZYTERON_COMPANY.transferAccountType}</span>
+                                  <span className="font-semibold text-slate-700">
+                                    Tipo de cuenta
+                                  </span>
+                                  <span className="text-right font-semibold text-slate-900">
+                                    {ZYTERON_COMPANY.transferAccountType}
+                                  </span>
                                 </div>
                                 <div className="grid grid-cols-[1.3fr_1fr] px-4 py-3 text-sm">
-                                  <span className="font-semibold text-slate-700">Número de cuenta</span>
-                                  <span className="text-right font-semibold text-slate-900">{ZYTERON_COMPANY.transferAccountNumber}</span>
+                                  <span className="font-semibold text-slate-700">
+                                    Número de cuenta
+                                  </span>
+                                  <span className="text-right font-semibold text-slate-900">
+                                    {ZYTERON_COMPANY.transferAccountNumber}
+                                  </span>
                                 </div>
                               </div>
                               <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                                Monto exacto a transferir: <span className="font-bold">{currency(stage.amount)}</span>
+                                Monto exacto a transferir:{" "}
+                                <span className="font-bold">{currency(stage.amount)}</span>
                               </div>
                             </div>
                             <div className="grid gap-3 sm:grid-cols-2">
@@ -521,7 +651,10 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                                   onChange={(event) =>
                                     setTransferState((prev) => ({
                                       ...prev,
-                                      [key]: { ...transferForm, file: event.target.files?.[0] || null },
+                                      [key]: {
+                                        ...transferForm,
+                                        file: event.target.files?.[0] || null,
+                                      },
                                     }))
                                   }
                                   className="block w-full text-sm text-slate-600"
@@ -545,16 +678,23 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                             <button
                               type="button"
                               disabled={pending}
-                              onClick={() => startTransition(() => void submitTransfer(quote.id, stage))}
+                              onClick={() =>
+                                startTransition(() => void submitTransfer(quote.id, stage))
+                              }
                               className="inline-flex w-fit items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
                             >
-                              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                              {isBusy ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <UploadCloud className="h-4 w-4" />
+                              )}
                               Enviar comprobante
                             </button>
                             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
                               <div className="flex items-center gap-2">
                                 <Landmark className="h-4 w-4 text-slate-400" />
-                                El comprobante se envía al equipo comercial para validación contra el monto oficial de la cotización.
+                                El comprobante se envía al equipo comercial para validación contra
+                                el monto oficial de la cotización.
                               </div>
                             </div>
                           </div>
@@ -564,7 +704,10 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
 
                     {stage.status === "PENDING_TRANSFER_REVIEW" && stage.transferProofs?.length ? (
                       <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-                        Último comprobante enviado: {stage.transferProofs[stage.transferProofs.length - 1]?.fileName || "sin archivo"}.
+                        Último comprobante enviado:{" "}
+                        {stage.transferProofs[stage.transferProofs.length - 1]?.fileName ||
+                          "sin archivo"}
+                        .
                       </div>
                     ) : null}
                   </div>
@@ -575,52 +718,86 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
         );
       })}
 
-      <Dialog open={Boolean(paymentModal)} onOpenChange={(open) => (!open ? closePaymentModal() : null)}>
+      <Dialog
+        open={Boolean(paymentModal)}
+        onOpenChange={(open) => (!open ? closePaymentModal() : null)}
+      >
         <DialogContent className="max-h-[92vh] overflow-y-auto border-0 bg-white p-0 md:max-h-none md:max-w-[1120px] md:overflow-visible">
           {modalQuote && modalStage ? (
             <div className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-2xl shadow-slate-900/10">
-              <div className="border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_48%,#eef4ff_100%)] px-6 py-5">
+              <div className="border-b border-slate-200 bg-[linear-gradient(135deg,#f4f8f0_0%,#ffffff_48%,#eef4ff_100%)] px-6 py-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <DialogHeader className="max-w-3xl space-y-2">
-                    <div className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-blue-700 shadow-sm">
+                    <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-white px-3 py-1 text-[11px] font-bold tracking-[0.24em] text-emerald-700 uppercase shadow-sm">
                       <ShieldCheck className="h-3.5 w-3.5" />
                       Pago protegido
                     </div>
                     <DialogTitle className="text-3xl font-extrabold tracking-tight text-slate-950">
-                      {paymentModal?.mode === "SUBSCRIPTION" ? "Confirmar suscripción mensual" : "Confirmar pago de cotización"}
+                      {paymentModal?.mode === "SUBSCRIPTION"
+                        ? "Confirmar suscripción mensual"
+                        : "Confirmar pago de cotización"}
                     </DialogTitle>
                     <DialogDescription className="text-base text-slate-600">
-                      Estás pagando <span className="font-semibold text-slate-900">{modalStage.label}</span> de la cotización{" "}
-                      <span className="font-semibold text-slate-900">{modalQuote.displayNumber}</span>.
+                      Estás pagando{" "}
+                      <span className="font-semibold text-slate-900">{modalStage.label}</span> de la
+                      cotización{" "}
+                      <span className="font-semibold text-slate-900">
+                        {modalQuote.displayNumber}
+                      </span>
+                      .
                     </DialogDescription>
                   </DialogHeader>
 
-                  <div className="min-w-[220px] rounded-3xl bg-blue-600 px-5 py-4 text-white shadow-lg shadow-blue-600/20">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-100">Cargo de hoy</p>
-                    <p className="mt-2 text-4xl font-black leading-none">{currency(modalStage.amount)}</p>
-                    <p className="mt-2 text-sm text-blue-100">{paymentContextLabel(modalStage, modalQuote.payment?.billingType === "SUBSCRIPTION")}</p>
+                  <div className="min-w-[220px] rounded-3xl bg-emerald-600 px-5 py-4 text-white shadow-lg shadow-emerald-600/20">
+                    <p className="text-[11px] font-bold tracking-[0.22em] text-emerald-100 uppercase">
+                      Cargo de hoy
+                    </p>
+                    <p className="mt-2 text-4xl leading-none font-black">
+                      {currency(modalStage.amount)}
+                    </p>
+                    <p className="mt-2 text-sm text-emerald-100">
+                      {paymentContextLabel(
+                        modalStage,
+                        modalQuote.payment?.billingType === "SUBSCRIPTION",
+                      )}
+                    </p>
                   </div>
                 </div>
 
                 <div className="mt-5 grid gap-3 md:grid-cols-4">
                   <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Cotización</p>
-                    <p className="mt-2 text-xl font-extrabold text-slate-900">{modalQuote.displayNumber}</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Qué pagas</p>
-                    <p className="mt-2 text-lg font-bold text-slate-900">{modalStage.label}</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Método</p>
-                    <p className="mt-2 text-lg font-bold text-slate-900">
-                      {paymentChannelLabel(modalQuote.payment?.billingType === "SUBSCRIPTION", modalStage)}
+                    <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase">
+                      Cotización
+                    </p>
+                    <p className="mt-2 text-xl font-extrabold text-slate-900">
+                      {modalQuote.displayNumber}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Pendiente luego</p>
+                    <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase">
+                      Qué pagas
+                    </p>
+                    <p className="mt-2 text-lg font-bold text-slate-900">{modalStage.label}</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase">
+                      Método
+                    </p>
+                    <p className="mt-2 text-lg font-bold text-slate-900">
+                      {paymentChannelLabel(
+                        modalQuote.payment?.billingType === "SUBSCRIPTION",
+                        modalStage,
+                      )}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase">
+                      Pendiente luego
+                    </p>
                     <p className="mt-2 text-xl font-extrabold text-slate-900">
-                      {currency(Math.max(0, (modalQuote.payment?.totalPending || 0) - modalStage.amount))}
+                      {currency(
+                        Math.max(0, (modalQuote.payment?.totalPending || 0) - modalStage.amount),
+                      )}
                     </p>
                   </div>
                 </div>
@@ -636,24 +813,40 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
 
                   <div className="grid gap-3 md:grid-cols-3">
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Monto exacto</p>
-                      <p className="mt-2 text-2xl font-black text-slate-950">{currency(modalStage.amount)}</p>
+                      <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase">
+                        Monto exacto
+                      </p>
+                      <p className="mt-2 text-2xl font-black text-slate-950">
+                        {currency(modalStage.amount)}
+                      </p>
                     </div>
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Total cotización</p>
-                      <p className="mt-2 text-2xl font-black text-slate-950">{currency(modalQuote.totalAmount)}</p>
+                      <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase">
+                        Total cotización
+                      </p>
+                      <p className="mt-2 text-2xl font-black text-slate-950">
+                        {currency(modalQuote.totalAmount)}
+                      </p>
                     </div>
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Estado</p>
-                      <p className="mt-2 text-lg font-bold text-slate-950">{stageStatusLabel(modalStage.status)}</p>
+                      <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase">
+                        Estado
+                      </p>
+                      <p className="mt-2 text-lg font-bold text-slate-950">
+                        {stageStatusLabel(modalStage.status)}
+                      </p>
                     </div>
                   </div>
 
                   <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-bold text-slate-900">Documentación y validación</p>
-                        <p className="mt-1 text-sm text-slate-600">Abre el respaldo comercial y revisa las políticas sin salir del portal.</p>
+                        <p className="text-sm font-bold text-slate-900">
+                          Documentación y validación
+                        </p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          Abre el respaldo comercial y revisa las políticas sin salir del portal.
+                        </p>
                       </div>
                       <a
                         href={modalQuote.pdfUrl}
@@ -670,15 +863,17 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                       <button
                         type="button"
                         onClick={() => setLegalDocument("terms")}
-                        className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:border-blue-300 hover:bg-blue-50"
+                        className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:border-emerald-300 hover:bg-emerald-50"
                       >
                         <div className="flex items-center gap-3">
                           <div className="rounded-xl bg-white p-2 shadow-sm">
-                            <ScrollText className="h-4 w-4 text-blue-700" />
+                            <ScrollText className="h-4 w-4 text-emerald-700" />
                           </div>
                           <div>
                             <p className="text-sm font-bold text-slate-900">Ver términos</p>
-                            <p className="text-xs text-slate-500">Condiciones del servicio y del cobro</p>
+                            <p className="text-xs text-slate-500">
+                              Condiciones del servicio y del cobro
+                            </p>
                           </div>
                         </div>
                         <Eye className="h-4 w-4 text-slate-400" />
@@ -687,11 +882,11 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                       <button
                         type="button"
                         onClick={() => setLegalDocument("privacy")}
-                        className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:border-blue-300 hover:bg-blue-50"
+                        className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:border-emerald-300 hover:bg-emerald-50"
                       >
                         <div className="flex items-center gap-3">
                           <div className="rounded-xl bg-white p-2 shadow-sm">
-                            <FileText className="h-4 w-4 text-blue-700" />
+                            <FileText className="h-4 w-4 text-emerald-700" />
                           </div>
                           <div>
                             <p className="text-sm font-bold text-slate-900">Ver privacidad</p>
@@ -704,17 +899,52 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                   </div>
                 </section>
 
-                <section className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] p-5 shadow-sm">
+                <section className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,#f4f8f0_0%,#ffffff_100%)] p-5 shadow-sm">
                   <div className="flex items-center gap-3">
-                    <div className="rounded-2xl bg-blue-600 p-2.5 text-white shadow-lg shadow-blue-600/20">
+                    <div className="rounded-2xl bg-emerald-600 p-2.5 text-white shadow-lg shadow-emerald-600/20">
                       <ShieldCheck className="h-5 w-5" />
                     </div>
                     <div>
                       <p className="text-lg font-extrabold text-slate-950">Aceptación legal</p>
-                      <p className="text-sm text-slate-600">Marca ambas confirmaciones para continuar al pago.</p>
+                      <p className="text-sm text-slate-600">
+                        Marca ambas confirmaciones para continuar al pago.
+                      </p>
                     </div>
                   </div>
 
+                  {paymentModal?.mode === "SUBSCRIPTION" ? (
+                    <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                      <p className="mb-3 text-sm">
+                        Autoriza este cobro mensual con el código de tu correo. Activar la
+                        suscripción no acredita un pago.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={sendingCode}
+                        onClick={() => void sendSubscriptionCode()}
+                        className="mb-3 rounded-lg bg-emerald-900 px-4 py-2 text-white disabled:opacity-50"
+                      >
+                        {sendingCode
+                          ? "Enviando…"
+                          : financialChallenge
+                            ? "Enviar otro código"
+                            : "Enviar código de seguridad"}
+                      </button>
+                      {financialChallenge ? (
+                        <label className="block text-sm">
+                          Código de seis dígitos
+                          <input
+                            autoComplete="one-time-code"
+                            inputMode="numeric"
+                            maxLength={6}
+                            value={financialCode}
+                            onChange={(e) => setFinancialCode(e.target.value.replace(/\D/g, ""))}
+                            className="mt-2 block w-full rounded-lg border border-emerald-300 bg-white p-3"
+                          />
+                        </label>
+                      ) : null}
+                    </div>
+                  ) : null}
                   <div className="mt-4 space-y-3">
                     <button
                       type="button"
@@ -726,23 +956,28 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                       }
                       className={`w-full rounded-2xl border-2 p-4 text-left transition ${
                         legalState.acceptTerms
-                          ? "border-blue-600 bg-blue-50 shadow-lg shadow-blue-600/10"
-                          : "border-slate-300 bg-white hover:border-blue-300"
+                          ? "border-emerald-600 bg-emerald-50 shadow-lg shadow-emerald-600/10"
+                          : "border-slate-300 bg-white hover:border-emerald-300"
                       }`}
                     >
                       <div className="flex items-start gap-4">
                         <div
                           className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border-2 ${
                             legalState.acceptTerms
-                              ? "border-blue-600 bg-blue-600 text-white"
+                              ? "border-emerald-600 bg-emerald-600 text-white"
                               : "border-slate-300 bg-white text-transparent"
                           }`}
                         >
                           <Check className="h-4 w-4" />
                         </div>
                         <div>
-                          <p className="text-sm font-extrabold text-slate-950">Acepto los términos y condiciones</p>
-                          <p className="mt-1 text-sm text-slate-600">Confirmo las condiciones comerciales, de alcance, pago, garantía y entrega asociadas a esta cotización.</p>
+                          <p className="text-sm font-extrabold text-slate-950">
+                            Acepto los términos y condiciones
+                          </p>
+                          <p className="mt-1 text-sm text-slate-600">
+                            Confirmo las condiciones comerciales, de alcance, pago, garantía y
+                            entrega asociadas a esta cotización.
+                          </p>
                         </div>
                       </div>
                     </button>
@@ -757,23 +992,28 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                       }
                       className={`w-full rounded-2xl border-2 p-4 text-left transition ${
                         legalState.acceptPrivacy
-                          ? "border-blue-600 bg-blue-50 shadow-lg shadow-blue-600/10"
-                          : "border-slate-300 bg-white hover:border-blue-300"
+                          ? "border-emerald-600 bg-emerald-50 shadow-lg shadow-emerald-600/10"
+                          : "border-slate-300 bg-white hover:border-emerald-300"
                       }`}
                     >
                       <div className="flex items-start gap-4">
                         <div
                           className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border-2 ${
                             legalState.acceptPrivacy
-                              ? "border-blue-600 bg-blue-600 text-white"
+                              ? "border-emerald-600 bg-emerald-600 text-white"
                               : "border-slate-300 bg-white text-transparent"
                           }`}
                         >
                           <Check className="h-4 w-4" />
                         </div>
                         <div>
-                          <p className="text-sm font-extrabold text-slate-950">Acepto la política de privacidad</p>
-                          <p className="mt-1 text-sm text-slate-600">Autorizo el tratamiento de datos necesario para validar el pago, documentar el cobro y gestionar el servicio.</p>
+                          <p className="text-sm font-extrabold text-slate-950">
+                            Acepto la política de privacidad
+                          </p>
+                          <p className="mt-1 text-sm text-slate-600">
+                            Autorizo el tratamiento de datos necesario para validar el pago,
+                            documentar el cobro y gestionar el servicio.
+                          </p>
                         </div>
                       </div>
                     </button>
@@ -786,7 +1026,9 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
               </div>
 
               <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 md:flex-row md:items-center md:justify-between">
-                <p className="text-sm text-slate-500">Al continuar se abrirá la pasarela segura para completar este cobro.</p>
+                <p className="text-sm text-slate-500">
+                  Al continuar se abrirá la pasarela segura para completar este cobro.
+                </p>
                 <div className="flex flex-col-reverse gap-3 sm:flex-row">
                   <button
                     type="button"
@@ -799,10 +1041,16 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                     type="button"
                     disabled={isModalBusy}
                     onClick={confirmPortalPayment}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:opacity-60"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-60"
                   >
-                    {isModalBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                    {paymentModal?.mode === "SUBSCRIPTION" ? "Confirmar y activar suscripción" : "Confirmar y continuar al pago"}
+                    {isModalBusy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <CreditCard className="h-4 w-4" />
+                    )}
+                    {paymentModal?.mode === "SUBSCRIPTION"
+                      ? "Confirmar y activar suscripción"
+                      : "Confirmar y continuar al pago"}
                   </button>
                 </div>
               </div>
@@ -811,18 +1059,23 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(legalDocument)} onOpenChange={(open) => (!open ? setLegalDocument(null) : null)}>
+      <Dialog
+        open={Boolean(legalDocument)}
+        onOpenChange={(open) => (!open ? setLegalDocument(null) : null)}
+      >
         <DialogContent className="max-h-[88vh] overflow-y-auto border-0 bg-white p-0 md:max-w-4xl">
           {legalDocument ? (
             <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white">
-              <div className="border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_55%,#eef4ff_100%)] px-6 py-5">
+              <div className="border-b border-slate-200 bg-[linear-gradient(135deg,#f4f8f0_0%,#ffffff_55%,#eef4ff_100%)] px-6 py-5">
                 <DialogHeader className="space-y-2">
-                  <div className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-blue-700">
+                  <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-white px-3 py-1 text-[11px] font-bold tracking-[0.22em] text-emerald-700 uppercase">
                     <ShieldCheck className="h-3.5 w-3.5" />
                     Información legal interna
                   </div>
                   <DialogTitle className="text-2xl font-extrabold text-slate-950">
-                    {legalDocument === "terms" ? "Términos y condiciones del servicio" : "Política de privacidad"}
+                    {legalDocument === "terms"
+                      ? "Términos y condiciones del servicio"
+                      : "Política de privacidad"}
                   </DialogTitle>
                   <DialogDescription className="text-sm text-slate-600">
                     {legalDocument === "terms"
@@ -847,20 +1100,27 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                       <div className="grid gap-x-8 gap-y-3 pt-2 sm:grid-cols-2">
                         {termsCompanyInfo.map((item) => (
                           <div key={item.label}>
-                            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{item.label}</p>
-                            <p className="mt-1 text-sm font-semibold text-slate-900">{item.value}</p>
+                            <p className="text-[11px] font-bold tracking-widest text-slate-400 uppercase">
+                              {item.label}
+                            </p>
+                            <p className="mt-1 text-sm font-semibold text-slate-900">
+                              {item.value}
+                            </p>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     {termsSections.map((section) => (
-                      <section key={section.title} className="border-b border-slate-200 pb-6 last:border-b-0 last:pb-0">
+                      <section
+                        key={section.title}
+                        className="border-b border-slate-200 pb-6 last:border-b-0 last:pb-0"
+                      >
                         <h3 className="text-xl font-extrabold text-slate-950">{section.title}</h3>
                         <div className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
                           {section.points.map((point, index) => (
                             <p key={index}>
-                              <span className="mr-2 font-bold text-blue-700">•</span>
+                              <span className="mr-2 font-bold text-emerald-700">•</span>
                               {point}
                             </p>
                           ))}
@@ -869,16 +1129,20 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                     ))}
 
                     <section className="border-t border-slate-200 pt-6">
-                      <h3 className="text-lg font-extrabold text-slate-950">Notas operativas complementarias</h3>
+                      <h3 className="text-lg font-extrabold text-slate-950">
+                        Notas operativas complementarias
+                      </h3>
                       <div className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
                         {termsExtraNotes.map((note) => (
                           <p key={note}>
-                            <span className="mr-2 font-bold text-blue-700">•</span>
+                            <span className="mr-2 font-bold text-emerald-700">•</span>
                             {note}
                           </p>
                         ))}
                       </div>
-                      <p className="mt-6 text-xs text-slate-500">Última actualización: {termsLastUpdated}.</p>
+                      <p className="mt-6 text-xs text-slate-500">
+                        Última actualización: {termsLastUpdated}.
+                      </p>
                     </section>
                   </article>
                 ) : (
@@ -888,12 +1152,15 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                     </div>
 
                     {privacySections.map((section) => (
-                      <section key={section.title} className="border-b border-slate-200 pb-6 last:border-b-0 last:pb-0">
+                      <section
+                        key={section.title}
+                        className="border-b border-slate-200 pb-6 last:border-b-0 last:pb-0"
+                      >
                         <h3 className="text-xl font-extrabold text-slate-950">{section.title}</h3>
                         <div className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
                           {section.points.map((point, index) => (
                             <p key={index}>
-                              <span className="mr-2 font-bold text-blue-700">•</span>
+                              <span className="mr-2 font-bold text-emerald-700">•</span>
                               {point}
                             </p>
                           ))}
@@ -901,7 +1168,9 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                       </section>
                     ))}
 
-                    <p className="text-xs text-slate-500">Última actualización: {privacyLastUpdated}.</p>
+                    <p className="text-xs text-slate-500">
+                      Última actualización: {privacyLastUpdated}.
+                    </p>
                   </article>
                 )}
               </div>

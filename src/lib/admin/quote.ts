@@ -105,6 +105,8 @@ export type QuotePaymentConfig = {
     lastError?: string;
     lastPaymentAt?: string;
     lastPaymentStatus?: string;
+    lastVerifiedInvoiceId?: number;
+    paidThrough?: string;
   };
   stages?: QuotePaymentStage[];
 };
@@ -217,7 +219,7 @@ export function buildDefaultQuoteTerms(includeIva = true) {
     "Revisiones: El servicio incluye un máximo de dos (2) rondas de correcciones. Cambios estructurales posteriores tendrán costo extra.",
     "Condición de entrega: El saldo final del proyecto debe ser cancelado en su totalidad antes de la publicación oficial y la entrega de credenciales.",
     "Garantía: Incluye 30 días de garantía técnica para corrección de errores de código. No incluye cambios de contenido ni reparaciones por mal uso.",
-    "Vigencia: Esta cotización es válida hasta la fecha indicada en este documento."
+    "Vigencia: Esta cotización es válida hasta la fecha indicada en este documento.",
   ].join("\n");
 }
 
@@ -230,13 +232,13 @@ export function parseQuoteMessage(message?: string | null): QuoteMeta {
     grandTotal: 0,
     includeIva: true,
     ivaRate: 0.19,
-      companyName: ZYTERON_COMPANY.legalName,
-      companyRut: ZYTERON_COMPANY.rut,
-      companyGiro: ZYTERON_COMPANY.businessLine,
-      terms: buildDefaultQuoteTerms(true),
-      projectAnswers: [],
-      errorLog: [],
-    };
+    companyName: ZYTERON_COMPANY.legalName,
+    companyRut: ZYTERON_COMPANY.rut,
+    companyGiro: ZYTERON_COMPANY.businessLine,
+    terms: buildDefaultQuoteTerms(true),
+    projectAnswers: [],
+    errorLog: [],
+  };
 
   if (!message) {
     return safeBase;
@@ -272,7 +274,8 @@ export function parseQuoteMessage(message?: string | null): QuoteMeta {
       kind: typeof raw.kind === "string" ? raw.kind : undefined,
       quoteCode: typeof raw.quoteCode === "string" ? raw.quoteCode : undefined,
       source: typeof raw.source === "string" ? raw.source : undefined,
-      clientSubmissionId: typeof raw.clientSubmissionId === "string" ? raw.clientSubmissionId : undefined,
+      clientSubmissionId:
+        typeof raw.clientSubmissionId === "string" ? raw.clientSubmissionId : undefined,
       projectType: typeof raw.projectType === "string" ? raw.projectType : undefined,
       projectTypeLabel: typeof raw.projectTypeLabel === "string" ? raw.projectTypeLabel : undefined,
       businessName: typeof raw.businessName === "string" ? raw.businessName : undefined,
@@ -303,11 +306,13 @@ export function parseQuoteMessage(message?: string | null): QuoteMeta {
       priority: typeof raw.priority === "string" ? raw.priority : undefined,
       contactName: typeof raw.contactName === "string" ? raw.contactName : undefined,
       contactWhatsapp: typeof raw.contactWhatsapp === "string" ? raw.contactWhatsapp : undefined,
-      contactWhatsappE164: typeof raw.contactWhatsappE164 === "string" ? raw.contactWhatsappE164 : undefined,
+      contactWhatsappE164:
+        typeof raw.contactWhatsappE164 === "string" ? raw.contactWhatsappE164 : undefined,
       contactEmail: typeof raw.contactEmail === "string" ? raw.contactEmail : undefined,
       contactCompany: typeof raw.contactCompany === "string" ? raw.contactCompany : undefined,
       currentWebsite: typeof raw.currentWebsite === "string" ? raw.currentWebsite : undefined,
-      additionalMessage: typeof raw.additionalMessage === "string" ? raw.additionalMessage : undefined,
+      additionalMessage:
+        typeof raw.additionalMessage === "string" ? raw.additionalMessage : undefined,
       requestStage: typeof raw.requestStage === "string" ? raw.requestStage : undefined,
       shortSummary: typeof raw.shortSummary === "string" ? raw.shortSummary : undefined,
       emailStatus: typeof raw.emailStatus === "string" ? raw.emailStatus : undefined,
@@ -320,7 +325,10 @@ export function parseQuoteMessage(message?: string | null): QuoteMeta {
       errorLog: Array.isArray(raw.errorLog)
         ? raw.errorLog.filter((item) => typeof item === "string")
         : [],
-      payment: raw.payment && typeof raw.payment === "object" ? (raw.payment as QuotePaymentConfig) : undefined,
+      payment:
+        raw.payment && typeof raw.payment === "object"
+          ? (raw.payment as QuotePaymentConfig)
+          : undefined,
     };
   } catch {
     return safeBase;
@@ -337,7 +345,8 @@ export function enrichQuoteRecord(record: QuoteRecord) {
   return {
     ...record,
     meta,
-    displayNumber: meta.quoteCode || meta.quoteNumber || `COT-${record.id.slice(0, 8).toUpperCase()}`,
+    displayNumber:
+      meta.quoteCode || meta.quoteNumber || `COT-${record.id.slice(0, 8).toUpperCase()}`,
     issuedAt: meta.quoteDate || record.createdAt || new Date().toISOString(),
     totalAmount: typeof record.total === "number" ? record.total : meta.grandTotal,
     subtotalAmount: typeof record.subtotal === "number" ? record.subtotal : meta.subtotal,
@@ -370,7 +379,10 @@ export function buildQuoteMeta(input: Partial<QuoteMeta>): QuoteMeta {
     includeIva,
     ivaRate: input.ivaRate ?? 0.19,
     notes: input.notes,
-    terms: input.terms && input.terms.trim().length > 0 ? input.terms : buildDefaultQuoteTerms(includeIva),
+    terms:
+      input.terms && input.terms.trim().length > 0
+        ? input.terms
+        : buildDefaultQuoteTerms(includeIva),
     companyName: input.companyName || ZYTERON_COMPANY.legalName,
     companyRut: input.companyRut || ZYTERON_COMPANY.rut,
     companyGiro: input.companyGiro || ZYTERON_COMPANY.businessLine,

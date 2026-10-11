@@ -29,7 +29,7 @@ type PageProps = {
 
 export default async function PortalCotizacionesPage({ searchParams }: PageProps) {
   const session = await requirePortalSession();
-  const query = await Promise.resolve(searchParams);
+  void searchParams;
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { email: true },
@@ -62,8 +62,10 @@ export default async function PortalCotizacionesPage({ searchParams }: PageProps
       meta: normalizeQuoteMetaPayment(enriched.meta),
     };
   });
+  const cancellations = await prisma.$queryRaw<Array<{ quote_id: string }>>`SELECT quote_id FROM zyteron_recurring_lifecycle WHERE client_id=${session.user.id} AND state!='ACTIVE'`;
+  const cancelledIds = new Set(cancellations.map((r) => r.quote_id));
   const actionableQuotes = quotes.filter((quote) =>
-    quotePaymentVisibleInPortal(quote.status, quote.meta.payment),
+    !cancelledIds.has(quote.id) && quotePaymentVisibleInPortal(quote.status, quote.meta.payment),
   );
 
   return (
@@ -75,6 +77,12 @@ export default async function PortalCotizacionesPage({ searchParams }: PageProps
         </p>
       </div>
 
+      {cancellations.length > 0 && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-950">
+          Tienes suscripciones con solicitud de cancelación. Revisa su confirmación y el período pagado en{" "}
+          <Link href="/clientes/panel/pagos" className="font-semibold underline">Pagos y renovaciones</Link>.
+        </div>
+      )}
       {actionableQuotes.length > 0 ? (
         <QuotePaymentActions
           quotes={actionableQuotes.map((quote) => ({
@@ -85,15 +93,9 @@ export default async function PortalCotizacionesPage({ searchParams }: PageProps
             pdfUrl: `/api/portal/quotes/${quote.id}/pdf`,
             payment: quote.meta.payment,
           }))}
-          paymentResult={
-            query?.payment_result === "paid" ||
-            query?.payment_result === "pending" ||
-            query?.payment_result === "error"
-              ? query.payment_result
-              : null
-          }
-          paymentMessage={query?.payment_message || null}
-          paymentLabel={query?.payment_label || null}
+          paymentResult={null}
+          paymentMessage={null}
+          paymentLabel={null}
         />
       ) : null}
 
