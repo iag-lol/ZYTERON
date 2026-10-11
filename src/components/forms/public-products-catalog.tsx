@@ -593,7 +593,7 @@ export function PublicProductsCatalog({ products }: Props) {
 
               <p className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-500">
                 <Tag className="h-3.5 w-3.5" />
-                Pago online por Flow (crédito, débito y medios disponibles). IVA incluido.
+                Pago online seguro (crédito, débito y medios disponibles). IVA incluido.
               </p>
             </div>
           </aside>
@@ -616,7 +616,7 @@ export function PublicProductsCatalog({ products }: Props) {
           <DialogHeader className="border-b border-slate-200 bg-slate-50 px-6 py-5">
             <DialogTitle className="text-xl font-extrabold text-slate-900">Checkout de compra empresarial</DialogTitle>
             <DialogDescription className="text-sm text-slate-600">
-              Completa datos de despacho y documento tributario para pagar online con Flow.
+              Completa datos de despacho y documento tributario para pagar online de forma segura.
             </DialogDescription>
           </DialogHeader>
 
@@ -762,7 +762,7 @@ export function PublicProductsCatalog({ products }: Props) {
 
             <button type="submit" disabled={isCreatingPayment || cartItems.length === 0} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 sm:col-span-2">
               <CreditCard className="h-4 w-4" />
-              {isCreatingPayment ? "Creando pago..." : `Pagar ${currencyCLP(summary.total)} con Flow`}
+              {isCreatingPayment ? "Creando pago..." : `Pagar ${currencyCLP(summary.total)}`}
             </button>
           </form>
         </DialogContent>

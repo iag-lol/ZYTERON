@@ -102,7 +102,7 @@ export function PortalClientAdminActions({
       const ok = await callApi(`/api/portal/admin/users/${userId}`, "DELETE");
       if (ok) {
         setIsDeleteDialogOpen(false);
-        router.push("/admin/portal-clientes");
+        router.push("/administracion/portal-clientes");
         router.refresh();
       }
     });

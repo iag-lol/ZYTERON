@@ -169,7 +169,7 @@ async function processPayload(payload: unknown) {
         await sendAdminPushNotification({
           title: `Nuevo WhatsApp: ${profileName || `+${from}`}`,
           body: desc.content.slice(0, 180) || "Nuevo mensaje recibido",
-          href: `/admin/whatsapp?conversation=${conv.id}`,
+          href: `/administracion/whatsapp?conversation=${conv.id}`,
           tag: `whatsapp-${storedMessage?.id || message.id || conv.id}`,
           kind: "whatsapp",
           createdAt: storedMessage?.created_at || new Date().toISOString(),

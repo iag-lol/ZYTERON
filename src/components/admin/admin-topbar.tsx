@@ -18,42 +18,42 @@ import { AdminNotifications } from "@/components/admin/admin-notifications";
 import { useAdminUi } from "@/components/admin/admin-ui-context";
 
 const routeMap: Record<string, string> = {
-  "/admin": "Dashboard",
-  "/admin/asistente-ia": "Asistente IA",
-  "/admin/clientes": "Clientes",
-  "/admin/comercial": "Partners & Ejecutivos",
-  "/admin/portal-clientes": "Portal Clientes",
-  "/admin/cotizaciones": "Cotizaciones",
-  "/admin/cotizaciones/nueva": "Nueva Cotización",
-  "/admin/ordenes-trabajo": "Órdenes de Trabajo",
-  "/admin/proyectos": "Proyectos",
-  "/admin/solicitudes": "Solicitudes",
-  "/admin/comentarios": "Comentarios",
-  "/admin/contactos": "Contactos",
-  "/admin/comunicaciones": "Mensajes",
-  "/admin/whatsapp": "WhatsApp",
-  "/admin/visitas": "Visitas Técnicas",
-  "/admin/visitas/nueva": "Nueva Visita",
-  "/admin/ventas": "Ventas",
-  "/admin/contador-auditor": "Contador Auditor",
-  "/admin/contador-auditor/facturacion": "Facturación SII",
-  "/admin/gastos": "Gastos",
-  "/admin/productos": "Productos",
-  "/admin/sii": "Centro SII",
-  "/admin/control-web": "Control Web",
-  "/admin/reportes": "Reportes",
-  "/admin/config": "Configuración",
+  "/administracion": "Dashboard",
+  "/administracion/asistente-ia": "Asistente IA",
+  "/administracion/clientes": "Clientes",
+  "/administracion/comercial": "Partners & Ejecutivos",
+  "/administracion/portal-clientes": "Portal Clientes",
+  "/administracion/cotizaciones": "Cotizaciones",
+  "/administracion/cotizaciones/nueva": "Nueva Cotización",
+  "/administracion/ordenes-trabajo": "Órdenes de Trabajo",
+  "/administracion/proyectos": "Proyectos",
+  "/administracion/solicitudes": "Solicitudes",
+  "/administracion/comentarios": "Comentarios",
+  "/administracion/contactos": "Contactos",
+  "/administracion/comunicaciones": "Mensajes",
+  "/administracion/whatsapp": "WhatsApp",
+  "/administracion/visitas": "Visitas Técnicas",
+  "/administracion/visitas/nueva": "Nueva Visita",
+  "/administracion/ventas": "Ventas",
+  "/administracion/contador-auditor": "Contador Auditor",
+  "/administracion/contador-auditor/facturacion": "Facturación SII",
+  "/administracion/gastos": "Gastos",
+  "/administracion/productos": "Productos",
+  "/administracion/sii": "Centro SII",
+  "/administracion/control-web": "Control Web",
+  "/administracion/reportes": "Reportes",
+  "/administracion/config": "Configuración",
 };
 
 function buildBreadcrumbs(pathname: string): { label: string; href: string }[] {
-  const crumbs: { label: string; href: string }[] = [{ label: "Admin", href: "/admin" }];
-  if (pathname === "/admin") return crumbs;
+  const crumbs: { label: string; href: string }[] = [{ label: "Admin", href: "/administracion" }];
+  if (pathname === "/administracion") return crumbs;
   const segments = pathname.split("/").filter(Boolean);
   let built = "";
   for (let i = 0; i < segments.length; i++) {
     built += "/" + segments[i];
     const label = routeMap[built];
-    if (label && built !== "/admin") {
+    if (label && built !== "/administracion") {
       crumbs.push({ label, href: built });
     }
   }
@@ -168,7 +168,7 @@ export function AdminTopbar({ isProd }: { isProd: boolean }) {
 
           {/* Nueva cotización */}
           <Link
-            href="/admin/cotizaciones/nueva"
+            href="/administracion/cotizaciones/nueva"
             prefetch={false}
             className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[12px] font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
           >
@@ -178,7 +178,7 @@ export function AdminTopbar({ isProd }: { isProd: boolean }) {
 
           {/* Agendar visita */}
           <Link
-            href="/admin/visitas/nueva"
+            href="/administracion/visitas/nueva"
             prefetch={false}
             className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 sm:flex"
             title="Agendar visita"
@@ -188,7 +188,7 @@ export function AdminTopbar({ isProd }: { isProd: boolean }) {
 
           {/* SII */}
           <Link
-            href="/admin/sii"
+            href="/administracion/sii"
             prefetch={false}
             className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 sm:flex"
             title="Centro SII"
@@ -198,7 +198,7 @@ export function AdminTopbar({ isProd }: { isProd: boolean }) {
 
           {/* Settings */}
           <Link
-            href="/admin/config"
+            href="/administracion/config"
             prefetch={false}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
             title="Configuración"
@@ -207,7 +207,7 @@ export function AdminTopbar({ isProd }: { isProd: boolean }) {
           </Link>
 
           {/* Logout */}
-          <form action="/admin/logout" method="post">
+          <form action="/administracion/logout" method="post">
             <button
               type="submit"
               className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"

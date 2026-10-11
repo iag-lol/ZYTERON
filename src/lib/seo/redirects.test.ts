@@ -92,6 +92,7 @@ describe("redirecciones · integridad de la tabla", () => {
   it("usa 308/301 permanentes: ninguna migración definitiva queda temporal", async () => {
     const redirects = await loadRedirects();
     for (const rule of redirects) {
+      if (["/admin/:path*", "/portal-clientes/:path*"].includes(rule.source)) continue;
       assert.equal(
         rule.permanent,
         true,

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const PORTAL_CLIENTES_URL = "/portal-clientes";
+export const PORTAL_CLIENTES_URL = "/clientes";
 
 type PortalAccessLinkProps = {
   className?: string;

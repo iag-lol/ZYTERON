@@ -40,7 +40,7 @@ export async function buildAdminNotificationFeed() {
       title: kind === "quote" ? `Nueva solicitud: ${lead.name}` : kind === "web" ? `Nuevo mensaje web: ${lead.name}` : `Nuevo contacto: ${lead.name}`,
       subtitle: compact(lead.preview) || "Nueva oportunidad desde el sitio web",
       createdAt: lead.createdAt,
-      href: kind === "quote" ? "/admin/cotizaciones" : lead.href,
+      href: kind === "quote" ? "/administracion/cotizaciones" : lead.href,
     };
   });
 
@@ -50,7 +50,7 @@ export async function buildAdminNotificationFeed() {
     title: `Nueva cotización: ${quote.name?.trim() || "Cliente"}`,
     subtitle: [compact(quote.company), money(quote.total)].filter(Boolean).join(" · ") || "Cotización recibida",
     createdAt: quote.createdAt,
-    href: "/admin/cotizaciones",
+    href: "/administracion/cotizaciones",
   }));
 
   const whatsappItems = snapshot.recentMessages.map((message) => ({

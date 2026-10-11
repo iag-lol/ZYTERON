@@ -242,7 +242,7 @@ export function ControlWebConsole({
   }
 
   async function submitControl(body: Record<string, unknown>) {
-    const response = await fetch("/admin/control-web/submit", {
+    const response = await fetch("/administracion/control-web/submit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

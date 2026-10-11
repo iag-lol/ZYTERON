@@ -848,7 +848,7 @@ function FichaPanel({
             <Copy className="h-3.5 w-3.5" /> Copiar teléfono
           </button>
           <Link
-            href={`/admin/cotizaciones/nueva?phone=${conv.phone}&name=${encodeURIComponent(conv.customer_name || conv.profile_name || "")}`}
+            href={`/administracion/cotizaciones/nueva?phone=${conv.phone}&name=${encodeURIComponent(conv.customer_name || conv.profile_name || "")}`}
             className="flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-700"
           >
             <FileText className="h-3.5 w-3.5" /> Crear cotización

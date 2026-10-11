@@ -143,8 +143,8 @@ export const portalAuthOptions: NextAuthOptions = {
     maxAge: 60 * 60 * 12,
   },
   pages: {
-    signIn: "/portal-clientes/login",
-    error: "/portal-clientes/login",
+    signIn: "/clientes/login",
+    error: "/clientes/login",
   },
   providers: (() => {
     const providers: NextAuthOptions["providers"] = [
@@ -220,7 +220,7 @@ export const portalAuthOptions: NextAuthOptions = {
         (profile as { email_verified?: boolean } | undefined)?.email_verified,
       );
       if (!googleEmailVerified) {
-        return "/portal-clientes/login?error=google_email_not_verified";
+        return "/clientes/login?error=google_email_not_verified";
       }
 
       try {
@@ -231,13 +231,13 @@ export const portalAuthOptions: NextAuthOptions = {
           isVerifiedByGoogle: googleEmailVerified,
         });
         if (resolution.status === "not_registered") {
-          return "/portal-clientes/login?error=google_not_registered";
+          return "/clientes/login?error=google_not_registered";
         }
         if (resolution.status === "not_active") {
-          return "/portal-clientes/login?error=account_not_active";
+          return "/clientes/login?error=account_not_active";
         }
         if (resolution.status === "not_verified") {
-          return "/portal-clientes/login?error=email_not_verified";
+          return "/clientes/login?error=email_not_verified";
         }
         const ensured = resolution.user;
 
@@ -251,17 +251,17 @@ export const portalAuthOptions: NextAuthOptions = {
             "[portal/auth/google] Conexión a base de datos fallida. Verifica DATABASE_URL en Render.",
             error,
           );
-          return "/portal-clientes/login?error=portal_db_connection";
+          return "/clientes/login?error=portal_db_connection";
         }
         if (isSchemaOutOfSyncPrismaError(error)) {
           console.error(
             "[portal/auth/google] Esquema desalineado en base de datos. Ejecuta portal_setup_all_in_one.sql.",
             error,
           );
-          return "/portal-clientes/login?error=portal_schema";
+          return "/clientes/login?error=portal_schema";
         }
         console.error("[portal/auth/google] Error en alta/inicio de usuario Google.", error);
-        return "/portal-clientes/login?error=google_auth_failed";
+        return "/clientes/login?error=google_auth_failed";
       }
     },
     async jwt({ token, user }) {

@@ -93,7 +93,7 @@ function nextStepByStatus(status: number, checkoutUrl?: string | null) {
       ? `Puedes intentar el pago nuevamente desde este enlace: ${checkoutUrl}`
       : "Puedes solicitar un nuevo enlace de pago respondiendo este correo.";
   }
-  return "Tu orden quedó registrada y será actualizada cuando Flow confirme el estado final del pago.";
+  return "Tu orden quedó registrada y será actualizada cuando la pasarela confirme el estado final del pago.";
 }
 
 function getNetSubtotal(meta: CheckoutMeta) {

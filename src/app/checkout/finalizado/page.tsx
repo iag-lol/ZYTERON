@@ -5,6 +5,8 @@ import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { getCheckoutOrder } from "@/lib/checkout/orders";
 import { createPageMetadata } from "@/lib/seo";
+import { getFlowPaymentStatus, mapFlowStatusLabel } from "@/lib/payments/flow";
+import { samePaymentToken, verifyPaymentObservation } from "@/lib/payments/verified-payment";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = createPageMetadata({
@@ -49,28 +51,30 @@ export default async function CheckoutFinalizadoPage({
   const params = searchParams ? await searchParams : {};
   const order = typeof params.order === "string" ? params.order : "";
   const token = typeof params.token === "string" ? params.token : "";
-  const flowStatus = Number.parseInt(typeof params.flowStatus === "string" ? params.flowStatus : "0", 10);
-  const flowLabel = typeof params.flowLabel === "string" ? params.flowLabel : "";
-  const message = typeof params.message === "string" ? params.message : "";
-
-  const status = resolveStatus(Number.isFinite(flowStatus) ? flowStatus : 0);
-  const Icon = status.icon;
+  let flowStatus = 0;
+  let flowLabel = "En verificación";
+  const message = "";
   let orderData = null;
-  if (order) {
+  if (order && token) {
     try {
-      orderData = await getCheckoutOrder(order);
+      const candidate = await getCheckoutOrder(order);
+      if (candidate?.storage === "db" && samePaymentToken(token, candidate.meta.flow.token)) {
+        const observation = verifyPaymentObservation(await getFlowPaymentStatus(token), { id: candidate.id, amount: candidate.meta.total, flowOrder: candidate.meta.flow.flowOrder, token: candidate.meta.flow.token }, token);
+        flowStatus = observation.status;
+        flowLabel = mapFlowStatusLabel(flowStatus);
+        orderData = candidate;
+      }
     } catch {
       orderData = null;
     }
   }
+  const status = resolveStatus(flowStatus);
+  const Icon = status.icon;
   const canDownloadInvoice = flowStatus === 2 && orderData && token && orderData.meta.flow.token === token;
   const invoiceUrl = canDownloadInvoice
     ? `/api/checkout/invoice/${encodeURIComponent(order)}?token=${encodeURIComponent(token)}`
     : "";
-  const invoiceLabel =
-    orderData?.meta.customer.documentType === "FACTURA"
-      ? "Descargar factura referencial PDF"
-      : "Descargar boleta PDF";
+  const invoiceLabel = "Descargar comprobante PDF";
 
   const netSubtotal = orderData
     ? typeof orderData.meta.netSubtotal === "number"
@@ -113,7 +117,7 @@ export default async function CheckoutFinalizadoPage({
               </p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Estado Flow</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Estado del pago</p>
               <p className="mt-1 flex items-center gap-2 text-sm font-bold text-slate-900">
                 <CreditCard className="h-4 w-4 text-blue-700" />
                 {flowLabel || "Sin estado"} ({Number.isFinite(flowStatus) ? flowStatus : 0})

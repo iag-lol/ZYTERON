@@ -132,7 +132,7 @@ export function CaseManager({ cases }: { cases: CaseStudyRow[] }) {
   async function uploadImage(file: File) {
     const fd = new FormData();
     fd.append("file", file);
-    const res = await fetch("/admin/casos/upload-image", { method: "POST", body: fd });
+    const res = await fetch("/administracion/casos/upload-image", { method: "POST", body: fd });
     const data = (await res.json().catch(() => null)) as { ok?: boolean; url?: string; error?: string } | null;
     if (!res.ok || !data?.ok || !data.url) throw new Error(data?.error || "No se pudo subir la imagen.");
     return data.url;
@@ -164,7 +164,7 @@ export function CaseManager({ cases }: { cases: CaseStudyRow[] }) {
     setAlert({ type: "idle" });
     startTransition(async () => {
       try {
-        const res = await fetch("/admin/casos/submit", {
+        const res = await fetch("/administracion/casos/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -192,7 +192,7 @@ export function CaseManager({ cases }: { cases: CaseStudyRow[] }) {
             },
           }),
         });
-        if (res.redirected && res.url.includes("/admin/login")) {
+        if (res.redirected && res.url.includes("/administracion/login")) {
           throw new Error("Sesión admin expirada. Inicia sesión nuevamente.");
         }
         const data = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
@@ -208,7 +208,7 @@ export function CaseManager({ cases }: { cases: CaseStudyRow[] }) {
     if (typeof window !== "undefined" && !window.confirm(`¿Eliminar el caso "${item.companyName}"?`)) return;
     startTransition(async () => {
       try {
-        const res = await fetch("/admin/casos/submit", {
+        const res = await fetch("/administracion/casos/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "delete", id: item.id }),

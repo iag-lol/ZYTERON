@@ -19,6 +19,7 @@ import {
 import { sendCheckoutStatusEmail } from "@/lib/notifications/purchase-status";
 import { sendPurchaseWhatsappNotification } from "@/lib/notifications/purchase-whatsapp";
 import { ZYTERON_COMPANY } from "@/lib/company";
+import { verifyPaymentObservation } from "@/lib/payments/verified-payment";
 
 function resolvePublicBaseUrl() {
   const isProduction = process.env.NODE_ENV === "production";
@@ -84,6 +85,9 @@ export async function processFlowToken(token: string) {
   if (!order) {
     throw new Error(`No existe orden asociada: ${orderId}`);
   }
+
+  if (order.storage !== "db") throw new Error("PAYMENT_PERSISTENCE_REQUIRED");
+  verifyPaymentObservation(status, { id: order.id, amount: order.meta.total, flowOrder: order.meta.flow.flowOrder, token: order.meta.flow.token }, token);
 
   const updated = await setCheckoutFlowStatus({
     orderId,

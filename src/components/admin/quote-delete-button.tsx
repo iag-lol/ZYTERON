@@ -24,7 +24,7 @@ export function QuoteDeleteButton({ quoteId, label, compact = false }: Props) {
 
     startTransition(async () => {
       try {
-        const res = await fetch(`/admin/cotizaciones/${quoteId}/eliminar`, {
+        const res = await fetch(`/administracion/cotizaciones/${quoteId}/eliminar`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         });

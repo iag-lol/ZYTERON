@@ -1,7 +1,9 @@
 const EXCLUDED_WEB_VISIT_PATH_PREFIXES = [
   "/admin",
-  "/api",
   "/portal-clientes",
+  "/administracion",
+  "/api",
+  "/clientes",
   "/portal-comercial",
   "/checkout",
   "/pagos",

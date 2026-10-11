@@ -32,7 +32,7 @@ export function QuoteRequestIntegrationButton({ channel, quoteId, compact = fals
 
     startTransition(async () => {
       try {
-        const response = await fetch(`/admin/cotizaciones/${quoteId}/integrations`, {
+        const response = await fetch(`/administracion/cotizaciones/${quoteId}/integrations`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ channel }),

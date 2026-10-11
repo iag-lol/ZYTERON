@@ -245,7 +245,7 @@ export function leadPushPayload(input: {
   return {
     title: isQuote ? `Nueva cotización: ${input.name}` : fromChat ? `Nuevo mensaje web: ${input.name}` : `Nuevo contacto: ${input.name}`,
     body: details.join(" · ").slice(0, 180) || "Hay una nueva oportunidad en Zyteron.",
-    href: isQuote ? "/admin/cotizaciones" : "/admin/contactos",
+    href: isQuote ? "/administracion/cotizaciones" : "/administracion/contactos",
     tag: `${isQuote ? "quote" : fromChat ? "web" : "lead"}-${input.leadId}`,
     kind: isQuote ? "quote" : fromChat ? "web" : "contact",
     createdAt: new Date().toISOString(),

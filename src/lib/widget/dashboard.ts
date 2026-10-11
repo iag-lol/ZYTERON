@@ -145,7 +145,7 @@ export async function buildWidgetDashboardSnapshot() {
       validationStatus: lead.validation_status,
       commercialStatus: lead.commercial_status,
       createdAt: lead.created_at,
-      href: "/admin/comercial?tab=leads",
+      href: "/administracion/comercial?tab=leads",
     };
   });
   const whatsappPending = conversations.reduce((total, conversation) => total + Math.max(Number(conversation.unread_count) || 0, 0), 0);
@@ -180,7 +180,7 @@ export async function buildWidgetDashboardSnapshot() {
             name: conversation?.customer_name || conversation?.profile_name || conversation?.phone || "WhatsApp",
             preview: compact(message.content || `[${message.message_type}]`, 140),
             receivedAt: message.created_at,
-            href: `/admin/whatsapp?conversation=${message.conversation_id}`,
+            href: `/administracion/whatsapp?conversation=${message.conversation_id}`,
           };
         })()
       : null,
@@ -190,7 +190,7 @@ export async function buildWidgetDashboardSnapshot() {
       channel: lead.source || lead.type || "WEB",
       preview: compact(lead.message || lead.email || lead.phone, 120),
       createdAt: lead.createdAt,
-      href: `/admin/contactos/${lead.id}`,
+      href: `/administracion/contactos/${lead.id}`,
     })),
     recentMessages: inboundMessages.map((message) => {
       const conversation = conversationById.get(message.conversation_id);
@@ -199,15 +199,15 @@ export async function buildWidgetDashboardSnapshot() {
         name: conversation?.customer_name || conversation?.profile_name || conversation?.phone || "WhatsApp",
         preview: compact(message.content || `[${message.message_type}]`, 120),
         createdAt: message.created_at,
-        href: `/admin/whatsapp?conversation=${message.conversation_id}`,
+        href: `/administracion/whatsapp?conversation=${message.conversation_id}`,
       };
     }),
     recentClients: latestCommercial,
     links: {
-      contacts: "/admin/contactos",
-      quotes: "/admin/cotizaciones",
-      whatsapp: "/admin/whatsapp",
-      partners: "/admin/comercial?tab=leads",
+      contacts: "/administracion/contactos",
+      quotes: "/administracion/cotizaciones",
+      whatsapp: "/administracion/whatsapp",
+      partners: "/administracion/comercial?tab=leads",
     },
   };
 }

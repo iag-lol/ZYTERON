@@ -64,8 +64,8 @@ function companyLabel(transaction: AccountingTransaction) {
 }
 
 export function AccountingAuditorDashboard({ data }: Props) {
-  const xlsxHref = `/admin/contador-auditor/export/xlsx?period=${data.selectedPeriod}`;
-  const pdfHref = `/admin/contador-auditor/export/pdf?period=${data.selectedPeriod}`;
+  const xlsxHref = `/administracion/contador-auditor/export/xlsx?period=${data.selectedPeriod}`;
+  const pdfHref = `/administracion/contador-auditor/export/pdf?period=${data.selectedPeriod}`;
 
   return (
     <div className="space-y-8">
@@ -112,7 +112,7 @@ export function AccountingAuditorDashboard({ data }: Props) {
             return (
               <Link
                 key={period}
-                href={`/admin/contador-auditor?period=${period}`}
+                href={`/administracion/contador-auditor?period=${period}`}
                 className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
                   active
                     ? "border-blue-300 bg-blue-50 text-blue-700"

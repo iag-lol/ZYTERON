@@ -18,13 +18,13 @@ export async function getPortalSession() {
 export async function requirePortalSession() {
   const session = await getPortalSession();
   if (!session?.user?.id) {
-    redirect("/portal-clientes/login");
+    redirect("/clientes/login");
   }
   if (!session.user.emailVerifiedAt) {
-    redirect("/portal-clientes/verificar");
+    redirect("/clientes/verificar");
   }
   if (session.user.accountStatus !== "ACTIVE") {
-    redirect("/portal-clientes/login?status=disabled");
+    redirect("/clientes/login?status=disabled");
   }
   return session;
 }
@@ -32,7 +32,7 @@ export async function requirePortalSession() {
 export async function requirePortalAdminSession() {
   const session = await requirePortalSession();
   if (session.user.role !== Role.ADMIN && session.user.role !== Role.SUPERADMIN) {
-    redirect("/portal-clientes/panel");
+    redirect("/clientes/panel");
   }
   return session;
 }

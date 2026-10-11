@@ -60,7 +60,7 @@ export async function POST(req: Request) {
         title: `Nuevo mensaje: ${parsed.data.subject}`,
         body: parsed.data.message.slice(0, 200),
         type: "INFO",
-        link: "/portal-clientes/panel/comunicacion",
+        link: "/clientes/panel/comunicacion",
       },
     });
 

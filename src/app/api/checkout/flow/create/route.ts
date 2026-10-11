@@ -232,6 +232,7 @@ export async function POST(req: Request) {
     });
 
     const baseUrl = resolveBaseUrl(req);
+    if (order.storage !== "db") throw new Error("La conexión de pagos necesita persistencia verificada.");
     const reference = order.id.slice(0, 8).toUpperCase();
 
     const flow = await createFlowPayment({

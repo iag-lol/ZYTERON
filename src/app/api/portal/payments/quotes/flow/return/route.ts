@@ -20,7 +20,7 @@ function resolveBaseUrl(req: Request) {
 }
 
 function buildRedirect(req: Request, params: Record<string, string>) {
-  const url = new URL("/portal-clientes/panel/cotizaciones", resolveBaseUrl(req));
+  const url = new URL("/clientes/panel/cotizaciones", resolveBaseUrl(req));
   for (const [key, value] of Object.entries(params)) {
     if (value) url.searchParams.set(key, value);
   }

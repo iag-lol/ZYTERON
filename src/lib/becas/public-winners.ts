@@ -11,7 +11,12 @@ function usesLocalOrUnconfiguredSupabase() {
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
     ""
   ).toLowerCase();
-  return !url || url.startsWith("http://localhost:54321");
+  if (!url) return true;
+  try {
+    return ["localhost", "127.0.0.1", "[::1]"].includes(new URL(url).hostname);
+  } catch {
+    return false;
+  }
 }
 
 /** Rutas de resultados que ya cuentan con un ganador publicado. */

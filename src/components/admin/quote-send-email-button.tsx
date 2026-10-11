@@ -32,7 +32,7 @@ export function QuoteSendEmailButton({ quoteId, hasEmail, compact = false }: Pro
 
     startTransition(async () => {
       try {
-        const response = await fetch(`/admin/cotizaciones/${quoteId}/enviar`, {
+        const response = await fetch(`/administracion/cotizaciones/${quoteId}/enviar`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

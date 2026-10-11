@@ -22,7 +22,7 @@ export function ReviewModerationActions({ reviewId, redirectTo }: Props) {
     setMessage("");
     startTransition(async () => {
       try {
-        const response = await fetch(`/admin/comentarios/${reviewId}/estado`, {
+        const response = await fetch(`/administracion/comentarios/${reviewId}/estado`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -53,7 +53,7 @@ export function ReviewModerationActions({ reviewId, redirectTo }: Props) {
     setMessage("");
     startTransition(async () => {
       try {
-        const response = await fetch("/admin/control-web/submit", {
+        const response = await fetch("/administracion/control-web/submit", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

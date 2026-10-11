@@ -484,10 +484,10 @@ export function ProspectImporter() {
 
           <div className="flex flex-wrap gap-3">
             <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/admin/ventas-ia/bandeja">Ver la cola</Link>
+              <Link href="/administracion/ventas-ia/bandeja">Ver la cola</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/admin/ventas-ia/prospectos">Ver pendientes de revisión</Link>
+              <Link href="/administracion/ventas-ia/prospectos">Ver pendientes de revisión</Link>
             </Button>
             <Button variant="outline" onClick={reset}>
               Importar otro archivo

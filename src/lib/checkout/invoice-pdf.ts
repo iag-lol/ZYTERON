@@ -167,7 +167,7 @@ function drawPanel(args: {
 function drawHeader(ctx: PageContext, input: Input, continuation = false) {
   const { page, font, bold } = ctx;
   const orderRef = `WEB-${input.orderId.slice(0, 8).toUpperCase()}`;
-  const docLabel = input.meta.customer.documentType === "FACTURA" ? "FACTURA REFERENCIAL" : "BOLETA REFERENCIAL";
+  const docLabel = "COMPROBANTE DE PAGO";
   const issueAt = formatDate(input.createdAt || input.meta.flow.updatedAt);
 
   const headerHeight = continuation ? 74 : 108;
@@ -542,7 +542,7 @@ export async function generateCheckoutInvoicePdf(input: Input) {
     },
   );
   ctx.page.drawText(
-    "Documento comercial referencial generado automáticamente tras confirmación de pago en Flow. La emisión tributaria oficial depende del proceso SII.",
+    "Comprobante de un pago verificado por Zyteron. No es una boleta ni factura tributaria; no sustituye un DTE emitido ante el SII.",
     {
       x: MARGIN,
       y: FOOTER_LIMIT - 8,

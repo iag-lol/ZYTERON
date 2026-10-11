@@ -47,13 +47,13 @@ export function PortalRegisterForm({ googleEnabled = false }: PortalRegisterForm
       payload?.warning ||
         "Cuenta creada. Te enviamos un código al correo para verificar tu acceso.",
     );
-    router.push(`/portal-clientes/verificar?email=${encodeURIComponent(form.email)}`);
+    router.push(`/clientes/verificar?email=${encodeURIComponent(form.email)}`);
   }
 
   async function continueWithGoogle() {
     setError("");
     setSuccess("");
-    await signIn("google", { callbackUrl: "/portal-clientes/panel" });
+    await signIn("google", { callbackUrl: "/clientes/panel" });
   }
 
   return (
@@ -161,7 +161,7 @@ export function PortalRegisterForm({ googleEnabled = false }: PortalRegisterForm
 
       <p className="text-center text-sm text-slate-500">
         ¿Ya tienes cuenta?{" "}
-        <Link href="/portal-clientes/login" className="font-semibold text-blue-700 hover:text-blue-800">
+        <Link href="/clientes/login" className="font-semibold text-blue-700 hover:text-blue-800">
           Inicia sesión
         </Link>
       </p>

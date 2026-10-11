@@ -3,7 +3,7 @@
  * admin ni de APIs para no exponer datos. Solo provee el "app shell" offline
  * básico y el manejo de fetch requerido para la instalación. */
 
-const CACHE = "zyteron-shell-v2";
+const CACHE = "zyteron-shell-v3";
 const OFFLINE_ASSETS = ["/manifest.webmanifest", "/logo.svg", "/icon-192.png"];
 
 self.addEventListener("install", (event) => {
@@ -32,7 +32,10 @@ self.addEventListener("fetch", (event) => {
     url.origin !== self.location.origin ||
     url.pathname.startsWith("/api/") ||
     url.pathname.startsWith("/admin") ||
-    url.pathname.startsWith("/portal-clientes")
+    url.pathname.startsWith("/administracion") ||
+    url.pathname.startsWith("/clientes") ||
+    url.pathname.startsWith("/portal-clientes") ||
+    url.pathname.startsWith("/checkout")
   ) {
     return;
   }
@@ -59,13 +62,13 @@ self.addEventListener("fetch", (event) => {
 // abierta, y solo se abre una nueva cuando no hay ninguna.
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const destino = (event.notification.data && event.notification.data.href) || "/admin";
+  const destino = (event.notification.data && event.notification.data.href) || "/administracion";
   const destinationUrl = new URL(destino, self.location.origin).href;
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
-        if (client.url.includes("/admin") && "focus" in client) {
+        if (client.url.includes("/administracion") && "focus" in client) {
           client.navigate(destinationUrl);
           return client.focus();
         }
@@ -100,7 +103,7 @@ self.addEventListener("push", (event) => {
       tag: payload.tag,
       renotify: true,
       timestamp: payload.createdAt ? new Date(payload.createdAt).getTime() : Date.now(),
-      data: { href: payload.href || "/admin" },
+      data: { href: payload.href || "/administracion" },
       vibrate: [180, 80, 180],
     });
   })());

@@ -27,7 +27,7 @@ export function PortalForgotPasswordForm() {
       return;
     }
     setMessage("Si el correo existe, enviamos un código de recuperación.");
-    router.push(`/portal-clientes/restablecer?email=${encodeURIComponent(email)}`);
+    router.push(`/clientes/restablecer?email=${encodeURIComponent(email)}`);
   }
 
   return (

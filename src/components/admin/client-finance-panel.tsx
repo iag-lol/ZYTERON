@@ -167,7 +167,7 @@ export function ClientFinancePanel({
     setFeedback(null);
     startTransition(async () => {
       try {
-        const response = await fetch(`/admin/clientes/${clientId}/pagos`, {
+        const response = await fetch(`/administracion/clientes/${clientId}/pagos`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -204,7 +204,7 @@ export function ClientFinancePanel({
     setFeedback(null);
     startTransition(async () => {
       try {
-        const response = await fetch(`/admin/clientes/${clientId}/pagos/${paymentId}/anular`, {
+        const response = await fetch(`/administracion/clientes/${clientId}/pagos/${paymentId}/anular`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reason: voidReason }),

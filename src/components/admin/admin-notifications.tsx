@@ -328,7 +328,7 @@ export function AdminNotifications() {
           title: payload.title || "Zyteron",
           subtitle: payload.body || "Nueva actividad en Zyteron",
           createdAt: payload.createdAt || new Date().toISOString(),
-          href: payload.href || "/admin",
+          href: payload.href || "/administracion",
         }],
         { fromPush: true },
       );

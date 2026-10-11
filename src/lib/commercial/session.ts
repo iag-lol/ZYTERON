@@ -98,9 +98,9 @@ export async function getCommercialUserForApi(): Promise<CommercialUser | null> 
  */
 export async function requireCommercialUser(allowedRoles?: string[]): Promise<CommercialUser> {
   const session = await getCommercialSession();
-  if (!session) redirect("/admin/login?portal=comercial");
+  if (!session) redirect("/administracion/login?portal=comercial");
   const user = await getCommercialUserById(session!.id);
-  if (!user || user.status !== "active") redirect("/admin/login?portal=comercial&e=1");
+  if (!user || user.status !== "active") redirect("/administracion/login?portal=comercial&e=1");
   if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(user!.role)) {
     redirect("/portal-comercial");
   }

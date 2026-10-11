@@ -31,13 +31,13 @@ export function AdminFab() {
 
   const actions = [
     {
-      href: "/admin/whatsapp",
+      href: "/administracion/whatsapp",
       label: "WhatsApp",
       icon: MessageCircle,
       ring: "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/30",
     },
     {
-      href: "/admin/asistente-ia",
+      href: "/administracion/asistente-ia",
       label: "Asistente IA",
       icon: Sparkles,
       ring: "bg-blue-600 hover:bg-blue-700 shadow-blue-600/30",

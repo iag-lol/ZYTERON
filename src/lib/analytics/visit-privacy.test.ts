@@ -13,10 +13,10 @@ describe("web visit privacy", () => {
 
   it("rejects private, operational and payment paths on segment boundaries", () => {
     for (const path of [
-      "/admin",
-      "/admin/ventas",
+      "/administracion",
+      "/administracion/ventas",
       "/api/health",
-      "/portal-clientes/panel",
+      "/clientes/panel",
       "/portal-comercial",
       "/checkout/finalizado",
       "/pagos/finalizado",
@@ -34,7 +34,7 @@ describe("web visit privacy", () => {
       "https://example.com/landing",
     );
     assert.equal(
-      sanitizeWebVisitReferrer("https://zyteron.cl/portal-clientes/panel?token=secret"),
+      sanitizeWebVisitReferrer("https://zyteron.cl/clientes/panel?token=secret"),
       "",
     );
   });

@@ -129,7 +129,7 @@ export function BlogManager({ posts }: { posts: BlogPostRow[] }) {
   async function uploadImage(file: File) {
     const fd = new FormData();
     fd.append("file", file);
-    const res = await fetch("/admin/blog/upload-image", { method: "POST", body: fd });
+    const res = await fetch("/administracion/blog/upload-image", { method: "POST", body: fd });
     const data = (await res.json().catch(() => null)) as { ok?: boolean; url?: string; error?: string } | null;
     if (!res.ok || !data?.ok || !data.url) throw new Error(data?.error || "No se pudo subir la imagen.");
     return data.url;
@@ -161,7 +161,7 @@ export function BlogManager({ posts }: { posts: BlogPostRow[] }) {
     setAlert({ type: "idle" });
     startTransition(async () => {
       try {
-        const res = await fetch("/admin/blog/submit", {
+        const res = await fetch("/administracion/blog/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -187,7 +187,7 @@ export function BlogManager({ posts }: { posts: BlogPostRow[] }) {
             },
           }),
         });
-        if (res.redirected && res.url.includes("/admin/login")) {
+        if (res.redirected && res.url.includes("/administracion/login")) {
           throw new Error("Sesión admin expirada. Inicia sesión nuevamente.");
         }
         const data = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
@@ -203,7 +203,7 @@ export function BlogManager({ posts }: { posts: BlogPostRow[] }) {
     if (typeof window !== "undefined" && !window.confirm(`¿Eliminar el artículo "${post.title}"?`)) return;
     startTransition(async () => {
       try {
-        const res = await fetch("/admin/blog/submit", {
+        const res = await fetch("/administracion/blog/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "delete", id: post.id }),

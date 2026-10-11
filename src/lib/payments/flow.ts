@@ -129,8 +129,8 @@ function getFlowConfig() {
   const useSandbox = sandboxFlag === "1" || sandboxFlag === "true" || sandboxFlag === "yes";
   const base = readEnv("FLOW_API_BASE") || (useSandbox ? "https://sandbox.flow.cl/api" : "https://www.flow.cl/api");
   const normalizedBase = base.replace(/\/+$/, "");
-  if (!/^https?:\/\//i.test(normalizedBase)) {
-    throw new Error("Flow mal configurado: FLOW_API_BASE debe iniciar con http:// o https://");
+  if (!["https://sandbox.flow.cl/api", "https://www.flow.cl/api"].includes(normalizedBase)) {
+    throw new Error("La conexión de pagos no tiene un origen autorizado.");
   }
 
   return {
@@ -138,6 +138,12 @@ function getFlowConfig() {
     secret,
     base: normalizedBase,
   };
+}
+
+function requirePaymentActivation(base: string) {
+  if (base === "https://www.flow.cl/api" && process.env.FLOW_LIVE_PAYMENTS_ENABLED !== "true") {
+    throw new Error("Los cobros reales requieren activar y validar la configuración de producción.");
+  }
 }
 
 function normalizeForSign(params: Record<string, unknown>) {
@@ -167,19 +173,13 @@ function toFormBody(params: Record<string, unknown>) {
 }
 
 function flowError(status: number, body: unknown) {
-  if (body && typeof body === "object") {
-    const b = body as Record<string, unknown>;
-    const msg = [b.message, b.error, b.code]
-      .map((v) => (typeof v === "string" ? v.trim() : ""))
-      .filter(Boolean)[0];
-    if (msg) return new Error(`Flow ${status}: ${msg}`);
-  }
-
-  return new Error(`Flow respondió con error ${status}.`);
+  void body;
+  return new Error(`La pasarela no pudo completar la operación (HTTP ${status}).`);
 }
 
 async function flowPost(path: string, payload: Record<string, unknown>) {
   const { apiKey, secret, base } = getFlowConfig();
+  requirePaymentActivation(base);
   const bodyPayload: Record<string, unknown> = { apiKey, ...payload };
   bodyPayload.s = signFlowParams(bodyPayload, secret);
 
@@ -191,6 +191,8 @@ async function flowPost(path: string, payload: Record<string, unknown>) {
     },
     body: toFormBody(bodyPayload),
     cache: "no-store",
+    redirect: "error",
+    signal: AbortSignal.timeout(8000),
   });
 
   const body = (await response.json().catch(() => null)) as Record<string, unknown> | null;
@@ -218,6 +220,8 @@ async function flowGet(path: string, query: Record<string, unknown>) {
       "User-Agent": "zyteron-web/1.0",
     },
     cache: "no-store",
+    redirect: "error",
+    signal: AbortSignal.timeout(8000),
   });
 
   const body = (await response.json().catch(() => null)) as Record<string, unknown> | null;
@@ -246,12 +250,13 @@ export function isFlowRejected(status: number) {
 
 export async function createFlowPayment(input: FlowPaymentCreateInput): Promise<FlowPaymentCreateResult> {
   const { apiKey, secret, base } = getFlowConfig();
+  requirePaymentActivation(base);
 
   const payload: Record<string, unknown> = {
     apiKey,
     commerceOrder: input.commerceOrder,
     subject: input.subject,
-    amount: Math.max(0, Math.round(input.amount)),
+    amount: input.amount,
     email: input.email,
     currency: "CLP",
     urlConfirmation: input.urlConfirmation,
@@ -262,6 +267,7 @@ export async function createFlowPayment(input: FlowPaymentCreateInput): Promise<
   };
 
   payload.s = signFlowParams(payload, secret);
+  if (!Number.isSafeInteger(input.amount) || input.amount <= 0) throw new Error("Importe de pago inválido.");
 
   const response = await fetch(`${base}/payment/create`, {
     method: "POST",
@@ -271,6 +277,8 @@ export async function createFlowPayment(input: FlowPaymentCreateInput): Promise<
     },
     body: toFormBody(payload),
     cache: "no-store",
+    redirect: "error",
+    signal: AbortSignal.timeout(8000),
   });
 
   const body = (await response.json().catch(() => null)) as Record<string, unknown> | null;
@@ -312,6 +320,9 @@ export async function createFlowCustomer(input: {
 }
 
 export async function createFlowPlan(input: FlowPlanCreateInput): Promise<FlowPlanCreateResult> {
+  if (!Number.isSafeInteger(input.amount) || input.amount <= 0 || ![1, 2, 3, 4].includes(input.interval)) {
+    throw new Error("La configuración del plan mensual requiere revisión.");
+  }
   const body = await flowPost("/plans/create", {
     planId: input.planId,
     name: input.name,
@@ -423,7 +434,7 @@ export async function getFlowPaymentStatus(token: string): Promise<FlowStatusRes
   const query: Record<string, unknown> = { apiKey, token };
   query.s = signFlowParams(query, secret);
 
-  const url = new URL(`${base}/payment/getStatus`);
+  const url = new URL(`${base}/payment/getStatusExtended`);
   for (const [key, value] of Object.entries(query)) {
     if (value === undefined || value === null) continue;
     url.searchParams.set(key, String(value));
@@ -435,6 +446,8 @@ export async function getFlowPaymentStatus(token: string): Promise<FlowStatusRes
       "User-Agent": "zyteron-web/1.0",
     },
     cache: "no-store",
+    redirect: "error",
+    signal: AbortSignal.timeout(8000),
   });
 
   const body = (await response.json().catch(() => null)) as Record<string, unknown> | null;

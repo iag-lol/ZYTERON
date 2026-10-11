@@ -26,17 +26,17 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { href: "/portal-clientes/panel", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/portal-clientes/panel/perfil", label: "Mi perfil", icon: CircleUser },
-  { href: "/portal-clientes/panel/cotizaciones", label: "Cotizaciones", icon: FileDigit },
-  { href: "/portal-clientes/panel/proyectos", label: "Proyectos", icon: BriefcaseBusiness },
-  { href: "/portal-clientes/panel/documentos", label: "Documentos", icon: FolderOpen },
-  { href: "/portal-clientes/panel/compras-boletas", label: "Compras y boletas", icon: FileText },
-  { href: "/portal-clientes/panel/asistencia", label: "Asistencia", icon: LifeBuoy },
-  { href: "/portal-clientes/panel/credenciales", label: "Credenciales", icon: ShieldCheck },
-  { href: "/portal-clientes/panel/comunicacion", label: "Comunicación", icon: MessageCircle },
-  { href: "/portal-clientes/panel/solicitudes", label: "Solicitudes", icon: Ticket },
-  { href: "/portal-clientes/panel/informaciones-zyteron", label: "INFORMACIONES ZYTERON", icon: Scale },
+  { href: "/clientes/panel", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/clientes/panel/perfil", label: "Mi perfil", icon: CircleUser },
+  { href: "/clientes/panel/cotizaciones", label: "Cotizaciones", icon: FileDigit },
+  { href: "/clientes/panel/proyectos", label: "Proyectos", icon: BriefcaseBusiness },
+  { href: "/clientes/panel/documentos", label: "Documentos", icon: FolderOpen },
+  { href: "/clientes/panel/compras-boletas", label: "Compras y boletas", icon: FileText },
+  { href: "/clientes/panel/asistencia", label: "Asistencia", icon: LifeBuoy },
+  { href: "/clientes/panel/credenciales", label: "Credenciales", icon: ShieldCheck },
+  { href: "/clientes/panel/comunicacion", label: "Comunicación", icon: MessageCircle },
+  { href: "/clientes/panel/solicitudes", label: "Solicitudes", icon: Ticket },
+  { href: "/clientes/panel/informaciones-zyteron", label: "INFORMACIONES ZYTERON", icon: Scale },
 ];
 
 function isActivePath(current: string, href: string, exact?: boolean) {
@@ -164,7 +164,7 @@ export function PortalPanelShell({
           }`}
         >
           <div className="flex items-center justify-between">
-            <Link href="/portal-clientes/panel" className="flex items-center gap-2.5">
+            <Link href="/clientes/panel" className="flex items-center gap-2.5">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-700/30">
                 <Sparkles className="h-4.5 w-4.5" />
               </div>
@@ -214,7 +214,7 @@ export function PortalPanelShell({
 
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: "/portal-clientes/login" })}
+            onClick={() => signOut({ callbackUrl: "/clientes/login" })}
             className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/[0.08]"
           >
             <LogOut className="h-4 w-4" />

@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { verifyPaymentObservation } from "./verified-payment";
 import {
   assertExternalPaymentMatches,
   isFinanceSchemaUnavailableError,
@@ -225,7 +226,7 @@ async function saveQuotePaymentMeta(input: {
 }
 
 function buildPortalQuotePaymentsUrl(baseUrl: string, params?: Record<string, string>) {
-  const url = new URL("/portal-clientes/panel/cotizaciones", baseUrl);
+  const url = new URL("/clientes/panel/cotizaciones", baseUrl);
   for (const [key, value] of Object.entries(params || {})) {
     if (!value) continue;
     url.searchParams.set(key, value);
@@ -340,7 +341,7 @@ async function notifyStageReady(
   stage: QuotePaymentStage,
   baseUrl: string,
 ) {
-  const portalUrl = `${baseUrl}/portal-clientes/panel/cotizaciones`;
+  const portalUrl = `${baseUrl}/clientes/panel/cotizaciones`;
   const channelLabel =
     stage.paymentChannel === "TRANSFER" ? "Transferencia bancaria" : "Pago online Flow";
   await createPortalNotification({
@@ -352,7 +353,7 @@ async function notifyStageReady(
       maximumFractionDigits: 0,
     }).format(stage.amount)} disponible para tu cotización ${quote.displayNumber}.`,
     type: "ALERT",
-    link: "/portal-clientes/panel/cotizaciones",
+    link: "/clientes/panel/cotizaciones",
   });
 
   if (quote.email) {
@@ -389,7 +390,7 @@ async function notifyStageStatus(input: {
     title: input.title,
     body: `${input.quote.displayNumber} · ${input.stage.label}`,
     type: input.type,
-    link: "/portal-clientes/panel/cotizaciones",
+    link: "/clientes/panel/cotizaciones",
   });
 
   if (input.quote.email) {
@@ -400,7 +401,7 @@ async function notifyStageStatus(input: {
       stage: input.stage,
       title: input.title,
       intro: input.intro,
-      portalUrl: `${input.baseUrl}/portal-clientes/panel/cotizaciones`,
+      portalUrl: `${input.baseUrl}/clientes/panel/cotizaciones`,
     }).catch((error) => {
       console.error("[quote-payment] status email failed", error);
     });
@@ -616,6 +617,13 @@ export async function processQuoteFlowPaymentToken(token: string, req?: Request)
   if (!currentStage) {
     throw new Error("Etapa de pago no disponible en la cotización.");
   }
+
+  verifyPaymentObservation(status, {
+    id: currentStage.flow?.commerceOrder || "",
+    amount: currentStage.amount,
+    flowOrder: currentStage.flow?.flowOrder,
+    token: currentStage.flow?.token,
+  }, token);
 
   const baseUrl = resolveBaseUrl(req);
   let payment = quote.meta.payment || {};
@@ -967,7 +975,7 @@ export async function processQuoteSubscriptionChargeConfirmation(input: {
       title: "Cobro mensual observado",
       body: `${quote.displayNumber} registró un intento de cobro mensual no aprobado en Flow.`,
       type: "WARNING",
-      link: "/portal-clientes/panel/cotizaciones",
+      link: "/clientes/panel/cotizaciones",
     });
   }
 }
@@ -1067,7 +1075,7 @@ export async function submitQuoteTransferProof(input: {
     title: "Comprobante recibido",
     body: `${quote.displayNumber} · ${stage.label} quedó pendiente de revisión.`,
     type: "INFO",
-    link: "/portal-clientes/panel/cotizaciones",
+    link: "/clientes/panel/cotizaciones",
   });
 
   const baseUrl = resolveBaseUrl(input.req);

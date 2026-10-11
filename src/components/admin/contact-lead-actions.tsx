@@ -76,7 +76,7 @@ export function ContactLeadActions({ leadId, email, phone }: Props) {
           type="button"
           disabled={isPending}
           onClick={() =>
-            runAction(`/admin/contactos/${leadId}/convertir-cliente`, "No se pudo convertir en cliente.")
+            runAction(`/administracion/contactos/${leadId}/convertir-cliente`, "No se pudo convertir en cliente.")
           }
           className={`${baseButtonClass} border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-60`}
         >
@@ -88,7 +88,7 @@ export function ContactLeadActions({ leadId, email, phone }: Props) {
           type="button"
           disabled={isPending}
           onClick={() =>
-            runAction(`/admin/contactos/${leadId}/generar-proyecto`, "No se pudo generar el borrador de proyecto.")
+            runAction(`/administracion/contactos/${leadId}/generar-proyecto`, "No se pudo generar el borrador de proyecto.")
           }
           className={`${baseButtonClass} border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 disabled:opacity-60`}
         >
@@ -100,7 +100,7 @@ export function ContactLeadActions({ leadId, email, phone }: Props) {
           type="button"
           disabled={isPending}
           onClick={() =>
-            runAction(`/admin/contactos/${leadId}/generar-cotizacion`, "No se pudo generar el borrador de cotización.")
+            runAction(`/administracion/contactos/${leadId}/generar-cotizacion`, "No se pudo generar el borrador de cotización.")
           }
           className={`${baseButtonClass} border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 disabled:opacity-60`}
         >
@@ -116,7 +116,7 @@ export function ContactLeadActions({ leadId, email, phone }: Props) {
             setMessage("");
             startTransition(async () => {
               try {
-                const res = await fetch(`/admin/contactos/${leadId}/eliminar`, { method: "POST" });
+                const res = await fetch(`/administracion/contactos/${leadId}/eliminar`, { method: "POST" });
                 const data = (await res.json().catch(() => null)) as ActionResult | null;
                 if (!res.ok || !data?.ok) {
                   setMessage(data?.error || "No se pudo eliminar el contacto.");

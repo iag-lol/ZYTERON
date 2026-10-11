@@ -385,7 +385,7 @@ export function QuoteEditForm({ quote }: Props) {
       setLastLookupEmail(email);
 
       try {
-        const res = await fetch(`/admin/cotizaciones/nueva/client?email=${encodeURIComponent(email)}`, {
+        const res = await fetch(`/administracion/cotizaciones/nueva/client?email=${encodeURIComponent(email)}`, {
           method: "GET",
           cache: "no-store",
         });
@@ -503,7 +503,7 @@ export function QuoteEditForm({ quote }: Props) {
 
     startTransition(async () => {
       try {
-        const response = await fetch(`/admin/cotizaciones/${quote.id}/editar/submit`, {
+        const response = await fetch(`/administracion/cotizaciones/${quote.id}/editar/submit`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),

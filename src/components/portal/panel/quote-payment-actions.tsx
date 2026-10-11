@@ -141,7 +141,7 @@ function canShowTransferPayment(stage: QuoteStage) {
 }
 
 function paymentChannelLabel(isSubscriptionQuote: boolean, stage: QuoteStage) {
-  if (isSubscriptionQuote) return "Suscripción mensual por Flow";
+  if (isSubscriptionQuote) return "Suscripción mensual";
   return stage.paymentChannel === "FLOW" ? "Pago online con tarjeta" : "Transferencia bancaria";
 }
 
@@ -437,7 +437,7 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                           <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
                             <p className="text-sm font-semibold text-blue-900">
                               {isSubscriptionQuote
-                                ? "Revisa el resumen del cobro mensual, valida los términos legales y luego activa tu suscripción en Flow."
+                                ? "Revisa el resumen del cobro mensual, valida los términos legales y luego activa tu suscripción."
                                 : "Revisa la información del cobro, valida los términos legales y luego continúa a la pasarela de pago."}
                             </p>
                             <button
@@ -780,13 +780,13 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                   </div>
 
                   <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                    El registro de aceptación queda guardado antes de salir a Flow.
+                    El registro de aceptación queda guardado antes de continuar al pago.
                   </div>
                 </section>
               </div>
 
               <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 md:flex-row md:items-center md:justify-between">
-                <p className="text-sm text-slate-500">Al continuar se abrirá la pasarela segura de Flow para completar este cobro.</p>
+                <p className="text-sm text-slate-500">Al continuar se abrirá la pasarela segura para completar este cobro.</p>
                 <div className="flex flex-col-reverse gap-3 sm:flex-row">
                   <button
                     type="button"
@@ -802,7 +802,7 @@ export function QuotePaymentActions({ quotes, paymentResult, paymentMessage, pay
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:opacity-60"
                   >
                     {isModalBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                    {paymentModal?.mode === "SUBSCRIPTION" ? "Confirmar y activar suscripción" : "Confirmar y continuar a Flow"}
+                    {paymentModal?.mode === "SUBSCRIPTION" ? "Confirmar y activar suscripción" : "Confirmar y continuar al pago"}
                   </button>
                 </div>
               </div>

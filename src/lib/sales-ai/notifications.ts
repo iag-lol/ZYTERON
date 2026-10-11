@@ -28,7 +28,7 @@ export async function notifySalesEvent(input: NotifyInput): Promise<void> {
     isAutomated: true,
     payload: {
       priority: input.priority,
-      link: input.link ?? (input.companyId ? `/admin/ventas-ia/prospectos/${input.companyId}` : "/admin/ventas-ia"),
+      link: input.link ?? (input.companyId ? `/administracion/ventas-ia/prospectos/${input.companyId}` : "/administracion/ventas-ia"),
     },
   });
 }
@@ -61,7 +61,7 @@ export async function getSalesNotifications(limit = 25): Promise<SalesNotificati
         title: row.title as string,
         detail: (row.detail as string) ?? null,
         priority: payload.priority ?? "NORMAL",
-        link: payload.link ?? "/admin/ventas-ia",
+        link: payload.link ?? "/administracion/ventas-ia",
         companyId: (row.company_id as string) ?? null,
         createdAt: row.created_at as string,
       };

@@ -1,0 +1,242 @@
+.surface {
+  min-height: 100vh;
+  background: #f2f5ed;
+  color: #203b2e;
+  padding: 32px 24px 40px;
+  font-family: var(--font-sans), Arial, sans-serif;
+}
+.top {
+  max-width: 1000px;
+  margin: 0 auto 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.brand {
+  font-size: 31px;
+  font-weight: 800;
+  letter-spacing: -1.7px;
+  text-decoration: none;
+  color: #203b2e;
+}
+.brand span {
+  color: #719249;
+}
+.top > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #50694f;
+}
+.card {
+  width: min(100%, 590px);
+  margin: auto;
+  background: #fff;
+  padding: 38px;
+  border: 1px solid #d8e0d0;
+  border-radius: 23px;
+  box-shadow: 0 20px 90px #233e2d0b;
+}
+.eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #617856;
+}
+.eyebrow span {
+  letter-spacing: 0;
+  font-weight: 400;
+}
+.symbol,
+.success {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: #f2f5e9;
+  color: #587842;
+  margin: 29px 0 22px;
+}
+.success {
+  background: #d9eca9;
+  color: #25481c;
+}
+.card h1 {
+  font-size: 29px;
+  line-height: 1.2;
+  letter-spacing: -1px;
+  margin: 0 0 17px;
+  font-weight: 700;
+}
+.intro {
+  color: #536650;
+  font-size: 14px;
+  line-height: 1.8;
+  margin: 0 0 29px;
+}
+.summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 21px;
+  border: 1px solid #dce4cf;
+  border-radius: 12px;
+  background: #f4f7ee;
+  margin-bottom: 24px;
+}
+.summary > div {
+  display: grid;
+  gap: 8px;
+}
+.summary > div:last-child {
+  text-align: right;
+}
+.summary strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+.summary > div:last-child strong {
+  font-size: 24px;
+}
+.summary small {
+  font-size: 9px;
+  color: #5c734a;
+  letter-spacing: 1px;
+}
+.primary,
+.secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 50px;
+  border: 0;
+  border-radius: 8px;
+  background: #25462e;
+  color: #fff;
+  padding: 13px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.primary:hover {
+  background: #365f3a;
+}
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.secondary {
+  background: #edf2e4;
+  color: #395d31;
+}
+.safe {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px;
+  background: #f6f8f2;
+  border: 1px solid #e1e7d8;
+  border-radius: 10px;
+  margin-top: 27px;
+}
+.safe svg {
+  flex-shrink: 0;
+  color: #527147;
+}
+.safe p {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #536a4f;
+  margin: 0;
+}
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #526549;
+}
+.error {
+  color: #743427;
+  background: #fff2eb;
+  border: 1px solid #efd4c3;
+  padding: 14px;
+  border-radius: 9px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.mail {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #506849;
+  margin: 17px 0;
+}
+.spin {
+  animation: spin 1s linear infinite;
+}
+.surface footer {
+  max-width: 590px;
+  margin: 25px auto 0;
+  font-size: 11px;
+  color: #5e7158;
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+}
+.surface footer a {
+  color: inherit;
+}
+.surface button:focus-visible,
+.surface a:focus-visible {
+  outline: 3px solid #789c43;
+  outline-offset: 4px;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 600px) {
+  .surface {
+    padding: 22px 14px;
+  }
+  .top {
+    margin-bottom: 25px;
+  }
+  .card {
+    padding: 26px 20px;
+    border-radius: 16px;
+  }
+  .card h1 {
+    font-size: 26px;
+  }
+  .summary {
+    padding: 16px;
+    align-items: flex-start;
+  }
+  .summary > div:first-child {
+    max-width: 65%;
+  }
+  .summary > div:last-child strong {
+    font-size: 22px;
+  }
+  .surface footer {
+    padding: 0 7px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}

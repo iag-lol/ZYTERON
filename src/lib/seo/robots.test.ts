@@ -15,8 +15,8 @@ describe("robots.txt", () => {
 
     assert.ok(disallowed.includes("/api/"));
     for (const htmlPath of [
-      "/admin/",
-      "/portal-clientes/",
+      "/administracion/",
+      "/clientes/",
       "/portal-comercial/",
       "/checkout/",
       "/pagos/",
@@ -28,8 +28,8 @@ describe("robots.txt", () => {
   it("emite X-Robots-Tag en áreas privadas y resultados de pago", async () => {
     const rules = await nextConfig.headers!();
     const protectedRoutes = new Set([
-      "/admin/:path*",
-      "/portal-clientes/:path*",
+      "/administracion/:path*",
+      "/clientes/:path*",
       "/portal-comercial/:path*",
       "/checkout/:path*",
       "/pagos/:path*",

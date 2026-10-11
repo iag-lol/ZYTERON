@@ -61,7 +61,7 @@ export function PortalVerifyEmailForm() {
       email: form.email,
       password: form.password,
       redirect: true,
-      callbackUrl: "/portal-clientes/panel",
+      callbackUrl: "/clientes/panel",
     });
     if (result?.error) {
       setError("No se pudo iniciar sesión con las credenciales ingresadas.");

@@ -46,13 +46,13 @@ export function PortalLoginForm({
       setError("No fue posible iniciar sesión. Intenta nuevamente.");
       return;
     }
-    router.push("/portal-clientes/panel");
+    router.push("/clientes/panel");
     router.refresh();
   }
 
   async function loginWithGoogle() {
     setError("");
-    await signIn("google", { callbackUrl: "/portal-clientes/panel" });
+    await signIn("google", { callbackUrl: "/clientes/panel" });
   }
 
   return (
@@ -110,10 +110,10 @@ export function PortalLoginForm({
 
       {!loginOnly ? (
         <div className="flex items-center justify-between text-sm">
-          <Link href="/portal-clientes/recuperar" className="font-medium text-blue-700 hover:text-blue-800">
+          <Link href="/clientes/recuperar" className="font-medium text-blue-700 hover:text-blue-800">
             Recuperar contraseña
           </Link>
-          <Link href="/portal-clientes/registro" className="font-medium text-slate-600 hover:text-slate-800">
+          <Link href="/clientes/registro" className="font-medium text-slate-600 hover:text-slate-800">
             Crear cuenta
           </Link>
         </div>

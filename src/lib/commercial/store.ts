@@ -417,7 +417,7 @@ export async function createLead(ownerId: string, input: Record<string, unknown>
   await sendAdminPushNotification({
     title: `${ownerRole === "partner" ? "Partner" : "Ejecutivo"}: nuevo cliente`,
     body: `${fields.name} · ${owner?.name || "Equipo comercial"}`,
-    href: "/admin/comercial?tab=leads",
+    href: "/administracion/comercial?tab=leads",
     tag: `commercial-${String(data.id)}`,
     kind: ownerRole,
     createdAt: new Date().toISOString(),

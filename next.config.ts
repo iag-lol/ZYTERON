@@ -64,6 +64,8 @@ const privateNoIndexHeaders = [
 const privateHtmlRoutes = [
   "/admin/:path*",
   "/portal-clientes/:path*",
+  "/administracion/:path*",
+  "/clientes/:path*",
   "/portal-comercial/:path*",
   "/checkout/:path*",
   "/pagos/:path*",
@@ -72,6 +74,7 @@ const privateHtmlRoutes = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  agentRules: false,
   experimental: {
     optimizePackageImports: ["lucide-react"],
   },
@@ -97,6 +100,8 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      { source: "/admin/:path*", destination: "/administracion/:path*", permanent: false },
+      { source: "/portal-clientes/:path*", destination: "/clientes/:path*", permanent: false },
       // Consolidación SEO: estas URLs antiguas o duplicadas ya compiten con
       // páginas principales. Los redirects permanentes concentran sus señales
       // y evitan que Google siga rastreando versiones equivalentes.

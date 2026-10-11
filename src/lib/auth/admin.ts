@@ -10,6 +10,6 @@ export async function assertAdmin() {
   const store = await cookies();
   const token = store.get(ADMIN_COOKIE)?.value;
   if (!(await verifyAdminSessionToken(token))) {
-    redirect("/admin/login");
+    redirect("/administracion/login");
   }
 }

@@ -18,9 +18,9 @@ type AppShellProps = {
 
 export function AppShell({ children, header, footer }: AppShellProps) {
   const pathname = usePathname();
-  const isAdminRoute = pathname.startsWith("/admin");
+  const isAdminRoute = pathname.startsWith("/administracion");
   const isPortalRoute =
-    pathname.startsWith("/portal-clientes") || pathname.startsWith("/portal-comercial");
+    pathname.startsWith("/clientes") || pathname.startsWith("/portal-comercial");
 
   if (isAdminRoute || isPortalRoute) {
     return <div className="min-h-screen">{children}</div>;

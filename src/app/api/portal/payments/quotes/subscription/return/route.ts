@@ -8,8 +8,8 @@ function buildFallbackRedirect(req: Request, message: string) {
       .replace(/\/+$/, "");
 
   const url = /^https?:\/\//i.test(base)
-    ? new URL("/portal-clientes/panel/cotizaciones", base)
-    : new URL("/portal-clientes/panel/cotizaciones", req.url);
+    ? new URL("/clientes/panel/cotizaciones", base)
+    : new URL("/clientes/panel/cotizaciones", req.url);
 
   url.searchParams.set("payment_result", "error");
   url.searchParams.set("payment_message", message);

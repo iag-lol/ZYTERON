@@ -111,8 +111,8 @@ export function ExpensesManager({ expenses, activeCategory, activeStatus }: Prop
           </div>
         </div>
 
-        <form action="/admin/gastos/submit" method="post" encType="multipart/form-data" className="space-y-4">
-          <input type="hidden" name="redirectTo" value={`/admin/gastos?status=${activeStatus}&category=${activeCategory}`} />
+        <form action="/administracion/gastos/submit" method="post" encType="multipart/form-data" className="space-y-4">
+          <input type="hidden" name="redirectTo" value={`/administracion/gastos?status=${activeStatus}&category=${activeCategory}`} />
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <div>
               <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Nombre</label>
@@ -216,8 +216,8 @@ export function ExpensesManager({ expenses, activeCategory, activeStatus }: Prop
                       >
                         <FilePenLine className="h-4 w-4" />
                       </button>
-                      <form action={`/admin/gastos/${expense.id}/delete`} method="post">
-                        <input type="hidden" name="redirectTo" value={`/admin/gastos?status=${activeStatus}&category=${activeCategory}`} />
+                      <form action={`/administracion/gastos/${expense.id}/delete`} method="post">
+                        <input type="hidden" name="redirectTo" value={`/administracion/gastos?status=${activeStatus}&category=${activeCategory}`} />
                         <button className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50" title="Eliminar gasto">
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -242,9 +242,9 @@ export function ExpensesManager({ expenses, activeCategory, activeStatus }: Prop
                   </div>
 
                   {isEditing ? (
-                    <form action="/admin/gastos/submit" method="post" encType="multipart/form-data" className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <form action="/administracion/gastos/submit" method="post" encType="multipart/form-data" className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
                       <input type="hidden" name="id" value={expense.id} />
-                      <input type="hidden" name="redirectTo" value={`/admin/gastos?status=${activeStatus}&category=${activeCategory}`} />
+                      <input type="hidden" name="redirectTo" value={`/administracion/gastos?status=${activeStatus}&category=${activeCategory}`} />
 
                       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                         <div>

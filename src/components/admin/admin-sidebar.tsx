@@ -62,26 +62,26 @@ const navGroups: NavGroup[] = [
   {
     label: "Principal",
     items: [
-      { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true, color: "blue" },
-      { href: "/admin/asistente-ia", label: "Asistente IA", icon: Sparkles, color: "violet" },
-      { href: "/admin/reportes", label: "Reportes", icon: BarChart3, color: "violet" },
+      { href: "/administracion", label: "Dashboard", icon: LayoutDashboard, exact: true, color: "blue" },
+      { href: "/administracion/asistente-ia", label: "Asistente IA", icon: Sparkles, color: "violet" },
+      { href: "/administracion/reportes", label: "Reportes", icon: BarChart3, color: "violet" },
     ],
   },
   {
     label: "ZARA",
     items: [
-      { href: "/admin/ventas-ia", label: "Resumen", icon: Bot, exact: true, color: "violet" },
-      { href: "/admin/ventas-ia/prospectos", label: "Prospectos", icon: Building2, color: "blue" },
-      { href: "/admin/ventas-ia/bandeja", label: "Bandeja", icon: Inbox, color: "sky" },
+      { href: "/administracion/ventas-ia", label: "Resumen", icon: Bot, exact: true, color: "violet" },
+      { href: "/administracion/ventas-ia/prospectos", label: "Prospectos", icon: Building2, color: "blue" },
+      { href: "/administracion/ventas-ia/bandeja", label: "Bandeja", icon: Inbox, color: "sky" },
       {
-        href: "/admin/ventas-ia/importar",
+        href: "/administracion/ventas-ia/importar",
         label: "Importar prospectos",
         icon: FileSpreadsheet,
         color: "emerald",
       },
-      { href: "/admin/ventas-ia/actividad", label: "Actividad", icon: Activity, color: "amber" },
+      { href: "/administracion/ventas-ia/actividad", label: "Actividad", icon: Activity, color: "amber" },
       {
-        href: "/admin/ventas-ia/configuracion",
+        href: "/administracion/ventas-ia/configuracion",
         label: "Configuración",
         icon: SlidersHorizontal,
         color: "slate",
@@ -91,12 +91,12 @@ const navGroups: NavGroup[] = [
   {
     label: "Ventas & Clientes",
     items: [
-      { href: "/admin/clientes", label: "Clientes", icon: Users, color: "blue" },
-      { href: "/admin/contactos", label: "Contactos", icon: Mail, color: "sky" },
-      { href: "/admin/cotizaciones", label: "Cotizaciones", icon: FileText, color: "violet" },
-      { href: "/admin/ventas", label: "Ventas", icon: ShoppingCart, color: "emerald" },
+      { href: "/administracion/clientes", label: "Clientes", icon: Users, color: "blue" },
+      { href: "/administracion/contactos", label: "Contactos", icon: Mail, color: "sky" },
+      { href: "/administracion/cotizaciones", label: "Cotizaciones", icon: FileText, color: "violet" },
+      { href: "/administracion/ventas", label: "Ventas", icon: ShoppingCart, color: "emerald" },
       {
-        href: "/admin/comercial",
+        href: "/administracion/comercial",
         label: "Partners & Ejecutivos",
         icon: UserRoundCog,
         color: "indigo",
@@ -106,68 +106,68 @@ const navGroups: NavGroup[] = [
   {
     label: "Comunicación",
     items: [
-      { href: "/admin/whatsapp", label: "WhatsApp", icon: MessageCircle, color: "emerald" },
-      { href: "/admin/comunicaciones", label: "Mensajes", icon: Inbox, color: "teal" },
-      { href: "/admin/comentarios", label: "Comentarios", icon: MessageSquareQuote, color: "rose" },
+      { href: "/administracion/whatsapp", label: "WhatsApp", icon: MessageCircle, color: "emerald" },
+      { href: "/administracion/comunicaciones", label: "Mensajes", icon: Inbox, color: "teal" },
+      { href: "/administracion/comentarios", label: "Comentarios", icon: MessageSquareQuote, color: "rose" },
     ],
   },
   {
     label: "Operaciones",
     items: [
-      { href: "/admin/operaciones", label: "Centro de operaciones", icon: Activity, color: "blue" },
+      { href: "/administracion/operaciones", label: "Centro de operaciones", icon: Activity, color: "blue" },
       {
-        href: "/admin/ordenes-trabajo",
+        href: "/administracion/ordenes-trabajo",
         label: "Órdenes de trabajo",
         icon: ClipboardCheck,
         color: "amber",
       },
-      { href: "/admin/proyectos", label: "Proyectos", icon: BriefcaseBusiness, color: "orange" },
-      { href: "/admin/visitas", label: "Visitas técnicas", icon: CalendarClock, color: "cyan" },
-      { href: "/admin/solicitudes", label: "Solicitudes", icon: MessagesSquare, color: "pink" },
+      { href: "/administracion/proyectos", label: "Proyectos", icon: BriefcaseBusiness, color: "orange" },
+      { href: "/administracion/visitas", label: "Visitas técnicas", icon: CalendarClock, color: "cyan" },
+      { href: "/administracion/solicitudes", label: "Solicitudes", icon: MessagesSquare, color: "pink" },
     ],
   },
   {
     label: "Finanzas & Tributario",
     items: [
       {
-        href: "/admin/contador-auditor",
+        href: "/administracion/contador-auditor",
         label: "Contador Auditor",
         icon: Calculator,
         color: "blue",
       },
       {
-        href: "/admin/contador-auditor/facturacion",
+        href: "/administracion/contador-auditor/facturacion",
         label: "Facturación SII",
         icon: Receipt,
         color: "violet",
       },
-      { href: "/admin/sii", label: "Centro SII", icon: Landmark, color: "yellow" },
-      { href: "/admin/gastos", label: "Gastos", icon: WalletCards, color: "red" },
+      { href: "/administracion/sii", label: "Centro SII", icon: Landmark, color: "yellow" },
+      { href: "/administracion/gastos", label: "Gastos", icon: WalletCards, color: "red" },
     ],
   },
   {
     label: "Catálogo & Contenido",
     items: [
-      { href: "/admin/productos", label: "Productos", icon: Boxes, color: "indigo" },
-      { href: "/admin/blog", label: "Blog", icon: Newspaper, color: "orange" },
-      { href: "/admin/casos", label: "Casos de éxito", icon: Trophy, color: "amber" },
+      { href: "/administracion/productos", label: "Productos", icon: Boxes, color: "indigo" },
+      { href: "/administracion/blog", label: "Blog", icon: Newspaper, color: "orange" },
+      { href: "/administracion/casos", label: "Casos de éxito", icon: Trophy, color: "amber" },
     ],
   },
   {
     label: "Programas",
-    items: [{ href: "/admin/becas", label: "Becas Web Pyme", icon: Award, color: "blue" }],
+    items: [{ href: "/administracion/becas", label: "Becas Web Pyme", icon: Award, color: "blue" }],
   },
   {
     label: "Sistema",
     items: [
       {
-        href: "/admin/portal-clientes",
+        href: "/administracion/portal-clientes",
         label: "Portal Clientes",
         icon: ShieldCheck,
         color: "emerald",
       },
-      { href: "/admin/control-web", label: "Control Web", icon: SlidersHorizontal, color: "slate" },
-      { href: "/admin/config", label: "Configuración", icon: Settings, color: "slate" },
+      { href: "/administracion/control-web", label: "Control Web", icon: SlidersHorizontal, color: "slate" },
+      { href: "/administracion/config", label: "Configuración", icon: Settings, color: "slate" },
     ],
   },
 ];
@@ -339,7 +339,7 @@ export function AdminSidebar() {
       >
         {/* Logo */}
         <div className="relative flex h-16 shrink-0 items-center border-b border-slate-200 px-4">
-          <Link href="/admin" prefetch={false} className="flex items-center gap-3 overflow-hidden">
+          <Link href="/administracion" prefetch={false} className="flex items-center gap-3 overflow-hidden">
             <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 shadow-md shadow-blue-700/20">
               <Zap className="text-white" style={{ width: "1.125rem", height: "1.125rem" }} />
               {/* Online indicator */}
@@ -473,7 +473,7 @@ export function AdminSidebar() {
               <ExternalLink className="h-3.5 w-3.5" />
               {showLabels && "Ver sitio"}
             </Link>
-            <form action="/admin/logout" method="post" className="flex flex-1">
+            <form action="/administracion/logout" method="post" className="flex flex-1">
               <button
                 type="submit"
                 className="flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-500 transition-all hover:bg-rose-50 hover:text-rose-600"

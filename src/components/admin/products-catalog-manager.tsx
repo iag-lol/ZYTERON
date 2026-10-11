@@ -228,7 +228,7 @@ export function ProductsCatalogManager({ products, categories }: Props) {
   );
 
   async function submitProduct(payload: Record<string, unknown>) {
-    const response = await fetch("/admin/productos/submit", {
+    const response = await fetch("/administracion/productos/submit", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -236,7 +236,7 @@ export function ProductsCatalogManager({ products, categories }: Props) {
       body: JSON.stringify(payload),
     });
 
-    if (response.redirected && response.url.includes("/admin/login")) {
+    if (response.redirected && response.url.includes("/administracion/login")) {
       throw new Error("Sesión admin expirada. Inicia sesión nuevamente.");
     }
 
@@ -249,7 +249,7 @@ export function ProductsCatalogManager({ products, categories }: Props) {
   async function uploadImage(file: File) {
     const formData = new FormData();
     formData.append("file", file);
-    const response = await fetch("/admin/productos/upload-image", {
+    const response = await fetch("/administracion/productos/upload-image", {
       method: "POST",
       body: formData,
     });

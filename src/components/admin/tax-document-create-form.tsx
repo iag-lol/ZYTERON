@@ -123,7 +123,7 @@ export function TaxDocumentCreateForm({ clients, quotes, projects, sales, initia
     event.preventDefault();
     setError(null);
     startTransition(async () => {
-      const response = await fetch("/admin/sii/nuevo/submit", {
+      const response = await fetch("/administracion/sii/nuevo/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -141,8 +141,8 @@ export function TaxDocumentCreateForm({ clients, quotes, projects, sales, initia
       }
       router.push(
         form.clientId
-          ? `/admin/clientes/${form.clientId}?invoice_created=1`
-          : "/admin/sii?created=1",
+          ? `/administracion/clientes/${form.clientId}?invoice_created=1`
+          : "/administracion/sii?created=1",
       );
       router.refresh();
     });

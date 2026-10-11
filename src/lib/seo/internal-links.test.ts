@@ -14,9 +14,9 @@ const APP_DIR = path.join(SRC_DIR, "app");
  */
 const DB_BACKED = [/^\/blog\/[^/]+$/, /^\/casos-exito\/[^/]+$/];
 const NON_PUBLIC_PREFIXES = [
-  "/admin",
+  "/administracion",
   "/api",
-  "/portal-clientes",
+  "/clientes",
   "/portal-comercial",
   "/checkout",
   "/pagos",
