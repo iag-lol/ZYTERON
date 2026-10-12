@@ -42,7 +42,7 @@ export default async function PortalDashboardPage() {
       0,
     );
   const openProjects = snapshot.projects.filter(
-    (p) => !["COMPLETED", "CLOSED", "CANCELLED"].includes(p.status || ""),
+    (p) => ["ACTIVE", "IN_PROGRESS", "EN_CURSO"].includes((p.status || "").toUpperCase()),
   );
   const openTickets = snapshot.tickets.filter((t) => !["CLOSED", "RESOLVED"].includes(t.status));
   const firstName = snapshot.user?.firstName || snapshot.user?.name.split(" ")[0] || "Cliente";
@@ -171,7 +171,7 @@ export default async function PortalDashboardPage() {
         <section>
           <div className="section-heading">
             <div>
-              <h2>Proyectos en movimiento</h2>
+              <h2>Tus proyectos</h2>
               <p>De una buena idea a un gran resultado.</p>
             </div>
             <Link className="text-button" href="/clientes/panel/proyectos">
@@ -223,7 +223,7 @@ export default async function PortalDashboardPage() {
                 </div>
               </article>
             ))}
-            {openProjects.length === 0 && (
+            {snapshot.projects.length === 0 && (
               <div className="empty-state">
                 <BriefcaseBusiness size={30} />
                 <h2>Las próximas ideas empiezan aquí.</h2>
