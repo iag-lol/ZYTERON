@@ -1,5 +1,6 @@
 import { AccountStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { clientDatabase } from "./scoped-db";
 
 export function currencyCLP(value: number) {
   return new Intl.NumberFormat("es-CL", {
@@ -10,202 +11,209 @@ export function currencyCLP(value: number) {
 }
 
 export async function getClientPortalSnapshot(userId: string) {
-  const emailOwner = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { email: true },
-  });
-  const safeEmail = emailOwner?.email || "";
-
-  const [
-    user,
-    quotes,
-    projects,
-    sales,
-    taxDocuments,
-    documents,
-    tickets,
-    notifications,
-    communications,
-    credentials,
-    portalRequests,
-  ] = await Promise.all([
-    prisma.user.findUnique({
+  return clientDatabase(userId, async (prisma) => {
+    const emailOwner = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        company: true,
-        phone: true,
-        address: true,
-        rut: true,
-        role: true,
-        accountStatus: true,
-        emailVerifiedAt: true,
-        createdAt: true,
-        lastLoginAt: true,
-      },
-    }),
-    prisma.quote.findMany({
-      where: safeEmail ? { OR: [{ userId }, { email: { equals: safeEmail } }] } : { userId },
-      orderBy: { createdAt: "desc" },
-      take: 60,
-      select: {
-        id: true,
-        status: true,
-        total: true,
-        createdAt: true,
-        name: true,
-        company: true,
-        message: true,
-      },
-    }),
-    prisma.project.findMany({
-      where: { clientId: userId },
-      orderBy: { createdAt: "desc" },
-      take: 80,
-      select: {
-        id: true,
-        title: true,
-        status: true,
-        serviceArea: true,
-        priority: true,
-        description: true,
-        scope: true,
-        startDate: true,
-        endDate: true,
-        createdAt: true,
-      },
-    }),
-    prisma.sale.findMany({
-      where: { clientId: userId },
-      orderBy: { createdAt: "desc" },
-      take: 80,
-      select: {
-        id: true,
-        total: true,
-        description: true,
-        paymentMethod: true,
-        invoiceRef: true,
-        createdAt: true,
-      },
-    }),
-    prisma.taxDocument.findMany({
-      where: { clientId: userId },
-      orderBy: { createdAt: "desc" },
-      take: 80,
-      select: {
-        id: true,
-        type: true,
-        documentNumber: true,
-        issueDate: true,
-        dueDate: true,
-        totalAmount: true,
-        paymentStatus: true,
-        status: true,
-        pdfUrl: true,
-        createdAt: true,
-      },
-    }),
-    prisma.clientDocument.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: 120,
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        category: true,
-        fileName: true,
-        fileUrl: true,
-        createdAt: true,
-      },
-    }),
-    prisma.supportTicket.findMany({
-      where: { userId },
-      orderBy: { updatedAt: "desc" },
-      take: 120,
-      include: {
-        messages: {
-          orderBy: { createdAt: "asc" },
-          select: {
-            id: true,
-            authorRole: true,
-            message: true,
-            createdAt: true,
-            isInternal: true,
+      select: { email: true },
+    });
+    const safeEmail = emailOwner?.email || "";
+
+    const [
+      user,
+      quotes,
+      projects,
+      sales,
+      taxDocuments,
+      documents,
+      tickets,
+      notifications,
+      communications,
+      credentials,
+      portalRequests,
+    ] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          company: true,
+          phone: true,
+          address: true,
+          rut: true,
+          role: true,
+          accountStatus: true,
+          emailVerifiedAt: true,
+          createdAt: true,
+          lastLoginAt: true,
+        },
+      }),
+      prisma.quote.findMany({
+        where: safeEmail
+          ? {
+              OR: [{ userId }, { userId: null, email: { equals: safeEmail, mode: "insensitive" } }],
+            }
+          : { userId },
+        orderBy: { createdAt: "desc" },
+        take: 60,
+        select: {
+          id: true,
+          status: true,
+          total: true,
+          createdAt: true,
+          name: true,
+          company: true,
+          message: true,
+        },
+      }),
+      prisma.project.findMany({
+        where: { clientId: userId },
+        orderBy: { createdAt: "desc" },
+        take: 80,
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          serviceArea: true,
+          priority: true,
+          description: true,
+          scope: true,
+          startDate: true,
+          endDate: true,
+          createdAt: true,
+        },
+      }),
+      prisma.sale.findMany({
+        where: { clientId: userId },
+        orderBy: { createdAt: "desc" },
+        take: 80,
+        select: {
+          id: true,
+          total: true,
+          description: true,
+          paymentMethod: true,
+          invoiceRef: true,
+          createdAt: true,
+        },
+      }),
+      prisma.taxDocument.findMany({
+        where: { clientId: userId },
+        orderBy: { createdAt: "desc" },
+        take: 80,
+        select: {
+          id: true,
+          type: true,
+          documentNumber: true,
+          issueDate: true,
+          dueDate: true,
+          totalAmount: true,
+          paymentStatus: true,
+          status: true,
+          pdfUrl: true,
+          createdAt: true,
+        },
+      }),
+      prisma.clientDocument.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 120,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          category: true,
+          fileName: true,
+          fileUrl: true,
+          createdAt: true,
+        },
+      }),
+      prisma.supportTicket.findMany({
+        where: { userId },
+        orderBy: { updatedAt: "desc" },
+        take: 120,
+        include: {
+          messages: {
+            where: { isInternal: false },
+            orderBy: { createdAt: "asc" },
+            select: {
+              id: true,
+              authorRole: true,
+              message: true,
+              createdAt: true,
+              isInternal: true,
+            },
           },
         },
-      },
-    }),
-    prisma.clientNotification.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: 80,
-    }),
-    prisma.clientCommunication.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: 80,
-    }),
-    prisma.clientCredential.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: 80,
-      select: {
-        id: true,
-        serviceName: true,
-        username: true,
-        secretCiphertext: true,
-        url: true,
-        notes: true,
-        isSensitive: true,
-        createdAt: true,
-        updatedAt: true,
-        project: {
-          select: { id: true, title: true },
+      }),
+      prisma.clientNotification.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 80,
+      }),
+      prisma.clientCommunication.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 80,
+      }),
+      prisma.clientCredential.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 80,
+        select: {
+          id: true,
+          serviceName: true,
+          username: true,
+          secretCiphertext: true,
+          url: true,
+          notes: true,
+          isSensitive: true,
+          createdAt: true,
+          updatedAt: true,
+          project: {
+            select: { id: true, title: true },
+          },
         },
-      },
-    }),
-    prisma.portalRequest.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: 80,
-    }),
-  ]);
+      }),
+      prisma.portalRequest.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 80,
+      }),
+    ]);
 
-  const safeCredentials = credentials.map((cred) => {
+    const safeCredentials = credentials.map((cred) => {
+      return {
+        id: cred.id,
+        project: cred.project,
+        serviceName: cred.serviceName,
+        username: cred.username,
+        // El listado nunca descifra secretos. La revelación exige contraseña +
+        // código de un solo uso en su endpoint dedicado y queda auditada.
+        secretMasked: cred.secretCiphertext ? "••••••••" : null,
+        url: cred.url,
+        notes: cred.notes,
+        isSensitive: cred.isSensitive,
+        createdAt: cred.createdAt,
+        updatedAt: cred.updatedAt,
+      };
+    });
+
     return {
-      id: cred.id,
-      project: cred.project,
-      serviceName: cred.serviceName,
-      username: cred.username,
-      // El listado nunca descifra secretos. La revelación exige contraseña +
-      // código de un solo uso en su endpoint dedicado y queda auditada.
-      secretMasked: cred.secretCiphertext ? "••••••••" : null,
-      url: cred.url,
-      notes: cred.notes,
-      isSensitive: cred.isSensitive,
-      createdAt: cred.createdAt,
-      updatedAt: cred.updatedAt,
+      user,
+      quotes,
+      projects,
+      sales,
+      taxDocuments,
+      documents,
+      tickets,
+      notifications,
+      communications,
+      credentials: safeCredentials,
+      portalRequests,
     };
   });
-
-  return {
-    user,
-    quotes,
-    projects,
-    sales,
-    taxDocuments,
-    documents,
-    tickets,
-    notifications,
-    communications,
-    credentials: safeCredentials,
-    portalRequests,
-  };
 }
 
 export async function getPortalClientsAdminOverview(filters?: {

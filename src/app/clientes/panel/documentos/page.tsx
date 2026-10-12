@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Download, FolderOpen } from "lucide-react";
 import { requirePortalSession } from "@/lib/auth/portal-session";
-import { prisma } from "@/lib/prisma";
+import { getScopedPortalDatabase } from "@/lib/portal/scoped-db";
 
 function formatDate(value: Date) {
   return value.toLocaleDateString("es-CL", {
@@ -13,6 +13,7 @@ function formatDate(value: Date) {
 
 export default async function PortalDocumentosPage() {
   const session = await requirePortalSession();
+  const prisma = getScopedPortalDatabase(session.user.id);
   const docs = await prisma.clientDocument.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },

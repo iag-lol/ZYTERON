@@ -7,6 +7,7 @@ import { siteConfig } from "@/config/site";
 import { useAdminUi } from "@/components/admin/admin-ui-context";
 import {
   LayoutDashboard,
+  Layers3,
   Users,
   ShoppingCart,
   FileText,
@@ -124,6 +125,18 @@ const navGroups: NavGroup[] = [
   {
     label: "Ventas & Clientes",
     items: [
+      {
+        href: "/administracion/entradas",
+        label: "Entradas y solicitudes",
+        icon: Inbox,
+        color: "emerald",
+      },
+      {
+        href: "/administracion/recursos-clientes",
+        label: "Servicios y agenda",
+        icon: Layers3,
+        color: "emerald",
+      },
       { href: "/administracion/clientes", label: "Clientes", icon: Users, color: "blue" },
       { href: "/administracion/contactos", label: "Contactos", icon: Mail, color: "sky" },
       {
@@ -144,6 +157,12 @@ const navGroups: NavGroup[] = [
   {
     label: "Comunicación",
     items: [
+      {
+        href: "/administracion/conversaciones-web",
+        label: "Conversaciones web",
+        icon: MessageCircle,
+        color: "emerald",
+      },
       {
         href: "/administracion/whatsapp",
         label: "WhatsApp",

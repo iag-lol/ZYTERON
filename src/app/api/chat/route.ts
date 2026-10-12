@@ -5,6 +5,9 @@ import { LEAD_CAPTURE_TOOL, executeLeadCapture } from "@/lib/ai/lead-capture";
 import { HANDOFF_SIGNAL } from "@/lib/ai/handoff-signal";
 import { notifyOwnerChatStarted } from "@/lib/notifications/chat-started-alert";
 import { siteConfig } from "@/config/site";
+import { randomUUID } from "node:crypto";
+import { beginChat, finishChat, chatCookieName, type ChatContext } from "@/lib/ai/chat-store";
+import { boundedJson, publicRateLimit, intakeFailure } from "@/lib/security/public-intake";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,37 +19,6 @@ const DEFAULT_MODEL = "gpt-4o-mini";
 const MAX_MESSAGES = 24; // últimos turnos que enviamos al modelo
 const MAX_CONTENT = 4000; // caracteres por mensaje
 
-// -- Rate limit en memoria (mismo patrón que /api/contacto) -----------------
-
-type RateLimitEntry = { hits: number; firstHitAt: number };
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX_HITS = 20;
-
-declare global {
-  var zyteronChatRateLimit: Map<string, RateLimitEntry> | undefined;
-}
-
-const rateLimitStore = globalThis.zyteronChatRateLimit ?? new Map<string, RateLimitEntry>();
-globalThis.zyteronChatRateLimit = rateLimitStore;
-
-function extractRequestIp(req: Request) {
-  const forwardedFor = req.headers.get("x-forwarded-for");
-  if (forwardedFor) return forwardedFor.split(",")[0]!.trim();
-  return req.headers.get("x-real-ip")?.trim() || "unknown";
-}
-
-function checkRateLimit(ip: string) {
-  const now = Date.now();
-  const previous = rateLimitStore.get(ip);
-  if (!previous || now - previous.firstHitAt > RATE_LIMIT_WINDOW_MS) {
-    rateLimitStore.set(ip, { hits: 1, firstHitAt: now });
-    return true;
-  }
-  if (previous.hits >= RATE_LIMIT_MAX_HITS) return false;
-  previous.hits += 1;
-  return true;
-}
-
 // -- Validación -------------------------------------------------------------
 
 const messageSchema = z.object({
@@ -55,13 +27,20 @@ const messageSchema = z.object({
 });
 
 const bodySchema = z.object({
-  messages: z.array(messageSchema).min(1).max(MAX_MESSAGES * 2),
+  messages: z
+    .array(messageSchema)
+    .min(1)
+    .max(MAX_MESSAGES * 2),
+  requestId: z.string().uuid().optional(),
 });
 
 function readEnv(name: string) {
   const value = process.env[name];
   if (typeof value !== "string") return "";
-  return value.trim().replace(/^['"]|['"]$/g, "").trim();
+  return value
+    .trim()
+    .replace(/^['"]|['"]$/g, "")
+    .trim();
 }
 
 // -- Utilidades de streaming ------------------------------------------------
@@ -77,12 +56,17 @@ function textStream(text: string) {
   });
 }
 
-function streamingResponse(stream: ReadableStream<Uint8Array>) {
+function streamingResponse(stream: ReadableStream<Uint8Array>, context?: ChatContext) {
   return new Response(stream, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
       "X-Accel-Buffering": "no",
+      ...(context
+        ? {
+            "Set-Cookie": `${chatCookieName}=${context.cookie}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400${process.env.NODE_ENV === "production" ? "; Secure" : ""}`,
+          }
+        : {}),
     },
   });
 }
@@ -99,44 +83,43 @@ const FALLBACK_ERROR =
 // -- Handler ----------------------------------------------------------------
 
 export async function POST(req: Request) {
-  // 1) Rate limit
-  const ip = extractRequestIp(req);
-  if (!checkRateLimit(ip)) {
-    return streamingResponse(
-      textStream(
-        "Estás enviando mensajes muy rápido. Espera unos segundos e inténtalo nuevamente, por favor.",
-      ),
-    );
+  try {
+    const limit = await publicRateLimit(req, "chat", 20);
+    if (!limit.allowed)
+      return new Response("Espera un minuto antes de continuar.", {
+        status: 429,
+        headers: { "retry-after": "60" },
+      });
+  } catch (error) {
+    return intakeFailure(error);
   }
-
   // 2) Parseo y validación (nunca lanzamos: devolvemos texto amable)
   let messages: z.infer<typeof messageSchema>[];
+  let context: ChatContext;
   try {
-    const json = await req.json();
+    const json = await boundedJson(req);
     const parsed = bodySchema.safeParse(json);
     if (!parsed.success) {
       return streamingResponse(
         textStream("No pude leer tu mensaje. ¿Puedes escribirlo nuevamente, por favor?"),
       );
     }
-    messages = parsed.data.messages.slice(-MAX_MESSAGES);
-  } catch {
-    return streamingResponse(
-      textStream("No pude leer tu mensaje. ¿Puedes escribirlo nuevamente, por favor?"),
-    );
+    const latest = parsed.data.messages.filter((m) => m.role === "user").at(-1);
+    if (!latest) return new Response("Escribe tu mensaje para continuar.", { status: 400 });
+    context = await beginChat(req, latest.content, parsed.data.requestId || randomUUID());
+    if (context.replay) return streamingResponse(textStream(context.replay), context);
+    messages = context.history;
+  } catch (error) {
+    return intakeFailure(error);
   }
 
-  // 2b) Aviso al dueño al INICIAR la conversación (primer mensaje del visitante).
-  //     Solo una vez por sesión: cuando hay exactamente un mensaje de usuario.
-  const userMessages = messages.filter((m) => m.role === "user");
-  if (userMessages.length === 1) {
-    void notifyOwnerChatStarted(userMessages[0]!.content);
-  }
-
+  if (context.history.filter((m) => m.role === "user").length === 1)
+    void notifyOwnerChatStarted(context.history[0]?.content || "");
   // 3) Sin API key configurada: fallback amable (no es un error para el usuario)
   const apiKey = readEnv("OPENAI_API_KEY");
   if (!apiKey) {
-    return streamingResponse(textStream(FALLBACK_NO_KEY));
+    await finishChat(context, FALLBACK_NO_KEY);
+    return streamingResponse(textStream(FALLBACK_NO_KEY), context);
   }
 
   const model = readEnv("OPENAI_MODEL") || DEFAULT_MODEL;
@@ -151,9 +134,13 @@ export async function POST(req: Request) {
 
   // Loop con function-calling: la IA puede registrar el lead y luego confirmar
   // al cliente en lenguaje natural. Todo se transmite en streaming.
+  let captured = "";
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const emit = (text: string) => controller.enqueue(encoder.encode(text));
+      const emit = (text: string) => {
+        if (text !== HANDOFF_SIGNAL) captured += text;
+        controller.enqueue(encoder.encode(text));
+      };
       const MAX_TURNS = 3;
       try {
         for (let turn = 0; turn < MAX_TURNS; turn++) {
@@ -165,6 +152,7 @@ export async function POST(req: Request) {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${apiKey}`,
               },
+              signal: AbortSignal.timeout(45000),
               body: JSON.stringify({
                 model,
                 stream: true,
@@ -211,7 +199,10 @@ export async function POST(req: Request) {
               } catch {
                 parsed = {};
               }
-              const outcome = await executeLeadCapture(parsed);
+              const outcome = await executeLeadCapture(parsed, {
+                threadId: context.threadId,
+                userId: context.userId,
+              });
               result = outcome.message;
               // Señal para el widget: el cliente ya está listo (dio datos) →
               // recién ahí se ofrece el botón "Continuar por WhatsApp".
@@ -224,12 +215,17 @@ export async function POST(req: Request) {
       } catch {
         emit("\n" + FALLBACK_ERROR);
       } finally {
+        try {
+          await finishChat(context, captured);
+        } catch {
+          /* El turno entrante permanece en la bandeja para revisión. */
+        }
         controller.close();
       }
     },
   });
 
-  return streamingResponse(stream);
+  return streamingResponse(stream, context);
 }
 
 // -- Tipos y parser de streaming con tool-calls -----------------------------

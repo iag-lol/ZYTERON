@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { getClientFinanceSummary } from "@/lib/admin/client-finance";
 import { requirePortalSession } from "@/lib/auth/portal-session";
-import { prisma } from "@/lib/prisma";
+import { getScopedPortalDatabase } from "@/lib/portal/scoped-db";
 import { currencyCLP } from "@/lib/portal/data";
 
 function formatDate(value?: Date | null) {
@@ -22,6 +22,7 @@ function formatDate(value?: Date | null) {
 
 export default async function PortalComprasBoletasPage() {
   const session = await requirePortalSession();
+  const prisma = getScopedPortalDatabase(session.user.id);
   const [sales, documents, finance] = await Promise.all([
     prisma.sale.findMany({
       where: { clientId: session.user.id },

@@ -7,7 +7,7 @@ import {
   quotePaymentVisibleInPortal,
 } from "@/lib/payments/quote-payments";
 import { QuotePaymentActions } from "@/components/portal/panel/quote-payment-actions";
-import { prisma } from "@/lib/prisma";
+import { getScopedPortalDatabase } from "@/lib/portal/scoped-db";
 import { currencyCLP } from "@/lib/portal/data";
 
 function formatDate(value?: Date | string | null) {
@@ -29,6 +29,7 @@ type PageProps = {
 
 export default async function PortalCotizacionesPage({ searchParams }: PageProps) {
   const session = await requirePortalSession();
+  const prisma = getScopedPortalDatabase(session.user.id);
   void searchParams;
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -36,7 +37,12 @@ export default async function PortalCotizacionesPage({ searchParams }: PageProps
   });
   const rawQuotes = await prisma.quote.findMany({
     where: user?.email
-      ? { OR: [{ userId: session.user.id }, { email: user.email }] }
+      ? {
+          OR: [
+            { userId: session.user.id },
+            { userId: null, email: { equals: user.email, mode: "insensitive" } },
+          ],
+        }
       : { userId: session.user.id },
     orderBy: { createdAt: "desc" },
     take: 200,
@@ -62,10 +68,13 @@ export default async function PortalCotizacionesPage({ searchParams }: PageProps
       meta: normalizeQuoteMetaPayment(enriched.meta),
     };
   });
-  const cancellations = await prisma.$queryRaw<Array<{ quote_id: string }>>`SELECT quote_id FROM zyteron_recurring_lifecycle WHERE client_id=${session.user.id} AND state!='ACTIVE'`;
+  const cancellations = await prisma.$queryRaw<
+    Array<{ quote_id: string }>
+  >`SELECT quote_id FROM zyteron_recurring_lifecycle WHERE client_id=${session.user.id} AND state!='ACTIVE'`;
   const cancelledIds = new Set(cancellations.map((r) => r.quote_id));
-  const actionableQuotes = quotes.filter((quote) =>
-    !cancelledIds.has(quote.id) && quotePaymentVisibleInPortal(quote.status, quote.meta.payment),
+  const actionableQuotes = quotes.filter(
+    (quote) =>
+      !cancelledIds.has(quote.id) && quotePaymentVisibleInPortal(quote.status, quote.meta.payment),
   );
 
   return (
@@ -79,8 +88,12 @@ export default async function PortalCotizacionesPage({ searchParams }: PageProps
 
       {cancellations.length > 0 && (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-950">
-          Tienes suscripciones con solicitud de cancelación. Revisa su confirmación y el período pagado en{" "}
-          <Link href="/clientes/panel/pagos" className="font-semibold underline">Pagos y renovaciones</Link>.
+          Tienes suscripciones con solicitud de cancelación. Revisa su confirmación y el período
+          pagado en{" "}
+          <Link href="/clientes/panel/pagos" className="font-semibold underline">
+            Pagos y renovaciones
+          </Link>
+          .
         </div>
       )}
       {actionableQuotes.length > 0 ? (

@@ -32,13 +32,16 @@ export async function POST(req: Request) {
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { passwordHash: await hash(parsed.data.password, 12) },
+      data: {
+        passwordHash: await hash(parsed.data.password, 12),
+        sessionVersion: { increment: 1 },
+      },
     });
 
     return NextResponse.json({ ok: true, message: "Contraseña actualizada correctamente." });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "No se pudo restablecer la contraseña.";
+    const message =
+      error instanceof Error ? error.message : "No se pudo restablecer la contraseña.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }
-

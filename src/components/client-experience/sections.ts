@@ -1,0 +1,17 @@
+export const experienceSections = [
+  { path: "", label: "Inicio", group: "TU ESPACIO", icon: "home" },
+  { path: "/servicios", label: "Mis servicios", icon: "services" },
+  { path: "/proyectos", label: "Proyectos", icon: "projects" },
+  { path: "/cuenta", label: "Estado de cuenta", group: "GESTIÓN Y DOCUMENTOS", icon: "wallet" },
+  { path: "/pagos", label: "Pagos y renovaciones", icon: "payments" },
+  { path: "/cotizaciones", label: "Cotizaciones y contratos", icon: "contracts" },
+  { path: "/documentos", label: "Documentos", icon: "documents" },
+  { path: "/credenciales", label: "Credenciales", icon: "security" },
+  { path: "/asistencia", label: "Asistencia técnica", group: "ACOMPAÑAMIENTO", icon: "support" },
+  { path: "/monitoreo", label: "Monitoreo", icon: "monitor" },
+  { path: "/informes", label: "Informes y mantenciones", icon: "reports" },
+  { path: "/agenda", label: "Agenda", icon: "calendar" },
+  { path: "/notificaciones", label: "Notificaciones", icon: "notifications" },
+  { path: "/empresa", label: "Mi empresa", group: "CONFIGURACIÓN", icon: "company" },
+  { path: "/perfil", label: "Mi perfil y seguridad", icon: "profile" },
+];

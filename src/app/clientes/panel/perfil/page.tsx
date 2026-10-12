@@ -1,7 +1,17 @@
-import { Activity, BadgeCheck, Clock, Key, LogIn, Mail, Shield, ShieldCheck, UserRound } from "lucide-react";
+import {
+  Activity,
+  BadgeCheck,
+  Clock,
+  Key,
+  LogIn,
+  Mail,
+  Shield,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import { ProfileSettingsForm } from "@/components/portal/panel/profile-settings-form";
 import { requirePortalSession } from "@/lib/auth/portal-session";
-import { prisma } from "@/lib/prisma";
+import { getScopedPortalDatabase } from "@/lib/portal/scoped-db";
 
 function formatDate(value?: Date | null) {
   if (!value) return "—";
@@ -43,6 +53,7 @@ function getAuditActionLabel(action: string) {
 
 export default async function PortalPerfilPage() {
   const session = await requirePortalSession();
+  const prisma = getScopedPortalDatabase(session.user.id);
   const [user, auditLogs] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
@@ -80,29 +91,43 @@ export default async function PortalPerfilPage() {
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 px-3.5 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Correo</p>
+            <p className="text-[11px] font-semibold tracking-widest text-slate-500 uppercase">
+              Correo
+            </p>
             <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-slate-900">
               <Mail className="h-4 w-4 text-blue-700" />
               {user.email}
             </p>
           </div>
           <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 px-3.5 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Verificación</p>
-            <p className={`mt-1 flex items-center gap-1.5 text-sm font-semibold ${user.emailVerifiedAt ? "text-emerald-700" : "text-amber-700"}`}>
-              <BadgeCheck className={`h-4 w-4 ${user.emailVerifiedAt ? "animate-pulse-badge" : ""}`} />
+            <p className="text-[11px] font-semibold tracking-widest text-slate-500 uppercase">
+              Verificación
+            </p>
+            <p
+              className={`mt-1 flex items-center gap-1.5 text-sm font-semibold ${user.emailVerifiedAt ? "text-emerald-700" : "text-amber-700"}`}
+            >
+              <BadgeCheck
+                className={`h-4 w-4 ${user.emailVerifiedAt ? "animate-pulse-badge" : ""}`}
+              />
               {user.emailVerifiedAt ? "Verificado" : "Pendiente"}
             </p>
           </div>
           <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 px-3.5 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Estado cuenta</p>
+            <p className="text-[11px] font-semibold tracking-widest text-slate-500 uppercase">
+              Estado cuenta
+            </p>
             <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-slate-900">
               <Shield className="h-4 w-4 text-blue-700" />
               {user.accountStatus}
             </p>
           </div>
           <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 px-3.5 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Último acceso</p>
-            <p className="mt-1 text-sm font-semibold text-slate-900">{formatDate(user.lastLoginAt)}</p>
+            <p className="text-[11px] font-semibold tracking-widest text-slate-500 uppercase">
+              Último acceso
+            </p>
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              {formatDate(user.lastLoginAt)}
+            </p>
           </div>
         </div>
       </section>
@@ -135,7 +160,9 @@ export default async function PortalPerfilPage() {
                 Método de acceso
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                {user.authProvider === "GOOGLE" ? "Google OAuth 2.0" : "Credenciales locales (bcrypt)"}
+                {user.authProvider === "GOOGLE"
+                  ? "Google OAuth 2.0"
+                  : "Credenciales locales (bcrypt)"}
               </p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-white p-3.5">
@@ -171,7 +198,9 @@ export default async function PortalPerfilPage() {
                 Verificación email
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                {user.emailVerifiedAt ? `Verificado el ${formatDate(user.emailVerifiedAt)}` : "Pendiente de verificación"}
+                {user.emailVerifiedAt
+                  ? `Verificado el ${formatDate(user.emailVerifiedAt)}`
+                  : "Pendiente de verificación"}
               </p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-white p-3.5">
@@ -190,13 +219,18 @@ export default async function PortalPerfilPage() {
             <h4 className="text-sm font-bold text-slate-900">Actividad reciente de tu cuenta</h4>
             <div className="mt-3 space-y-2">
               {auditLogs.map((log) => (
-                <div key={log.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5">
+                <div
+                  key={log.id}
+                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5"
+                >
                   <div className="flex items-center gap-2.5">
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100">
                       <Activity className="h-3.5 w-3.5 text-blue-600" />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-slate-800">{getAuditActionLabel(log.action)}</p>
+                      <p className="text-xs font-semibold text-slate-800">
+                        {getAuditActionLabel(log.action)}
+                      </p>
                       <p className="text-[11px] text-slate-500">{log.entityType}</p>
                     </div>
                   </div>
@@ -204,7 +238,7 @@ export default async function PortalPerfilPage() {
                 </div>
               ))}
               {auditLogs.length === 0 ? (
-                <p className="text-center text-xs text-slate-500 py-4">Sin actividad registrada.</p>
+                <p className="py-4 text-center text-xs text-slate-500">Sin actividad registrada.</p>
               ) : null}
             </div>
           </div>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "@/components/client-experience/experience.css";
 
 export const metadata: Metadata = {
   robots: {
@@ -15,5 +16,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <div className="zy-experience zy-admin">{children}</div>;
 }

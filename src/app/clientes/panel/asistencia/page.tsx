@@ -1,10 +1,11 @@
 import { CheckCircle, Clock, LifeBuoy } from "lucide-react";
 import { SupportTicketCenter } from "@/components/portal/panel/support-ticket-center";
 import { requirePortalSession } from "@/lib/auth/portal-session";
-import { prisma } from "@/lib/prisma";
+import { getScopedPortalDatabase } from "@/lib/portal/scoped-db";
 
 export default async function PortalAsistenciaPage() {
   const session = await requirePortalSession();
+  const prisma = getScopedPortalDatabase(session.user.id);
   const [tickets, projects] = await Promise.all([
     prisma.supportTicket.findMany({
       where: { userId: session.user.id },
@@ -55,7 +56,9 @@ export default async function PortalAsistenciaPage() {
             </div>
             <div>
               <p className="text-lg font-extrabold text-slate-900">{openCount}</p>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Abiertos</p>
+              <p className="text-[11px] font-semibold tracking-widest text-slate-500 uppercase">
+                Abiertos
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
@@ -64,7 +67,9 @@ export default async function PortalAsistenciaPage() {
             </div>
             <div>
               <p className="text-lg font-extrabold text-slate-900">{resolvedCount}</p>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Resueltos</p>
+              <p className="text-[11px] font-semibold tracking-widest text-slate-500 uppercase">
+                Resueltos
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
@@ -73,7 +78,9 @@ export default async function PortalAsistenciaPage() {
             </div>
             <div>
               <p className="text-lg font-extrabold text-slate-900">{tickets.length}</p>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Totales</p>
+              <p className="text-[11px] font-semibold tracking-widest text-slate-500 uppercase">
+                Totales
+              </p>
             </div>
           </div>
         </div>

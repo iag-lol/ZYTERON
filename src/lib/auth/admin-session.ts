@@ -28,12 +28,10 @@ type AdminSessionPayload = {
  * sesión: es preferible que el panel quede inaccesible a que quede abierto.
  */
 function secret(): string | null {
-  const value = (
-    process.env.ADMIN_SESSION_SECRET ||
-    process.env.NEXTAUTH_SECRET ||
-    ""
-  ).trim();
-  return value.length >= 16 ? value : null;
+  const value = (process.env.ADMIN_SESSION_SECRET || process.env.NEXTAUTH_SECRET || "").trim();
+  return value.length >= 16
+    ? value + "|admin-password:" + (process.env.ADMIN_PASSWORD || "")
+    : null;
 }
 
 export function isAdminAuthConfigured(): boolean {
@@ -47,10 +45,10 @@ function toBase64Url(bytes: Uint8Array): string {
 }
 
 function fromBase64Url(value: string): Uint8Array {
-  const padded = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(
-    value.length + ((4 - (value.length % 4)) % 4),
-    "=",
-  );
+  const padded = value
+    .replace(/-/g, "+")
+    .replace(/_/g, "/")
+    .padEnd(value.length + ((4 - (value.length % 4)) % 4), "=");
   const binary = atob(padded);
   return Uint8Array.from(binary, (char) => char.charCodeAt(0));
 }

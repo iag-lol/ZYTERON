@@ -36,21 +36,24 @@ function hasStaticRoute(destination: string): boolean {
   const clean = destination.split("?")[0].split("#")[0];
   const segments = clean.split("/").filter(Boolean);
 
-  let dir = APP_DIR;
-  for (const segment of segments) {
-    const literal = path.join(dir, segment);
-    if (existsSync(literal)) {
-      dir = literal;
-      continue;
-    }
-    const dynamic = readdirSync(dir, { withFileTypes: true }).find(
-      (entry) => entry.isDirectory() && entry.name.startsWith("[") && entry.name.endsWith("]"),
+  function resolve(dir: string, index: number): boolean {
+    const entries = readdirSync(dir, { withFileTypes: true }).filter((entry) =>
+      entry.isDirectory(),
     );
-    if (!dynamic) return false;
-    dir = path.join(dir, dynamic.name);
+    if (index === segments.length && existsSync(path.join(dir, "page.tsx"))) return true;
+    for (const entry of entries) {
+      if (entry.name.startsWith("(") && entry.name.endsWith(")")) {
+        if (resolve(path.join(dir, entry.name), index)) return true;
+      } else if (
+        index < segments.length &&
+        (entry.name === segments[index] || (entry.name.startsWith("[") && entry.name.endsWith("]")))
+      ) {
+        if (resolve(path.join(dir, entry.name), index + 1)) return true;
+      }
+    }
+    return false;
   }
-
-  return existsSync(path.join(dir, "page.tsx"));
+  return resolve(APP_DIR, 0);
 }
 
 describe("redirecciones · integridad de la tabla", () => {
@@ -75,7 +78,9 @@ describe("redirecciones · integridad de la tabla", () => {
   it("no tiene ciclos", async () => {
     const redirects = await loadRedirects();
     const map = new Map(
-      redirects.filter((r) => !r.source.includes(":") && !r.has).map((r) => [r.source, r.destination]),
+      redirects
+        .filter((r) => !r.source.includes(":") && !r.has)
+        .map((r) => [r.source, r.destination]),
     );
 
     for (const start of map.keys()) {
@@ -92,7 +97,15 @@ describe("redirecciones · integridad de la tabla", () => {
   it("usa 308/301 permanentes: ninguna migración definitiva queda temporal", async () => {
     const redirects = await loadRedirects();
     for (const rule of redirects) {
-      if (["/admin/:path*", "/portal-clientes/:path*"].includes(rule.source)) continue;
+      if (
+        [
+          "/admin/:path*",
+          "/portal-clientes/:path*",
+          "/clientes/admin",
+          "/clientes/admin/:path*",
+        ].includes(rule.source)
+      )
+        continue;
       assert.equal(
         rule.permanent,
         true,

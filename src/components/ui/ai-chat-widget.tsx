@@ -12,21 +12,17 @@ import {
   trackChatQualified,
 } from "@/lib/analytics/google-ads";
 import { HANDOFF_SIGNAL } from "@/lib/ai/handoff-signal";
-import {
-  ZYTERON_QUICK_PROMPTS,
-  ZYTERON_WELCOME_MESSAGE,
-} from "@/lib/ai/zyteron-knowledge";
+import { ZYTERON_QUICK_PROMPTS, ZYTERON_WELCOME_MESSAGE } from "@/lib/ai/zyteron-knowledge";
 
 const WHATSAPP_DIGITS = siteConfig.contact.phone.replace(/\D/g, "");
 
 type ChatRole = "user" | "assistant";
 type ChatMessage = { id: string; role: ChatRole; content: string };
 
-const STORAGE_KEY = "zyteron_chat_history_v1";
 const TEASER_DISMISSED_KEY = "zyteron_chat_teaser_dismissed_v1";
 
 function makeId() {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  return crypto.randomUUID();
 }
 
 function welcomeMessage(): ChatMessage {
@@ -48,27 +44,33 @@ export function AiChatWidget() {
   // Evita emitir chat_qualified más de una vez por conversación.
   const qualifiedRef = useRef(false);
 
-  // Restaurar historial de la sesión.
-  useEffect(() => {
+  // Only server-authorized history is restored. Never retain another account's
+  // transcript in browser storage after logout or a change of account.
+  const synchronizeHistory = useCallback(async () => {
     try {
-      const raw = sessionStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as ChatMessage[];
-        if (Array.isArray(parsed) && parsed.length > 0) setMessages(parsed);
+      const response = await fetch("/api/chat/history", { cache: "no-store" });
+      if (!response.ok) return;
+      const data = (await response.json()) as { messages?: ChatMessage[] };
+      if (Array.isArray(data.messages)) {
+        setMessages(data.messages.length ? data.messages : [welcomeMessage()]);
       }
     } catch {
-      /* noop */
+      /* Keep current draft when connectivity is temporarily unavailable. */
     }
   }, []);
-
-  // Persistir historial de la sesión.
   useEffect(() => {
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-40)));
-    } catch {
-      /* noop */
-    }
-  }, [messages]);
+    if (!open || isStreaming) return;
+    void synchronizeHistory();
+    const interval = setInterval(() => void synchronizeHistory(), 15000);
+    const refresh = () => {
+      if (document.visibilityState === "visible") void synchronizeHistory();
+    };
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [open, isStreaming, synchronizeHistory]);
 
   // Burbuja proactiva SIEMPRE visible (aparece de inmediato) mientras el chat
   // esté cerrado, salvo que el visitante la cierre manualmente en la sesión.
@@ -141,13 +143,12 @@ export function AiChatWidget() {
           headers: { "Content-Type": "application/json" },
           signal: controller.signal,
           body: JSON.stringify({
-            // Incluimos el saludo de bienvenida como primer turno del asistente
-            // para que la IA sepa que YA saludó y no vuelva a presentarse.
-            messages: history.map((m) => ({ role: m.role, content: m.content })),
+            requestId: userMsg.id,
+            messages: [{ role: "user", content: trimmed }],
           }),
         });
 
-        if (!res.body) throw new Error("no-body");
+        if (!res.ok || !res.body) throw new Error("chat-unavailable");
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -231,25 +232,9 @@ export function AiChatWidget() {
   const goToWhatsApp = useCallback(async () => {
     if (handoffLoading) return;
     setHandoffLoading(true);
-    const history = messages
-      .filter((m) => m.id !== "welcome")
-      .map((m) => ({ role: m.role, content: m.content }));
-    let text = "Hola, vengo del sitio web de Zyteron. Quiero cotizar un proyecto para mi empresa.";
-    try {
-      if (history.length > 0) {
-        const res = await fetch("/api/chat/handoff", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: history }),
-        });
-        const data = (await res.json().catch(() => null)) as { text?: string } | null;
-        if (data?.text) text = data.text;
-      }
-    } catch {
-      /* usa el texto por defecto */
-    } finally {
-      setHandoffLoading(false);
-    }
+    const text =
+      "Hola, vengo del sitio web de Zyteron. Quiero cotizar un proyecto para mi empresa.";
+    setHandoffLoading(false);
     const url = `https://wa.me/${WHATSAPP_DIGITS}?text=${encodeURIComponent(text)}`;
     // window.open no pasa por el listener global de anchors, así que el
     // evento de conversión se registra aquí.
@@ -259,7 +244,7 @@ export function AiChatWidget() {
       link_text: "chat_handoff",
     });
     window.open(url, "_blank", "noopener,noreferrer");
-  }, [handoffLoading, messages]);
+  }, [handoffLoading]);
 
   const showQuickPrompts = messages.filter((m) => m.role === "user").length === 0;
 
@@ -295,6 +280,10 @@ export function AiChatWidget() {
               <X className="h-5 w-5" />
             </button>
           </header>
+          <p className="border-b border-slate-100 bg-emerald-50 px-4 py-2 text-[10px] text-emerald-900">
+            Tus mensajes quedan disponibles para el equipo de Zyteron para dar seguimiento a tu
+            solicitud.
+          </p>
 
           {/* Mensajes */}
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-slate-50 px-4 py-4">
@@ -325,10 +314,7 @@ export function AiChatWidget() {
           </div>
 
           {/* Entrada */}
-          <form
-            onSubmit={handleSubmit}
-            className="border-t border-slate-200 bg-white px-3 py-3"
-          >
+          <form onSubmit={handleSubmit} className="border-t border-slate-200 bg-white px-3 py-3">
             <div className="flex items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
               <textarea
                 ref={inputRef}
@@ -377,7 +363,7 @@ export function AiChatWidget() {
 
       {/* Burbuja proactiva (siempre visible mientras el chat esté cerrado) */}
       {!open && showTeaser && (
-        <div className="fixed bottom-[92px] right-4 z-40 w-[300px] max-w-[calc(100vw-2rem)] sm:bottom-28 sm:right-6 sm:w-[330px]">
+        <div className="fixed right-4 bottom-[92px] z-40 w-[300px] max-w-[calc(100vw-2rem)] sm:right-6 sm:bottom-28 sm:w-[330px]">
           <button
             type="button"
             onClick={openPanel}
@@ -398,7 +384,7 @@ export function AiChatWidget() {
                   dismissTeaser();
                 }
               }}
-              className="absolute -right-2.5 -top-2.5 flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:text-slate-700"
+              className="absolute -top-2.5 -right-2.5 flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:text-slate-700"
             >
               <X className="h-3.5 w-3.5" />
             </span>
@@ -411,7 +397,7 @@ export function AiChatWidget() {
                 Zara · Asistente Zyteron
               </span>
             </span>
-            <span className="mt-2.5 block text-[15px] font-semibold leading-snug text-slate-800">
+            <span className="mt-2.5 block text-[15px] leading-snug font-semibold text-slate-800">
               Hola, ¿en qué te puedo ayudar hoy?
             </span>
             <span className="mt-1 block text-[13px] leading-snug text-slate-500">
@@ -432,13 +418,13 @@ export function AiChatWidget() {
           onClick={openPanel}
           aria-label="Abrir asistente virtual"
           className={cn(
-            "fixed bottom-5 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full",
+            "fixed right-4 bottom-5 z-40 flex h-14 w-14 items-center justify-center rounded-full",
             "bg-blue-600 text-white shadow-lg shadow-blue-600/30 transition-all duration-200",
-            "hover:scale-105 hover:bg-blue-700 sm:bottom-6 sm:right-6",
+            "hover:scale-105 hover:bg-blue-700 sm:right-6 sm:bottom-6",
           )}
         >
           <MessageCircle className="h-6 w-6" />
-          <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5">
+          <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-emerald-500 ring-2 ring-white" />
           </span>
@@ -459,7 +445,7 @@ function MessageBubble({ role, content }: { role: ChatRole; content: string }) {
       )}
       <div
         className={cn(
-          "max-w-[78%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-[13.5px] leading-relaxed",
+          "max-w-[78%] rounded-2xl px-3.5 py-2.5 text-[13.5px] leading-relaxed whitespace-pre-wrap",
           isUser
             ? "rounded-br-sm bg-blue-600 text-white"
             : "rounded-bl-sm border border-slate-200 bg-white text-slate-700",

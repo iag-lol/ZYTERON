@@ -3,7 +3,8 @@ import { getServerSession } from "next-auth";
 import { Role } from "@prisma/client";
 import { z } from "zod";
 import { portalAuthOptions } from "@/lib/auth/portal-auth";
-import { prisma } from "@/lib/prisma";
+import { getScopedPortalDatabase } from "@/lib/portal/scoped-db";
+import { boundedJson } from "@/lib/security/public-intake";
 
 const createTicketSchema = z.object({
   title: z
@@ -37,8 +38,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No autenticado." }, { status: 401 });
   }
 
+  const prisma = getScopedPortalDatabase(session.user.id);
   try {
-    const body = await req.json();
+    const body = await boundedJson(req, 16384);
     const parsed = createTicketSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -57,40 +59,50 @@ export async function POST(req: Request) {
       }
     }
 
-    const ticket = await prisma.supportTicket.create({
-      data: {
-        userId: session.user.id,
-        title: parsed.data.title,
-        description: parsed.data.description,
-        category: parsed.data.category || null,
-        priority: parsed.data.priority || "NORMAL",
-        projectId: parsed.data.projectId || null,
-      },
-      select: { id: true, createdAt: true },
+    const ticket = await prisma.$transaction(async (db) => {
+      const ticket = await db.supportTicket.create({
+        data: {
+          userId: session.user.id,
+          title: parsed.data.title,
+          description: parsed.data.description,
+          category: parsed.data.category || null,
+          priority: parsed.data.priority || "NORMAL",
+          projectId: parsed.data.projectId || null,
+        },
+        select: { id: true, createdAt: true },
+      });
+
+      await db.supportTicketMessage.create({
+        data: {
+          ticketId: ticket.id,
+          userId: session.user.id,
+          authorRole: Role.CLIENT,
+          message: parsed.data.description,
+        },
+      });
+
+      await db.clientAuditLog.create({
+        select: { id: true },
+        data: {
+          actorId: session.user.id,
+          targetUserId: session.user.id,
+          action: "SUPPORT_TICKET_CREATED",
+          entityType: "SupportTicket",
+          entityId: ticket.id,
+        },
+      });
+
+      return ticket;
     });
 
-    await prisma.supportTicketMessage.create({
-      data: {
-        ticketId: ticket.id,
-        userId: session.user.id,
-        authorRole: Role.CLIENT,
-        message: parsed.data.description,
-      },
+    return NextResponse.json({
+      ok: true,
+      id: ticket.id,
+      createdAt: ticket.createdAt.toISOString(),
     });
-
-    await prisma.clientAuditLog.create({
-      data: {
-        actorId: session.user.id,
-        targetUserId: session.user.id,
-        action: "SUPPORT_TICKET_CREATED",
-        entityType: "SupportTicket",
-        entityId: ticket.id,
-      },
-    });
-
-    return NextResponse.json({ ok: true, id: ticket.id, createdAt: ticket.createdAt.toISOString() });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "No se pudo crear el ticket.";
+    void error;
+    const message = "No se pudo crear el ticket.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

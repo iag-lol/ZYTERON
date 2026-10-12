@@ -1,9 +1,12 @@
 import { compare } from "bcrypt";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { boundedJson, publicRateLimit } from "@/lib/security/public-intake";
 
 function normalizeEmail(value?: string) {
-  return String(value || "").trim().toLowerCase();
+  return String(value || "")
+    .trim()
+    .toLowerCase();
 }
 
 function getPrismaErrorCode(error: unknown) {
@@ -36,9 +39,16 @@ function isDbConnectionPrismaError(error: unknown) {
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json().catch(() => null)) as
-      | { email?: string; password?: string }
-      | null;
+    const rate = await publicRateLimit(req, "portal-prelogin", 15);
+    if (!rate.allowed)
+      return NextResponse.json(
+        { error: "Espera un minuto antes de volver a intentar." },
+        { status: 429, headers: { "retry-after": "60" } },
+      );
+    const body = (await boundedJson(req, 4096).catch(() => null)) as {
+      email?: string;
+      password?: string;
+    } | null;
     const email = normalizeEmail(body?.email);
     const password = String(body?.password || "");
     if (!email || !password) {
@@ -101,8 +111,7 @@ export async function POST(req: Request) {
       );
       return NextResponse.json(
         {
-          error:
-            "No se pudo conectar con la base de datos del portal. Verifica DATABASE_URL del entorno de producción.",
+          error: "No se pudo validar el acceso en este momento. Intenta nuevamente.",
         },
         { status: 500 },
       );
@@ -114,8 +123,7 @@ export async function POST(req: Request) {
       );
       return NextResponse.json(
         {
-          error:
-            "La base de datos del portal no está completamente actualizada. Ejecuta el SQL de portal y vuelve a intentar.",
+          error: "No se pudo validar el acceso en este momento. Intenta nuevamente.",
         },
         { status: 500 },
       );

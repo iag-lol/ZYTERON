@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { portalAuthOptions } from "@/lib/auth/portal-auth";
-import { prisma } from "@/lib/prisma";
+import { getScopedPortalDatabase } from "@/lib/portal/scoped-db";
+import { boundedJson } from "@/lib/security/public-intake";
 
 const profileSchema = z.object({
   firstName: z.string().trim().min(2).max(80),
@@ -17,8 +18,9 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "No autenticado." }, { status: 401 });
   }
 
+  const prisma = getScopedPortalDatabase(session.user.id);
   try {
-    const body = await req.json();
+    const body = await boundedJson(req, 16384);
     const parsed = profileSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -30,6 +32,7 @@ export async function PATCH(req: Request) {
     const fullName = `${parsed.data.firstName} ${parsed.data.lastName}`.trim();
     await prisma.user.update({
       where: { id: session.user.id },
+      select: { id: true },
       data: {
         firstName: parsed.data.firstName,
         lastName: parsed.data.lastName,
@@ -41,8 +44,8 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ ok: true, message: "Perfil actualizado." });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "No se pudo actualizar el perfil.";
+    void error;
+    const message = "No se pudo actualizar el perfil.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { insertRow } from "@/lib/admin/repository";
+import { prisma } from "@/lib/prisma";
 import { dispatchChatLeadAlert, type DispatchReport } from "@/lib/notifications/chat-lead-dispatch";
-import { siteConfig } from "@/config/site";
 
 /**
  * Herramienta (function calling) que la IA del chat invoca cuando capta un
@@ -36,7 +35,10 @@ export const LEAD_CAPTURE_TOOL = {
         },
         empresa: { type: "string", description: "Nombre de la empresa del cliente, si aplica." },
         rubro: { type: "string", description: "Rubro o industria del negocio del cliente." },
-        telefono: { type: "string", description: "Teléfono o WhatsApp, si lo entregó (aparte del correo)." },
+        telefono: {
+          type: "string",
+          description: "Teléfono o WhatsApp, si lo entregó (aparte del correo).",
+        },
         plazo: { type: "string", description: "Plazo o urgencia que mencionó el cliente." },
         resumen: {
           type: "string",
@@ -48,7 +50,8 @@ export const LEAD_CAPTURE_TOOL = {
         },
         es_cotizacion: {
           type: "boolean",
-          description: "true si el cliente pidió cotizar formalmente; false si es solo interés inicial.",
+          description:
+            "true si el cliente pidió cotizar formalmente; false si es solo interés inicial.",
         },
       },
       required: ["nombre", "contacto", "tipo_proyecto", "resumen"],
@@ -73,7 +76,9 @@ const EMAIL_REGEX = /[^\s@]+@[^\s@]+\.[^\s@]+/;
 const PHONE_REGEX = /(\+?56)?\s?9?\s?\d[\d\s.-]{6,}/;
 
 function str(value: unknown, max = 1000) {
-  return String(value ?? "").trim().slice(0, max);
+  return String(value ?? "")
+    .trim()
+    .slice(0, max);
 }
 
 function extractEmail(text: string) {
@@ -99,7 +104,10 @@ export type LeadCaptureResult = {
 };
 
 /** Ejecuta la captura del lead. Diseñada para NO lanzar nunca. */
-export async function executeLeadCapture(rawArgs: LeadCaptureArgs): Promise<LeadCaptureResult> {
+export async function executeLeadCapture(
+  rawArgs: LeadCaptureArgs,
+  context?: { threadId: string; userId: string | null },
+): Promise<LeadCaptureResult> {
   const name = str(rawArgs?.nombre, 140) || "Cliente del chat";
   const contact = str(rawArgs?.contacto, 200);
   const projectType = str(rawArgs?.tipo_proyecto, 200) || "Consulta general";
@@ -108,12 +116,13 @@ export async function executeLeadCapture(rawArgs: LeadCaptureArgs): Promise<Lead
   const deadline = str(rawArgs?.plazo, 120) || null;
   const summary = str(rawArgs?.resumen, 2000) || "Interés captado desde el chat con IA.";
   const budget = str(rawArgs?.presupuesto_estimado, 120) || null;
-  const isQuote = Boolean(rawArgs?.es_cotizacion);
+  const isQuote = rawArgs?.es_cotizacion === true;
 
   const email = extractEmail(contact);
   const phone = extractPhone(contact) || extractPhone(str(rawArgs?.telefono, 60));
   const createdAtIso = new Date().toISOString();
-  const leadId = randomUUID();
+  let leadId: string = randomUUID();
+  let firstCapture = true;
 
   const messageParts = [
     `[Chat IA] ${isQuote ? "Solicitud de cotización" : "Interés de cliente"}`,
@@ -131,58 +140,100 @@ export async function executeLeadCapture(rawArgs: LeadCaptureArgs): Promise<Lead
   let saved = false;
   let saveError: string | null = null;
   try {
-    await insertRow(
-      "Lead",
-      {
-        id: leadId,
-        name,
-        email: email || `chat-lead@${siteConfig.domain}`,
-        phone,
-        source: "CHAT_IA",
-        message: messageParts.join("\n"),
-        type: "CONTACT",
-        createdAt: createdAtIso,
-      },
-      "id",
-    );
+    if (!email && !phone)
+      return {
+        ok: false,
+        leadId: null,
+        dispatch: null,
+        message: "Necesitamos una forma de contacto real para registrar la solicitud.",
+      };
+    await prisma.$transaction(async (db) => {
+      let existing: { lead_id: string | null; quote_id: string | null } | undefined;
+      if (context)
+        existing = (
+          await db.$queryRaw<
+            Array<{ lead_id: string | null; quote_id: string | null }>
+          >`SELECT lead_id,quote_id FROM sales_threads WHERE id=${context.threadId}::uuid AND channel='WEB_CHAT' FOR UPDATE`
+        )[0];
+      if (context && !existing) throw new Error("CHAT_THREAD_MISSING");
+      if (existing?.lead_id) {
+        leadId = existing.lead_id;
+        firstCapture = false;
+      } else
+        await db.lead.create({
+          data: {
+            id: leadId,
+            userId: context?.userId || null,
+            name,
+            email: email || "",
+            phone,
+            source: "CHAT_IA",
+            message: messageParts.join("\n"),
+            type: "CONTACT",
+          },
+        });
+      let quoteId = existing?.quote_id || null;
+      if (isQuote && email && !quoteId) {
+        quoteId = randomUUID();
+        await db.quote.create({
+          data: {
+            id: quoteId,
+            userId: context?.userId || null,
+            name,
+            email,
+            phone,
+            company,
+            message: JSON.stringify({
+              version: 1,
+              origin: "CHAT_IA",
+              description: summary,
+              requestedBudget: budget,
+              status: "AWAITING_COMMERCIAL_REVIEW",
+            }),
+            subtotal: 0,
+            total: 0,
+            status: "PENDING",
+          },
+        });
+      }
+      if (context)
+        await db.$executeRaw`UPDATE sales_threads SET lead_id=${leadId},quote_id=${quoteId} WHERE id=${context.threadId}::uuid AND channel='WEB_CHAT'`;
+    });
     saved = true;
   } catch (err) {
     // Un fallo aquí es grave: el aviso igual sale por correo, así que el
     // problema pasa desapercibido y el contacto no queda en el panel.
     // Se deja registro explícito para poder detectarlo en los logs.
-    saveError = err instanceof Error ? err.message : String(err);
-    console.error("[chat-lead] NO SE GUARDÓ EL LEAD EN LA BASE:", {
-      leadId,
-      email,
-      error: saveError,
-    });
+    void err;
+    saveError = "CHAT_STORAGE_UNAVAILABLE";
   }
 
   // 2) Despacho de avisos (correo + WhatsApp) — siempre deja registro en logs.
   let dispatch: DispatchReport | null = null;
   try {
-    dispatch = await dispatchChatLeadAlert({
-      leadId,
-      name,
-      contact: contact || "no especificado",
-      email,
-      phone,
-      company,
-      industry,
-      deadline,
-      projectType,
-      summary,
-      budget,
-      isQuote,
-      createdAtIso,
-    });
+    if (saved && firstCapture)
+      dispatch = await dispatchChatLeadAlert({
+        leadId,
+        name,
+        contact: contact || "no especificado",
+        email,
+        phone,
+        company,
+        industry,
+        deadline,
+        projectType,
+        summary,
+        budget,
+        isQuote,
+        createdAtIso,
+      });
   } catch (err) {
     console.error("[chat-lead] fallo el despacho de avisos:", err);
   }
 
   const message = saved
-    ? "Registro creado correctamente. El equipo de Zyteron recibió el aviso y contactará al cliente a la brevedad."
-    : "El interés quedó registrado en el aviso al equipo, aunque hubo un problema al guardarlo en el panel.";
+    ? "Tu solicitud fue guardada para que el equipo de Zyteron la revise."
+    : "No pudimos guardar la solicitud. No se ha creado una cotizacion ni una venta.";
 
   return { ok: saved, leadId: saved ? leadId : null, dispatch, message, saveError };
 }

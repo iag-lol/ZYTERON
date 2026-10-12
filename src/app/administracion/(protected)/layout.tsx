@@ -2,10 +2,12 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminTopbar } from "@/components/admin/admin-topbar";
 import { AdminUiProvider } from "@/components/admin/admin-ui-context";
 import { AdminFab } from "@/components/admin/admin-fab";
+import { assertAdmin } from "@/lib/auth/admin";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  await assertAdmin();
   const isProd = process.env.NODE_ENV === "production";
 
   return (
@@ -18,7 +20,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <AdminTopbar isProd={isProd} />
 
             <main className="flex-1 px-4 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-8">
-              <div className="mx-auto min-w-0 max-w-[1600px]">{children}</div>
+              <div className="mx-auto max-w-[1600px] min-w-0">{children}</div>
             </main>
 
             <footer className="border-t border-slate-200 bg-white px-4 py-3 sm:px-6">
@@ -26,7 +28,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <p className="text-[11px] text-slate-400">
                   Zyteron Admin Panel · Datos en tiempo real vía Supabase
                 </p>
-                <p className="hidden text-[11px] capitalize text-slate-400 sm:block">
+                <p className="hidden text-[11px] text-slate-400 capitalize sm:block">
                   {new Date().toLocaleDateString("es-CL", {
                     weekday: "long",
                     year: "numeric",

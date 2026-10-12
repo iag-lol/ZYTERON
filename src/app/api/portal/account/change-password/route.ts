@@ -36,7 +36,10 @@ export async function POST(req: Request) {
 
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { passwordHash: await hash(parsed.data.newPassword, 12) },
+      data: {
+        passwordHash: await hash(parsed.data.newPassword, 12),
+        sessionVersion: { increment: 1 },
+      },
     });
 
     return NextResponse.json({ ok: true, message: "Contraseña actualizada correctamente." });
@@ -45,4 +48,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

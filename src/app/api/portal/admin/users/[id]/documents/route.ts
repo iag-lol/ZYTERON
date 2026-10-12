@@ -89,7 +89,10 @@ async function ensurePrivateBucket() {
   const { data: buckets, error: listError } = await supabase.storage.listBuckets();
   if (listError) throw new Error(`No se pudo validar el almacenamiento: ${listError.message}`);
 
-  if (!(buckets || []).some((bucket) => bucket.name === CLIENT_FILES_BUCKET)) {
+  const existing = (buckets || []).find((bucket) => bucket.name === CLIENT_FILES_BUCKET);
+  if (existing?.public)
+    throw new Error("El repositorio requiere revisión de privacidad antes de adjuntar documentos.");
+  if (!existing) {
     const { error } = await supabase.storage.createBucket(CLIENT_FILES_BUCKET, {
       public: false,
       fileSizeLimit: MAX_FILE_BYTES,

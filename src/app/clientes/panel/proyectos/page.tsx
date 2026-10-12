@@ -1,6 +1,6 @@
 import { BriefcaseBusiness, Calendar, Clock, Flag, Target } from "lucide-react";
 import { requirePortalSession } from "@/lib/auth/portal-session";
-import { prisma } from "@/lib/prisma";
+import { getScopedPortalDatabase } from "@/lib/portal/scoped-db";
 
 function formatDate(value?: Date | null) {
   if (!value) return "—";
@@ -14,14 +14,34 @@ function formatDate(value?: Date | null) {
 function getStatusConfig(status?: string | null) {
   const s = String(status || "").toUpperCase();
   if (s === "ACTIVE" || s === "IN_PROGRESS" || s === "EN_CURSO")
-    return { label: "Activo", color: "border-emerald-200 bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" };
+    return {
+      label: "Activo",
+      color: "border-emerald-200 bg-emerald-50 text-emerald-700",
+      dot: "bg-emerald-500",
+    };
   if (s === "COMPLETED" || s === "FINALIZADO" || s === "DONE")
-    return { label: "Finalizado", color: "border-slate-200 bg-slate-100 text-slate-600", dot: "bg-slate-400" };
+    return {
+      label: "Finalizado",
+      color: "border-slate-200 bg-slate-100 text-slate-600",
+      dot: "bg-slate-400",
+    };
   if (s === "PAUSED" || s === "PAUSADO" || s === "ON_HOLD")
-    return { label: "Pausado", color: "border-amber-200 bg-amber-50 text-amber-700", dot: "bg-amber-500" };
+    return {
+      label: "Pausado",
+      color: "border-amber-200 bg-amber-50 text-amber-700",
+      dot: "bg-amber-500",
+    };
   if (s === "CANCELLED" || s === "CANCELADO")
-    return { label: "Cancelado", color: "border-rose-200 bg-rose-50 text-rose-700", dot: "bg-rose-500" };
-  return { label: status || "Sin estado", color: "border-blue-200 bg-blue-50 text-blue-700", dot: "bg-blue-500" };
+    return {
+      label: "Cancelado",
+      color: "border-rose-200 bg-rose-50 text-rose-700",
+      dot: "bg-rose-500",
+    };
+  return {
+    label: status || "Sin estado",
+    color: "border-blue-200 bg-blue-50 text-blue-700",
+    dot: "bg-blue-500",
+  };
 }
 
 function getPriorityConfig(priority?: string | null) {
@@ -43,6 +63,7 @@ function calculateProgress(startDate?: Date | null, endDate?: Date | null) {
 
 export default async function PortalProyectosPage() {
   const session = await requirePortalSession();
+  const prisma = getScopedPortalDatabase(session.user.id);
   const projects = await prisma.project.findMany({
     where: { clientId: session.user.id },
     orderBy: { createdAt: "desc" },
@@ -100,7 +121,9 @@ export default async function PortalProyectosPage() {
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-sm font-bold text-slate-900">{project.title}</h3>
-                    <span className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${statusConfig.color}`}>
+                    <span
+                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${statusConfig.color}`}
+                    >
                       <span className={`h-1.5 w-1.5 rounded-full ${statusConfig.dot}`} />
                       {statusConfig.label}
                     </span>
@@ -142,13 +165,17 @@ export default async function PortalProyectosPage() {
                   ) : null}
 
                   {project.description ? (
-                    <p className="mt-3 text-sm leading-6 text-slate-600 line-clamp-3">{project.description}</p>
+                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">
+                      {project.description}
+                    </p>
                   ) : null}
 
                   {project.scope ? (
                     <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                      <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-1">Alcance</p>
-                      <p className="text-xs text-slate-600 line-clamp-2">{project.scope}</p>
+                      <p className="mb-1 text-[11px] font-semibold tracking-widest text-slate-500 uppercase">
+                        Alcance
+                      </p>
+                      <p className="line-clamp-2 text-xs text-slate-600">{project.scope}</p>
                     </div>
                   ) : null}
                 </div>

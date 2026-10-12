@@ -22,7 +22,8 @@ export async function proxy(req: NextRequest) {
     pathname.startsWith("/administracion") ||
     pathname.startsWith("/api/admin") ||
     pathname.startsWith("/api/portal") ||
-    pathname.startsWith("/api/checkout");
+    pathname.startsWith("/api/checkout") ||
+    ["/api/contacto", "/api/cotizaciones", "/api/chat"].includes(pathname);
 
   if (
     !isExternalFlowRequest &&
@@ -62,7 +63,13 @@ export async function proxy(req: NextRequest) {
 
   if (isAdminArea && !isLogin && !isLogout) {
     const token = req.cookies.get(ADMIN_COOKIE)?.value;
-    if (!(await verifyAdminSessionToken(token))) {
+    const portalAdminToken = await readPortalToken(req);
+    const portalAdmin =
+      portalAdminToken?.sub &&
+      ["ADMIN", "SUPERADMIN"].includes(String(portalAdminToken.role)) &&
+      portalAdminToken.emailVerifiedAt &&
+      portalAdminToken.accountStatus === "ACTIVE";
+    if (!(await verifyAdminSessionToken(token)) && !portalAdmin) {
       const url = req.nextUrl.clone();
       url.pathname = "/administracion/login";
       url.search = "";
@@ -103,6 +110,9 @@ export const config = {
     "/api/admin/:path*",
     "/api/portal/:path*",
     "/api/checkout/:path*",
+    "/api/contacto",
+    "/api/cotizaciones",
+    "/api/chat",
   ],
 };
 

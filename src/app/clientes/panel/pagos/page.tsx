@@ -1,5 +1,5 @@
 import { requirePortalSession } from "@/lib/auth/portal-session";
-import { prisma } from "@/lib/prisma";
+import { getScopedPortalDatabase } from "@/lib/portal/scoped-db";
 import { enrichQuoteRecord } from "@/lib/admin/quote";
 import { normalizeQuoteMetaPayment } from "@/lib/payments/quote-payments";
 import { PaymentCalendar } from "@/components/client-experience/payment-calendar";
@@ -7,6 +7,7 @@ import type { RecurringProjection } from "@/lib/payments/payment-projection";
 export const dynamic = "force-dynamic";
 export default async function ClientPaymentsPage() {
   const session = await requirePortalSession();
+  const prisma = getScopedPortalDatabase(session.user.id);
   const [quotes, payments, lifecycle] = await Promise.all([
     prisma.quote.findMany({
       where: { userId: session.user.id },

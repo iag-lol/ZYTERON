@@ -5,6 +5,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { AccountStatus, AuthProvider, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { publicRateLimit } from "@/lib/security/public-intake";
 
 function normalizeEmail(value?: string | null) {
   return String(value || "")
@@ -154,10 +155,27 @@ export const portalAuthOptions: NextAuthOptions = {
           email: { label: "Email", type: "email" },
           password: { label: "Password", type: "password" },
         },
-        async authorize(credentials) {
+        async authorize(credentials, request) {
           const email = normalizeEmail(credentials?.email);
           const password = String(credentials?.password || "");
-          if (!email || !password) return null;
+          if (!email || !password || email.length > 160 || password.length > 1024) return null;
+          try {
+            const byIp = await publicRateLimit(
+              new Request("http://localhost/auth", {
+                headers: new Headers(request.headers as Record<string, string>),
+              }),
+              "portal-login",
+              15,
+            );
+            const byAccount = await publicRateLimit(
+              new Request("http://localhost/auth", { headers: { "x-real-ip": email } }),
+              "portal-login-account",
+              10,
+            );
+            if (!byIp.allowed || !byAccount.allowed) return null;
+          } catch {
+            return null;
+          }
 
           const user = await prisma.user.findUnique({
             where: { email },
@@ -281,6 +299,7 @@ export const portalAuthOptions: NextAuthOptions = {
             role: true,
             accountStatus: true,
             emailVerifiedAt: true,
+            sessionVersion: true,
           },
         });
         if (!dbUser) {
@@ -290,6 +309,14 @@ export const portalAuthOptions: NextAuthOptions = {
           return token;
         }
 
+        if (!user && (token.sessionVersion || 0) !== dbUser.sessionVersion) {
+          token.sub = "";
+          token.role = Role.CLIENT;
+          token.accountStatus = AccountStatus.DISABLED;
+          token.emailVerifiedAt = null;
+          return token;
+        }
+        token.sessionVersion = dbUser.sessionVersion;
         token.sub = dbUser.id;
         token.role = dbUser.role;
         token.accountStatus = dbUser.accountStatus;
@@ -321,7 +348,10 @@ export const portalAuthOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = String(token.sub || "");
+        session.user.id =
+          token.accountStatus === AccountStatus.ACTIVE && token.emailVerifiedAt
+            ? String(token.sub || "")
+            : "";
         session.user.role = (token.role as Role | undefined) || Role.CLIENT;
         session.user.accountStatus =
           (token.accountStatus as AccountStatus | undefined) || AccountStatus.DISABLED;

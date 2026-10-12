@@ -1,26 +1,26 @@
-import { prisma } from "@/lib/prisma";
 import { requirePortalSession } from "@/lib/auth/portal-session";
-import { PortalPanelShell } from "@/components/portal/panel/portal-panel-shell";
-
-export default async function PortalPanelLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+import { clientDatabase } from "@/lib/portal/scoped-db";
+import { ExperienceShell } from "@/components/client-experience/experience-shell";
+export const dynamic = "force-dynamic";
+export default async function PortalPanelLayout({ children }: { children: React.ReactNode }) {
   const session = await requirePortalSession();
-  const unreadCount = await prisma.clientNotification.count({
-    where: { userId: session.user.id, isRead: false },
-  });
-
+  const [user, unreadCount] = await clientDatabase(session.user.id, (db) =>
+    Promise.all([
+      db.user.findUnique({
+        where: { id: session.user.id },
+        select: { name: true, company: true, role: true },
+      }),
+      db.clientNotification.count({ where: { userId: session.user.id, isRead: false } }),
+    ]),
+  );
   return (
-    <PortalPanelShell
-      heading="Portal de Clientes"
-      subheading="Gestión privada de servicios, documentos y soporte."
-      userLabel={session.user.name || session.user.email || "Cliente"}
+    <ExperienceShell
+      name={user?.name || session.user.name || "Cliente"}
+      company={user?.company || ""}
       unreadCount={unreadCount}
+      isAdmin={user?.role === "ADMIN" || user?.role === "SUPERADMIN"}
     >
       {children}
-    </PortalPanelShell>
+    </ExperienceShell>
   );
 }
-

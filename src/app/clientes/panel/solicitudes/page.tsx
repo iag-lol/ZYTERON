@@ -1,7 +1,7 @@
 import { ClipboardPlus } from "lucide-react";
 import { PortalRequestForm } from "@/components/portal/panel/portal-request-form";
 import { requirePortalSession } from "@/lib/auth/portal-session";
-import { prisma } from "@/lib/prisma";
+import { getScopedPortalDatabase } from "@/lib/portal/scoped-db";
 
 function formatDate(value: Date) {
   return value.toLocaleDateString("es-CL", {
@@ -13,6 +13,7 @@ function formatDate(value: Date) {
 
 export default async function PortalSolicitudesPage() {
   const session = await requirePortalSession();
+  const prisma = getScopedPortalDatabase(session.user.id);
   const requests = await prisma.portalRequest.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },
@@ -50,7 +51,9 @@ export default async function PortalSolicitudesPage() {
                 <p className="mt-1 text-xs text-slate-500">
                   {request.type} · {formatDate(request.createdAt)}
                 </p>
-                <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">{request.details}</p>
+                <p className="mt-2 text-sm leading-6 whitespace-pre-line text-slate-600">
+                  {request.details}
+                </p>
               </div>
             ))}
             {requests.length === 0 ? (
@@ -65,4 +68,3 @@ export default async function PortalSolicitudesPage() {
     </section>
   );
 }
-

@@ -1,0 +1,5641 @@
+@layer base {
+  @font-face {
+    font-family: ZyteronInter;
+    src: url("/fonts/InterVariable.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+  .zy-experience {
+    --ink: #263b32;
+    --muted: #5a664e;
+    --forest: #203e30;
+    --lime: #c4e88c;
+    --background: #f7f8f5;
+    --line: #e5e9e2;
+    --green: #3c6248;
+    --orange: #926038;
+    --shadow: 0 6px 24px #243d3005;
+  }
+  :where(.zy-experience) * {
+    box-sizing: border-box;
+  }
+  .zy-experience {
+    margin: 0;
+    color: var(--ink);
+    background: var(--background);
+    font-family:
+      "ZyteronInter",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  :where(.zy-experience) button,
+  :where(.zy-experience) input,
+  :where(.zy-experience) textarea,
+  :where(.zy-experience) select {
+    font: inherit;
+  }
+  :where(.zy-experience) button,
+  :where(.zy-experience) a,
+  :where(.zy-experience) input,
+  :where(.zy-experience) textarea,
+  :where(.zy-experience) select {
+    -webkit-tap-highlight-color: transparent;
+  }
+  :where(.zy-experience) button {
+    color: inherit;
+    cursor: pointer;
+  }
+  :where(.zy-experience) button {
+    border: 0;
+    background: none;
+  }
+  :where(.zy-experience) a {
+    color: inherit;
+    text-decoration: none;
+  }
+  :where(.zy-experience) button:disabled {
+    cursor: wait;
+    opacity: 0.65;
+  }
+  :where(.zy-experience) button:focus-visible,
+  :where(.zy-experience) a:focus-visible,
+  :where(.zy-experience) input:focus-visible,
+  :where(.zy-experience) textarea:focus-visible,
+  :where(.zy-experience) select:focus-visible {
+    outline: 3px solid #5d8747;
+    outline-offset: 4px;
+  }
+  :where(.zy-experience) h1,
+  :where(.zy-experience) h2,
+  :where(.zy-experience) h3,
+  :where(.zy-experience) h4,
+  :where(.zy-experience) p {
+    margin: 0;
+  }
+  :where(.zy-experience) h1 {
+    font-size: 30px;
+    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: -1.15px;
+  }
+  :where(.zy-experience) h2 {
+    font-size: 17px;
+    line-height: 1.35;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+  }
+  :where(.zy-experience) h3 {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.35px;
+  }
+  :where(.zy-experience) h4 {
+    font-size: 14px;
+    margin: 24px 0 12px;
+  }
+  :where(.zy-experience) p {
+    color: var(--muted);
+  }
+  :where(.zy-experience) svg {
+    flex-shrink: 0;
+  }
+  :where(.zy-experience) button {
+    transition:
+      background 0.18s,
+      box-shadow 0.18s,
+      transform 0.18s;
+  }
+  :where(.zy-experience) ::selection {
+    background: #d5e9b5;
+  }
+  :where(.zy-experience) .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  :where(.zy-experience) .skip-link {
+    position: fixed;
+    top: -80px;
+    left: 20px;
+    z-index: 99;
+    padding: 14px;
+    background: var(--forest);
+    color: white;
+    border-radius: 8px;
+  }
+  :where(.zy-experience) .skip-link:focus {
+    top: 12px;
+  }
+  :where(.zy-experience) .portal-shell {
+    min-height: 100vh;
+  }
+  :where(.zy-experience) .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 238px;
+    background: #fff;
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    z-index: 20;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  :where(.zy-experience) .sidebar-brand {
+    padding: 27px 26px 26px;
+  }
+  :where(.zy-experience) .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--forest);
+  }
+  :where(.zy-experience) .brand > svg {
+    width: 30px;
+    height: 30px;
+  }
+  :where(.zy-experience) .brand > span {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -1.8px;
+    line-height: 1;
+  }
+  :where(.zy-experience) .brand-dot {
+    color: #536249;
+  }
+  :where(.zy-experience) .brand small {
+    display: block;
+    font-size: 8px;
+    letter-spacing: 2.3px;
+    font-weight: 500;
+    margin: 7px 0 0 2px;
+  }
+  :where(.zy-experience) .brand.light {
+    color: #fff;
+  }
+  :where(.zy-experience) .organization {
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    margin: 0 15px 14px;
+    padding: 11px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+    background: #fcfdfa;
+  }
+  :where(.zy-experience) .organization:hover {
+    background: #f1f5ec;
+  }
+  :where(.zy-experience) .organization > span:nth-child(2) {
+    flex: 1;
+    min-width: 0;
+  }
+  :where(.zy-experience) .organization b {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  :where(.zy-experience) .organization small {
+    display: block;
+    color: var(--muted);
+    font-size: 10px;
+    margin-top: 2px;
+  }
+  :where(.zy-experience) .org-symbol {
+    width: 33px;
+    height: 34px;
+    border: 1px solid #d7dfcc;
+    background: #e9efdc;
+    color: #456135;
+    border-radius: 7px;
+    font-size: 20px;
+    font-weight: 600;
+    position: relative;
+    text-align: center;
+    line-height: 32px;
+  }
+  :where(.zy-experience) .org-symbol > span {
+    position: absolute;
+    font-size: 11px;
+    top: -5px;
+    right: 1px;
+  }
+  :where(.zy-experience) .sidebar nav {
+    padding: 0 12px;
+  }
+  :where(.zy-experience) .nav-group {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.3px;
+    padding: 12px 13px 6px;
+    color: #536249;
+  }
+  :where(.zy-experience) .nav-item {
+    min-height: 37px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    text-align: left;
+    border-radius: 7px;
+    padding: 7px 12px;
+    color: #536249;
+    font-size: 11px;
+    line-height: 1.2;
+    margin: 2px 0;
+  }
+  :where(.zy-experience) .nav-item svg {
+    width: 16px;
+    height: 16px;
+  }
+  :where(.zy-experience) .nav-item:hover {
+    background: #f5f7f0;
+    color: var(--forest);
+  }
+  :where(.zy-experience) .nav-item.active {
+    background: #eaf2de;
+    color: #38532c;
+    font-weight: 600;
+  }
+  :where(.zy-experience) .nav-item.active svg {
+    stroke-width: 2;
+  }
+  :where(.zy-experience) .nav-count {
+    margin-left: auto;
+    background: #f0e7d6;
+    min-width: 17px;
+    height: 17px;
+    border-radius: 5px;
+    text-align: center;
+    line-height: 17px;
+    font-size: 10px;
+    color: #845b2a;
+  }
+  :where(.zy-experience) .nav-item.active .nav-count {
+    background: #d7e9bf;
+  }
+  :where(.zy-experience) .sidebar-bottom {
+    padding: 18px 15px 0;
+    margin-top: auto;
+  }
+  :where(.zy-experience) .help-card {
+    background: #f5f7f0;
+    border: 1px solid #e9eddf;
+    border-radius: 9px;
+    padding: 14px;
+  }
+  :where(.zy-experience) .help-icon {
+    display: block;
+    color: #536249;
+    margin-bottom: 7px;
+  }
+  :where(.zy-experience) .help-card b {
+    font-size: 11px;
+  }
+  :where(.zy-experience) .help-card p {
+    font-size: 10px;
+    margin: 4px 0 9px;
+    line-height: 1.6;
+  }
+  :where(.zy-experience) .help-card button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 600;
+    width: 100%;
+    padding: 0;
+    min-height: 25px;
+  }
+  :where(.zy-experience) .profile-switch {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 74px;
+    width: 100%;
+    text-align: left;
+  }
+  :where(.zy-experience) .profile-switch > span:nth-child(2) {
+    flex: 1;
+  }
+  :where(.zy-experience) .profile-switch b {
+    display: block;
+    font-size: 11px;
+  }
+  :where(.zy-experience) .profile-switch small {
+    font-size: 10px;
+    color: var(--muted);
+  }
+  :where(.zy-experience) .avatar {
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 600;
+    background: #e9ecdf;
+    color: #536249;
+    flex-shrink: 0;
+  }
+  :where(.zy-experience) .profile-avatar {
+    background: #efe9dc;
+    color: #746247;
+    border: 2px solid white;
+    font-size: 10px;
+  }
+  :where(.zy-experience) .workspace {
+    margin-left: 238px;
+  }
+  :where(.zy-experience) .topbar {
+    height: 73px;
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 38px;
+    gap: 18px;
+  }
+  :where(.zy-experience) .breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    font-size: 11px;
+  }
+  :where(.zy-experience) .desktop-crumb {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    color: #536249;
+  }
+  :where(.zy-experience) .breadcrumbs > b {
+    font-weight: 500;
+  }
+  :where(.zy-experience) .top-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  :where(.zy-experience) .search-trigger {
+    color: #5c6c50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    padding: 10px 0;
+    margin-right: 8px;
+  }
+  :where(.zy-experience) .search-trigger kbd {
+    background: #f7f8f5;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 10px;
+    padding: 2px 5px;
+    margin-left: 27px;
+  }
+  :where(.zy-experience) .icon-button {
+    min-width: 35px;
+    min-height: 35px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+  }
+  :where(.zy-experience) .icon-button:hover {
+    background: #f1f5ed;
+  }
+  :where(.zy-experience) .notification-button {
+    position: relative;
+  }
+  :where(.zy-experience) .notification-button i {
+    position: absolute;
+    right: 8px;
+    top: 5px;
+    width: 5px;
+    height: 5px;
+    border: 1px solid #fff;
+    background: #a3be75;
+    border-radius: 50%;
+  }
+  :where(.zy-experience) .top-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--line);
+  }
+  :where(.zy-experience) .mobile-brand {
+    display: none;
+  }
+  :where(.zy-experience) .preview-bar {
+    padding: 8px 38px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #5c6c50;
+    font-size: 10px;
+    background: #eff3e8;
+    border-bottom: 1px solid #e4eadb;
+    gap: 12px;
+  }
+  :where(.zy-experience) .preview-bar > span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+  :where(.zy-experience) .preview-description {
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+  :where(.zy-experience) .preview-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #899a70;
+  }
+  :where(.zy-experience) .preview-bar button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  :where(.zy-experience) main {
+    max-width: 1630px;
+    margin: 0 auto;
+    padding: 30px 38px 0;
+  }
+  :where(.zy-experience) main:focus {
+    outline: none;
+  }
+  :where(.zy-experience) .page-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin: 0 0 26px;
+  }
+  :where(.zy-experience) .eyebrow {
+    font-size: 10px;
+    letter-spacing: 1.7px;
+    font-weight: 600;
+    color: #5c6c50;
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+  :where(.zy-experience) .page-heading h1 {
+    margin-bottom: 8px;
+  }
+  :where(.zy-experience) .page-heading p:not(.eyebrow) {
+    font-size: 12px;
+  }
+  :where(.zy-experience) .greeting-spark {
+    display: inline-block;
+    color: #5c6c50;
+    font-size: 25px;
+    font-weight: 400;
+    margin-left: 7px;
+    vertical-align: 2px;
+  }
+  :where(.zy-experience) .button {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: 7px;
+    padding: 10px 15px;
+    white-space: nowrap;
+  }
+  :where(.zy-experience) .button.primary {
+    background: var(--forest);
+    color: white;
+    border: 1px solid var(--forest);
+  }
+  :where(.zy-experience) .button.primary:hover {
+    background: #34543f;
+    box-shadow: 0 3px 10px #24432a22;
+  }
+  :where(.zy-experience) .button.secondary {
+    background: #fff;
+    border: 1px solid #dfe5da;
+    color: #41573a;
+  }
+  :where(.zy-experience) .button.secondary:hover {
+    background: #f0f5e8;
+    border-color: #ccd9bd;
+  }
+  :where(.zy-experience) .button.lime {
+    background: var(--lime);
+    color: #294329;
+  }
+  :where(.zy-experience) .button.lime:hover {
+    background: #d3efa4;
+  }
+  :where(.zy-experience) .welcome-banner {
+    border-radius: 12px;
+    background: var(--forest);
+    color: white;
+    position: relative;
+    overflow: hidden;
+    padding: 26px 30px;
+    display: flex;
+    justify-content: space-between;
+    min-height: 193px;
+  }
+  :where(.zy-experience) .welcome-banner > div:first-child {
+    z-index: 2;
+  }
+  :where(.zy-experience) .banner-label {
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 1.8px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #d0ddbb;
+  }
+  :where(.zy-experience) .banner-label > span {
+    width: 5px;
+    height: 5px;
+    background: var(--lime);
+    border-radius: 50%;
+  }
+  :where(.zy-experience) .welcome-banner h2 {
+    font-size: 27px;
+    letter-spacing: -0.85px;
+    line-height: 1.25;
+    margin: 11px 0 10px;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .welcome-banner h2 > span {
+    color: #d1e5b3;
+  }
+  :where(.zy-experience) .welcome-banner p {
+    font-size: 10px;
+    color: #b6c7b9;
+  }
+  :where(.zy-experience) .welcome-banner button {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0;
+    font-size: 10px;
+    color: #e1f2c9;
+    font-weight: 500;
+    min-height: 24px;
+  }
+  :where(.zy-experience) .welcome-banner button:hover {
+    color: white;
+  }
+  :where(.zy-experience) .banner-art {
+    position: absolute;
+    width: 380px;
+    height: 280px;
+    top: -48px;
+    right: 27px;
+    color: #b1d677;
+  }
+  :where(.zy-experience) .banner-art svg {
+    width: 139px;
+    height: 139px;
+    position: absolute;
+    top: 89px;
+    right: 100px;
+    transform: rotate(-8deg);
+    filter: drop-shadow(0 6px 0 #152d23);
+  }
+  :where(.zy-experience) .orbit {
+    position: absolute;
+    border: 1px solid #69865a65;
+    border-radius: 50%;
+    width: 285px;
+    height: 285px;
+    right: 8px;
+    top: 19px;
+  }
+  :where(.zy-experience) .orbit-two {
+    width: 221px;
+    height: 221px;
+    right: 40px;
+    top: 51px;
+  }
+  :where(.zy-experience) .orbit-three {
+    width: 349px;
+    height: 349px;
+    right: -24px;
+    top: -13px;
+  }
+  :where(.zy-experience) .banner-art:after {
+    content: "";
+    width: 7px;
+    height: 7px;
+    background: #cce89f;
+    border-radius: 50%;
+    position: absolute;
+    top: 90px;
+    right: 28px;
+    box-shadow: -268px 118px 0 0 #87a265;
+  }
+  :where(.zy-experience) .art-star {
+    position: absolute;
+    right: 33px;
+    top: 195px;
+    font-size: 39px;
+    line-height: 1;
+  }
+  :where(.zy-experience) .art-coordinate {
+    position: absolute;
+    right: 110px;
+    bottom: 4px;
+    color: #536249;
+    font-size: 7px;
+    letter-spacing: 1.7px;
+  }
+  :where(.zy-experience) .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin: 20px 0 28px;
+  }
+  :where(.zy-experience) .stat-card {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 17px 17px 13px;
+    text-align: left;
+    box-shadow: var(--shadow);
+  }
+  :where(.zy-experience) .stat-card:hover {
+    border-color: #5c6c50;
+    transform: translateY(-2px);
+  }
+  :where(.zy-experience) .stat-card > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 5px;
+    font-size: 10px;
+    color: #536249;
+  }
+  :where(.zy-experience) .stat-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  :where(.zy-experience) .green {
+    color: #48673c;
+    background: #edf3e4;
+  }
+  :where(.zy-experience) .purple {
+    color: #5c6c50;
+    background: #f0ecf6;
+  }
+  :where(.zy-experience) .orange {
+    color: #5c6c50;
+    background: #faf0e1;
+  }
+  :where(.zy-experience) .blue {
+    color: #5c6c50;
+    background: #ebf0f7;
+  }
+  :where(.zy-experience) .stat-card strong {
+    display: block;
+    font-size: 29px;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: -1.15px;
+    margin: 8px 0 15px;
+  }
+  :where(.zy-experience) .stat-card p {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #5c6c50;
+    border-top: 1px solid #f0f2ec;
+    padding-top: 9px;
+  }
+  :where(.zy-experience) .section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 17px;
+  }
+  :where(.zy-experience) .section-heading h2 {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 15px;
+  }
+  :where(.zy-experience) .section-heading p {
+    font-size: 10px;
+    margin-top: 4px;
+  }
+  :where(.zy-experience) .section-heading > span {
+    font-size: 10px;
+    color: #5c6c50;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  :where(.zy-experience) .text-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #536249;
+    min-height: 32px;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 0;
+  }
+  :where(.zy-experience) .text-button:hover {
+    color: #233d26;
+  }
+  :where(.zy-experience) .attention-dot {
+    height: 6px;
+    width: 6px;
+    background: #bc9b58;
+    border-radius: 50%;
+  }
+  :where(.zy-experience) .count-pill {
+    background: #efeddf;
+    padding: 2px 6px;
+    color: #5c6c50;
+    font-size: 10px;
+    font-weight: 500;
+    border-radius: 4px;
+    margin-left: 3px;
+  }
+  :where(.zy-experience) .attention-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border: 1px solid #e9e4d6;
+    background: #fdfcf8;
+    border-radius: 9px;
+    overflow: hidden;
+  }
+  :where(.zy-experience) .attention-grid > button {
+    display: flex;
+    align-items: center;
+    padding: 18px 14px;
+    gap: 10px;
+    text-align: left;
+    min-width: 0;
+  }
+  :where(.zy-experience) .attention-grid > button:hover {
+    background: #f6f3e9;
+  }
+  :where(.zy-experience) .attention-grid > button:not(:last-child) {
+    border-right: 1px solid #eae5d6;
+  }
+  :where(.zy-experience) .attention-grid > button > span:nth-child(2) {
+    flex: 1;
+    min-width: 0;
+  }
+  :where(.zy-experience) .attention-grid b {
+    display: block;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: -0.05px;
+  }
+  :where(.zy-experience) .attention-grid small {
+    display: block;
+    font-size: 10px;
+    color: #5c6c50;
+    margin-top: 4px;
+  }
+  :where(.zy-experience) .attention-grid > button > svg {
+    color: #5c6c50;
+    width: 14px;
+  }
+  :where(.zy-experience) .attention-icon {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border: 1px solid #ede6d5;
+    border-radius: 8px;
+    background: #f7f3e9;
+    color: #5c6c50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  :where(.zy-experience) .attention-icon svg {
+    width: 18px;
+  }
+  :where(.zy-experience) .home-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 2.16fr) minmax(260px, 1fr);
+    gap: 24px;
+    margin-top: 30px;
+  }
+  :where(.zy-experience) .project-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  :where(.zy-experience) .project-card {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  :where(.zy-experience) .project-art {
+    height: 142px;
+    overflow: hidden;
+    position: relative;
+    background: #edf1e6;
+    border-bottom: 1px solid var(--line);
+  }
+  :where(.zy-experience) .art-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(#6e835614 1px, transparent 1px),
+      linear-gradient(90deg, #6e835614 1px, transparent 1px);
+    background-size: 22px 22px;
+    mask-image: linear-gradient(to right, black, transparent);
+  }
+  :where(.zy-experience) .art-orbit {
+    width: 160px;
+    height: 160px;
+    position: absolute;
+    border: 1px solid #bbc9a2;
+    border-radius: 50%;
+    left: -55px;
+    top: 17px;
+  }
+  :where(.zy-experience) .art-orbit:after {
+    content: "";
+    position: absolute;
+    inset: 20px;
+    border: 1px solid #bbc9a2;
+    border-radius: 50%;
+  }
+  :where(.zy-experience) .art-window {
+    width: 198px;
+    height: 141px;
+    background: #fff;
+    position: absolute;
+    left: 50%;
+    top: 16px;
+    transform: translateX(-50%) rotate(-5deg);
+    border-radius: 5px 5px 0 0;
+    border: 1px solid #d1d8c7;
+    box-shadow: 0 5px 15px #41503215;
+    overflow: hidden;
+  }
+  :where(.zy-experience) .art-window-head {
+    height: 16px;
+    background: #fafbf8;
+    border-bottom: 1px solid #e1e6d9;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 0 6px;
+  }
+  :where(.zy-experience) .art-window-head i {
+    width: 3px;
+    height: 3px;
+    background: #bdc7b4;
+    border-radius: 50%;
+  }
+  :where(.zy-experience) .art-window-head span {
+    margin-left: auto;
+    font-size: 5px;
+    color: #536249;
+    font-weight: 600;
+  }
+  :where(.zy-experience) .art-window-body {
+    padding: 16px 11px;
+    position: relative;
+    height: 125px;
+    overflow: hidden;
+  }
+  :where(.zy-experience) .art-window-body > small {
+    font-size: 4px;
+    letter-spacing: 1px;
+    color: #536249;
+    display: block;
+  }
+  :where(.zy-experience) .art-window-body > b {
+    font-size: 13px;
+    line-height: 1.16;
+    font-weight: 600;
+    letter-spacing: -0.6px;
+    display: block;
+    margin: 7px 0 10px;
+    position: relative;
+    z-index: 2;
+  }
+  :where(.zy-experience) .art-mini-button {
+    background: #284833;
+    color: #d3e8af;
+    font-size: 4px;
+    padding: 5px 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+    z-index: 2;
+  }
+  :where(.zy-experience) .art-landscape {
+    position: absolute;
+    right: -6px;
+    bottom: -15px;
+    width: 100px;
+    height: 120px;
+    background: #48684b;
+    border-radius: 90% 0 0 0;
+    transform: rotate(-7deg);
+  }
+  :where(.zy-experience) .art-landscape:before {
+    content: "";
+    position: absolute;
+    right: 12px;
+    top: 18px;
+    width: 41px;
+    height: 89px;
+    background: #71935d;
+    border-radius: 70% 70% 0 0;
+    transform: rotate(18deg);
+  }
+  :where(.zy-experience) .art-landscape:after {
+    content: "";
+    position: absolute;
+    right: 40px;
+    bottom: -5px;
+    width: 36px;
+    height: 87px;
+    background: #203f30;
+    border-radius: 70% 70% 0 0;
+    transform: rotate(28deg);
+  }
+  :where(.zy-experience) .art-tag {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 6px;
+    padding: 6px 9px;
+    background: #ffffffee;
+    border: 1px solid #dbe1d1;
+    box-shadow: 0 4px 10px #41503210;
+    border-radius: 4px;
+    position: absolute;
+    left: 20px;
+    bottom: 14px;
+    transform: rotate(2deg);
+    color: #536249;
+  }
+  :where(.zy-experience) .project-art.sand {
+    background: #f2eee6;
+  }
+  :where(.zy-experience) .sand .art-grid {
+    background-image:
+      linear-gradient(#b89b7214 1px, transparent 1px),
+      linear-gradient(90deg, #b89b7214 1px, transparent 1px);
+  }
+  :where(.zy-experience) .sand .art-orbit,
+  :where(.zy-experience) .sand .art-orbit:after {
+    border-color: #ddc5a2;
+  }
+  :where(.zy-experience) .sand .art-window {
+    transform: translateX(-50%) rotate(5deg);
+  }
+  :where(.zy-experience) .sand .art-window-body {
+    background: #faf8f2;
+  }
+  :where(.zy-experience) .sand .art-landscape {
+    background: #d9b979;
+    border-radius: 12px;
+    width: 67px;
+    height: 88px;
+    bottom: 8px;
+    right: 7px;
+    transform: rotate(0deg);
+  }
+  :where(.zy-experience) .sand .art-landscape:before {
+    background: #f0ddad;
+    border-radius: 7px;
+    width: 50px;
+    height: 17px;
+    right: 8px;
+    top: 8px;
+    transform: none;
+    box-shadow:
+      0 24px 0 #ebd2a3,
+      0 48px 0 #ebd2a3;
+  }
+  :where(.zy-experience) .sand .art-landscape:after {
+    background: #c89949;
+    border-radius: 3px;
+    width: 5px;
+    height: 8px;
+    right: 47px;
+    bottom: 59px;
+    transform: none;
+    box-shadow:
+      0 24px 0 #c89949,
+      0 48px 0 #c89949;
+  }
+  :where(.zy-experience) .sand .art-window-body > b {
+    font-size: 12px;
+  }
+  :where(.zy-experience) .sand .art-tag {
+    left: auto;
+    right: 15px;
+    bottom: 14px;
+    transform: rotate(-2deg);
+    color: #536249;
+  }
+  :where(.zy-experience) .project-art.blue {
+    background: #e9eef6;
+  }
+  :where(.zy-experience) .project-body {
+    padding: 15px 17px;
+  }
+  :where(.zy-experience) .project-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  :where(.zy-experience) .project-meta > span:first-child {
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    color: #5c6c50;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 7px;
+    font-size: 10px;
+    line-height: 1.5;
+    white-space: nowrap;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .badge.green {
+    background: #edf3e6;
+    color: #536249;
+  }
+  :where(.zy-experience) .badge.orange {
+    background: #f7eddb;
+    color: #536249;
+  }
+  :where(.zy-experience) .badge.neutral {
+    background: #f2f3ee;
+    color: #536249;
+  }
+  :where(.zy-experience) .title-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    text-align: left;
+    margin: 11px 0 4px;
+    padding: 0;
+    min-height: 28px;
+  }
+  :where(.zy-experience) .title-link h3 {
+    font-size: 13px;
+  }
+  :where(.zy-experience) .title-link svg {
+    color: #5c6c50;
+    width: 15px;
+  }
+  :where(.zy-experience) .title-link:hover h3 {
+    color: #536249;
+  }
+  :where(.zy-experience) .project-body > p {
+    font-size: 10px;
+    color: #536249;
+  }
+  :where(.zy-experience) .progress-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 17px 0 7px;
+    font-size: 10px;
+    color: #536249;
+  }
+  :where(.zy-experience) .progress-label b {
+    font-size: 10px;
+    color: #5c6c50;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .progress-track {
+    height: 4px;
+    border-radius: 4px;
+    background: #eef1e7;
+    overflow: hidden;
+  }
+  :where(.zy-experience) .progress-track > span {
+    display: block;
+    height: 100%;
+    background: #91af66;
+    border-radius: 4px;
+  }
+  :where(.zy-experience) .project-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 17px;
+  }
+  :where(.zy-experience) .avatars {
+    display: flex;
+    margin-left: 0;
+  }
+  :where(.zy-experience) .avatars .avatar {
+    margin-left: -5px;
+    border: 2px solid #fff;
+    width: 24px;
+    height: 24px;
+    font-size: 6px;
+  }
+  :where(.zy-experience) .avatars .avatar:first-child {
+    margin-left: 0;
+  }
+  :where(.zy-experience) .av-0 {
+    background: #e8ecd9;
+    color: #536249;
+  }
+  :where(.zy-experience) .av-1 {
+    background: #e5e9ef;
+    color: #536249;
+  }
+  :where(.zy-experience) .av-2 {
+    background: #ede5d8;
+    color: #536249;
+  }
+  :where(.zy-experience) .project-footer > span {
+    font-size: 10px;
+    color: #5c6c50;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  :where(.zy-experience) .agenda-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px 18px 8px;
+    align-self: stretch;
+    box-shadow: var(--shadow);
+  }
+  :where(.zy-experience) .agenda-card .section-heading {
+    margin-bottom: 7px;
+  }
+  :where(.zy-experience) .event-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    width: 100%;
+    padding: 18px 0;
+    min-width: 0;
+  }
+  :where(.zy-experience) .event-row:not(:last-of-type) {
+    border-bottom: 1px solid #eff1eb;
+  }
+  :where(.zy-experience) .event-row:hover .event-text > b {
+    color: #536249;
+  }
+  :where(.zy-experience) .event-day {
+    flex-shrink: 0;
+    border: 1px solid #e8ede0;
+    background: #f8faf4;
+    width: 40px;
+    height: 46px;
+    border-radius: 7px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #536249;
+  }
+  :where(.zy-experience) .event-day b {
+    font-size: 17px;
+    line-height: 1.25;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .event-day small {
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+  :where(.zy-experience) .event-text {
+    flex: 1;
+    min-width: 0;
+  }
+  :where(.zy-experience) .event-text > b {
+    font-size: 10px;
+    display: block;
+    line-height: 1.35;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .event-text > small {
+    font-size: 10px;
+    color: #5c6c50;
+    display: block;
+    margin: 3px 0 7px;
+  }
+  :where(.zy-experience) .event-text > span {
+    display: flex;
+    gap: 4px;
+    font-size: 10px;
+    color: #5c6c50;
+    align-items: center;
+  }
+  :where(.zy-experience) .event-row > svg {
+    color: #5c6c50;
+    width: 13px;
+  }
+  :where(.zy-experience) .agenda-all {
+    border-top: 1px solid #eef1e7;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 500;
+    gap: 8px;
+    color: #5c6c50;
+    padding: 13px 0;
+  }
+  :where(.zy-experience) .panel {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px;
+    box-shadow: var(--shadow);
+  }
+  :where(.zy-experience) .bottom-columns {
+    margin-top: 24px;
+  }
+  :where(.zy-experience) .document-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    text-align: left;
+    min-width: 0;
+    padding: 16px 0;
+  }
+  :where(.zy-experience) .document-row + .document-row {
+    border-top: 1px solid #edf0e7;
+  }
+  :where(.zy-experience) .document-row:hover .row-text b {
+    color: #536249;
+  }
+  :where(.zy-experience) .document-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 39px;
+    border: 1px solid #e9eade;
+    border-radius: 6px;
+    color: #5c6c50;
+    background: #f9faf6;
+    flex-shrink: 0;
+  }
+  :where(.zy-experience) .row-text {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+  }
+  :where(.zy-experience) .row-text > b {
+    display: block;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+  :where(.zy-experience) .row-text > small {
+    display: block;
+    color: #5c6c50;
+    font-size: 10px;
+    margin-top: 4px;
+  }
+  :where(.zy-experience) .document-row > svg {
+    color: #5c6c50;
+    width: 13px;
+  }
+  :where(.zy-experience) .contact-card {
+    padding: 23px;
+    background: #eff2e8;
+    border: 1px solid #e5eadb;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  :where(.zy-experience) .contact-card .eyebrow {
+    font-size: 10px;
+    letter-spacing: 1.2px;
+  }
+  :where(.zy-experience) .contact-card h2 {
+    font-size: 21px;
+    margin: 10px 0;
+    letter-spacing: -0.75px;
+    line-height: 1.25;
+  }
+  :where(.zy-experience) .contact-card > p {
+    font-size: 10px;
+    max-width: 200px;
+    color: #536249;
+  }
+  :where(.zy-experience) .contact-person {
+    display: flex;
+    gap: 9px;
+    align-items: center;
+    margin: 19px 0 17px;
+  }
+  :where(.zy-experience) .contact-person b {
+    display: block;
+    font-size: 10px;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .contact-person small {
+    font-size: 10px;
+    color: #536249;
+  }
+  :where(.zy-experience) .camila-avatar {
+    background: #d9e2c7;
+    color: #536249;
+    width: 34px;
+    height: 34px;
+  }
+  :where(.zy-experience) .contact-card .button {
+    width: 100%;
+    font-size: 10px;
+    background: #ffffffc0;
+    min-height: 34px;
+  }
+  :where(.zy-experience) .workspace-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    font-size: 10px;
+    color: #5c6c50;
+    border-top: 1px solid #e7ebdf;
+    padding: 20px 0;
+    margin-top: 35px;
+  }
+  :where(.zy-experience) .workspace-footer > span {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  :where(.zy-experience) .workspace-footer b {
+    font-size: 12px;
+    letter-spacing: -0.5px;
+    font-weight: 500;
+    color: #536249;
+  }
+  :where(.zy-experience) .workspace-footer button {
+    font-size: 10px;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    color: #5c6c50;
+    min-height: 24px;
+  }
+  :where(.zy-experience) .mobile-nav {
+    display: none;
+  }
+  :where(.zy-experience) .section-intro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  :where(.zy-experience) .section-intro > span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .section-intro p {
+    font-size: 10px;
+  }
+  :where(.zy-experience) .services-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+  :where(.zy-experience) .service-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 25px;
+  }
+  :where(.zy-experience) .service-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  :where(.zy-experience) .service-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+  :where(.zy-experience) .service-card .eyebrow {
+    font-size: 10px;
+    margin-bottom: 8px;
+  }
+  :where(.zy-experience) .service-card h2 {
+    font-size: 19px;
+    letter-spacing: -0.7px;
+  }
+  :where(.zy-experience) .service-card > p:not(.eyebrow) {
+    font-size: 12px;
+    line-height: 1.7;
+    margin: 9px 0 20px;
+    max-width: 300px;
+  }
+  :where(.zy-experience) .service-resource {
+    background: #f7f8f4;
+    border: 1px solid #edf0e7;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #5c6c50;
+    font-size: 10px;
+    border-radius: 6px;
+  }
+  :where(.zy-experience) .service-price {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 20px 0;
+  }
+  :where(.zy-experience) .service-price b {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.6px;
+  }
+  :where(.zy-experience) .service-price span {
+    color: #5c6c50;
+    font-size: 10px;
+  }
+  :where(.zy-experience) .service-bottom {
+    border-top: 1px solid var(--line);
+    padding-top: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  :where(.zy-experience) .service-bottom > span {
+    font-size: 10px;
+    color: #536249;
+  }
+  :where(.zy-experience) .service-bottom b {
+    display: block;
+    color: #5c6c50;
+    font-size: 10px;
+    margin-top: 3px;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .soft-banner {
+    margin-top: 28px;
+    display: flex;
+    align-items: center;
+    gap: 17px;
+    padding: 23px;
+    background: #f0f3e9;
+    border-radius: 10px;
+    border: 1px solid #e2e9d6;
+  }
+  :where(.zy-experience) .soft-banner > div {
+    flex: 1;
+  }
+  :where(.zy-experience) .soft-banner h3 {
+    font-size: 15px;
+  }
+  :where(.zy-experience) .soft-banner p {
+    font-size: 11px;
+    margin-top: 5px;
+  }
+  :where(.zy-experience) .tabs {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 11px;
+    flex-wrap: wrap;
+  }
+  :where(.zy-experience) .tabs > button {
+    font-size: 11px;
+    color: #5c6c50;
+    padding: 8px 12px;
+    border-radius: 6px;
+    min-height: 35px;
+  }
+  :where(.zy-experience) .tabs > button.selected {
+    background: #e9efdf;
+    color: #526c3c;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .tabs > button:hover {
+    background: #edf1e5;
+  }
+  :where(.zy-experience) .full-projects {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+  }
+  :where(.zy-experience) .full-projects .project-art {
+    height: 180px;
+  }
+  :where(.zy-experience) .full-projects .art-window {
+    top: 38px;
+    width: 218px;
+    height: 160px;
+  }
+  :where(.zy-experience) .full-projects .art-window-body {
+    height: 145px;
+    padding: 22px 16px;
+  }
+  :where(.zy-experience) .full-projects .art-window-body > b {
+    font-size: 16px;
+  }
+  :where(.zy-experience) .full-projects .art-landscape {
+    height: 137px;
+    width: 115px;
+  }
+  :where(.zy-experience) .full-projects .art-tag {
+    bottom: 24px;
+  }
+  :where(.zy-experience) .full-projects .project-body {
+    padding: 20px;
+  }
+  :where(.zy-experience) .full-projects .title-link h3 {
+    font-size: 15px;
+  }
+  :where(.zy-experience) .source-note {
+    font-size: 10px;
+    color: #5c6c50;
+    margin: 22px 0 0;
+    line-height: 1.7;
+  }
+  :where(.zy-experience) .finance-overview {
+    display: grid;
+    grid-template-columns: minmax(300px, 1fr) minmax(0, 1fr);
+    gap: 22px;
+    margin-bottom: 28px;
+  }
+  :where(.zy-experience) .balance-card {
+    padding: 27px 30px;
+    background: var(--forest);
+    color: #fff;
+    border-radius: 12px;
+  }
+  :where(.zy-experience) .balance-card .eyebrow {
+    color: #bfcca6;
+    font-size: 10px;
+  }
+  :where(.zy-experience) .balance-card strong {
+    font-size: 39px;
+    letter-spacing: -1.6px;
+    font-weight: 500;
+    display: block;
+    margin: 14px 0 5px;
+    line-height: 1.2;
+  }
+  :where(.zy-experience) .balance-card strong > span {
+    font-size: 12px;
+    letter-spacing: 0;
+    color: #bfd2ad;
+    margin-left: 10px;
+  }
+  :where(.zy-experience) .balance-card > p {
+    font-size: 10px;
+    color: #a9bca3;
+  }
+  :where(.zy-experience) .balance-card > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid #9cb18844;
+    padding-top: 20px;
+    margin: 22px 0 25px;
+  }
+  :where(.zy-experience) .balance-card > div > span {
+    font-size: 10px;
+    color: #acbda0;
+  }
+  :where(.zy-experience) .balance-card b {
+    display: block;
+    font-size: 16px;
+    font-weight: 500;
+    color: #e0edcb;
+    margin-top: 5px;
+  }
+  :where(.zy-experience) .balance-card .button {
+    font-size: 11px;
+    width: 100%;
+  }
+  :where(.zy-experience) .finance-info {
+    padding: 26px;
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 12px;
+  }
+  :where(.zy-experience) .finance-info h2 {
+    font-size: 21px;
+    letter-spacing: -0.7px;
+    margin-top: 14px;
+  }
+  :where(.zy-experience) .finance-info > p {
+    font-size: 12px;
+    line-height: 1.8;
+    margin-top: 10px;
+    max-width: 370px;
+  }
+  :where(.zy-experience) .finance-small {
+    display: flex;
+    gap: 24px;
+    margin-top: 20px;
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+  :where(.zy-experience) .finance-small > span {
+    font-size: 10px;
+    color: #536249;
+  }
+  :where(.zy-experience) .finance-small b {
+    font-size: 11px;
+    display: block;
+    color: #4e6142;
+    margin-top: 6px;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .finance-panel .tabs {
+    margin-bottom: 0;
+  }
+  :where(.zy-experience) .table-container {
+    overflow: auto;
+    width: 100%;
+    scrollbar-width: thin;
+  }
+  :where(.zy-experience) table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 11px;
+    min-width: 590px;
+  }
+  :where(.zy-experience) th {
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.4px;
+    color: #5c6c50;
+    padding: 16px 12px;
+    border-bottom: 1px solid var(--line);
+    background: #fcfdfa;
+  }
+  :where(.zy-experience) td {
+    padding: 20px 12px;
+    border-bottom: 1px solid #edf0e6;
+    color: #536249;
+  }
+  :where(.zy-experience) tr:last-child td {
+    border-bottom: 0;
+  }
+  :where(.zy-experience) td small {
+    display: block;
+    font-size: 10px;
+    margin-top: 5px;
+    color: #536249;
+  }
+  :where(.zy-experience) .table-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #526943;
+    padding: 0;
+  }
+  :where(.zy-experience) .amount {
+    font-weight: 500;
+    font-size: 12px;
+  }
+  :where(.zy-experience) .amount small {
+    font-weight: 400;
+  }
+  :where(.zy-experience) .info-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 14px 16px;
+    background: #f4f6ef;
+    border: 1px solid #e7ecdd;
+    border-radius: 8px;
+    color: #5c6c50;
+    font-size: 11px;
+    line-height: 1.6;
+    margin-top: 22px;
+  }
+  :where(.zy-experience) .info-note svg {
+    margin-top: 1px;
+  }
+  :where(.zy-experience) .document-toolbar {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  :where(.zy-experience) .document-toolbar .tabs {
+    flex: 1;
+  }
+  :where(.zy-experience) .inline-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--line);
+    padding: 9px 12px;
+    background: #fff;
+    border-radius: 7px;
+    color: #536249;
+  }
+  :where(.zy-experience) .inline-search input {
+    width: 170px;
+    border: none;
+    outline: none;
+    font-size: 11px;
+    background: none;
+    color: var(--ink);
+  }
+  :where(.zy-experience) .document-panel .document-row {
+    padding: 23px 0;
+  }
+  :where(.zy-experience) .document-panel .row-text b {
+    font-size: 13px;
+  }
+  :where(.zy-experience) .document-panel .row-text small {
+    font-size: 10px;
+  }
+  :where(.zy-experience) .document-panel .document-icon {
+    width: 43px;
+    height: 47px;
+  }
+  :where(.zy-experience) .support-banner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: #eaf0e1;
+    border: 1px solid #dfe8d0;
+    padding: 25px;
+    border-radius: 11px;
+    margin-bottom: 28px;
+  }
+  :where(.zy-experience) .support-banner > span {
+    color: #536249;
+  }
+  :where(.zy-experience) .support-banner > div {
+    flex: 1;
+  }
+  :where(.zy-experience) .support-banner h2 {
+    font-size: 18px;
+  }
+  :where(.zy-experience) .support-banner p {
+    font-size: 11px;
+    margin-top: 7px;
+  }
+  :where(.zy-experience) .ticket-list {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0 23px;
+  }
+  :where(.zy-experience) .ticket-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 0;
+    min-width: 0;
+    width: 100%;
+    text-align: left;
+  }
+  :where(.zy-experience) .ticket-row + .ticket-row {
+    border-top: 1px solid var(--line);
+  }
+  :where(.zy-experience) .ticket-symbol {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f5ec;
+    border: 1px solid #e7eadc;
+    width: 44px;
+    height: 44px;
+    border-radius: 9px;
+    color: #5c6c50;
+    flex-shrink: 0;
+  }
+  :where(.zy-experience) .ticket-row .row-text b {
+    font-size: 13px;
+    margin: 5px 0;
+  }
+  :where(.zy-experience) .ticket-row .row-text small {
+    font-size: 10px;
+  }
+  :where(.zy-experience) .ticket-row > svg {
+    color: #536249;
+  }
+  :where(.zy-experience) .agreements-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+  }
+  :where(.zy-experience) .agreement-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 27px;
+  }
+  :where(.zy-experience) .agreement-card h2 {
+    font-size: 20px;
+    margin: 13px 0 9px;
+  }
+  :where(.zy-experience) .agreement-card p {
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  :where(.zy-experience) .agreement-card dl {
+    margin: 22px 0;
+    border-top: 1px solid var(--line);
+  }
+  :where(.zy-experience) dl > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  :where(.zy-experience) dt {
+    color: #5c6c50;
+    font-size: 10px;
+  }
+  :where(.zy-experience) dd {
+    margin: 0;
+    font-size: 11px;
+    color: #536249;
+    text-align: right;
+  }
+  :where(.zy-experience) .agreement-card .button {
+    width: 100%;
+    margin-top: 5px;
+  }
+  :where(.zy-experience) .empty-state {
+    padding: 70px 25px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+  }
+  :where(.zy-experience) .empty-symbol {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 68px;
+    height: 68px;
+    background: #edf2e4;
+    color: #5c6c50;
+    border: 1px solid #e0e8d2;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+  :where(.zy-experience) .empty-state h2 {
+    font-size: 23px;
+    font-weight: 500;
+    letter-spacing: -0.7px;
+  }
+  :where(.zy-experience) .empty-state p {
+    font-size: 12px;
+    line-height: 1.9;
+    margin: 12px 0 22px;
+    max-width: 460px;
+  }
+  :where(.zy-experience) .empty-state .button {
+    margin: 0;
+  }
+  :where(.zy-experience) .security-features {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    padding: 22px 0 7px;
+    border-top: 1px solid var(--line);
+  }
+  :where(.zy-experience) .security-features > span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #536249;
+  }
+  :where(.zy-experience) .monitor-summary {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 25px;
+    margin-bottom: 24px;
+  }
+  :where(.zy-experience) .monitor-status {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  :where(.zy-experience) .monitor-status > svg {
+    color: #536249;
+  }
+  :where(.zy-experience) .monitor-status > div {
+    flex: 1;
+  }
+  :where(.zy-experience) .monitor-status p {
+    font-size: 11px;
+    margin-top: 5px;
+  }
+  :where(.zy-experience) .monitor-cells {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--line);
+    margin-top: 25px;
+    padding-top: 25px;
+  }
+  :where(.zy-experience) .monitor-cells > span {
+    font-size: 10px;
+    color: #536249;
+  }
+  :where(.zy-experience) .monitor-cells > span + span {
+    padding-left: 25px;
+    border-left: 1px solid var(--line);
+  }
+  :where(.zy-experience) .monitor-cells b {
+    display: block;
+    font-size: 15px;
+    margin-top: 7px;
+    color: #536249;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .report-feature {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 30px;
+    background: #eef2e6;
+    border: 1px solid #e0e8d1;
+    border-radius: 11px;
+    margin-bottom: 25px;
+  }
+  :where(.zy-experience) .report-feature h2 {
+    font-size: 22px;
+    max-width: 450px;
+  }
+  :where(.zy-experience) .report-feature p:not(.eyebrow) {
+    font-size: 12px;
+    margin-top: 9px;
+  }
+  :where(.zy-experience) .upcoming-maintenance {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 24px;
+  }
+  :where(.zy-experience) .upcoming-maintenance > div {
+    flex: 1;
+  }
+  :where(.zy-experience) .upcoming-maintenance h3 {
+    font-size: 14px;
+  }
+  :where(.zy-experience) .upcoming-maintenance p {
+    font-size: 11px;
+    margin-top: 5px;
+  }
+  :where(.zy-experience) .upcoming-maintenance > svg {
+    color: #536249;
+  }
+  :where(.zy-experience) .agenda-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+    gap: 24px;
+  }
+  :where(.zy-experience) .calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    gap: 8px;
+  }
+  :where(.zy-experience) .calendar-week,
+  :where(.zy-experience) .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 5px;
+  }
+  :where(.zy-experience) .calendar-week > span {
+    text-align: center;
+    font-size: 10px;
+    color: #5c6c50;
+    margin-bottom: 15px;
+  }
+  :where(.zy-experience) .calendar-grid button {
+    height: 53px;
+    font-size: 13px;
+    font-weight: 500;
+    position: relative;
+    border-radius: 8px;
+    color: #536249;
+  }
+  :where(.zy-experience) .calendar-grid button:hover {
+    background: #f0f4e7;
+  }
+  :where(.zy-experience) .calendar-grid button.today {
+    background: #2f4e36;
+    color: #ddedc2;
+  }
+  :where(.zy-experience) .calendar-grid button.has-event {
+    background: #edf3e3;
+    color: #536249;
+  }
+  :where(.zy-experience) .calendar-grid button > i {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    bottom: 8px;
+    left: calc(50% - 2px);
+    background: #95ad6f;
+    border-radius: 50%;
+  }
+  :where(.zy-experience) .notification-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 17px;
+    padding: 23px 0;
+  }
+  :where(.zy-experience) .notification-row + .notification-row {
+    border-top: 1px solid var(--line);
+  }
+  :where(.zy-experience) .notification-row .row-text {
+    padding: 0;
+  }
+  :where(.zy-experience) .notification-row .row-text b {
+    font-size: 13px;
+  }
+  :where(.zy-experience) .notification-row p {
+    font-size: 11px;
+    margin-top: 6px;
+  }
+  :where(.zy-experience) .notification-row small {
+    font-size: 10px;
+    margin-top: 10px;
+  }
+  :where(.zy-experience) .notification-row.unread b {
+    color: #4e6b3b;
+  }
+  :where(.zy-experience) .notification-row.unread .document-icon {
+    background: #eaf2dd;
+    color: #536249;
+  }
+  :where(.zy-experience) .company-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: #f0f3e8;
+    border: 1px solid #e2e9d7;
+    padding: 28px;
+    border-radius: 11px;
+    margin-bottom: 27px;
+  }
+  :where(.zy-experience) .company-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    letter-spacing: -5px;
+    border-radius: 15px;
+    background: #dfe9cc;
+    border: 1px solid #d1ddbe;
+    width: 80px;
+    height: 80px;
+    color: #536249;
+    font-weight: 600;
+  }
+  :where(.zy-experience) .company-header > div {
+    flex: 1;
+  }
+  :where(.zy-experience) .company-header h2 {
+    font-size: 24px;
+  }
+  :where(.zy-experience) .company-header p:not(.eyebrow) {
+    font-size: 11px;
+    margin-top: 6px;
+  }
+  :where(.zy-experience) .company-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  :where(.zy-experience) .detail-list {
+    margin: 20px 0 25px;
+  }
+  :where(.zy-experience) .detail-list > div {
+    padding: 15px 0;
+    align-items: flex-start;
+  }
+  :where(.zy-experience) .detail-list dt {
+    font-size: 11px;
+  }
+  :where(.zy-experience) .detail-list dd {
+    font-size: 12px;
+    overflow-wrap: anywhere;
+    max-width: 65%;
+  }
+  :where(.zy-experience) .member-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 19px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  :where(.zy-experience) .member-row > span + span {
+    flex: 1;
+  }
+  :where(.zy-experience) .member-row b {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .member-row small {
+    display: block;
+    font-size: 10px;
+    color: #5c6c50;
+    margin-top: 3px;
+  }
+  :where(.zy-experience) .profile-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin: 5px 0 30px;
+  }
+  :where(.zy-experience) .profile-large {
+    height: 80px;
+    width: 80px;
+    font-size: 24px;
+    background: #ece5d7;
+    color: #5c6c50;
+    border: 4px solid #fff;
+    box-shadow: 0 2px 4px #243d3009;
+  }
+  :where(.zy-experience) .profile-header h2 {
+    font-size: 22px;
+  }
+  :where(.zy-experience) .profile-header p {
+    font-size: 12px;
+    margin: 5px 0 8px;
+  }
+  :where(.zy-experience) .security-setting {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 25px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  :where(.zy-experience) .security-setting > div {
+    flex: 1;
+  }
+  :where(.zy-experience) .security-setting > svg {
+    color: #536249;
+  }
+  :where(.zy-experience) .security-setting b {
+    font-size: 11px;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .security-setting p {
+    font-size: 10px;
+    margin-top: 5px;
+  }
+  :where(.zy-experience) .security-setting .text-button {
+    font-size: 10px;
+  }
+  :where(.zy-experience) .company-columns .panel > .button {
+    margin-top: 20px;
+  }
+  :where(.zy-experience) .subtle {
+    font-size: 11px;
+    color: #5c6c50;
+    line-height: 1.8;
+  }
+  :where(.zy-experience) .panel > .subtle {
+    margin-top: 9px;
+  }
+  :where(.zy-experience) .preference {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: space-between;
+    padding: 27px 0;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+  }
+  :where(.zy-experience) .preference b {
+    font-size: 12px;
+    display: block;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .preference small {
+    display: block;
+    font-size: 10px;
+    margin-top: 5px;
+    color: #536249;
+  }
+  :where(.zy-experience) .preference input {
+    appearance: none;
+    width: 35px;
+    height: 20px;
+    border-radius: 15px;
+    background: #dfe5d6;
+    position: relative;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  :where(.zy-experience) .preference input:before {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: white;
+    top: 3px;
+    left: 3px;
+    border-radius: 50%;
+    box-shadow: 0 1px 2px #23443222;
+    transition: left 0.2s;
+  }
+  :where(.zy-experience) .preference input:checked {
+    background: #718e52;
+  }
+  :where(.zy-experience) .preference input:checked:before {
+    left: 18px;
+  }
+  :where(.zy-experience) .modal {
+    border: 1px solid #e0e6d7;
+    border-radius: 16px;
+    box-shadow: 0 25px 100px #10271933;
+    padding: 0;
+    max-width: 600px;
+    width: calc(100% - 40px);
+    max-height: 88dvh;
+    color: var(--ink);
+    background: #fff;
+    overflow: auto;
+  }
+  :where(.zy-experience) .modal::backdrop {
+    background: #17282066;
+    backdrop-filter: blur(4px);
+  }
+  :where(.zy-experience) .modal-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--line);
+    gap: 12px;
+    background: #fcfdfa;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  :where(.zy-experience) .modal-heading h2 {
+    font-size: 17px;
+  }
+  :where(.zy-experience) .modal-content {
+    padding: 25px;
+  }
+  :where(.zy-experience) .modal-content > p {
+    font-size: 12px;
+    line-height: 1.9;
+    margin: 12px 0;
+  }
+  :where(.zy-experience) .modal-content > h3 {
+    font-size: 23px;
+    letter-spacing: -0.8px;
+    line-height: 1.4;
+    margin: 14px 0 9px;
+  }
+  :where(.zy-experience) .modal-content > .button {
+    margin-top: 24px;
+  }
+  :where(.zy-experience) .modal-content .project-art {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    height: 190px;
+    margin-bottom: 22px;
+  }
+  :where(.zy-experience) .modal-content .project-art .art-window {
+    top: 35px;
+    width: 220px;
+    height: 170px;
+  }
+  :where(.zy-experience) .modal-content .project-art .art-window-body {
+    height: 154px;
+  }
+  :where(.zy-experience) .modal-content .project-art .art-landscape {
+    height: 145px;
+  }
+  :where(.zy-experience) .modal-content .project-art .art-window-body > b {
+    font-size: 17px;
+  }
+  :where(.zy-experience) .modal-content .badge {
+    font-size: 10px;
+    padding: 4px 9px;
+  }
+  :where(.zy-experience) .modal-content .eyebrow {
+    margin-top: 15px;
+  }
+  :where(.zy-experience) .modal-content .info-note {
+    font-size: 11px;
+    margin: 22px 0;
+  }
+  :where(.zy-experience) .modal-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 25px;
+  }
+  :where(.zy-experience) .modal-actions .button {
+    flex: 1;
+  }
+  :where(.zy-experience) .selected-organization {
+    width: 100%;
+    margin: 0;
+    padding: 16px;
+  }
+  :where(.zy-experience) .selected-organization b {
+    font-size: 14px;
+  }
+  :where(.zy-experience) .selected-organization small {
+    font-size: 11px;
+  }
+  :where(.zy-experience) .milestones {
+    padding: 0;
+    list-style: none;
+  }
+  :where(.zy-experience) .milestones li {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 13px 0;
+  }
+  :where(.zy-experience) .milestones li > span {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #e3e9d8;
+    background: #fafbf8;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5c6c50;
+    font-size: 11px;
+  }
+  :where(.zy-experience) .milestones li.done > span {
+    background: #e8efdc;
+    color: #5c6c50;
+    border-color: #dbe5cb;
+  }
+  :where(.zy-experience) .milestones li > div {
+    flex: 1;
+  }
+  :where(.zy-experience) .milestones b {
+    font-size: 12px;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .milestones small {
+    display: block;
+    font-size: 10px;
+    color: #5c6c50;
+    margin-top: 3px;
+  }
+  :where(.zy-experience) .scope-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+  }
+  :where(.zy-experience) .scope-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    padding: 8px 0;
+    color: #536249;
+  }
+  :where(.zy-experience) .invoice-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  :where(.zy-experience) .document-preview {
+    background: #f3f5ed;
+    border: 1px solid #e3e8d8;
+    border-radius: 9px;
+    padding: 30px;
+    position: relative;
+    overflow: hidden;
+    color: #536249;
+  }
+  :where(.zy-experience) .document-preview > span {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    margin: 20px 0 12px;
+  }
+  :where(.zy-experience) .document-preview h3 {
+    font-size: 22px;
+    max-width: 320px;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .document-preview p {
+    font-size: 11px;
+    margin: 12px 0 20px;
+  }
+  :where(.zy-experience) .fake-doc-lines i {
+    display: block;
+    height: 4px;
+    background: #dce4cd;
+    margin: 7px 0;
+    border-radius: 2px;
+    width: 70%;
+  }
+  :where(.zy-experience) .fake-doc-lines i:nth-child(2) {
+    width: 90%;
+  }
+  :where(.zy-experience) .fake-doc-lines i:nth-child(3) {
+    width: 60%;
+  }
+  :where(.zy-experience) .support-form > p {
+    font-size: 12px;
+    line-height: 1.8;
+    margin-bottom: 23px;
+  }
+  :where(.zy-experience) .support-form label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    margin-bottom: 19px;
+    color: #536249;
+  }
+  :where(.zy-experience) .support-form input,
+  :where(.zy-experience) .support-form select,
+  :where(.zy-experience) .support-form textarea {
+    width: 100%;
+    display: block;
+    margin-top: 7px;
+    background: #fafbf8;
+    border: 1px solid #dde5d2;
+    border-radius: 7px;
+    padding: 12px;
+    color: var(--ink);
+    font-size: 12px;
+    outline-offset: 2px;
+  }
+  :where(.zy-experience) .support-form textarea {
+    resize: vertical;
+    min-height: 90px;
+  }
+  :where(.zy-experience) .support-form input::placeholder,
+  :where(.zy-experience) .support-form textarea::placeholder {
+    color: #536249;
+  }
+  :where(.zy-experience) .support-form > .button {
+    width: 100%;
+    margin-top: 12px;
+  }
+  :where(.zy-experience) .support-form > .subtle {
+    display: block;
+  }
+  :where(.zy-experience) .preserve-lines {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  :where(.zy-experience) .conversation {
+    margin: 25px 0;
+  }
+  :where(.zy-experience) .message {
+    background: #f1f5e9;
+    border: 1px solid #e6ebde;
+    padding: 16px 20px;
+    margin: 15px 25px 15px 0;
+    border-radius: 0 10px 10px 10px;
+  }
+  :where(.zy-experience) .message.from-user {
+    background: #f7f6f0;
+    border-color: #5c6c50;
+    margin-left: 25px;
+    margin-right: 0;
+    border-radius: 10px 0 10px 10px;
+  }
+  :where(.zy-experience) .message b {
+    font-size: 10px;
+    color: #5c6c50;
+    font-weight: 600;
+  }
+  :where(.zy-experience) .message p {
+    font-size: 12px;
+    line-height: 1.8;
+    margin: 8px 0;
+  }
+  :where(.zy-experience) .message small {
+    font-size: 10px;
+    color: #536249;
+  }
+  :where(.zy-experience) .modal-search {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px;
+    background: #f7faf2;
+    border: 1px solid #dbe5cc;
+    border-radius: 8px;
+    color: #536249;
+  }
+  :where(.zy-experience) .modal-search input {
+    border: 0;
+    background: none;
+    min-width: 0;
+    flex: 1;
+    outline: 0;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  :where(.zy-experience) .search-results {
+    margin-top: 20px;
+  }
+  :where(.zy-experience) .search-results > button {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    text-align: left;
+    padding: 17px 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  :where(.zy-experience) .search-results > button > span {
+    flex: 1;
+  }
+  :where(.zy-experience) .search-results > button > b {
+    flex: 1;
+  }
+  :where(.zy-experience) .search-results b {
+    font-size: 12px;
+    font-weight: 500;
+    display: block;
+  }
+  :where(.zy-experience) .search-results small {
+    font-size: 10px;
+    color: #5c6c50;
+    display: block;
+    margin-bottom: 5px;
+  }
+  :where(.zy-experience) .search-results > button > svg:last-child {
+    color: #5c6c50;
+    margin-left: auto;
+  }
+  :where(.zy-experience) .search-results .empty-state {
+    padding: 35px 15px;
+  }
+  :where(.zy-experience) .toast {
+    position: fixed;
+    right: 25px;
+    bottom: 25px;
+    max-width: 450px;
+    padding: 15px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 100;
+    border: 1px solid #cadaaf;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 12px 45px #233d2622;
+    font-size: 11px;
+    color: #536249;
+  }
+  :where(.zy-experience) .toast > span {
+    flex: 1;
+  }
+  :where(.zy-experience) .toast button {
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    min-height: 24px;
+  }
+  :where(.zy-experience) .login-page {
+    min-height: 100dvh;
+    display: grid;
+    grid-template-columns: 1.03fr 1fr;
+    background: #fff;
+  }
+  :where(.zy-experience) .login-story {
+    padding: 55px 65px;
+    background: var(--forest);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  :where(.zy-experience) .login-story > div:not(.login-decor) {
+    position: relative;
+    z-index: 1;
+  }
+  :where(.zy-experience) .login-copy {
+    margin: auto 0;
+    padding: 65px 0;
+    max-width: 410px;
+  }
+  :where(.zy-experience) .login-copy .eyebrow {
+    color: #accd85;
+    font-size: 10px;
+  }
+  :where(.zy-experience) .login-copy h1 {
+    font-size: 47px;
+    line-height: 1.13;
+    font-weight: 500;
+    letter-spacing: -2px;
+  }
+  :where(.zy-experience) .login-copy h1 > span {
+    color: #c4e88c;
+  }
+  :where(.zy-experience) .login-copy > p {
+    color: #b6c7ad;
+    font-size: 13px;
+    line-height: 1.9;
+    margin-top: 23px;
+    max-width: 320px;
+  }
+  :where(.zy-experience) .login-points {
+    margin-top: 35px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  :where(.zy-experience) .login-points > span {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: #536249;
+  }
+  :where(.zy-experience) .login-decor {
+    position: absolute;
+    width: 750px;
+    height: 750px;
+    border: 1px solid #88a86644;
+    border-radius: 50%;
+    right: -445px;
+    bottom: -340px;
+    box-shadow:
+      0 0 0 80px #8fa8760a,
+      0 0 0 160px #8fa87608;
+  }
+  :where(.zy-experience) .login-story-footer {
+    font-size: 10px;
+    color: #99b38b;
+  }
+  :where(.zy-experience) .login-form-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 50px;
+  }
+  :where(.zy-experience) .login-form-box {
+    width: 100%;
+    max-width: 350px;
+  }
+  :where(.zy-experience) .login-form-box > h2 {
+    font-size: 30px;
+    letter-spacing: -1px;
+  }
+  :where(.zy-experience) .login-form-box > p {
+    font-size: 12px;
+    line-height: 1.8;
+    margin-top: 10px;
+  }
+  :where(.zy-experience) .login-form-box .support-form {
+    margin-top: 29px;
+  }
+  :where(.zy-experience) .login-form-box .support-form input:disabled {
+    opacity: 0.8;
+    cursor: not-allowed;
+  }
+  :where(.zy-experience) .login-form-box .button:disabled {
+    cursor: not-allowed;
+  }
+  :where(.zy-experience) .login-form-box .info-note {
+    font-size: 10px;
+  }
+  :where(.zy-experience) .login-demo-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #5c6c50;
+    margin-top: 27px;
+    padding: 12px;
+  }
+  :where(.zy-experience) .login-demo-link:hover {
+    color: #2b482e;
+  }
+  :where(.zy-experience) .login-invitation {
+    border-top: 1px solid var(--line);
+    padding-top: 22px;
+    margin-top: 28px;
+    font-size: 10px;
+    text-align: center;
+    line-height: 1.8;
+    color: #536249;
+  }
+  @media (min-width: 1700px) {
+    :where(.zy-experience) main {
+      padding-top: 40px;
+    }
+    :where(.zy-experience) .page-heading h1 {
+      font-size: 35px;
+    }
+    :where(.zy-experience) .welcome-banner {
+      min-height: 220px;
+    }
+    :where(.zy-experience) .welcome-banner h2 {
+      font-size: 32px;
+    }
+    :where(.zy-experience) .banner-art {
+      right: 80px;
+    }
+    :where(.zy-experience) .stats-grid {
+      gap: 22px;
+    }
+    :where(.zy-experience) .stat-card {
+      padding: 24px;
+    }
+    :where(.zy-experience) .stat-card strong {
+      font-size: 34px;
+    }
+    :where(.zy-experience) .stat-card > div {
+      font-size: 12px;
+    }
+    :where(.zy-experience) .stat-card p {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .attention-grid > button {
+      padding: 23px;
+    }
+    :where(.zy-experience) .attention-grid b {
+      font-size: 12px;
+    }
+    :where(.zy-experience) .attention-grid small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .project-art {
+      height: 190px;
+    }
+    :where(.zy-experience) .art-window {
+      top: 39px;
+      width: 230px;
+      height: 170px;
+    }
+    :where(.zy-experience) .art-window-body {
+      height: 155px;
+      padding: 22px;
+    }
+    :where(.zy-experience) .art-window-body > b {
+      font-size: 17px;
+    }
+    :where(.zy-experience) .art-landscape {
+      height: 145px;
+      width: 115px;
+    }
+    :where(.zy-experience) .project-body {
+      padding: 22px;
+    }
+    :where(.zy-experience) .project-meta > span:first-child {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .title-link h3 {
+      font-size: 16px;
+    }
+    :where(.zy-experience) .project-body > p {
+      font-size: 12px;
+    }
+    :where(.zy-experience) .badge {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .progress-label {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .project-footer > span {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .event-text > b {
+      font-size: 12px;
+    }
+    :where(.zy-experience) .event-text > small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .event-text > span {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .agenda-card {
+      padding: 24px;
+    }
+    :where(.zy-experience) .event-row {
+      padding: 23px 0;
+    }
+    :where(.zy-experience) .document-row .row-text > b {
+      font-size: 12px;
+    }
+    :where(.zy-experience) .document-row .row-text > small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .contact-card h2 {
+      font-size: 26px;
+    }
+    :where(.zy-experience) .contact-card > p {
+      font-size: 12px;
+    }
+    :where(.zy-experience) .contact-card .eyebrow {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .contact-person b {
+      font-size: 12px;
+    }
+    :where(.zy-experience) .contact-person small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .contact-card .button {
+      font-size: 11px;
+      min-height: 40px;
+    }
+    :where(.zy-experience) .section-heading h2 {
+      font-size: 18px;
+    }
+    :where(.zy-experience) .section-heading p {
+      font-size: 12px;
+    }
+  }
+  @media (max-width: 1200px) {
+    :where(.zy-experience) .sidebar {
+      width: 214px;
+    }
+    :where(.zy-experience) .workspace {
+      margin-left: 214px;
+    }
+    :where(.zy-experience) .sidebar-brand {
+      padding-left: 22px;
+    }
+    :where(.zy-experience) .nav-item {
+      font-size: 10px;
+      gap: 9px;
+      padding-left: 10px;
+    }
+    :where(.zy-experience) .topbar {
+      padding: 0 27px;
+    }
+    :where(.zy-experience) main {
+      padding: 26px 27px 0;
+    }
+    :where(.zy-experience) .preview-bar {
+      padding-left: 27px;
+      padding-right: 27px;
+    }
+    :where(.zy-experience) .home-columns {
+      grid-template-columns: minmax(0, 1.9fr) minmax(230px, 1fr);
+      gap: 18px;
+    }
+    :where(.zy-experience) .attention-grid > button {
+      gap: 7px;
+      padding: 15px 10px;
+    }
+    :where(.zy-experience) .attention-icon {
+      width: 29px;
+      height: 30px;
+    }
+    :where(.zy-experience) .attention-grid b {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .attention-grid small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .project-body {
+      padding: 13px;
+    }
+    :where(.zy-experience) .title-link h3 {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .project-meta > span:first-child {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .project-grid {
+      gap: 12px;
+    }
+    :where(.zy-experience) .agenda-card {
+      padding: 16px 13px 5px;
+    }
+    :where(.zy-experience) .event-row {
+      gap: 8px;
+      padding: 17px 0;
+    }
+    :where(.zy-experience) .event-day {
+      width: 33px;
+      height: 41px;
+    }
+    :where(.zy-experience) .event-text > b {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .event-text > small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .section-heading h2 {
+      font-size: 14px;
+    }
+    :where(.zy-experience) .section-heading > span {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .full-projects {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    :where(.zy-experience) .stats-grid {
+      gap: 11px;
+    }
+    :where(.zy-experience) .stat-card {
+      padding: 13px;
+    }
+    :where(.zy-experience) .stat-card strong {
+      font-size: 26px;
+    }
+    :where(.zy-experience) .stat-card > div {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .stat-card p {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .stat-icon {
+      width: 26px;
+      height: 26px;
+    }
+    :where(.zy-experience) .stat-icon svg {
+      width: 16px;
+    }
+    :where(.zy-experience) .document-row {
+      gap: 8px;
+    }
+    :where(.zy-experience) .row-text > b {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .document-row .badge {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .panel {
+      padding: 18px;
+    }
+    :where(.zy-experience) .contact-card {
+      padding: 20px;
+    }
+    :where(.zy-experience) .document-toolbar {
+      flex-direction: column;
+      gap: 0;
+    }
+    :where(.zy-experience) .document-toolbar .tabs {
+      width: 100%;
+    }
+    :where(.zy-experience) .inline-search {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    :where(.zy-experience) .inline-search input {
+      width: 100%;
+    }
+    :where(.zy-experience) .company-columns {
+      grid-template-columns: 1fr;
+    }
+    :where(.zy-experience) .login-story {
+      padding: 40px;
+    }
+    :where(.zy-experience) .login-copy h1 {
+      font-size: 40px;
+    }
+    :where(.zy-experience) .login-form-area {
+      padding: 35px;
+    }
+  }
+  @media (max-width: 1020px) and (min-width: 769px) {
+    :where(.zy-experience) .home-columns {
+      grid-template-columns: 1fr;
+    }
+    :where(.zy-experience) .agenda-card .event-row {
+      padding: 14px 0;
+    }
+    :where(.zy-experience) .agenda-card {
+      display: flex;
+      flex-direction: column;
+    }
+    :where(.zy-experience) .agenda-card .section-heading {
+      margin-bottom: 0;
+    }
+    :where(.zy-experience) .bottom-columns {
+      grid-template-columns: 1.5fr 1fr;
+    }
+    :where(.zy-experience) .stats-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    :where(.zy-experience) .stat-card > div {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .stat-card strong {
+      font-size: 29px;
+    }
+    :where(.zy-experience) .attention-grid {
+      grid-template-columns: 1fr;
+    }
+    :where(.zy-experience) .attention-grid > button:not(:last-child) {
+      border-right: 0;
+      border-bottom: 1px solid #eae5d6;
+    }
+    :where(.zy-experience) .attention-grid > button {
+      padding: 14px;
+    }
+    :where(.zy-experience) .attention-grid b {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .attention-grid small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .attention-section .section-heading > span {
+      display: none;
+    }
+    :where(.zy-experience) .services-grid {
+      grid-template-columns: 1fr;
+    }
+    :where(.zy-experience) .finance-overview {
+      grid-template-columns: 1fr;
+    }
+    :where(.zy-experience) .agreements-grid {
+      grid-template-columns: 1fr;
+    }
+    :where(.zy-experience) .agenda-layout {
+      grid-template-columns: 1fr;
+    }
+    :where(.zy-experience) .monitor-cells {
+      grid-template-columns: 1fr 1fr;
+      row-gap: 20px;
+    }
+    :where(.zy-experience) .monitor-cells > span:nth-child(3) {
+      padding-left: 0;
+      border-left: 0;
+    }
+    :where(.zy-experience) .banner-art {
+      right: -90px;
+      opacity: 0.65;
+    }
+    :where(.zy-experience) .search-trigger span,
+    :where(.zy-experience) .search-trigger kbd {
+      display: none;
+    }
+    :where(.zy-experience) .preview-description {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .section-intro {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+    :where(.zy-experience) .report-feature {
+      padding: 23px;
+    }
+    :where(.zy-experience) .report-feature h2 {
+      font-size: 19px;
+    }
+  }
+  @media (max-width: 768px) {
+    :where(.zy-experience) .sidebar {
+      display: none;
+    }
+    :where(.zy-experience) .workspace {
+      margin-left: 0;
+    }
+    :where(.zy-experience) .topbar {
+      height: 65px;
+      padding: 0 22px;
+    }
+    :where(.zy-experience) .mobile-brand {
+      display: inline;
+      font-size: 23px;
+      letter-spacing: -1.5px;
+      font-weight: 700;
+    }
+    :where(.zy-experience) .mobile-brand span {
+      color: #536249;
+    }
+    :where(.zy-experience) .desktop-crumb {
+      display: none;
+    }
+    :where(.zy-experience) .breadcrumbs > b {
+      display: none;
+    }
+    :where(.zy-experience) .top-actions {
+      gap: 7px;
+    }
+    :where(.zy-experience) .top-actions .top-divider {
+      margin: 0 6px;
+    }
+    :where(.zy-experience) .search-trigger {
+      margin: 0;
+      padding: 9px;
+    }
+    :where(.zy-experience) .search-trigger span,
+    :where(.zy-experience) .search-trigger kbd {
+      display: none;
+    }
+    :where(.zy-experience) .preview-bar {
+      padding: 8px 22px;
+      font-size: 10px;
+    }
+    :where(.zy-experience) .preview-description {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .preview-bar > span {
+      gap: 5px;
+      letter-spacing: 0.3px;
+    }
+    :where(.zy-experience) .preview-bar button {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .preview-bar button svg {
+      display: none;
+    }
+    :where(.zy-experience) main {
+      padding: 25px 22px 0;
+    }
+    :where(.zy-experience) .page-heading {
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    :where(.zy-experience) .eyebrow {
+      font-size: 10px;
+      letter-spacing: 1.4px;
+    }
+    :where(.zy-experience) h1 {
+      font-size: 27px;
+    }
+    :where(.zy-experience) .page-heading p:not(.eyebrow) {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .page-heading .button {
+      font-size: 10px;
+      padding: 9px 11px;
+      min-height: 38px;
+      gap: 6px;
+    }
+    :where(.zy-experience) .page-heading .button svg {
+      width: 14px;
+    }
+    :where(.zy-experience) .welcome-banner {
+      padding: 23px;
+      min-height: 190px;
+    }
+    :where(.zy-experience) .welcome-banner h2 {
+      font-size: 25px;
+    }
+    :where(.zy-experience) .welcome-banner p {
+      font-size: 10px;
+      max-width: 260px;
+    }
+    :where(.zy-experience) .banner-label {
+      font-size: 10px;
+      letter-spacing: 1.4px;
+    }
+    :where(.zy-experience) .banner-art {
+      right: -125px;
+      opacity: 0.48;
+      top: -40px;
+    }
+    :where(.zy-experience) .welcome-banner > div:first-child {
+      max-width: 85%;
+    }
+    :where(.zy-experience) .welcome-banner button {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .stats-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 17px 0 25px;
+    }
+    :where(.zy-experience) .stat-card {
+      padding: 15px;
+    }
+    :where(.zy-experience) .stat-card > div {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .stat-card strong {
+      font-size: 27px;
+      margin: 10px 0 16px;
+    }
+    :where(.zy-experience) .stat-card p {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .stat-icon {
+      width: 29px;
+      height: 29px;
+    }
+    :where(.zy-experience) .section-heading h2 {
+      font-size: 15px;
+    }
+    :where(.zy-experience) .section-heading > span {
+      display: none;
+    }
+    :where(.zy-experience) .attention-grid {
+      grid-template-columns: 1fr;
+    }
+    :where(.zy-experience) .attention-grid > button {
+      padding: 16px;
+      gap: 12px;
+    }
+    :where(.zy-experience) .attention-grid > button:not(:last-child) {
+      border-right: 0;
+      border-bottom: 1px solid #eae5d6;
+    }
+    :where(.zy-experience) .attention-grid b {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .attention-grid small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .attention-icon {
+      width: 36px;
+      height: 36px;
+    }
+    :where(.zy-experience) .attention-grid > button > svg {
+      width: 17px;
+    }
+    :where(.zy-experience) .home-columns {
+      grid-template-columns: 1fr;
+      margin-top: 25px;
+      gap: 22px;
+    }
+    :where(.zy-experience) .project-grid {
+      gap: 14px;
+    }
+    :where(.zy-experience) .project-art {
+      height: 155px;
+    }
+    :where(.zy-experience) .project-body {
+      padding: 16px;
+    }
+    :where(.zy-experience) .title-link h3 {
+      font-size: 13px;
+    }
+    :where(.zy-experience) .project-meta > span:first-child {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .badge {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .project-body > p {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .agenda-card {
+      padding: 20px 18px 5px;
+    }
+    :where(.zy-experience) .event-row {
+      padding: 19px 0;
+      gap: 14px;
+    }
+    :where(.zy-experience) .event-day {
+      width: 42px;
+      height: 46px;
+    }
+    :where(.zy-experience) .event-text > b {
+      font-size: 12px;
+    }
+    :where(.zy-experience) .event-text > small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .event-text > span {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .agenda-all {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .bottom-columns {
+      grid-template-columns: 1fr;
+    }
+    :where(.zy-experience) .panel {
+      padding: 21px;
+    }
+    :where(.zy-experience) .row-text > b {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .row-text > small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .document-row .badge {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .document-row {
+      padding: 19px 0;
+      gap: 10px;
+    }
+    :where(.zy-experience) .contact-card {
+      padding: 25px;
+    }
+    :where(.zy-experience) .contact-card h2 {
+      font-size: 26px;
+    }
+    :where(.zy-experience) .contact-card > p {
+      max-width: 350px;
+      font-size: 12px;
+    }
+    :where(.zy-experience) .contact-card .eyebrow {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .contact-person b {
+      font-size: 12px;
+    }
+    :where(.zy-experience) .contact-person small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .contact-card .button {
+      min-height: 40px;
+      font-size: 11px;
+    }
+    :where(.zy-experience) .workspace-footer {
+      margin-top: 27px;
+      padding: 21px 0 104px;
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 10px;
+    }
+    :where(.zy-experience) .workspace-footer > span {
+      font-size: 10px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    :where(.zy-experience) .workspace-footer button {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .mobile-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 8px 15px max(9px, env(safe-area-inset-bottom));
+      background: #ffffffed;
+      backdrop-filter: blur(15px);
+      border-top: 1px solid #e4eada;
+      box-shadow: 0 -2px 12px #24462a06;
+    }
+    :where(.zy-experience) .mobile-nav button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      color: #5c6c50;
+      min-height: 47px;
+      border-radius: 7px;
+      font-size: 10px;
+    }
+    :where(.zy-experience) .mobile-nav button.active {
+      background: #eff4e7;
+      color: #546f3d;
+    }
+    :where(.zy-experience) .mobile-nav button:hover {
+      background: #f0f5e8;
+    }
+    :where(.zy-experience) .services-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    :where(.zy-experience) .service-card {
+      padding: 22px;
+    }
+    :where(.zy-experience) .service-card h2 {
+      font-size: 17px;
+    }
+    :where(.zy-experience) .service-card > p:not(.eyebrow) {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .service-bottom {
+      flex-wrap: wrap;
+    }
+    :where(.zy-experience) .soft-banner {
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 13px;
+      padding: 21px;
+    }
+    :where(.zy-experience) .soft-banner > .button {
+      margin-left: 59px;
+    }
+    :where(.zy-experience) .soft-banner h3 {
+      font-size: 14px;
+    }
+    :where(.zy-experience) .section-intro {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
+    :where(.zy-experience) .full-projects {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+    }
+    :where(.zy-experience) .full-projects .project-body {
+      padding: 16px;
+    }
+    :where(.zy-experience) .full-projects .title-link h3 {
+      font-size: 13px;
+    }
+    :where(.zy-experience) .finance-overview {
+      grid-template-columns: 1fr;
+      gap: 17px;
+    }
+    :where(.zy-experience) .finance-small {
+      gap: 35px;
+    }
+    :where(.zy-experience) .balance-card {
+      padding: 26px;
+    }
+    :where(.zy-experience) .finance-info {
+      padding: 25px;
+    }
+    :where(.zy-experience) .table-container {
+      margin: 0 -5px;
+      width: calc(100% + 10px);
+    }
+    :where(.zy-experience) .agreements-grid {
+      grid-template-columns: 1fr;
+    }
+    :where(.zy-experience) .support-banner {
+      padding: 20px;
+      gap: 15px;
+    }
+    :where(.zy-experience) .support-banner > .badge {
+      display: none;
+    }
+    :where(.zy-experience) .support-banner h2 {
+      font-size: 16px;
+    }
+    :where(.zy-experience) .support-banner p {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .ticket-list {
+      padding: 0 19px;
+    }
+    :where(.zy-experience) .ticket-row {
+      gap: 12px;
+      flex-wrap: wrap;
+      position: relative;
+      padding: 20px 0;
+    }
+    :where(.zy-experience) .ticket-row .row-text {
+      flex-basis: calc(100% - 85px);
+    }
+    :where(.zy-experience) .ticket-row .badge {
+      margin-left: 56px;
+      margin-top: -6px;
+    }
+    :where(.zy-experience) .ticket-row > svg {
+      position: absolute;
+      right: 0;
+      top: 41px;
+    }
+    :where(.zy-experience) .ticket-row .row-text b {
+      font-size: 12px;
+    }
+    :where(.zy-experience) .ticket-row .row-text small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .monitor-cells {
+      grid-template-columns: repeat(2, 1fr);
+      row-gap: 22px;
+    }
+    :where(.zy-experience) .monitor-cells > span:nth-child(3) {
+      padding-left: 0;
+      border-left: 0;
+    }
+    :where(.zy-experience) .monitor-cells b {
+      font-size: 13px;
+    }
+    :where(.zy-experience) .monitor-status {
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    :where(.zy-experience) .monitor-status > .badge {
+      margin-left: 37px;
+    }
+    :where(.zy-experience) .monitor-status > div {
+      min-width: 180px;
+    }
+    :where(.zy-experience) .monitor-status h2 {
+      font-size: 16px;
+    }
+    :where(.zy-experience) .monitor-status p {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .monitor-summary {
+      padding: 22px;
+    }
+    :where(.zy-experience) .empty-state {
+      padding: 50px 8px;
+    }
+    :where(.zy-experience) .empty-state h2 {
+      font-size: 22px;
+    }
+    :where(.zy-experience) .empty-state p {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .security-features {
+      gap: 17px;
+      align-items: center;
+      flex-direction: column;
+    }
+    :where(.zy-experience) .report-feature {
+      padding: 23px;
+      gap: 17px;
+    }
+    :where(.zy-experience) .report-feature h2 {
+      font-size: 19px;
+    }
+    :where(.zy-experience) .report-feature p:not(.eyebrow) {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .upcoming-maintenance {
+      flex-wrap: wrap;
+    }
+    :where(.zy-experience) .upcoming-maintenance .text-button {
+      margin-left: 36px;
+    }
+    :where(.zy-experience) .agenda-layout {
+      grid-template-columns: 1fr;
+    }
+    :where(.zy-experience) .calendar-grid button {
+      height: 52px;
+    }
+    :where(.zy-experience) .company-header {
+      padding: 23px;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    :where(.zy-experience) .company-mark {
+      width: 65px;
+      height: 65px;
+      font-size: 28px;
+    }
+    :where(.zy-experience) .company-header > .badge {
+      margin-left: 80px;
+      margin-top: -6px;
+    }
+    :where(.zy-experience) .company-header h2 {
+      font-size: 21px;
+    }
+    :where(.zy-experience) .company-columns {
+      grid-template-columns: 1fr;
+    }
+    :where(.zy-experience) .preference b {
+      font-size: 12px;
+    }
+    :where(.zy-experience) .profile-header {
+      gap: 17px;
+    }
+    :where(.zy-experience) .profile-large {
+      width: 68px;
+      height: 68px;
+      font-size: 20px;
+    }
+    :where(.zy-experience) .profile-header h2 {
+      font-size: 20px;
+    }
+    :where(.zy-experience) .document-toolbar .tabs {
+      gap: 3px;
+    }
+    :where(.zy-experience) .tabs > button {
+      padding: 8px 10px;
+      font-size: 10px;
+      min-height: 37px;
+    }
+    :where(.zy-experience) .document-panel .row-text b {
+      font-size: 12px;
+    }
+    :where(.zy-experience) .document-panel .row-text small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .document-panel .document-row {
+      flex-wrap: wrap;
+      position: relative;
+    }
+    :where(.zy-experience) .document-panel .row-text {
+      flex-basis: calc(100% - 80px);
+    }
+    :where(.zy-experience) .document-panel .document-row > .badge {
+      margin-left: 54px;
+      margin-top: -7px;
+    }
+    :where(.zy-experience) .document-panel .document-row > svg {
+      position: absolute;
+      right: 0;
+      top: 38px;
+    }
+    :where(.zy-experience) .modal {
+      width: calc(100% - 26px);
+      max-height: 90dvh;
+      border-radius: 12px;
+    }
+    :where(.zy-experience) .modal-heading {
+      padding: 17px 19px;
+    }
+    :where(.zy-experience) .modal-content {
+      padding: 21px;
+    }
+    :where(.zy-experience) .modal-content > h3 {
+      font-size: 21px;
+    }
+    :where(.zy-experience) .toast {
+      right: 14px;
+      left: 14px;
+      bottom: 88px;
+      max-width: none;
+      font-size: 11px;
+    }
+    :where(.zy-experience) .modal .nav-item {
+      min-height: 43px;
+      font-size: 12px;
+    }
+    :where(.zy-experience) .modal .nav-item svg {
+      width: 19px;
+      height: 19px;
+    }
+    :where(.zy-experience) .modal .nav-group {
+      font-size: 10px;
+      padding-top: 16px;
+    }
+    :where(.zy-experience) .login-page {
+      grid-template-columns: 1fr;
+    }
+    :where(.zy-experience) .login-story {
+      padding: 25px 28px;
+      min-height: 270px;
+    }
+    :where(.zy-experience) .login-story .brand > span {
+      font-size: 24px;
+    }
+    :where(.zy-experience) .login-story .brand small {
+      font-size: 7px;
+    }
+    :where(.zy-experience) .login-copy {
+      padding: 35px 0 8px;
+      max-width: 440px;
+    }
+    :where(.zy-experience) .login-copy h1 {
+      font-size: 33px;
+      letter-spacing: -1.3px;
+    }
+    :where(.zy-experience) .login-copy > p {
+      font-size: 11px;
+      margin-top: 14px;
+      max-width: 350px;
+    }
+    :where(.zy-experience) .login-points,
+    :where(.zy-experience) .login-story-footer {
+      display: none;
+    }
+    :where(.zy-experience) .login-form-area {
+      padding: 40px 27px;
+    }
+    :where(.zy-experience) .login-form-box {
+      max-width: 430px;
+    }
+    :where(.zy-experience) .login-form-box > h2 {
+      font-size: 26px;
+    }
+  }
+  @media (max-width: 480px) {
+    :where(.zy-experience) main {
+      padding: 23px 17px 0;
+    }
+    :where(.zy-experience) .topbar {
+      padding: 0 17px;
+    }
+    :where(.zy-experience) .preview-bar {
+      padding: 8px 17px;
+      align-items: flex-start;
+    }
+    :where(.zy-experience) .preview-description {
+      display: none;
+    }
+    :where(.zy-experience) .preview-bar button {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .page-heading {
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    :where(.zy-experience) .page-heading > div {
+      min-width: 0;
+      flex: 1;
+    }
+    :where(.zy-experience) .page-heading .button {
+      min-width: auto;
+      font-size: 10px;
+      padding: 9px 11px;
+      margin-top: 15px;
+    }
+    :where(.zy-experience) .page-heading p:not(.eyebrow) {
+      font-size: 10px;
+      max-width: 220px;
+      line-height: 1.7;
+    }
+    :where(.zy-experience) .page-heading h1 {
+      font-size: 26px;
+      letter-spacing: -1px;
+      margin-bottom: 6px;
+    }
+    :where(.zy-experience) .greeting-spark {
+      font-size: 20px;
+      margin-left: 3px;
+    }
+    :where(.zy-experience) .welcome-banner {
+      padding: 22px;
+      min-height: 199px;
+    }
+    :where(.zy-experience) .welcome-banner h2 {
+      font-size: 24px;
+    }
+    :where(.zy-experience) .banner-art {
+      right: -156px;
+      opacity: 0.32;
+      top: -30px;
+    }
+    :where(.zy-experience) .welcome-banner > div:first-child {
+      max-width: 100%;
+    }
+    :where(.zy-experience) .welcome-banner p {
+      max-width: 240px;
+      line-height: 1.7;
+    }
+    :where(.zy-experience) .banner-label {
+      font-size: 10px;
+      letter-spacing: 1.3px;
+    }
+    :where(.zy-experience) .welcome-banner button {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .stats-grid {
+      gap: 10px;
+    }
+    :where(.zy-experience) .stat-card {
+      padding: 13px 12px;
+    }
+    :where(.zy-experience) .stat-card > div {
+      font-size: 10px;
+      gap: 4px;
+    }
+    :where(.zy-experience) .stat-icon {
+      width: 25px;
+      height: 25px;
+      border-radius: 6px;
+    }
+    :where(.zy-experience) .stat-icon svg {
+      width: 15px;
+    }
+    :where(.zy-experience) .stat-card strong {
+      font-size: 25px;
+      margin: 11px 0 13px;
+      letter-spacing: -1px;
+    }
+    :where(.zy-experience) .stat-card p {
+      font-size: 10px;
+      padding-top: 10px;
+      gap: 3px;
+    }
+    :where(.zy-experience) .stat-card p svg {
+      width: 11px;
+    }
+    :where(.zy-experience) .attention-grid b {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .attention-grid small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .attention-grid > button {
+      padding: 16px 13px;
+      gap: 10px;
+    }
+    :where(.zy-experience) .attention-icon {
+      width: 32px;
+      height: 34px;
+    }
+    :where(.zy-experience) .section-heading {
+      gap: 6px;
+    }
+    :where(.zy-experience) .section-heading h2 {
+      font-size: 14px;
+    }
+    :where(.zy-experience) .section-heading p {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .text-button {
+      font-size: 10px;
+      gap: 5px;
+    }
+    :where(.zy-experience) .project-grid,
+    :where(.zy-experience) .full-projects {
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    :where(.zy-experience) .project-art {
+      height: 182px;
+    }
+    :where(.zy-experience) .art-window {
+      top: 27px;
+      width: 224px;
+      height: 169px;
+    }
+    :where(.zy-experience) .art-window-body {
+      height: 153px;
+      padding: 19px 14px;
+    }
+    :where(.zy-experience) .art-window-body > b {
+      font-size: 16px;
+    }
+    :where(.zy-experience) .art-window-body > small {
+      font-size: 5px;
+    }
+    :where(.zy-experience) .art-mini-button {
+      font-size: 5px;
+    }
+    :where(.zy-experience) .art-landscape {
+      height: 148px;
+      width: 113px;
+      bottom: -21px;
+    }
+    :where(.zy-experience) .art-tag {
+      font-size: 7px;
+      bottom: 25px;
+      left: 18px;
+    }
+    :where(.zy-experience) .sand .art-tag {
+      left: auto;
+      right: 18px;
+    }
+    :where(.zy-experience) .sand .art-landscape {
+      width: 81px;
+      height: 104px;
+      bottom: 13px;
+      right: 10px;
+    }
+    :where(.zy-experience) .sand .art-landscape:before {
+      width: 60px;
+      height: 20px;
+      right: 11px;
+      top: 12px;
+      box-shadow:
+        0 29px 0 #ebd2a3,
+        0 58px 0 #ebd2a3;
+    }
+    :where(.zy-experience) .sand .art-landscape:after {
+      right: 55px;
+      bottom: 72px;
+      box-shadow:
+        0 29px 0 #c89949,
+        0 58px 0 #c89949;
+    }
+    :where(.zy-experience) .sand .art-window-body > b {
+      font-size: 15px;
+    }
+    :where(.zy-experience) .project-body,
+    :where(.zy-experience) .full-projects .project-body {
+      padding: 20px;
+    }
+    :where(.zy-experience) .project-meta > span:first-child {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .title-link h3,
+    :where(.zy-experience) .full-projects .title-link h3 {
+      font-size: 15px;
+    }
+    :where(.zy-experience) .project-body > p {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .progress-label {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .progress-label b {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .project-footer > span {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .project-footer {
+      margin-top: 19px;
+    }
+    :where(.zy-experience) .avatars .avatar {
+      height: 27px;
+      width: 27px;
+      font-size: 7px;
+    }
+    :where(.zy-experience) .badge {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .panel {
+      padding: 19px;
+    }
+    :where(.zy-experience) .panel .row-text > b {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .panel .row-text > small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .document-row .badge {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .document-icon {
+      width: 31px;
+      height: 36px;
+    }
+    :where(.zy-experience) .contact-card {
+      padding: 24px;
+    }
+    :where(.zy-experience) .services-grid {
+      grid-template-columns: 1fr;
+    }
+    :where(.zy-experience) .service-card {
+      padding: 25px;
+    }
+    :where(.zy-experience) .service-card h2 {
+      font-size: 20px;
+    }
+    :where(.zy-experience) .service-bottom {
+      flex-wrap: nowrap;
+    }
+    :where(.zy-experience) .service-card > p:not(.eyebrow) {
+      font-size: 12px;
+    }
+    :where(.zy-experience) .service-bottom .text-button {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .soft-banner {
+      padding: 20px;
+    }
+    :where(.zy-experience) .soft-banner h3 {
+      font-size: 13px;
+    }
+    :where(.zy-experience) .soft-banner p {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .soft-banner > .button {
+      margin-left: 0;
+      width: 100%;
+    }
+    :where(.zy-experience) .soft-banner > div {
+      min-width: 180px;
+    }
+    :where(.zy-experience) .finance-small {
+      gap: 20px;
+    }
+    :where(.zy-experience) .balance-card strong {
+      font-size: 35px;
+    }
+    :where(.zy-experience) .finance-info h2 {
+      font-size: 20px;
+    }
+    :where(.zy-experience) .finance-info > p {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .agreement-card {
+      padding: 24px;
+    }
+    :where(.zy-experience) .agreement-card h2 {
+      font-size: 19px;
+    }
+    :where(.zy-experience) .agreement-card dl > div {
+      gap: 10px;
+    }
+    :where(.zy-experience) .agreement-card dd {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .support-banner {
+      align-items: flex-start;
+      padding: 22px;
+      gap: 12px;
+    }
+    :where(.zy-experience) .support-banner > span svg {
+      width: 25px;
+    }
+    :where(.zy-experience) .support-banner h2 {
+      font-size: 16px;
+    }
+    :where(.zy-experience) .ticket-list {
+      padding: 0 17px;
+    }
+    :where(.zy-experience) .ticket-row .row-text b {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .ticket-row .row-text small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .report-feature {
+      align-items: flex-start;
+      gap: 14px;
+      padding: 22px;
+    }
+    :where(.zy-experience) .report-feature > .service-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+    }
+    :where(.zy-experience) .report-feature svg {
+      width: 23px;
+    }
+    :where(.zy-experience) .report-feature h2 {
+      font-size: 18px;
+    }
+    :where(.zy-experience) .report-feature .eyebrow {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .report-feature p:not(.eyebrow) {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .calendar-grid button {
+      height: 42px;
+      font-size: 11px;
+    }
+    :where(.zy-experience) .calendar-week,
+    :where(.zy-experience) .calendar-grid {
+      gap: 3px;
+    }
+    :where(.zy-experience) .calendar-header h2 {
+      font-size: 16px;
+    }
+    :where(.zy-experience) .calendar-header > .badge {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .company-header > div {
+      min-width: 160px;
+    }
+    :where(.zy-experience) .company-mark {
+      width: 54px;
+      height: 54px;
+      border-radius: 11px;
+    }
+    :where(.zy-experience) .company-header > .badge {
+      margin-left: 69px;
+    }
+    :where(.zy-experience) .company-header h2 {
+      font-size: 19px;
+    }
+    :where(.zy-experience) .company-header .eyebrow {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .company-header p:not(.eyebrow) {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .detail-list > div {
+      gap: 15px;
+    }
+    :where(.zy-experience) .detail-list dt {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .detail-list dd {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .security-setting {
+      gap: 9px;
+    }
+    :where(.zy-experience) .security-setting b {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .security-setting p {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .security-setting .text-button {
+      font-size: 10px;
+      gap: 2px;
+    }
+    :where(.zy-experience) .security-setting .text-button svg {
+      width: 12px;
+    }
+    :where(.zy-experience) .profile-header h2 {
+      font-size: 18px;
+    }
+    :where(.zy-experience) .profile-header p {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .preference small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .notification-row {
+      gap: 11px;
+    }
+    :where(.zy-experience) .notification-row .row-text b {
+      font-size: 12px;
+    }
+    :where(.zy-experience) .notification-row p {
+      font-size: 10px;
+      line-height: 1.7;
+    }
+    :where(.zy-experience) .modal-heading h2 {
+      font-size: 15px;
+    }
+    :where(.zy-experience) .modal-content {
+      padding: 20px;
+    }
+    :where(.zy-experience) .modal-content > h3 {
+      font-size: 20px;
+    }
+    :where(.zy-experience) .modal-content > .service-icon {
+      width: 42px;
+      height: 42px;
+    }
+    :where(.zy-experience) .modal-actions {
+      flex-direction: column;
+    }
+    :where(.zy-experience) .scope-list li {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .milestones small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .milestones b {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .modal-content .info-note {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .toast {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .document-panel .row-text b {
+      font-size: 12px;
+    }
+    :where(.zy-experience) .document-panel .row-text small {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .workspace-footer > span {
+      font-size: 10px;
+      gap: 8px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :where(.zy-experience) *,
+    :where(.zy-experience) *:before,
+    :where(.zy-experience) *:after {
+      scroll-behavior: auto !important;
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+
+  :where(.zy-experience) .icon-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  :where(.zy-experience) .nav-item {
+    min-height: 41px;
+    font-size: 12px;
+  }
+  :where(.zy-experience) .topbar .avatar {
+    width: 36px;
+    height: 36px;
+  }
+  :where(.zy-experience) .search-trigger {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  :where(.zy-experience) .preview-bar button {
+    min-height: 28px;
+  }
+  :where(.zy-experience) .login-page {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+  :where(.zy-experience) .empty-state .empty-symbol {
+    color: #536249;
+  }
+  @media (max-width: 768px) {
+    :where(.zy-experience) .nav-item {
+      min-height: 44px;
+    }
+    :where(.zy-experience) .preview-bar {
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
+    :where(.zy-experience) .preview-bar > span {
+      align-self: center;
+    }
+    :where(.zy-experience) .mobile-nav button {
+      font-size: 10px;
+    }
+  }
+  :where(.zy-experience) .loading-page,
+  :where(.zy-experience) .standalone-state {
+    min-height: 100dvh;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 18px;
+    padding: 30px;
+  }
+  :where(.zy-experience) .standalone-state > svg {
+    color: #536249;
+  }
+  :where(.zy-experience) .standalone-state h1 {
+    max-width: 600px;
+  }
+  :where(.zy-experience) .loading-dot {
+    height: 24px;
+    width: 24px;
+    border: 2px solid #d7e2c7;
+    border-top-color: #5f7e40;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  :where(.zy-experience) .stat-card > div {
+    color: #5e6c57;
+  }
+  :where(.zy-experience) .badge.neutral {
+    color: #5b664f;
+  }
+  :where(.zy-experience) .badge.green {
+    color: #4b6237;
+  }
+  :where(.zy-experience) .badge.orange {
+    color: #7f592d;
+  }
+  :where(.zy-experience) .av-0 {
+    color: #4d5e39;
+  }
+  :where(.zy-experience) .av-1 {
+    color: #45596f;
+  }
+  :where(.zy-experience) .av-2 {
+    color: #705b40;
+  }
+  :where(.zy-experience) .art-window-body > small {
+    color: #4c6538;
+  }
+  :where(.zy-experience) .finance-panel {
+    min-width: 0;
+  }
+  :where(.zy-experience) .table-container {
+    position: relative;
+  }
+  :where(.zy-experience) .workspace {
+    min-width: 0;
+  }
+  :where(.zy-experience) .finance-overview > * {
+    min-width: 0;
+  }
+  :where(.zy-experience) .button.secondary {
+    background: #fff;
+    color: #41573a;
+    border-color: #dfe5da;
+  }
+  @media (max-width: 480px) {
+    :where(.zy-experience) .page-heading > .button {
+      flex-shrink: 0;
+      max-width: 100%;
+    }
+    :where(.zy-experience) .finance-small {
+      flex-wrap: wrap;
+    }
+  }
+  /* Flow, recurring agreements and payment result experience. */
+  :where(.zy-experience) .billing-hub {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    margin: 0 0 26px;
+    padding: 25px;
+  }
+  :where(.zy-experience) .billing-hub-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+  }
+  :where(.zy-experience) .billing-hub-title h2 {
+    font-size: 21px;
+    letter-spacing: -0.75px;
+  }
+  :where(.zy-experience) .billing-demo-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: #5b6c48;
+    background: #f0f4e8;
+    padding: 6px 9px;
+    border-radius: 5px;
+    white-space: nowrap;
+  }
+  :where(.zy-experience) .billing-demo-badge > span {
+    height: 5px;
+    width: 5px;
+    border-radius: 50%;
+    background: #7c9852;
+  }
+  :where(.zy-experience) .billing-hub-tabs {
+    display: flex;
+    gap: 9px;
+    margin: 23px 0;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  :where(.zy-experience) .billing-hub-tabs > button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    min-height: 40px;
+    font-size: 11px;
+    color: #647351;
+    border-radius: 7px;
+  }
+  :where(.zy-experience) .billing-hub-tabs > button.selected {
+    background: #eaf1df;
+    color: #426030;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .subscription-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: 26px;
+  }
+  :where(.zy-experience) .subscription-card {
+    border: 1px solid #e3e9d8;
+    border-radius: 10px;
+    padding: 25px;
+    background: #fcfdf9;
+  }
+  :where(.zy-experience) .subscription-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  :where(.zy-experience) .subscription-card h3 {
+    font-size: 21px;
+    letter-spacing: -0.65px;
+  }
+  :where(.zy-experience) .subscription-domain {
+    font-size: 11px;
+    margin: 8px 0 19px;
+  }
+  :where(.zy-experience) .subscription-price {
+    font-size: 27px;
+    font-weight: 600;
+    letter-spacing: -0.7px;
+  }
+  :where(.zy-experience) .subscription-price span {
+    display: block;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: #667657;
+    margin-top: 6px;
+  }
+  :where(.zy-experience) .subscription-card dl {
+    margin: 20px 0;
+  }
+  :where(.zy-experience) .subscription-card dl > div {
+    gap: 14px;
+  }
+  :where(.zy-experience) .subscription-card dd {
+    font-size: 10px;
+  }
+  :where(.zy-experience) .subscription-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  :where(.zy-experience) .cancel-link {
+    font-size: 10px;
+    color: #865c41;
+  }
+  :where(.zy-experience) .cancel-link:disabled {
+    opacity: 0.7;
+    cursor: default;
+  }
+  :where(.zy-experience) .subscription-guide {
+    padding: 19px 6px;
+  }
+  :where(.zy-experience) .subscription-guide h3 {
+    font-size: 20px;
+    max-width: 300px;
+    margin: 17px 0 11px;
+  }
+  :where(.zy-experience) .subscription-guide > p {
+    font-size: 12px;
+    line-height: 1.9;
+  }
+  :where(.zy-experience) .subscription-guide > div:not(.info-note) {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    margin-top: 20px;
+    color: #586d43;
+    font-size: 11px;
+  }
+  :where(.zy-experience) .subscription-guide > div > span {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  :where(.zy-experience) .subscription-guide .info-note {
+    font-size: 10px;
+    margin: 24px 0 14px;
+  }
+  :where(.zy-experience) .billing-calendar-controls {
+    display: flex;
+    align-items: center;
+    gap: 17px;
+    margin: 3px 0 23px;
+    flex-wrap: wrap;
+  }
+  :where(.zy-experience) .calendar-year-selector {
+    display: flex;
+    align-items: center;
+    gap: 19px;
+    flex: 1;
+  }
+  :where(.zy-experience) .calendar-year-selector strong {
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.7px;
+  }
+  :where(.zy-experience) .calendar-year-selector button {
+    min-width: 36px;
+    min-height: 36px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  :where(.zy-experience) .calendar-view-control {
+    display: flex;
+    gap: 4px;
+    background: #f4f6ee;
+    padding: 4px;
+    border: 1px solid #e9eedf;
+    border-radius: 7px;
+  }
+  :where(.zy-experience) .calendar-view-control button {
+    min-height: 31px;
+    min-width: 49px;
+    font-size: 10px;
+    border-radius: 5px;
+  }
+  :where(.zy-experience) .calendar-view-control button.selected {
+    background: #fff;
+    color: #41612d;
+    box-shadow: 0 2px 5px #34432810;
+  }
+  :where(.zy-experience) .calendar-month-select select {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 9px;
+    color: #596c45;
+    font-size: 11px;
+    text-transform: capitalize;
+    min-height: 40px;
+  }
+  :where(.zy-experience) .calendar-finance-summary {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    padding: 23px;
+    background: #f4f7ee;
+    border: 1px solid #e6ecd9;
+    border-radius: 9px;
+    gap: 20px;
+  }
+  :where(.zy-experience) .calendar-finance-summary > div > span {
+    display: block;
+    font-size: 10px;
+    color: #62744f;
+    margin-bottom: 9px;
+  }
+  :where(.zy-experience) .calendar-finance-summary strong {
+    display: block;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.7px;
+  }
+  :where(.zy-experience) .calendar-finance-summary small {
+    display: block;
+    font-size: 9px;
+    color: #62744f;
+    margin-top: 5px;
+  }
+  :where(.zy-experience) .calendar-finance-summary b {
+    font-size: 17px;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .projection-legend {
+    display: flex;
+    gap: 17px;
+    flex-wrap: wrap;
+    margin: 23px 0 17px;
+    color: #60734c;
+    font-size: 9px;
+  }
+  :where(.zy-experience) .projection-legend > span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  :where(.zy-experience) .projection-legend i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #9baf7b;
+  }
+  :where(.zy-experience) .projection-legend i.paid {
+    background: #536f3e;
+  }
+  :where(.zy-experience) .projection-legend i.overdue {
+    background: #a68551;
+  }
+  :where(.zy-experience) .projection-legend i.forecast {
+    border: 1px solid #8da56d;
+    background: white;
+  }
+  :where(.zy-experience) .projection-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 13px;
+  }
+  :where(.zy-experience) .projection-month {
+    padding: 18px;
+    text-align: left;
+    border: 1px solid #e3e9d8;
+    background: #fff;
+    border-radius: 9px;
+    min-width: 0;
+  }
+  :where(.zy-experience) .projection-month:hover {
+    background: #f5f8ef;
+    border-color: #b4c89b;
+    transform: translateY(-2px);
+  }
+  :where(.zy-experience) .projection-month > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    text-transform: capitalize;
+    color: #5d7546;
+  }
+  :where(.zy-experience) .projection-month > strong {
+    display: block;
+    font-size: 21px;
+    font-weight: 500;
+    letter-spacing: -0.65px;
+    margin: 14px 0 6px;
+  }
+  :where(.zy-experience) .projection-month > p {
+    font-size: 9px;
+  }
+  :where(.zy-experience) .projection-month > small {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9px;
+    color: #617750;
+    margin-top: 17px;
+    border-top: 1px solid #e9efde;
+    padding-top: 11px;
+  }
+  :where(.zy-experience) .projection-month.confirmed {
+    background: #f0f6e8;
+    border-color: #dce8cb;
+  }
+  :where(.zy-experience) .projection-month.overdue {
+    background: #fbf6ed;
+    border-color: #ece0c9;
+  }
+  :where(.zy-experience) .projection-month.overdue > div {
+    color: #8c693d;
+  }
+  :where(.zy-experience) .projection-grid.month-view {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  :where(.zy-experience) .inline-confirm {
+    display: flex;
+    gap: 22px;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 25px;
+    border: 1px solid #dfdfcf;
+    background: #f8f7ef;
+    border-radius: 9px;
+    padding: 22px;
+  }
+  :where(.zy-experience) .inline-confirm > div:first-child {
+    flex: 1;
+  }
+  :where(.zy-experience) .inline-confirm p {
+    font-size: 11px;
+    line-height: 1.8;
+    margin-top: 8px;
+  }
+  :where(.zy-experience) .inline-confirm > div:last-child {
+    display: flex;
+    gap: 9px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  :where(.zy-experience) .inline-confirm h3 {
+    margin-top: 8px;
+  }
+  :where(.zy-experience) .inline-confirm .button {
+    font-size: 10px;
+  }
+  :where(.zy-experience) .flow-brand {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    color: var(--forest);
+    font-size: 26px;
+    letter-spacing: -1.5px;
+    font-weight: 700;
+  }
+  :where(.zy-experience) .flow-brand > span {
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: #5f7351;
+  }
+  :where(.zy-experience) .flow-review > h3 {
+    font-size: 23px;
+    letter-spacing: -0.8px;
+    line-height: 1.3;
+    margin: 23px 0 11px;
+  }
+  :where(.zy-experience) .flow-review > p {
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  :where(.zy-experience) .checkout-document {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 19px;
+    background: #f3f6ec;
+    border: 1px solid #e2e9d7;
+    border-radius: 9px;
+    margin: 22px 0;
+  }
+  :where(.zy-experience) .checkout-document > span {
+    color: #72895b;
+  }
+  :where(.zy-experience) .checkout-document > div {
+    flex: 1;
+    min-width: 0;
+  }
+  :where(.zy-experience) .checkout-document small {
+    display: block;
+    font-size: 8px;
+    letter-spacing: 0.6px;
+    color: #62774f;
+  }
+  :where(.zy-experience) .checkout-document b {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 6px;
+  }
+  :where(.zy-experience) .checkout-document strong {
+    font-size: 21px;
+    letter-spacing: -0.5px;
+    text-align: right;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .checkout-document strong small {
+    letter-spacing: 0;
+    margin-top: 5px;
+    font-size: 9px;
+  }
+  :where(.zy-experience) .checkout-steps {
+    list-style: none;
+    padding: 0;
+  }
+  :where(.zy-experience) .checkout-steps li {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 16px 0;
+  }
+  :where(.zy-experience) .checkout-steps li > span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 29px;
+    height: 29px;
+    border: 1px solid #dae4cd;
+    background: #f2f6e9;
+    border-radius: 50%;
+    color: #6a8649;
+    font-size: 10px;
+  }
+  :where(.zy-experience) .checkout-steps li > div {
+    flex: 1;
+  }
+  :where(.zy-experience) .checkout-steps b {
+    font-size: 12px;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .checkout-steps small {
+    display: block;
+    font-size: 10px;
+    color: #63744f;
+    margin-top: 5px;
+  }
+  :where(.zy-experience) .checkout-steps > li > svg {
+    color: #729256;
+  }
+  :where(.zy-experience) .flow-review > .button {
+    width: 100%;
+    margin-top: 17px;
+    white-space: normal;
+    line-height: 1.7;
+  }
+  :where(.zy-experience) .checkout-state-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 26px;
+    justify-content: space-between;
+  }
+  :where(.zy-experience) .checkout-state-links .eyebrow {
+    width: 100%;
+    margin: 0;
+  }
+  :where(.zy-experience) .checkout-state-links > a {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 11px;
+    color: #5a763f;
+    min-height: 32px;
+  }
+  :where(.zy-experience) .payment-page {
+    max-width: 1120px;
+    min-height: 100dvh;
+    padding: 31px 40px 50px;
+  }
+  :where(.zy-experience) .payment-page > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding-bottom: 27px;
+    border-bottom: 1px solid var(--line);
+  }
+  :where(.zy-experience) .payment-page > header > span {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    font-size: 10px;
+    color: #5c7448;
+  }
+  :where(.zy-experience) .payment-demo-alert {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #eef3e5;
+    border: 1px solid #dfe8d0;
+    padding: 14px 20px;
+    border-radius: 8px;
+    margin: 26px auto 0;
+    max-width: 670px;
+    font-size: 11px;
+    color: #5f7549;
+  }
+  :where(.zy-experience) .payment-demo-alert b {
+    font-size: 11px;
+    font-weight: 500;
+  }
+  :where(.zy-experience) .payment-demo-alert p {
+    font-size: 10px;
+    line-height: 1.7;
+    margin-top: 4px;
+  }
+  :where(.zy-experience) .payment-result {
+    padding: 38px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 15px 60px #23372806;
+    max-width: 670px;
+    margin: 22px auto;
+    text-align: center;
+  }
+  :where(.zy-experience) .payment-result-symbol {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    margin: 0 auto 26px;
+    color: #678f40;
+    background: #eef5e3;
+    border: 1px solid #dce9c8;
+  }
+  :where(.zy-experience) .payment-result.rejected .payment-result-symbol {
+    color: #a77a52;
+    background: #f8f0e5;
+    border-color: #efe0cd;
+  }
+  :where(.zy-experience) .payment-result.pending .payment-result-symbol {
+    color: #7c8c5f;
+    background: #f3f5ec;
+    border-color: #e7e9d9;
+  }
+  :where(.zy-experience) .payment-result h1 {
+    font-size: 30px;
+    max-width: 510px;
+    line-height: 1.2;
+    margin: 13px auto 17px;
+  }
+  :where(.zy-experience) .payment-result-description {
+    font-size: 12px;
+    line-height: 1.9;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  :where(.zy-experience) .payment-result-facts {
+    background: #f8faf4;
+    border: 1px solid #e7eeda;
+    border-radius: 9px;
+    margin: 29px 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 22px;
+    text-align: left;
+  }
+  :where(.zy-experience) .payment-result-facts > div {
+    min-width: 0;
+  }
+  :where(.zy-experience) .payment-result-facts span {
+    font-size: 10px;
+    display: block;
+    color: #677957;
+    margin-bottom: 7px;
+  }
+  :where(.zy-experience) .payment-result-facts b {
+    font-size: 12px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+  :where(.zy-experience) .payment-receipt-box {
+    padding: 21px;
+    border: 1px solid #e1eacf;
+    border-radius: 9px;
+    text-align: left;
+  }
+  :where(.zy-experience) .payment-receipt-box > div {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  :where(.zy-experience) .payment-receipt-box > div > span {
+    color: #779656;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #edf4e2;
+    border-radius: 8px;
+    width: 37px;
+    height: 41px;
+  }
+  :where(.zy-experience) .payment-receipt-box b {
+    font-size: 12px;
+    font-weight: 500;
+    display: block;
+  }
+  :where(.zy-experience) .payment-receipt-box small {
+    font-size: 10px;
+    display: block;
+    color: #65764f;
+    margin-top: 5px;
+  }
+  :where(.zy-experience) .payment-receipt-box .button {
+    width: 100%;
+    margin: 20px 0 15px;
+  }
+  :where(.zy-experience) .payment-receipt-box > p {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 10px;
+    line-height: 1.7;
+  }
+  :where(.zy-experience) .payment-result-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 25px;
+  }
+  :where(.zy-experience) .payment-security-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    gap: 6px;
+    line-height: 1.7;
+    margin-top: 24px;
+  }
+  :where(.zy-experience) .result-gallery {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 10px;
+    color: #5e7646;
+    padding: 14px;
+  }
+  :where(.zy-experience) .result-gallery a {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    min-height: 30px;
+  }
+  @media (max-width: 1100px) {
+    :where(.zy-experience) .projection-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    :where(.zy-experience) .subscription-layout {
+      grid-template-columns: 1fr;
+    }
+    :where(.zy-experience) .subscription-guide {
+      padding: 5px 0;
+    }
+    :where(.zy-experience) .calendar-finance-summary {
+      grid-template-columns: 1fr 1fr;
+    }
+    :where(.zy-experience) .calendar-finance-summary > div:last-child {
+      grid-column: span 2;
+    }
+    :where(.zy-experience) .inline-confirm {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    :where(.zy-experience) .billing-hub-title {
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+  }
+  @media (max-width: 768px) {
+    :where(.zy-experience) .billing-hub {
+      padding: 21px;
+    }
+    :where(.zy-experience) .billing-hub-title h2 {
+      font-size: 20px;
+    }
+    :where(.zy-experience) .billing-demo-badge {
+      font-size: 9px;
+    }
+    :where(.zy-experience) .projection-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    :where(.zy-experience) .projection-month {
+      padding: 15px;
+    }
+    :where(.zy-experience) .projection-month > strong {
+      font-size: 19px;
+    }
+    :where(.zy-experience) .subscription-card {
+      padding: 22px;
+    }
+    :where(.zy-experience) .payment-page {
+      padding: 23px 21px 40px;
+    }
+    :where(.zy-experience) .payment-page > header > span {
+      max-width: 170px;
+      font-size: 9px;
+      line-height: 1.7;
+    }
+    :where(.zy-experience) .payment-page > header .brand > span {
+      font-size: 24px;
+    }
+    :where(.zy-experience) .payment-result {
+      padding: 27px 23px;
+    }
+    :where(.zy-experience) .payment-result h1 {
+      font-size: 26px;
+    }
+    :where(.zy-experience) .payment-result-facts {
+      padding: 19px;
+    }
+    :where(.zy-experience) .payment-demo-alert {
+      padding: 15px;
+    }
+    :where(.zy-experience) .payment-result-description {
+      font-size: 11px;
+    }
+  }
+  @media (max-width: 480px) {
+    :where(.zy-experience) .billing-hub {
+      padding: 18px;
+      margin-bottom: 23px;
+    }
+    :where(.zy-experience) .billing-hub-tabs {
+      gap: 5px;
+      margin: 20px 0;
+    }
+    :where(.zy-experience) .billing-hub-tabs button {
+      padding: 9px 11px;
+      font-size: 10px;
+    }
+    :where(.zy-experience) .billing-hub-tabs svg {
+      width: 15px;
+    }
+    :where(.zy-experience) .subscription-card {
+      padding: 19px;
+    }
+    :where(.zy-experience) .subscription-card h3 {
+      font-size: 20px;
+    }
+    :where(.zy-experience) .subscription-price {
+      font-size: 24px;
+    }
+    :where(.zy-experience) .subscription-price span {
+      font-size: 9px;
+      line-height: 1.7;
+    }
+    :where(.zy-experience) .subscription-card .eyebrow {
+      font-size: 7px;
+    }
+    :where(.zy-experience) .subscription-card dl > div {
+      align-items: flex-start;
+      gap: 10px;
+    }
+    :where(.zy-experience) .subscription-card dt {
+      font-size: 9px;
+    }
+    :where(.zy-experience) .subscription-card dd {
+      font-size: 9px;
+      max-width: 56%;
+      line-height: 1.7;
+    }
+    :where(.zy-experience) .subscription-card .badge {
+      font-size: 8px;
+    }
+    :where(.zy-experience) .subscription-guide h3 {
+      font-size: 19px;
+    }
+    :where(.zy-experience) .subscription-guide > p {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .subscription-guide > div:not(.info-note) {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .projection-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    :where(.zy-experience) .projection-grid.month-view {
+      grid-template-columns: 1fr;
+    }
+    :where(.zy-experience) .projection-month {
+      padding: 14px;
+    }
+    :where(.zy-experience) .projection-month > strong {
+      font-size: 18px;
+    }
+    :where(.zy-experience) .projection-month > p,
+    :where(.zy-experience) .projection-month > small {
+      font-size: 8px;
+    }
+    :where(.zy-experience) .projection-month > div {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .calendar-finance-summary {
+      padding: 17px;
+      gap: 20px;
+    }
+    :where(.zy-experience) .calendar-finance-summary span {
+      font-size: 9px !important;
+      line-height: 1.8;
+    }
+    :where(.zy-experience) .calendar-finance-summary strong {
+      font-size: 21px;
+    }
+    :where(.zy-experience) .calendar-finance-summary small {
+      font-size: 8px;
+    }
+    :where(.zy-experience) .calendar-view-control {
+      gap: 3px;
+    }
+    :where(.zy-experience) .calendar-year-selector {
+      gap: 12px;
+    }
+    :where(.zy-experience) .calendar-year-selector strong {
+      font-size: 20px;
+    }
+    :where(.zy-experience) .projection-legend {
+      gap: 11px;
+      font-size: 8px;
+      line-height: 1.7;
+    }
+    :where(.zy-experience) .inline-confirm {
+      padding: 18px;
+    }
+    :where(.zy-experience) .inline-confirm h3 {
+      font-size: 15px;
+    }
+    :where(.zy-experience) .inline-confirm p {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .flow-review > h3 {
+      font-size: 21px;
+    }
+    :where(.zy-experience) .checkout-document {
+      padding: 16px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    :where(.zy-experience) .checkout-document strong {
+      font-size: 20px;
+    }
+    :where(.zy-experience) .checkout-document b {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .checkout-document > span {
+      display: none;
+    }
+    :where(.zy-experience) .checkout-steps small {
+      font-size: 9px;
+    }
+    :where(.zy-experience) .checkout-steps b {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .flow-review > p {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .payment-page {
+      padding: 21px 15px 35px;
+    }
+    :where(.zy-experience) .payment-page > header > span {
+      font-size: 8px;
+      max-width: 120px;
+      gap: 5px;
+    }
+    :where(.zy-experience) .payment-page > header .brand > span {
+      font-size: 23px;
+    }
+    :where(.zy-experience) .payment-page > header .brand > svg {
+      width: 26px;
+    }
+    :where(.zy-experience) .payment-page > header .brand small {
+      font-size: 6px;
+      letter-spacing: 1.4px;
+    }
+    :where(.zy-experience) .payment-result {
+      padding: 28px 20px;
+    }
+    :where(.zy-experience) .payment-result h1 {
+      font-size: 24px;
+    }
+    :where(.zy-experience) .payment-result-facts {
+      grid-template-columns: 1fr;
+      padding: 19px;
+      gap: 16px;
+    }
+    :where(.zy-experience) .payment-result-facts > div {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+    :where(.zy-experience) .payment-result-facts span {
+      margin: 0;
+      font-size: 9px;
+    }
+    :where(.zy-experience) .payment-result-facts b {
+      font-size: 10px;
+      text-align: right;
+      max-width: 65%;
+    }
+    :where(.zy-experience) .payment-result-symbol {
+      width: 73px;
+      height: 73px;
+    }
+    :where(.zy-experience) .payment-demo-alert {
+      font-size: 10px;
+      gap: 9px;
+    }
+    :where(.zy-experience) .payment-demo-alert b {
+      font-size: 10px;
+    }
+    :where(.zy-experience) .payment-demo-alert p {
+      font-size: 9px;
+    }
+    :where(.zy-experience) .payment-result-description {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .payment-receipt-box {
+      padding: 18px;
+    }
+    :where(.zy-experience) .payment-receipt-box b {
+      font-size: 11px;
+    }
+    :where(.zy-experience) .payment-receipt-box small {
+      font-size: 9px;
+    }
+    :where(.zy-experience) .payment-security-note {
+      font-size: 8px;
+      align-items: flex-start;
+    }
+    :where(.zy-experience) .result-gallery {
+      font-size: 9px;
+      gap: 12px;
+    }
+    :where(.zy-experience) .result-gallery > span {
+      width: 100%;
+      text-align: center;
+    }
+  }
+
+  :where(.zy-experience) .payment-result-facts span {
+    color: #5b694f;
+  }
+  :where(.zy-experience) .payment-retry {
+    display: flex;
+    justify-content: center;
+    padding: 0 20px 30px;
+  }
+}
+.zy-experience {
+  font-family: ZyteronInter, Inter, system-ui, sans-serif;
+  color: #263b32;
+  background: #f7f8f5;
+  min-height: 100vh;
+}
+.zy-experience .sidebar .nav-item {
+  display: flex;
+}
+.zy-experience .experience-main {
+  padding: 32px 36px;
+  max-width: 1550px;
+  margin: auto;
+}
+.zy-experience .mobile-navigation {
+  display: none;
+}
+.zy-experience .portal-module > section {
+  border-radius: 18px;
+}
+.zy-experience .experience-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 36px;
+  border-bottom: 1px solid #e5e9e2;
+  color: #596b5c;
+  font-size: 10px;
+}
+.zy-experience .experience-status > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.zy-experience .experience-logout {
+  font-size: 11px;
+  padding: 8px 12px;
+}
+.zy-experience .experience-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+.zy-experience .service-row {
+  border: 1px solid #e5e9e2;
+  background: white;
+  border-radius: 14px;
+  padding: 22px;
+}
+.zy-experience .service-row p {
+  margin-top: 8px;
+}
+.zy-experience .resource-row {
+  padding: 18px;
+  border-bottom: 1px solid #e5e9e2;
+}
+.zy-experience .resource-list {
+  border: 1px solid #e5e9e2;
+  border-radius: 16px;
+  background: white;
+  overflow: hidden;
+}
+.zy-experience .resource-row:last-child {
+  border-bottom: 0;
+}
+.zy-experience .resource-row p {
+  margin-top: 6px;
+}
+.zy-experience .resource-row small {
+  color: #5a664e;
+}
+.zy-experience .company-dl {
+  display: grid;
+  gap: 18px;
+}
+.zy-experience .company-dl dt {
+  font-size: 11px;
+  color: #5a664e;
+}
+.zy-experience .company-dl dd {
+  margin: 4px 0;
+  font-weight: 600;
+}
+.zy-experience .mobile-toggle {
+  display: none;
+}
+.zy-experience .sidebar-backdrop {
+  display: none;
+}
+.zy-experience .login-form-box input {
+  background: #fff;
+  color: #263b32;
+}
+.zy-experience .login-form-box [class*="bg-blue-600"] {
+  background: #203e30;
+}
+.zy-experience .login-form-box [class*="text-blue-600"] {
+  color: #3c6248;
+}
+.zy-experience .module-heading {
+  margin-bottom: 22px;
+}
+.zy-experience .module-heading h1 {
+  margin-top: 8px;
+}
+.zy-experience .module-heading p {
+  margin-top: 9px;
+}
+.zy-experience .workspace {
+  min-width: 0;
+}
+.zy-experience .experience-table {
+  overflow: auto;
+  border: 1px solid #e5e9e2;
+  border-radius: 15px;
+  background: white;
+}
+.zy-experience .experience-table table {
+  width: 100%;
+  min-width: 640px;
+}
+.zy-experience .experience-table th,
+.zy-experience .experience-table td {
+  padding: 16px 20px;
+  text-align: left;
+  border-bottom: 1px solid #e5e9e2;
+}
+.zy-experience .experience-table th {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #5a664e;
+}
+.zy-experience .project-art .art-window-head span {
+  color: #566b5b;
+}
+.zy-experience .new-admin-root {
+  background: #f7f8f5;
+}
+.zy-experience .new-admin-root main {
+  font-family: ZyteronInter, Inter, system-ui, sans-serif;
+}
+@media (max-width: 1000px) {
+  .zy-experience .experience-main {
+    padding: 26px 22px;
+  }
+  .zy-experience .experience-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 760px) {
+  .zy-experience .sidebar {
+    display: flex;
+    transform: translateX(-100%);
+    transition: transform 0.18s;
+  }
+  .zy-experience .sidebar.is-open {
+    transform: translateX(0);
+    z-index: 55;
+  }
+  .zy-experience .sidebar-backdrop.is-open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: #152b2170;
+    z-index: 50;
+  }
+  .zy-experience .workspace {
+    margin-left: 0;
+  }
+  .zy-experience .mobile-toggle {
+    display: flex;
+  }
+  .zy-experience .experience-main {
+    padding: 22px 16px 92px;
+  }
+  .zy-experience .experience-status {
+    padding: 8px 16px;
+  }
+  .zy-experience .mobile-navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    background: white;
+    border-top: 1px solid #e5e9e2;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 6px max(10px, env(safe-area-inset-bottom));
+  }
+  .zy-experience .mobile-navigation a {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-direction: column;
+    font-size: 9px;
+  }
+  .zy-experience .mobile-navigation a[aria-current] {
+    color: #203e30;
+    font-weight: 700;
+  }
+  .zy-experience .login-form-area {
+    padding: 32px 20px;
+  }
+}
+
+.zy-admin [class*="bg-blue-600"] {
+  background-color: #203e30;
+}
+.zy-admin [class*="text-blue-600"],
+.zy-admin [class*="text-blue-700"] {
+  color: #3c6248;
+}
+.zy-admin [class*="bg-blue-50"] {
+  background-color: #f0f5e9;
+}
+.zy-admin [class*="border-blue-"] {
+  border-color: #c8dabb;
+}
+.zy-admin h1 {
+  color: #203e30;
+}
+.zy-admin [class*="from-blue-600"] {
+  --tw-gradient-from: #203e30;
+}
+.zy-admin [class*="to-blue-800"] {
+  --tw-gradient-to: #365942;
+}
+.zy-experience .attention-grid > a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+}
+.zy-experience .attention-grid > a small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+.zy-experience .welcome-banner > div > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #edf4e2;
+  margin-top: 18px;
+}
+.zy-experience .help-card > a {
+  display: flex;
+  gap: 7px;
+  font-weight: 600;
+  font-size: 12px;
+  margin-top: 10px;
+}
+.zy-experience .stat-card {
+  display: block;
+}
+.zy-experience .team-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 28px;
+  background: #edf2e5;
+  border: 1px solid #dfe7d4;
+  border-radius: 16px;
+  margin-top: 28px;
+}
+.zy-experience .portal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 36px 0 4px;
+  font-size: 10px;
+  color: #5a664e;
+}
+.zy-experience .sidebar-brand {
+  position: relative;
+}
+.zy-experience .sidebar-brand > .mobile-toggle {
+  position: absolute;
+  right: 10px;
+  top: 20px;
+}
+@media (max-width: 760px) {
+  .zy-experience .team-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .zy-experience .portal-footer {
+    font-size: 9px;
+  }
+  .zy-experience .topbar .search-trigger span,
+  .zy-experience .topbar .search-trigger kbd {
+    display: none;
+  }
+}
