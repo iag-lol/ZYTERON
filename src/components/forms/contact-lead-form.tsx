@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,10 +15,22 @@ const contactLeadSchema = z.object({
   name: z.string().trim().min(2, "Ingresa tu nombre completo").max(120, "Nombre demasiado largo"),
   company: z.string().trim().max(140, "Empresa demasiado larga").optional(),
   email: z.string().trim().email("Ingresa un email válido").max(160, "Email demasiado largo"),
-  phone: z.string().trim().min(8, "Ingresa un WhatsApp o teléfono válido").max(32, "Teléfono demasiado largo"),
-  projectType: z.string().trim().min(2, "Selecciona el tipo de proyecto").max(120, "Tipo de proyecto inválido"),
+  phone: z
+    .string()
+    .trim()
+    .min(8, "Ingresa un WhatsApp o teléfono válido")
+    .max(32, "Teléfono demasiado largo"),
+  projectType: z
+    .string()
+    .trim()
+    .min(2, "Selecciona el tipo de proyecto")
+    .max(120, "Tipo de proyecto inválido"),
   budget: z.string().trim().max(80, "Presupuesto demasiado largo").optional(),
-  message: z.string().trim().min(10, "Describe brevemente tu requerimiento").max(4000, "Mensaje demasiado largo"),
+  message: z
+    .string()
+    .trim()
+    .min(10, "Describe brevemente tu requerimiento")
+    .max(4000, "Mensaje demasiado largo"),
   website: z.string().max(0).optional(),
 });
 
@@ -48,7 +60,17 @@ const PROJECT_TYPE_BY_SOURCE: Record<string, string> = {
 
 function readMarketingSource() {
   const params = new URLSearchParams(window.location.search);
-  return ["servicio", "tipo", "plan", "origen", "item", "utm_source", "utm_medium", "utm_campaign", "gclid"]
+  return [
+    "servicio",
+    "tipo",
+    "plan",
+    "origen",
+    "item",
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "gclid",
+  ]
     .map((key) => {
       const value = params.get(key)?.trim();
       return value ? `${key}=${value}` : "";
@@ -90,44 +112,55 @@ export function ContactLeadForm() {
     }
   }, [setValue]);
 
-  const onSubmit = handleSubmit(async (values) => {
+  const submission = useRef<{ body: string; id: string } | null>(null);
+  async function send(values: ContactLeadFormData) {
     setSubmitState({ status: "idle" });
 
-    const response = await fetch("/api/contacto", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ...values,
-        service: values.projectType,
-        marketingSource: readMarketingSource(),
-      }),
+    const body = JSON.stringify({
+      ...values,
+      service: values.projectType,
+      marketingSource: readMarketingSource(),
     });
+    if (submission.current?.body !== body) submission.current = { body, id: crypto.randomUUID() };
+    try {
+      const response = await fetch("/api/contacto", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...JSON.parse(body), clientSubmissionId: submission.current.id }),
+      });
 
-    const payload = (await response.json().catch(() => ({}))) as {
-      ok?: boolean;
-      error?: string;
-      reference?: string;
-    };
+      const payload = (await response.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        reference?: string;
+      };
 
-    if (!response.ok || !payload.ok) {
+      if (!response.ok || !payload.ok) {
+        setSubmitState({
+          status: "error",
+          message: payload.error || "No se pudo enviar tu solicitud. Intenta nuevamente.",
+        });
+        return;
+      }
+
+      const eventParams = {
+        page_path: window.location.pathname,
+        project_type: values.projectType,
+      };
+      trackContactFormSubmit(eventParams);
+      trackQuoteRequestConversion(eventParams);
+      reset();
+      setSubmitState({ status: "success", reference: payload.reference || "RECIBIDO" });
+      submission.current = null;
+    } catch {
       setSubmitState({
         status: "error",
-        message: payload.error || "No se pudo enviar tu solicitud. Intenta nuevamente.",
+        message: "No pudimos confirmar el envío. Intenta nuevamente.",
       });
-      return;
     }
-
-    const eventParams = {
-      page_path: window.location.pathname,
-      project_type: values.projectType,
-    };
-    trackContactFormSubmit(eventParams);
-    trackQuoteRequestConversion(eventParams);
-    reset();
-    setSubmitState({ status: "success", reference: payload.reference || "RECIBIDO" });
-  });
+  }
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-lg shadow-slate-100/80">
@@ -137,11 +170,12 @@ export function ContactLeadForm() {
           <h2 className="text-lg font-bold text-slate-900">Solicita una orientación inicial</h2>
         </div>
         <p className="text-xs text-slate-500">
-          Cuéntanos lo esencial. Revisaremos tu necesidad y te contactaremos para definir el siguiente paso.
+          Cuéntanos lo esencial. Revisaremos tu necesidad y te contactaremos para definir el
+          siguiente paso.
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4" noValidate>
+      <form onSubmit={(event) => void handleSubmit(send)(event)} className="space-y-4" noValidate>
         <input
           type="text"
           autoComplete="off"
@@ -153,42 +187,90 @@ export function ContactLeadForm() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            <Label
+              htmlFor="name"
+              className="text-xs font-bold tracking-wide text-slate-500 uppercase"
+            >
               Nombre
             </Label>
-            <Input id="name" autoComplete="name" placeholder="Tu nombre completo" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("name")} />
+            <Input
+              id="name"
+              autoComplete="name"
+              placeholder="Tu nombre completo"
+              className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
+              {...register("name")}
+            />
             {errors.name ? <p className="text-xs text-rose-600">{errors.name.message}</p> : null}
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="company" className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            <Label
+              htmlFor="company"
+              className="text-xs font-bold tracking-wide text-slate-500 uppercase"
+            >
               Empresa (opcional)
             </Label>
-            <Input id="company" autoComplete="organization" placeholder="Nombre de tu empresa" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("company")} />
-            {errors.company ? <p className="text-xs text-rose-600">{errors.company.message}</p> : null}
+            <Input
+              id="company"
+              autoComplete="organization"
+              placeholder="Nombre de tu empresa"
+              className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
+              {...register("company")}
+            />
+            {errors.company ? (
+              <p className="text-xs text-rose-600">{errors.company.message}</p>
+            ) : null}
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            <Label
+              htmlFor="email"
+              className="text-xs font-bold tracking-wide text-slate-500 uppercase"
+            >
               Correo
             </Label>
-            <Input id="email" type="email" autoComplete="email" placeholder="correo@empresa.cl" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("email")} />
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="correo@empresa.cl"
+              className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
+              {...register("email")}
+            />
             {errors.email ? <p className="text-xs text-rose-600">{errors.email.message}</p> : null}
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            <Label
+              htmlFor="phone"
+              className="text-xs font-bold tracking-wide text-slate-500 uppercase"
+            >
               WhatsApp
             </Label>
-            <Input id="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+56939526626" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("phone")} />
+            <Input
+              id="phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="+56939526626"
+              className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
+              {...register("phone")}
+            />
             {errors.phone ? <p className="text-xs text-rose-600">{errors.phone.message}</p> : null}
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="projectType" className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            <Label
+              htmlFor="projectType"
+              className="text-xs font-bold tracking-wide text-slate-500 uppercase"
+            >
               Tipo de proyecto
             </Label>
-            <select id="projectType" className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-blue-400 focus:bg-white focus:outline-none" {...register("projectType")}>
+            <select
+              id="projectType"
+              className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-blue-400 focus:bg-white focus:outline-none"
+              {...register("projectType")}
+            >
               <option value="">Selecciona una opción</option>
               <option value="Página web corporativa">Página web corporativa</option>
               <option value="Landing page comercial">Landing page comercial</option>
@@ -200,21 +282,35 @@ export function ContactLeadForm() {
               <option value="Soporte TI">Soporte TI</option>
               <option value="Otro">Otro</option>
             </select>
-            {errors.projectType ? <p className="text-xs text-rose-600">{errors.projectType.message}</p> : null}
+            {errors.projectType ? (
+              <p className="text-xs text-rose-600">{errors.projectType.message}</p>
+            ) : null}
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="budget" className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            <Label
+              htmlFor="budget"
+              className="text-xs font-bold tracking-wide text-slate-500 uppercase"
+            >
               Presupuesto estimado (opcional)
             </Label>
-            <Input id="budget" placeholder="Ej: $180.000 - $350.000" className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white" {...register("budget")} />
-            {errors.budget ? <p className="text-xs text-rose-600">{errors.budget.message}</p> : null}
+            <Input
+              id="budget"
+              placeholder="Ej: $180.000 - $350.000"
+              className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
+              {...register("budget")}
+            />
+            {errors.budget ? (
+              <p className="text-xs text-rose-600">{errors.budget.message}</p>
+            ) : null}
           </div>
-
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="message" className="text-xs font-bold uppercase tracking-wide text-slate-500">
+          <Label
+            htmlFor="message"
+            className="text-xs font-bold tracking-wide text-slate-500 uppercase"
+          >
             Descripción del requerimiento
           </Label>
           <Textarea
@@ -224,10 +320,16 @@ export function ContactLeadForm() {
             className="resize-none border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
             {...register("message")}
           />
-          {errors.message ? <p className="text-xs text-rose-600">{errors.message.message}</p> : null}
+          {errors.message ? (
+            <p className="text-xs text-rose-600">{errors.message.message}</p>
+          ) : null}
         </div>
 
-        <Button type="submit" disabled={isSubmitting} className="btn-primary-glow w-full gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="btn-primary-glow w-full gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800"
+        >
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -242,8 +344,8 @@ export function ContactLeadForm() {
 
         {submitState.status === "success" ? (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Gracias. Recibimos tu solicitud. Revisaremos los antecedentes y te contactaremos para preparar una cotización formal.
-            Código: <strong>{submitState.reference}</strong>.
+            Gracias. Recibimos tu solicitud. Revisaremos los antecedentes y te contactaremos para
+            preparar una cotización formal. Código: <strong>{submitState.reference}</strong>.
           </div>
         ) : null}
 
@@ -254,11 +356,13 @@ export function ContactLeadForm() {
         ) : null}
 
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-          Te respondemos dentro del horario laboral con una propuesta clara: sabrás exactamente qué incluye tu proyecto antes de comenzar.
+          Te respondemos dentro del horario laboral con una propuesta clara: sabrás exactamente qué
+          incluye tu proyecto antes de comenzar.
         </div>
 
         <p className="text-center text-xs text-slate-400">
-          Al enviar, aceptas que procesemos tus datos para contacto comercial y preparación de cotización.
+          Al enviar, aceptas que procesemos tus datos para contacto comercial y preparación de
+          cotización.
         </p>
       </form>
     </div>

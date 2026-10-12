@@ -23,7 +23,7 @@ export async function proxy(req: NextRequest) {
     pathname.startsWith("/api/admin") ||
     pathname.startsWith("/api/portal") ||
     pathname.startsWith("/api/checkout") ||
-    ["/api/contacto", "/api/cotizaciones", "/api/chat"].includes(pathname);
+    ["/api/contacto", "/api/cotizaciones", "/api/cotizador", "/api/chat"].includes(pathname);
 
   if (
     !isExternalFlowRequest &&
@@ -111,6 +111,7 @@ export const config = {
     "/api/portal/:path*",
     "/api/checkout/:path*",
     "/api/contacto",
+    "/api/cotizador",
     "/api/cotizaciones",
     "/api/chat",
   ],

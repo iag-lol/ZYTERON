@@ -41,8 +41,8 @@ export default async function PortalDashboardPage() {
       (n, r) => n + Math.max(0, r.totalAmount - r.allocations.reduce((s, a) => s + a.amount, 0)),
       0,
     );
-  const openProjects = snapshot.projects.filter(
-    (p) => ["ACTIVE", "IN_PROGRESS", "EN_CURSO"].includes((p.status || "").toUpperCase()),
+  const openProjects = snapshot.projects.filter((p) =>
+    ["ACTIVE", "IN_PROGRESS", "EN_CURSO"].includes((p.status || "").toUpperCase()),
   );
   const openTickets = snapshot.tickets.filter((t) => !["CLOSED", "RESOLVED"].includes(t.status));
   const firstName = snapshot.user?.firstName || snapshot.user?.name.split(" ")[0] || "Cliente";
@@ -179,7 +179,7 @@ export default async function PortalDashboardPage() {
             </Link>
           </div>
           <div className="project-grid">
-            {openProjects.slice(0, 2).map((p, i) => (
+            {snapshot.projects.slice(0, 2).map((p, i) => (
               <article className="project-card" key={p.id}>
                 <div className={`project-art ${i % 2 ? "sand" : "forest"}`} aria-hidden="true">
                   <div className="art-grid" />
@@ -214,7 +214,7 @@ export default async function PortalDashboardPage() {
                   </Link>
                   <p>{p.description || "Revisa los detalles compartidos por nuestro equipo."}</p>
                   <div className="project-footer">
-                    <span>Próxima entrega</span>
+                    <span>Fecha acordada</span>
                     <span>
                       <Clock3 size={13} />
                       {p.endDate ? date(p.endDate) : "Por coordinar"}

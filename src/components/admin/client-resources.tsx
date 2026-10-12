@@ -190,7 +190,14 @@ export function ClientResources({
               >
                 {["ONE_TIME", "MONTHLY", "QUARTERLY", "ANNUAL"].map((v) => (
                   <option key={v} value={v}>
-                    {v}
+                    {(
+                      {
+                        ONE_TIME: "Pago único",
+                        MONTHLY: "Mensual",
+                        QUARTERLY: "Trimestral",
+                        ANNUAL: "Anual",
+                      } as Record<string, string>
+                    )[v] || v}
                   </option>
                 ))}
               </select>
@@ -276,7 +283,8 @@ export function ClientResources({
         {resources.map((r) => (
           <article key={r.id} className="rounded-2xl border border-slate-200 bg-white p-5">
             <small className="text-slate-500">
-              {r.kind} · {r.published ? "Compartido" : "Interno"}
+              {r.kind === "SERVICE" ? "Servicio" : "Agenda"} ·{" "}
+              {r.published ? "Compartido" : "Interno"}
             </small>
             <h3 className="mt-2 font-semibold">{r.title}</h3>
             <p className="mt-1 text-sm text-slate-500">

@@ -141,7 +141,9 @@ export default async function PortalCotizacionesPage({ searchParams }: PageProps
                 </span>
                 <span className="text-slate-600">{formatDate(quote.createdAt)}</span>
                 <div className="text-right font-semibold text-slate-900">
-                  {currencyCLP(quote.totalAmount || 0)}
+                  {quote.status === "PENDING" && !quote.totalAmount
+                    ? "Por definir"
+                    : currencyCLP(quote.totalAmount || 0)}
                 </div>
               </div>
             ))}
