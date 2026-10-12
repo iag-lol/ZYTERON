@@ -10,6 +10,7 @@ import {
   signedParams,
 } from "./pilot-protocol";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { pilotAccessScope, pilotReadAllowed } from "./pilot-access";
 
 type Intent = {
   id: string;
@@ -148,13 +149,15 @@ export function principal(cookie: string) {
 export async function openAccess(access: string) {
   if (!/^[A-Za-z0-9_-]{43}$/.test(access)) throw new Error("PILOT_ACCESS_DENIED");
   const r = await row("access_hash", digest(access));
-  check(r);
-  return grant(r.id, "PAY");
+  check(r, false);
+  const scope = pilotAccessScope(r.state, r.expires_at);
+  if (scope === "READ") await verify(r.id);
+  return grant(r.id, scope);
 }
 export async function view(cookie: string) {
   const p = principal(cookie),
     r = await row("id", p.id);
-  check(r);
+  check(r, !pilotReadAllowed(p.scope, r.state));
   return {
     reference: r.id.slice(0, 8).toUpperCase(),
     amount: r.amount,
@@ -274,15 +277,16 @@ export async function callback(token: string) {
 }
 export async function returnAccess(token: string) {
   const r = await row("token_hash", digest(token));
-  check(r);
+  check(r, false);
+  pilotAccessScope(r.state, r.expires_at);
   await verify(r.id);
   return grant(r.id, "READ");
 }
 export async function receipt(cookie: string) {
   const p = principal(cookie),
     r = await row("id", p.id);
-  check(r);
-  return pdf(r);
+  check(r, !pilotReadAllowed(p.scope, r.state));
+  return pdf(await verify(r.id));
 }
 async function pdf(r: Intent) {
   if (r.state !== "CONFIRMED" || !r.flow_order || !r.paid_at || !r.verified_at)
