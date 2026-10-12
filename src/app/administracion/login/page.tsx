@@ -194,8 +194,10 @@ function AdminLoginForm({ queryHasError }: { queryHasError: boolean }) {
 
 export default function AdminLoginPage() {
   return (
-    <Suspense fallback={<AdminLoginForm queryHasError={false} />}>
-      <AdminLoginInner />
-    </Suspense>
+    <div className="zy-experience zy-admin">
+      <Suspense fallback={<AdminLoginForm queryHasError={false} />}>
+        <AdminLoginInner />
+      </Suspense>
+    </div>
   );
 }

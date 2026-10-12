@@ -442,6 +442,7 @@ export function normalizeQuoteMetaPayment(meta: QuoteMeta) {
 }
 
 export function getPayableQuoteStage(payment?: QuotePaymentConfig | null) {
+  if (payment?.enabled === false) return null;
   const stages = Array.isArray(payment?.stages) ? payment.stages : [];
   return (
     stages.find(
@@ -565,6 +566,9 @@ export function markQuoteStageReady(payment: QuotePaymentConfig, stageKey: Quote
     totalQuoted: payment.totalQuoted || 0,
   });
 
+  if (!(normalized.stages || []).some((s) => s.key === stageKey && s.status !== "PAID"))
+    throw new Error("PAYMENT_STAGE_INVALID");
+  normalized.enabled = true;
   normalized.stages = (normalized.stages || []).map((stage) =>
     stage.key === stageKey && stage.status !== "PAID"
       ? {

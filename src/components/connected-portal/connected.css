@@ -1,0 +1,258 @@
+@layer base {
+  .zy-experience .connected-form {
+    display: grid;
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .zy-experience .connected-form label {
+    display: grid;
+    gap: 7px;
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .zy-experience .connected-form input:not([type="checkbox"]),
+  .zy-experience .connected-form textarea,
+  .zy-experience .connected-form select {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 11px 12px;
+    background: white;
+    color: var(--ink);
+  }
+  .zy-experience .connected-form textarea {
+    resize: vertical;
+  }
+  .zy-experience .connected-form .connected-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-weight: 400;
+  }
+  .zy-experience .connected-check a {
+    text-decoration: underline;
+  }
+  .zy-experience .connected-error {
+    padding: 13px;
+    border-radius: 8px;
+    background: #fff0ec;
+    color: #9a3d23;
+    margin-top: 16px;
+    white-space: pre-wrap;
+  }
+  .zy-experience .home-columns > div {
+    display: grid;
+    gap: 24px;
+    align-content: start;
+  }
+  .zy-experience .home-section {
+    min-width: 0;
+  }
+  .zy-experience .tabs > button.selected {
+    color: var(--forest);
+    border-bottom: 2px solid var(--forest);
+  }
+  .zy-experience .project-art-button {
+    display: block;
+    width: 100%;
+    padding: 0;
+    text-align: left;
+    overflow: hidden;
+  }
+  .zy-experience .table-scroll {
+    overflow-x: auto;
+  }
+  .zy-experience .data-table {
+    border-collapse: collapse;
+    width: 100%;
+    text-align: left;
+    min-width: 700px;
+  }
+  .zy-experience .data-table th {
+    font-weight: 500;
+    font-size: 10px;
+    color: var(--muted);
+    padding: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .zy-experience .data-table td {
+    padding: 18px 14px;
+    border-bottom: 1px solid var(--line);
+    font-size: 11px;
+  }
+  .zy-experience .table-title {
+    padding: 0;
+    text-align: left;
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .zy-experience .inline-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 14px;
+    max-width: 400px;
+    flex: 1;
+  }
+  .zy-experience .inline-search input {
+    border: 0;
+    outline: 0;
+    background: transparent;
+    width: 100%;
+  }
+  .zy-experience .document-row,
+  .zy-experience .ticket-row,
+  .zy-experience .notification-row {
+    gap: 16px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+  }
+  .zy-experience .ticket-icon {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    background: #eef3e8;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .zy-experience .message {
+    display: flex;
+    gap: 12px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .zy-experience .message > div {
+    min-width: 0;
+    flex: 1;
+  }
+  .zy-experience .message p,
+  .zy-experience .detail-list dd {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .zy-experience .message strong {
+    font-size: 12px;
+  }
+  .zy-experience .message small {
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .zy-experience .credential-secret {
+    padding: 14px;
+    background: #f0f4e8;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow-wrap: anywhere;
+    font-family: monospace;
+    font-size: 16px;
+  }
+  .zy-experience .agenda-note {
+    background: #edf2e5;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 26px;
+    display: grid;
+    gap: 16px;
+    align-content: start;
+  }
+  .zy-experience .company-monogram {
+    width: 64px;
+    height: 64px;
+    display: grid;
+    place-items: center;
+    background: #dae8c9;
+    color: var(--forest);
+    border-radius: 12px;
+    font-size: 24px;
+  }
+  .zy-experience .projection-month {
+    padding: 20px;
+    text-align: left;
+  }
+  .zy-experience .notification-row.unread {
+    background: #f7f9f1;
+  }
+  .zy-experience .home-columns .empty-state {
+    padding: 28px;
+  }
+  @media (max-width: 700px) {
+    .zy-experience .document-row,
+    .zy-experience .ticket-row,
+    .zy-experience .notification-row {
+      gap: 9px;
+      flex-wrap: wrap;
+    }
+    .zy-experience .document-row .row-text,
+    .zy-experience .ticket-row .row-text {
+      min-width: 120px;
+    }
+    .zy-experience .home-columns > div {
+      gap: 18px;
+    }
+    .zy-experience .company-banner {
+      flex-wrap: wrap;
+    }
+    .zy-experience .modal-actions {
+      flex-wrap: wrap;
+    }
+    .zy-experience .data-table {
+      min-width: 630px;
+    }
+    .zy-experience .subscription-layout {
+      display: block;
+    }
+    .zy-experience .subscription-guide {
+      margin-top: 20px;
+    }
+  }
+}
+@layer base {
+  .zy-experience .purchase-result {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 22px;
+    margin: 20px 0;
+    border: 1px solid #dce7d1;
+    border-radius: 12px;
+    background: #f3f8ed;
+  }
+  .zy-experience .purchase-result > span {
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #e4f0d5;
+    color: #406332;
+    flex-shrink: 0;
+  }
+  .zy-experience .purchase-result p {
+    margin: 6px 0 12px;
+    font-size: 12px;
+  }
+  .zy-experience .purchase-result a {
+    display: flex;
+    margin-top: 10px;
+  }
+  .zy-experience .purchase-result.rejected {
+    background: #fff3ec;
+    border-color: #efd6c9;
+  }
+  .zy-experience .purchase-result.rejected > span {
+    background: #f8e2d5;
+    color: #9a5435;
+  }
+  .zy-experience .purchase-result.pending {
+    background: #f6f5ed;
+    border-color: #e6e2cd;
+  }
+}

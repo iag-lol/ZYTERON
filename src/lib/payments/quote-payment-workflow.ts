@@ -516,6 +516,7 @@ export async function createQuoteFlowSubscriptionStart(input: {
   if (quote.userId && quote.userId !== input.userId) {
     throw new Error("Esta cotización no pertenece a tu cuenta.");
   }
+  if (quote.meta.payment?.enabled === false) throw new Error("SUBSCRIPTION_NOT_ENABLED");
 
   const quoteEmail = String(quote.email || "").trim();
   if (!quoteEmail || quoteEmail.toLowerCase() !== input.email.toLowerCase()) {

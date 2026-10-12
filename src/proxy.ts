@@ -21,6 +21,7 @@ export async function proxy(req: NextRequest) {
   const isProtectedMutationScope =
     pathname.startsWith("/administracion") ||
     pathname.startsWith("/api/admin") ||
+    pathname.startsWith("/api/control") ||
     pathname.startsWith("/api/portal") ||
     pathname.startsWith("/api/checkout") ||
     ["/api/contacto", "/api/cotizaciones", "/api/cotizador", "/api/chat"].includes(pathname);
@@ -80,7 +81,7 @@ export async function proxy(req: NextRequest) {
   const isPortalAuthApi = pathname.startsWith("/api/portal/auth");
   const isPortalAdminApi =
     pathname.startsWith("/api/portal/admin") || pathname === "/api/portal/diag";
-  const isAdminApi = pathname.startsWith("/api/admin");
+  const isAdminApi = pathname.startsWith("/api/admin") || pathname.startsWith("/api/control");
   const isPortalApi = pathname.startsWith("/api/portal");
   const isPortalDocumentDownload =
     req.method === "GET" && pathname.startsWith("/api/portal/documents/");
@@ -108,6 +109,7 @@ export const config = {
     "/administracion/:path*",
     "/clientes/:path*",
     "/api/admin/:path*",
+    "/api/control/:path*",
     "/api/portal/:path*",
     "/api/checkout/:path*",
     "/api/contacto",

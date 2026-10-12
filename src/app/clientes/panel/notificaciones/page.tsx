@@ -1,5 +1,2 @@
-import { ExperienceModule } from "@/components/client-experience/module-page";
-export const dynamic = "force-dynamic";
-export default function Page() {
-  return <ExperienceModule kind="notificaciones" />;
-}
+import { ConnectedPortalView } from "@/components/connected-portal/view";
+export default function Page() {return <ConnectedPortalView section="notificaciones"/>;}

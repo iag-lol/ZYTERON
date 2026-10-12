@@ -6,7 +6,16 @@ import { getScopedPortalDatabase } from "@/lib/portal/scoped-db";
 import { boundedJson } from "@/lib/security/public-intake";
 
 const createRequestSchema = z.object({
-  type: z.enum(["NUEVA_WEB", "REDISENO", "SOPORTE", "INTEGRACION", "CAMBIOS", "COTIZACION"]),
+  type: z.enum([
+    "NUEVA_WEB",
+    "REDISENO",
+    "SOPORTE",
+    "INTEGRACION",
+    "CAMBIOS",
+    "COTIZACION",
+    "MEETING",
+    "PROFILE_UPDATE",
+  ]),
   title: z.string().trim().min(4).max(140),
   details: z.string().trim().min(10).max(5000),
   attachmentUrl: z

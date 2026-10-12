@@ -16,5 +16,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
-  return <div className="zy-experience zy-admin">{children}</div>;
+  return <>{children}</>;
 }

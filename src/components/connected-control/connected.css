@@ -1,0 +1,551 @@
+@layer base {
+  .zy-control {
+    min-height: 100vh;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: ZyteronInter, Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .zy-control button,
+  .zy-control input,
+  .zy-control select,
+  .zy-control textarea {
+    font: inherit;
+  }
+  .zy-control button {
+    cursor: pointer;
+  }
+  .zy-control a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .zy-control button:disabled {
+    opacity: 0.55;
+    cursor: wait;
+  }
+  .zy-control :is(button, input, select, textarea, a):focus-visible {
+    outline: 3px solid #92b266;
+    outline-offset: 3px;
+  }
+  .zy-control .enterpriseSidebar {
+    height: 100vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    position: sticky;
+    top: 0;
+  }
+  .zy-control .enterpriseTopbar {
+    position: sticky;
+    top: 0;
+    z-index: 15;
+    min-height: 74px;
+  }
+  .zy-control .clientHub,
+  .zy-control .dashboardContent {
+    min-height: calc(100vh - 74px);
+  }
+  .zy-control .controlRecord {
+    display: grid;
+    gap: 4px;
+    padding: 0;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    max-width: 360px;
+  }
+  .zy-control .controlRecord strong {
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .zy-control .controlRecord small {
+    color: var(--muted);
+    font-size: 10px;
+    overflow-wrap: anywhere;
+  }
+  .zy-control .controlTextButton {
+    display: inline-flex;
+    gap: 7px;
+    align-items: center;
+    border: 0;
+    background: none;
+    color: var(--green);
+    font-size: 11px;
+    padding: 0;
+    white-space: nowrap;
+  }
+  .zy-control .controlCount {
+    font-size: 10px;
+    color: var(--muted);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  .zy-control .clientToolbar select {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    min-height: 39px;
+    padding: 0 10px;
+    background: white;
+    font-size: 11px;
+    max-width: 170px;
+  }
+  .zy-control .controlDashboardColumns {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 20px;
+    margin-top: 24px;
+    align-items: start;
+  }
+  .zy-control .controlActivity {
+    padding: 10px 20px;
+  }
+  .zy-control .controlActivity article {
+    display: flex;
+    gap: 12px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .zy-control .controlActivity article > span {
+    height: 30px;
+    width: 30px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: var(--green-soft);
+    color: var(--green);
+  }
+  .zy-control .controlActivity strong {
+    display: block;
+    font-size: 11px;
+  }
+  .zy-control .controlActivity small {
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .zy-control .controlTabs {
+    display: flex;
+    gap: 6px;
+    border-bottom: 1px solid var(--line);
+    margin: 22px 0 20px;
+    overflow-x: auto;
+  }
+  .zy-control .controlTabs button {
+    border: 0;
+    border-bottom: 2px solid transparent;
+    padding: 12px 15px;
+    background: transparent;
+    white-space: nowrap;
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .zy-control .controlTabs button.active {
+    color: var(--green);
+    border-bottom-color: var(--green);
+    font-weight: 600;
+  }
+  .zy-control .controlDetails {
+    padding: 18px 24px;
+    margin: 0;
+    display: grid;
+    gap: 0;
+  }
+  .zy-control .controlDetails > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 22px;
+    border-bottom: 1px solid var(--line);
+    padding: 13px 0;
+  }
+  .zy-control .controlDetails dt {
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .zy-control .controlDetails dd {
+    margin: 0;
+    text-align: right;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+  .zy-control .controlPanelActions {
+    padding: 0 24px 24px;
+  }
+  .zy-control .controlFooter {
+    margin-top: 30px;
+    color: var(--muted);
+    font-size: 10px;
+    text-align: right;
+  }
+  .zy-control .controlIntake {
+    display: grid;
+    gap: 24px;
+  }
+  .zy-control .controlInbox {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+  .zy-control .controlThread {
+    display: grid;
+    gap: 6px;
+    min-height: 90px;
+    width: 100%;
+    padding: 18px;
+    text-align: left;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    background: white;
+  }
+  .zy-control .controlThread.active {
+    background: var(--green-soft);
+    border-left: 3px solid var(--green);
+  }
+  .zy-control .controlThread strong {
+    font-size: 12px;
+  }
+  .zy-control .controlThread small,
+  .zy-control .controlThread > span {
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .zy-control .controlMessages {
+    padding: 20px;
+    display: grid;
+    gap: 14px;
+    max-height: 520px;
+    overflow: auto;
+  }
+  .zy-control .controlMessage {
+    padding: 16px;
+    background: #f2f5f2;
+    border-radius: 12px;
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .zy-control .controlMessage.outgoing {
+    background: #edf5e7;
+  }
+  .zy-control .controlMessage > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .zy-control .controlMessage p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .zy-control .controlReply {
+    padding: 20px;
+    border-top: 1px solid var(--line);
+    display: grid;
+    gap: 12px;
+  }
+  .zy-control .controlReply label {
+    display: grid;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .zy-control .controlDialog {
+    width: min(780px, calc(100% - 32px));
+    max-height: 90svh;
+    overflow: auto;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    margin: auto;
+    padding: 0;
+    background: white;
+    color: var(--ink);
+    box-shadow: 0 30px 100px #142e2340;
+  }
+  .zy-control .controlDialog::backdrop {
+    background: #19302770;
+    backdrop-filter: blur(5px);
+  }
+  .zy-control .controlDialog > header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 28px;
+    border-bottom: 1px solid var(--line);
+  }
+  .zy-control .controlDialog > header h2 {
+    font-size: 23px;
+    letter-spacing: -0.6px;
+    margin: 6px 0 0;
+    font-weight: 600;
+  }
+  .zy-control .controlDialog > header button {
+    display: grid;
+    place-items: center;
+    min-width: 40px;
+    min-height: 40px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #f5f7f3;
+  }
+  .zy-control .controlDialogBody {
+    padding: 25px 28px;
+  }
+  .zy-control .controlForm {
+    display: grid;
+    gap: 16px;
+  }
+  .zy-control .controlForm label {
+    display: grid;
+    gap: 7px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .zy-control .controlForm input:not([type="checkbox"]),
+  .zy-control .controlForm textarea,
+  .zy-control .controlForm select,
+  .zy-control .controlReply textarea {
+    width: 100%;
+    min-height: 42px;
+    padding: 11px 12px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: white;
+    color: var(--ink);
+    font-size: 12px;
+  }
+  .zy-control .controlForm input[type="file"] {
+    padding: 12px;
+  }
+  .zy-control .controlForm textarea {
+    resize: vertical;
+  }
+  .zy-control .controlFormGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .zy-control .controlForm .controlCheck {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 400;
+  }
+  .zy-control .controlCheck input {
+    width: 16px;
+    height: 16px;
+  }
+  .zy-control .controlQuoteItems {
+    display: grid;
+    gap: 14px;
+  }
+  .zy-control .controlQuoteItems > div {
+    display: grid;
+    grid-template-columns: 2fr 0.6fr 1fr auto;
+    gap: 10px;
+    align-items: end;
+  }
+  .zy-control .controlQuoteItems button {
+    height: 42px;
+    width: 32px;
+    background: #f4f6f2;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .zy-control .controlDetailHero {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 22px;
+  }
+  .zy-control .controlDetailHero > span:first-child {
+    width: 55px;
+    height: 55px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    background: var(--green-soft);
+    color: var(--green);
+    border-radius: 12px;
+  }
+  .zy-control .controlDetailHero > div {
+    flex: 1;
+    min-width: 0;
+  }
+  .zy-control .controlDetailHero h3 {
+    font-size: 19px;
+    font-weight: 600;
+    margin: 4px 0;
+  }
+  .zy-control .controlDetailHero p {
+    font-size: 11px;
+    color: var(--muted);
+    margin: 0;
+  }
+  .zy-control .controlTextBlock {
+    font-size: 12px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    line-height: 1.8;
+    margin: 20px 0;
+  }
+  .zy-control .controlSubtle {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.7;
+    margin: 12px 0;
+  }
+  .zy-control .controlFinancialNotice {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid #dce6d6;
+    background: #f5f8ef;
+    border-radius: 11px;
+    font-size: 11px;
+    line-height: 1.7;
+    margin: 12px 0;
+    color: #456036;
+  }
+  .zy-control .controlFinancialNotice svg {
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+  .zy-control .controlError {
+    background: #fff0e9;
+    border: 1px solid #f0d1c5;
+    color: #953f25;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 12px;
+    margin-top: 15px;
+  }
+  .zy-control .statusBadge {
+    display: inline-flex;
+    padding: 5px 9px;
+    border-radius: 6px;
+    font-size: 10px;
+    white-space: nowrap;
+    background: #f0f3ed;
+    color: #5b6c52;
+  }
+  .zy-control .statusBadge.success {
+    background: #e6f4df;
+    color: #35592a;
+  }
+  .zy-control .domainHero {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    border: 1px solid var(--line);
+    border-radius: 17px;
+    padding: 26px;
+    background: white;
+  }
+  .zy-control .domainHero h2 {
+    font-size: 26px;
+    letter-spacing: -0.8px;
+    margin: 7px 0;
+  }
+  .zy-control .domainHero p {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  @media (max-width: 1100px) {
+    .zy-control .controlDashboardColumns {
+      grid-template-columns: 1fr;
+    }
+    .zy-control .controlInbox {
+      grid-template-columns: 240px minmax(0, 1fr);
+    }
+  }
+  @media (max-width: 760px) {
+    .zy-control .controlInbox {
+      grid-template-columns: 1fr;
+    }
+    .zy-control .controlFormGrid {
+      grid-template-columns: 1fr;
+    }
+    .zy-control .controlQuoteItems > div {
+      grid-template-columns: 1fr 1fr 32px;
+    }
+    .zy-control .controlQuoteItems > div > label:first-child {
+      grid-column: 1/-1;
+    }
+    .zy-control .controlDialog > header,
+    .zy-control .controlDialogBody {
+      padding: 20px;
+    }
+    .zy-control .domainHero {
+      flex-direction: column;
+    }
+    .zy-control .pageHeader {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+    .zy-control .clientToolbar {
+      flex-wrap: wrap;
+    }
+    .zy-control .clientSearch {
+      min-width: 150px;
+    }
+    .zy-control .controlDetailHero {
+      flex-wrap: wrap;
+    }
+    .zy-control .globalSearchWrap {
+      display: none;
+    }
+    .zy-control .enterpriseSidebar {
+      position: fixed;
+      height: 100svh;
+    }
+    .zy-control .clientHub,
+    .zy-control .dashboardContent {
+      padding: 24px 16px 50px;
+    }
+    .zy-control .controlMessages {
+      padding: 14px;
+    }
+    .zy-control .controlMessage > div {
+      flex-wrap: wrap;
+    }
+  }
+}
+
+@layer base {
+  @media (max-width: 780px) {
+    .zy-control .enterpriseSidebar {
+      visibility: hidden;
+    }
+    .zy-control .enterpriseSidebar.mobileOpen {
+      visibility: visible;
+    }
+  }
+}
+
+@layer base {
+  @media (max-width: 780px) {
+    .zy-control .mobileScrim {
+      z-index: 30;
+    }
+    .zy-control .enterpriseSidebar.mobileOpen {
+      z-index: 31;
+    }
+  }
+}
+
+@layer base {
+  .zy-control .controlQuoteItems > div {
+    grid-template-columns: 2fr 0.6fr 1fr 0.7fr auto;
+  }
+  @media (max-width: 760px) {
+    .zy-control .controlQuoteItems > div {
+      grid-template-columns: 1fr 1fr;
+    }
+    .zy-control .controlQuoteItems > div > label:first-child {
+      grid-column: 1/-1;
+    }
+  }
+}
