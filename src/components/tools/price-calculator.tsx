@@ -170,7 +170,7 @@ const FEATURE_GROUPS: Array<{ category: AddonCategory; features: Feature[] }> = 
       },
       {
         id: "payments",
-        description: "Webpay, Flow o Mercado Pago.",
+        description: "Pagos en línea con tarjeta.",
         includedIn: ["ecommerce"],
       },
       { id: "products50", description: "Cargamos nosotros el catálogo inicial." },

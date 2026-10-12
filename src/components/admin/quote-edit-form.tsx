@@ -63,7 +63,7 @@ const PAYMENT_BILLING_TYPES = [
   { value: "SUBSCRIPTION", label: "Suscripción mensual" },
 ];
 const PAYMENT_CHANNELS = [
-  { value: "FLOW", label: "Flow online" },
+  { value: "FLOW", label: "Pago en línea" },
   { value: "TRANSFER", label: "Transferencia bancaria" },
 ];
 const PAYMENT_PLAN_MODES = [
@@ -713,7 +713,7 @@ export function QuoteEditForm({ quote }: Props) {
                 disabled={meta.paymentBillingType === "SUBSCRIPTION"}
               >
                 {PAYMENT_METHODS.map((m) => (
-                  <option key={m}>{m}</option>
+                  <option key={m} value={m}>{m === FLOW_PAYMENT_METHOD ? "Pago en línea" : m}</option>
                 ))}
               </Select>
             </Field>
@@ -765,7 +765,7 @@ export function QuoteEditForm({ quote }: Props) {
             </Field>
             {meta.paymentBillingType === "SUBSCRIPTION" ? (
               <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] text-blue-900 lg:col-span-2">
-                La cotización se cobrará como suscripción mensual por el total completo vía Flow. El cliente activará el enrolamiento de tarjeta y los cobros recurrentes desde su portal.
+                La cotización tendrá cobros mensuales por el total completo. El cliente autorizará el registro de su tarjeta y los pagos recurrentes desde su portal.
               </div>
             ) : null}
             {meta.paymentBillingType !== "SUBSCRIPTION" && meta.paymentPlanMode === "SPLIT" ? (

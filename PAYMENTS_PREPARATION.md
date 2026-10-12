@@ -1,6 +1,6 @@
 # Pagos y renovaciones Zyteron
 
-## Implementación — 11-10-2026
+## Implementación — 12-10-2026
 
 Integración nativa del sitio existente iag-lol/ZYTERON: `/administracion`, `/clientes`, checkout, cotizaciones y calendario mensual/anual. Se reutiliza el servicio Render srv-d7emn6dckfvc73ekrh70; no se contratan servicios adicionales. El usuario confirma credenciales revocadas y actualizadas en Render. PostgreSQL verifica certificado TLS con la CA oficial Supabase.
 
@@ -22,6 +22,10 @@ Activación y cancelación requieren sesión verificada y código de un solo uso
 
 Suite Node, tipos, lint y build; pruebas PostgreSQL local de 24 confirmaciones concurrentes, stock, venta, correo y permisos; recorrido nativo con pasarela simulada de pago único, dos facturas mensuales, PDF, correo, cancelación OTP y ACK de mantención. Estas pruebas no representan pagos externos. Dependencias de producción sin vulnerabilidades conocidas reportadas por npm audit; quedan avisos en herramientas de desarrollo. Marketing deshabilitado globalmente para que sus scripts no sigan la navegación privada.
 
-Migración privada aplicada en Supabase bwybwrxrbzjkwpxhpkcr. Render tiene configuración separada Sandbox y workers en el servicio existente. El piloto `/clientes/pagos/prueba` usa exclusivamente zyteron_sandbox_payment_pilot por $1.000 CLP; no modifica ventas/stock/clientes. Acceso aleatorio privado, callbacks HTTPS, API firmada, PDF marcado prueba y correo a destinatario autorizado. Mantener FLOW_LIVE_PAYMENTS_ENABLED=false hasta verificar el piloto HTTPS.
+Migración privada aplicada en Supabase bwybwrxrbzjkwpxhpkcr. Render tiene configuración separada Sandbox y workers en el servicio existente. El piloto `/clientes/pagos/prueba` usa exclusivamente zyteron_sandbox_payment_pilot por $1.000 CLP; no modifica ventas/stock/clientes. Acceso aleatorio privado, callbacks HTTPS, API firmada, PDF marcado prueba y correo a destinatario autorizado. El piloto HTTPS aprobado ya está verificado y FLOW_LIVE_PAYMENTS_ENABLED=true se guardó y desplegó el 12-10-2026. Claves de producción autenticadas mediante consulta firmada de sólo lectura; no se hizo una compra real.
 
-Publicación comprobada: revisión 74391b5 Live en Render, ocho controles HTTP por HTTPS correctos. Se creó desde la web una orden Sandbox y abrió checkout en la misma pestaña. Estado PENDING: PDF denegado HTTP409, email NOT_SENT, sin dinero acreditado. Pendiente: completar aprobado/rechazado y verificar PDF/correo; suscripción externa Sandbox. El botón de pago solicita aceptar términos y necesita confirmación del propietario antes de continuar. No afirmar prueba de cobro efectivo por un build. El checkout soportado se abre en la misma pestaña del proveedor, sin ventana emergente; no se implementa un iframe. La experiencia propia usa marca Zyteron.
+Publicación comprobada: revisión 782365d Live en Render, ocho controles HTTPS correctos. Orden Sandbox aprobada con API firmada: misma referencia/importe/moneda y fecha de pago, callback recibido, estado CONFIRMED, PDF HTTP200, correo ACCEPTED con adjunto. No acredita dinero real ni entrega en bandeja. El acceso vencido a cobros sólo permite recuperar READ de un pago ya confirmado con la capacidad privada original, sin reabrir el cobro; el PDF consulta de nuevo la API. 264 tests Node, tipos, lint y build correctos.
+
+Pendiente de recorrido externo: registro y cobro mensual Sandbox y cancelación. Plan mensual aislado verificado y página de registro de tarjeta ficticia abierta; la aceptación de cargos está esperando autorización del propietario. Suscripción/cancelación/avisos/calendario/mantención exacta ya fueron probados con PostgreSQL local y la pasarela simulada; no equivalen a esa prueba externa. No hay webs futuras vinculadas.
+
+El checkout soportado se abre en la misma pestaña del proveedor, sin ventana emergente; no se implementa un iframe. La experiencia propia usa marca Zyteron.
