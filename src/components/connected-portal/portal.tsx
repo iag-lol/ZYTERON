@@ -271,6 +271,8 @@ const initials = (v: string) =>
     .toUpperCase();
 const labels: Record<string, string> = {
   ACTIVE: "Activo",
+  PLANNED: "Planificado",
+  DONE: "Entregado",
   PENDING_ACTIVATION: "Por activar",
   SUSPENDED: "Suspendido",
   CANCELLED: "Cancelado",
@@ -326,9 +328,7 @@ export default function Portal({
     overdue = data.invoices
       .filter((i) => i.status === "Vencida" && i.currency === "CLP")
       .reduce((s, i) => s + i.balance, 0);
-  const activeProjects = data.projects.filter(
-      (p) => !["COMPLETED", "CANCELLED", "DONE"].includes(p.status),
-    ),
+  const activeProjects = data.projects.filter((p) => p.status === "IN_PROGRESS"),
     openTickets = data.tickets.filter((t) => !["CLOSED", "RESOLVED"].includes(t.status));
   const subscriptions = data.quotes.flatMap((q) => (q.subscription ? [q.subscription] : []));
   useEffect(() => {
@@ -933,7 +933,7 @@ export default function Portal({
                       filter === "Todos" ||
                       (filter === "Entregados"
                         ? ["COMPLETED", "DONE"].includes(p.status)
-                        : !["COMPLETED", "DONE", "CANCELLED"].includes(p.status)),
+                        : p.status === "IN_PROGRESS"),
                   )
                   .map(projectCard)}
               </div>

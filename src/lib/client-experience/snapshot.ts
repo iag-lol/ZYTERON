@@ -1,4 +1,5 @@
 import "server-only";
+import { projectStatus } from "./project-status";
 import { getClientPortalSnapshot } from "@/lib/portal/data";
 import { clientDatabase } from "@/lib/portal/scoped-db";
 import { decideSiteAccess } from "@/lib/payments/site-access-policy";
@@ -184,7 +185,7 @@ export async function connectedPortalSnapshot(userId: string) {
     projects: base.projects.map((p) => ({
       id: p.id,
       title: p.title,
-      status: p.status || "PENDING",
+      status: projectStatus(p.status),
       category: p.serviceArea,
       description: p.description || "",
       scope: p.scope || "",

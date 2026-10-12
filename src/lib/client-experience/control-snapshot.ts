@@ -1,4 +1,5 @@
 import "server-only";
+import { projectStatus } from "./project-status";
 import { prisma } from "@/lib/prisma";
 import { assertAdmin } from "@/lib/auth/admin";
 import { normalizeQuoteMetaPayment } from "@/lib/payments/quote-payments";
@@ -225,7 +226,12 @@ export async function controlSnapshot() {
       createdAt: l.createdAt.toISOString(),
     })),
     quotes: quoteRows,
-    projects: projects.map((p) => ({ ...p, startDate: iso(p.startDate), endDate: iso(p.endDate) })),
+    projects: projects.map((p) => ({
+      ...p,
+      status: projectStatus(p.status),
+      startDate: iso(p.startDate),
+      endDate: iso(p.endDate),
+    })),
     documents: documents.map((d) => ({ ...d, createdAt: d.createdAt.toISOString() })),
     tickets: tickets.map((t) => ({
       id: t.id,

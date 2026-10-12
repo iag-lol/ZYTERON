@@ -16,6 +16,6 @@ La navegación administrativa principal usa el diseño de Zyteron Control (`.int
 
 ## Verificación de esta corrección
 
-270 pruebas nativas, tipos, lint sin errores (6 advertencias heredadas), build. Regresión financiera local con proveedores simulados. En el workspace: 24 controles HTTP de portal/rutas, 12 RLS/atomicidad, 18 de formularios/chat/admin, 6 de autenticación y 25 de las vistas y acciones nuevas. Esas pruebas mutan únicamente PostgreSQL local y no cobran dinero. Inspección visual de los dos diseños en escritorio y vista móvil local a 390 × 844; el override del conector no aplicó móvil, por lo que se usó emulación real de Chrome.
+272 pruebas nativas, tipos, lint sin errores (6 advertencias heredadas), build. Regresión financiera local con proveedores simulados. En el workspace: 24 controles HTTP de portal/rutas, 12 RLS/atomicidad, 18 de formularios/chat/admin, 6 de autenticación y 25 de las vistas y acciones nuevas. Esas pruebas mutan únicamente PostgreSQL local y no cobran dinero. Inspección visual de los dos diseños en escritorio y vista móvil local a 390 × 844; el override del conector no aplicó móvil, por lo que se usó emulación real de Chrome.
 
 La prueba externa de suscripción Sandbox continúa pendiente por decisión del propietario. Las webs futuras necesitan su agente Next.js y vínculo específico para comprobar la suspensión real. La validación local de IA/correo no acredita entrega externa; deben comprobarse con un caso controlado del propietario. Esta corrección reutiliza el servicio Render existente y no contrata recursos nuevos.
