@@ -28,3 +28,10 @@ Estado verificado del hito:
 - Monitoreo muestra continuidad administrativa y cobertura pagada cuando existe una cotización vinculada. Las webs futuras requieren su vínculo exacto en PAYMENT_SITE_BINDINGS y el componente de control en Next.js; no se inventan mediciones técnicas ni vínculos de hosting.
 
 El cotizador de paquetes también crea Lead+Quote pendientes en una transacción. Las cifras enviadas desde el navegador quedan en la solicitud y no habilitan un precio cobrable: el equipo debe revisar el alcance y confirmar el valor. Ambos formularios mantienen una referencia estable para reintentos y aplican los controles de origen, tamaño y abuso.
+
+Cierre de autenticación y rutas antiguas:
+
+- Activación de cuentas previamente habilitadas; alta pública nueva requiere PORTAL_PUBLIC_SIGNUP_ENABLED=true de forma explícita. Se conservan las cuentas existentes y la activación mediante correo.
+- Recuperación/verificación con límites de cuerpo y frecuencia. Verificación y cambio de contraseña consumen el código bajo bloqueo del usuario y una transacción; una cuenta deshabilitada no puede reactivarse con un código antiguo. Se incrementa la versión de sesión.
+- El enlace antiguo /pagos/finalizado redirige al calendario protegido. Sus parámetros de URL no pueden mostrar un pago aprobado. Analítica deshabilitada en rutas de pago.
+- Seis controles locales adicionales verificaron reutilización concurrente de códigos, límite de intentos, bloqueo de reactivación, alta desconocida y rechazo de confirmaciones inventadas. Veintidós aserciones en la base real comprobaron aislamiento financiero, documental, soporte y recursos canónicos entre las dos cuentas activas, incluyendo recursos temporales visibles/internos que se revirtieron sin dejar datos de prueba.

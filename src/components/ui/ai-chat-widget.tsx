@@ -17,7 +17,7 @@ import { ZYTERON_QUICK_PROMPTS, ZYTERON_WELCOME_MESSAGE } from "@/lib/ai/zyteron
 const WHATSAPP_DIGITS = siteConfig.contact.phone.replace(/\D/g, "");
 
 type ChatRole = "user" | "assistant";
-type ChatMessage = { id: string; role: ChatRole; content: string };
+type ChatMessage = { id: string; role: ChatRole; content: string; actor?: string };
 
 const TEASER_DISMISSED_KEY = "zyteron_chat_teaser_dismissed_v1";
 
@@ -288,7 +288,12 @@ export function AiChatWidget() {
           {/* Mensajes */}
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-slate-50 px-4 py-4">
             {messages.map((m) => (
-              <MessageBubble key={m.id} role={m.role} content={m.content} />
+              <div key={m.id}>
+                {m.actor === "STAFF" && (
+                  <p className="mb-1 text-[11px] font-semibold text-emerald-800">Equipo Zyteron</p>
+                )}
+                <MessageBubble role={m.role} content={m.content} />
+              </div>
             ))}
             {isStreaming && messages[messages.length - 1]?.content === "" && (
               <div className="flex items-center gap-2 pl-1 text-slate-400">

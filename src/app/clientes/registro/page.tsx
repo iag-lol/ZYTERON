@@ -12,8 +12,8 @@ export default async function PortalRegisterPage() {
 
   return (
     <PortalAuthShell
-      title="Crear cuenta de cliente"
-      subtitle="Registra tu acceso privado para gestionar tus servicios con Zyteron."
+      title="Activa tu cuenta."
+      subtitle="Completa el acceso habilitado por el equipo de Zyteron para gestionar tus servicios."
     >
       <PortalRegisterForm googleEnabled={googleEnabled} />
     </PortalAuthShell>

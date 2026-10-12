@@ -1,3 +1,4 @@
+import { boundedJson, publicRateLimit, portalAuthFailure } from "@/lib/security/public-intake";
 import { NextResponse } from "next/server";
 import { verifyEmailCode } from "@/lib/auth/portal-codes";
 import { normalizeEmail, verifyCodeSchema } from "@/lib/auth/portal-validators";
@@ -6,7 +7,13 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const rate = await publicRateLimit(req, "auth-verify-code", 12);
+    if (!rate.allowed)
+      return NextResponse.json(
+        { error: "Espera un minuto antes de volver a intentar." },
+        { status: 429, headers: { "retry-after": "60" } },
+      );
+    const body = await boundedJson(req, 4096);
     const parsed = verifyCodeSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -28,12 +35,14 @@ export async function POST(req: Request) {
     }
 
     await verifyEmailCode({ userId: user.id, email: user.email, code: parsed.data.code });
-    await sendPortalWelcomeEmail({ to: user.email, fullName: user.name });
+    try {
+      await sendPortalWelcomeEmail({ to: user.email, fullName: user.name });
+    } catch {
+      /* Verified account remains valid if the courtesy email is unavailable. */
+    }
 
     return NextResponse.json({ ok: true, message: "Correo verificado correctamente." });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "No se pudo validar el código.";
-    return NextResponse.json({ error: message }, { status: 400 });
+    return portalAuthFailure(error);
   }
 }
-

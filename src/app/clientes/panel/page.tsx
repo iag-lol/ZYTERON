@@ -31,7 +31,9 @@ export default async function PortalDashboardPage() {
       >`SELECT id,status FROM client_services WHERE portal_visible`,
       db.receivable.findMany({
         where: { clientId: session.user.id, status: { notIn: ["VOID", "CANCELLED"] } },
-        include: { allocations: { select: { amount: true } } },
+        include: {
+          allocations: { where: { payment: { status: "CONFIRMED" } }, select: { amount: true } },
+        },
       }),
     ]),
   );

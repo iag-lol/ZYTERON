@@ -1,3 +1,4 @@
+import { boundedJson, publicRateLimit, portalAuthFailure } from "@/lib/security/public-intake";
 import { hash } from "bcrypt";
 import { NextResponse } from "next/server";
 import { verifyPasswordResetCode } from "@/lib/auth/portal-codes";
@@ -6,7 +7,13 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const rate = await publicRateLimit(req, "auth-reset-password", 10);
+    if (!rate.allowed)
+      return NextResponse.json(
+        { error: "Espera un minuto antes de volver a intentar." },
+        { status: 429, headers: { "retry-after": "60" } },
+      );
+    const body = await boundedJson(req, 4096);
     const parsed = resetPasswordSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -28,20 +35,11 @@ export async function POST(req: Request) {
       userId: user.id,
       email: user.email,
       code: parsed.data.code,
-    });
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        passwordHash: await hash(parsed.data.password, 12),
-        sessionVersion: { increment: 1 },
-      },
+      passwordHash: await hash(parsed.data.password, 12),
     });
 
     return NextResponse.json({ ok: true, message: "Contraseña actualizada correctamente." });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "No se pudo restablecer la contraseña.";
-    return NextResponse.json({ error: message }, { status: 400 });
+    return portalAuthFailure(error);
   }
 }

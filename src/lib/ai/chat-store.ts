@@ -96,12 +96,10 @@ export async function beginChat(
         cookie: value!,
         requestId,
         replay,
-        history: messages
-          .reverse()
-          .map((m) => ({
-            role: m.direction === "INBOUND" ? ("user" as const) : ("assistant" as const),
-            content: m.body_text.slice(0, 4000),
-          })),
+        history: messages.reverse().map((m) => ({
+          role: m.direction === "INBOUND" ? ("user" as const) : ("assistant" as const),
+          content: m.body_text.slice(0, 4000),
+        })),
       };
     },
     { maxWait: 10000, timeout: 20000 },
@@ -136,5 +134,5 @@ export async function chatHistory(req: Request) {
     return [];
   return prisma.$queryRaw<
     Array<{ id: string; role: string; content: string }>
-  >`SELECT id,CASE WHEN direction='INBOUND' THEN 'user' ELSE 'assistant' END AS role,body_text AS content FROM sales_messages WHERE thread_id=${id}::uuid ORDER BY created_at LIMIT 60`;
+  >`SELECT id,CASE WHEN direction='INBOUND' THEN 'user' ELSE 'assistant' END AS role,body_text AS content,actor_kind AS actor FROM (SELECT id,direction,body_text,actor_kind,created_at FROM sales_messages WHERE thread_id=${id}::uuid ORDER BY created_at DESC LIMIT 60) recent ORDER BY created_at`;
 }

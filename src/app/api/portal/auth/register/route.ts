@@ -1,3 +1,4 @@
+import { boundedJson, publicRateLimit, portalAuthFailure } from "@/lib/security/public-intake";
 import { hash } from "bcrypt";
 import { NextResponse } from "next/server";
 import { AccountStatus, AuthProvider, Role } from "@prisma/client";
@@ -7,37 +8,15 @@ import { sendPortalVerificationCodeEmail } from "@/lib/notifications/portal-emai
 import { sendAdminWhatsappNotification } from "@/lib/notifications/admin-whatsapp";
 import { prisma } from "@/lib/prisma";
 
-function getPrismaErrorCode(error: unknown) {
-  if (typeof error !== "object" || !error || !("code" in error)) return "";
-  return String((error as { code?: string }).code || "");
-}
-
-function isSchemaOutOfSyncPrismaError(error: unknown) {
-  const code = getPrismaErrorCode(error);
-  if (code === "P2021" || code === "P2022") return true;
-  const message = error instanceof Error ? error.message : "";
-  return (
-    message.includes("Invalid `prisma.") &&
-    (message.includes("does not exist in the current database") || message.includes("column"))
-  );
-}
-
-function isDbConnectionPrismaError(error: unknown) {
-  const code = getPrismaErrorCode(error);
-  if (code === "P1000" || code === "P1001" || code === "P1002") return true;
-  const message = error instanceof Error ? error.message : "";
-  return (
-    message.includes("DATABASE_URL") ||
-    message.includes("Can't reach database server") ||
-    message.includes("connect ECONNREFUSED") ||
-    message.includes("timeout") ||
-    message.includes("Falta DATABASE_URL")
-  );
-}
-
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const rate = await publicRateLimit(req, "auth-register", 6);
+    if (!rate.allowed)
+      return NextResponse.json(
+        { error: "Espera un minuto antes de volver a intentar." },
+        { status: 429, headers: { "retry-after": "60" } },
+      );
+    const body = await boundedJson(req, 4096);
     const parsed = registerSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -48,23 +27,32 @@ export async function POST(req: Request) {
 
     const email = normalizeEmail(parsed.data.email);
     const fullName = `${parsed.data.firstName} ${parsed.data.lastName}`.trim();
-    const passwordHash = await hash(parsed.data.password, 12);
 
     const existing = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, emailVerifiedAt: true, accountStatus: true },
+      select: { id: true, emailVerifiedAt: true, accountStatus: true, role: true },
     });
 
     if (existing?.emailVerifiedAt) {
       return NextResponse.json(
         {
-          error:
-            "Este correo ya está registrado. Inicia sesión o usa recuperación de contraseña.",
+          error: "Este correo ya está registrado. Inicia sesión o usa recuperación de contraseña.",
         },
         { status: 409 },
       );
     }
 
+    const publicSignup = process.env.PORTAL_PUBLIC_SIGNUP_ENABLED === "true";
+    if (
+      (!existing && !publicSignup) ||
+      (existing &&
+        (existing.role !== Role.CLIENT || existing.accountStatus === AccountStatus.DISABLED))
+    )
+      return NextResponse.json(
+        { error: "Solicita a Zyteron la habilitación de tu cuenta antes de activarla." },
+        { status: 403 },
+      );
+    const passwordHash = await hash(parsed.data.password, 12);
     const user = existing
       ? await prisma.user.update({
           where: { id: existing.id },
@@ -75,6 +63,7 @@ export async function POST(req: Request) {
             lastName: parsed.data.lastName,
             company: parsed.data.company,
             passwordHash,
+            sessionVersion: { increment: 1 },
             role: Role.CLIENT,
             authProvider: AuthProvider.LOCAL,
             accountStatus: AccountStatus.PENDING,
@@ -120,8 +109,8 @@ export async function POST(req: Request) {
     }
 
     sendAdminWhatsappNotification(
-      `🔔 *Nuevo Registro en Zyteron*\n\n👤 Cliente: ${user.name}\n🏢 Empresa: ${parsed.data.company || "No especificada"}\n📧 Correo: ${user.email}`
-    ).catch(err => console.error("Error sending admin WhatsApp on register:", err));
+      `🔔 *Nuevo Registro en Zyteron*\n\n👤 Cliente: ${user.name}\n🏢 Empresa: ${parsed.data.company || "No especificada"}\n📧 Correo: ${user.email}`,
+    ).catch((err) => console.error("Error sending admin WhatsApp on register:", err));
 
     return NextResponse.json({
       ok: true,
@@ -129,33 +118,6 @@ export async function POST(req: Request) {
       email: user.email,
     });
   } catch (error) {
-    if (isDbConnectionPrismaError(error)) {
-      console.error(
-        "[portal/register] Conexión a base de datos fallida. Verifica DATABASE_URL en Render.",
-        error,
-      );
-      return NextResponse.json(
-        {
-          error:
-            "No se pudo conectar con la base de datos del portal. Verifica DATABASE_URL del entorno de producción.",
-        },
-        { status: 500 },
-      );
-    }
-    if (isSchemaOutOfSyncPrismaError(error)) {
-      console.error(
-        "[portal/register] Esquema desalineado en base de datos. Ejecuta portal_setup_all_in_one.sql.",
-        error,
-      );
-      return NextResponse.json(
-        {
-          error:
-            "La base de datos del portal no está completamente actualizada. Ejecuta el SQL de portal y vuelve a intentar.",
-        },
-        { status: 500 },
-      );
-    }
-    console.error("[portal/register] Error no controlado en registro.", error);
-    return NextResponse.json({ error: "No se pudo completar el registro." }, { status: 500 });
+    return portalAuthFailure(error);
   }
 }

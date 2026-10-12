@@ -1,3 +1,4 @@
+import { boundedJson, publicRateLimit, portalAuthFailure } from "@/lib/security/public-intake";
 import { NextResponse } from "next/server";
 import { createEmailVerificationCode } from "@/lib/auth/portal-codes";
 import { normalizeEmail, resendCodeSchema } from "@/lib/auth/portal-validators";
@@ -6,7 +7,13 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const rate = await publicRateLimit(req, "auth-resend-code", 6);
+    if (!rate.allowed)
+      return NextResponse.json(
+        { error: "Espera un minuto antes de volver a intentar." },
+        { status: 429, headers: { "retry-after": "60" } },
+      );
+    const body = await boundedJson(req, 4096);
     const parsed = resendCodeSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -47,8 +54,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, message: "Código reenviado correctamente." });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "No se pudo reenviar el código.";
-    return NextResponse.json({ error: message }, { status: 400 });
+    return portalAuthFailure(error);
   }
 }
-

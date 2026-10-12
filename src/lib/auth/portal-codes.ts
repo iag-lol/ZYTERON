@@ -14,7 +14,9 @@ const RESET_MIN_RESEND_SECONDS = 45;
 const RESET_MAX_SENDS_15MIN = 4;
 
 function normalizeEmail(email: string) {
-  return String(email || "").trim().toLowerCase();
+  return String(email || "")
+    .trim()
+    .toLowerCase();
 }
 
 function buildCode() {
@@ -35,7 +37,9 @@ export async function createEmailVerificationCode(input: { userId: string; email
     where: { userId: input.userId, email, createdAt: { gte: recentWindow } },
   });
   if (recentCount >= VERIFY_MAX_SENDS_15MIN) {
-    throw new Error("Has superado el límite de envíos. Espera unos minutos e inténtalo nuevamente.");
+    throw new Error(
+      "Has superado el límite de envíos. Espera unos minutos e inténtalo nuevamente.",
+    );
   }
 
   const latest = await prisma.emailVerificationCode.findFirst({
@@ -71,41 +75,44 @@ export async function createEmailVerificationCode(input: { userId: string; email
 }
 
 export async function verifyEmailCode(input: { userId: string; email: string; code: string }) {
-  const email = normalizeEmail(input.email);
-  const codeHash = hashOtpCode(String(input.code).trim());
-  const record = await prisma.emailVerificationCode.findFirst({
-    where: { userId: input.userId, email, consumedAt: null },
-    orderBy: { createdAt: "desc" },
-  });
-
-  if (!record) {
-    throw new Error("No hay un código activo para este correo.");
-  }
-  if (record.expiresAt < new Date()) {
-    throw new Error("El código expiró. Solicita uno nuevo.");
-  }
-  if (record.attempts >= VERIFY_MAX_ATTEMPTS) {
-    throw new Error("Demasiados intentos fallidos. Solicita un nuevo código.");
-  }
-  if (record.codeHash !== codeHash) {
-    await prisma.emailVerificationCode.update({
-      where: { id: record.id },
-      data: { attempts: { increment: 1 } },
-    });
-    throw new Error("El código ingresado no es válido.");
-  }
-
-  const now = new Date();
-  await prisma.$transaction([
-    prisma.emailVerificationCode.update({
-      where: { id: record.id },
-      data: { consumedAt: now },
-    }),
-    prisma.user.update({
+  const email = normalizeEmail(input.email),
+    codeHash = hashOtpCode(String(input.code).trim());
+  const error = await prisma.$transaction(async (db) => {
+    await db.$queryRaw`SELECT id FROM "User" WHERE id=${input.userId} FOR UPDATE`;
+    const user = await db.user.findUnique({
       where: { id: input.userId },
-      data: { emailVerifiedAt: now, accountStatus: "ACTIVE" },
-    }),
-  ]);
+      select: { accountStatus: true, email: true },
+    });
+    if (!user || user.email.toLowerCase() !== email || user.accountStatus === "DISABLED")
+      return "La cuenta requiere revisión de Zyteron.";
+    const record = await db.emailVerificationCode.findFirst({
+      where: { userId: input.userId, email, consumedAt: null },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!record || record.expiresAt < new Date() || record.attempts >= VERIFY_MAX_ATTEMPTS)
+      return "Solicita un código válido para continuar.";
+    if (record.codeHash !== codeHash) {
+      await db.emailVerificationCode.update({
+        where: { id: record.id },
+        data: { attempts: { increment: 1 } },
+      });
+      return "El código ingresado no es válido.";
+    }
+    await db.emailVerificationCode.update({
+      where: { id: record.id },
+      data: { consumedAt: new Date() },
+    });
+    await db.user.update({
+      where: { id: input.userId },
+      data: {
+        emailVerifiedAt: new Date(),
+        accountStatus: "ACTIVE",
+        sessionVersion: { increment: 1 },
+      },
+    });
+    return null;
+  });
+  if (error) throw new Error(error);
 }
 
 export async function createPasswordResetCode(input: { userId: string; email: string }) {
@@ -115,7 +122,9 @@ export async function createPasswordResetCode(input: { userId: string; email: st
     where: { userId: input.userId, email, createdAt: { gte: recentWindow } },
   });
   if (recentCount >= RESET_MAX_SENDS_15MIN) {
-    throw new Error("Has superado el límite de envíos. Espera unos minutos e inténtalo nuevamente.");
+    throw new Error(
+      "Has superado el límite de envíos. Espera unos minutos e inténtalo nuevamente.",
+    );
   }
 
   const latest = await prisma.passwordResetCode.findFirst({
@@ -154,34 +163,40 @@ export async function verifyPasswordResetCode(input: {
   userId: string;
   email: string;
   code: string;
+  passwordHash: string;
 }) {
-  const email = normalizeEmail(input.email);
-  const codeHash = hashOtpCode(String(input.code).trim());
-  const record = await prisma.passwordResetCode.findFirst({
-    where: { userId: input.userId, email, consumedAt: null },
-    orderBy: { createdAt: "desc" },
-  });
-
-  if (!record) {
-    throw new Error("No hay un código activo para este correo.");
-  }
-  if (record.expiresAt < new Date()) {
-    throw new Error("El código expiró. Solicita uno nuevo.");
-  }
-  if (record.attempts >= RESET_MAX_ATTEMPTS) {
-    throw new Error("Demasiados intentos fallidos. Solicita un nuevo código.");
-  }
-  if (record.codeHash !== codeHash) {
-    await prisma.passwordResetCode.update({
-      where: { id: record.id },
-      data: { attempts: { increment: 1 } },
+  const email = normalizeEmail(input.email),
+    codeHash = hashOtpCode(String(input.code).trim());
+  const error = await prisma.$transaction(async (db) => {
+    await db.$queryRaw`SELECT id FROM "User" WHERE id=${input.userId} FOR UPDATE`;
+    const user = await db.user.findUnique({
+      where: { id: input.userId },
+      select: { accountStatus: true, email: true },
     });
-    throw new Error("Código de recuperación inválido.");
-  }
-
-  await prisma.passwordResetCode.update({
-    where: { id: record.id },
-    data: { consumedAt: new Date() },
+    if (!user || user.email.toLowerCase() !== email || user.accountStatus === "DISABLED")
+      return "La cuenta requiere revisión de Zyteron.";
+    const record = await db.passwordResetCode.findFirst({
+      where: { userId: input.userId, email, consumedAt: null },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!record || record.expiresAt < new Date() || record.attempts >= RESET_MAX_ATTEMPTS)
+      return "Solicita un código válido para continuar.";
+    if (record.codeHash !== codeHash) {
+      await db.passwordResetCode.update({
+        where: { id: record.id },
+        data: { attempts: { increment: 1 } },
+      });
+      return "Código de recuperación inválido.";
+    }
+    await db.passwordResetCode.update({
+      where: { id: record.id },
+      data: { consumedAt: new Date() },
+    });
+    await db.user.update({
+      where: { id: input.userId },
+      data: { passwordHash: input.passwordHash, sessionVersion: { increment: 1 } },
+    });
+    return null;
   });
+  if (error) throw new Error(error);
 }
-

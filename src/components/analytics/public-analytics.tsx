@@ -16,6 +16,7 @@ export function PublicAnalytics() {
       "/portal-clientes",
       "/portal-comercial",
       "/checkout",
+      "/pagos",
     ].some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"))
   )
     return null;

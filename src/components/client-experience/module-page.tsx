@@ -166,7 +166,9 @@ export async function ExperienceModule({ kind }: { kind: Kind }) {
       const [debts, payments] = await Promise.all([
         db.receivable.findMany({
           where: { clientId: session.user.id, status: { notIn: ["CANCELLED", "VOID"] } },
-          include: { allocations: { select: { amount: true } } },
+          include: {
+            allocations: { where: { payment: { status: "CONFIRMED" } }, select: { amount: true } },
+          },
           orderBy: { issuedAt: "desc" },
           take: 200,
         }),

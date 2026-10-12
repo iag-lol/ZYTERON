@@ -101,3 +101,17 @@ export function intakeFailure(error: unknown) {
     { status, headers: { "cache-control": "no-store" } },
   );
 }
+
+export function portalAuthFailure(error: unknown) {
+  const message = error instanceof Error ? error.message : "";
+  if (
+    /^(El código|Código de recuperación|Solicita un código|La cuenta requiere|Has superado el límite|Espera \d+s|No hay un código|Demasiados intentos)/.test(
+      message,
+    )
+  )
+    return NextResponse.json(
+      { error: message },
+      { status: 400, headers: { "cache-control": "no-store" } },
+    );
+  return intakeFailure(error);
+}
