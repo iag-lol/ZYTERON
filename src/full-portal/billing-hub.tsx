@@ -2,7 +2,7 @@
 import { useState } from "react";
 import type { PortalData } from "@/lib/client-experience/snapshot";
 import { money, civil } from "./production-model";
-import { projectMonthlyPayments } from "@/lib/payments/payment-projection";
+import { paymentCivilDate, projectMonthlyPayments } from "@/lib/payments/payment-projection";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -174,26 +174,32 @@ export function FlowCheckoutPreview({
   );
 }
 export default function BillingHub({ data, onHelp }: { data: PortalData; onHelp: () => void }) {
+  const reference = paymentCivilDate(data.asOf)!;
   const [tab, setTab] = useState<"subscription" | "calendar">("subscription"),
-    [year, setYear] = useState(new Date(data.asOf).getFullYear()),
+    [year, setYear] = useState(Number(reference.slice(0, 4))),
     [view, setView] = useState<"year" | "month">("year"),
-    [month, setMonth] = useState(new Date(data.asOf).getMonth() + 1),
+    [month, setMonth] = useState(Number(reference.slice(5, 7))),
     [cancel, setCancel] = useState<PortalData["quotes"][number] | null>(null),
     [challenge, setChallenge] = useState(""),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const subscriptions = data.quotes.flatMap((q) => (q.subscription ? [q.subscription] : []));
   const rows = [
-    ...data.payments
-      .filter((p) => p.date.slice(0, 4) === String(year))
-      .map((p) => ({
-        id: p.id,
-        label: "Pago confirmado",
-        date: p.date.slice(0, 10),
-        amount: p.amount,
-        kind: "confirmed",
-        receipt: p.receipt,
-      })),
+    ...data.payments.flatMap((payment) => {
+      const date = paymentCivilDate(payment.date);
+      return date && date.slice(0, 4) === String(year)
+        ? [
+            {
+              id: payment.id,
+              label: "Pago confirmado",
+              date,
+              amount: payment.amount,
+              kind: "confirmed",
+              receipt: payment.receipt,
+            },
+          ]
+        : [];
+    }),
     ...subscriptions
       .flatMap((s) => projectMonthlyPayments(s, year))
       .map((p, i) => ({ ...p, id: p.quoteId + ":" + i, kind: "forecast", receipt: false })),

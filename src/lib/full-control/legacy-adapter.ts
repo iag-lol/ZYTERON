@@ -1,4 +1,5 @@
 import "server-only";
+import { portfolioClientCount } from "./portfolio-projection";
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -9,6 +10,7 @@ import { POST as nativeAction } from "@/app/api/control/[action]/route";
 import { PATCH as requestAction } from "@/app/api/portal/admin/requests/[id]/route";
 import { POST as chatReply } from "@/app/api/admin/chat/[id]/reply/route";
 import type {
+  ClientListResponse,
   CommercialSummary,
   ExecutiveDashboard,
   SalesLead,
@@ -256,7 +258,7 @@ function mergePage(
   };
 }
 export function legacyReadPath(path: string) {
-  return /^\/(executive\/dashboard|commercial\/(summary|search)|leads|quotes|sales|sales\/summary|documents(?:\/workspace)?|projects|operations\/summary|support\/(workspace|tickets|search)|finance\/(dashboard|payments|invoices|receivables(?:\/aging)?|collections)|clients\/[^/]+\/(summary|support-summary|documents|finance-summary))$/.test(
+  return /^\/(executive\/dashboard|commercial\/(summary|search)|clients|leads|quotes|sales|sales\/summary|documents(?:\/workspace)?|projects|operations\/summary|support\/(workspace|tickets|search)|finance\/(dashboard|payments|invoices|receivables(?:\/aging)?|collections)|clients\/[^/]+\/(summary|support-summary|documents|finance-summary))$/.test(
     path,
   );
 }
@@ -264,6 +266,49 @@ export async function mergeLegacyRead(path: string, params: URLSearchParams, bod
   const s = await controlSnapshot(),
     ls = await links();
   const rows = body as Record<string, unknown>;
+  if (path === "/clients") {
+    const result = body as ClientListResponse;
+    const active = s.projects.filter((project) => project.status === "IN_PROGRESS");
+    let canonical: Array<{ domain: string; client_id: string }> | null;
+    try {
+      canonical = await prisma.$queryRaw<Array<{ domain: string; client_id: string }>>`
+        SELECT 'projects' AS domain, client_id::text FROM projects
+        WHERE client_id IS NOT NULL AND status IN ('PLANNING','READY','IN_PROGRESS','BLOCKED','INTERNAL_REVIEW','QA','WAITING_CLIENT','READY_FOR_PRODUCTION','PRODUCTION','MAINTENANCE','ON_HOLD')
+        UNION ALL
+        SELECT 'payments' AS domain, client_id::text FROM invoices
+        WHERE client_id IS NOT NULL AND status IN ('ISSUED','PARTIALLY_PAID') AND balance_due > 0`;
+    } catch (error) {
+      if (!["127.0.0.1", "localhost"].includes(new URL(process.env.DATABASE_URL!).hostname))
+        throw error;
+      canonical = null; // The isolated local database can lack the original modules.
+    }
+    return {
+      ...result,
+      items: result.items.map((client) => ({
+        ...client,
+        activeProjectCount:
+          client.activeProjectCount == null
+            ? null
+            : client.activeProjectCount +
+              active.filter((project) => clientId(ls, project.clientId) === client.id).length,
+      })),
+      summary: {
+        ...result.summary,
+        activeProjects: portfolioClientCount(
+          result.summary.activeProjects === null || canonical === null
+            ? null
+            : canonical.filter((row) => row.domain === "projects").map((row) => row.client_id),
+          active.map((project) => clientId(ls, project.clientId)),
+        ),
+        pendingPayments: portfolioClientCount(
+          result.summary.pendingPayments === null || canonical === null
+            ? null
+            : canonical.filter((row) => row.domain === "payments").map((row) => row.client_id),
+          s.debts.filter((debt) => debt.balance > 0).map((debt) => clientId(ls, debt.clientId)),
+        ),
+      },
+    };
+  }
   if (path === "/quotes")
     return mergePage(body as { items: unknown[] }, await quotes(s, ls), params);
   if (path === "/leads") return mergePage(body as { items: unknown[] }, leads(s, ls), params);
@@ -1111,6 +1156,19 @@ async function extraLegacyRead(
       ownDebts = s.debts.filter((d) => d.clientId === userId),
       ownProjects = s.projects.filter((p) => p.clientId === userId),
       ownTickets = tickets(s, ls).filter((t) => t.clientId === clientMatch[1]);
+    if (clientMatch[2] === "documents") {
+      const own = new Set(
+        s.documents
+          .filter((document) => document.userId === userId)
+          .map((document) => id("document", document.id)),
+      );
+      const documents = (await legacyDocuments(s)).filter((document) => own.has(document.id));
+      return {
+        ...data,
+        documents: [...(data.documents as unknown[]), ...documents],
+        total: Number(data.total || 0) + documents.length,
+      };
+    }
     if (clientMatch[2] === "finance-summary")
       return {
         ...data,
@@ -1136,9 +1194,52 @@ async function extraLegacyRead(
     if (clientMatch[2] === "summary") {
       const commercial = data.commercial as Record<string, number>,
         operations = data.operations as Record<string, number>;
+      const ownSales = await prisma.sale.aggregate({
+        where: { clientId: userId },
+        _count: true,
+        _sum: { total: true },
+      });
+      const documents = data.documents as Record<string, number>;
+      const support = data.support as Record<string, number>;
+      const finance = data.finance as Record<string, number> | null;
       return {
         ...data,
+        documents: {
+          ...documents,
+          total:
+            (documents.total || 0) +
+            s.documents.filter((document) => document.userId === userId).length,
+        },
+        support: {
+          ...support,
+          open:
+            (support.open || 0) +
+            ownTickets.filter(
+              (ticket) => !["CLOSED", "RESOLVED", "CANCELLED"].includes(ticket.status),
+            ).length,
+        },
+        finance:
+          finance === null
+            ? null
+            : {
+                ...finance,
+                openInvoices:
+                  (finance.openInvoices || 0) + ownDebts.filter((debt) => debt.balance > 0).length,
+                overdueInvoices:
+                  (finance.overdueInvoices || 0) +
+                  ownDebts.filter((debt) => debt.balance > 0 && debt.dueAt && debt.dueAt < s.asOf)
+                    .length,
+                balanceDue:
+                  (finance.balanceDue || 0) + ownDebts.reduce((sum, debt) => sum + debt.balance, 0),
+                overdueBalance:
+                  (finance.overdueBalance || 0) +
+                  ownDebts
+                    .filter((debt) => debt.dueAt && debt.dueAt < s.asOf)
+                    .reduce((sum, debt) => sum + debt.balance, 0),
+              },
         commercial: {
+          sales: (commercial.sales || 0) + ownSales._count,
+          salesValue: (commercial.salesValue || 0) + (ownSales._sum.total || 0),
           ...commercial,
           pendingQuotes:
             (commercial.pendingQuotes || 0) +

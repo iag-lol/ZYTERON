@@ -1,4 +1,15 @@
 import { Temporal } from "@js-temporal/polyfill";
+export function paymentCivilDate(value: string): string | null {
+  try {
+    return (
+      value.length === 10
+        ? Temporal.PlainDate.from(value)
+        : Temporal.Instant.from(value).toZonedDateTimeISO("America/Santiago").toPlainDate()
+    ).toString();
+  } catch {
+    return null;
+  }
+}
 export type RecurringProjection = {
   quoteId: string;
   label: string;
@@ -22,7 +33,7 @@ export function projectMonthlyPayments(subscription: RecurringProjection, year: 
   if (!raw) return [];
   let anchor: Temporal.PlainDate;
   try {
-    anchor = Temporal.PlainDate.from(raw.slice(0, 10));
+    anchor = Temporal.PlainDate.from(paymentCivilDate(raw) || "invalid");
   } catch {
     return [];
   }
