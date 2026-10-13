@@ -10,6 +10,55 @@ import {
 } from "@/lib/admin/quote";
 import { normalizeQuoteMetaPayment } from "@/lib/payments/quote-payments";
 
+export async function acceptWebsiteProposal(
+  raw: Quote,
+  actorId: string | null,
+  transaction?: Prisma.TransactionClient,
+) {
+  return inTransaction(transaction, async (db) => {
+    await db.$queryRaw`SELECT id FROM "Quote" WHERE id=${raw.id} FOR UPDATE`;
+    const current = await db.quote.findUniqueOrThrow({ where: { id: raw.id } }),
+      meta = parseQuoteMessage(current.message) as ReturnType<typeof parseQuoteMessage> & {
+        controlState?: string;
+        acceptedAt?: string;
+      };
+    if (current.status === "LOST") throw Error("La propuesta está cancelada o rechazada.");
+    if (current.status === "WON" || meta.controlState === "ACCEPTED")
+      return { accepted: true, saleCreated: false, created: false };
+    if (current.status !== "SENT" && !["SENT", "NEGOTIATING"].includes(meta.controlState || ""))
+      throw Error("La propuesta debe estar enviada antes de registrar su aceptación.");
+    await db.quote.update({
+      where: { id: current.id },
+      data: {
+        message: serializeQuoteMessage({
+          ...meta,
+          controlState: "ACCEPTED",
+          acceptedAt: new Date().toISOString(),
+        } as typeof meta),
+      },
+    });
+    await db.clientAuditLog.create({
+      data: {
+        actorId,
+        targetUserId: current.userId,
+        action: "CONTROL_PROPOSAL_ACCEPTED",
+        entityType: "Quote",
+        entityId: current.id,
+        details: { saleCreated: false, financialSettlement: false },
+      },
+    });
+    return { accepted: true, saleCreated: false, created: true };
+  });
+}
+
+export function websiteProposalAccepted(raw: Quote) {
+  return (
+    raw.status !== "LOST" &&
+    (raw.status === "WON" ||
+      (parseQuoteMessage(raw.message) as { controlState?: string }).controlState === "ACCEPTED")
+  );
+}
+
 export async function duplicateWebsiteQuote(
   raw: Quote,
   actorId: string | null,
@@ -90,7 +139,7 @@ export async function createWebsiteContract(
   actorId: string | null,
   transaction?: Prisma.TransactionClient,
 ) {
-  if (raw.status !== "WON")
+  if (!websiteProposalAccepted(raw))
     throw new Error("La propuesta debe estar aceptada antes de preparar el contrato.");
   return inTransaction(transaction, async (db) => {
     await db.$queryRaw`SELECT id FROM "Quote" WHERE id=${raw.id} FOR UPDATE`;
@@ -149,7 +198,7 @@ export async function createWebsiteWorkOrder(
     >`SELECT id FROM public.work_orders WHERE quote_id=${viewId}::uuid LIMIT 1`;
     if (existing[0]) return { workOrderId: existing[0].id, created: false };
     const current = await db.quote.findUniqueOrThrow({ where: { id: raw.id } });
-    if (current.status !== "WON")
+    if (!websiteProposalAccepted(current))
       throw new Error("La propuesta debe estar aceptada antes de crear la orden de trabajo.");
     // Lock the actual ledger evidence. A proposal status or uploaded proof is insufficient.
     const paid = await db.$queryRaw<

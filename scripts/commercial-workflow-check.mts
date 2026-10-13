@@ -10,8 +10,12 @@ if (
   throw Error("Unexpected QA database");
 process.env.DATABASE_URL = config.DATABASE_URL;
 const { prisma } = await import("../src/lib/prisma");
-const { duplicateWebsiteQuote, createWebsiteContract, createWebsiteWorkOrder } =
-  await import("../src/lib/full-control/website-quote-actions");
+const {
+  acceptWebsiteProposal,
+  duplicateWebsiteQuote,
+  createWebsiteContract,
+  createWebsiteWorkOrder,
+} = await import("../src/lib/full-control/website-quote-actions");
 const { parseQuoteMessage } = await import("../src/lib/admin/quote");
 let checks = 0;
 const check = (value: unknown) => {
@@ -22,12 +26,20 @@ const rollback = Error("TRANSACTIONAL_QA_ROLLBACK");
 try {
   await prisma.$transaction(
     async (db) => {
-      await db.$executeRawUnsafe(
-        fs.readFileSync(
-          "supabase/migrations/20261013044253_connect_web_leads_commercial_workflow.sql",
-          "utf8",
-        ),
-      );
+      if (process.argv.includes("--with-schema")) {
+        await db.$executeRawUnsafe(
+          fs.readFileSync(
+            "supabase/migrations/20261013053719_commercial_notification_recipients.sql",
+            "utf8",
+          ),
+        );
+        await db.$executeRawUnsafe(
+          fs.readFileSync(
+            "supabase/migrations/20261013044253_connect_web_leads_commercial_workflow.sql",
+            "utf8",
+          ),
+        );
+      }
       const [link] = await db.$queryRaw<
         Array<{ user_id: string; client_id: string }>
       >`SELECT user_id,client_id::text FROM zyteron_legacy_client_link LIMIT 1`;
@@ -109,9 +121,12 @@ try {
           where: { allocations: { some: { receivable: { quoteId: copy.id } } } },
         })) === 0,
       );
-      const revision=await duplicateWebsiteQuote(quote,null,db,true);
-    check((parseQuoteMessage(revision.message) as {controlVersion?:number}).controlVersion===2 && parseQuoteMessage(revision.message).quoteNumber!==meta.quoteNumber);
-    const viewId = randomUUID();
+      const revision = await duplicateWebsiteQuote(quote, null, db, true);
+      check(
+        (parseQuoteMessage(revision.message) as { controlVersion?: number }).controlVersion === 2 &&
+          parseQuoteMessage(revision.message).quoteNumber !== meta.quoteNumber,
+      );
+      const viewId = randomUUID();
       const contract = await createWebsiteContract(quote, viewId, link.client_id, null, db);
       const retry = await createWebsiteContract(quote, viewId, link.client_id, null, db);
       check(contract.id === retry.id && contract.created && !retry.created);
@@ -171,6 +186,33 @@ try {
       check(
         (await db.$queryRaw<Array<{ n: number }>>`SELECT count(*)::int n FROM sales`)[0].n ===
           canonicalSales,
+      );
+      const sent = await db.quote.update({
+        where: { id: quote.id },
+        data: {
+          status: "SENT",
+          message: JSON.stringify({ ...parseQuoteMessage(quote.message), controlState: "SENT" }),
+        },
+      });
+      const accepted = await acceptWebsiteProposal(sent, null, db);
+      const acceptedAgain = await acceptWebsiteProposal(sent, null, db);
+      check(
+        accepted.created &&
+          !acceptedAgain.created &&
+          accepted.saleCreated === false &&
+          (await db.sale.count()) === salesBefore,
+      );
+      await db.$executeRaw`UPDATE quotes SET status='SENT' WHERE id=${viewId}::uuid`;
+      await db.$queryRaw`SELECT zyteron_accept_commercial_proposal(${viewId}::uuid,NULL)`;
+      await db.$queryRaw`SELECT zyteron_accept_commercial_proposal(${viewId}::uuid,NULL)`;
+      const [proposal] = await db.$queryRaw<
+        Array<{ status: string; sale_id: string | null }>
+      >`SELECT status,sale_id FROM quotes WHERE id=${viewId}::uuid`;
+      check(
+        proposal.status === "ACCEPTED" &&
+          proposal.sale_id === null &&
+          (await db.$queryRaw<Array<{ n: number }>>`SELECT count(*)::int n FROM sales`)[0].n ===
+            canonicalSales,
       );
       const [privateRpc] = await db.$queryRaw<
         Array<{ ok: boolean }>

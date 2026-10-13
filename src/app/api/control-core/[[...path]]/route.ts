@@ -12,6 +12,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
 import { prisma } from "@/lib/prisma";
+import { websiteProposalAccepted } from "@/lib/full-control/website-quote-actions";
 import { ADMIN_COOKIE } from "@/lib/auth/admin-session";
 import {
   configuredRequestOrigins,
@@ -100,7 +101,7 @@ async function handle(request: Request, { params }: { params: Promise<{ path?: s
     const source = await prisma.quote.findUnique({ where: { id: sourceWebsiteQuoteId } });
     if (
       !source ||
-      source.status !== "WON" ||
+      !websiteProposalAccepted(source) ||
       source.userId ||
       source.email.trim().toLowerCase() !==
         String(input.generalEmail || "")
@@ -127,14 +128,6 @@ async function handle(request: Request, { params }: { params: Promise<{ path?: s
     );
   }
   if (legacy) return legacy;
-  if (request.method === "POST" && /^\/quotes\/[^/]+\/accept$/.test(path))
-    return NextResponse.json(
-      {
-        message:
-          "La venta requiere un pago efectivo verificado. Aceptar una propuesta no acredita dinero.",
-      },
-      { status: 409 },
-    );
   const target = "/" + segments.map(encodeURIComponent).join("/") + url.search;
   const cookieStore = await cookies();
   const sessionSource = auth.legacy
@@ -185,7 +178,7 @@ async function handle(request: Request, { params }: { params: Promise<{ path?: s
         const userId = await ensureNativePortalAccount(client.id);
         if (sourceWebsiteQuoteId) {
           const updated = await prisma.quote.updateMany({
-            where: { id: sourceWebsiteQuoteId, userId: null, status: "WON" },
+            where: { id: sourceWebsiteQuoteId, userId: null },
             data: { userId },
           });
           if (updated.count !== 1) throw Error("QUOTE_CLIENT_LINK_REQUIRES_REVIEW");

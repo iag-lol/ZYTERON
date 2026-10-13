@@ -378,6 +378,8 @@ export function CommercialWorkspace({
                   },
                   {
                     preview: "Borrador PDF descargado.",
+                    accept:
+                      "Aceptación de propuesta registrada. Esto no acredita un pago ni crea una venta.",
                     duplicate: "Copia creada en borrador, sin pagos ni cobros heredados.",
                     version: "Nueva propuesta creada en borrador.",
                     "convert-to-contract":

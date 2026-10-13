@@ -74,3 +74,20 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.zyteron_convert_commercial_lead(uuid,uuid,jsonb) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.zyteron_convert_commercial_lead(uuid,uuid,jsonb) TO service_role;
+
+-- Proposal acceptance is not a financial settlement and must never insert a sale.
+CREATE OR REPLACE FUNCTION public.zyteron_accept_commercial_proposal(target_quote uuid, actor_id uuid)
+RETURNS uuid LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog,public AS $$
+DECLARE q public.quotes%rowtype;
+BEGIN
+  SELECT * INTO q FROM public.quotes WHERE id=target_quote FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Cotización no encontrada'; END IF;
+  IF q.status='ACCEPTED' THEN RETURN q.id; END IF;
+  IF q.status NOT IN ('SENT','NEGOTIATING') THEN RAISE EXCEPTION 'La propuesta debe estar enviada antes de registrar su aceptación'; END IF;
+  UPDATE public.quotes SET status='ACCEPTED',accepted_at=now(),updated_at=now() WHERE id=q.id;
+  INSERT INTO public.commercial_events(aggregate_type,aggregate_id,event_type,actor_id,payload)
+  VALUES('QUOTE',q.id,'QUOTE_ACCEPTED',$2,jsonb_build_object('saleCreated',false,'financialSettlement',false));
+  RETURN q.id;
+END $$;
+REVOKE ALL ON FUNCTION public.zyteron_accept_commercial_proposal(uuid,uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.zyteron_accept_commercial_proposal(uuid,uuid) TO service_role;

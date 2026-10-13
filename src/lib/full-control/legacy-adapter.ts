@@ -8,6 +8,8 @@ import { enrichQuoteRecord, parseQuoteMessage, serializeQuoteMessage } from "@/l
 import { generateQuotePdf } from "@/lib/admin/quote-pdf";
 import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
 import {
+  acceptWebsiteProposal,
+  websiteProposalAccepted,
   duplicateWebsiteQuote,
   createWebsiteWorkOrder,
   createWebsiteContract,
@@ -713,7 +715,7 @@ export async function handleLegacyDetail(request: Request, path: string, payload
     if (auth.error) return auth.error;
     const actorId = auth.legacy ? null : auth.session.user.id;
     if (action === "convert-to-client") {
-      if (raw.status !== "WON")
+      if (!websiteProposalAccepted(raw))
         return NextResponse.json(
           { message: "La propuesta debe estar aceptada antes de crear el cliente." },
           { status: 409 },
@@ -826,14 +828,21 @@ export async function handleLegacyDetail(request: Request, path: string, payload
       );
       return result;
     }
-    if (action === "accept")
-      return NextResponse.json(
-        {
-          message:
-            "La aceptación no acredita un pago. La venta se genera únicamente después de verificar el cobro efectivo.",
-        },
-        { status: 409 },
-      );
+    if (action === "accept") {
+      try {
+        return NextResponse.json(await acceptWebsiteProposal(raw, actorId));
+      } catch (error) {
+        return NextResponse.json(
+          {
+            message:
+              error instanceof Error && !("code" in error)
+                ? error.message
+                : "No fue posible registrar la aceptación.",
+          },
+          { status: 409 },
+        );
+      }
+    }
     if (["submit-approval", "approve", "reject", "cancel", "decline"].includes(action || "")) {
       const controlState = (
         {
