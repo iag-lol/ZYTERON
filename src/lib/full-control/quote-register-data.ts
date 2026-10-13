@@ -32,7 +32,7 @@ export async function canonicalQuoteRegister(): Promise<SalesQuote[]> {
     taxRate: Number(r.tax_rate),
     taxAmount: Number(r.tax_amount),
     totalAmount: Number(r.total_amount),
-    validUntil: r.valid_until ? stamp(r.valid_until) : null,
+    validUntil: r.valid_until ? stamp(r.valid_until).slice(0, 10) : null,
     paymentTerms: r.payment_terms as string | null,
     commercialTerms: r.commercial_terms as string | null,
     notes: r.notes as string | null,

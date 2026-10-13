@@ -1,0 +1,13 @@
+# Registro de cotizaciones — 13 octubre 2026
+
+Criterios: orden global por fecha de creación descendente (empates por ID), cliente vinculado o prospecto sin vincular, búsqueda, modalidad fija/mensual y estado de pago. Carga de todas las páginas; paginación del conjunto combinado, sin volver a añadir espejos históricos. Se muestran total cotizado, pagado asignado, saldo y anticipo/períodos adelantados por moneda.
+
+La aceptación y la autorización de una tarjeta no acreditan dinero. Propuestas nativas: aplicaciones de pagos CONFIRMED a cuentas de esa cotización. Propuestas operativas con calendario: cuotas registradas PAID con documentación requerida; el importe se identifica como «pagado en calendario». Sin calendario: aplicaciones financieras confirmadas y no reversadas vinculadas por venta/proyecto. No se suman ambos libros ni se aplican créditos generales del cliente a una cotización sin asignación. En una mensual indefinida sólo se informa de los períodos registrados, nunca un «total pagado» perpetuo.
+
+«Cobros y modalidad» permite editar borradores sin obligaciones, documento emitido ni autorización/pago existente. Conserva el historial y registra auditoría; elegir mensual no activa cargos automáticos. Para propuestas enviadas/aceptadas se prepara una copia o revisión. «Calendario y pagos», disponible en cotizaciones operativas aceptadas, mantiene la configuración en Finanzas → Pagos de cotizaciones; la frecuencia respeta la propuesta definida. Duplicados y contratos nuevos conservan la modalidad.
+
+Migración 20261013084933 aplicada a la base existente: quotes.billing_type nullable y restringido a ONE_TIME/SUBSCRIPTION, guard de términos comprometidos y RPC de creación con modalidad. No se cambian valores históricos desconocidos ni permisos públicos; RLS existente permanece. Se comprobó que el RPC real coincidía con el original antes de reemplazarlo y se conserva su revocación anónima.
+
+Validación anterior a publicación: 291 pruebas de web, 9 de calendario financiero, 16 comprobaciones contra la base real con rollback (datos del registro, edición fija/mensual, copia, guardas de enviado/aceptado, creación RPC, revocación anónima y cero asignaciones fabricadas). Tipos, lint focalizado y build Next/Nest pasan. Graphify actualizado sin LLM. No se enviaron mensajes ni se hicieron cobros o cambios financieros reales como QA.
+
+Código enviado: 959d4e7. Despliegue y recorrido visual final pendientes de acreditación en este documento.
