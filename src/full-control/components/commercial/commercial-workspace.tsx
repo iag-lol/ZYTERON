@@ -40,6 +40,8 @@ import {
   X,
 } from "lucide-react";
 import { useAccess } from "@control/components/access-context";
+import { WebsiteQuoteBillingButton } from "./quote-billing";
+import { quoteClientKey, recentQuotes, type QuoteBilling } from "@/lib/full-control/quote-register";
 import { QuotePaymentsButton } from "@control/components/finance/quote-payments";
 import { commercialApi } from "@control/lib/commercial-api";
 import { subscribeToCommercial } from "@control/lib/commercial-realtime";
@@ -100,7 +102,7 @@ export function CommercialWorkspace({
     [leads, setLeads] = useState<SalesLead[]>([]),
     [opportunities, setOpportunities] = useState<SalesOpportunity[]>([]),
     [followUps, setFollowUps] = useState<SalesFollowUp[]>([]),
-    [quotes, setQuotes] = useState<SalesQuote[]>([]),
+    [quotes, setQuotes] = useState<Array<SalesQuote & { billing?: QuoteBilling }>>([]),
     [sales, setSales] = useState<Sale[]>([]),
     [goals, setGoals] = useState<SalesGoal[]>([]),
     [commissions, setCommissions] = useState<Commission[]>([]),
@@ -148,7 +150,7 @@ export function CommercialWorkspace({
         commercialApi.leads(role),
         commercialApi.opportunities(role, scope),
         commercialApi.followUps(role, scope),
-        commercialApi.quotes(role, scope),
+        commercialApi.allQuotes(role, scope),
         commercialApi.sales(role, scope),
         commercialApi.goals(role),
         commercialApi.commissions(role),
@@ -163,7 +165,7 @@ export function CommercialWorkspace({
       setLeads(data[1].items);
       setOpportunities(data[2].items);
       setFollowUps(data[3].items);
-      setQuotes(data[4].items);
+      setQuotes(data[4]);
       setSales(data[5].items);
       setGoals(data[6]);
       setCommissions(data[7]);
@@ -343,6 +345,12 @@ export function CommercialWorkspace({
           ) : null}
           {section === "quotes" ? (
             <QuoteCenter
+              onChanged={async () => {
+                const scope = initialClientId
+                  ? `&clientId=${encodeURIComponent(initialClientId)}`
+                  : "";
+                setQuotes(await commercialApi.allQuotes(role, scope));
+              }}
               items={quotes}
               role={role}
               busy={Boolean(busyAction)}
@@ -925,170 +933,336 @@ function FollowUpCenter({
 }
 function QuoteCenter({
   items,
+  onChanged,
   role,
   act,
   busy,
 }: {
-  items: SalesQuote[];
+  items: Array<SalesQuote & { billing?: QuoteBilling }>;
+  onChanged: () => Promise<void>;
   role: string;
   busy: boolean;
   act: (id: string, action: string, body?: unknown, idem?: boolean) => Promise<unknown>;
 }) {
   const canManage = ["GERENTE_GENERAL", "COMERCIAL", "JEFE_VENTAS"].includes(role);
-  return items.length ? (
-    <section className="quoteGrid">
-      {items.map((q) => (
-        <article key={q.id}>
-          <header>
-            <div>
-              <small>
-                {q.quoteNumber} · V{q.version}
-              </small>
-              <h3>{q.companyName}</h3>
-            </div>
-            <span>{q.status.replaceAll("_", " ")}</span>
-          </header>
-          <p>
-            {q.items.length} servicios · Vigencia {formatDate(q.validUntil)}
-          </p>
-          <strong>{money(q.totalAmount, q.currency)}</strong>
-          <footer>
-            <button
-              disabled={busy}
-              title="Descarga un borrador sin emitir la cotización"
-              onClick={() => void act(q.id, "preview")}
-            >
-              <FileText size={13} />
-              Descargar borrador PDF
-            </button>
-            {q.status === "DRAFT" ? (
-              <button disabled={busy} onClick={() => void act(q.id, "submit-approval")}>
-                Enviar aprobación
-              </button>
-            ) : null}
-            {q.status === "PENDING_APPROVAL" && canManage ? (
-              <>
-                <button disabled={busy} onClick={() => void act(q.id, "approve")}>
-                  Aprobar
-                </button>
+  const [client, setClient] = useState(""),
+    [search, setSearch] = useState(""),
+    [frequency, setFrequency] = useState(""),
+    [payment, setPayment] = useState("");
+  const clientOptions = [
+    ...new Map(
+      items.map((q) => [quoteClientKey(q), { name: q.companyName, linked: Boolean(q.clientId) }]),
+    ).entries(),
+  ].sort((a, b) => a[1].name.localeCompare(b[1].name, "es"));
+  const visible = recentQuotes(items).filter(
+    (q) =>
+      (!client || quoteClientKey(q) === client) &&
+      (!frequency || (q.billing?.frequency || "UNDEFINED") === frequency) &&
+      (!payment ||
+        (payment === "ADVANCE" ? (q.billing?.advance || 0) > 0 : q.billing?.state === payment)) &&
+      (!search.trim() ||
+        [q.quoteNumber, q.companyName, q.contactName, q.contactEmail].some((v) =>
+          v?.toLocaleLowerCase("es").includes(search.trim().toLocaleLowerCase("es")),
+        )),
+  );
+  const hasFilters = Boolean(client || search || frequency || payment);
+  return (
+    <div className="quoteRegister">
+      <section className="quoteRegisterFilters" aria-label="Filtros de cotizaciones">
+        <label>
+          Buscar
+          <input
+            type="search"
+            placeholder="Número, empresa o contacto"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </label>
+        <label>
+          Cliente
+          <select value={client} onChange={(e) => setClient(e.target.value)}>
+            <option value="">Todos los clientes</option>
+            {clientOptions.map(([key, value]) => (
+              <option key={key} value={key}>
+                {value.name}
+                {value.linked ? "" : " · sin vincular"}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Modalidad
+          <select value={frequency} onChange={(e) => setFrequency(e.target.value)}>
+            <option value="">Todas</option>
+            <option value="ONE_TIME">Fijo · pago único</option>
+            <option value="MONTHLY">Mensual</option>
+            <option value="UNDEFINED">Sin definir</option>
+          </select>
+        </label>
+        <label>
+          Estado de pago
+          <select value={payment} onChange={(e) => setPayment(e.target.value)}>
+            <option value="">Todos</option>
+            <option value="UNPAID">Sin pago confirmado</option>
+            <option value="PARTIAL">Pago parcial</option>
+            <option value="PAID">Total pagado</option>
+            <option value="CURRENT">Períodos registrados pagados</option>
+            <option value="ADVANCE">Con anticipo / adelantado</option>
+          </select>
+        </label>
+        <button
+          type="button"
+          disabled={!hasFilters}
+          onClick={() => {
+            setClient("");
+            setSearch("");
+            setFrequency("");
+            setPayment("");
+          }}
+        >
+          Limpiar filtros
+        </button>
+      </section>
+      <div className="quoteRegisterCount">
+        <span>
+          {visible.length} de {items.length} cotizaciones · más recientes primero
+        </span>
+        <small>Los estados comerciales y los pagos se verifican por separado.</small>
+      </div>
+      {visible.length ? (
+        <section className="quoteGrid">
+          {visible.map((q) => (
+            <article key={q.id}>
+              <header>
+                <div>
+                  <small>
+                    {q.quoteNumber} · V{q.version}
+                  </small>
+                  <h3>{q.companyName}</h3>
+                </div>
+                <span>{q.status.replaceAll("_", " ")}</span>
+              </header>
+              <p>
+                Creada {formatDate(q.createdAt)} · {q.items.length} servicios
+                <br />
+                Vigencia {formatDate(q.validUntil)}
+              </p>
+              <strong>{money(q.totalAmount, q.currency)}</strong>
+              <div className="quoteBillingSummary">
+                <div className="quoteBillingBadges">
+                  <span>
+                    {q.billing?.frequency === "MONTHLY"
+                      ? `Mensual · ${money(q.billing.monthlyAmount || q.totalAmount, q.billing.currency)}/mes`
+                      : q.billing?.frequency === "ONE_TIME"
+                        ? "Fijo · pago único"
+                        : "Modalidad sin definir"}
+                  </span>
+                  <span className={`payment-${q.billing?.state || "UNPAID"}`}>
+                    {
+                      (
+                        {
+                          PAID: "Total pagado",
+                          PARTIAL: "Pago parcial",
+                          CURRENT: "Períodos registrados pagados",
+                          UNPAID: "Sin pago confirmado",
+                        } as const
+                      )[q.billing?.state || "UNPAID"]
+                    }
+                  </span>
+                </div>
+                {q.billing ? (
+                  <>
+                    <dl>
+                      <div>
+                        <dt>
+                          Pagado{q.billing.basis === "CALENDAR" ? " en calendario" : " confirmado"}
+                        </dt>
+                        <dd>{money(q.billing.paid, q.billing.currency)}</dd>
+                      </div>
+                      <div>
+                        <dt>
+                          {q.billing.frequency === "MONTHLY"
+                            ? "Saldo registrado"
+                            : "Saldo pendiente"}
+                        </dt>
+                        <dd>{money(q.billing.balance, q.billing.currency)}</dd>
+                      </div>
+                    </dl>
+                    {q.billing.advance > 0 ? (
+                      <p className="quoteAdvance">
+                        Anticipo / adelantado: {money(q.billing.advance, q.billing.currency)}
+                      </p>
+                    ) : null}
+                    {q.billing.frequency === "MONTHLY" && !q.billing.finite ? (
+                      <small>Mensual indefinido: el saldo refleja los períodos registrados.</small>
+                    ) : null}
+                  </>
+                ) : (
+                  <small>El detalle de pagos no está disponible.</small>
+                )}
+              </div>
+              <footer>
                 <button
                   disabled={busy}
-                  onClick={() => {
-                    const reason = window.prompt("Motivo de rechazo");
-                    if (reason) void act(q.id, "reject", { reason });
-                  }}
+                  title="Descarga un borrador sin emitir la cotización"
+                  onClick={() => void act(q.id, "preview")}
                 >
-                  Rechazar
+                  <FileText size={13} />
+                  Descargar borrador PDF
                 </button>
-              </>
-            ) : null}
-            {q.status === "APPROVED" ? (
-              <button
-                disabled={busy}
-                className="quoteIssuePdf"
-                title="Registra la versión aprobada en Documentos"
-                onClick={() => void act(q.id, "pdf")}
-              >
-                <FileText size={13} />
-                Emitir PDF final
-              </button>
-            ) : null}
-            {q.status === "READY_TO_SEND" ? (
-              <button
-                disabled={busy || !q.contactEmail}
-                title={!q.contactEmail ? "La cotización no tiene email receptor" : undefined}
-                onClick={() => void act(q.id, "send", { to: q.contactEmail }, true)}
-              >
-                <Send size={13} />
-                Enviar
-              </button>
-            ) : null}
-            {["SENT", "NEGOTIATING"].includes(q.status) && canManage ? (
-              <button disabled={busy} onClick={() => void act(q.id, "accept", {}, true)}>
-                Aceptar
-              </button>
-            ) : null}
-            {["SENT", "NEGOTIATING"].includes(q.status) ? (
-              <button
-                disabled={busy}
-                onClick={() => {
-                  const reason = window.prompt("Motivo del rechazo del cliente");
-                  if (reason) void act(q.id, "decline", { reason });
-                }}
-              >
-                Declinar
-              </button>
-            ) : null}
-            {["SENT", "NEGOTIATING", "REJECTED", "EXPIRED"].includes(q.status) ? (
-              <button disabled={busy} onClick={() => void act(q.id, "version")}>
-                Nueva versión
-              </button>
-            ) : null}
-            <button disabled={busy} onClick={() => void act(q.id, "duplicate")}>
-              Duplicar
-            </button>
-            {[
-              "DRAFT",
-              "PENDING_APPROVAL",
-              "APPROVED",
-              "READY_TO_SEND",
-              "SENT",
-              "NEGOTIATING",
-            ].includes(q.status) ? (
-              <button
-                disabled={busy}
-                onClick={() => {
-                  if (window.confirm("¿Cancelar esta cotización?")) void act(q.id, "cancel");
-                }}
-              >
-                Cancelar
-              </button>
-            ) : null}
-            {q.status === "ACCEPTED" && !q.clientId && canManage ? (
-              <button
-                disabled={busy}
-                onClick={() => {
-                  const rut = window.prompt("RUT del nuevo cliente (con dígito verificador)");
-                  if (!rut) return;
-                  void act(q.id, "convert-to-client", {
-                    legalName: q.companyName,
-                    tradeName: q.companyName,
-                    rut,
-                    country: "Chile",
-                    generalEmail: q.contactEmail || undefined,
-                    source: "SALES",
-                    status: "ONBOARDING",
-                  });
-                }}
-              >
-                Crear cliente
-              </button>
-            ) : null}
-            {q.status === "ACCEPTED" && q.clientId && canManage ? (
-              <button disabled={busy} onClick={() => void act(q.id, "convert-to-contract")}>
-                Crear contrato
-              </button>
-            ) : null}
-            {q.status === "ACCEPTED" && q.clientId && canManage ? (
-              <button
-                disabled={busy}
-                onClick={() => void act(q.id, "convert-to-work-order", {}, true)}
-              >
-                Crear OT
-              </button>
-            ) : null}
-            {["ACCEPTED", "CONVERTED"].includes(q.status) ? (
-              <QuotePaymentsButton quoteId={q.id} quoteNumber={q.quoteNumber} role={role} />
-            ) : null}
-          </footer>
-        </article>
-      ))}
-    </section>
-  ) : (
-    <Empty
-      title="No existen cotizaciones"
-      text="Crea una cotización desde una oportunidad, un cliente o un lead y agrega los servicios reales."
-    />
+                {q.status === "DRAFT" ? (
+                  <button disabled={busy} onClick={() => void act(q.id, "submit-approval")}>
+                    Enviar aprobación
+                  </button>
+                ) : null}
+                {q.status === "PENDING_APPROVAL" && canManage ? (
+                  <>
+                    <button disabled={busy} onClick={() => void act(q.id, "approve")}>
+                      Aprobar
+                    </button>
+                    <button
+                      disabled={busy}
+                      onClick={() => {
+                        const reason = window.prompt("Motivo de rechazo");
+                        if (reason) void act(q.id, "reject", { reason });
+                      }}
+                    >
+                      Rechazar
+                    </button>
+                  </>
+                ) : null}
+                {q.status === "APPROVED" ? (
+                  <button
+                    disabled={busy}
+                    className="quoteIssuePdf"
+                    title="Registra la versión aprobada en Documentos"
+                    onClick={() => void act(q.id, "pdf")}
+                  >
+                    <FileText size={13} />
+                    Emitir PDF final
+                  </button>
+                ) : null}
+                {q.status === "READY_TO_SEND" ? (
+                  <button
+                    disabled={busy || !q.contactEmail}
+                    title={!q.contactEmail ? "La cotización no tiene email receptor" : undefined}
+                    onClick={() => void act(q.id, "send", { to: q.contactEmail }, true)}
+                  >
+                    <Send size={13} />
+                    Enviar
+                  </button>
+                ) : null}
+                {["SENT", "NEGOTIATING"].includes(q.status) && canManage ? (
+                  <button disabled={busy} onClick={() => void act(q.id, "accept", {}, true)}>
+                    Aceptar
+                  </button>
+                ) : null}
+                {["SENT", "NEGOTIATING"].includes(q.status) ? (
+                  <button
+                    disabled={busy}
+                    onClick={() => {
+                      const reason = window.prompt("Motivo del rechazo del cliente");
+                      if (reason) void act(q.id, "decline", { reason });
+                    }}
+                  >
+                    Declinar
+                  </button>
+                ) : null}
+                {["SENT", "NEGOTIATING", "REJECTED", "EXPIRED"].includes(q.status) ? (
+                  <button disabled={busy} onClick={() => void act(q.id, "version")}>
+                    Nueva versión
+                  </button>
+                ) : null}
+                <button disabled={busy} onClick={() => void act(q.id, "duplicate")}>
+                  Duplicar
+                </button>
+                {[
+                  "DRAFT",
+                  "PENDING_APPROVAL",
+                  "APPROVED",
+                  "READY_TO_SEND",
+                  "SENT",
+                  "NEGOTIATING",
+                ].includes(q.status) ? (
+                  <button
+                    disabled={busy}
+                    onClick={() => {
+                      if (window.confirm("¿Cancelar esta cotización?")) void act(q.id, "cancel");
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                ) : null}
+                {q.status === "ACCEPTED" && !q.clientId && canManage ? (
+                  <button
+                    disabled={busy}
+                    onClick={() => {
+                      const rut = window.prompt("RUT del nuevo cliente (con dígito verificador)");
+                      if (!rut) return;
+                      void act(q.id, "convert-to-client", {
+                        legalName: q.companyName,
+                        tradeName: q.companyName,
+                        rut,
+                        country: "Chile",
+                        generalEmail: q.contactEmail || undefined,
+                        source: "SALES",
+                        status: "ONBOARDING",
+                      });
+                    }}
+                  >
+                    Crear cliente
+                  </button>
+                ) : null}
+                {q.status === "ACCEPTED" && q.clientId && canManage ? (
+                  <button disabled={busy} onClick={() => void act(q.id, "convert-to-contract")}>
+                    Crear contrato
+                  </button>
+                ) : null}
+                {q.status === "ACCEPTED" && q.clientId && canManage ? (
+                  <button
+                    disabled={busy}
+                    onClick={() => void act(q.id, "convert-to-work-order", {}, true)}
+                  >
+                    Crear OT
+                  </button>
+                ) : null}
+                {q.billing && (q.billing.source === "WEBSITE" || q.billing.editable) ? (
+                  <WebsiteQuoteBillingButton
+                    quoteId={q.id}
+                    quoteNumber={q.quoteNumber}
+                    currency={q.currency}
+                    billing={q.billing}
+                    onChanged={onChanged}
+                  />
+                ) : ["ACCEPTED", "CONVERTED"].includes(q.status) ? (
+                  <QuotePaymentsButton
+                    quoteId={q.id}
+                    quoteNumber={q.quoteNumber}
+                    role={role}
+                    onChanged={onChanged}
+                  />
+                ) : null}
+              </footer>
+            </article>
+          ))}
+        </section>
+      ) : (
+        <Empty
+          title={items.length ? "Sin resultados para estos filtros" : "No existen cotizaciones"}
+          text={
+            items.length
+              ? "Cambia el cliente, la modalidad o el estado de pago para ver otras cotizaciones."
+              : "Crea una cotización desde un cliente, una oportunidad o un lead."
+          }
+        />
+      )}
+      <p className="quoteRegisterHelp">
+        Para cotizaciones operativas aceptadas, «Calendario y pagos» define pago único o cuotas
+        mensuales y conserva sus facturas. Para propuestas de la web, «Cobros y modalidad» muestra
+        el libro real; los borradores permiten definir fijo o mensual. Elegir mensual no autoriza
+        cargos automáticos.
+      </p>
+    </div>
   );
 }
 function SalesCenter({ items, summary }: { items: Sale[]; summary: CommercialSummary }) {
@@ -2311,7 +2485,9 @@ function QuoteWizard({
               Modalidad de cobro
               <select
                 value={b.billingType || "ONE_TIME"}
-                onChange={(e) => set({ ...b, billingType: e.target.value })}
+                onChange={(e) =>
+                  set({ ...b, billingType: e.target.value as "ONE_TIME" | "SUBSCRIPTION" })
+                }
               >
                 <option value="ONE_TIME">Pago único</option>
                 <option value="SUBSCRIPTION">Suscripción mensual</option>

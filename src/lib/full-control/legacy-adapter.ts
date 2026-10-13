@@ -1,6 +1,10 @@
 import "server-only";
 import { portfolioClientCount } from "./portfolio-projection";
 import { createHash } from "node:crypto";
+import { legacyViewId } from "./legacy-id";
+export { legacyViewId } from "./legacy-id";
+import { attachQuoteBilling, canonicalQuoteRegister } from "./quote-register-data";
+import { recentQuotes } from "./quote-register";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { controlSnapshot, type ControlData } from "@/lib/client-experience/control-snapshot";
@@ -26,11 +30,6 @@ import type {
   SupportTicket,
   SupportWorkspace,
 } from "@zyteron/contracts";
-export function legacyViewId(type: string, id: string) {
-  if (/^[0-9a-f-]{36}$/i.test(id)) return id;
-  const h = createHash("sha256").update(`zyteron:legacy-view:${type}:${id}`).digest("hex");
-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-a${h.slice(17, 20)}-${h.slice(20, 32)}`;
-}
 type Link = { user_id: string; client_id: string };
 async function links() {
   return prisma.$queryRaw<Link[]>`SELECT user_id,client_id FROM zyteron_legacy_client_link`;
@@ -333,14 +332,11 @@ export async function mergeLegacyRead(path: string, params: URLSearchParams, bod
   }
   if (path === "/quotes") {
     const native = await quotes(s, ls);
-    return mergePage(
-      {
-        ...(body as { items: unknown[] }),
-        items: [...native, ...(body as { items: unknown[] }).items],
-      },
-      [],
-      params,
-    );
+    const canonical = await canonicalQuoteRegister();
+    const seen = new Set(native.map(q => q.id));
+    const all = recentQuotes([...native, ...canonical.filter(q => !seen.has(q.id))]);
+    const page = mergePage({ items: all }, [], params);
+    return { ...page, items: await attachQuoteBilling(page.items as SalesQuote[]) };
   }
   const nativeLeads = ["/leads", "/commercial/search", "/commercial/summary"].includes(path)
     ? leads(s, ls)

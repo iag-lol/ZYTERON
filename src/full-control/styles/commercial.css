@@ -9,7 +9,7 @@
   max-width: 1680px;
   margin: auto;
   padding: 28px 32px 70px;
-  background: radial-gradient(circle at 100% 0, rgba(185, 244, 74, .12), transparent 30%);
+  background: radial-gradient(circle at 100% 0, rgba(185, 244, 74, 0.12), transparent 30%);
 }
 
 :where(.zy-full-control) .salesHeader {
@@ -24,14 +24,14 @@
   color: var(--sales-green);
   font-size: 9px;
   font-weight: 900;
-  letter-spacing: .15em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
 }
 
 :where(.zy-full-control) .salesHeader h1 {
   margin: 6px 0 5px;
   font-size: 37px;
-  letter-spacing: -.055em;
+  letter-spacing: -0.055em;
 }
 
 :where(.zy-full-control) .salesHeader p {
@@ -58,12 +58,15 @@
   font-size: 10px;
   font-weight: 850;
   cursor: pointer;
-  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
 }
 
 :where(.zy-full-control) .salesHeader button:hover {
   border-color: #8db5a4;
-  box-shadow: 0 6px 18px rgba(13, 91, 67, .08);
+  box-shadow: 0 6px 18px rgba(13, 91, 67, 0.08);
   transform: translateY(-1px);
 }
 
@@ -88,7 +91,7 @@
   border: 1px solid var(--sales-line);
   border-radius: 12px;
   background: #fff;
-  box-shadow: 0 4px 18px rgba(18, 63, 49, .035);
+  box-shadow: 0 4px 18px rgba(18, 63, 49, 0.035);
 }
 
 :where(.zy-full-control) .salesTabs a {
@@ -99,7 +102,9 @@
   white-space: nowrap;
   font-size: 9px;
   font-weight: 800;
-  transition: color .16s ease, background .16s ease;
+  transition:
+    color 0.16s ease,
+    background 0.16s ease;
 }
 
 :where(.zy-full-control) .salesTabs a:hover {
@@ -152,27 +157,27 @@
   justify-content: space-between;
   gap: 30px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, .08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   color: #fff;
   background:
-    radial-gradient(circle at 86% 5%, rgba(185, 244, 74, .26), transparent 31%),
+    radial-gradient(circle at 86% 5%, rgba(185, 244, 74, 0.26), transparent 31%),
     linear-gradient(125deg, var(--sales-deeper), var(--sales-green) 68%, #267358);
-  box-shadow: 0 18px 45px rgba(18, 63, 49, .13);
+  box-shadow: 0 18px 45px rgba(18, 63, 49, 0.13);
 }
 
 :where(.zy-full-control) .salesHero small {
   color: var(--sales-lime);
   font-size: 8px;
   font-weight: 900;
-  letter-spacing: .15em;
+  letter-spacing: 0.15em;
 }
 
 :where(.zy-full-control) .salesHero h2 {
   max-width: 700px;
   margin: 10px 0 8px;
   font-size: 34px;
-  letter-spacing: -.05em;
+  letter-spacing: -0.05em;
 }
 
 :where(.zy-full-control) .salesHero p {
@@ -192,7 +197,7 @@
   text-decoration: none;
   font-size: 10px;
   font-weight: 900;
-  box-shadow: 0 8px 22px rgba(8, 34, 25, .18);
+  box-shadow: 0 8px 22px rgba(8, 34, 25, 0.18);
 }
 
 :where(.zy-full-control) .salesMetricGrid {
@@ -214,13 +219,16 @@
   color: var(--ink);
   background: #fff;
   text-decoration: none;
-  box-shadow: 0 4px 16px rgba(18, 63, 49, .025);
-  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+  box-shadow: 0 4px 16px rgba(18, 63, 49, 0.025);
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
 }
 
 :where(.zy-full-control) .salesMetricGrid a:hover {
   border-color: #9bbdac;
-  box-shadow: 0 10px 28px rgba(18, 63, 49, .08);
+  box-shadow: 0 10px 28px rgba(18, 63, 49, 0.08);
   transform: translateY(-2px);
 }
 
@@ -240,7 +248,7 @@
 
 :where(.zy-full-control) .salesCommandGrid {
   display: grid;
-  grid-template-columns: .8fr 1.2fr;
+  grid-template-columns: 0.8fr 1.2fr;
   gap: 10px;
 }
 
@@ -373,7 +381,7 @@
   border: 1px solid var(--sales-line);
   border-radius: 10px;
   background: #fff;
-  box-shadow: 0 4px 12px rgba(18, 63, 49, .035);
+  box-shadow: 0 4px 12px rgba(18, 63, 49, 0.035);
 }
 
 :where(.zy-full-control) .leadCard small,
@@ -548,6 +556,170 @@
   background: #fff;
 }
 
+:where(.zy-full-control) .quoteRegister {
+  display: grid;
+  gap: 16px;
+}
+:where(.zy-full-control) .quoteRegisterFilters {
+  display: grid;
+  grid-template-columns: 1.3fr 1.5fr 1fr 1.2fr auto;
+  gap: 12px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid var(--sales-line);
+  border-radius: 13px;
+  align-items: end;
+}
+:where(.zy-full-control) .quoteRegisterFilters label,
+:where(.zy-full-control) .quoteBillingEdit label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 700;
+}
+:where(.zy-full-control) .quoteRegisterFilters input,
+:where(.zy-full-control) .quoteRegisterFilters select,
+:where(.zy-full-control) .quoteBillingEdit select {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 11px;
+  border: 1px solid var(--sales-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--sales-ink);
+  font: inherit;
+  font-size: 12px;
+}
+:where(.zy-full-control) .quoteRegisterFilters button {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--sales-line);
+  border-radius: 8px;
+  background: #f4f8f3;
+  font-size: 11px;
+}
+:where(.zy-full-control) .quoteRegisterFilters button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+:where(.zy-full-control) .quoteRegisterCount {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #53645b;
+  font-size: 12px;
+}
+:where(.zy-full-control) .quoteBillingSummary {
+  margin-top: 15px;
+  padding: 13px 0 2px;
+  border-top: 1px solid var(--sales-line);
+}
+:where(.zy-full-control) .quoteBillingBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+:where(.zy-full-control) .quoteBillingBadges span {
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: #edf2ef;
+  color: #34483d;
+  font-size: 10px;
+  font-weight: 700;
+}
+:where(.zy-full-control) .quoteBillingBadges .payment-PAID,
+:where(.zy-full-control) .quoteBillingBadges .payment-CURRENT {
+  background: #e4f5e8;
+  color: #175334;
+}
+:where(.zy-full-control) .quoteBillingBadges .payment-PARTIAL {
+  background: #fff1d3;
+  color: #725016;
+}
+:where(.zy-full-control) .quoteBillingSummary dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 13px 0 8px;
+}
+:where(.zy-full-control) .quoteBillingSummary dt {
+  color: #617069;
+  font-size: 10px;
+  margin-bottom: 5px;
+}
+:where(.zy-full-control) .quoteBillingSummary dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+:where(.zy-full-control) .quoteBillingSummary small {
+  display: block;
+  color: #617069;
+  font-size: 10px;
+  line-height: 1.6;
+}
+:where(.zy-full-control) .quoteBillingSummary .quoteAdvance {
+  font-size: 11px;
+  margin: 9px 0;
+  color: #285c3d;
+}
+:where(.zy-full-control) .quoteRegisterHelp {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #596c60;
+}
+.quoteBillingEdit {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid #dce5dd;
+  border-radius: 12px;
+}
+.quoteBillingEdit select {
+  height: 40px;
+  padding: 8px;
+  border: 1px solid #dce5dd;
+  border-radius: 8px;
+}
+.quoteBillingEdit p {
+  font-size: 12px;
+  color: #596c60;
+  line-height: 1.6;
+}
+.quoteCollections {
+  display: grid;
+  gap: 10px;
+}
+.quoteCollections article {
+  padding: 16px;
+  border: 1px solid #dce5dd;
+  border-radius: 10px;
+}
+.quoteCollections h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+.quoteCollections p {
+  color: #596c60;
+  font-size: 12px;
+}
+@media (max-width: 1100px) {
+  :where(.zy-full-control) .quoteRegisterFilters {
+    grid-template-columns: 1fr 1fr;
+  }
+  :where(.zy-full-control) .quoteRegisterCount {
+    flex-direction: column;
+  }
+}
+@media (max-width: 600px) {
+  :where(.zy-full-control) .quoteRegisterFilters {
+    grid-template-columns: 1fr;
+  }
+}
+
 :where(.zy-full-control) .quoteGrid header {
   display: flex;
   justify-content: space-between;
@@ -584,7 +756,7 @@
 }
 
 :where(.zy-full-control) .quoteGrid button:disabled {
-  opacity: .45;
+  opacity: 0.45;
 }
 
 :where(.zy-full-control) .salesStrip {
@@ -596,7 +768,7 @@
   border-radius: 14px;
   color: #fff;
   background:
-    radial-gradient(circle at 90% 0, rgba(185, 244, 74, .2), transparent 36%),
+    radial-gradient(circle at 90% 0, rgba(185, 244, 74, 0.2), transparent 36%),
     linear-gradient(120deg, var(--sales-deeper), var(--sales-green));
 }
 
@@ -711,7 +883,7 @@
 :where(.zy-full-control) .salesForm select:focus,
 :where(.zy-full-control) .salesForm textarea:focus {
   border-color: #75a28f;
-  box-shadow: 0 0 0 3px rgba(13, 91, 67, .08);
+  box-shadow: 0 0 0 3px rgba(13, 91, 67, 0.08);
 }
 
 :where(.zy-full-control) .salesForm textarea {
@@ -842,7 +1014,7 @@
   color: var(--sales-green);
   border-color: #79a691;
   background: var(--sales-soft);
-  box-shadow: 0 0 0 3px rgba(13, 91, 67, .07);
+  box-shadow: 0 0 0 3px rgba(13, 91, 67, 0.07);
 }
 
 :where(.zy-full-control) .quoteSource button span {
@@ -907,7 +1079,7 @@
   color: var(--sales-green);
   font-size: 8px;
   font-weight: 900;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
 }
 
 :where(.zy-full-control) .quoteItems > header strong {
@@ -983,7 +1155,7 @@
 
 :where(.zy-full-control) .quotePricing > article {
   display: grid;
-  grid-template-columns: 1.4fr .7fr 1fr .7fr auto auto;
+  grid-template-columns: 1.4fr 0.7fr 1fr 0.7fr auto auto;
   align-items: end;
   gap: 8px;
 }
@@ -1163,7 +1335,7 @@
   color: var(--sales-green);
   font-size: 8px;
   font-weight: 900;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
 }
 
 :where(.zy-full-control) .handoffIntro h2 {

@@ -13,6 +13,7 @@ import type {
   SalesPipelineStage,
   SalesQuote,
 } from "@zyteron/contracts";
+import type { QuoteBilling } from "@/lib/full-control/quote-register";
 import { apiHeaders } from "./api-auth";
 
 const base = () => "/api/control-core/api";
@@ -95,6 +96,16 @@ export const commercialApi = {
     }),
   quotes: (role: Role, query = "") =>
     request<Page<SalesQuote>>(role, `/quotes?pageSize=100${query}`),
+  allQuotes: async (role: Role, query = "") => {
+    type Quote = SalesQuote & { billing?: QuoteBilling };
+    const first = await request<Page<Quote>>(role, `/quotes?pageSize=100${query}`);
+    const items = [...first.items];
+    for (let page = 2; page <= first.totalPages; page++) {
+      const next = await request<Page<Quote>>(role, `/quotes?pageSize=100&page=${page}${query}`);
+      items.push(...next.items);
+    }
+    return [...new Map(items.map((q) => [q.id, q])).values()];
+  },
   catalog: (role: Role) =>
     request<
       Array<{

@@ -155,7 +155,7 @@ export interface QuotePaymentInstallment {
   markedPaidBy: string | null; markedPaidAt: string | null; notes: string | null; cancelReason: string | null;
   quoteNumber?: string | null; companyName?: string | null; clientName?: string | null; ownerId?: string | null;
 }
-export interface QuotePaymentQuote { id: string; quoteNumber: string; companyName: string; clientId: string | null; clientName: string | null; ownerId: string | null; status: string; currency: string; totalAmount: number; acceptedAt: string | null; }
+export interface QuotePaymentQuote { billingType?:"ONE_TIME"|"SUBSCRIPTION"|null; id: string; quoteNumber: string; companyName: string; clientId: string | null; clientName: string | null; ownerId: string | null; status: string; currency: string; totalAmount: number; acceptedAt: string | null; }
 export interface QuotePaymentSummary { total: number; paid: number; open: number; overdue: number; upcoming: number; cancelled: number; paidAmount: number; pendingAmount: number; nextDue: { id: string; dueDate: string; amount: number; effectiveStatus: QuoteInstallmentEffectiveStatus } | null; }
 export interface QuotePaymentDetail { quote: QuotePaymentQuote; plan: QuotePaymentPlan | null; installments: QuotePaymentInstallment[]; summary: QuotePaymentSummary; eligible: boolean; eligibilityReason: string | null; permissions: { manage: boolean; markPaid: boolean }; }
 export interface QuotePaymentBoard { items: QuotePaymentInstallment[]; kpis: { open: number; overdue: number; upcoming30: number; paidThisMonth: number; byCurrency: Record<string, { open: number; overdue: number; paidThisMonth: number }> }; asOf: string; }

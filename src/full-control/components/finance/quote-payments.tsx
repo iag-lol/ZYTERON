@@ -83,7 +83,7 @@ function InstallmentCell({item:i,canPay,canManage,busy,onPay,onCancel,onInvoice,
 
 function PlanForm({detail:d,onSaved,onCancel}:{detail:QuotePaymentDetail;onSaved:(next:QuotePaymentDetail)=>void;onCancel?:()=>void}){
   const{role}=useAccess();const plan=d.plan;const action=useAction();const paid=d.summary.paid>0;
-  const[f,setF]=useState({frequency:plan?.frequency??"MONTHLY",amount:String(plan?.amount??d.quote.totalAmount),currency:plan?.currency??(d.quote.currency as "CLP"),startDate:plan?.startDate??todayIso(),paymentDay:String(plan?.paymentDay??Number(todayIso().slice(8,10))),totalInstallments:plan?.totalInstallments?String(plan.totalInstallments):plan?"":"12",activationDaysBefore:String(plan?.activationDaysBefore??5),notes:plan?.notes??""});
+  const[f,setF]=useState({frequency:plan?.frequency??(d.quote.billingType==="SUBSCRIPTION"?"MONTHLY":"ONE_TIME"),amount:String(plan?.amount??d.quote.totalAmount),currency:plan?.currency??(d.quote.currency as "CLP"),startDate:plan?.startDate??todayIso(),paymentDay:String(plan?.paymentDay??Number(todayIso().slice(8,10))),totalInstallments:plan?.totalInstallments?String(plan.totalInstallments):plan?"":"12",activationDaysBefore:String(plan?.activationDaysBefore??5),notes:plan?.notes??""});
   const monthly=f.frequency==="MONTHLY";const preview=f.startDate?[1,2,3].slice(0,monthly?3:1).map((n)=>monthly?dueDate(f.startDate,Number(f.paymentDay)||1,n):f.startDate):[];
   const valid=Number(f.amount)>0&&Boolean(f.startDate)&&(!monthly||(Number(f.paymentDay)>=1&&Number(f.paymentDay)<=31));
   return <div className="fx-form boxed">
@@ -127,12 +127,12 @@ function MarkPaidDrawer({item,currency,onClose,onDone}:{item:QuotePaymentInstall
 
 // =========================================================================================== acceso desde Comercial
 /** Botón «Pagos» en la tarjeta de una cotización aceptada; abre el calendario en un panel lateral. */
-export function QuotePaymentsButton({quoteId,quoteNumber,role}:{quoteId:string;quoteNumber:string;role:Role|string}){
+export function QuotePaymentsButton({quoteId,quoteNumber,role,onChanged}:{quoteId:string;quoteNumber:string;role:Role|string;onChanged?:()=>Promise<void>}){
   const[open,setOpen]=useState(false),[mounted,setMounted]=useState(false);useEffect(()=>setMounted(true),[]);useQueryParams((p)=>{if(p.get("payments")===quoteId)setOpen(true);});
   if(!hasFinancePermission(role,"quote_payment.view"))return null;
   // Portal al <body>: el panel no hereda los estilos de la tarjeta comercial que lo contiene.
-  return <><button onClick={()=>setOpen(true)}><CalendarDays size={13}/>Pagos</button>
-    {open&&mounted?createPortal(<Drawer open wide title={`Calendario de pagos · ${quoteNumber}`} subtitle="Cuotas, pagos registrados y facturas SII adjuntas." onClose={()=>setOpen(false)}><QuotePaymentPanel quoteId={quoteId}/></Drawer>,document.body):null}</>;
+  return <><button onClick={()=>setOpen(true)}><CalendarDays size={13}/>Calendario y pagos</button>
+    {open&&mounted?createPortal(<Drawer open wide title={`Calendario de pagos · ${quoteNumber}`} subtitle="Cuotas, pagos registrados y facturas SII adjuntas." onClose={()=>setOpen(false)}><QuotePaymentPanel quoteId={quoteId} onChanged={()=>void onChanged?.()}/></Drawer>,document.body):null}</>;
 }
 
 // =========================================================================================== sección de Finanzas

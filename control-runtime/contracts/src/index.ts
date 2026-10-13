@@ -125,6 +125,7 @@ export interface SalesFollowUp {
 }
 export interface QuoteItem { id:string; quoteId:string; catalogServiceId:string|null; description:string; quantity:number; unitPrice:number; discountPercent:number; taxable:boolean; subtotal:number; }
 export interface SalesQuote {
+  billingType?: "ONE_TIME" | "SUBSCRIPTION" | null;
   id:string; quoteNumber:string; version:number; clientId:string|null; leadId:string|null; opportunityId:string|null; companyName:string; contactName:string|null;
   contactEmail:string|null; ownerId:string|null; status:QuoteStatus; currency:"CLP"|"UF"|"USD"; subtotal:number; discountTotal:number; netAmount:number;
   taxRate:number; taxAmount:number; totalAmount:number; validUntil:string|null; paymentTerms:string|null; commercialTerms:string|null; notes:string|null;

@@ -72,7 +72,7 @@ export async function duplicateWebsiteQuote(
     pdfPublicUrl: undefined,
     pdfStoragePath: undefined,
     pdfGeneratedAt: undefined,
-    payment: undefined,
+    payment: { billingType: original.payment?.billingType || "ONE_TIME" },
   });
   return inTransaction(transaction, async (db) => {
     const [reserved] = await db.$queryRaw<
@@ -168,7 +168,7 @@ export async function createWebsiteContract(
     const [contract] = await db.$queryRaw<
       Array<{ id: string; contractNumber: string }>
     >`INSERT INTO public.client_contracts(client_id,quote_id,name,description,contract_type,status,start_date,renewal_type,renewal_notice_days,billing_frequency,currency,subtotal,tax,total,portal_visible,template_codes,builder_values,source_snapshot)
-      VALUES(${clientId}::uuid,${viewId}::uuid,${`Contrato ${e.displayNumber}`},${meta.items.map((i) => i.description).join(", ") || meta.projectSummary || e.displayNumber},'DESARROLLO','DRAFT',CURRENT_DATE,'NONE',30,'ONE_TIME','CLP',${Math.max(0, raw.total - meta.iva)},${meta.iva},${raw.total},false,ARRAY['ZT-PROYECTO-CL','ZT-CONDICIONES-CL'],${values}::jsonb,${snapshot}::jsonb)
+      VALUES(${clientId}::uuid,${viewId}::uuid,${`Contrato ${e.displayNumber}`},${meta.items.map((i) => i.description).join(", ") || meta.projectSummary || e.displayNumber},'DESARROLLO','DRAFT',CURRENT_DATE,'NONE',30,${meta.payment?.billingType === "SUBSCRIPTION" ? "MONTHLY" : "ONE_TIME"},'CLP',${Math.max(0, raw.total - meta.iva)},${meta.iva},${raw.total},false,ARRAY['ZT-PROYECTO-CL','ZT-CONDICIONES-CL'],${values}::jsonb,${snapshot}::jsonb)
       RETURNING id,contract_number AS "contractNumber"`;
     await db.clientAuditLog.create({
       data: {

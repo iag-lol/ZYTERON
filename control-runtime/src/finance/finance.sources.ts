@@ -18,7 +18,7 @@ export interface SourceQuoteItem { description:string; quantity:number; unitPric
 export interface SourceCommission { id:string; saleId:string; userId:string; amount:number; currency:string; status:string; }
 export interface SourceProject { id:string; name:string; projectNumber:string|null; clientId:string|null; contractId:string|null; quoteId:string|null; status:string; }
 export interface SourceWorklog { projectId:string; userId:string; workDate:string; durationMinutes:number; billable:boolean; }
-export interface SourceQuote { id:string; quoteNumber:string; companyName:string; clientId:string|null; ownerId:string|null; status:string; currency:string; totalAmount:number; acceptedAt:string|null; }
+export interface SourceQuote { billingType?:"ONE_TIME"|"SUBSCRIPTION"|null; id:string; quoteNumber:string; companyName:string; clientId:string|null; ownerId:string|null; status:string; currency:string; totalAmount:number; acceptedAt:string|null; }
 export interface SourceChangeRequest { id:string; projectId:string; description:string; costImpact:number|null; currency:string; status:string; approvedAt:string|null; }
 
 const system={userId:null,role:"GERENTE_GENERAL"} as const;
@@ -27,8 +27,8 @@ const mapClient=(c:Row):SourceClient=>({id:c.id,legalName:c.legal_name??c.legalN
 const mapService=(s:Row):SourceClientService=>({id:s.id,clientId:s.client_id??s.clientId,serviceName:s.service_name??s.serviceName,contractId:s.contract_id??s.contractId??null,projectId:s.project_id??s.projectId??null,catalogServiceId:s.catalog_service_id??s.catalogServiceId??null,billingFrequency:s.billing_frequency??s.billingFrequency??s.billing_type??null,agreedPrice:s.agreed_price??s.agreedPrice??s.price??null,currency:s.currency??"CLP",status:s.status,startDate:s.start_date??s.startDate??null,endDate:s.end_date??s.endDate??null});
 const mapContract=(c:Row):SourceContract=>({id:c.id,clientId:c.client_id??c.clientId,contractNumber:c.contract_number??c.contractNumber,name:c.name,status:c.status,billingFrequency:c.billing_frequency??c.billingFrequency??null,currency:c.currency??"CLP",subtotal:num(c.subtotal),tax:num(c.tax),total:num(c.total),startDate:c.start_date??c.startDate??null,endDate:c.end_date??c.endDate??null});
 const mapSale=(s:Row):SourceSale=>({id:s.id,quoteId:s.quote_id??s.quoteId,clientId:s.client_id??s.clientId??null,amount:num(s.amount),currency:s.currency,closedAt:s.closed_at??s.closedAt,contractId:s.contract_id??s.contractId??null,status:s.status,ownerId:s.owner_id??s.ownerId??null});
-const mapQuote=(q:Row):SourceQuote=>({id:q.id,quoteNumber:q.quote_number??q.quoteNumber,companyName:q.company_name??q.companyName,clientId:q.client_id??q.clientId??null,ownerId:q.owner_id??q.ownerId??null,status:q.status,currency:q.currency??"CLP",totalAmount:num(q.total_amount??q.totalAmount),acceptedAt:q.accepted_at??q.acceptedAt??null});
-const quoteColumns="id,quote_number,company_name,client_id,owner_id,status,currency,total_amount,accepted_at";
+const mapQuote=(q:Row):SourceQuote=>({billingType:q.billing_type??q.billingType??null,id:q.id,quoteNumber:q.quote_number??q.quoteNumber,companyName:q.company_name??q.companyName,clientId:q.client_id??q.clientId??null,ownerId:q.owner_id??q.ownerId??null,status:q.status,currency:q.currency??"CLP",totalAmount:num(q.total_amount??q.totalAmount),acceptedAt:q.accepted_at??q.acceptedAt??null});
+const quoteColumns="id,quote_number,company_name,client_id,owner_id,status,currency,total_amount,accepted_at,billing_type";
 const mapProject=(p:Row):SourceProject=>({id:p.id,name:p.name,projectNumber:p.project_number??p.projectNumber??null,clientId:p.client_id??p.clientId??null,contractId:p.contract_id??p.contractId??null,quoteId:p.quote_id??p.quoteId??null,status:p.status});
 
 @Injectable()

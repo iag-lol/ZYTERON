@@ -99,6 +99,7 @@ export class QuotePaymentService {
     if(!current){const reason=this.eligibility(quote);if(reason)throw new ConflictException(reason);}
     if(current?.status==="CANCELLED")throw new ConflictException("El plan está anulado y no se reactiva.");
     const frequency=oneOf(body.frequency,["ONE_TIME","MONTHLY"] as const,"Frecuencia","MONTHLY");
+    if(quote.billingType&&frequency!==(quote.billingType==="SUBSCRIPTION"?"MONTHLY":"ONE_TIME"))throw new ConflictException("La frecuencia debe respetar la modalidad de la cotización. Prepara una nueva versión para cambiarla.");
     const startDate=isoDate(body.startDate,"Fecha de inicio");const amount=positiveAmount(body.amount??quote.totalAmount,"Monto por cuota");
     const currency=oneOf(body.currency,["CLP","UF","USD"] as const,"Moneda",(quote.currency as "CLP")||"CLP");
     const paymentDay=frequency==="ONE_TIME"?Number(startDate.slice(8,10)):integer(body.paymentDay??Number(startDate.slice(8,10)),"Día de pago",1,31);
