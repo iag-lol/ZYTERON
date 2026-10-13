@@ -39,7 +39,7 @@ export function presentation(data: PortalData) {
       short: p.title,
       category: p.category || "PROYECTO",
       description: p.description,
-      progress: null as number | null,
+      progress: p.progress,
       status: p.status,
       phase: p.status === "DONE" ? "Entregado" : p.status === "IN_PROGRESS" ? "En curso" : p.status,
       date: civil(p.end),

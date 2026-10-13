@@ -17,7 +17,8 @@ process.env.API_BIND_ADDRESS = "127.0.0.1";
 process.env.AUTH_MODE = "supabase";
 process.env.WEB_ORIGIN ||=
   process.env.NEXTAUTH_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:3000";
-process.env.MONITORING_WORKER_ENABLED = "false";
+process.env.MONITORING_WORKER_ENABLED ||= "true";
+process.env.MONITORING_MAX_CONCURRENCY ||= "2";
 process.env.MONITORING_PROCESS_ROLE = "api";
 process.env.FLOW_WORKER_ENABLED = "false";
 for (const [name, value] of Object.entries({

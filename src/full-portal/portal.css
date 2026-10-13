@@ -2312,6 +2312,9 @@
   left: 18px;
 }
 .zy-full-portal.zy-full-portal .modal {
+  position: fixed;
+  inset: 0;
+  margin: auto;
   border: 1px solid #e0e6d7;
   border-radius: 16px;
   box-shadow: 0 25px 100px #10271933;

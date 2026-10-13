@@ -22,10 +22,11 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
         new URL(process.env.DATABASE_URL || "").hostname,
       );
     } catch {}
-    if (isolated) return { projects: [], documents: [], tickets: [], messages: [] };
+    if (isolated)
+      return { projects: [], documents: [], tickets: [], messages: [], monitors: [], payments: [] };
     throw new Error("PORTAL_PUBLICATION_SCHEMA_UNAVAILABLE");
   }
-  const [projects, documents, tickets, messages] = await Promise.all([
+  const [projects, documents, tickets, messages, monitors, payments] = await Promise.all([
     db.$queryRaw<
       Array<{
         id: string;
@@ -33,10 +34,11 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
         description: string | null;
         scope: string | null;
         status: string;
+        progress: number;
         planned_start_date: Date | null;
         target_date: Date | null;
       }>
-    >`SELECT id,name,description,scope,status,planned_start_date,target_date FROM projects ORDER BY created_at DESC LIMIT 100`,
+    >`SELECT id,name,description,scope,status,progress,planned_start_date,target_date FROM projects ORDER BY created_at DESC LIMIT 100`,
     db.$queryRaw<
       PublishedDocument[]
     >`SELECT d.id,d.title,d.description,v.filename,v.storage_path,d.created_at FROM documents d JOIN document_versions v ON v.id=d.current_version_id ORDER BY d.created_at DESC LIMIT 100`,
@@ -46,12 +48,28 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
     db.$queryRaw<
       Array<{ id: string; ticket_id: string; author_type: string; body: string; created_at: Date }>
     >`SELECT id,ticket_id,author_type,body,created_at FROM ticket_messages ORDER BY created_at ASC LIMIT 500`,
+    db.$queryRaw<
+      Array<{
+        id: string;
+        name: string;
+        url: string;
+        status: string;
+        last_checked_at: Date | null;
+        last_latency_ms: number | null;
+        ssl_status: string;
+        ssl_expires_at: Date | null;
+      }>
+    >`SELECT m.id,e.name,e.url,m.status,m.last_checked_at,m.last_latency_ms,m.ssl_status,m.ssl_expires_at FROM monitors m JOIN project_endpoints e ON e.id=m.endpoint_id ORDER BY e.name LIMIT 100`,
+    db.$queryRaw<
+      Array<{ id: string; gross_amount: number; received_at: Date; currency: string }>
+    >`SELECT id,gross_amount,received_at,currency FROM payments WHERE status='CONFIRMED' AND confirmed_at IS NOT NULL AND provider IN ('BANK_TRANSFER','CASH','OTHER') AND currency='CLP' ORDER BY received_at DESC LIMIT 200`,
   ]);
   return {
     projects: projects.map((p) => ({
       id: p.id,
       title: p.name,
       status: projectStatus(p.status),
+      progress: Number.isFinite(Number(p.progress)) ? Number(p.progress) : null,
       category: "Proyecto",
       description: p.description || "",
       scope: p.scope || "",
@@ -83,6 +101,30 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
         })),
     })),
     messages,
+    monitors: monitors.map((m) => ({
+      id: m.id,
+      name: m.name,
+      url: (() => {
+        try {
+          const u = new URL(m.url);
+          return u.origin + u.pathname;
+        } catch {
+          return "";
+        }
+      })(),
+      status: m.status,
+      checkedAt: m.last_checked_at?.toISOString() || null,
+      latency: m.last_latency_ms,
+      ssl: m.ssl_status,
+      sslExpires: m.ssl_expires_at?.toISOString() || null,
+    })),
+    payments: payments.map((p) => ({
+      id: p.id,
+      amount: Number(p.gross_amount),
+      date: p.received_at.toISOString(),
+      receipt: false,
+      quoteId: null,
+    })),
   };
 }
 export async function canonicalDocumentForCustomer(userId: string, id: string) {

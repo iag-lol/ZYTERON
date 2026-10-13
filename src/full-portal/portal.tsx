@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
+import MonitoringPanel from "./monitoring-panel";
 import BillingHub, { FlowCheckoutPreview } from "./billing-hub";
 import {
   ArrowUpRight,
@@ -312,7 +313,6 @@ export default function Portal({
   });
   const [reply, setReply] = useState("");
   const [replyDrafts] = useState<Record<string, string>>({});
-  const [monitorLoading, setMonitorLoading] = useState(false);
   const title = sections.find((s) => s.id === section)?.label || "Inicio";
   const unread = notifications.filter((n) => n.unread && !read.includes(n.id)).length;
   useEffect(() => {
@@ -1308,68 +1308,7 @@ export default function Portal({
                   </div>
                 </section>
               )}
-              {section === "monitoreo" && (
-                <>
-                  <div className="monitor-summary">
-                    <div className="monitor-status">
-                      <Monitor size={26} />
-                      <div>
-                        <h2>Monitoreo sin conectar</h2>
-                        <p>Sin mediciones reales · Estado técnico no disponible</p>
-                      </div>
-                      <Badge tone="neutral">Sin datos</Badge>
-                    </div>
-                    <div className="monitor-cells">
-                      <span>
-                        Última comprobación<b>No disponible</b>
-                      </span>
-                      <span>
-                        Disponibilidad<b>Sin muestras</b>
-                      </span>
-                      <span>
-                        Latencia<b>Sin muestras</b>
-                      </span>
-                      <span>
-                        Certificado TLS<b>Sin comprobación</b>
-                      </span>
-                    </div>
-                  </div>
-                  <section className="panel">
-                    <Empty
-                      icon="monitor"
-                      title="La visibilidad empieza con datos reales"
-                      description="Cuando el motor de Monitoreo esté conectado, verás el estado de tus sitios, incidentes publicados y la frescura de cada observación."
-                      action={
-                        <button
-                          disabled={monitorLoading}
-                          className="button secondary"
-                          onClick={async () => {
-                            setMonitorLoading(true);
-                            try {
-                              const response = await fetch("/api/portal/monitoring/status", {
-                                cache: "no-store",
-                              });
-                              if (!response.ok)
-                                notice("Monitoreo no disponible: el portal aún no está conectado.");
-                            } catch {
-                              notice("No se pudo consultar el servicio. Puedes reintentar.");
-                            } finally {
-                              setMonitorLoading(false);
-                            }
-                          }}
-                        >
-                          {monitorLoading ? "Consultando…" : "Volver a comprobar"}{" "}
-                          <ArrowRight size={16} />
-                        </button>
-                      }
-                    />
-                  </section>
-                  <div className="info-note">
-                    <Info size={17} />
-                    El estado técnico es independiente del estado comercial y financiero.
-                  </div>
-                </>
-              )}
+              {section === "monitoreo" && <MonitoringPanel initial={data.monitors} />}
               {section === "informes" && (
                 <>
                   <div className="report-feature">

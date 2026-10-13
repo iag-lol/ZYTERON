@@ -206,6 +206,7 @@ export async function connectedPortalSnapshot(userId: string) {
             id: p.id,
             title: p.title,
             status: projectStatus(p.status),
+            progress: null,
             category: p.serviceArea,
             description: p.description || "",
             scope: p.scope || "",
@@ -293,19 +294,23 @@ export async function connectedPortalSnapshot(userId: string) {
           balance === 0 ? "Pagada" : d.dueAt && d.dueAt.getTime() < now ? "Vencida" : "Pendiente",
       };
     }),
-    payments: (extra.permissions.invoices ? extra.payments : []).map((p) => ({
-      id: p.id,
-      amount: p.amount,
-      date: p.receivedAt.toISOString(),
-      receipt: p.provider === "FLOW",
-      quoteId:
-        p.metadata &&
-        typeof p.metadata === "object" &&
-        !Array.isArray(p.metadata) &&
-        typeof p.metadata.quoteId === "string"
-          ? p.metadata.quoteId
-          : null,
-    })),
+    monitors: extra.permissions.monitoring ? extra.publications.monitors : [],
+    payments: [
+      ...(extra.permissions.invoices ? extra.publications.payments : []),
+      ...(extra.permissions.invoices ? extra.payments : []).map((p) => ({
+        id: p.id,
+        amount: p.amount,
+        date: p.receivedAt.toISOString(),
+        receipt: p.provider === "FLOW",
+        quoteId:
+          p.metadata &&
+          typeof p.metadata === "object" &&
+          !Array.isArray(p.metadata) &&
+          typeof p.metadata.quoteId === "string"
+            ? p.metadata.quoteId
+            : null,
+      })),
+    ],
     quotes,
     webThreads: extra.webThreads,
     webMessages: extra.webMessages.map((m) => ({ ...m, created_at: m.created_at.toISOString() })),
