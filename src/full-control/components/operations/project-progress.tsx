@@ -83,7 +83,7 @@ export function ProjectProgress({ project, tasks, milestones, worklogs, create, 
       <p>{hasMilestones && activeTasks.length ? "Hitos: 70% del avance · Tareas: 30%. Cada parte se calcula sobre lo completado de su plan."
         : hasMilestones ? "El avance corresponde al peso de los hitos completados sobre el peso total definido."
         : activeTasks.length ? "El avance corresponde a las tareas terminadas sobre el total de tareas del proyecto."
-        : "Está en 0% porque todavía no hay hitos ni tareas. Crea las etapas del proyecto y las tareas que necesitas completar."}</p>
+        : "Todavía no hay hitos ni tareas para medir el avance. Crea las etapas del proyecto y las tareas que necesitas completar."}</p>
       <p>Registrar trabajo guarda lo que hiciste y las horas dedicadas. Para actualizar el porcentaje, completa el hito o cambia la tarea a Terminada. Cambiar la etapa del proyecto no cambia el porcentaje.</p>
     </div>
     <div className="projectProgressColumns">

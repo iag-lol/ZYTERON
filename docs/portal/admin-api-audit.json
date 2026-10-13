@@ -1,12 +1,12 @@
 {
-  "at": "2026-10-13T06:02:01.770Z",
+  "at": "2026-10-13T07:48:31.713Z",
   "origin": "https://www.zyteron.cl",
   "mode": "READ_ONLY",
   "results": [
     {
       "path": "/executive/dashboard",
       "status": 200,
-      "ms": 1996,
+      "ms": 2122,
       "ok": true,
       "shape": [
         "generatedAt",
@@ -19,7 +19,7 @@
     {
       "path": "/commercial/summary",
       "status": 200,
-      "ms": 1037,
+      "ms": 899,
       "ok": true,
       "shape": [
         "newLeads",
@@ -41,7 +41,7 @@
     {
       "path": "/commercial/activity",
       "status": 200,
-      "ms": 344,
+      "ms": 385,
       "ok": true,
       "shape": [
         "0",
@@ -64,7 +64,7 @@
     {
       "path": "/leads?pageSize=100",
       "status": 200,
-      "ms": 765,
+      "ms": 701,
       "ok": true,
       "shape": [
         "items",
@@ -77,7 +77,7 @@
     {
       "path": "/opportunities?pageSize=100",
       "status": 200,
-      "ms": 315,
+      "ms": 363,
       "ok": true,
       "shape": [
         "items",
@@ -88,21 +88,25 @@
       ]
     },
     {
-      "path": "/pipeline",
-      "status": 404,
-      "ms": 262,
-      "ok": false,
-      "message": "Cannot GET /api/pipeline",
+      "path": "/commercial/pipeline-stages",
+      "status": 200,
+      "ms": 340,
+      "ok": true,
       "shape": [
-        "message",
-        "error",
-        "statusCode"
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
       ]
     },
     {
       "path": "/follow-ups?pageSize=100",
       "status": 200,
-      "ms": 305,
+      "ms": 311,
       "ok": true,
       "shape": [
         "items",
@@ -115,7 +119,7 @@
     {
       "path": "/quotes?pageSize=100",
       "status": 200,
-      "ms": 1258,
+      "ms": 1380,
       "ok": true,
       "shape": [
         "items",
@@ -128,7 +132,7 @@
     {
       "path": "/sales?pageSize=100",
       "status": 200,
-      "ms": 934,
+      "ms": 816,
       "ok": true,
       "shape": [
         "items",
@@ -139,45 +143,30 @@
       ]
     },
     {
-      "path": "/commercial/goals",
-      "status": 404,
-      "ms": 244,
-      "ok": false,
-      "message": "Cannot GET /api/commercial/goals",
-      "shape": [
-        "message",
-        "error",
-        "statusCode"
-      ]
+      "path": "/sales-goals",
+      "status": 200,
+      "ms": 344,
+      "ok": true,
+      "shape": []
     },
     {
-      "path": "/commercial/commissions",
-      "status": 404,
-      "ms": 220,
-      "ok": false,
-      "message": "Cannot GET /api/commercial/commissions",
-      "shape": [
-        "message",
-        "error",
-        "statusCode"
-      ]
+      "path": "/commissions",
+      "status": 200,
+      "ms": 372,
+      "ok": true,
+      "shape": []
     },
     {
-      "path": "/handoffs?pageSize=100",
-      "status": 404,
-      "ms": 213,
-      "ok": false,
-      "message": "Cannot GET /api/handoffs?pageSize=100",
-      "shape": [
-        "message",
-        "error",
-        "statusCode"
-      ]
+      "path": "/sales-handoffs",
+      "status": 200,
+      "ms": 507,
+      "ok": true,
+      "shape": []
     },
     {
       "path": "/clients?pageSize=100",
       "status": 200,
-      "ms": 918,
+      "ms": 963,
       "ok": true,
       "shape": [
         "items",
@@ -189,33 +178,37 @@
       ]
     },
     {
-      "path": "/client-contacts?pageSize=100",
-      "status": 404,
-      "ms": 266,
-      "ok": false,
-      "message": "Cannot GET /api/client-contacts?pageSize=100",
+      "path": "/contacts?pageSize=100",
+      "status": 200,
+      "ms": 460,
+      "ok": true,
       "shape": [
-        "message",
-        "error",
-        "statusCode"
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages",
+        "summary"
       ]
     },
     {
-      "path": "/client-contracts?pageSize=100",
-      "status": 404,
-      "ms": 218,
-      "ok": false,
-      "message": "Cannot GET /api/client-contracts?pageSize=100",
+      "path": "/contracts?pageSize=100",
+      "status": 200,
+      "ms": 451,
+      "ok": true,
       "shape": [
-        "message",
-        "error",
-        "statusCode"
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages",
+        "summary"
       ]
     },
     {
       "path": "/client-services?pageSize=100",
       "status": 200,
-      "ms": 492,
+      "ms": 458,
       "ok": true,
       "shape": [
         "items",
@@ -229,7 +222,7 @@
     {
       "path": "/renewals?pageSize=100",
       "status": 200,
-      "ms": 597,
+      "ms": 652,
       "ok": true,
       "shape": [
         "items",
@@ -243,7 +236,7 @@
     {
       "path": "/operations/summary",
       "status": 200,
-      "ms": 727,
+      "ms": 660,
       "ok": true,
       "shape": [
         "blockedTasks",
@@ -264,14 +257,18 @@
     {
       "path": "/operations/priorities",
       "status": 200,
-      "ms": 499,
+      "ms": 385,
       "ok": true,
-      "shape": []
+      "shape": [
+        "0",
+        "1",
+        "2"
+      ]
     },
     {
       "path": "/operations/activity",
       "status": 200,
-      "ms": 644,
+      "ms": 340,
       "ok": true,
       "shape": [
         "0",
@@ -288,7 +285,7 @@
     {
       "path": "/work-orders?pageSize=100",
       "status": 200,
-      "ms": 329,
+      "ms": 345,
       "ok": true,
       "shape": [
         "items",
@@ -301,7 +298,7 @@
     {
       "path": "/projects?pageSize=100",
       "status": 200,
-      "ms": 974,
+      "ms": 964,
       "ok": true,
       "shape": [
         "items",
@@ -314,7 +311,7 @@
     {
       "path": "/tasks?pageSize=100",
       "status": 200,
-      "ms": 411,
+      "ms": 294,
       "ok": true,
       "shape": [
         "items",
@@ -327,7 +324,7 @@
     {
       "path": "/milestones",
       "status": 200,
-      "ms": 293,
+      "ms": 309,
       "ok": true,
       "shape": [
         "0"
@@ -336,7 +333,7 @@
     {
       "path": "/worklogs?pageSize=100",
       "status": 200,
-      "ms": 323,
+      "ms": 376,
       "ok": true,
       "shape": [
         "items",
@@ -349,7 +346,7 @@
     {
       "path": "/deliverables?pageSize=100",
       "status": 200,
-      "ms": 315,
+      "ms": 366,
       "ok": true,
       "shape": [
         "items",
@@ -362,7 +359,7 @@
     {
       "path": "/deployments?pageSize=100",
       "status": 200,
-      "ms": 401,
+      "ms": 312,
       "ok": true,
       "shape": [
         "items",
@@ -375,7 +372,7 @@
     {
       "path": "/development/summary",
       "status": 200,
-      "ms": 710,
+      "ms": 1122,
       "ok": true,
       "shape": [
         "unassignedProjects",
@@ -395,80 +392,90 @@
     {
       "path": "/development/repositories",
       "status": 200,
-      "ms": 344,
+      "ms": 553,
       "ok": true,
       "shape": []
     },
     {
       "path": "/development/pull-requests",
       "status": 200,
-      "ms": 302,
+      "ms": 301,
       "ok": true,
       "shape": []
     },
     {
       "path": "/development/environments",
       "status": 200,
-      "ms": 352,
+      "ms": 328,
       "ok": true,
       "shape": []
     },
     {
       "path": "/qa/runs",
       "status": 200,
-      "ms": 476,
+      "ms": 310,
       "ok": true,
       "shape": []
     },
     {
       "path": "/bugs",
       "status": 200,
-      "ms": 349,
+      "ms": 325,
       "ok": true,
       "shape": []
     },
     {
       "path": "/releases",
       "status": 200,
-      "ms": 432,
+      "ms": 377,
       "ok": true,
       "shape": []
     },
     {
       "path": "/technical-debt",
       "status": 200,
-      "ms": 411,
+      "ms": 349,
       "ok": true,
       "shape": []
     },
     {
-      "path": "/monitoring/summary",
-      "status": 404,
-      "ms": 213,
-      "ok": false,
-      "message": "Cannot GET /api/monitoring/summary",
+      "path": "/monitoring/dashboard",
+      "status": 200,
+      "ms": 707,
+      "ok": true,
       "shape": [
-        "message",
-        "error",
-        "statusCode"
+        "totals",
+        "openIncidents",
+        "criticalIncidents",
+        "unacknowledgedIncidents",
+        "globalUptime24h",
+        "globalUptimeDefinition",
+        "sslExpiring",
+        "highLatency",
+        "recentRecoveries",
+        "activeIncidents",
+        "events",
+        "monitors",
+        "fleet",
+        "workers",
+        "realtimeConfigured",
+        "generatedAt"
       ]
     },
     {
-      "path": "/monitoring/endpoints",
-      "status": 404,
-      "ms": 215,
-      "ok": false,
-      "message": "Cannot GET /api/monitoring/endpoints",
+      "path": "/monitoring/monitors?pageSize=100",
+      "status": 200,
+      "ms": 455,
+      "ok": true,
       "shape": [
-        "message",
-        "error",
-        "statusCode"
+        "0",
+        "1"
       ]
     },
     {
       "path": "/monitoring/incidents",
       "status": 200,
-      "ms": 318,
+      "ms": 338,
       "ok": true,
       "shape": [
         "items",
@@ -481,7 +488,7 @@
     {
       "path": "/audits/workspace",
       "status": 200,
-      "ms": 469,
+      "ms": 594,
       "ok": true,
       "shape": [
         "summary",
@@ -499,7 +506,7 @@
     {
       "path": "/support/workspace",
       "status": 200,
-      "ms": 1000,
+      "ms": 1243,
       "ok": true,
       "shape": [
         "summary",
@@ -518,7 +525,7 @@
     {
       "path": "/documents/workspace",
       "status": 200,
-      "ms": 1039,
+      "ms": 1433,
       "ok": true,
       "shape": [
         "summary",
@@ -536,7 +543,7 @@
     {
       "path": "/hr/workspace",
       "status": 200,
-      "ms": 448,
+      "ms": 593,
       "ok": true,
       "shape": [
         "summary",
@@ -566,7 +573,7 @@
     {
       "path": "/finance/dashboard",
       "status": 200,
-      "ms": 3608,
+      "ms": 3265,
       "ok": true,
       "shape": [
         "period",
@@ -587,7 +594,7 @@
     {
       "path": "/security/workspace",
       "status": 200,
-      "ms": 1140,
+      "ms": 731,
       "ok": true,
       "shape": [
         "summary",
@@ -629,7 +636,7 @@
     {
       "path": "/settings/workspace",
       "status": 200,
-      "ms": 879,
+      "ms": 644,
       "ok": true,
       "shape": [
         "summary",

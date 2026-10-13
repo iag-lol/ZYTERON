@@ -14,4 +14,4 @@ Límites: la autorización y prueba mensual de Sandbox permanecen pendientes por
 
 Migraciones aplicadas en la base existente: 20261013060325, 20261013061603, 20261013062505, 20261013065816. Registro privado con SHA-256 en `zyteron_admin_client_migrations`, sin lectura pública.
 
-Pendiente de cierre: verificar la versión Live y registrar el commit/evidencia final.
+Publicado y verificado: commit b6138df, Render dep-db6u65nf3r2c73ci5mbg (Live; 3m46s). 45 APIs de lectura respondieron 200. Se abrió Proyecto 360° de un proyecto web y se comprobaron sus acciones, relaciones y visibilidad; ficha de cliente con comunicación e historial real; informes con registros. La sesión del cliente había expirado y la vista pública exigió inicio de sesión: queda pendiente repetir su recorrido gráfico en Live con sesión del dueño. El comportamiento/aislamiento se verificó en las transacciones anteriores. Se añade una corrección visual menor en botones y fechas civiles de contratos para el despliegue final.

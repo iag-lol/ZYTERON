@@ -182,11 +182,12 @@ function ConnectedModule({ pathname }: { pathname: string }) {
           title={descriptor.title}
           description="Información conectada a los registros de administración. La publicación al cliente se controla en cada expediente."
           actions={
-            <div>
-              <button type="button" onClick={() => void load()} disabled={loading}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <button className="pagePrimaryAction" type="button" onClick={() => void load()} disabled={loading}>
                 <RefreshCw size={15} /> Actualizar
               </button>
               <button
+                className="pagePrimaryAction"
                 type="button"
                 onClick={() => void download()}
                 disabled={busy || loading || !filtered.length}

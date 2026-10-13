@@ -1197,8 +1197,8 @@ export default function Portal({
                               Estado: {c.status} · Firma: {c.signature} · Vigencia: {c.effective}
                             </p>
                             <p>
-                              {c.start ? civil(c.start) : "Sin inicio"} —{" "}
-                              {c.end ? civil(c.end) : "Indefinido"} · {money(c.total, c.currency)}
+                              {c.start ? civil(c.start.slice(0,10)+"T12:00:00Z") : "Sin inicio"} —{" "}
+                              {c.end ? civil(c.end.slice(0,10)+"T12:00:00Z") : "Indefinido"} · {money(c.total, c.currency)}
                             </p>
                           </article>
                         ))}

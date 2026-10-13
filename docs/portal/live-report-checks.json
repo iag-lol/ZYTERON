@@ -1,0 +1,58 @@
+[
+  {
+    "path": "/administracion/reports/commercial",
+    "rows": 14,
+    "error": false,
+    "placeholder": false
+  },
+  {
+    "path": "/administracion/reports/clients",
+    "rows": 5,
+    "error": false,
+    "placeholder": false
+  },
+  {
+    "path": "/administracion/reports/projects",
+    "rows": 4,
+    "error": false,
+    "placeholder": false
+  },
+  {
+    "path": "/administracion/reports/development",
+    "rows": 12,
+    "error": false,
+    "placeholder": false
+  },
+  {
+    "path": "/administracion/reports/uptime",
+    "rows": 0,
+    "error": false,
+    "placeholder": false,
+    "recheck_required": true
+  },
+  {
+    "path": "/administracion/reports/audits",
+    "rows": 0,
+    "error": false,
+    "placeholder": false
+  },
+  {
+    "path": "/administracion/reports/hr",
+    "rows": 12,
+    "error": false,
+    "placeholder": false
+  },
+  {
+    "path": "/administracion/reports/finance",
+    "rows": 8,
+    "error": false,
+    "placeholder": false,
+    "rechecked_after_load": true
+  },
+  {
+    "path": "/administracion/reports/security",
+    "rows": 16,
+    "error": false,
+    "placeholder": false
+  }
+]
