@@ -25,10 +25,11 @@
   },
   {
     "path": "/administracion/reports/uptime",
-    "rows": 0,
+    "rows": 2,
     "error": false,
     "placeholder": false,
-    "recheck_required": true
+    "rechecked_after_final_deploy": true,
+    "deployed_commit": "6cb46a3"
   },
   {
     "path": "/administracion/reports/audits",
