@@ -114,7 +114,7 @@ const descriptions: Record<string, string> = {
   servicios: "Tu ecosistema digital, en un solo lugar.",
   proyectos: "Cada avance nos acerca a tu próximo objetivo.",
   cuenta: "Una visión clara de tus obligaciones y movimientos.",
-  pagos: "Consulta tus facturas y el estado de tus pagos.",
+  pagos: "Consulta tus documentos de cobro y el estado de tus pagos.",
   contratos: "Acuerdos claros para construir juntos.",
   documentos: "Toda la información compartida con tu empresa.",
   credenciales: "Acceso controlado a tus recursos digitales.",
@@ -260,7 +260,9 @@ export default function Portal({
   const { services, projects, invoices, documents, tickets, notifications, events } =
     presentation(data);
   const router = useRouter();
-  const DEMO_DATE = civil(data.asOf);
+  const REFERENCE_DATE = civil(data.asOf);
+  const [calendarDay, calendarMonth, calendarYear] = REFERENCE_DATE.split("-").map(Number);
+  const calendarEvents = events.filter((event) => event.date.slice(3) === REFERENCE_DATE.slice(3));
   const company = data.user.company || data.user.name;
   const accountInitials = initials(data.user.name);
   const overdue = data.invoices
@@ -427,8 +429,8 @@ export default function Portal({
     return events.map((e) => (
       <button
         className="event-row"
-        key={e.title}
-        onClick={() => setModal({ kind: "event", id: e.title })}
+        key={e.id}
+        onClick={() => setModal({ kind: "event", id: e.id })}
       >
         <span className="event-day">
           <b>{e.day}</b>
@@ -491,7 +493,7 @@ export default function Portal({
                     className="table-link"
                     onClick={() => setModal({ kind: "invoice", id: i.id })}
                   >
-                    {i.id} <ArrowUpRight size={13} />
+                    {i.displayNumber} <ArrowUpRight size={13} />
                   </button>
                   <small>{i.concept}</small>
                 </td>
@@ -519,7 +521,7 @@ export default function Portal({
                 <td>
                   <button
                     className="icon-button"
-                    aria-label={`Ver factura ${i.id}`}
+                    aria-label={`Ver cuenta ${i.displayNumber}`}
                     onClick={() => setModal({ kind: "invoice", id: i.id })}
                   >
                     <ChevronRight size={18} />
@@ -1419,8 +1421,8 @@ export default function Portal({
                           {
                             length:
                               (new Date(
-                                new Date(data.asOf).getFullYear(),
-                                new Date(data.asOf).getMonth(),
+                                calendarYear,
+                                calendarMonth - 1,
                                 1,
                               ).getDay() +
                                 6) %
@@ -1433,8 +1435,8 @@ export default function Portal({
                         {Array.from(
                           {
                             length: new Date(
-                              new Date(data.asOf).getFullYear(),
-                              new Date(data.asOf).getMonth() + 1,
+                              calendarYear,
+                              calendarMonth,
                               0,
                             ).getDate(),
                           },
@@ -1442,24 +1444,24 @@ export default function Portal({
                         ).map((d) => (
                           <button
                             key={d}
-                            className={`${d === new Date(data.asOf).getDate() ? "today" : ""} ${events.some((e) => Number(e.day) === d) ? "has-event" : ""}`}
-                            aria-label={`${d}-10-2026${events.some((e) => Number(e.day) === d) ? ", con compromiso de ejemplo" : ""}`}
+                            className={`${d === calendarDay ? "today" : ""} ${calendarEvents.some((e) => Number(e.day) === d) ? "has-event" : ""}`}
+                            aria-label={`${String(d).padStart(2, "0")}-${REFERENCE_DATE.slice(3)}${calendarEvents.some((e) => Number(e.day) === d) ? ", con compromiso publicado" : ""}`}
                             onClick={() => {
-                              const e = events.find((e) => Number(e.day) === d);
-                              if (e) setModal({ kind: "event", id: e.title });
+                              const e = calendarEvents.find((e) => Number(e.day) === d);
+                              if (e) setModal({ kind: "event", id: e.id });
                               else
                                 notice(
-                                  `Sin compromisos de ejemplo el ${String(d).padStart(2, "0")}-10-2026.`,
+                                  `Sin compromisos publicados el ${String(d).padStart(2, "0")}-${REFERENCE_DATE.slice(3)}.`,
                                 );
                             }}
                           >
                             {d}
-                            {events.some((e) => Number(e.day) === d) && <i />}
+                            {calendarEvents.some((e) => Number(e.day) === d) && <i />}
                           </button>
                         ))}
                       </div>
                       <p className="source-note">
-                        Fecha de referencia: {DEMO_DATE} · America/Santiago
+                        Fecha de referencia: {REFERENCE_DATE} · America/Santiago
                       </p>
                     </section>
                     <section className="agenda-card">
@@ -1659,7 +1661,7 @@ export default function Portal({
               Hecho para avanzar contigo. <b>zyteron.</b>
             </span>
             <span>
-              Actualizado · {DEMO_DATE}
+              Actualizado · {REFERENCE_DATE}
               <button onClick={() => setModal({ kind: "privacy" })}>Privacidad</button>
               <button onClick={() => setModal({ kind: "preview" })}>
                 <CircleHelp size={14} />
@@ -1725,14 +1727,14 @@ export default function Portal({
                                 : modal.kind === "event"
                                   ? "Compromiso publicado"
                                   : modal.kind === "quote"
-                                    ? "Propuesta de ejemplo"
+                                    ? "Tu propuesta"
                                     : modal.kind === "draft"
                                       ? "Borrador de solicitud"
                                       : modal.kind === "privacy"
-                                        ? "Privacidad de esta vista"
+                                        ? "Privacidad de tu cuenta"
                                         : modal.kind === "blocked"
                                           ? "Integración pendiente"
-                                          : "Sobre esta vista previa"
+                                          : "Tu cuenta Zyteron"
           }
           onClose={() => setModal(null)}
         >
@@ -1742,7 +1744,7 @@ export default function Portal({
               if (!i) return null;
               return (
                 <FlowCheckoutPreview
-                  document={i.id + " · " + i.concept}
+                  document={i.displayNumber + " · " + i.concept}
                   amount={i.balance}
                   quote={data.quotes.find((q) => q.id === i.quoteId)}
                 />
@@ -1770,8 +1772,8 @@ export default function Portal({
                 <Check size={20} />
               </button>
               <p className="subtle">
-                El selector real mostrará únicamente membresías activas y verificadas. No hay
-                empresas reales cargadas en esta vista.
+                Tu acceso corresponde a la empresa vinculada a esta cuenta. Para modificar la
+                vinculación, solicita la revisión del equipo de Zyteron.
               </p>
             </>
           )}
@@ -2025,9 +2027,9 @@ export default function Portal({
                           <b>{s}</b>
                           <small>
                             {i < p.current
-                              ? "Hito de ejemplo completado"
+                              ? "Hito completado"
                               : i === p.current
-                                ? "Fase actual de ejemplo"
+                                ? "Fase actual"
                                 : "Próximo paso"}
                           </small>
                         </div>
@@ -2037,7 +2039,7 @@ export default function Portal({
                   </ol>
                   <div className="info-note">
                     <CalendarDays size={18} />
-                    {p.next} · {p.date} · Compromiso ilustrativo
+                    {p.next} · {p.date}
                   </div>
                   <button className="button primary" onClick={() => go("documentos")}>
                     Revisar documentos <ArrowRight size={16} />
@@ -2055,7 +2057,7 @@ export default function Portal({
                     <span className={`service-icon ${s.color}`}>
                       <Icon name={s.icon} size={25} />
                     </span>
-                    <Badge>Activo · Ejemplo</Badge>
+                    <Badge>{s.status}</Badge>
                   </div>
                   <h3>{s.name}</h3>
                   <p>{s.description}</p>
@@ -2127,7 +2129,7 @@ export default function Portal({
                       {i.status}
                     </Badge>
                   </div>
-                  <span className="eyebrow">DOCUMENTO SINTÉTICO · {i.id}</span>
+                  <span className="eyebrow">CUENTA POR COBRAR · {i.displayNumber}</span>
                   <h3>{i.concept}</h3>
                   <dl className="detail-list">
                     <div>
@@ -2164,7 +2166,7 @@ export default function Portal({
                     </div>
                     <div>
                       <dt>Pago real</dt>
-                      <dd>Sin integración</dd>
+                      <dd>{i.status === "Pagada" ? "Pago registrado" : "Pendiente de confirmación"}</dd>
                     </div>
                   </dl>
                   <div className="info-note">
@@ -2175,6 +2177,7 @@ export default function Portal({
                   <div className="modal-actions">
                     <button
                       className="button primary"
+                      disabled={!i.payable}
                       onClick={() => setModal({ kind: "flow", id: i.id })}
                     >
                       Opciones de pago <CreditCard size={17} />
@@ -2293,7 +2296,7 @@ export default function Portal({
             })()}
           {modal.kind === "event" &&
             (() => {
-              const e = events.find((e) => e.title === modal.id)!;
+              const e = events.find((e) => e.id === modal.id)!;
               return (
                 <>
                   <span className="service-icon green">

@@ -52,6 +52,7 @@ export function presentation(data: PortalData) {
     invoices: data.invoices.map((i) => ({
       id: i.id,
       quoteId: i.quoteId,
+      displayNumber: data.quotes.find((q) => q.id === i.quoteId)?.number || `Cuenta · ${i.id.slice(0, 8)}`,
       concept: i.concept,
       period: "Obligación registrada",
       issued: civil(i.issued),
