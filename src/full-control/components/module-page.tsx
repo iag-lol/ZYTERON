@@ -98,8 +98,8 @@ function ConnectedModule({ pathname }: { pathname: string }) {
         if (!source) throw new Error("Esta vista no tiene un informe configurado.");
         const data = await read(source.path);
         if (source.rows)
-          values = (data[source.rows] || []).map((r: Row) => ({
-            name: text(r.name || r.legalName || r.auditNumber || r.projectNumber),
+          values = (Array.isArray(data) ? data : data[source.rows] || []).map((r: Row) => ({
+            name: text(r.name || r.endpointName || r.legalName || r.auditNumber || r.projectNumber),
             status: text(r.status),
             value: text(r.clientName || r.tradeName || r.url || r.scope),
             date: text(r.updatedAt || r.createdAt || r.scheduledAt),
