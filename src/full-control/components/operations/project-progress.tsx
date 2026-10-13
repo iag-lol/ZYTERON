@@ -12,7 +12,7 @@ const taskLabels: Record<OperationsTask["status"], string> = {
   REVIEW: "En revisión", QA: "En pruebas", DONE: "Terminada", CANCELLED: "Anulada",
 };
 // Las opciones respetan las transiciones que permite OperationsService.
-const nextTaskStates: Record<OperationsTask["status"], OperationsTask["status"][]> = {
+export const nextTaskStates: Record<OperationsTask["status"], OperationsTask["status"][]> = {
   BACKLOG: ["TODO", "CANCELLED"], TODO: ["BACKLOG", "IN_PROGRESS", "BLOCKED", "CANCELLED"],
   IN_PROGRESS: ["TODO", "BLOCKED", "REVIEW", "QA", "DONE", "CANCELLED"],
   BLOCKED: ["TODO", "IN_PROGRESS", "CANCELLED"], REVIEW: ["IN_PROGRESS", "QA", "DONE"],

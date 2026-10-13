@@ -1,3 +1,4 @@
+import { portalModuleEnabled } from "@/lib/portal/module-access";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { portalAuthOptions } from "@/lib/auth/portal-auth";
@@ -9,10 +10,12 @@ type Context = { params: Promise<{ id: string }> };
 
 export async function GET(_request: Request, { params }: Context) {
   const session = await getServerSession(portalAuthOptions);
-  if (!session?.user?.id || !session.user.email || session.user.accountStatus !== "ACTIVE") {
+  if (!session?.user?.id || !session.user.email || session.user.accountStatus !== "ACTIVE" || !session.user.emailVerifiedAt) {
     return NextResponse.json({ error: "No autenticado." }, { status: 401 });
   }
 
+  try { if (!(await portalModuleEnabled(session.user.id,"documents"))) return NextResponse.json({error:"Documentos deshabilitados para esta cuenta."},{status:403}); }
+  catch {return NextResponse.json({error:"No fue posible validar el acceso."},{status:503});}
   const { id } = await params;
   const quote = await prisma.quote.findUnique({ where: { id } });
   if (!quote) return NextResponse.json({ error: "Cotización no encontrada." }, { status: 404 });

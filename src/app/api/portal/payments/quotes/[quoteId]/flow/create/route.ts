@@ -1,3 +1,4 @@
+import { portalModuleEnabled } from "@/lib/portal/module-access";
 import { limitedJson } from "@/lib/payments/request-body";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
@@ -26,6 +27,7 @@ export async function POST(req: Request, { params }: Context) {
   }
 
   try {
+    if (!(await portalModuleEnabled(session.user.id,"invoices"))) return NextResponse.json({error:"Los pagos no están habilitados para esta cuenta."},{status:403});
     const body = await limitedJson(req);
     const parsedBody = payloadSchema.safeParse(body);
     if (!parsedBody.success) {

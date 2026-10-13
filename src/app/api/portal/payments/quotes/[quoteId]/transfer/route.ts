@@ -1,3 +1,4 @@
+import { portalModuleEnabled } from "@/lib/portal/module-access";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { portalAuthOptions } from "@/lib/auth/portal-auth";
@@ -14,6 +15,7 @@ export async function POST(req: Request, { params }: Context) {
   }
 
   try {
+    if (!(await portalModuleEnabled(session.user.id,"invoices"))) return NextResponse.json({error:"Los pagos no están habilitados para esta cuenta."},{status:403});
     const { quoteId } = await params;
     const formData = await req.formData();
     const stageKey = String(formData.get("stageKey") || "").trim().toUpperCase();

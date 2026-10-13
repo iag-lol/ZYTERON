@@ -1,3 +1,5 @@
+import { isSafePortalLink } from "@/lib/portal/safe-link";
+import { boundedJson } from "@/lib/security/public-intake";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { Role } from "@prisma/client";
@@ -18,7 +20,7 @@ const sendNotificationSchema = z.object({
     .min(5, "El contenido debe tener al menos 5 caracteres.")
     .max(2000, "El contenido no puede superar 2000 caracteres."),
   type: z.enum(["INFO", "SUCCESS", "WARNING", "ALERT"]).optional(),
-  link: z.string().trim().max(500).optional().or(z.literal("")),
+  link: z.string().trim().max(500).refine(isSafePortalLink, "El enlace debe apuntar a una sección del portal cliente.").optional().or(z.literal("")),
 });
 
 export async function POST(req: Request) {
@@ -26,7 +28,7 @@ export async function POST(req: Request) {
   if (auth.error) return auth.error;
 
   try {
-    const body = await req.json();
+    const body = await boundedJson(req, 16384);
     const parsed = sendNotificationSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(

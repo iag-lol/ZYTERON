@@ -2,7 +2,7 @@ import fs from "node:fs";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import pg from "pg";
-const env = JSON.parse(fs.readFileSync("../../.tools/control-cloud-private.json", "utf8"));
+const env = JSON.parse(fs.readFileSync(process.env.ZYTERON_AUDIT_CONFIG || "../../.tools/control-cloud-private.json", "utf8"));
 const db = new pg.Client({
   connectionString: env.DATABASE_URL,
   ssl: {

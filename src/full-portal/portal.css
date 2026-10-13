@@ -5339,3 +5339,13 @@
   justify-content: center;
   padding: 0 20px 30px;
 }
+
+.zy-full-portal .portal-communications { padding: 24px; margin-bottom: 24px; }
+.zy-full-portal .communication-history { display:grid; gap:12px; max-height:420px; overflow:auto; margin:20px 0; }
+.zy-full-portal .communication-history article { padding:16px; border:1px solid #dde5d9; border-radius:12px; }
+.zy-full-portal .communication-history p { white-space:pre-wrap; overflow-wrap:anywhere; }
+.zy-full-portal .portal-communications form { display:grid; gap:14px; }
+.zy-full-portal .portal-communications label { display:grid; gap:8px; font-size:13px; }
+.zy-full-portal .portal-communications input,.zy-full-portal .portal-communications textarea { padding:12px; border:1px solid #bdcbb7; border-radius:8px; font:inherit; background:white; color:#193b2c; }
+.zy-full-portal .portal-communications textarea { min-height:110px; resize:vertical; }
+.zy-full-portal .portal-communications button { justify-self:start; }

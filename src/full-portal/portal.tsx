@@ -1,4 +1,5 @@
 "use client";
+import { PortalCommunications } from "./communications";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -1089,6 +1090,7 @@ export default function Portal({
               )}
               {section === "asistencia" && (
                 <>
+                  <PortalCommunications messages={data.communications} />
                   <div className="support-banner">
                     <span>
                       <Headphones size={32} />
@@ -1183,6 +1185,26 @@ export default function Portal({
               )}
               {section === "contratos" && (
                 <>
+                  {data.contracts.length ? (
+                    <section className="panel portal-communications">
+                      <h2>Contratos publicados</h2>
+                      <div className="communication-history">
+                        {data.contracts.map((c) => (
+                          <article key={c.id}>
+                            <small>{c.number}</small>
+                            <h3>{c.title}</h3>
+                            <p>
+                              Estado: {c.status} · Firma: {c.signature} · Vigencia: {c.effective}
+                            </p>
+                            <p>
+                              {c.start ? civil(c.start) : "Sin inicio"} —{" "}
+                              {c.end ? civil(c.end) : "Indefinido"} · {money(c.total, c.currency)}
+                            </p>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+                  ) : null}
                   {tabs(["Todos", "Cotizaciones", "Contratos"])}
                   <div className="agreements-grid">
                     {(filter === "Todos" || filter === "Cotizaciones") &&
@@ -1358,14 +1380,7 @@ export default function Portal({
                       <div className="calendar-grid">
                         {Array.from(
                           {
-                            length:
-                              (new Date(
-                                calendarYear,
-                                calendarMonth - 1,
-                                1,
-                              ).getDay() +
-                                6) %
-                              7,
+                            length: (new Date(calendarYear, calendarMonth - 1, 1).getDay() + 6) % 7,
                           },
                           (_, i) => (
                             <span key={`blank-${i}`} className="calendar-blank" />
@@ -1373,11 +1388,7 @@ export default function Portal({
                         )}
                         {Array.from(
                           {
-                            length: new Date(
-                              calendarYear,
-                              calendarMonth,
-                              0,
-                            ).getDate(),
+                            length: new Date(calendarYear, calendarMonth, 0).getDate(),
                           },
                           (_, i) => i + 1,
                         ).map((d) => (
@@ -2105,7 +2116,9 @@ export default function Portal({
                     </div>
                     <div>
                       <dt>Pago real</dt>
-                      <dd>{i.status === "Pagada" ? "Pago registrado" : "Pendiente de confirmación"}</dd>
+                      <dd>
+                        {i.status === "Pagada" ? "Pago registrado" : "Pendiente de confirmación"}
+                      </dd>
                     </div>
                   </dl>
                   <div className="info-note">

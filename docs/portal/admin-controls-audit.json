@@ -1,0 +1,10 @@
+{
+  "note": "Candidates require source inspection; delegated handlers and nested controls can be legitimate.",
+  "findings": [
+    {
+      "file": "src/full-control/components/monitoring/charts.tsx",
+      "line": 42,
+      "opening": "<button key={period.at} type=\"button\" role=\"listitem\" onMouseEnter={() => setHover(index)} onFocus={() => setHover(index)} onBlur={() => setHover(null)} aria-label={`${granularity === \"hour\" ? formatD"
+    }
+  ]
+}

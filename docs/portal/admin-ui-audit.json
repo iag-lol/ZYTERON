@@ -1,0 +1,1361 @@
+{
+  "phase": "before_deploy",
+  "pages": [
+    {
+      "path": "/administracion/audits/scheduled",
+      "label": "Auditorías programadas",
+      "review": "LOADING_RECHECK_REQUIRED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/audits/in-progress",
+      "label": "En ejecución",
+      "review": "LOADING_RECHECK_REQUIRED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/audits/completed",
+      "label": "Auditorías realizadas",
+      "review": "LOADING_RECHECK_REQUIRED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/audits/findings",
+      "label": "Hallazgos",
+      "review": "LOADING_RECHECK_REQUIRED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/audits/remediations",
+      "label": "Remediaciones",
+      "review": "LOADING_RECHECK_REQUIRED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/audits/evidence",
+      "label": "Evidencias",
+      "review": "LOADING_RECHECK_REQUIRED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/audits/templates",
+      "label": "Plantillas",
+      "review": "LOADING_RECHECK_REQUIRED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/audits/reports",
+      "label": "Informes",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "",
+        " Nuevo plan"
+      ]
+    },
+    {
+      "path": "/administracion/audits/settings",
+      "label": "Configuración",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "",
+        " Nuevo plan"
+      ]
+    },
+    {
+      "path": "/administracion/support",
+      "label": "Support Command Center",
+      "review": "LOADING_RECHECK_REQUIRED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/support/inbox",
+      "label": "Bandeja de entrada",
+      "review": "LOADING_RECHECK_REQUIRED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/support/mine",
+      "label": "Mis tickets",
+      "review": "LOADING_RECHECK_REQUIRED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/support/all",
+      "label": "Todos los tickets",
+      "review": "LOADING_RECHECK_REQUIRED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/support/clients",
+      "label": "Clientes",
+      "review": "LOADING_RECHECK_REQUIRED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/support/internal",
+      "label": "Solicitudes internas",
+      "review": "LOADING_RECHECK_REQUIRED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/support/incidents",
+      "label": "Incidencias",
+      "review": "LOADING_RECHECK_REQUIRED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/support/problems",
+      "label": "Problemas",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo ticket",
+        "Orden: prioridad SLA"
+      ]
+    },
+    {
+      "path": "/administracion/support/changes",
+      "label": "Cambios",
+      "review": "LOADING_RECHECK_REQUIRED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/support/sla",
+      "label": "SLA",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo ticket"
+      ]
+    },
+    {
+      "path": "/administracion/support/queues",
+      "label": "Colas",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo ticket"
+      ]
+    },
+    {
+      "path": "/administracion/support/knowledge",
+      "label": "Base de conocimiento",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo ticket"
+      ]
+    },
+    {
+      "path": "/administracion/support/macros",
+      "label": "Respuestas rápidas",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo ticket"
+      ]
+    },
+    {
+      "path": "/administracion/support/satisfaction",
+      "label": "Satisfacción",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo ticket"
+      ]
+    },
+    {
+      "path": "/administracion/support/reports",
+      "label": "Informes",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo ticket"
+      ]
+    },
+    {
+      "path": "/administracion/support/settings",
+      "label": "Configuración",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo ticket"
+      ]
+    },
+    {
+      "path": "/administracion/documents",
+      "label": "Document Command Center",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/all",
+      "label": "Todos los documentos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/mine",
+      "label": "Mis documentos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/shared",
+      "label": "Compartidos conmigo",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/clients",
+      "label": "Clientes",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/projects",
+      "label": "Proyectos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/contracts",
+      "label": "Contratos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/quotes",
+      "label": "Cotizaciones",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/work-orders",
+      "label": "Órdenes de trabajo",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/finance",
+      "label": "Finanzas",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/audits",
+      "label": "Auditorías",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/support",
+      "label": "Soporte",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/templates",
+      "label": "Plantillas",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/reviews",
+      "label": "Pendientes de revisión",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/signatures",
+      "label": "Pendientes de firma",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/archived",
+      "label": "Archivados",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/trash",
+      "label": "Papelera controlada",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/documents/settings",
+      "label": "Configuración",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        " Actualizar",
+        " Nuevo documento"
+      ]
+    },
+    {
+      "path": "/administracion/hr",
+      "label": "People Command Center",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/employees",
+      "label": "Personal",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/org-chart",
+      "label": "Organigrama",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/departments",
+      "label": "Departamentos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/teams",
+      "label": "Equipos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/positions",
+      "label": "Cargos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/contracts",
+      "label": "Contratos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/annexes",
+      "label": "Anexos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/files",
+      "label": "Expedientes",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/onboarding",
+      "label": "Onboarding",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/offboarding",
+      "label": "Offboarding",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/vacations",
+      "label": "Vacaciones",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/permissions",
+      "label": "Permisos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/medical-leave",
+      "label": "Licencias",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/absences",
+      "label": "Ausencias",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/schedules",
+      "label": "Jornadas y turnos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/attendance",
+      "label": "Asistencia",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/payroll",
+      "label": "Remuneraciones",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/lre",
+      "label": "LRE / DT",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/assets",
+      "label": "Activos asignados",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/performance",
+      "label": "Evaluaciones",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/goals",
+      "label": "Objetivos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/training",
+      "label": "Capacitación",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/requests",
+      "label": "Solicitudes",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/expirations",
+      "label": "Vencimientos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/reports",
+      "label": "Informes",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/hr/settings",
+      "label": "Configuración RR.HH.",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/finance",
+      "label": "Financial Command Center",
+      "review": "PAGE_RENDERED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/finance/invoices",
+      "label": "Facturación",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Registro",
+        "Recurrentes",
+        "Pendiente de facturar",
+        "Nueva factura"
+      ]
+    },
+    {
+      "path": "/administracion/finance/tax-documents",
+      "label": "Documentos tributarios",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Emitidos",
+        "Recibidos",
+        "Conciliación RCV"
+      ]
+    },
+    {
+      "path": "/administracion/finance/receivables",
+      "label": "Cuentas por cobrar",
+      "review": "PAGE_RENDERED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/finance/collections",
+      "label": "Cobranza",
+      "review": "PAGE_RENDERED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/finance/payments",
+      "label": "Pagos recibidos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Registrar pago"
+      ]
+    },
+    {
+      "path": "/administracion/finance/quote-payments",
+      "label": "Pagos de cotizaciones",
+      "review": "PAGE_RENDERED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/finance/payables",
+      "label": "Cuentas por pagar",
+      "review": "PAGE_RENDERED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/finance/vendors",
+      "label": "Proveedores",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Proveedor"
+      ]
+    },
+    {
+      "path": "/administracion/finance/expenses",
+      "label": "Gastos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Registrar gasto"
+      ]
+    },
+    {
+      "path": "/administracion/finance/banks",
+      "label": "Bancos y cajas",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Vista previa"
+      ]
+    },
+    {
+      "path": "/administracion/finance/reconciliation",
+      "label": "Conciliación",
+      "review": "PAGE_RENDERED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/finance/accounting",
+      "label": "Contabilidad",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Hechos económicos",
+        "Reglas contables",
+        "Períodos",
+        "Reprocesar pendientes"
+      ]
+    },
+    {
+      "path": "/administracion/finance/journal",
+      "label": "Libro Diario",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Nuevo asiento"
+      ]
+    },
+    {
+      "path": "/administracion/finance/general-ledger",
+      "label": "Libro Mayor",
+      "review": "PAGE_RENDERED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/finance/chart-of-accounts",
+      "label": "Plan de cuentas",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Cuenta"
+      ]
+    },
+    {
+      "path": "/administracion/finance/cost-centers",
+      "label": "Centros de costo",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Centro"
+      ]
+    },
+    {
+      "path": "/administracion/finance/budgets",
+      "label": "Presupuestos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Presupuesto"
+      ]
+    },
+    {
+      "path": "/administracion/finance/taxes",
+      "label": "IVA / Impuestos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Preparar",
+        "Obligación"
+      ]
+    },
+    {
+      "path": "/administracion/finance/commissions",
+      "label": "Comisiones",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Política"
+      ]
+    },
+    {
+      "path": "/administracion/finance/closing",
+      "label": "Cierres contables",
+      "review": "PAGE_RENDERED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/finance/reports",
+      "label": "Informes financieros",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Estado de Resultados",
+        "Balance General",
+        "Balance de Comprobación",
+        "Libro Diario",
+        "Libro Mayor",
+        "Flujo de Caja",
+        "Aging cuentas por cobrar",
+        "Aging cuentas por pagar",
+        "Ventas",
+        "Compras",
+        "IVA",
+        "Rentabilidad por cliente",
+        "Rentabilidad por proyecto",
+        "Presupuesto vs Real",
+        "CSV",
+        "XLSX",
+        "PDF"
+      ]
+    },
+    {
+      "path": "/administracion/finance/settings",
+      "label": "Configuración contable",
+      "review": "PAGE_RENDERED",
+      "controls": []
+    },
+    {
+      "path": "/administracion/security",
+      "label": "Security Command Center",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/users",
+      "label": "Usuarios",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/identities",
+      "label": "Identidades",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/mfa",
+      "label": "MFA",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Enrolar TOTP"
+      ]
+    },
+    {
+      "path": "/administracion/security/roles",
+      "label": "Roles",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/permissions",
+      "label": "Permisos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/sessions",
+      "label": "Sesiones",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Revocar",
+        "Revocar",
+        "Revocar",
+        "Revocar",
+        "Revocar",
+        "Revocar",
+        "Revocar",
+        "Revocar",
+        "Revocar",
+        "Revocar",
+        "Revocar",
+        "Revocar",
+        "Revocar",
+        "Revocar",
+        "Revocar",
+        "Revocar"
+      ]
+    },
+    {
+      "path": "/administracion/security/devices",
+      "label": "Dispositivos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/access-requests",
+      "label": "Accesos temporales",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Nuevo registro"
+      ]
+    },
+    {
+      "path": "/administracion/security/vault",
+      "label": "Vault",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/secrets",
+      "label": "Secretos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/events",
+      "label": "Eventos de seguridad",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/incidents",
+      "label": "Incidentes",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Nuevo registro"
+      ]
+    },
+    {
+      "path": "/administracion/security/vulnerabilities",
+      "label": "Vulnerabilidades",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Nuevo registro"
+      ]
+    },
+    {
+      "path": "/administracion/security/rls",
+      "label": "RLS & Data Access",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/privacy",
+      "label": "Privacy Center",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/data-inventory",
+      "label": "Data Inventory",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Nuevo registro"
+      ]
+    },
+    {
+      "path": "/administracion/security/retention",
+      "label": "Retención",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/subject-rights",
+      "label": "Derechos de titulares",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Nuevo registro"
+      ]
+    },
+    {
+      "path": "/administracion/security/dpia",
+      "label": "Evaluaciones de impacto",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/dlp",
+      "label": "DLP",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/vendors",
+      "label": "Proveedores",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/backups",
+      "label": "Backups",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/disaster-recovery",
+      "label": "Disaster Recovery",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/testing",
+      "label": "Security Testing",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/cicd",
+      "label": "CI/CD Security",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/compliance",
+      "label": "Compliance",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/gate",
+      "label": "Security Gate",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Evaluar release"
+      ]
+    },
+    {
+      "path": "/administracion/security/reports",
+      "label": "Informes",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/security/configuration",
+      "label": "Configuración",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/reports/commercial",
+      "label": "Comercial",
+      "review": "PLACEHOLDER_REPLACED",
+      "controls": [
+        "Nuevo registro",
+        "Filtros"
+      ]
+    },
+    {
+      "path": "/administracion/reports/clients",
+      "label": "Clientes",
+      "review": "PLACEHOLDER_REPLACED",
+      "controls": [
+        "Nuevo registro",
+        "Filtros"
+      ]
+    },
+    {
+      "path": "/administracion/reports/projects",
+      "label": "Proyectos",
+      "review": "PLACEHOLDER_REPLACED",
+      "controls": [
+        "Nuevo registro",
+        "Filtros"
+      ]
+    },
+    {
+      "path": "/administracion/reports/development",
+      "label": "Desarrollo",
+      "review": "PLACEHOLDER_REPLACED",
+      "controls": [
+        "Nuevo registro",
+        "Filtros"
+      ]
+    },
+    {
+      "path": "/administracion/reports/uptime",
+      "label": "Uptime",
+      "review": "PLACEHOLDER_REPLACED",
+      "controls": [
+        "Nuevo registro",
+        "Filtros"
+      ]
+    },
+    {
+      "path": "/administracion/reports/audits",
+      "label": "Auditorías",
+      "review": "PLACEHOLDER_REPLACED",
+      "controls": [
+        "Nuevo registro",
+        "Filtros"
+      ]
+    },
+    {
+      "path": "/administracion/reports/hr",
+      "label": "RR.HH.",
+      "review": "PLACEHOLDER_REPLACED",
+      "controls": [
+        "Nuevo registro",
+        "Filtros"
+      ]
+    },
+    {
+      "path": "/administracion/reports/finance",
+      "label": "Finanzas",
+      "review": "PLACEHOLDER_REPLACED",
+      "controls": [
+        "Nuevo registro",
+        "Filtros"
+      ]
+    },
+    {
+      "path": "/administracion/reports/security",
+      "label": "Seguridad",
+      "review": "PLACEHOLDER_REPLACED",
+      "controls": [
+        "Nuevo registro",
+        "Filtros"
+      ]
+    },
+    {
+      "path": "/administracion/settings",
+      "label": "Control Center",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/company",
+      "label": "Empresa",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Agregar o actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/organization",
+      "label": "Organización",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/departments",
+      "label": "Departamentos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/teams",
+      "label": "Equipos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/roles",
+      "label": "Roles",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/permissions",
+      "label": "Permisos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/numbering",
+      "label": "Numeraciones",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/calendars",
+      "label": "Calendarios",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/automations",
+      "label": "Automatizaciones",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Crear"
+      ]
+    },
+    {
+      "path": "/administracion/settings/alerts",
+      "label": "Alertas",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Crear"
+      ]
+    },
+    {
+      "path": "/administracion/settings/notifications",
+      "label": "Notificaciones",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Agregar o actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/workflows",
+      "label": "Workflows",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/approvals",
+      "label": "Aprobaciones",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/templates",
+      "label": "Plantillas",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/integrations",
+      "label": "Integraciones",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Configurar",
+        "Probar conexión",
+        "Configurar",
+        "Probar conexión",
+        "Configurar",
+        "Probar conexión",
+        "Configurar",
+        "Probar conexión",
+        "Configurar",
+        "Probar conexión",
+        "Configurar",
+        "Probar conexión",
+        "Configurar",
+        "Probar conexión",
+        "Configurar",
+        "Probar conexión"
+      ]
+    },
+    {
+      "path": "/administracion/settings/webhooks",
+      "label": "Webhooks",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Crear"
+      ]
+    },
+    {
+      "path": "/administracion/settings/features",
+      "label": "Feature Flags",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Crear"
+      ]
+    },
+    {
+      "path": "/administracion/settings/modules",
+      "label": "Módulos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/ai",
+      "label": "IA",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Agregar o actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/security",
+      "label": "Seguridad",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/privacy",
+      "label": "Privacidad",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Agregar o actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/retention",
+      "label": "Retención",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Agregar o actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/client-portal",
+      "label": "Portal Cliente",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Agregar o actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/system",
+      "label": "Sistema",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Agregar o actualizar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/jobs",
+      "label": "Jobs",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Habilitar",
+        "Habilitar",
+        "Habilitar",
+        "Habilitar",
+        "Habilitar",
+        "Habilitar",
+        "Habilitar",
+        "Habilitar",
+        "Habilitar",
+        "Habilitar"
+      ]
+    },
+    {
+      "path": "/administracion/settings/diagnostics",
+      "label": "Diagnósticos",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar",
+        "Ejecutar diagnóstico"
+      ]
+    },
+    {
+      "path": "/administracion/settings/history",
+      "label": "Historial",
+      "review": "PAGE_RENDERED",
+      "controls": [
+        "Actualizar"
+      ]
+    }
+  ]
+}

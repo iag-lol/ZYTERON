@@ -9,6 +9,7 @@ type PublishedDocument = {
   filename: string;
   storage_path: string;
   created_at: Date;
+  category?: string | null;
 };
 export async function scopedPublications(db: Prisma.TransactionClient) {
   // The isolated native QA database intentionally contains no enterprise modules.
@@ -23,7 +24,15 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
       );
     } catch {}
     if (isolated)
-      return { projects: [], documents: [], tickets: [], messages: [], monitors: [], payments: [] };
+      return {
+        projects: [],
+        documents: [],
+        tickets: [],
+        messages: [],
+        monitors: [],
+        payments: [],
+        contracts: [],
+      };
     throw new Error("PORTAL_PUBLICATION_SCHEMA_UNAVAILABLE");
   }
   const [projects, documents, tickets, messages, monitors, payments] = await Promise.all([
@@ -41,7 +50,7 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
     >`SELECT id,name,description,scope,status,progress,planned_start_date,target_date FROM projects ORDER BY created_at DESC LIMIT 100`,
     db.$queryRaw<
       PublishedDocument[]
-    >`SELECT d.id,d.title,d.description,v.filename,v.storage_path,d.created_at FROM documents d JOIN document_versions v ON v.id=d.current_version_id ORDER BY d.created_at DESC LIMIT 100`,
+    >`SELECT d.id,d.title,d.description,v.filename,v.storage_path,d.created_at,t.code AS category FROM documents d JOIN document_versions v ON v.id=d.current_version_id LEFT JOIN document_types t ON t.id=d.type_id ORDER BY d.created_at DESC LIMIT 100`,
     db.$queryRaw<
       Array<{ id: string; subject: string; description: string; status: string; updated_at: Date }>
     >`SELECT id,subject,description,status,updated_at FROM support_tickets ORDER BY updated_at DESC LIMIT 100`,
@@ -64,12 +73,41 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
       Array<{ id: string; gross_amount: number; received_at: Date; currency: string }>
     >`SELECT id,gross_amount,received_at,currency FROM payments WHERE status='CONFIRMED' AND confirmed_at IS NOT NULL AND provider IN ('BANK_TRANSFER','CASH','OTHER') AND currency='CLP' ORDER BY received_at DESC LIMIT 200`,
   ]);
+  const contracts = await db.$queryRaw<
+    Array<{
+      id: string;
+      contract_number: string;
+      name: string;
+      status: string;
+      signature_status: string;
+      effective_status: string;
+      start_date: Date | null;
+      end_date: Date | null;
+      total: number;
+      currency: string;
+      billing_frequency: string | null;
+    }>
+  >`SELECT id,contract_number,name,status,signature_status,effective_status,start_date,end_date,total,currency,billing_frequency FROM public.client_contracts ORDER BY contract_number DESC LIMIT 100`;
   return {
+    contracts: contracts.map((c) => ({
+      id: c.id,
+      number: c.contract_number,
+      title: c.name,
+      status: c.status,
+      signature: c.signature_status,
+      effective: c.effective_status,
+      start: c.start_date?.toISOString() || null,
+      end: c.end_date?.toISOString() || null,
+      total: Number(c.total),
+      currency: c.currency.trim(),
+      frequency: c.billing_frequency,
+    })),
     projects: projects.map((p) => ({
       id: p.id,
       title: p.name,
       status: projectStatus(p.status),
-      progress: Number.isFinite(Number(p.progress)) ? Number(p.progress) : null,
+      progress:
+        p.progress !== null && Number.isFinite(Number(p.progress)) ? Number(p.progress) : null,
       category: "Proyecto",
       description: p.description || "",
       scope: p.scope || "",
@@ -80,7 +118,8 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
       id: d.id,
       title: d.title,
       description: d.description || "",
-      category: "Documento",
+      category:
+        d.category === "REPORT" ? "INFORME" : d.category === "CONTRACT" ? "CONTRATO" : "Documento",
       fileName: d.filename,
       date: d.created_at.toISOString(),
     })),

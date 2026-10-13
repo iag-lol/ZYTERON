@@ -1,3 +1,4 @@
+import { isSafePortalLink } from "@/lib/portal/safe-link";
 import { portalModulePermissions } from "@/lib/portal/module-permissions";
 import { scopedPublications } from "@/lib/portal/canonical-publications";
 import "server-only";
@@ -87,6 +88,15 @@ export async function connectedPortalSnapshot(userId: string) {
     const permissions = await portalModulePermissions(db);
     if (!permissions.enabled) throw new Error("PORTAL_DISABLED");
     const publications = await scopedPublications(db);
+    const managedSchema = await db.$queryRaw<
+      Array<{ available: boolean }>
+    >`SELECT to_regclass('public.zyteron_native_project_link') IS NOT NULL AS available`;
+    const managedNativeProjects = managedSchema[0]?.available
+      ? await db.$queryRaw<
+          Array<{ native_id: string }>
+        >`SELECT native_id FROM public.zyteron_native_project_link`
+      : [];
+
     return {
       services,
       events,
@@ -97,6 +107,7 @@ export async function connectedPortalSnapshot(userId: string) {
       webThreads,
       webMessages,
       publications,
+      managedNativeProjects,
       permissions,
     };
   });
@@ -117,6 +128,7 @@ export async function connectedPortalSnapshot(userId: string) {
       total: q.total,
       createdAt: q.createdAt.toISOString(),
       payable:
+        extra.permissions.invoices &&
         quotePaymentVisibleInPortal(q.status, p) &&
         p?.enabled !== false &&
         q.total > 0 &&
@@ -202,17 +214,19 @@ export async function connectedPortalSnapshot(userId: string) {
       ? []
       : [
           ...extra.publications.projects,
-          ...base.projects.map((p) => ({
-            id: p.id,
-            title: p.title,
-            status: projectStatus(p.status),
-            progress: null,
-            category: p.serviceArea,
-            description: p.description || "",
-            scope: p.scope || "",
-            start: p.startDate?.toISOString() || null,
-            end: p.endDate?.toISOString() || null,
-          })),
+          ...base.projects
+            .filter((p) => !extra.managedNativeProjects.some((m) => m.native_id === p.id))
+            .map((p) => ({
+              id: p.id,
+              title: p.title,
+              status: projectStatus(p.status),
+              progress: null,
+              category: p.serviceArea,
+              description: p.description || "",
+              scope: p.scope || "",
+              start: p.startDate?.toISOString() || null,
+              end: p.endDate?.toISOString() || null,
+            })),
         ],
     documents: !extra.permissions.documents
       ? []
@@ -266,7 +280,7 @@ export async function connectedPortalSnapshot(userId: string) {
       title: n.title,
       text: n.body || "",
       read: n.isRead,
-      link: n.link,
+      link: n.link && isSafePortalLink(n.link) ? n.link : null,
       date: n.createdAt.toISOString(),
     })),
     credentials: base.credentials.map((c) => ({
@@ -312,6 +326,7 @@ export async function connectedPortalSnapshot(userId: string) {
       })),
     ],
     quotes,
+    contracts: extra.permissions.documents ? extra.publications.contracts : [],
     webThreads: extra.webThreads,
     webMessages: extra.webMessages.map((m) => ({ ...m, created_at: m.created_at.toISOString() })),
     asOf: new Date().toISOString(),

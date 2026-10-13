@@ -1,0 +1,2 @@
+const sections = new Set(["asistencia","notificaciones","servicios","proyectos","documentos","contratos","cuenta","pagos","agenda","monitoreo","informes","empresa","perfil","credenciales","comunicacion"]);
+export function isSafePortalLink(link:string){if(!link)return true;if(link==="/clientes/panel")return true;const match=/^\/clientes\/panel\/([a-z-]+)$/.exec(link);return Boolean(match&&sections.has(match[1]));}

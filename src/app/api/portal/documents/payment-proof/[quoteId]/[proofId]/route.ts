@@ -1,3 +1,4 @@
+import { portalModuleEnabled } from "@/lib/portal/module-access";
 import { cookies } from "next/headers";
 import { getPortalSession } from "@/lib/auth/portal-session";
 import { ADMIN_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin-session";
@@ -16,7 +17,7 @@ export async function GET(
     const session = await getPortalSession(),
       admin = await verifyAdminSessionToken((await cookies()).get(ADMIN_COOKIE)?.value),
       q = await prisma.quote.findUnique({ where: { id: quoteId } });
-    const verified = session?.user.accountStatus === "ACTIVE" && session.user.emailVerifiedAt;
+    const verified = !admin && session?.user.accountStatus === "ACTIVE" && session.user.emailVerifiedAt && await portalModuleEnabled(session.user.id,"invoices");
     if (
       !q ||
       (!admin &&

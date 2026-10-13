@@ -13,9 +13,14 @@ export async function clientDatabase<T>(
     async (db) => {
       const user = await db.user.findUnique({
         where: { id: userId },
-        select: { accountStatus: true, emailVerifiedAt: true },
+        select: { accountStatus: true, emailVerifiedAt: true, role: true },
       });
-      if (!user || user.accountStatus !== "ACTIVE" || !user.emailVerifiedAt)
+      if (
+        !user ||
+        user.role !== "CLIENT" ||
+        user.accountStatus !== "ACTIVE" ||
+        !user.emailVerifiedAt
+      )
         throw new Error("PORTAL_ACCESS_DENIED");
       await db.$queryRaw`SELECT set_config('zyteron.portal_user_id',${userId},true)`;
       await db.$executeRaw`SET LOCAL ROLE zyteron_portal_client`;

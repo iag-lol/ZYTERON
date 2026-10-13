@@ -83,5 +83,5 @@ export class ClientsService {
     await this.events.publish(id, settings.enabled ? "CLIENT_PORTAL_ENABLED" : "CLIENT_PORTAL_UPDATED", settings.enabled ? "Portal Cliente habilitado" : "Configuración de portal actualizada");
     return settings;
   }
-  auditExport(domain:string){const allowed=["contacts","contracts","services","renewals"];if(!allowed.includes(domain))throw new NotFoundException("Dominio de exportación no válido.");return this.repository.addAudit("EXPORT",domain.toUpperCase(),null,null,{domain});}
+  auditExport(domain:string){const allowed=["contacts","contracts","services","renewals","/activity","/notifications","/reports",... ["commercial","clients","projects","development","uptime","audits","hr","finance","security"].map(group=>"/reports/"+group)];if(!allowed.includes(domain))throw new NotFoundException("Dominio de exportación no válido.");return this.repository.addAudit("EXPORT",domain.toUpperCase(),null,null,{domain});}
 }

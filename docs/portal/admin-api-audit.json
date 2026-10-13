@@ -1,0 +1,657 @@
+{
+  "at": "2026-10-13T06:02:01.770Z",
+  "origin": "https://www.zyteron.cl",
+  "mode": "READ_ONLY",
+  "results": [
+    {
+      "path": "/executive/dashboard",
+      "status": 200,
+      "ms": 1996,
+      "ok": true,
+      "shape": [
+        "generatedAt",
+        "status",
+        "sources",
+        "metrics",
+        "attention"
+      ]
+    },
+    {
+      "path": "/commercial/summary",
+      "status": 200,
+      "ms": 1037,
+      "ok": true,
+      "shape": [
+        "newLeads",
+        "uncontactedLeads",
+        "overdueFollowUps",
+        "todayFollowUps",
+        "openOpportunities",
+        "staleOpportunities",
+        "pendingQuotes",
+        "expiringQuotes",
+        "approvalQuotes",
+        "monthSales",
+        "activePipeline",
+        "weightedPipeline",
+        "wonClients",
+        "lostOpportunities"
+      ]
+    },
+    {
+      "path": "/commercial/activity",
+      "status": 200,
+      "ms": 344,
+      "ok": true,
+      "shape": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14"
+      ]
+    },
+    {
+      "path": "/leads?pageSize=100",
+      "status": 200,
+      "ms": 765,
+      "ok": true,
+      "shape": [
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages"
+      ]
+    },
+    {
+      "path": "/opportunities?pageSize=100",
+      "status": 200,
+      "ms": 315,
+      "ok": true,
+      "shape": [
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages"
+      ]
+    },
+    {
+      "path": "/pipeline",
+      "status": 404,
+      "ms": 262,
+      "ok": false,
+      "message": "Cannot GET /api/pipeline",
+      "shape": [
+        "message",
+        "error",
+        "statusCode"
+      ]
+    },
+    {
+      "path": "/follow-ups?pageSize=100",
+      "status": 200,
+      "ms": 305,
+      "ok": true,
+      "shape": [
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages"
+      ]
+    },
+    {
+      "path": "/quotes?pageSize=100",
+      "status": 200,
+      "ms": 1258,
+      "ok": true,
+      "shape": [
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages"
+      ]
+    },
+    {
+      "path": "/sales?pageSize=100",
+      "status": 200,
+      "ms": 934,
+      "ok": true,
+      "shape": [
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages"
+      ]
+    },
+    {
+      "path": "/commercial/goals",
+      "status": 404,
+      "ms": 244,
+      "ok": false,
+      "message": "Cannot GET /api/commercial/goals",
+      "shape": [
+        "message",
+        "error",
+        "statusCode"
+      ]
+    },
+    {
+      "path": "/commercial/commissions",
+      "status": 404,
+      "ms": 220,
+      "ok": false,
+      "message": "Cannot GET /api/commercial/commissions",
+      "shape": [
+        "message",
+        "error",
+        "statusCode"
+      ]
+    },
+    {
+      "path": "/handoffs?pageSize=100",
+      "status": 404,
+      "ms": 213,
+      "ok": false,
+      "message": "Cannot GET /api/handoffs?pageSize=100",
+      "shape": [
+        "message",
+        "error",
+        "statusCode"
+      ]
+    },
+    {
+      "path": "/clients?pageSize=100",
+      "status": 200,
+      "ms": 918,
+      "ok": true,
+      "shape": [
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages",
+        "summary"
+      ]
+    },
+    {
+      "path": "/client-contacts?pageSize=100",
+      "status": 404,
+      "ms": 266,
+      "ok": false,
+      "message": "Cannot GET /api/client-contacts?pageSize=100",
+      "shape": [
+        "message",
+        "error",
+        "statusCode"
+      ]
+    },
+    {
+      "path": "/client-contracts?pageSize=100",
+      "status": 404,
+      "ms": 218,
+      "ok": false,
+      "message": "Cannot GET /api/client-contracts?pageSize=100",
+      "shape": [
+        "message",
+        "error",
+        "statusCode"
+      ]
+    },
+    {
+      "path": "/client-services?pageSize=100",
+      "status": 200,
+      "ms": 492,
+      "ok": true,
+      "shape": [
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages",
+        "summary"
+      ]
+    },
+    {
+      "path": "/renewals?pageSize=100",
+      "status": 200,
+      "ms": 597,
+      "ok": true,
+      "shape": [
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages",
+        "summary"
+      ]
+    },
+    {
+      "path": "/operations/summary",
+      "status": 200,
+      "ms": 727,
+      "ok": true,
+      "shape": [
+        "blockedTasks",
+        "minutesToday",
+        "overdueTasks",
+        "newWorkOrders",
+        "activeProjects",
+        "atRiskProjects",
+        "overdueProjects",
+        "pendingPlanning",
+        "overdueMilestones",
+        "pendingDeployments",
+        "unassignedProjects",
+        "upcomingMilestones",
+        "pendingDeliverables"
+      ]
+    },
+    {
+      "path": "/operations/priorities",
+      "status": 200,
+      "ms": 499,
+      "ok": true,
+      "shape": []
+    },
+    {
+      "path": "/operations/activity",
+      "status": 200,
+      "ms": 644,
+      "ok": true,
+      "shape": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ]
+    },
+    {
+      "path": "/work-orders?pageSize=100",
+      "status": 200,
+      "ms": 329,
+      "ok": true,
+      "shape": [
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages"
+      ]
+    },
+    {
+      "path": "/projects?pageSize=100",
+      "status": 200,
+      "ms": 974,
+      "ok": true,
+      "shape": [
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages"
+      ]
+    },
+    {
+      "path": "/tasks?pageSize=100",
+      "status": 200,
+      "ms": 411,
+      "ok": true,
+      "shape": [
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages"
+      ]
+    },
+    {
+      "path": "/milestones",
+      "status": 200,
+      "ms": 293,
+      "ok": true,
+      "shape": [
+        "0"
+      ]
+    },
+    {
+      "path": "/worklogs?pageSize=100",
+      "status": 200,
+      "ms": 323,
+      "ok": true,
+      "shape": [
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages"
+      ]
+    },
+    {
+      "path": "/deliverables?pageSize=100",
+      "status": 200,
+      "ms": 315,
+      "ok": true,
+      "shape": [
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages"
+      ]
+    },
+    {
+      "path": "/deployments?pageSize=100",
+      "status": 200,
+      "ms": 401,
+      "ok": true,
+      "shape": [
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages"
+      ]
+    },
+    {
+      "path": "/development/summary",
+      "status": 200,
+      "ms": 710,
+      "ok": true,
+      "shape": [
+        "unassignedProjects",
+        "activeProjects",
+        "availableDevelopers",
+        "overloadedDevelopers",
+        "blockedTasks",
+        "pendingPullRequests",
+        "pendingQa",
+        "criticalBugs",
+        "failedDeployments",
+        "upcomingReleases",
+        "productionPending",
+        "technicalIncidents"
+      ]
+    },
+    {
+      "path": "/development/repositories",
+      "status": 200,
+      "ms": 344,
+      "ok": true,
+      "shape": []
+    },
+    {
+      "path": "/development/pull-requests",
+      "status": 200,
+      "ms": 302,
+      "ok": true,
+      "shape": []
+    },
+    {
+      "path": "/development/environments",
+      "status": 200,
+      "ms": 352,
+      "ok": true,
+      "shape": []
+    },
+    {
+      "path": "/qa/runs",
+      "status": 200,
+      "ms": 476,
+      "ok": true,
+      "shape": []
+    },
+    {
+      "path": "/bugs",
+      "status": 200,
+      "ms": 349,
+      "ok": true,
+      "shape": []
+    },
+    {
+      "path": "/releases",
+      "status": 200,
+      "ms": 432,
+      "ok": true,
+      "shape": []
+    },
+    {
+      "path": "/technical-debt",
+      "status": 200,
+      "ms": 411,
+      "ok": true,
+      "shape": []
+    },
+    {
+      "path": "/monitoring/summary",
+      "status": 404,
+      "ms": 213,
+      "ok": false,
+      "message": "Cannot GET /api/monitoring/summary",
+      "shape": [
+        "message",
+        "error",
+        "statusCode"
+      ]
+    },
+    {
+      "path": "/monitoring/endpoints",
+      "status": 404,
+      "ms": 215,
+      "ok": false,
+      "message": "Cannot GET /api/monitoring/endpoints",
+      "shape": [
+        "message",
+        "error",
+        "statusCode"
+      ]
+    },
+    {
+      "path": "/monitoring/incidents",
+      "status": 200,
+      "ms": 318,
+      "ok": true,
+      "shape": [
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "totalPages"
+      ]
+    },
+    {
+      "path": "/audits/workspace",
+      "status": 200,
+      "ms": 469,
+      "ok": true,
+      "shape": [
+        "summary",
+        "attention",
+        "audits",
+        "plans",
+        "findings",
+        "remediations",
+        "evidence",
+        "templates",
+        "reports",
+        "activity"
+      ]
+    },
+    {
+      "path": "/support/workspace",
+      "status": 200,
+      "ms": 1000,
+      "ok": true,
+      "shape": [
+        "summary",
+        "attention",
+        "tickets",
+        "queues",
+        "categories",
+        "workloads",
+        "slaPolicies",
+        "macros",
+        "knowledge",
+        "satisfaction",
+        "generatedAt"
+      ]
+    },
+    {
+      "path": "/documents/workspace",
+      "status": 200,
+      "ms": 1039,
+      "ok": true,
+      "shape": [
+        "summary",
+        "attention",
+        "documents",
+        "types",
+        "reviews",
+        "signatures",
+        "templates",
+        "activity",
+        "providers",
+        "generatedAt"
+      ]
+    },
+    {
+      "path": "/hr/workspace",
+      "status": 200,
+      "ms": 448,
+      "ok": true,
+      "shape": [
+        "summary",
+        "attention",
+        "employees",
+        "relationships",
+        "departments",
+        "teams",
+        "positions",
+        "contracts",
+        "annexes",
+        "onboarding",
+        "offboarding",
+        "leave",
+        "medical",
+        "payroll",
+        "lre",
+        "assets",
+        "goals",
+        "training",
+        "activity",
+        "providers",
+        "providerReadiness",
+        "generatedAt"
+      ]
+    },
+    {
+      "path": "/finance/dashboard",
+      "status": 200,
+      "ms": 3608,
+      "ok": true,
+      "shape": [
+        "period",
+        "kpis",
+        "health",
+        "cash",
+        "aging",
+        "apAging",
+        "dueSoon",
+        "payablesDue",
+        "pendingToInvoice",
+        "revenueTrend",
+        "actions",
+        "dteReadiness",
+        "generatedAt"
+      ]
+    },
+    {
+      "path": "/security/workspace",
+      "status": 200,
+      "ms": 1140,
+      "ok": true,
+      "shape": [
+        "summary",
+        "posture",
+        "identities",
+        "sessions",
+        "devices",
+        "accessRequests",
+        "accessGrants",
+        "accessReviews",
+        "vaultItems",
+        "vaultAccesses",
+        "events",
+        "incidents",
+        "incidentEvents",
+        "vulnerabilities",
+        "controls",
+        "scans",
+        "dataAssets",
+        "processingActivities",
+        "subjectRequests",
+        "dpias",
+        "privacyBreaches",
+        "retentionPolicies",
+        "dataExports",
+        "vendors",
+        "backupTargets",
+        "recoveryTests",
+        "disasterRecoveryPlans",
+        "threatModels",
+        "gates",
+        "settings",
+        "roles",
+        "permissions",
+        "providers",
+        "generatedAt"
+      ]
+    },
+    {
+      "path": "/settings/workspace",
+      "status": 200,
+      "ms": 879,
+      "ok": true,
+      "shape": [
+        "summary",
+        "configuration",
+        "history",
+        "automations",
+        "automationRuns",
+        "alerts",
+        "integrations",
+        "webhooks",
+        "webhookDeliveries",
+        "features",
+        "workflows",
+        "approvals",
+        "jobs",
+        "diagnostics",
+        "numbering",
+        "calendars",
+        "dependencies",
+        "canonical",
+        "generatedAt"
+      ]
+    }
+  ]
+}

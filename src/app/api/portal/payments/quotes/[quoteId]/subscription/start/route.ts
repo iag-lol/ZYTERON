@@ -1,3 +1,4 @@
+import { portalModuleEnabled } from "@/lib/portal/module-access";
 import { prisma } from "@/lib/prisma";
 import { consumeFinancialCode } from "@/lib/payments/financial-challenge";
 import { limitedJson } from "@/lib/payments/request-body";
@@ -30,6 +31,7 @@ export async function POST(req: Request, { params }: Context) {
   }
 
   try {
+    if (!(await portalModuleEnabled(session.user.id,"invoices"))) return NextResponse.json({error:"Los pagos no están habilitados para esta cuenta."},{status:403});
     const body = await limitedJson(req).catch(() => null);
     const parsedBody = payloadSchema.safeParse(body);
     if (!parsedBody.success) {

@@ -1,26 +1,116 @@
 "use client";
 
 import Link from "@control/components/routed-link";
-import { useEffect, useState } from "react";
-import type { ChangeRequest, Client, OperationsEvent, OperationsPriorityItem, OperationsProject, OperationsSummary, OperationsTask, ProjectDeliverable, ProjectDeployment, ProjectEndpoint, ProjectMember, ProjectMilestone, ProjectRisk, UserDirectoryItem, WorkLog, WorkOrder } from "@zyteron/contracts";
-import { Activity, AlertTriangle, ArrowRight, Boxes, CalendarDays, Check, ChevronRight, Clock3, CloudUpload, FileCheck2, Flag, FolderKanban, GripVertical, Plus, RefreshCw, Rocket, Route, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import type {
+  ChangeRequest,
+  Client,
+  OperationsEvent,
+  OperationsPriorityItem,
+  OperationsProject,
+  OperationsSummary,
+  OperationsTask,
+  ProjectDeliverable,
+  ProjectDeployment,
+  ProjectEndpoint,
+  ProjectMember,
+  ProjectMilestone,
+  ProjectRisk,
+  UserDirectoryItem,
+  WorkLog,
+  WorkOrder,
+} from "@zyteron/contracts";
+import {
+  Activity,
+  AlertTriangle,
+  ArrowRight,
+  Boxes,
+  CalendarDays,
+  Check,
+  ChevronRight,
+  Clock3,
+  CloudUpload,
+  FileCheck2,
+  Flag,
+  FolderKanban,
+  GripVertical,
+  Plus,
+  RefreshCw,
+  Rocket,
+  Route,
+  X,
+} from "lucide-react";
 import { useAccess } from "@control/components/access-context";
 import { clientsApi } from "@control/lib/clients-api";
 import { usersDirectoryApi } from "@control/lib/client-domain-api";
 import { formatDate, formatDateTime } from "@control/lib/date-time";
 import { operationsApi } from "@control/lib/operations-api";
-import { operationsCreateInitialValue, type OperationsCreateKind } from "@control/lib/operations-form";
+import {
+  operationsCreateInitialValue,
+  type OperationsCreateKind,
+} from "@control/lib/operations-form";
 import { subscribeToOperations } from "@control/lib/operations-realtime";
-import { ProjectProgress } from "./project-progress";
+import { nextTaskStates, ProjectProgress } from "./project-progress";
+import { ProjectPublication } from "./project-publication";
 
-export type OperationsSection = "command" | "work-orders" | "projects" | "tasks" | "milestones" | "worklogs" | "deliverables" | "deployments" | "project";
-const emptySummary: OperationsSummary = { newWorkOrders: 0, pendingPlanning: 0, activeProjects: 0, atRiskProjects: 0, overdueProjects: 0, overdueTasks: 0, blockedTasks: 0, upcomingMilestones: 0, overdueMilestones: 0, pendingDeliverables: 0, pendingDeployments: 0, minutesToday: 0, unassignedProjects: 0 };
-const taskColumns: OperationsTask["status"][] = ["BACKLOG", "TODO", "IN_PROGRESS", "BLOCKED", "REVIEW", "QA", "DONE"];
-const otColumns: WorkOrder["status"][] = ["DRAFT", "READY_FOR_HANDOFF", "PENDING_PLANNING", "PLANNING", "PENDING_ASSIGNMENT", "ASSIGNED", "IN_PROGRESS", "IN_REVIEW", "WAITING_CLIENT", "COMPLETED"];
+export type OperationsSection =
+  | "command"
+  | "work-orders"
+  | "projects"
+  | "tasks"
+  | "milestones"
+  | "worklogs"
+  | "deliverables"
+  | "deployments"
+  | "project";
+const emptySummary: OperationsSummary = {
+  newWorkOrders: 0,
+  pendingPlanning: 0,
+  activeProjects: 0,
+  atRiskProjects: 0,
+  overdueProjects: 0,
+  overdueTasks: 0,
+  blockedTasks: 0,
+  upcomingMilestones: 0,
+  overdueMilestones: 0,
+  pendingDeliverables: 0,
+  pendingDeployments: 0,
+  minutesToday: 0,
+  unassignedProjects: 0,
+};
+const taskColumns: OperationsTask["status"][] = [
+  "BACKLOG",
+  "TODO",
+  "IN_PROGRESS",
+  "BLOCKED",
+  "REVIEW",
+  "QA",
+  "DONE",
+];
+const otColumns: WorkOrder["status"][] = [
+  "DRAFT",
+  "READY_FOR_HANDOFF",
+  "PENDING_PLANNING",
+  "PLANNING",
+  "PENDING_ASSIGNMENT",
+  "ASSIGNED",
+  "IN_PROGRESS",
+  "IN_REVIEW",
+  "WAITING_CLIENT",
+  "COMPLETED",
+];
 const label = (value: string) => value.replaceAll("_", " ");
 const hours = (minutes: number) => `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
 
-export function OperationsWorkspace({ section = "command", detailId, initialClientId = null }: { section?: OperationsSection; detailId?: string; initialClientId?: string|null }) {
+export function OperationsWorkspace({
+  section = "command",
+  detailId,
+  initialClientId = null,
+}: {
+  section?: OperationsSection;
+  detailId?: string;
+  initialClientId?: string | null;
+}) {
   const { role } = useAccess();
   const [summary, setSummary] = useState(emptySummary);
   const [priorities, setPriorities] = useState<OperationsPriorityItem[]>([]);
@@ -34,92 +124,1529 @@ export function OperationsWorkspace({ section = "command", detailId, initialClie
   const [events, setEvents] = useState<OperationsEvent[]>([]);
   const [users, setUsers] = useState<UserDirectoryItem[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
-  const [modal, setModal] = useState<"work-order" | "task" | "milestone" | "worklog" | "deliverable" | "deployment" | null>(null);
+  const [modal, setModal] = useState<
+    "work-order" | "task" | "milestone" | "worklog" | "deliverable" | "deployment" | null
+  >(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const refresh = async () => {
-    setLoading(true); setError("");
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setError("");
     try {
       const projectContext = section === "project" ? detailId : undefined;
       const projectQuery = projectContext ? `&projectId=${encodeURIComponent(projectContext)}` : "";
       const clientQuery = initialClientId ? `&clientId=${encodeURIComponent(initialClientId)}` : "";
       const [s, p, w, pr, t, m, wl, d, dp, ev, directory, clientPage] = await Promise.all([
-        operationsApi.summary(role), operationsApi.priorities(role), operationsApi.workOrders(role, clientQuery), projectContext ? operationsApi.project(role, projectContext).then((project) => ({ items: [project] })) : operationsApi.projects(role, clientQuery), operationsApi.tasks(role, projectQuery), operationsApi.milestones(role, projectContext), operationsApi.worklogs(role, projectQuery), operationsApi.deliverables(role, projectQuery), operationsApi.deployments(role, projectQuery), operationsApi.activity(role, projectContext), usersDirectoryApi.list(role).catch(() => []), clientsApi.list(role, new URLSearchParams({pageSize:"100"})).catch(() => ({items:[]} as {items:Client[]})),
+        operationsApi.summary(role),
+        operationsApi.priorities(role),
+        operationsApi.workOrders(role, clientQuery),
+        projectContext
+          ? operationsApi.project(role, projectContext).then((project) => ({ items: [project] }))
+          : operationsApi.projects(role, clientQuery),
+        operationsApi.tasks(role, projectQuery),
+        operationsApi.milestones(role, projectContext),
+        operationsApi.worklogs(role, projectQuery),
+        operationsApi.deliverables(role, projectQuery),
+        operationsApi.deployments(role, projectQuery),
+        operationsApi.activity(role, projectContext),
+        usersDirectoryApi.list(role).catch(() => []),
+        clientsApi
+          .list(role, new URLSearchParams({ pageSize: "100" }))
+          .catch(() => ({ items: [] }) as { items: Client[] }),
       ]);
-      setSummary(s); setPriorities(p); setWorkOrders(w.items); setProjects(pr.items); setTasks(t.items); setMilestones(m); setWorklogs(wl.items); setDeliverables(d.items); setDeployments(dp.items); setEvents(ev); setUsers(directory); setClients(clientPage.items);
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "No fue posible cargar Operaciones."); }
-    finally { setLoading(false); }
-  };
-  useEffect(() => { void refresh(); return subscribeToOperations(() => void refresh()); }, [role, initialClientId, detailId, section]);
+      setSummary(s);
+      setPriorities(p);
+      setWorkOrders(w.items);
+      setProjects(pr.items);
+      setTasks(t.items);
+      setMilestones(m);
+      setWorklogs(wl.items);
+      setDeliverables(d.items);
+      setDeployments(dp.items);
+      setEvents(ev);
+      setUsers(directory);
+      setClients(clientPage.items);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No fue posible cargar Operaciones.");
+    } finally {
+      setLoading(false);
+    }
+  }, [role, initialClientId, detailId, section]);
+  useEffect(() => {
+    void refresh();
+    return subscribeToOperations(() => void refresh());
+  }, [refresh]);
   const selected = detailId ? projects.find((item) => item.id === detailId) : undefined;
-  const title = section === "command" ? "Delivery Operations Center" : section === "project" ? selected?.name || "Proyecto 360°" : ({ "work-orders": "Órdenes de trabajo", projects: "Proyectos", tasks: "Tablero de tareas", milestones: "Hitos", worklogs: "Registro de trabajo", deliverables: "Entregables", deployments: "Deployments" } as const)[section];
-  const create = section === "work-orders" ? "work-order" : section === "tasks" ? "task" : section === "milestones" ? "milestone" : section === "worklogs" ? "worklog" : section === "deliverables" ? "deliverable" : section === "deployments" ? "deployment" : null;
-  const done = async (message: string, action: () => Promise<unknown>) => { try { setError(""); await action(); setNotice(message); await refresh(); } catch (cause) { setError(cause instanceof Error ? cause.message : "La acción no pudo completarse."); } };
+  const title =
+    section === "command"
+      ? "Delivery Operations Center"
+      : section === "project"
+        ? selected?.name || "Proyecto 360°"
+        : (
+            {
+              "work-orders": "Órdenes de trabajo",
+              projects: "Proyectos",
+              tasks: "Tablero de tareas",
+              milestones: "Hitos",
+              worklogs: "Registro de trabajo",
+              deliverables: "Entregables",
+              deployments: "Deployments",
+            } as const
+          )[section];
+  const create =
+    section === "work-orders"
+      ? "work-order"
+      : section === "tasks"
+        ? "task"
+        : section === "milestones"
+          ? "milestone"
+          : section === "worklogs"
+            ? "worklog"
+            : section === "deliverables"
+              ? "deliverable"
+              : section === "deployments"
+                ? "deployment"
+                : null;
+  const done = async (message: string, action: () => Promise<unknown>) => {
+    try {
+      setError("");
+      await action();
+      setNotice(message);
+      await refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "La acción no pudo completarse.");
+    }
+  };
 
-  return <main className="opsWorkspace">
-    <header className="opsHeader"><div><span>Operaciones · Delivery</span><h1>{title}</h1><p>{section === "command" ? "Carga, plazos, bloqueos y entregas desde señales operacionales reales." : "Un flujo trazable desde la orden comercial hasta la entrega en producción."}</p></div><div><button onClick={() => void refresh()} aria-label="Actualizar"><RefreshCw size={15}/></button>{create ? <button className="opsPrimary" onClick={() => setModal(create)}><Plus size={15}/>Nuevo</button> : null}</div></header>
-    <nav className="opsTabs" aria-label="Navegación de operaciones">{[["command", "Centro", "/operations"], ["work-orders", "OT", "/work-orders"], ["projects", "Proyectos", "/projects"], ["tasks", "Tareas", "/tasks"], ["milestones", "Hitos", "/milestones"], ["worklogs", "Worklogs", "/worklogs"], ["deliverables", "Entregables", "/deliverables"], ["deployments", "Deployments", "/deployments"]].map(([id, text, href]) => <Link className={section === id ? "active" : ""} href={href!} key={id}>{text}</Link>)}</nav>
-    {error ? <div className="opsAlert error"><AlertTriangle size={16}/>{error}</div> : null}{notice ? <div className="opsAlert success"><Check size={16}/>{notice}<button onClick={() => setNotice("")}>×</button></div> : null}
-    {loading ? <div className="opsLoading">Sincronizando operación…</div> : <>
-      {section === "command" ? <Command summary={summary} priorities={priorities} projects={projects} events={events}/> : null}
-      {section === "work-orders" ? <WorkOrderBoard items={workOrders} users={users} act={(id, action, body) => done("Orden de trabajo actualizada.", () => operationsApi.workOrderAction(role, id, action, body))}/> : null}
-      {section === "projects" ? <Projects items={projects}/> : null}
-      {section === "tasks" ? <TaskBoard items={tasks} move={(id, status, reason) => done("Tarea movida.", () => operationsApi.taskStatus(role, id, status, reason))}/> : null}
-      {section === "milestones" ? <Milestones items={milestones} projects={projects} complete={(id) => done("Hito completado y avance recalculado.", () => operationsApi.completeMilestone(role, id))}/> : null}
-      {section === "worklogs" ? <Worklogs items={worklogs}/> : null}
-      {section === "deliverables" ? <Deliverables items={deliverables} act={(id, action, body) => done("Entregable actualizado.", () => operationsApi.deliverableAction(role, id, action, body))}/> : null}
-      {section === "deployments" ? <Deployments items={deployments}/> : null}
-      {section === "project" ? <Project360 project={selected} tasks={tasks} milestones={milestones} worklogs={worklogs} deliverables={deliverables} deployments={deployments} users={users} create={setModal} complete={(id) => done("Hito completado y avance recalculado.", () => operationsApi.completeMilestone(role, id))} moveTask={(id, status, reason) => done("Tarea actualizada y avance recalculado.", () => operationsApi.taskStatus(role, id, status, reason))} moveProject={(status) => done("Etapa del proyecto actualizada.", () => operationsApi.projectAction(role, selected!.id, "status", { status }))}/> : null}
-    </>}
-    {modal ? <CreateModal kind={modal} projects={projects} tasks={tasks} users={users} clients={clients} initialClientId={initialClientId} initialProjectId={section === "project" ? detailId : undefined} close={() => setModal(null)} save={async (value) => {
-      const action = modal === "work-order" ? operationsApi.createWorkOrder(role, value as Partial<WorkOrder>) : modal === "task" ? operationsApi.createTask(role, value as Partial<OperationsTask>) : modal === "milestone" ? operationsApi.createMilestone(role, String(value.projectId), value) : modal === "worklog" ? operationsApi.createWorklog(role, value as Partial<WorkLog>) : modal === "deliverable" ? operationsApi.createDeliverable(role, value as Partial<ProjectDeliverable>) : operationsApi.createDeployment(role, value as Partial<ProjectDeployment>);
-      setError(""); await action; setNotice("Registro creado correctamente."); setModal(null); await refresh();
-    }}/> : null}
-  </main>;
+  return (
+    <main className="opsWorkspace">
+      <header className="opsHeader">
+        <div>
+          <span>Operaciones · Delivery</span>
+          <h1>{title}</h1>
+          <p>
+            {section === "command"
+              ? "Carga, plazos, bloqueos y entregas desde señales operacionales reales."
+              : "Un flujo trazable desde la orden comercial hasta la entrega en producción."}
+          </p>
+        </div>
+        <div>
+          <button onClick={() => void refresh()} aria-label="Actualizar">
+            <RefreshCw size={15} />
+          </button>
+          {create ? (
+            <button className="opsPrimary" onClick={() => setModal(create)}>
+              <Plus size={15} />
+              Nuevo
+            </button>
+          ) : null}
+        </div>
+      </header>
+      <nav className="opsTabs" aria-label="Navegación de operaciones">
+        {[
+          ["command", "Centro", "/operations"],
+          ["work-orders", "OT", "/work-orders"],
+          ["projects", "Proyectos", "/projects"],
+          ["tasks", "Tareas", "/tasks"],
+          ["milestones", "Hitos", "/milestones"],
+          ["worklogs", "Worklogs", "/worklogs"],
+          ["deliverables", "Entregables", "/deliverables"],
+          ["deployments", "Deployments", "/deployments"],
+        ].map(([id, text, href]) => (
+          <Link className={section === id ? "active" : ""} href={href!} key={id}>
+            {text}
+          </Link>
+        ))}
+      </nav>
+      {error ? (
+        <div className="opsAlert error">
+          <AlertTriangle size={16} />
+          {error}
+        </div>
+      ) : null}
+      {notice ? (
+        <div className="opsAlert success">
+          <Check size={16} />
+          {notice}
+          <button onClick={() => setNotice("")}>×</button>
+        </div>
+      ) : null}
+      {loading ? (
+        <div className="opsLoading">Sincronizando operación…</div>
+      ) : (
+        <>
+          {section === "command" ? (
+            <Command
+              summary={summary}
+              priorities={priorities}
+              projects={projects}
+              events={events}
+            />
+          ) : null}
+          {section === "work-orders" ? (
+            <WorkOrderBoard
+              items={workOrders}
+              users={users}
+              act={(id, action, body) =>
+                done("Orden de trabajo actualizada.", () =>
+                  operationsApi.workOrderAction(role, id, action, body),
+                )
+              }
+            />
+          ) : null}
+          {section === "projects" ? <Projects items={projects} /> : null}
+          {section === "tasks" ? (
+            <TaskBoard
+              items={tasks}
+              move={(id, status, reason) =>
+                done("Tarea movida.", () => operationsApi.taskStatus(role, id, status, reason))
+              }
+            />
+          ) : null}
+          {section === "milestones" ? (
+            <Milestones
+              items={milestones}
+              projects={projects}
+              complete={(id) =>
+                done("Hito completado y avance recalculado.", () =>
+                  operationsApi.completeMilestone(role, id),
+                )
+              }
+            />
+          ) : null}
+          {section === "worklogs" ? <Worklogs items={worklogs} /> : null}
+          {section === "deliverables" ? (
+            <Deliverables
+              items={deliverables}
+              act={(id, action, body) =>
+                done("Entregable actualizado.", () =>
+                  operationsApi.deliverableAction(role, id, action, body),
+                )
+              }
+            />
+          ) : null}
+          {section === "deployments" ? <Deployments items={deployments} /> : null}
+          {section === "project" && selected ? (
+            <ProjectPublication
+              id={selected.id}
+              clientId={selected.clientId}
+              visibility={selected.clientVisibility}
+              updated={refresh}
+            />
+          ) : null}
+          {section === "project" ? (
+            <Project360
+              project={selected}
+              tasks={tasks}
+              milestones={milestones}
+              worklogs={worklogs}
+              deliverables={deliverables}
+              deployments={deployments}
+              users={users}
+              create={setModal}
+              complete={(id) =>
+                done("Hito completado y avance recalculado.", () =>
+                  operationsApi.completeMilestone(role, id),
+                )
+              }
+              moveTask={(id, status, reason) =>
+                done("Tarea actualizada y avance recalculado.", () =>
+                  operationsApi.taskStatus(role, id, status, reason),
+                )
+              }
+              moveProject={(status) =>
+                done("Etapa del proyecto actualizada.", () =>
+                  operationsApi.projectAction(role, selected!.id, "status", { status }),
+                )
+              }
+            />
+          ) : null}
+        </>
+      )}
+      {modal ? (
+        <CreateModal
+          kind={modal}
+          projects={projects}
+          tasks={tasks}
+          users={users}
+          clients={clients}
+          initialClientId={initialClientId}
+          initialProjectId={section === "project" ? detailId : undefined}
+          close={() => setModal(null)}
+          save={async (value) => {
+            const action =
+              modal === "work-order"
+                ? operationsApi.createWorkOrder(role, value as Partial<WorkOrder>)
+                : modal === "task"
+                  ? operationsApi.createTask(role, value as Partial<OperationsTask>)
+                  : modal === "milestone"
+                    ? operationsApi.createMilestone(role, String(value.projectId), value)
+                    : modal === "worklog"
+                      ? operationsApi.createWorklog(role, value as Partial<WorkLog>)
+                      : modal === "deliverable"
+                        ? operationsApi.createDeliverable(
+                            role,
+                            value as Partial<ProjectDeliverable>,
+                          )
+                        : operationsApi.createDeployment(role, value as Partial<ProjectDeployment>);
+            setError("");
+            await action;
+            setNotice("Registro creado correctamente.");
+            setModal(null);
+            await refresh();
+          }}
+        />
+      ) : null}
+    </main>
+  );
 }
 
-function Command({ summary: s, priorities, projects, events }: { summary: OperationsSummary; priorities: OperationsPriorityItem[]; projects: OperationsProject[]; events: OperationsEvent[] }) {
-  const metrics = [["OT nuevas", s.newWorkOrders, "/work-orders", Route], ["Pendientes de planificar", s.pendingPlanning, "/work-orders", CalendarDays], ["Proyectos activos", s.activeProjects, "/projects", FolderKanban], ["Proyectos en riesgo", s.atRiskProjects, "/projects", AlertTriangle], ["Tareas vencidas", s.overdueTasks, "/tasks", Clock3], ["Tareas bloqueadas", s.blockedTasks, "/tasks", Boxes], ["Hitos próximos", s.upcomingMilestones, "/milestones", Flag], ["Entregables pendientes", s.pendingDeliverables, "/deliverables", FileCheck2], ["Deployments pendientes", s.pendingDeployments, "/deployments", Rocket], ["Tiempo registrado hoy", hours(s.minutesToday), "/worklogs", Activity]] as const;
-  return <><section className="opsHero"><div><small>RADAR DE ENTREGA</small><h2>{s.blockedTasks ? `${s.blockedTasks} tareas bloquean el flujo` : s.pendingPlanning ? `${s.pendingPlanning} OT esperan planificación` : "La operación avanza sin bloqueos críticos"}</h2><p>{s.activeProjects} proyectos activos · {s.atRiskProjects} requieren atención · {s.unassignedProjects} sin líder</p></div><Link href="/tasks">Abrir tablero <ArrowRight size={16}/></Link></section>
-    <section className="opsMetricRail">{metrics.map(([text, value, href, Icon]) => <Link href={href} key={text}><Icon size={17}/><span>{text}</span><strong>{value}</strong></Link>)}</section>
-    <section className="opsCommandGrid"><article className="opsPriority"><header><span>Prioridad operacional</span><b>{priorities.length}</b></header>{priorities.length ? priorities.slice(0, 8).map((item) => <Link href={item.href} key={`${item.type}-${item.id}`}><i className={item.severity.toLowerCase()}/><div><strong>{item.title}</strong><small>{item.reason} · {formatDate(item.dueAt)}</small></div><ChevronRight size={15}/></Link>) : <Empty title="Sin prioridades críticas" text="No hay bloqueos, vencimientos ni entregas pendientes que requieran intervención."/>}</article>
-      <article className="opsLoad"><header><span>Portafolio activo</span><b>{projects.length}</b></header>{projects.slice(0, 7).map((project) => <Link href={`/projects/${project.id}`} key={project.id}><div><strong>{project.name}</strong><small>{project.projectNumber} · {label(project.status)}</small></div><span>{project.progress==null?"—":`${project.progress??0}%`}</span><div className="opsProgress"><i style={{ width: `${project.progress==null?"—":`${project.progress??0}%`}` }}/></div></Link>)}{!projects.length ? <Empty title="Sin proyectos" text="El primer proyecto nace al convertir una OT planificada."/> : null}</article>
-      <article className="opsTimeline"><header><span>Actividad trazable</span><b>{events.length}</b></header>{events.slice(0, 8).map((event) => <div key={event.id}><i/><span><strong>{label(event.eventType)}</strong><small>{event.aggregateType}</small></span><time>{formatDateTime(event.occurredAt)}</time></div>)}{!events.length ? <Empty title="Sin actividad" text="Las transiciones operacionales aparecerán automáticamente."/> : null}</article></section></>;
+function Command({
+  summary: s,
+  priorities,
+  projects,
+  events,
+}: {
+  summary: OperationsSummary;
+  priorities: OperationsPriorityItem[];
+  projects: OperationsProject[];
+  events: OperationsEvent[];
+}) {
+  const metrics = [
+    ["OT nuevas", s.newWorkOrders, "/work-orders", Route],
+    ["Pendientes de planificar", s.pendingPlanning, "/work-orders", CalendarDays],
+    ["Proyectos activos", s.activeProjects, "/projects", FolderKanban],
+    ["Proyectos en riesgo", s.atRiskProjects, "/projects", AlertTriangle],
+    ["Tareas vencidas", s.overdueTasks, "/tasks", Clock3],
+    ["Tareas bloqueadas", s.blockedTasks, "/tasks", Boxes],
+    ["Hitos próximos", s.upcomingMilestones, "/milestones", Flag],
+    ["Entregables pendientes", s.pendingDeliverables, "/deliverables", FileCheck2],
+    ["Deployments pendientes", s.pendingDeployments, "/deployments", Rocket],
+    ["Tiempo registrado hoy", hours(s.minutesToday), "/worklogs", Activity],
+  ] as const;
+  return (
+    <>
+      <section className="opsHero">
+        <div>
+          <small>RADAR DE ENTREGA</small>
+          <h2>
+            {s.blockedTasks
+              ? `${s.blockedTasks} tareas bloquean el flujo`
+              : s.pendingPlanning
+                ? `${s.pendingPlanning} OT esperan planificación`
+                : "La operación avanza sin bloqueos críticos"}
+          </h2>
+          <p>
+            {s.activeProjects} proyectos activos · {s.atRiskProjects} requieren atención ·{" "}
+            {s.unassignedProjects} sin líder
+          </p>
+        </div>
+        <Link href="/tasks">
+          Abrir tablero <ArrowRight size={16} />
+        </Link>
+      </section>
+      <section className="opsMetricRail">
+        {metrics.map(([text, value, href, Icon]) => (
+          <Link href={href} key={text}>
+            <Icon size={17} />
+            <span>{text}</span>
+            <strong>{value}</strong>
+          </Link>
+        ))}
+      </section>
+      <section className="opsCommandGrid">
+        <article className="opsPriority">
+          <header>
+            <span>Prioridad operacional</span>
+            <b>{priorities.length}</b>
+          </header>
+          {priorities.length ? (
+            priorities.slice(0, 8).map((item) => (
+              <Link href={item.href} key={`${item.type}-${item.id}`}>
+                <i className={item.severity.toLowerCase()} />
+                <div>
+                  <strong>{item.title}</strong>
+                  <small>
+                    {item.reason} · {formatDate(item.dueAt)}
+                  </small>
+                </div>
+                <ChevronRight size={15} />
+              </Link>
+            ))
+          ) : (
+            <Empty
+              title="Sin prioridades críticas"
+              text="No hay bloqueos, vencimientos ni entregas pendientes que requieran intervención."
+            />
+          )}
+        </article>
+        <article className="opsLoad">
+          <header>
+            <span>Portafolio activo</span>
+            <b>{projects.length}</b>
+          </header>
+          {projects.slice(0, 7).map((project) => (
+            <Link href={`/projects/${project.id}`} key={project.id}>
+              <div>
+                <strong>{project.name}</strong>
+                <small>
+                  {project.projectNumber} · {label(project.status)}
+                </small>
+              </div>
+              <span>{project.progress == null ? "—" : `${project.progress ?? 0}%`}</span>
+              <div className="opsProgress">
+                <i
+                  style={{
+                    width: project.progress == null ? "0%" : `${project.progress}%`,
+                  }}
+                />
+              </div>
+            </Link>
+          ))}
+          {!projects.length ? (
+            <Empty
+              title="Sin proyectos"
+              text="El primer proyecto nace al convertir una OT planificada."
+            />
+          ) : null}
+        </article>
+        <article className="opsTimeline">
+          <header>
+            <span>Actividad trazable</span>
+            <b>{events.length}</b>
+          </header>
+          {events.slice(0, 8).map((event) => (
+            <div key={event.id}>
+              <i />
+              <span>
+                <strong>{label(event.eventType)}</strong>
+                <small>{event.aggregateType}</small>
+              </span>
+              <time>{formatDateTime(event.occurredAt)}</time>
+            </div>
+          ))}
+          {!events.length ? (
+            <Empty
+              title="Sin actividad"
+              text="Las transiciones operacionales aparecerán automáticamente."
+            />
+          ) : null}
+        </article>
+      </section>
+    </>
+  );
 }
 
-function WorkOrderBoard({ items, users, act }: { items: WorkOrder[]; users: UserDirectoryItem[]; act: (id: string, action: string, body?: unknown) => void }) {
-  return <section className="opsLanes">{otColumns.map((status) => { const list = items.filter((item) => item.status === status); return <article key={status}><header><span>{label(status)}</span><b>{list.length}</b></header>{list.map((item) => <div className="opsTicket" key={item.id}><small>{item.workOrderNumber} · {item.priority}</small><h3>{item.title}</h3><p>{item.clientName || "Cliente no vinculado"}</p><dl><div><dt>Objetivo</dt><dd>{formatDate(item.targetDate)}</dd></div><div><dt>Horas</dt><dd>{item.estimatedHours ?? "—"}</dd></div></dl>{["PLANNING", "PENDING_ASSIGNMENT"].includes(status) ? <select aria-label={`Asignar ${item.title}`} value={item.assignedTo || ""} onChange={(event) => { if (event.target.value) act(item.id, "assign", { userId: event.target.value }); }}><option value="">Seleccionar responsable</option>{users.filter((user) => user.role && ["GERENTE_GENERAL", "JEFE_DESARROLLO", "PROGRAMADOR", "DESARROLLO", "OPERACIONES"].includes(user.role)).map((user) => <option value={user.id} key={user.id}>{user.name} · {user.role}</option>)}</select> : null}<footer>{status === "DRAFT" ? <button onClick={() => act(item.id, "status", { status: "READY_FOR_HANDOFF" })}>Enviar a handoff</button> : null}{status === "READY_FOR_HANDOFF" ? <button onClick={() => act(item.id, "accept-handoff")}>Aceptar</button> : null}{["PENDING_PLANNING", "PLANNING"].includes(status) ? <button onClick={() => { const targetDate = window.prompt("Fecha objetivo (AAAA-MM-DD)", item.targetDate || ""); const estimatedHours = window.prompt("Horas estimadas", String(item.estimatedHours || 8)); if (targetDate && estimatedHours) act(item.id, "plan", { plannedStartDate: new Date().toISOString().slice(0, 10), targetDate, estimatedHours: Number(estimatedHours) }); }}>Planificar</button> : null}{["ASSIGNED", "IN_PROGRESS", "PENDING_ASSIGNMENT", "PLANNING"].includes(status) && !item.projectId ? <button onClick={() => act(item.id, "convert-to-project", {})}>Crear proyecto</button> : null}{item.projectId ? <Link href={`/projects/${item.projectId}`}>Proyecto</Link> : null}</footer></div>)}{!list.length ? <Empty title="Carril vacío" text="Sin órdenes en este estado."/> : null}</article>; })}</section>;
+function WorkOrderBoard({
+  items,
+  users,
+  act,
+}: {
+  items: WorkOrder[];
+  users: UserDirectoryItem[];
+  act: (id: string, action: string, body?: unknown) => void;
+}) {
+  return (
+    <section className="opsLanes">
+      {otColumns.map((status) => {
+        const list = items.filter((item) => item.status === status);
+        return (
+          <article key={status}>
+            <header>
+              <span>{label(status)}</span>
+              <b>{list.length}</b>
+            </header>
+            {list.map((item) => (
+              <div className="opsTicket" key={item.id}>
+                <small>
+                  {item.workOrderNumber} · {item.priority}
+                </small>
+                <h3>{item.title}</h3>
+                <p>{item.clientName || "Cliente no vinculado"}</p>
+                <dl>
+                  <div>
+                    <dt>Objetivo</dt>
+                    <dd>{formatDate(item.targetDate)}</dd>
+                  </div>
+                  <div>
+                    <dt>Horas</dt>
+                    <dd>{item.estimatedHours ?? "—"}</dd>
+                  </div>
+                </dl>
+                {["PLANNING", "PENDING_ASSIGNMENT"].includes(status) ? (
+                  <select
+                    aria-label={`Asignar ${item.title}`}
+                    value={item.assignedTo || ""}
+                    onChange={(event) => {
+                      if (event.target.value)
+                        act(item.id, "assign", { userId: event.target.value });
+                    }}
+                  >
+                    <option value="">Seleccionar responsable</option>
+                    {users
+                      .filter(
+                        (user) =>
+                          user.role &&
+                          [
+                            "GERENTE_GENERAL",
+                            "JEFE_DESARROLLO",
+                            "PROGRAMADOR",
+                            "DESARROLLO",
+                            "OPERACIONES",
+                          ].includes(user.role),
+                      )
+                      .map((user) => (
+                        <option value={user.id} key={user.id}>
+                          {user.name} · {user.role}
+                        </option>
+                      ))}
+                  </select>
+                ) : null}
+                <footer>
+                  {status === "DRAFT" ? (
+                    <button onClick={() => act(item.id, "status", { status: "READY_FOR_HANDOFF" })}>
+                      Enviar a handoff
+                    </button>
+                  ) : null}
+                  {status === "READY_FOR_HANDOFF" ? (
+                    <button onClick={() => act(item.id, "accept-handoff")}>Aceptar</button>
+                  ) : null}
+                  {["PENDING_PLANNING", "PLANNING"].includes(status) ? (
+                    <button
+                      onClick={() => {
+                        const targetDate = window.prompt(
+                          "Fecha objetivo (AAAA-MM-DD)",
+                          item.targetDate || "",
+                        );
+                        const estimatedHours = window.prompt(
+                          "Horas estimadas",
+                          String(item.estimatedHours || 8),
+                        );
+                        if (targetDate && estimatedHours)
+                          act(item.id, "plan", {
+                            plannedStartDate: new Date().toISOString().slice(0, 10),
+                            targetDate,
+                            estimatedHours: Number(estimatedHours),
+                          });
+                      }}
+                    >
+                      Planificar
+                    </button>
+                  ) : null}
+                  {["ASSIGNED", "IN_PROGRESS", "PENDING_ASSIGNMENT", "PLANNING"].includes(status) &&
+                  !item.projectId ? (
+                    <button onClick={() => act(item.id, "convert-to-project", {})}>
+                      Crear proyecto
+                    </button>
+                  ) : null}
+                  {item.projectId ? (
+                    <Link href={`/projects/${item.projectId}`}>Proyecto</Link>
+                  ) : null}
+                </footer>
+              </div>
+            ))}
+            {!list.length ? (
+              <Empty title="Carril vacío" text="Sin órdenes en este estado." />
+            ) : null}
+          </article>
+        );
+      })}
+    </section>
+  );
 }
 
-function Projects({ items }: { items: OperationsProject[] }) { return items.length ? <section className="opsProjectGrid">{items.map((project) => <Link href={`/projects/${project.id}`} key={project.id}><header><small>{project.projectNumber}</small><span className={`health ${project.health.toLowerCase()}`}>{label(project.health)}</span></header><h2>{project.name}</h2><p>{project.clientName || "Cliente no informado"}</p><div className="projectDial" style={{ "--progress": `${project.progress * 3.6}deg` } as React.CSSProperties}><strong>{project.progress==null?"—":`${project.progress??0}%`}</strong></div><div className="opsProgress"><i style={{ width: `${project.progress==null?"—":`${project.progress??0}%`}` }}/></div><footer><span>{label(project.status)}</span><span>{formatDate(project.targetDate)}</span></footer><small>{project.healthReason}</small></Link>)}</section> : <Empty title="No hay proyectos todavía" text="Convierte una orden de trabajo planificada para iniciar Project 360°."/>; }
-
-function TaskBoard({ items, move }: { items: OperationsTask[]; move: (id: string, status: OperationsTask["status"], reason?: string) => void }) { return <section className="taskBoard">{taskColumns.map((status) => <article key={status} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { const id = event.dataTransfer.getData("task"); if (!id) return; const reason = status === "BLOCKED" ? window.prompt("Motivo del bloqueo") || undefined : undefined; if (status === "BLOCKED" && !reason) return; move(id, status, reason); }}><header><span>{label(status)}</span><b>{items.filter((item) => item.status === status).length}</b></header>{items.filter((item) => item.status === status).map((task) => <div draggable onDragStart={(event) => event.dataTransfer.setData("task", task.id)} className={`taskCard ${task.overdue ? "overdue" : ""}`} key={task.id}><GripVertical size={13}/><small>{task.projectName || "Proyecto"} · {task.priority}</small><h3>{task.title}</h3><p>{task.estimatedMinutes ?? "—"} min estimados · {task.actualMinutes} min reales</p><select aria-label={`Mover ${task.title}`} value={task.status} onChange={(event) => { const next = event.target.value as OperationsTask["status"]; const reason = next === "BLOCKED" ? window.prompt("Motivo del bloqueo") || undefined : undefined; if (next !== "BLOCKED" || reason) move(task.id, next, reason); }}>{taskColumns.map((value) => <option value={value} key={value}>{label(value)}</option>)}</select></div>)}</article>)}</section>; }
-
-function Milestones({ items, projects, complete }: { items: ProjectMilestone[]; projects: OperationsProject[]; complete: (id: string) => void }) { return <section className="milestoneRail">{projects.map((project) => { const list = items.filter((item) => item.projectId === project.id); return <article key={project.id}><header><div><small>{project.projectNumber}</small><h2>{project.name}</h2></div><strong>{project.progress==null?"—":`${project.progress??0}%`}</strong></header><div className="milestoneTrack">{list.map((item) => <div className={item.status === "COMPLETED" ? "done" : item.dueDate && item.dueDate < new Date().toISOString().slice(0, 10) ? "late" : ""} key={item.id}><i/><span><b>{item.name}</b><small>{item.weight}% · {formatDate(item.dueDate)}</small></span>{item.status !== "COMPLETED" ? <button onClick={() => complete(item.id)}><Check size={13}/>Completar</button> : <Check size={16}/>}</div>)}{!list.length ? <Empty title="Sin hitos" text="Define hitos ponderados para medir el avance real."/> : null}</div></article>; })}{!projects.length ? <Empty title="Sin proyectos activos" text="Los hitos se organizan dentro de un proyecto."/> : null}</section>; }
-
-function Worklogs({ items }: { items: WorkLog[] }) { return items.length ? <section className="worklogLedger"><header><span>Fecha</span><span>Proyecto / actividad</span><span>Tipo</span><span>Duración</span><span>Visibilidad</span></header>{items.map((item) => <div key={item.id}><time>{formatDate(item.workDate)}</time><span><strong>{item.projectName || "Proyecto"}</strong><small>{item.description}</small></span><b>{label(item.workType)}</b><strong>{hours(item.durationMinutes)}</strong><small>{label(item.clientVisibility)}</small></div>)}</section> : <Empty title="Sin tiempo registrado" text="Registra trabajo real para comparar consumo con la estimación del proyecto."/>; }
-
-function Deliverables({ items, act }: { items: ProjectDeliverable[]; act: (id: string, action: string, body?: unknown) => void }) { return items.length ? <section className="deliveryShelf">{items.map((item) => <article key={item.id}><div className="deliveryIcon"><FileCheck2 size={20}/><span>v{item.version}</span></div><small>{item.projectName || "Proyecto"} · {item.type}</small><h3>{item.name}</h3><p>{item.description || "Sin descripción"}</p><div><span>{label(item.status)}</span><time>{formatDate(item.dueDate)}</time></div><footer>{["PLANNED", "IN_PROGRESS", "CHANGES_REQUESTED"].includes(item.status) ? <button onClick={() => act(item.id, "submit")}>Enviar a revisión</button> : null}{["READY_FOR_REVIEW", "INTERNAL_REVIEW"].includes(item.status) ? <><button onClick={() => act(item.id, "approve")}>Aprobar</button><button onClick={() => { const reason = window.prompt("Cambios solicitados"); if (reason) act(item.id, "request-changes", { reason }); }}>Pedir cambios</button></> : null}</footer></article>)}</section> : <Empty title="Sin entregables" text="Crea una entrega versionada y sométela al flujo de revisión."/>; }
-
-function Deployments({ items }: { items: ProjectDeployment[] }) { return <><div className="manualBanner"><CloudUpload size={17}/><span>Registro operacional manual. No ejecuta despliegues ni simula una integración CI/CD.</span></div>{items.length ? <section className="deploymentStream">{items.map((item) => <article key={item.id}><i className={item.status.toLowerCase()}/><div><small>{item.environment} · {item.recordType === "MANUAL_RECORD" ? "REGISTRO MANUAL" : "INTEGRACIÓN"}</small><h3>{item.projectName || "Proyecto"} · {item.version}</h3><p>{item.commitSha || "Sin referencia de commit"} · {item.notes || "Sin notas"}</p></div><span>{label(item.status)}</span><time>{formatDateTime(item.createdAt)}</time></article>)}</section> : <Empty title="Sin deployments registrados" text="Agrega el primer registro manual de una entrega a ambiente."/>}</>; }
-
-function Project360({ project, tasks, milestones, worklogs, deliverables, deployments, users, create, complete, moveTask, moveProject }: { project?: OperationsProject; tasks: OperationsTask[]; milestones: ProjectMilestone[]; worklogs: WorkLog[]; deliverables: ProjectDeliverable[]; deployments: ProjectDeployment[]; users: UserDirectoryItem[]; create: (kind: OperationsCreateKind) => void; complete: (id: string) => Promise<void>; moveTask: (id: string, status: OperationsTask["status"], reason?: string) => Promise<void>; moveProject: (status: OperationsProject["status"]) => Promise<void> }) { const { role } = useAccess(); const [members, setMembers] = useState<ProjectMember[]>([]), [endpoints, setEndpoints] = useState<ProjectEndpoint[]>([]), [risks, setRisks] = useState<ProjectRisk[]>([]), [changes, setChanges] = useState<ChangeRequest[]>([]); const refreshDetails = async () => { if (!project) return; const [m, e, r, c] = await Promise.all([operationsApi.members(role, project.id), operationsApi.endpoints(role, project.id), operationsApi.risks(role, project.id), operationsApi.changes(role, project.id)]); setMembers(m); setEndpoints(e); setRisks(r); setChanges(c); }; useEffect(() => { void refreshDetails().catch(() => undefined); }, [project?.id, role]); if (!project) return <Empty title="Proyecto no encontrado" text="Vuelve a la cartera y selecciona un proyecto disponible."/>; const projectTasks = tasks.filter((item) => item.projectId === project.id), projectMilestones = milestones.filter((item) => item.projectId === project.id); const run = (action: Promise<unknown>) => void action.then(refreshDetails).catch((cause: Error) => window.alert(cause.message)); return <><section className="projectHero"><div><small>{project.projectNumber} · {project.clientName || "Sin cliente"}</small><h2>{project.name}</h2><p>{project.scope}</p><div><span>{label(project.status)}</span><span>{label(project.health)}</span><span>Meta {formatDate(project.targetDate)}</span><Link href={`/development/projects/${project.id}`}>Desarrollo</Link>{project.clientId?<Link className="projectContractAction" href={`/clients/contracts/new?clientId=${project.clientId}&projectId=${project.id}`}><FileCheck2 size={13}/> Crear contrato</Link>:null}</div></div><div className="projectDial large" style={{ "--progress": `${project.progress * 3.6}deg` } as React.CSSProperties}><strong>{project.progress==null?"—":`${project.progress??0}%`}</strong><small>avance</small></div></section><ProjectProgress project={project} tasks={projectTasks} milestones={projectMilestones} worklogs={worklogs.filter((item) => item.projectId === project.id)} create={create} complete={complete} moveTask={moveTask} moveProject={moveProject}/><section className="project360Grid"><article><header><Flag size={17}/><span>Hitos</span><b>{projectMilestones.length}</b></header>{projectMilestones.map((item) => <p key={item.id}><span>{item.name}</span><small>{item.weight}% · {label(item.status)}</small></p>)}</article><article><header><FolderKanban size={17}/><span>Tareas</span><b>{projectTasks.length}</b></header><p><span>Abiertas</span><strong>{projectTasks.filter((item) => !["DONE", "CANCELLED"].includes(item.status)).length}</strong></p><p><span>Bloqueadas</span><strong>{projectTasks.filter((item) => item.status === "BLOCKED").length}</strong></p><p><span>Vencidas</span><strong>{projectTasks.filter((item) => item.overdue).length}</strong></p></article><article><header><Clock3 size={17}/><span>Consumo</span></header><p><span>Tiempo real</span><strong>{hours(worklogs.filter((item) => item.projectId === project.id).reduce((sum, item) => sum + item.durationMinutes, 0))}</strong></p><p><span>Estimación</span><strong>{project.estimatedHours ?? "—"}h</strong></p></article><article><header><Rocket size={17}/><span>Entrega</span></header><p><span>Entregables</span><strong>{deliverables.filter((item) => item.projectId === project.id).length}</strong></p><p><span>Deployments</span><strong>{deployments.filter((item) => item.projectId === project.id).length}</strong></p></article></section><p className="healthReason"><AlertTriangle size={15}/><strong>Health explicable:</strong> {project.healthReason}</p><section className="projectDetailBand"><article><header><span>Equipo</span><button onClick={() => { const available = users.find((user) => !members.some((member) => member.userId === user.id)); if (available) run(operationsApi.addMember(role, project.id, { userId: available.id, projectRole: "DEVELOPER" })); else window.alert("No hay más usuarios disponibles en el directorio."); }}><Plus size={12}/>Integrar</button></header>{members.map((member) => <p key={member.id}><strong>{member.userName || users.find((user) => user.id === member.userId)?.name || member.userId.slice(0, 8)}</strong><small>{label(member.projectRole)}</small></p>)}{!members.length ? <Empty title="Sin equipo" text="Incorpora usuarios desde el directorio."/> : null}</article><article><header><span>Endpoints</span><button onClick={() => { const url = window.prompt("URL del endpoint"); if (url) run(operationsApi.createEndpoint(role, project.id, { name: "Web principal", url, environment: "PRODUCTION", endpointType: "WEB" })); }}><Plus size={12}/>Agregar</button></header>{endpoints.map((item) => <p key={item.id}><a href={item.url} target="_blank" rel="noreferrer">{item.name}</a><small>{item.environment}</small></p>)}{!endpoints.length ? <Empty title="Sin endpoints" text="Registra URLs sin activar monitoreo ficticio."/> : null}</article><article><header><span>Riesgos</span><button onClick={() => { const title = window.prompt("Riesgo identificado"); if (title) run(operationsApi.createRisk(role, project.id, { title, probability: 3, impact: 3 })); }}><Plus size={12}/>Registrar</button></header>{risks.map((item) => <p key={item.id}><strong>{item.title}</strong><small>{item.severity}/25 · {item.status}</small></p>)}{!risks.length ? <Empty title="Sin riesgos" text="No hay riesgos operacionales registrados."/> : null}</article><article><header><span>Cambios</span><button onClick={() => { const description = window.prompt("Solicitud de cambio"); if (description) run(operationsApi.createChange(role, project.id, { description, source: "INTERNAL" })); }}><Plus size={12}/>Solicitar</button></header>{changes.map((item) => <p key={item.id}><strong>{item.description}</strong><small>{label(item.status)}</small></p>)}{!changes.length ? <Empty title="Sin cambios" text="El alcance original permanece sin solicitudes."/> : null}</article></section></>; }
-
-function CreateModal({ kind, projects, tasks, users, clients, initialClientId, initialProjectId, close, save }: { kind: OperationsCreateKind; projects: OperationsProject[]; tasks: OperationsTask[]; users: UserDirectoryItem[]; clients: Client[]; initialClientId:string|null; initialProjectId?:string; close: () => void; save: (value: Record<string, unknown>) => Promise<void> }) {
-  const [value, setValue] = useState<Record<string, unknown>>(() => ({ ...operationsCreateInitialValue(kind, initialClientId), ...(initialProjectId ? { projectId: initialProjectId } : {}) })); const [busy, setBusy] = useState(false); const [formError, setFormError] = useState(""); const set = (key: string, entry: unknown) => setValue((current) => ({ ...current, [key]: entry })); const needsProject = kind !== "work-order";
-  return <div className="opsModal" role="dialog" aria-modal="true" aria-label="Crear registro del proyecto"><div><button className="opsModalClose" onClick={close} aria-label="Cerrar"><X size={17}/></button><small>Delivery Operations</small><h2>{({"work-order":"Nueva orden de trabajo",task:"Nueva tarea",milestone:"Nuevo hito",worklog:"Registrar trabajo",deliverable:"Nuevo entregable",deployment:"Nuevo despliegue"})[kind]}</h2><form onSubmit={async (event) => { event.preventDefault(); setBusy(true); setFormError(""); try { await save(value); } catch (cause) { setFormError(cause instanceof Error ? cause.message : "No se pudo guardar el registro."); } finally { setBusy(false); } }}>
-    {needsProject ? <label className="wide">Proyecto<select required value={String(value.projectId??"")} disabled={Boolean(initialProjectId)} onChange={(event) => { set("projectId", event.target.value); set("taskId", null); }}><option value="">Seleccionar</option>{projects.map((project) => <option value={project.id} key={project.id}>{project.projectNumber} · {project.name}</option>)}</select></label> : null}
-    {kind === "work-order" ? <><label className="wide">Cliente<select value={String(value.clientId??"")} onChange={(event) => set("clientId", event.target.value || null)}><option value="">Sin cliente vinculado</option>{clients.map((client) => <option value={client.id} key={client.id}>{client.tradeName||client.legalName}</option>)}</select></label><label className="wide">Título<input required onChange={(event) => set("title", event.target.value)}/></label><label className="wide">Alcance<textarea required onChange={(event) => set("scope", event.target.value)}/></label><label>Prioridad<select value={String(value.priority??"NORMAL")} onChange={(event) => set("priority", event.target.value)}>{["LOW", "NORMAL", "HIGH", "URGENT", "CRITICAL"].map((item) => <option key={item}>{item}</option>)}</select></label><label>Responsable<select onChange={(event) => set("assignedTo", event.target.value || null)}><option value="">Sin asignar</option>{users.map((user) => <option value={user.id} key={user.id}>{user.name}</option>)}</select></label></> : null}
-    {kind === "task" ? <><label className="wide">Tarea<input required onChange={(event) => set("title", event.target.value)}/></label><label>Prioridad<select value={String(value.priority??"NORMAL")} onChange={(event) => set("priority", event.target.value)}>{["LOW", "NORMAL", "HIGH", "URGENT", "CRITICAL"].map((item) => <option key={item}>{item}</option>)}</select></label><label>Responsable<select onChange={(event) => set("assignedTo", event.target.value || null)}><option value="">Sin asignar</option>{users.map((user) => <option value={user.id} key={user.id}>{user.name}</option>)}</select></label><label>Estimación (min)<input type="number" min="0" onChange={(event) => set("estimatedMinutes", Number(event.target.value))}/></label><label>Vence<input type="date" onChange={(event) => set("dueDate", event.target.value || null)}/></label></> : null}
-    {kind === "milestone" ? <><label className="wide">Nombre<input required onChange={(event) => set("name", event.target.value)}/></label><label>Peso en el plan (%)<input required type="number" min="1" max="100" onChange={(event) => set("weight", Number(event.target.value))}/></label><label>Vence<input type="date" onChange={(event) => set("dueDate", event.target.value || null)}/></label></> : null}
-    {kind === "worklog" ? <><label>Tarea<select value={String(value.taskId??"")} onChange={(event) => set("taskId", event.target.value || null)}><option value="">Trabajo general</option>{tasks.filter((task) => task.projectId === value.projectId).map((task) => <option value={task.id} key={task.id}>{task.title}</option>)}</select></label><label>Fecha<input required type="date" value={String(value.workDate??"")} onChange={(event) => set("workDate", event.target.value)}/></label><label>Duración (min)<input required type="number" min="1" onChange={(event) => set("durationMinutes", Number(event.target.value))}/></label><label>Tipo<select value={String(value.workType??"DEVELOPMENT")} onChange={(event) => set("workType", event.target.value)}>{["DEVELOPMENT", "DESIGN", "MEETING", "QA", "SUPPORT", "RESEARCH", "DEPLOYMENT", "DOCUMENTATION", "MANAGEMENT", "OTHER"].map((item) => <option key={item}>{item}</option>)}</select></label><label className="wide">Descripción<textarea required onChange={(event) => set("description", event.target.value)}/></label></> : null}
-    {kind === "deliverable" ? <><label className="wide">Nombre<input required onChange={(event) => set("name", event.target.value)}/></label><label>Tipo<select value={String(value.type??"DOCUMENT")} onChange={(event) => set("type", event.target.value)}>{["DOCUMENT", "DESIGN", "CODE", "BUILD", "REPORT", "ACCESS", "OTHER"].map((item) => <option key={item}>{item}</option>)}</select></label><label>Vence<input type="date" onChange={(event) => set("dueDate", event.target.value || null)}/></label><label className="wide">Descripción<textarea onChange={(event) => set("description", event.target.value)}/></label></> : null}
-    {kind === "deployment" ? <><label>Ambiente<select value={String(value.environment??"DEVELOPMENT")} onChange={(event) => set("environment", event.target.value)}><option>DEVELOPMENT</option><option>STAGING</option><option>PRODUCTION</option></select></label><label>Versión<input required placeholder="v1.0.0" onChange={(event) => set("version", event.target.value)}/></label><label className="wide">Commit / referencia<input onChange={(event) => set("commitSha", event.target.value || null)}/></label><label className="wide">Notas<textarea onChange={(event) => set("notes", event.target.value)}/></label><p className="manualNote">Se guardará como REGISTRO MANUAL; esta acción no ejecuta un despliegue.</p></> : null}
-    {formError ? <p role="alert" className="opsFormError">{formError}</p> : null}
-    <footer><button type="button" onClick={close}>Cancelar</button><button className="opsPrimary" disabled={busy}>{busy ? "Guardando…" : "Crear"}</button></footer>
-  </form></div></div>;
+function Projects({ items }: { items: OperationsProject[] }) {
+  return items.length ? (
+    <section className="opsProjectGrid">
+      {items.map((project) => (
+        <Link href={`/projects/${project.id}`} key={project.id}>
+          <header>
+            <small>{project.projectNumber}</small>
+            <span className={`health ${project.health.toLowerCase()}`}>
+              {label(project.health)}
+            </span>
+          </header>
+          <h2>{project.name}</h2>
+          <p>{project.clientName || "Cliente no informado"}</p>
+          <div
+            className="projectDial"
+            style={{ "--progress": `${(project.progress ?? 0) * 3.6}deg` } as React.CSSProperties}
+          >
+            <strong>{project.progress == null ? "—" : `${project.progress ?? 0}%`}</strong>
+          </div>
+          <div className="opsProgress">
+            <i
+              style={{ width: project.progress == null ? "0%" : `${project.progress}%` }}
+            />
+          </div>
+          <footer>
+            <span>{label(project.status)}</span>
+            <span>{formatDate(project.targetDate)}</span>
+          </footer>
+          <small>{project.healthReason}</small>
+        </Link>
+      ))}
+    </section>
+  ) : (
+    <Empty
+      title="No hay proyectos todavía"
+      text="Convierte una orden de trabajo planificada para iniciar Project 360°."
+    />
+  );
 }
 
-function Empty({ title, text }: { title: string; text: string }) { return <div className="opsEmpty"><i/><strong>{title}</strong><p>{text}</p></div>; }
+function TaskBoard({
+  items,
+  move,
+}: {
+  items: OperationsTask[];
+  move: (id: string, status: OperationsTask["status"], reason?: string) => void;
+}) {
+  return (
+    <section className="taskBoard">
+      {taskColumns.map((status) => (
+        <article
+          key={status}
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={(event) => {
+            const id = event.dataTransfer.getData("task");
+            if (!id) return;
+            const reason =
+              status === "BLOCKED" ? window.prompt("Motivo del bloqueo") || undefined : undefined;
+            if (status === "BLOCKED" && !reason) return;
+            move(id, status, reason);
+          }}
+        >
+          <header>
+            <span>{label(status)}</span>
+            <b>{items.filter((item) => item.status === status).length}</b>
+          </header>
+          {items
+            .filter((item) => item.status === status)
+            .map((task) => (
+              <div
+                draggable
+                onDragStart={(event) => event.dataTransfer.setData("task", task.id)}
+                className={`taskCard ${task.overdue ? "overdue" : ""}`}
+                key={task.id}
+              >
+                <GripVertical size={13} />
+                <small>
+                  {task.projectName || "Proyecto"} · {task.priority}
+                </small>
+                <h3>{task.title}</h3>
+                <p>
+                  {task.estimatedMinutes ?? "—"} min estimados · {task.actualMinutes} min reales
+                </p>
+                <select
+                  aria-label={`Mover ${task.title}`}
+                  value={task.status}
+                  onChange={(event) => {
+                    const next = event.target.value as OperationsTask["status"];
+                    const reason =
+                      next === "BLOCKED"
+                        ? window.prompt("Motivo del bloqueo") || undefined
+                        : undefined;
+                    if (next !== "BLOCKED" || reason) move(task.id, next, reason);
+                  }}
+                >
+                  {[task.status, ...nextTaskStates[task.status]].map((value) => (
+                    <option value={value} key={value}>
+                      {label(value)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+        </article>
+      ))}
+    </section>
+  );
+}
+
+function Milestones({
+  items,
+  projects,
+  complete,
+}: {
+  items: ProjectMilestone[];
+  projects: OperationsProject[];
+  complete: (id: string) => void;
+}) {
+  return (
+    <section className="milestoneRail">
+      {projects.map((project) => {
+        const list = items.filter((item) => item.projectId === project.id);
+        return (
+          <article key={project.id}>
+            <header>
+              <div>
+                <small>{project.projectNumber}</small>
+                <h2>{project.name}</h2>
+              </div>
+              <strong>{project.progress == null ? "—" : `${project.progress ?? 0}%`}</strong>
+            </header>
+            <div className="milestoneTrack">
+              {list.map((item) => (
+                <div
+                  className={
+                    item.status === "COMPLETED"
+                      ? "done"
+                      : item.dueDate && item.dueDate < new Date().toISOString().slice(0, 10)
+                        ? "late"
+                        : ""
+                  }
+                  key={item.id}
+                >
+                  <i />
+                  <span>
+                    <b>{item.name}</b>
+                    <small>
+                      {item.weight}% · {formatDate(item.dueDate)}
+                    </small>
+                  </span>
+                  {item.status !== "COMPLETED" ? (
+                    <button onClick={() => complete(item.id)}>
+                      <Check size={13} />
+                      Completar
+                    </button>
+                  ) : (
+                    <Check size={16} />
+                  )}
+                </div>
+              ))}
+              {!list.length ? (
+                <Empty
+                  title="Sin hitos"
+                  text="Define hitos ponderados para medir el avance real."
+                />
+              ) : null}
+            </div>
+          </article>
+        );
+      })}
+      {!projects.length ? (
+        <Empty title="Sin proyectos activos" text="Los hitos se organizan dentro de un proyecto." />
+      ) : null}
+    </section>
+  );
+}
+
+function Worklogs({ items }: { items: WorkLog[] }) {
+  return items.length ? (
+    <section className="worklogLedger">
+      <header>
+        <span>Fecha</span>
+        <span>Proyecto / actividad</span>
+        <span>Tipo</span>
+        <span>Duración</span>
+        <span>Visibilidad</span>
+      </header>
+      {items.map((item) => (
+        <div key={item.id}>
+          <time>{formatDate(item.workDate)}</time>
+          <span>
+            <strong>{item.projectName || "Proyecto"}</strong>
+            <small>{item.description}</small>
+          </span>
+          <b>{label(item.workType)}</b>
+          <strong>{hours(item.durationMinutes)}</strong>
+          <small>{label(item.clientVisibility)}</small>
+        </div>
+      ))}
+    </section>
+  ) : (
+    <Empty
+      title="Sin tiempo registrado"
+      text="Registra trabajo real para comparar consumo con la estimación del proyecto."
+    />
+  );
+}
+
+function Deliverables({
+  items,
+  act,
+}: {
+  items: ProjectDeliverable[];
+  act: (id: string, action: string, body?: unknown) => void;
+}) {
+  return items.length ? (
+    <section className="deliveryShelf">
+      {items.map((item) => (
+        <article key={item.id}>
+          <div className="deliveryIcon">
+            <FileCheck2 size={20} />
+            <span>v{item.version}</span>
+          </div>
+          <small>
+            {item.projectName || "Proyecto"} · {item.type}
+          </small>
+          <h3>{item.name}</h3>
+          <p>{item.description || "Sin descripción"}</p>
+          <div>
+            <span>{label(item.status)}</span>
+            <time>{formatDate(item.dueDate)}</time>
+          </div>
+          <footer>
+            {["PLANNED", "IN_PROGRESS", "CHANGES_REQUESTED"].includes(item.status) ? (
+              <button onClick={() => act(item.id, "submit")}>Enviar a revisión</button>
+            ) : null}
+            {["READY_FOR_REVIEW", "INTERNAL_REVIEW"].includes(item.status) ? (
+              <>
+                <button onClick={() => act(item.id, "approve")}>Aprobar</button>
+                <button
+                  onClick={() => {
+                    const reason = window.prompt("Cambios solicitados");
+                    if (reason) act(item.id, "request-changes", { reason });
+                  }}
+                >
+                  Pedir cambios
+                </button>
+              </>
+            ) : null}
+          </footer>
+        </article>
+      ))}
+    </section>
+  ) : (
+    <Empty
+      title="Sin entregables"
+      text="Crea una entrega versionada y sométela al flujo de revisión."
+    />
+  );
+}
+
+function Deployments({ items }: { items: ProjectDeployment[] }) {
+  return (
+    <>
+      <div className="manualBanner">
+        <CloudUpload size={17} />
+        <span>
+          Registro operacional manual. No ejecuta despliegues ni simula una integración CI/CD.
+        </span>
+      </div>
+      {items.length ? (
+        <section className="deploymentStream">
+          {items.map((item) => (
+            <article key={item.id}>
+              <i className={item.status.toLowerCase()} />
+              <div>
+                <small>
+                  {item.environment} ·{" "}
+                  {item.recordType === "MANUAL_RECORD" ? "REGISTRO MANUAL" : "INTEGRACIÓN"}
+                </small>
+                <h3>
+                  {item.projectName || "Proyecto"} · {item.version}
+                </h3>
+                <p>
+                  {item.commitSha || "Sin referencia de commit"} · {item.notes || "Sin notas"}
+                </p>
+              </div>
+              <span>{label(item.status)}</span>
+              <time>{formatDateTime(item.createdAt)}</time>
+            </article>
+          ))}
+        </section>
+      ) : (
+        <Empty
+          title="Sin deployments registrados"
+          text="Agrega el primer registro manual de una entrega a ambiente."
+        />
+      )}
+    </>
+  );
+}
+
+function Project360({
+  project,
+  tasks,
+  milestones,
+  worklogs,
+  deliverables,
+  deployments,
+  users,
+  create,
+  complete,
+  moveTask,
+  moveProject,
+}: {
+  project?: OperationsProject;
+  tasks: OperationsTask[];
+  milestones: ProjectMilestone[];
+  worklogs: WorkLog[];
+  deliverables: ProjectDeliverable[];
+  deployments: ProjectDeployment[];
+  users: UserDirectoryItem[];
+  create: (kind: OperationsCreateKind) => void;
+  complete: (id: string) => Promise<void>;
+  moveTask: (id: string, status: OperationsTask["status"], reason?: string) => Promise<void>;
+  moveProject: (status: OperationsProject["status"]) => Promise<void>;
+}) {
+  const { role } = useAccess();
+  const [members, setMembers] = useState<ProjectMember[]>([]),
+    [endpoints, setEndpoints] = useState<ProjectEndpoint[]>([]),
+    [risks, setRisks] = useState<ProjectRisk[]>([]),
+    [changes, setChanges] = useState<ChangeRequest[]>([]);
+  const projectId = project?.id;
+  const [detailError, setDetailError] = useState("");
+  const refreshDetails = useCallback(() => {
+    if (!projectId) return Promise.resolve();
+    return Promise.all([
+      operationsApi.members(role, projectId),
+      operationsApi.endpoints(role, projectId),
+      operationsApi.risks(role, projectId),
+      operationsApi.changes(role, projectId),
+    ]).then(([m, e, r, c]) => {
+      setMembers(m);
+      setEndpoints(e);
+      setRisks(r);
+      setChanges(c);
+      setDetailError("");
+    });
+  }, [projectId, role]);
+  useEffect(() => {
+    void refreshDetails().catch((e) =>
+      setDetailError(
+        e instanceof Error ? e.message : "No se pudieron cargar las relaciones del proyecto.",
+      ),
+    );
+  }, [refreshDetails]);
+  if (!project)
+    return (
+      <Empty
+        title="Proyecto no encontrado"
+        text="Vuelve a la cartera y selecciona un proyecto disponible."
+      />
+    );
+  const projectTasks = tasks.filter((item) => item.projectId === project.id),
+    projectMilestones = milestones.filter((item) => item.projectId === project.id);
+  const run = (action: Promise<unknown>) =>
+    void action.then(refreshDetails).catch((cause: Error) => window.alert(cause.message));
+  return (
+    <>
+      <section className="projectHero">
+        <div>
+          <small>
+            {project.projectNumber} · {project.clientName || "Sin cliente"}
+          </small>
+          <h2>{project.name}</h2>
+          <p>{project.scope}</p>
+          <div>
+            <span>{label(project.status)}</span>
+            <span>{label(project.health)}</span>
+            <span>Meta {formatDate(project.targetDate)}</span>
+            <Link href={`/development/projects/${project.id}`}>Desarrollo</Link>
+            {project.clientId ? (
+              <Link
+                className="projectContractAction"
+                href={`/clients/contracts/new?clientId=${project.clientId}&projectId=${project.id}`}
+              >
+                <FileCheck2 size={13} /> Crear contrato
+              </Link>
+            ) : null}
+          </div>
+        </div>
+        <div
+          className="projectDial large"
+          style={{ "--progress": `${(project.progress ?? 0) * 3.6}deg` } as React.CSSProperties}
+        >
+          <strong>{project.progress == null ? "—" : `${project.progress ?? 0}%`}</strong>
+          <small>avance</small>
+        </div>
+      </section>
+      <ProjectProgress
+        project={project}
+        tasks={projectTasks}
+        milestones={projectMilestones}
+        worklogs={worklogs.filter((item) => item.projectId === project.id)}
+        create={create}
+        complete={complete}
+        moveTask={moveTask}
+        moveProject={moveProject}
+      />
+      <section className="project360Grid">
+        <article>
+          <header>
+            <Flag size={17} />
+            <span>Hitos</span>
+            <b>{projectMilestones.length}</b>
+          </header>
+          {projectMilestones.map((item) => (
+            <p key={item.id}>
+              <span>{item.name}</span>
+              <small>
+                {item.weight}% · {label(item.status)}
+              </small>
+            </p>
+          ))}
+        </article>
+        <article>
+          <header>
+            <FolderKanban size={17} />
+            <span>Tareas</span>
+            <b>{projectTasks.length}</b>
+          </header>
+          <p>
+            <span>Abiertas</span>
+            <strong>
+              {projectTasks.filter((item) => !["DONE", "CANCELLED"].includes(item.status)).length}
+            </strong>
+          </p>
+          <p>
+            <span>Bloqueadas</span>
+            <strong>{projectTasks.filter((item) => item.status === "BLOCKED").length}</strong>
+          </p>
+          <p>
+            <span>Vencidas</span>
+            <strong>{projectTasks.filter((item) => item.overdue).length}</strong>
+          </p>
+        </article>
+        <article>
+          <header>
+            <Clock3 size={17} />
+            <span>Consumo</span>
+          </header>
+          <p>
+            <span>Tiempo real</span>
+            <strong>
+              {hours(
+                worklogs
+                  .filter((item) => item.projectId === project.id)
+                  .reduce((sum, item) => sum + item.durationMinutes, 0),
+              )}
+            </strong>
+          </p>
+          <p>
+            <span>Estimación</span>
+            <strong>{project.estimatedHours ?? "—"}h</strong>
+          </p>
+        </article>
+        <article>
+          <header>
+            <Rocket size={17} />
+            <span>Entrega</span>
+          </header>
+          <p>
+            <span>Entregables</span>
+            <strong>{deliverables.filter((item) => item.projectId === project.id).length}</strong>
+          </p>
+          <p>
+            <span>Deployments</span>
+            <strong>{deployments.filter((item) => item.projectId === project.id).length}</strong>
+          </p>
+        </article>
+      </section>
+      <p className="healthReason">
+        <AlertTriangle size={15} />
+        <strong>Health explicable:</strong> {project.healthReason}
+      </p>
+      {detailError ? (
+        <p role="alert" className="opsAlert error">
+          {detailError}
+        </p>
+      ) : null}
+      <section className="projectDetailBand">
+        <article>
+          <header>
+            <span>Equipo</span>
+            <button
+              onClick={() => {
+                const available = users.find(
+                  (user) => !members.some((member) => member.userId === user.id),
+                );
+                if (available)
+                  run(
+                    operationsApi.addMember(role, project.id, {
+                      userId: available.id,
+                      projectRole: "DEVELOPER",
+                    }),
+                  );
+                else window.alert("No hay más usuarios disponibles en el directorio.");
+              }}
+            >
+              <Plus size={12} />
+              Integrar
+            </button>
+          </header>
+          {members.map((member) => (
+            <p key={member.id}>
+              <strong>
+                {member.userName ||
+                  users.find((user) => user.id === member.userId)?.name ||
+                  member.userId.slice(0, 8)}
+              </strong>
+              <small>{label(member.projectRole)}</small>
+            </p>
+          ))}
+          {!members.length ? (
+            <Empty title="Sin equipo" text="Incorpora usuarios desde el directorio." />
+          ) : null}
+        </article>
+        <article>
+          <header>
+            <span>Endpoints</span>
+            <button
+              onClick={() => {
+                const url = window.prompt("URL del endpoint");
+                if (url)
+                  run(
+                    operationsApi.createEndpoint(role, project.id, {
+                      name: "Web principal",
+                      url,
+                      environment: "PRODUCTION",
+                      endpointType: "WEB",
+                    }),
+                  );
+              }}
+            >
+              <Plus size={12} />
+              Agregar
+            </button>
+          </header>
+          {endpoints.map((item) => (
+            <p key={item.id}>
+              <a href={item.url} target="_blank" rel="noreferrer">
+                {item.name}
+              </a>
+              <small>{item.environment}</small>
+            </p>
+          ))}
+          {!endpoints.length ? (
+            <Empty title="Sin endpoints" text="Registra URLs sin activar monitoreo ficticio." />
+          ) : null}
+        </article>
+        <article>
+          <header>
+            <span>Riesgos</span>
+            <button
+              onClick={() => {
+                const title = window.prompt("Riesgo identificado");
+                if (title)
+                  run(
+                    operationsApi.createRisk(role, project.id, {
+                      title,
+                      probability: 3,
+                      impact: 3,
+                    }),
+                  );
+              }}
+            >
+              <Plus size={12} />
+              Registrar
+            </button>
+          </header>
+          {risks.map((item) => (
+            <p key={item.id}>
+              <strong>{item.title}</strong>
+              <small>
+                {item.severity}/25 · {item.status}
+              </small>
+            </p>
+          ))}
+          {!risks.length ? (
+            <Empty title="Sin riesgos" text="No hay riesgos operacionales registrados." />
+          ) : null}
+        </article>
+        <article>
+          <header>
+            <span>Cambios</span>
+            <button
+              onClick={() => {
+                const description = window.prompt("Solicitud de cambio");
+                if (description)
+                  run(
+                    operationsApi.createChange(role, project.id, {
+                      description,
+                      source: "INTERNAL",
+                    }),
+                  );
+              }}
+            >
+              <Plus size={12} />
+              Solicitar
+            </button>
+          </header>
+          {changes.map((item) => (
+            <p key={item.id}>
+              <strong>{item.description}</strong>
+              <small>{label(item.status)}</small>
+            </p>
+          ))}
+          {!changes.length ? (
+            <Empty title="Sin cambios" text="El alcance original permanece sin solicitudes." />
+          ) : null}
+        </article>
+      </section>
+    </>
+  );
+}
+
+function CreateModal({
+  kind,
+  projects,
+  tasks,
+  users,
+  clients,
+  initialClientId,
+  initialProjectId,
+  close,
+  save,
+}: {
+  kind: OperationsCreateKind;
+  projects: OperationsProject[];
+  tasks: OperationsTask[];
+  users: UserDirectoryItem[];
+  clients: Client[];
+  initialClientId: string | null;
+  initialProjectId?: string;
+  close: () => void;
+  save: (value: Record<string, unknown>) => Promise<void>;
+}) {
+  const [value, setValue] = useState<Record<string, unknown>>(() => ({
+    ...operationsCreateInitialValue(kind, initialClientId),
+    ...(initialProjectId ? { projectId: initialProjectId } : {}),
+  }));
+  const [busy, setBusy] = useState(false);
+  const [formError, setFormError] = useState("");
+  const set = (key: string, entry: unknown) =>
+    setValue((current) => ({ ...current, [key]: entry }));
+  const needsProject = kind !== "work-order";
+  return (
+    <div
+      className="opsModal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Crear registro del proyecto"
+    >
+      <div>
+        <button className="opsModalClose" onClick={close} aria-label="Cerrar">
+          <X size={17} />
+        </button>
+        <small>Delivery Operations</small>
+        <h2>
+          {
+            {
+              "work-order": "Nueva orden de trabajo",
+              task: "Nueva tarea",
+              milestone: "Nuevo hito",
+              worklog: "Registrar trabajo",
+              deliverable: "Nuevo entregable",
+              deployment: "Nuevo despliegue",
+            }[kind]
+          }
+        </h2>
+        <form
+          onSubmit={async (event) => {
+            event.preventDefault();
+            setBusy(true);
+            setFormError("");
+            try {
+              await save(value);
+            } catch (cause) {
+              setFormError(
+                cause instanceof Error ? cause.message : "No se pudo guardar el registro.",
+              );
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          {needsProject ? (
+            <label className="wide">
+              Proyecto
+              <select
+                required
+                value={String(value.projectId ?? "")}
+                disabled={Boolean(initialProjectId)}
+                onChange={(event) => {
+                  set("projectId", event.target.value);
+                  set("taskId", null);
+                }}
+              >
+                <option value="">Seleccionar</option>
+                {projects.map((project) => (
+                  <option value={project.id} key={project.id}>
+                    {project.projectNumber} · {project.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {kind === "work-order" ? (
+            <>
+              <label className="wide">
+                Cliente
+                <select
+                  value={String(value.clientId ?? "")}
+                  onChange={(event) => set("clientId", event.target.value || null)}
+                >
+                  <option value="">Sin cliente vinculado</option>
+                  {clients.map((client) => (
+                    <option value={client.id} key={client.id}>
+                      {client.tradeName || client.legalName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="wide">
+                Título
+                <input required onChange={(event) => set("title", event.target.value)} />
+              </label>
+              <label className="wide">
+                Alcance
+                <textarea required onChange={(event) => set("scope", event.target.value)} />
+              </label>
+              <label>
+                Prioridad
+                <select
+                  value={String(value.priority ?? "NORMAL")}
+                  onChange={(event) => set("priority", event.target.value)}
+                >
+                  {["LOW", "NORMAL", "HIGH", "URGENT", "CRITICAL"].map((item) => (
+                    <option key={item}>{item}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Responsable
+                <select onChange={(event) => set("assignedTo", event.target.value || null)}>
+                  <option value="">Sin asignar</option>
+                  {users.map((user) => (
+                    <option value={user.id} key={user.id}>
+                      {user.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
+          ) : null}
+          {kind === "task" ? (
+            <>
+              <label className="wide">
+                Tarea
+                <input required onChange={(event) => set("title", event.target.value)} />
+              </label>
+              <label>
+                Prioridad
+                <select
+                  value={String(value.priority ?? "NORMAL")}
+                  onChange={(event) => set("priority", event.target.value)}
+                >
+                  {["LOW", "NORMAL", "HIGH", "URGENT", "CRITICAL"].map((item) => (
+                    <option key={item}>{item}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Responsable
+                <select onChange={(event) => set("assignedTo", event.target.value || null)}>
+                  <option value="">Sin asignar</option>
+                  {users.map((user) => (
+                    <option value={user.id} key={user.id}>
+                      {user.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Estimación (min)
+                <input
+                  type="number"
+                  min="0"
+                  onChange={(event) => set("estimatedMinutes", Number(event.target.value))}
+                />
+              </label>
+              <label>
+                Vence
+                <input
+                  type="date"
+                  onChange={(event) => set("dueDate", event.target.value || null)}
+                />
+              </label>
+            </>
+          ) : null}
+          {kind === "milestone" ? (
+            <>
+              <label className="wide">
+                Nombre
+                <input required onChange={(event) => set("name", event.target.value)} />
+              </label>
+              <label>
+                Peso en el plan (%)
+                <input
+                  required
+                  type="number"
+                  min="1"
+                  max="100"
+                  onChange={(event) => set("weight", Number(event.target.value))}
+                />
+              </label>
+              <label>
+                Vence
+                <input
+                  type="date"
+                  onChange={(event) => set("dueDate", event.target.value || null)}
+                />
+              </label>
+            </>
+          ) : null}
+          {kind === "worklog" ? (
+            <>
+              <label>
+                Tarea
+                <select
+                  value={String(value.taskId ?? "")}
+                  onChange={(event) => set("taskId", event.target.value || null)}
+                >
+                  <option value="">Trabajo general</option>
+                  {tasks
+                    .filter((task) => task.projectId === value.projectId)
+                    .map((task) => (
+                      <option value={task.id} key={task.id}>
+                        {task.title}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <label>
+                Fecha
+                <input
+                  required
+                  type="date"
+                  value={String(value.workDate ?? "")}
+                  onChange={(event) => set("workDate", event.target.value)}
+                />
+              </label>
+              <label>
+                Duración (min)
+                <input
+                  required
+                  type="number"
+                  min="1"
+                  onChange={(event) => set("durationMinutes", Number(event.target.value))}
+                />
+              </label>
+              <label>
+                Tipo
+                <select
+                  value={String(value.workType ?? "DEVELOPMENT")}
+                  onChange={(event) => set("workType", event.target.value)}
+                >
+                  {[
+                    "DEVELOPMENT",
+                    "DESIGN",
+                    "MEETING",
+                    "QA",
+                    "SUPPORT",
+                    "RESEARCH",
+                    "DEPLOYMENT",
+                    "DOCUMENTATION",
+                    "MANAGEMENT",
+                    "OTHER",
+                  ].map((item) => (
+                    <option key={item}>{item}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="wide">
+                Descripción
+                <textarea required onChange={(event) => set("description", event.target.value)} />
+              </label>
+            </>
+          ) : null}
+          {kind === "deliverable" ? (
+            <>
+              <label className="wide">
+                Nombre
+                <input required onChange={(event) => set("name", event.target.value)} />
+              </label>
+              <label>
+                Tipo
+                <select
+                  value={String(value.type ?? "DOCUMENT")}
+                  onChange={(event) => set("type", event.target.value)}
+                >
+                  {["DOCUMENT", "DESIGN", "CODE", "BUILD", "REPORT", "ACCESS", "OTHER"].map(
+                    (item) => (
+                      <option key={item}>{item}</option>
+                    ),
+                  )}
+                </select>
+              </label>
+              <label>
+                Vence
+                <input
+                  type="date"
+                  onChange={(event) => set("dueDate", event.target.value || null)}
+                />
+              </label>
+              <label className="wide">
+                Descripción
+                <textarea onChange={(event) => set("description", event.target.value)} />
+              </label>
+            </>
+          ) : null}
+          {kind === "deployment" ? (
+            <>
+              <label>
+                Ambiente
+                <select
+                  value={String(value.environment ?? "DEVELOPMENT")}
+                  onChange={(event) => set("environment", event.target.value)}
+                >
+                  <option>DEVELOPMENT</option>
+                  <option>STAGING</option>
+                  <option>PRODUCTION</option>
+                </select>
+              </label>
+              <label>
+                Versión
+                <input
+                  required
+                  placeholder="v1.0.0"
+                  onChange={(event) => set("version", event.target.value)}
+                />
+              </label>
+              <label className="wide">
+                Commit / referencia
+                <input onChange={(event) => set("commitSha", event.target.value || null)} />
+              </label>
+              <label className="wide">
+                Notas
+                <textarea onChange={(event) => set("notes", event.target.value)} />
+              </label>
+              <p className="manualNote">
+                Se guardará como REGISTRO MANUAL; esta acción no ejecuta un despliegue.
+              </p>
+            </>
+          ) : null}
+          {formError ? (
+            <p role="alert" className="opsFormError">
+              {formError}
+            </p>
+          ) : null}
+          <footer>
+            <button type="button" onClick={close}>
+              Cancelar
+            </button>
+            <button className="opsPrimary" disabled={busy}>
+              {busy ? "Guardando…" : "Crear"}
+            </button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function Empty({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="opsEmpty">
+      <i />
+      <strong>{title}</strong>
+      <p>{text}</p>
+    </div>
+  );
+}

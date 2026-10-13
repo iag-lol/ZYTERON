@@ -281,6 +281,12 @@ export function legacyReadPath(path: string) {
 export async function mergeLegacyRead(path: string, params: URLSearchParams, body: unknown) {
   const s = await controlSnapshot(),
     ls = await links();
+  const mirroredProjects = await prisma.$queryRaw<
+    Array<{ legacy_project_id: string }>
+  >`SELECT legacy_project_id FROM public.projects WHERE legacy_project_id IS NOT NULL`;
+  s.projects = s.projects.filter(
+    (p) => !mirroredProjects.some((m) => m.legacy_project_id === p.id),
+  );
   const rows = body as Record<string, unknown>;
   if (path === "/clients") {
     const result = body as ClientListResponse;
@@ -484,6 +490,14 @@ export async function handleLegacyDetail(request: Request, path: string, payload
   const parts = path.split("/").filter(Boolean);
   if (!["quotes", "support", "projects", "documents", "finance"].includes(parts[0] || ""))
     return null;
+  // Collection reads and canonical details must not load the whole website ledger.
+  if (request.method === "GET" && (!parts[1] || parts[1] === "workspace")) return null;
+  if (parts[0] === "projects" && parts[1]) {
+    const canonical = await prisma.$queryRaw<
+      Array<{ id: string }>
+    >`SELECT id FROM public.projects WHERE id::text=${parts[1]}`;
+    if (canonical.length) return null;
+  }
   const s = await controlSnapshot(),
     ls = await links();
   const body = payload.length ? JSON.parse(payload.toString()) : {};
@@ -1188,47 +1202,52 @@ async function extraLegacyRead(
     const records = await prisma.project.findMany({
       where: { id: { in: s.projects.map((p) => p.id) } },
     });
-    const rows = records.map((p) => ({
-      id: id("project", p.id),
-      projectNumber: "WEB-" + p.id.slice(0, 8).toUpperCase(),
-      clientId: clientId(ls, p.clientId),
-      clientName:
-        s.users.find((u) => u.id === p.clientId)?.company ||
-        s.users.find((u) => u.id === p.clientId)?.name ||
-        null,
-      workOrderId: "",
-      quoteId: p.quoteId ? id("quote", p.quoteId) : null,
-      contractId: null,
-      name: p.title,
-      description: p.description,
-      scope: p.scope || "",
-      status:
-        s.projects.find((v) => v.id === p.id)?.status === "DONE"
-          ? "COMPLETED"
-          : s.projects.find((v) => v.id === p.id)?.status === "PLANNED"
-            ? "PLANNING"
-            : s.projects.find((v) => v.id === p.id)?.status || "PLANNING",
-      priority: p.priority || "NORMAL",
-      health: "ATTENTION",
-      healthReason: "Proyecto histórico sin medición publicada de avance.",
-      progress: null,
-      developmentManagerId: null,
-      projectLeadId: null,
-      plannedStartDate: p.startDate?.toISOString().slice(0, 10) || null,
-      actualStartDate: null,
-      targetDate: p.endDate?.toISOString().slice(0, 10) || null,
-      completedAt: null,
-      estimatedHours: p.estimatedHours,
-      budgetedHours: null,
-      stagingUrl: null,
-      productionUrl: null,
-      repositoryUrl: null,
-      clientVisibility: "CLIENT_VISIBLE",
-      createdBy: null,
-      createdAt: p.createdAt.toISOString(),
-      updatedAt: p.createdAt.toISOString(),
-      archivedAt: null,
-    }));
+    const mirrored = await prisma.$queryRaw<
+      Array<{ legacy_project_id: string }>
+    >`SELECT legacy_project_id FROM public.projects WHERE legacy_project_id IS NOT NULL`;
+    const rows = records
+      .filter((p) => !mirrored.some((m) => m.legacy_project_id === p.id))
+      .map((p) => ({
+        id: id("project", p.id),
+        projectNumber: "WEB-" + p.id.slice(0, 8).toUpperCase(),
+        clientId: clientId(ls, p.clientId),
+        clientName:
+          s.users.find((u) => u.id === p.clientId)?.company ||
+          s.users.find((u) => u.id === p.clientId)?.name ||
+          null,
+        workOrderId: "",
+        quoteId: p.quoteId ? id("quote", p.quoteId) : null,
+        contractId: null,
+        name: p.title,
+        description: p.description,
+        scope: p.scope || "",
+        status:
+          s.projects.find((v) => v.id === p.id)?.status === "DONE"
+            ? "COMPLETED"
+            : s.projects.find((v) => v.id === p.id)?.status === "PLANNED"
+              ? "PLANNING"
+              : s.projects.find((v) => v.id === p.id)?.status || "PLANNING",
+        priority: p.priority || "NORMAL",
+        health: "ATTENTION",
+        healthReason: "Proyecto histórico sin medición publicada de avance.",
+        progress: null,
+        developmentManagerId: null,
+        projectLeadId: null,
+        plannedStartDate: p.startDate?.toISOString().slice(0, 10) || null,
+        actualStartDate: null,
+        targetDate: p.endDate?.toISOString().slice(0, 10) || null,
+        completedAt: null,
+        estimatedHours: p.estimatedHours,
+        budgetedHours: null,
+        stagingUrl: null,
+        productionUrl: null,
+        repositoryUrl: null,
+        clientVisibility: "CLIENT_VISIBLE",
+        createdBy: null,
+        createdAt: p.createdAt.toISOString(),
+        updatedAt: p.createdAt.toISOString(),
+        archivedAt: null,
+      }));
     return mergePage(body as { items: unknown[] }, rows, params);
   }
   if (path === "/operations/summary")

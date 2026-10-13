@@ -1,3 +1,5 @@
+import { isSafePortalLink } from "@/lib/portal/safe-link";
+import { boundedJson } from "@/lib/security/public-intake";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
@@ -8,7 +10,7 @@ const schema = z.object({
   title: z.string().trim().min(2).max(180),
   body: z.string().trim().min(2).max(3000),
   type: z.string().trim().max(40).optional().or(z.literal("")),
-  link: z.string().trim().url().optional().or(z.literal("")),
+  link: z.string().trim().max(500).refine(isSafePortalLink).optional().or(z.literal("")),
 });
 
 type Context = {
@@ -21,13 +23,13 @@ export async function POST(req: Request, { params }: Context) {
 
   try {
     const { id } = await params;
-    const body = await req.json();
+    const body = await boundedJson(req, 16384);
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.issues[0]?.message || "Datos inválidos." }, { status: 400 });
     }
 
-    const client = await prisma.user.findUnique({ where: { id }, select: { id: true } });
+    const client = await prisma.user.findUnique({ where: { id, role: "CLIENT" }, select: { id: true } });
     if (!client) return NextResponse.json({ error: "Cliente no encontrado." }, { status: 404 });
 
     const notification = await prisma.clientNotification.create({

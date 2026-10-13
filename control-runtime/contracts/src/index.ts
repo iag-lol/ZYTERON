@@ -489,7 +489,7 @@ export type ProjectHealth = (typeof projectHealthStatuses)[number];
 export interface OperationsProject {
   id: string; projectNumber: string; clientId: string | null; clientName: string | null; workOrderId: string; quoteId: string | null; contractId: string | null;
   name: string; description: string | null; scope: string; status: ProjectStatus; priority: OperationPriority; health: ProjectHealth; healthReason: string;
-  progress: number; developmentManagerId: string | null; projectLeadId: string | null; plannedStartDate: string | null; actualStartDate: string | null;
+  progress: number | null; developmentManagerId: string | null; projectLeadId: string | null; plannedStartDate: string | null; actualStartDate: string | null;
   targetDate: string | null; completedAt: string | null; estimatedHours: number | null; budgetedHours: number | null; stagingUrl: string | null;
   productionUrl: string | null; repositoryUrl: string | null; clientVisibility: "INTERNAL" | "CLIENT_VISIBLE"; createdBy: string | null; createdAt: string; updatedAt: string; archivedAt: string | null;
 }

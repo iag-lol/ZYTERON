@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {csvContent} from '../../full-control/lib/csv';
+test('CSV preserves delimiters and quotes and neutralizes spreadsheet formula cells',()=>{const s=csvContent([['RUT','Nombre'],['1-9','A;B"C'],['=WEBSERVICE("https://invalid")','  +SUM(A1)'],['@SUM(A1)',null]]);assert.ok(s.startsWith('\ufeff'));assert.ok(s.includes('"A;B""C"'));assert.ok(s.includes('"\'=WEBSERVICE'));assert.ok(s.includes('"\'  +SUM'));assert.ok(s.includes('"\'@SUM'));assert.ok(s.endsWith(';""'));});
