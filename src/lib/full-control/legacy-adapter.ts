@@ -6,6 +6,12 @@ import { prisma } from "@/lib/prisma";
 import { controlSnapshot, type ControlData } from "@/lib/client-experience/control-snapshot";
 import { enrichQuoteRecord, parseQuoteMessage, serializeQuoteMessage } from "@/lib/admin/quote";
 import { generateQuotePdf } from "@/lib/admin/quote-pdf";
+import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
+import {
+  duplicateWebsiteQuote,
+  createWebsiteWorkOrder,
+  createWebsiteContract,
+} from "./website-quote-actions";
 import { POST as nativeAction } from "@/app/api/control/[action]/route";
 import { PATCH as requestAction } from "@/app/api/portal/admin/requests/[id]/route";
 import { POST as chatReply } from "@/app/api/admin/chat/[id]/reply/route";
@@ -75,11 +81,14 @@ async function quotes(s: ControlData, ls: Link[]): Promise<SalesQuote[]> {
   const raw = await prisma.quote.findMany({ where: { id: { in: s.quotes.map((q) => q.id) } } });
   return raw.map((q) => {
     const e = enrichQuoteRecord({ ...q, createdAt: q.createdAt.toISOString() }),
-      m = e.meta as typeof e.meta & { controlState?: SalesQuote["status"] };
+      m = e.meta as typeof e.meta & {
+        controlState?: SalesQuote["status"];
+        controlVersion?: number;
+      };
     return {
       id: id("quote", q.id),
       quoteNumber: e.displayNumber,
-      version: 1,
+      version: Math.max(1, Number(m.controlVersion) || 1),
       clientId:
         clientId(ls, q.userId) ||
         clientId(
@@ -238,7 +247,12 @@ function mergePage(
   const query = (params.get("search") || "").toLocaleLowerCase("es");
   const state = params.get("status"),
     client = params.get("clientId");
-  const items = [...existing.items, ...additional].filter((value) => {
+  const combined = new Map<string, unknown>();
+  for (const value of [...existing.items, ...additional]) {
+    const key = String((value as Record<string, unknown>).id);
+    if (!combined.has(key)) combined.set(key, value);
+  }
+  const items = [...combined.values()].filter((value) => {
     const r = value as Record<string, unknown>;
     return (
       (!query || JSON.stringify(r).toLocaleLowerCase("es").includes(query)) &&
@@ -309,15 +323,33 @@ export async function mergeLegacyRead(path: string, params: URLSearchParams, bod
       },
     };
   }
-  if (path === "/quotes")
-    return mergePage(body as { items: unknown[] }, await quotes(s, ls), params);
-  if (path === "/leads") return mergePage(body as { items: unknown[] }, leads(s, ls), params);
+  if (path === "/quotes") {
+    const native = await quotes(s, ls);
+    return mergePage(
+      {
+        ...(body as { items: unknown[] }),
+        items: [...native, ...(body as { items: unknown[] }).items],
+      },
+      [],
+      params,
+    );
+  }
+  const nativeLeads = ["/leads", "/commercial/search", "/commercial/summary"].includes(path)
+    ? leads(s, ls)
+    : [];
+  const mirrored = nativeLeads.length
+    ? await prisma.$queryRaw<
+        Array<{ id: string }>
+      >`SELECT id::text FROM public.leads WHERE id::text=ANY(${nativeLeads.map((l) => l.id)}::text[])`
+    : [];
+  const historicalLeads = nativeLeads.filter((lead) => !mirrored.some((row) => row.id === lead.id));
+  if (path === "/leads") return mergePage(body as { items: unknown[] }, historicalLeads, params);
   if (path === "/commercial/search") {
     const query = (params.get("q") || "").toLowerCase();
     const match = (r: unknown) => JSON.stringify(r).toLowerCase().includes(query);
     return {
       ...rows,
-      leads: [...(rows.leads as unknown[]), ...leads(s, ls).filter(match)],
+      leads: [...(rows.leads as unknown[]), ...historicalLeads.filter(match)],
       quotes: [...(rows.quotes as unknown[]), ...(await quotes(s, ls)).filter(match)],
     };
   }
@@ -331,11 +363,12 @@ export async function mergeLegacyRead(path: string, params: URLSearchParams, bod
     return {
       ...result,
       monthSales: result.monthSales + monthSales,
-      newLeads:
-        result.newLeads + s.leads.filter((l) => ["NEW", "RECEIVED"].includes(l.status)).length,
+      newLeads: result.newLeads + historicalLeads.filter((l) => l.status === "NEW").length,
       uncontactedLeads:
         result.uncontactedLeads +
-        s.leads.filter((l) => !["CLOSED", "LOST", "IN_PROGRESS"].includes(l.status)).length,
+        historicalLeads.filter(
+          (l) => !["CONVERTED", "DISQUALIFIED", "CONTACTED"].includes(l.status),
+        ).length,
       pendingQuotes:
         result.pendingQuotes +
         s.quotes.filter((q) => !["WON", "LOST"].includes(q.status || "")).length,
@@ -674,6 +707,55 @@ export async function handleLegacyDetail(request: Request, path: string, payload
     if (request.method === "GET")
       return NextResponse.json((await quotes(s, ls)).find((q) => q.id === parts[1]));
     const action = parts[2];
+    if (request.method !== "POST")
+      return NextResponse.json({ message: "Método no permitido." }, { status: 405 });
+    const auth = await requirePortalAdminApiSession();
+    if (auth.error) return auth.error;
+    const actorId = auth.legacy ? null : auth.session.user.id;
+    if (action === "convert-to-client") {
+      if (raw.status !== "WON")
+        return NextResponse.json(
+          { message: "La propuesta debe estar aceptada antes de crear el cliente." },
+          { status: 409 },
+        );
+      const target = new URL("/api/control-core/api/clients", request.url);
+      target.searchParams.set("sourceWebsiteQuoteId", raw.id);
+      // Preserve the POST body; the original client service validates RUT and business data.
+      return NextResponse.redirect(target, 307);
+    }
+    if (action === "duplicate" || action === "version") {
+      const created = await duplicateWebsiteQuote(raw, actorId, undefined, action === "version");
+      return NextResponse.json({
+        id: id("quote", created.id),
+        quoteNumber: enrichQuoteRecord({ ...created, createdAt: created.createdAt.toISOString() })
+          .displayNumber,
+      });
+    }
+    if (action === "convert-to-contract" || action === "convert-to-work-order") {
+      const mapped = (await quotes(s, ls)).find((q) => q.id === parts[1]);
+      if (!mapped?.clientId)
+        return NextResponse.json(
+          { message: "Vincula el cliente de esta cotización antes de continuar." },
+          { status: 409 },
+        );
+      try {
+        return NextResponse.json(
+          action === "convert-to-contract"
+            ? await createWebsiteContract(raw, parts[1]!, mapped.clientId, actorId)
+            : await createWebsiteWorkOrder(raw, parts[1]!, mapped.clientId, actorId),
+        );
+      } catch (error) {
+        return NextResponse.json(
+          {
+            message:
+              error instanceof Error && !("code" in error)
+                ? error.message
+                : "No fue posible registrar la operación. Revisa la cotización y vuelve a intentarlo.",
+          },
+          { status: 409 },
+        );
+      }
+    }
     if (action === "preview") {
       const e = enrichQuoteRecord({ ...raw, createdAt: raw.createdAt.toISOString() });
       const bytes = await generateQuotePdf({

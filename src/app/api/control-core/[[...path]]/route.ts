@@ -11,6 +11,7 @@ import { createHash, createHmac, randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
+import { prisma } from "@/lib/prisma";
 import { ADMIN_COOKIE } from "@/lib/auth/admin-session";
 import {
   configuredRequestOrigins,
@@ -85,6 +86,35 @@ async function handle(request: Request, { params }: { params: Promise<{ path?: s
   if (body.length > 25_000_000)
     return NextResponse.json({ message: "Archivo demasiado grande." }, { status: 413 });
   const path = "/" + segments.slice(1).join("/");
+  const sourceWebsiteQuoteId =
+    path === "/clients" && request.method === "POST"
+      ? url.searchParams.get("sourceWebsiteQuoteId")
+      : null;
+  if (sourceWebsiteQuoteId) {
+    let input: Record<string, unknown>;
+    try {
+      input = JSON.parse(body.toString());
+    } catch {
+      return NextResponse.json({ message: "Datos de cliente inválidos." }, { status: 400 });
+    }
+    const source = await prisma.quote.findUnique({ where: { id: sourceWebsiteQuoteId } });
+    if (
+      !source ||
+      source.status !== "WON" ||
+      source.userId ||
+      source.email.trim().toLowerCase() !==
+        String(input.generalEmail || "")
+          .trim()
+          .toLowerCase()
+    )
+      return NextResponse.json(
+        {
+          message:
+            "No se puede vincular esta cotización con los datos indicados. Revisa el cliente y el correo.",
+        },
+        { status: 409 },
+      );
+  }
   let legacy: NextResponse | null;
   try {
     legacy =
@@ -152,7 +182,24 @@ async function handle(request: Request, { params }: { params: Promise<{ path?: s
       const client = await result.json();
       let portalPreparation = "PREPARED";
       try {
-        await ensureNativePortalAccount(client.id);
+        const userId = await ensureNativePortalAccount(client.id);
+        if (sourceWebsiteQuoteId) {
+          const updated = await prisma.quote.updateMany({
+            where: { id: sourceWebsiteQuoteId, userId: null, status: "WON" },
+            data: { userId },
+          });
+          if (updated.count !== 1) throw Error("QUOTE_CLIENT_LINK_REQUIRES_REVIEW");
+          await prisma.clientAuditLog.create({
+            data: {
+              actorId: auth.legacy ? null : auth.session.user.id,
+              targetUserId: userId,
+              action: "CONTROL_QUOTE_CLIENT_LINKED",
+              entityType: "Quote",
+              entityId: sourceWebsiteQuoteId,
+              details: { clientId: client.id },
+            },
+          });
+        }
       } catch {
         portalPreparation = "REVIEW_REQUIRED";
       }

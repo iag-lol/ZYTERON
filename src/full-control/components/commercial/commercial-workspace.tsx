@@ -1,116 +1,2514 @@
 "use client";
-import Link from"@control/components/routed-link";import{useEffect,useState}from"react";import type{Client,ClientContact,CommercialEvent,CommercialSummary,Commission,QuoteItem,Role,Sale,SalesFollowUp,SalesGoal,SalesHandoff,SalesLead,SalesOpportunity,SalesPipelineStage,SalesQuote,UserDirectoryItem}from"@zyteron/contracts";import{ArrowRight,Building2,CalendarClock,Check,ChevronRight,CircleDollarSign,Clock3,FileText,GripVertical,Plus,RefreshCw,Send,Target,Trash2,TrendingUp,UserRound,Users,X}from"lucide-react";import{useAccess}from"@control/components/access-context";import{QuotePaymentsButton}from"@control/components/finance/quote-payments";import{commercialApi}from"@control/lib/commercial-api";import{subscribeToCommercial}from"@control/lib/commercial-realtime";import{usersDirectoryApi}from"@control/lib/client-domain-api";import{clientsApi}from"@control/lib/clients-api";import{formatDate,formatDateTime}from"@control/lib/date-time";
-const money=(value:number,currency="CLP")=>new Intl.NumberFormat("es-CL",{style:"currency",currency,maximumFractionDigits:currency==="CLP"?0:2}).format(value);
-const emptySummary:CommercialSummary={newLeads:0,uncontactedLeads:0,overdueFollowUps:0,todayFollowUps:0,openOpportunities:0,staleOpportunities:0,pendingQuotes:0,expiringQuotes:0,approvalQuotes:0,monthSales:0,activePipeline:0,weightedPipeline:0,wonClients:0,lostOpportunities:0};
-type Section="command"|"leads"|"opportunities"|"pipeline"|"follow-ups"|"quotes"|"sales"|"goals"|"commissions"|"handoffs";
-type CatalogItem={id:string;name:string;code:string;default_price:number|null;currency:string};
-export function CommercialWorkspace({section="command",initialClientId=null,openNewQuote=false}:{section?:Section;initialClientId?:string|null;openNewQuote?:boolean}){const{role}=useAccess();const[summary,setSummary]=useState(emptySummary),[leads,setLeads]=useState<SalesLead[]>([]),[opportunities,setOpportunities]=useState<SalesOpportunity[]>([]),[followUps,setFollowUps]=useState<SalesFollowUp[]>([]),[quotes,setQuotes]=useState<SalesQuote[]>([]),[sales,setSales]=useState<Sale[]>([]),[goals,setGoals]=useState<SalesGoal[]>([]),[commissions,setCommissions]=useState<Commission[]>([]),[handoffs,setHandoffs]=useState<SalesHandoff[]>([]),[catalog,setCatalog]=useState<CatalogItem[]>([]),[sources,setSources]=useState<Array<{id:string;code:string;name:string}>>([]),[users,setUsers]=useState<UserDirectoryItem[]>([]),[stages,setStages]=useState<SalesPipelineStage[]>([]),[events,setEvents]=useState<CommercialEvent[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[modal,setModal]=useState<"lead"|"opportunity"|"followup"|"quote"|"goal"|null>(openNewQuote&&section==="quotes"?"quote":null),[notice,setNotice]=useState("");
-const refresh=async()=>{setLoading(true);setError("");try{const scope=initialClientId?`&clientId=${encodeURIComponent(initialClientId)}`:"";const data=await Promise.all([commercialApi.summary(role),commercialApi.leads(role),commercialApi.opportunities(role,scope),commercialApi.followUps(role,scope),commercialApi.quotes(role,scope),commercialApi.sales(role,scope),commercialApi.goals(role),commercialApi.commissions(role),commercialApi.handoffs(role),commercialApi.catalog(role),commercialApi.sources(role),usersDirectoryApi.list(role),commercialApi.stages(role),commercialApi.activity(role)]);setSummary(data[0]);setLeads(data[1].items);setOpportunities(data[2].items);setFollowUps(data[3].items);setQuotes(data[4].items);setSales(data[5].items);setGoals(data[6]);setCommissions(data[7]);setHandoffs(data[8]);setCatalog(data[9]);setSources(data[10]);setUsers(data[11]);setStages(data[12]);setEvents(data[13]);}catch(e){setError(e instanceof Error?e.message:"No fue posible cargar Comercial.");}finally{setLoading(false);}};useEffect(()=>{void refresh();return subscribeToCommercial(()=>void refresh());},[role,initialClientId]);
-const title={command:"Sales Command Center",leads:"Lead Inbox",opportunities:"Oportunidades",pipeline:"Pipeline comercial", "follow-ups":"Sales Follow-up Center",quotes:"Cotizaciones",sales:"Ventas",goals:"Metas",commissions:"Comisiones",handoffs:"Handoff a Desarrollo"}[section];
-const open=section==="leads"?()=>setModal("lead"):section==="opportunities"?()=>setModal("opportunity"):section==="follow-ups"?()=>setModal("followup"):section==="quotes"?()=>setModal("quote"):section==="goals"?()=>setModal("goal"):undefined;
-return <main className="salesWorkspace">
-  <header className="salesHeader"><div><span>Comercial · Sales Operations</span><h1>{title}</h1><p>{section==="command"?"Prioridades reales, forecast y actividad del equipo en un solo lugar.":"Datos comerciales persistidos y conectados con Client 360."}</p></div><div><button onClick={()=>void refresh()} aria-label="Actualizar"><RefreshCw size={15}/></button>{open?<button className="salesPrimary" onClick={open}><Plus size={15}/>Nuevo</button>:null}</div></header>
-  <nav className="salesTabs" aria-label="Navegación comercial">{[["command","Centro"],["leads","Leads"],["opportunities","Oportunidades"],["pipeline","Pipeline"],["follow-ups","Seguimientos"],["quotes","Cotizaciones"],["sales","Ventas"],["goals","Metas"],["commissions","Comisiones"],["handoffs","Handoff"]].map(([id,label])=><Link className={section===id?"active":""} href={id==="command"?"/commercial":`/commercial/${id}`} key={id}>{label}</Link>)}</nav>
-  {error?<p className="salesError">{error}</p>:null}{notice?<p className="salesNotice">{notice}<button onClick={()=>setNotice("")}>×</button></p>:null}
-  {loading?<div className="salesLoading">Actualizando operación comercial…</div>:<>
-    {section==="command"?<Command summary={summary} events={events}/>:null}
-    {section==="leads"?<LeadInbox items={leads} roleAction={async(id,action,body)=>{const result=await commercialApi.leadAction(role,id,action,body);setNotice(action==="convert"?"Lead convertido en oportunidad.":"Lead actualizado.");await refresh();return result;}}/>:null}
-    {section==="opportunities"?<OpportunityList items={opportunities}/>:null}
-    {section==="pipeline"?<Pipeline items={opportunities} stages={stages} onMove={async(id,stageId,reason)=>{const before=opportunities;setOpportunities((all)=>all.map((i)=>i.id===id?{...i,stageId,stageName:stages.find((s)=>s.id===stageId)?.name??i.stageName}:i));try{await commercialApi.moveOpportunity(role,id,stageId,reason);await refresh();}catch(e){setOpportunities(before);setError(e instanceof Error?e.message:"No fue posible mover la oportunidad.");}}}/>:null}
-    {section==="follow-ups"?<FollowUpCenter items={followUps} onNext={()=>setModal("followup")} onComplete={async(id)=>{const outcome=window.prompt("Resultado del seguimiento");if(!outcome)return;await commercialApi.followUpAction(role,id,"complete",{outcome});await refresh();}} onReschedule={async(id)=>{const value=window.prompt("Nueva fecha y hora (AAAA-MM-DDTHH:mm)");if(!value)return;const date=new Date(value);if(Number.isNaN(date.getTime())){setError("Fecha de reprogramación inválida.");return;}await commercialApi.followUpAction(role,id,"reschedule",{scheduledAt:date.toISOString()});setNotice("Seguimiento reprogramado.");await refresh();}}/>:null}
-    {section==="quotes"?<QuoteCenter items={quotes} role={role} act={async(id,action,body={},idem=false)=>{try{const result=await commercialApi.quoteAction(role,id,action,body,idem);if(action==="preview"&&result.contentBase64){const bytes=Uint8Array.from(atob(result.contentBase64),(c)=>c.charCodeAt(0));const url=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));window.open(url,"_blank","noopener,noreferrer");window.setTimeout(()=>URL.revokeObjectURL(url),60000);}setNotice(`Acción ${action} completada.`);await refresh();return result;}catch(e){setError(e instanceof Error?e.message:"No fue posible ejecutar la acción.");return undefined;}}}/>:null}
-    {section==="sales"?<SalesCenter items={sales} summary={summary}/>:null}{section==="goals"?<GoalCenter items={goals}/>:null}{section==="commissions"?<CommissionCenter items={commissions}/>:null}
-    {section==="handoffs"?<HandoffCenter items={handoffs} sales={sales} create={async(body)=>{await commercialApi.handoffCreate(role,body);setNotice("Handoff creado y registrado en la actividad comercial.");await refresh();}}/>:null}
-  </>}
-  {modal==="lead"?<LeadForm sources={sources} users={users} close={()=>setModal(null)} save={async(b)=>{const result=await commercialApi.leadCreate(role,b);setNotice(result.warnings.join(" ")||"Lead creado.");setModal(null);await refresh();}}/>:null}
-  {modal==="opportunity"?<OpportunityForm leads={leads} users={users} close={()=>setModal(null)} save={async(b)=>{await commercialApi.opportunityCreate(role,b);setModal(null);setNotice("Oportunidad creada en el pipeline comercial.");await refresh();}}/>:null}
-  {modal==="followup"?<FollowUpForm leads={leads} opportunities={opportunities} close={()=>setModal(null)} save={async(b)=>{await commercialApi.followUpCreate(role,b);setModal(null);setNotice("Seguimiento agendado.");await refresh();}}/>:null}
-  {modal==="quote"?<QuoteWizard opportunities={opportunities} leads={leads} catalog={catalog} role={role} initialClientId={initialClientId} close={()=>setModal(null)} save={async(b)=>{const quote=await commercialApi.quoteCreate(role,b);setModal(null);setNotice(quote.status==="PENDING_APPROVAL"?"Cotización creada y enviada a aprobación por su descuento.":"Cotización creada en borrador.");await refresh();return quote;}}/>:null}
-  {modal==="goal"?<GoalForm close={()=>setModal(null)} save={async(b)=>{await commercialApi.goalCreate(role,b);setModal(null);await refresh();}}/>:null}
-</main>}
+import Link from "@control/components/routed-link";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type {
+  Client,
+  ClientContact,
+  CommercialEvent,
+  CommercialSummary,
+  Commission,
+  QuoteItem,
+  Role,
+  Sale,
+  SalesFollowUp,
+  SalesGoal,
+  SalesHandoff,
+  SalesLead,
+  SalesOpportunity,
+  SalesPipelineStage,
+  SalesQuote,
+  UserDirectoryItem,
+} from "@zyteron/contracts";
+import {
+  ArrowRight,
+  Building2,
+  CalendarClock,
+  Check,
+  ChevronRight,
+  CircleDollarSign,
+  Clock3,
+  FileText,
+  GripVertical,
+  Plus,
+  RefreshCw,
+  Send,
+  Target,
+  Trash2,
+  TrendingUp,
+  UserRound,
+  Users,
+  X,
+} from "lucide-react";
+import { useAccess } from "@control/components/access-context";
+import { QuotePaymentsButton } from "@control/components/finance/quote-payments";
+import { commercialApi } from "@control/lib/commercial-api";
+import { subscribeToCommercial } from "@control/lib/commercial-realtime";
+import { usersDirectoryApi } from "@control/lib/client-domain-api";
+import { clientsApi } from "@control/lib/clients-api";
+import { formatDate, formatDateTime } from "@control/lib/date-time";
+const money = (value: number, currency = "CLP") =>
+  new Intl.NumberFormat("es-CL", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: currency === "CLP" ? 0 : 2,
+  }).format(value);
+const emptySummary: CommercialSummary = {
+  newLeads: 0,
+  uncontactedLeads: 0,
+  overdueFollowUps: 0,
+  todayFollowUps: 0,
+  openOpportunities: 0,
+  staleOpportunities: 0,
+  pendingQuotes: 0,
+  expiringQuotes: 0,
+  approvalQuotes: 0,
+  monthSales: 0,
+  activePipeline: 0,
+  weightedPipeline: 0,
+  wonClients: 0,
+  lostOpportunities: 0,
+};
+type Section =
+  | "command"
+  | "leads"
+  | "opportunities"
+  | "pipeline"
+  | "follow-ups"
+  | "quotes"
+  | "sales"
+  | "goals"
+  | "commissions"
+  | "handoffs";
+type CatalogItem = {
+  id: string;
+  name: string;
+  code: string;
+  default_price: number | null;
+  currency: string;
+};
+export function CommercialWorkspace({
+  section = "command",
+  initialClientId = null,
+  openNewQuote = false,
+}: {
+  section?: Section;
+  initialClientId?: string | null;
+  openNewQuote?: boolean;
+}) {
+  const { role } = useAccess();
+  const [summary, setSummary] = useState(emptySummary),
+    [leads, setLeads] = useState<SalesLead[]>([]),
+    [opportunities, setOpportunities] = useState<SalesOpportunity[]>([]),
+    [followUps, setFollowUps] = useState<SalesFollowUp[]>([]),
+    [quotes, setQuotes] = useState<SalesQuote[]>([]),
+    [sales, setSales] = useState<Sale[]>([]),
+    [goals, setGoals] = useState<SalesGoal[]>([]),
+    [commissions, setCommissions] = useState<Commission[]>([]),
+    [handoffs, setHandoffs] = useState<SalesHandoff[]>([]),
+    [catalog, setCatalog] = useState<CatalogItem[]>([]),
+    [sources, setSources] = useState<Array<{ id: string; code: string; name: string }>>([]),
+    [users, setUsers] = useState<UserDirectoryItem[]>([]),
+    [stages, setStages] = useState<SalesPipelineStage[]>([]),
+    [events, setEvents] = useState<CommercialEvent[]>([]),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState(""),
+    [modal, setModal] = useState<"lead" | "opportunity" | "followup" | "quote" | "goal" | null>(
+      openNewQuote && section === "quotes" ? "quote" : null,
+    ),
+    [notice, setNotice] = useState("");
+  const [busyAction, setBusyAction] = useState(""),
+    [focusLeadId, setFocusLeadId] = useState("");
+  const actionLock = useRef(false);
+  const perform = async (key: string, task: () => Promise<unknown>, message: string) => {
+    if (actionLock.current) return undefined;
+    actionLock.current = true;
+    setBusyAction(key);
+    setError("");
+    setNotice("");
+    try {
+      const result = await task();
+      await refresh();
+      setNotice(message);
+      return result;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No fue posible guardar la operación.");
+      return undefined;
+    } finally {
+      actionLock.current = false;
+      setBusyAction("");
+    }
+  };
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const scope = initialClientId ? `&clientId=${encodeURIComponent(initialClientId)}` : "";
+      const data = await Promise.all([
+        commercialApi.summary(role),
+        commercialApi.leads(role),
+        commercialApi.opportunities(role, scope),
+        commercialApi.followUps(role, scope),
+        commercialApi.quotes(role, scope),
+        commercialApi.sales(role, scope),
+        commercialApi.goals(role),
+        commercialApi.commissions(role),
+        commercialApi.handoffs(role),
+        commercialApi.catalog(role),
+        commercialApi.sources(role),
+        usersDirectoryApi.list(role),
+        commercialApi.stages(role),
+        commercialApi.activity(role),
+      ]);
+      setSummary(data[0]);
+      setLeads(data[1].items);
+      setOpportunities(data[2].items);
+      setFollowUps(data[3].items);
+      setQuotes(data[4].items);
+      setSales(data[5].items);
+      setGoals(data[6]);
+      setCommissions(data[7]);
+      setHandoffs(data[8]);
+      setCatalog(data[9]);
+      setSources(data[10]);
+      setUsers(data[11]);
+      setStages(data[12]);
+      setEvents(data[13]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No fue posible cargar Comercial.");
+    } finally {
+      setLoading(false);
+    }
+  }, [role, initialClientId]);
+  useEffect(() => {
+    void refresh();
+    return subscribeToCommercial(() => void refresh());
+  }, [refresh]);
+  const title = {
+    command: "Sales Command Center",
+    leads: "Lead Inbox",
+    opportunities: "Oportunidades",
+    pipeline: "Pipeline comercial",
+    "follow-ups": "Sales Follow-up Center",
+    quotes: "Cotizaciones",
+    sales: "Ventas",
+    goals: "Metas",
+    commissions: "Comisiones",
+    handoffs: "Handoff a Desarrollo",
+  }[section];
+  const open =
+    section === "leads"
+      ? () => setModal("lead")
+      : section === "opportunities"
+        ? () => setModal("opportunity")
+        : section === "follow-ups"
+          ? () => setModal("followup")
+          : section === "quotes"
+            ? () => setModal("quote")
+            : section === "goals"
+              ? () => setModal("goal")
+              : undefined;
+  return (
+    <main className="salesWorkspace">
+      <header className="salesHeader">
+        <div>
+          <span>Comercial · Sales Operations</span>
+          <h1>{title}</h1>
+          <p>
+            {section === "command"
+              ? "Prioridades reales, forecast y actividad del equipo en un solo lugar."
+              : "Datos comerciales persistidos y conectados con Client 360."}
+          </p>
+        </div>
+        <div>
+          <button onClick={() => void refresh()} aria-label="Actualizar">
+            <RefreshCw size={15} />
+          </button>
+          {open ? (
+            <button className="salesPrimary" onClick={open}>
+              <Plus size={15} />
+              Nuevo
+            </button>
+          ) : null}
+        </div>
+      </header>
+      <nav className="salesTabs" aria-label="Navegación comercial">
+        {[
+          ["command", "Centro"],
+          ["leads", "Leads"],
+          ["opportunities", "Oportunidades"],
+          ["pipeline", "Pipeline"],
+          ["follow-ups", "Seguimientos"],
+          ["quotes", "Cotizaciones"],
+          ["sales", "Ventas"],
+          ["goals", "Metas"],
+          ["commissions", "Comisiones"],
+          ["handoffs", "Handoff"],
+        ].map(([id, label]) => (
+          <Link
+            className={section === id ? "active" : ""}
+            href={id === "command" ? "/commercial" : `/commercial/${id}`}
+            key={id}
+          >
+            {label}
+          </Link>
+        ))}
+      </nav>
+      {error ? (
+        <p className="salesError" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {notice ? (
+        <p className="salesNotice" role="status">
+          {notice}
+          <button onClick={() => setNotice("")}>×</button>
+        </p>
+      ) : null}
+      {loading ? (
+        <div className="salesLoading">Actualizando operación comercial…</div>
+      ) : (
+        <>
+          {section === "command" ? <Command summary={summary} events={events} /> : null}
+          {section === "leads" ? (
+            <LeadInbox
+              items={leads}
+              busy={Boolean(busyAction)}
+              focusLeadId={focusLeadId}
+              roleAction={async (id, action, body) => {
+                const result = await perform(
+                  `${id}:${action}`,
+                  () => commercialApi.leadAction(role, id, action, body),
+                  action === "convert"
+                    ? "Lead convertido en oportunidad. Puedes continuar en Oportunidades o Pipeline."
+                    : "Lead calificado. Ya puedes convertirlo en oportunidad.",
+                );
+                if (result) setFocusLeadId(id);
+                return result;
+              }}
+            />
+          ) : null}
+          {section === "opportunities" ? <OpportunityList items={opportunities} /> : null}
+          {section === "pipeline" ? (
+            <Pipeline
+              items={opportunities}
+              stages={stages}
+              onMove={async (id, stageId, reason) => {
+                const before = opportunities;
+                setOpportunities((all) =>
+                  all.map((i) =>
+                    i.id === id
+                      ? {
+                          ...i,
+                          stageId,
+                          stageName: stages.find((s) => s.id === stageId)?.name ?? i.stageName,
+                        }
+                      : i,
+                  ),
+                );
+                try {
+                  await commercialApi.moveOpportunity(role, id, stageId, reason);
+                  await refresh();
+                } catch (e) {
+                  setOpportunities(before);
+                  setError(e instanceof Error ? e.message : "No fue posible mover la oportunidad.");
+                }
+              }}
+            />
+          ) : null}
+          {section === "follow-ups" ? (
+            <FollowUpCenter
+              items={followUps}
+              onNext={() => setModal("followup")}
+              onComplete={async (id) => {
+                const outcome = window.prompt("Resultado del seguimiento");
+                if (!outcome) return;
+                await commercialApi.followUpAction(role, id, "complete", { outcome });
+                await refresh();
+              }}
+              onReschedule={async (id) => {
+                const value = window.prompt("Nueva fecha y hora (AAAA-MM-DDTHH:mm)");
+                if (!value) return;
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) {
+                  setError("Fecha de reprogramación inválida.");
+                  return;
+                }
+                await commercialApi.followUpAction(role, id, "reschedule", {
+                  scheduledAt: date.toISOString(),
+                });
+                setNotice("Seguimiento reprogramado.");
+                await refresh();
+              }}
+            />
+          ) : null}
+          {section === "quotes" ? (
+            <QuoteCenter
+              items={quotes}
+              role={role}
+              busy={Boolean(busyAction)}
+              act={async (id, action, body = {}, idem = false) =>
+                perform(
+                  `${id}:${action}`,
+                  async () => {
+                    const result = await commercialApi.quoteAction(role, id, action, body, idem);
+                    if (
+                      action === "convert-to-client" &&
+                      result.portalPreparation === "REVIEW_REQUIRED"
+                    )
+                      throw Error(
+                        "El cliente fue creado, pero su vinculación con la cuenta del portal necesita revisión en Clientes.",
+                      );
+                    if (action === "preview") {
+                      if (!result.contentBase64) throw Error("El documento no está disponible.");
+                      const bytes = Uint8Array.from(atob(result.contentBase64), (c) =>
+                        c.charCodeAt(0),
+                      );
+                      const url = URL.createObjectURL(
+                        new Blob([bytes], { type: "application/pdf" }),
+                      );
+                      const link = document.createElement("a");
+                      link.href = url;
+                      link.download = result.filename || "cotizacion.pdf";
+                      document.body.appendChild(link);
+                      link.click();
+                      link.remove();
+                      window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+                    }
+                    return result;
+                  },
+                  {
+                    preview: "Borrador PDF descargado.",
+                    duplicate: "Copia creada en borrador, sin pagos ni cobros heredados.",
+                    version: "Nueva propuesta creada en borrador.",
+                    "convert-to-contract":
+                      "Contrato en borrador disponible en Clientes → Contratos.",
+                    "convert-to-work-order":
+                      "Orden de trabajo disponible en Operaciones → Órdenes de trabajo.",
+                    "submit-approval": "Cotización enviada a aprobación.",
+                    approve: "Cotización aprobada.",
+                    pdf: "Documento aprobado generado.",
+                    send: "Cotización enviada y registrada.",
+                    cancel: "Cotización cancelada.",
+                    reject: "Cotización rechazada.",
+                    decline: "Rechazo del cliente registrado.",
+                  }[action] || "Cambio guardado.",
+                )
+              }
+            />
+          ) : null}
+          {section === "sales" ? <SalesCenter items={sales} summary={summary} /> : null}
+          {section === "goals" ? <GoalCenter items={goals} /> : null}
+          {section === "commissions" ? <CommissionCenter items={commissions} /> : null}
+          {section === "handoffs" ? (
+            <HandoffCenter
+              items={handoffs}
+              sales={sales}
+              create={async (body) => {
+                await commercialApi.handoffCreate(role, body);
+                setNotice("Handoff creado y registrado en la actividad comercial.");
+                await refresh();
+              }}
+            />
+          ) : null}
+        </>
+      )}
+      {modal === "lead" ? (
+        <LeadForm
+          sources={sources}
+          users={users}
+          close={() => setModal(null)}
+          save={async (b) => {
+            const result = await commercialApi.leadCreate(role, b);
+            setNotice(result.warnings.join(" ") || "Lead creado.");
+            setModal(null);
+            await refresh();
+          }}
+        />
+      ) : null}
+      {modal === "opportunity" ? (
+        <OpportunityForm
+          leads={leads}
+          users={users}
+          close={() => setModal(null)}
+          save={async (b) => {
+            await commercialApi.opportunityCreate(role, b);
+            setModal(null);
+            setNotice("Oportunidad creada en el pipeline comercial.");
+            await refresh();
+          }}
+        />
+      ) : null}
+      {modal === "followup" ? (
+        <FollowUpForm
+          leads={leads}
+          opportunities={opportunities}
+          close={() => setModal(null)}
+          save={async (b) => {
+            await commercialApi.followUpCreate(role, b);
+            setModal(null);
+            setNotice("Seguimiento agendado.");
+            await refresh();
+          }}
+        />
+      ) : null}
+      {modal === "quote" ? (
+        <QuoteWizard
+          opportunities={opportunities}
+          leads={leads}
+          catalog={catalog}
+          role={role}
+          initialClientId={initialClientId}
+          close={() => setModal(null)}
+          save={async (b) => {
+            const quote = await commercialApi.quoteCreate(role, b);
+            setModal(null);
+            setNotice(
+              quote.status === "PENDING_APPROVAL"
+                ? "Cotización creada y enviada a aprobación por su descuento."
+                : "Cotización creada en borrador.",
+            );
+            await refresh();
+            return quote;
+          }}
+        />
+      ) : null}
+      {modal === "goal" ? (
+        <GoalForm
+          close={() => setModal(null)}
+          save={async (b) => {
+            await commercialApi.goalCreate(role, b);
+            setModal(null);
+            await refresh();
+          }}
+        />
+      ) : null}
+    </main>
+  );
+}
 
-function Command({summary:s,events}:{summary:CommercialSummary;events:CommercialEvent[]}){const metrics=[
-  {label:"Leads nuevos",value:s.newLeads,href:"/commercial/leads?status=NEW",icon:Users},
-  {label:"Leads sin contactar",value:s.uncontactedLeads,href:"/commercial/leads?view=uncontacted",icon:Users},
-  {label:"Seguimientos vencidos",value:s.overdueFollowUps,href:"/commercial/follow-ups?status=OVERDUE",icon:Clock3},
-  {label:"Seguimientos de hoy",value:s.todayFollowUps,href:"/commercial/follow-ups?view=today",icon:CalendarClock},
-  {label:"Oportunidades abiertas",value:s.openOpportunities,href:"/commercial/opportunities?status=OPEN",icon:Target},
-  {label:"Oportunidades detenidas",value:s.staleOpportunities,href:"/commercial/opportunities?view=stale",icon:Clock3},
-  {label:"Cotizaciones pendientes",value:s.pendingQuotes,href:"/commercial/quotes?view=pending",icon:FileText},
-  {label:"Cotizaciones por vencer",value:s.expiringQuotes,href:"/commercial/quotes?view=expiring",icon:CalendarClock},
-  {label:"Esperando aprobación",value:s.approvalQuotes,href:"/commercial/quotes?status=PENDING_APPROVAL",icon:FileText},
-  {label:"Ventas del mes",value:money(s.monthSales),href:"/commercial/sales",icon:CircleDollarSign},
-  {label:"Pipeline activo",value:money(s.activePipeline),href:"/commercial/pipeline",icon:TrendingUp},
-  {label:"Pipeline ponderado",value:money(s.weightedPipeline),href:"/commercial/pipeline",icon:TrendingUp},
-  {label:"Clientes ganados",value:s.wonClients,href:"/commercial/sales",icon:Check},
-  {label:"Oportunidades perdidas",value:s.lostOpportunities,href:"/commercial/opportunities?status=LOST",icon:X},
-];return <><section className="salesHero"><div><small>QUÉ DEBE HACER VENTAS HOY</small><h2>{s.overdueFollowUps?`${s.overdueFollowUps} seguimientos requieren atención`:(s.uncontactedLeads?`${s.uncontactedLeads} leads esperan primer contacto`:"Operación comercial al día")}</h2><p>Pipeline activo {money(s.activePipeline)} · Forecast ponderado {money(s.weightedPipeline)}</p></div><Link href="/commercial/follow-ups">Abrir agenda <ArrowRight size={16}/></Link></section><section className="salesQuickActions"><span>Acciones rápidas</span><Link href="/commercial/leads">Nuevo lead</Link><Link href="/commercial/opportunities">Nueva oportunidad</Link><Link href="/commercial/quotes">Nueva cotización</Link><Link href="/commercial/follow-ups">Nuevo seguimiento</Link></section><section className="salesMetricGrid">{metrics.map(({label,value,href,icon:Icon})=><Link href={href} key={label}><Icon size={18}/><span>{label}</span><strong>{value}</strong><ChevronRight size={14}/></Link>)}</section><section className="salesCommandGrid"><article><header><div><span>Conversión y forecast</span><h3>Estado de la operación</h3></div><TrendingUp size={19}/></header><dl><div><dt>Oportunidades abiertas</dt><dd>{s.openOpportunities}</dd></div><div><dt>Pipeline ponderado</dt><dd>{money(s.weightedPipeline)}</dd></div><div><dt>Cotizaciones vigentes</dt><dd>{s.pendingQuotes}</dd></div><div><dt>Clientes ganados</dt><dd>{s.wonClients}</dd></div><div><dt>Oportunidades perdidas</dt><dd>{s.lostOpportunities}</dd></div></dl></article><article><header><div><span>Actividad comercial</span><h3>Últimos eventos</h3></div><CalendarClock size={19}/></header>{events.length?<div className="salesActivity">{events.slice(0,8).map((e)=><div key={e.id}><i/><span><strong>{e.eventType.replaceAll("_"," ")}</strong><small>{e.aggregateType}</small></span><time>{formatDateTime(e.occurredAt)}</time></div>)}</div>:<Empty title="Sin actividad todavía" text="Los eventos aparecerán al trabajar leads, oportunidades y cotizaciones."/>}</article></section></>}
-function LeadInbox({items,roleAction}:{items:SalesLead[];roleAction:(id:string,action:string,body?:unknown)=>Promise<unknown>}) {
-  const columns=["NEW","ASSIGNED","CONTACT_PENDING","CONTACTED","QUALIFYING","QUALIFIED","DISQUALIFIED","CONVERTED"] as const;
-  return <section className="leadInbox">{columns.map((status)=>{
-    const current=items.filter((item)=>item.status===status);
-    return <article key={status}><header><span>{status.replaceAll("_"," ")}</span><b>{current.length}</b></header>{current.length>0?current.map((lead)=><div className="leadCard" key={lead.id}><small>{lead.sourceName||"Origen no informado"}</small><h3>{lead.companyName}</h3><p>{lead.contactName}</p><p>{lead.email||lead.phone||lead.whatsapp}</p><footer>{lead.status!=="QUALIFIED"&&lead.status!=="CONVERTED"&&lead.status!=="DISQUALIFIED"?<button onClick={()=>{void roleAction(lead.id,"qualify");}}>Calificar</button>:null}{lead.status==="QUALIFIED"?<button onClick={()=>{void roleAction(lead.id,"convert",{});}}>Convertir</button>:null}</footer></div>):<Empty title="Sin leads" text={"No existen leads en "+status.toLowerCase()+"."}/>}</article>;
-  })}</section>;
+function Command({
+  summary: s,
+  events,
+}: {
+  summary: CommercialSummary;
+  events: CommercialEvent[];
+}) {
+  const metrics = [
+    { label: "Leads nuevos", value: s.newLeads, href: "/commercial/leads?status=NEW", icon: Users },
+    {
+      label: "Leads sin contactar",
+      value: s.uncontactedLeads,
+      href: "/commercial/leads?view=uncontacted",
+      icon: Users,
+    },
+    {
+      label: "Seguimientos vencidos",
+      value: s.overdueFollowUps,
+      href: "/commercial/follow-ups?status=OVERDUE",
+      icon: Clock3,
+    },
+    {
+      label: "Seguimientos de hoy",
+      value: s.todayFollowUps,
+      href: "/commercial/follow-ups?view=today",
+      icon: CalendarClock,
+    },
+    {
+      label: "Oportunidades abiertas",
+      value: s.openOpportunities,
+      href: "/commercial/opportunities?status=OPEN",
+      icon: Target,
+    },
+    {
+      label: "Oportunidades detenidas",
+      value: s.staleOpportunities,
+      href: "/commercial/opportunities?view=stale",
+      icon: Clock3,
+    },
+    {
+      label: "Cotizaciones pendientes",
+      value: s.pendingQuotes,
+      href: "/commercial/quotes?view=pending",
+      icon: FileText,
+    },
+    {
+      label: "Cotizaciones por vencer",
+      value: s.expiringQuotes,
+      href: "/commercial/quotes?view=expiring",
+      icon: CalendarClock,
+    },
+    {
+      label: "Esperando aprobación",
+      value: s.approvalQuotes,
+      href: "/commercial/quotes?status=PENDING_APPROVAL",
+      icon: FileText,
+    },
+    {
+      label: "Ventas del mes",
+      value: money(s.monthSales),
+      href: "/commercial/sales",
+      icon: CircleDollarSign,
+    },
+    {
+      label: "Pipeline activo",
+      value: money(s.activePipeline),
+      href: "/commercial/pipeline",
+      icon: TrendingUp,
+    },
+    {
+      label: "Pipeline ponderado",
+      value: money(s.weightedPipeline),
+      href: "/commercial/pipeline",
+      icon: TrendingUp,
+    },
+    { label: "Clientes ganados", value: s.wonClients, href: "/commercial/sales", icon: Check },
+    {
+      label: "Oportunidades perdidas",
+      value: s.lostOpportunities,
+      href: "/commercial/opportunities?status=LOST",
+      icon: X,
+    },
+  ];
+  return (
+    <>
+      <section className="salesHero">
+        <div>
+          <small>QUÉ DEBE HACER VENTAS HOY</small>
+          <h2>
+            {s.overdueFollowUps
+              ? `${s.overdueFollowUps} seguimientos requieren atención`
+              : s.uncontactedLeads
+                ? `${s.uncontactedLeads} leads esperan primer contacto`
+                : "Operación comercial al día"}
+          </h2>
+          <p>
+            Pipeline activo {money(s.activePipeline)} · Forecast ponderado{" "}
+            {money(s.weightedPipeline)}
+          </p>
+        </div>
+        <Link href="/commercial/follow-ups">
+          Abrir agenda <ArrowRight size={16} />
+        </Link>
+      </section>
+      <section className="salesQuickActions">
+        <span>Acciones rápidas</span>
+        <Link href="/commercial/leads">Nuevo lead</Link>
+        <Link href="/commercial/opportunities">Nueva oportunidad</Link>
+        <Link href="/commercial/quotes">Nueva cotización</Link>
+        <Link href="/commercial/follow-ups">Nuevo seguimiento</Link>
+      </section>
+      <section className="salesMetricGrid">
+        {metrics.map(({ label, value, href, icon: Icon }) => (
+          <Link href={href} key={label}>
+            <Icon size={18} />
+            <span>{label}</span>
+            <strong>{value}</strong>
+            <ChevronRight size={14} />
+          </Link>
+        ))}
+      </section>
+      <section className="salesCommandGrid">
+        <article>
+          <header>
+            <div>
+              <span>Conversión y forecast</span>
+              <h3>Estado de la operación</h3>
+            </div>
+            <TrendingUp size={19} />
+          </header>
+          <dl>
+            <div>
+              <dt>Oportunidades abiertas</dt>
+              <dd>{s.openOpportunities}</dd>
+            </div>
+            <div>
+              <dt>Pipeline ponderado</dt>
+              <dd>{money(s.weightedPipeline)}</dd>
+            </div>
+            <div>
+              <dt>Cotizaciones vigentes</dt>
+              <dd>{s.pendingQuotes}</dd>
+            </div>
+            <div>
+              <dt>Clientes ganados</dt>
+              <dd>{s.wonClients}</dd>
+            </div>
+            <div>
+              <dt>Oportunidades perdidas</dt>
+              <dd>{s.lostOpportunities}</dd>
+            </div>
+          </dl>
+        </article>
+        <article>
+          <header>
+            <div>
+              <span>Actividad comercial</span>
+              <h3>Últimos eventos</h3>
+            </div>
+            <CalendarClock size={19} />
+          </header>
+          {events.length ? (
+            <div className="salesActivity">
+              {events.slice(0, 8).map((e) => (
+                <div key={e.id}>
+                  <i />
+                  <span>
+                    <strong>{e.eventType.replaceAll("_", " ")}</strong>
+                    <small>{e.aggregateType}</small>
+                  </span>
+                  <time>{formatDateTime(e.occurredAt)}</time>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Empty
+              title="Sin actividad todavía"
+              text="Los eventos aparecerán al trabajar leads, oportunidades y cotizaciones."
+            />
+          )}
+        </article>
+      </section>
+    </>
+  );
 }
-function OpportunityList({items}:{items:SalesOpportunity[]}){return items.length?<section className="salesList">{items.map((i)=><article key={i.id}><div className="salesListMark"><Target size={17}/></div><div><small>{i.stageName||"Pipeline"}</small><h3>{i.company} · {i.name}</h3><p>Próxima acción {formatDateTime(i.nextActionAt)} · Cierre {formatDate(i.expectedCloseDate)}</p></div><strong>{money(i.estimatedValue,i.currency)}</strong><span>{i.probability}%</span></article>)}</section>:<Empty title="No hay oportunidades" text="Convierte un lead calificado para abrir una oportunidad real."/>}
-function Pipeline({items,stages,onMove}:{items:SalesOpportunity[];stages:SalesPipelineStage[];onMove:(id:string,stageId:string,reason?:string)=>Promise<void>}){return <section className="salesPipeline">{stages.map((stage)=><article key={stage.id} onDragOver={(e)=>e.preventDefault()} onDrop={(e)=>{const id=e.dataTransfer.getData("opportunity");if(!id)return;const reason=stage.kind==="LOST"?window.prompt("Motivo de pérdida")||undefined:undefined;if(stage.kind==="LOST"&&!reason)return;void onMove(id,stage.id,reason);}}><header><span>{stage.name}</span><b>{items.filter((i)=>i.stageId===stage.id).length}</b></header>{items.filter((i)=>i.stageId===stage.id).map((i)=><div draggable onDragStart={(e)=>e.dataTransfer.setData("opportunity",i.id)} className="opportunityCard" key={i.id}><GripVertical size={13}/><small>{i.company}</small><h3>{i.name}</h3><strong>{money(i.estimatedValue,i.currency)}</strong><p>{i.probability}% · cierre {formatDate(i.expectedCloseDate)}</p><label>Mover de etapa<select aria-label={`Mover ${i.name}`} value={i.stageId} onChange={(e)=>{const next=stages.find((s)=>s.id===e.target.value);const reason=next?.kind==="LOST"?window.prompt("Motivo de pérdida")||undefined:undefined;if(next?.kind==="LOST"&&!reason)return;void onMove(i.id,e.target.value,reason);}}>{stages.map((s)=><option value={s.id} key={s.id}>{s.name}</option>)}</select></label></div>)}</article>)}</section>}
-function FollowUpCenter({items,onComplete,onReschedule,onNext}:{items:SalesFollowUp[];onComplete:(id:string)=>Promise<void>;onReschedule:(id:string)=>Promise<void>;onNext:()=>void}){const groups=[{id:"OVERDUE",label:"Vencidos"},{id:"TODAY",label:"Hoy"},{id:"UPCOMING",label:"Próximos"},{id:"COMPLETED",label:"Completados"}];const today=new Date().toISOString().slice(0,10);return <section className="followUpAgenda">{groups.map((g)=>{const current=items.filter((i)=>g.id==="OVERDUE"?i.status==="OVERDUE":g.id==="TODAY"?i.status==="PENDING"&&i.scheduledAt.startsWith(today):g.id==="UPCOMING"?i.status==="PENDING"&&!i.scheduledAt.startsWith(today):i.status==="COMPLETED");return <article key={g.id}><header><span>{g.label}</span><b>{current.length}</b></header>{current.length?current.map((i)=><div className="followUpCard" key={i.id}><span>{i.type}</span><h3>{i.title}</h3><time>{formatDateTime(i.scheduledAt)}</time><p>{i.description||"Sin descripción adicional"}</p>{i.status!=="COMPLETED"?<div className="followUpActions"><button onClick={()=>void onComplete(i.id)}><Check size={13}/>Completar</button><button onClick={()=>void onReschedule(i.id)}>Reprogramar</button></div>:<div className="followUpActions"><small>{i.outcome}</small><button onClick={onNext}>Crear siguiente</button></div>}</div>):<Empty title={`Sin ${g.label.toLowerCase()}`} text="No hay acciones en esta vista."/>}</article>})}</section>}
-function QuoteCenter({items,role,act}:{items:SalesQuote[];role:string;act:(id:string,action:string,body?:unknown,idem?:boolean)=>Promise<unknown>}){const canManage=["GERENTE_GENERAL","COMERCIAL","JEFE_VENTAS"].includes(role);return items.length?<section className="quoteGrid">{items.map((q)=><article key={q.id}><header><div><small>{q.quoteNumber} · V{q.version}</small><h3>{q.companyName}</h3></div><span>{q.status.replaceAll("_"," ")}</span></header><p>{q.items.length} servicios · Vigencia {formatDate(q.validUntil)}</p><strong>{money(q.totalAmount,q.currency)}</strong><footer>
-  <button title="Abre un borrador con marca de agua, sin emitirlo" onClick={()=>void act(q.id,"preview")}><FileText size={13}/>Ver borrador PDF</button>
-  {q.status==="DRAFT"?<button onClick={()=>void act(q.id,"submit-approval")}>Enviar aprobación</button>:null}
-  {q.status==="PENDING_APPROVAL"&&canManage?<><button onClick={()=>void act(q.id,"approve")}>Aprobar</button><button onClick={()=>{const reason=window.prompt("Motivo de rechazo");if(reason)void act(q.id,"reject",{reason});}}>Rechazar</button></>:null}
-  {q.status==="APPROVED"?<button className="quoteIssuePdf" title="Registra la versión aprobada en Documentos" onClick={()=>void act(q.id,"pdf")}><FileText size={13}/>Emitir PDF final</button>:null}
-  {q.status==="READY_TO_SEND"?<button disabled={!q.contactEmail} title={!q.contactEmail?"La cotización no tiene email receptor":undefined} onClick={()=>void act(q.id,"send",{to:q.contactEmail},true)}><Send size={13}/>Enviar</button>:null}
-  {["SENT","NEGOTIATING"].includes(q.status)&&canManage?<button onClick={()=>void act(q.id,"accept",{},true)}>Aceptar</button>:null}
-  {["SENT","NEGOTIATING"].includes(q.status)?<button onClick={()=>{const reason=window.prompt("Motivo del rechazo del cliente");if(reason)void act(q.id,"decline",{reason});}}>Declinar</button>:null}
-  {["SENT","NEGOTIATING","REJECTED","EXPIRED"].includes(q.status)?<button onClick={()=>void act(q.id,"version")}>Nueva versión</button>:null}
-  <button onClick={()=>void act(q.id,"duplicate")}>Duplicar</button>
-  {["DRAFT","PENDING_APPROVAL","APPROVED","READY_TO_SEND","SENT","NEGOTIATING"].includes(q.status)?<button onClick={()=>{if(window.confirm("¿Cancelar esta cotización?"))void act(q.id,"cancel");}}>Cancelar</button>:null}
-  {q.status==="ACCEPTED"&&!q.clientId&&canManage?<button onClick={()=>{const rut=window.prompt("RUT del nuevo cliente (con dígito verificador)");if(!rut)return;void act(q.id,"convert-to-client",{legalName:q.companyName,tradeName:q.companyName,rut,country:"Chile",generalEmail:q.contactEmail||undefined,source:"SALES",status:"ONBOARDING"});}}>Crear cliente</button>:null}
-  {q.status==="ACCEPTED"&&q.clientId&&canManage?<button onClick={()=>void act(q.id,"convert-to-contract")}>Crear contrato</button>:null}
-  {q.status==="ACCEPTED"&&q.clientId&&canManage?<button onClick={()=>void act(q.id,"convert-to-work-order",{},true)}>Crear OT</button>:null}
-  {["ACCEPTED","CONVERTED"].includes(q.status)?<QuotePaymentsButton quoteId={q.id} quoteNumber={q.quoteNumber} role={role}/>:null}
-</footer></article>)}</section>:<Empty title="No existen cotizaciones" text="Crea una cotización desde una oportunidad, un cliente o un lead y agrega los servicios reales."/>}
-function SalesCenter({items,summary}:{items:Sale[];summary:CommercialSummary}){return <><section className="salesStrip"><div><small>Ventas del mes</small><strong>{money(summary.monthSales)}</strong></div><div><small>Clientes ganados</small><strong>{summary.wonClients}</strong></div><div><small>Conversión</small><strong>{items.length?"Con datos":"—"}</strong></div></section>{items.length?<section className="salesList">{items.map((i)=><article key={i.id}><div className="salesListMark"><CircleDollarSign size={17}/></div><div><small>Venta ganada · {formatDate(i.closedAt)}</small><h3>{i.clientId?`Cliente ${i.clientId.slice(0,8)}`:"Prospecto pendiente de convertir"}</h3><p>Cotización {i.quoteId.slice(0,8)} · OT {i.workOrderId?i.workOrderId.slice(0,8):"pendiente"}</p></div><strong>{money(i.amount,i.currency)}</strong></article>)}</section>:<Empty title="Aún no hay ventas" text="Una venta se crea únicamente después de verificar un pago efectivo mediante el flujo controlado."/>}</>}
-function GoalCenter({items}:{items:SalesGoal[]}){return items.length?<section className="goalGrid">{items.map((g)=>{const p=Math.min(100,g.target?g.actual/g.target*100:0);return <article key={g.id}><Target size={18}/><small>{g.goalType.replaceAll("_"," ")} · {g.periodType}</small><h3>{g.actual.toLocaleString("es-CL")} / {g.target.toLocaleString("es-CL")}</h3><div><i style={{width:`${p}%`}}/></div><p>{p.toFixed(1)}% de cumplimiento · {formatDate(g.periodEnd)}</p></article>})}</section>:<Empty title="No hay metas configuradas" text="Gerencia o Jefatura de Ventas puede crear la primera meta."/>}
-function CommissionCenter({items}:{items:Commission[]}){return items.length?<section className="salesList">{items.map((i)=><article key={i.id}><div className="salesListMark"><CircleDollarSign size={17}/></div><div><small>{i.status}</small><h3>{money(i.amount,i.currency)}</h3><p>Venta {i.saleId.slice(0,8)} · No se considera pagada hasta confirmación de Finanzas.</p></div></article>)}</section>:<Empty title="No hay comisiones calculadas" text="Las reglas configuradas se aplicarán a ventas reales; el pago depende del evento de Finanzas."/>}
-function HandoffCenter({items,sales,create}:{items:SalesHandoff[];sales:Sale[];create:(body:Partial<SalesHandoff>)=>Promise<void>}){const available=sales.filter((sale)=>sale.workOrderId&&!items.some((handoff)=>handoff.saleId===sale.id));return <><section className="handoffIntro"><div><small>COMERCIAL → DESARROLLO</small><h2>Entrega controlada del alcance vendido</h2><p>La OT, el cliente y la versión aceptada quedan enlazados. Riesgos y compromisos no se pierden en mensajes informales.</p></div>{available.length?<button className="salesPrimary" onClick={()=>{const sale=available[0];if(!sale)return;const scope=window.prompt("Alcance comprometido para Desarrollo");if(!scope)return;const committedDeadline=window.prompt("Fecha comprometida (AAAA-MM-DD)")||null;const risks=window.prompt("Riesgos identificados")||null;const dependencies=window.prompt("Dependencias")||null;void create({saleId:sale.id,clientId:sale.clientId,quoteId:sale.quoteId,workOrderId:sale.workOrderId,status:"READY",scope,committedDeadline,risks,dependencies});}}><Plus size={14}/>Crear handoff</button>:null}</section>{items.length?<section className="salesList">{items.map((i)=><article key={i.id}><div className="salesListMark"><ArrowRight size={17}/></div><div><small>{i.status} · Venta {i.saleId.slice(0,8)}</small><h3>{i.scope}</h3><p>Plazo {formatDate(i.committedDeadline)} · OT {i.workOrderId?.slice(0,8)||"sin OT"}</p>{i.risks?<p>Riesgos: {i.risks}</p>:null}</div><span>{i.status}</span></article>)}</section>:<Empty title="No hay handoffs pendientes" text={available.length?"Hay ventas listas para documentar y entregar a Desarrollo.":"Se habilitará cuando una venta aceptada tenga cliente y OT real."}/>}</>}
-function Empty({title,text}:{title:string;text:string}){return <div className="salesEmpty"><span>·</span><strong>{title}</strong><p>{text}</p></div>}
-function Modal({title,close,children}:{title:string;close:()=>void;children:React.ReactNode}){return <div className="domainModal"><div><button className="modalClose" onClick={close} aria-label="Cerrar"><X size={17}/></button><span>Sales Operations</span><h2>{title}</h2>{children}</div></div>}
-function LeadForm({sources,users,close,save}:{sources:Array<{id:string;code:string;name:string}>;users:UserDirectoryItem[];close:()=>void;save:(b:Partial<SalesLead>)=>Promise<void>}){const[b,set]=useState<Partial<SalesLead>>({companyName:"",contactName:"",email:"",phone:"",whatsapp:"",website:"",interest:"",notes:"",status:"NEW"}),[busy,setBusy]=useState(false);const salesUsers=users.filter((user)=>user.role&&["GERENTE_GENERAL","JEFE_VENTAS","EJECUTIVA_VENTAS","COMERCIAL"].includes(user.role));return <Modal title="Nuevo lead" close={close}><form className="salesForm" onSubmit={async(e)=>{e.preventDefault();setBusy(true);try{await save(b);}finally{setBusy(false);}}}><label>Empresa<input required value={b.companyName} onChange={(e)=>set({...b,companyName:e.target.value})}/></label><label>Contacto<input required value={b.contactName} onChange={(e)=>set({...b,contactName:e.target.value})}/></label><label>Email<input type="email" value={b.email||""} onChange={(e)=>set({...b,email:e.target.value})}/></label><label>Teléfono<input value={b.phone||""} onChange={(e)=>set({...b,phone:e.target.value})}/></label><label>WhatsApp<input value={b.whatsapp||""} onChange={(e)=>set({...b,whatsapp:e.target.value})}/></label><label>Sitio web<input type="url" value={b.website||""} onChange={(e)=>set({...b,website:e.target.value})}/></label><label>Origen<select value={b.sourceId||""} onChange={(e)=>set({...b,sourceId:e.target.value||null})}><option value="">Sin informar</option>{sources.map((source)=><option value={source.id} key={source.id}>{source.name}</option>)}</select></label><label>Ejecutiva responsable<select value={b.assignedTo||""} onChange={(e)=>set({...b,assignedTo:e.target.value||null})}><option value="">Sin asignar</option>{salesUsers.map((user)=><option value={user.id} key={user.id}>{user.name} · {user.role}</option>)}</select></label><label className="wide">Servicio de interés<input value={b.interest||""} onChange={(e)=>set({...b,interest:e.target.value})}/></label><label className="wide">Descripción de la necesidad<textarea value={b.notes||""} onChange={(e)=>set({...b,notes:e.target.value})}/></label><label className="wide">Próximo seguimiento<input type="datetime-local" onChange={(e)=>set({...b,nextActionAt:e.target.value?new Date(e.target.value).toISOString():null})}/></label><footer><button type="button" onClick={close}>Cancelar</button><button className="salesPrimary" disabled={busy}>{busy?"Guardando…":"Crear lead"}</button></footer></form></Modal>}
-function OpportunityForm({leads,users,close,save}:{leads:SalesLead[];users:UserDirectoryItem[];close:()=>void;save:(body:Partial<SalesOpportunity>)=>Promise<void>}){const[b,set]=useState<Partial<SalesOpportunity>>({company:"",name:"",estimatedValue:0,currency:"CLP"}),[busy,setBusy]=useState(false);const selectable=leads.filter((lead)=>lead.status!=="CONVERTED"&&lead.status!=="DISQUALIFIED");return <Modal title="Nueva oportunidad" close={close}><form className="salesForm" onSubmit={async(e)=>{e.preventDefault();setBusy(true);try{await save(b);}finally{setBusy(false);}}}><label className="wide">Lead relacionado<select required value={b.leadId||""} onChange={(e)=>{const lead=leads.find((item)=>item.id===e.target.value);set({...b,leadId:lead?.id||null,clientId:lead?.clientId||null,company:lead?.companyName||"",name:lead?.interest||`Oportunidad ${lead?.companyName||""}`,ownerId:lead?.assignedTo||null});}}><option value="">Seleccionar lead</option>{selectable.map((lead)=><option value={lead.id} key={lead.id}>{lead.companyName} · {lead.contactName}</option>)}</select></label><label>Empresa<input required value={b.company||""} onChange={(e)=>set({...b,company:e.target.value})}/></label><label>Oportunidad<input required value={b.name||""} onChange={(e)=>set({...b,name:e.target.value})}/></label><label>Valor estimado<input required min="0" type="number" value={b.estimatedValue||0} onChange={(e)=>set({...b,estimatedValue:Number(e.target.value)})}/></label><label>Moneda<select value={b.currency} onChange={(e)=>set({...b,currency:e.target.value as SalesOpportunity["currency"]})}><option>CLP</option><option>UF</option><option>USD</option></select></label><label>Responsable<select value={b.ownerId||""} onChange={(e)=>set({...b,ownerId:e.target.value||null})}><option value="">Sin asignar</option>{users.filter((user)=>user.role&&["GERENTE_GENERAL","JEFE_VENTAS","EJECUTIVA_VENTAS","COMERCIAL"].includes(user.role)).map((user)=><option value={user.id} key={user.id}>{user.name}</option>)}</select></label><label>Cierre esperado<input type="date" value={b.expectedCloseDate||""} onChange={(e)=>set({...b,expectedCloseDate:e.target.value||null})}/></label><label className="wide">Descripción<textarea value={b.description||""} onChange={(e)=>set({...b,description:e.target.value})}/></label><footer><button type="button" onClick={close}>Cancelar</button><button className="salesPrimary" disabled={busy}>{busy?"Guardando…":"Crear oportunidad"}</button></footer></form></Modal>}
-function FollowUpForm({leads,opportunities,close,save}:{leads:SalesLead[];opportunities:SalesOpportunity[];close:()=>void;save:(b:Partial<SalesFollowUp>)=>Promise<void>}){const[b,set]=useState<Partial<SalesFollowUp>>({title:"",type:"CALL"});return <Modal title="Nuevo seguimiento" close={close}><form className="salesForm" onSubmit={async(e)=>{e.preventDefault();await save(b);}}><label>Vincular a<select required onChange={(e)=>{const[type,id]=e.target.value.split(":");set({...b,leadId:type==="lead"?id:null,opportunityId:type==="opportunity"?id:null});}}><option value="">Seleccionar</option>{leads.filter((i)=>i.status!=="CONVERTED").map((i)=><option value={`lead:${i.id}`} key={i.id}>Lead · {i.companyName}</option>)}{opportunities.filter((i)=>i.status==="OPEN").map((i)=><option value={`opportunity:${i.id}`} key={i.id}>Oportunidad · {i.company}</option>)}</select></label><label>Tipo<select value={b.type} onChange={(e)=>set({...b,type:e.target.value as SalesFollowUp["type"]})}>{["CALL","EMAIL","WHATSAPP","MEETING","PROPOSAL","FOLLOW_UP","OTHER"].map((i)=><option key={i}>{i}</option>)}</select></label><label className="wide">Título<input required value={b.title} onChange={(e)=>set({...b,title:e.target.value})}/></label><label className="wide">Fecha y hora<input required type="datetime-local" onChange={(e)=>set({...b,scheduledAt:new Date(e.target.value).toISOString()})}/></label><label className="wide">Descripción<textarea onChange={(e)=>set({...b,description:e.target.value})}/></label><footer><button type="button" onClick={close}>Cancelar</button><button className="salesPrimary">Agendar</button></footer></form></Modal>}
-type QuoteSource="OPPORTUNITY"|"CLIENT"|"LEAD";
-type QuoteDraftItem=Omit<Partial<QuoteItem>,"id"|"quoteId">&{key:string;description:string;quantity:number;unitPrice:number;discountPercent:number;taxable:boolean};
-const blankQuoteItem=(key="initial"):QuoteDraftItem=>({key,catalogServiceId:null,description:"",quantity:1,unitPrice:0,discountPercent:0,taxable:true});
-function QuoteWizard({opportunities,leads,catalog,role,initialClientId,close,save}:{opportunities:SalesOpportunity[];leads:SalesLead[];catalog:CatalogItem[];role:Role;initialClientId:string|null;close:()=>void;save:(b:any)=>Promise<SalesQuote>}){
-  const[step,setStep]=useState(1),[source,setSource]=useState<QuoteSource>(initialClientId?"CLIENT":"OPPORTUNITY"),[b,set]=useState<any>({clientId:initialClientId||null,currency:"CLP",taxRate:19,billingType:"ONE_TIME"}),[items,setItems]=useState<QuoteDraftItem[]>([blankQuoteItem()]),[clients,setClients]=useState<Client[]>([]),[contacts,setContacts]=useState<ClientContact[]>([]),[loadingClients,setLoadingClients]=useState(true),[busy,setBusy]=useState(false),[formError,setFormError]=useState("");
-  const openOpportunities=opportunities.filter((item)=>item.status==="OPEN"),selectableLeads=leads.filter((item)=>!['DISQUALIFIED','CONVERTED'].includes(item.status)),requiresCatalog=role==="EJECUTIVA_VENTAS";
-  useEffect(()=>{let active=true;const params=new URLSearchParams({page:"1",pageSize:"100"});clientsApi.list(role,params).then(async(result)=>{let values=result.items;if(initialClientId&&!values.some((client)=>client.id===initialClientId)){const selected=await clientsApi.get(role,initialClientId);values=[selected,...values];}if(active)setClients(values);}).catch((cause:Error)=>{if(active)setFormError(cause.message);}).finally(()=>{if(active)setLoadingClients(false);});return()=>{active=false;};},[role,initialClientId]);
-  useEffect(()=>{if(!b.clientId){setContacts([]);return;}let active=true;clientsApi.contacts(role,b.clientId).then((values)=>{if(!active)return;setContacts(values.filter((contact)=>contact.status==="ACTIVE"));const preferred=values.find((contact)=>contact.status==="ACTIVE"&&contact.isPrimary)||values.find((contact)=>contact.status==="ACTIVE"&&contact.commercialContact)||values.find((contact)=>contact.status==="ACTIVE");if(preferred)set((current:any)=>({...current,contactName:current.contactName||preferred.name,contactEmail:current.contactEmail||preferred.email}));}).catch(()=>{if(active)setContacts([]);});return()=>{active=false;};},[b.clientId,role]);
-  useEffect(()=>{if(!initialClientId||!clients.length)return;const client=clients.find((item)=>item.id===initialClientId);if(client)set((current:any)=>({...current,clientId:client.id,companyName:client.tradeName||client.legalName,contactEmail:current.contactEmail||client.generalEmail||"",currency:client.currency||current.currency,paymentTerms:current.paymentTerms||client.paymentTerms||""}));},[clients,initialClientId]);
-  const chooseSource=(next:QuoteSource)=>{const initialClient=next==="CLIENT"&&initialClientId?clients.find((item)=>item.id===initialClientId):null;setSource(next);setFormError("");set((current:any)=>({...current,opportunityId:null,leadId:null,clientId:initialClient?.id||null,companyName:initialClient?(initialClient.tradeName||initialClient.legalName):"",contactName:"",contactEmail:initialClient?.generalEmail||"",ownerId:initialClient?.accountExecutiveId||null,currency:initialClient?.currency||current.currency,paymentTerms:initialClient?.paymentTerms||current.paymentTerms||""}));};
-  const chooseOpportunity=(id:string)=>{const value=openOpportunities.find((item)=>item.id===id),lead=value?.leadId?leads.find((item)=>item.id===value.leadId):null;if(!value){set((current:any)=>({...current,opportunityId:null}));return;}set((current:any)=>({...current,opportunityId:value.id,leadId:value.leadId,clientId:value.clientId,companyName:value.company,ownerId:value.ownerId,currency:value.currency,contactName:lead?.contactName||current.contactName||"",contactEmail:lead?.email||current.contactEmail||""}));};
-  const chooseClient=(id:string)=>{const value=clients.find((item)=>item.id===id);if(!value){set((current:any)=>({...current,clientId:null}));return;}set((current:any)=>({...current,clientId:value.id,leadId:null,opportunityId:null,companyName:value.tradeName||value.legalName,contactName:"",contactEmail:value.generalEmail||"",ownerId:value.accountExecutiveId,currency:value.currency||"CLP",paymentTerms:value.paymentTerms||current.paymentTerms||""}));};
-  const chooseLead=(id:string)=>{const value=selectableLeads.find((item)=>item.id===id);if(!value){set((current:any)=>({...current,leadId:null}));return;}set((current:any)=>({...current,leadId:value.id,clientId:value.clientId,opportunityId:null,companyName:value.companyName,contactName:value.contactName,contactEmail:value.email||"",ownerId:value.assignedTo}));};
-  const updateItem=(key:string,patch:Partial<QuoteDraftItem>)=>setItems((current)=>current.map((item)=>item.key===key?{...item,...patch}:item));
-  const selectCatalog=(key:string,id:string)=>{const value=catalog.find((item)=>item.id===id);updateItem(key,{catalogServiceId:value?.id||null,description:value?.name||"",unitPrice:value?.default_price??0});if(value?.currency)set((current:any)=>({...current,currency:value.currency}));};
-  const addItem=()=>setItems((current)=>[...current,blankQuoteItem(crypto.randomUUID())]);
-  const removeItem=(key:string)=>setItems((current)=>current.length===1?current:current.filter((item)=>item.key!==key));
-  const totals=items.reduce((sum,item)=>{const raw=Number(item.quantity||0)*Number(item.unitPrice||0),discount=raw*Number(item.discountPercent||0)/100,net=raw-discount,tax=item.taxable?net*Number(b.taxRate||0)/100:0;return{subtotal:sum.subtotal+raw,discount:sum.discount+discount,net:sum.net+net,tax:sum.tax+tax,total:sum.total+net+tax};},{subtotal:0,discount:0,net:0,tax:0,total:0});
-  const submit=async()=>{setBusy(true);setFormError("");try{return await save({opportunityId:b.opportunityId||null,leadId:b.leadId||null,clientId:b.clientId||null,companyName:b.companyName,contactName:b.contactName||null,contactEmail:b.contactEmail||null,ownerId:b.ownerId||null,currency:b.currency,billingType:b.billingType||"ONE_TIME",validUntil:b.validUntil,paymentTerms:b.paymentTerms||null,commercialTerms:b.commercialTerms||null,notes:b.notes||null,taxRate:Number(b.taxRate),items:items.map(({key:_key,...item})=>item)});}catch(cause){setFormError(cause instanceof Error?cause.message:"No fue posible crear la cotización.");return undefined;}finally{setBusy(false);}};
-  const steps=["Origen","Contacto","Servicios","Precios","Condiciones","Vigencia","Notas","Revisión"];
-  return <Modal title="Nueva cotización" close={close}><div className="quoteSteps" aria-label={`Paso ${step} de 8`}>{steps.map((label,index)=><span title={label} aria-label={`${index+1}. ${label}`} className={step===index+1?"active":step>index+1?"done":""} key={label}><b>{index+1}</b><small>{label}</small></span>)}</div>{formError?<p className="quoteFormError">{formError}</p>:null}<form className="salesForm quoteWizard" onSubmit={async(e)=>{e.preventDefault();setFormError("");if(step<8)setStep(step+1);else await submit();}}>
-    {step===1?<div className="quoteSource wide"><p>¿Desde dónde nace esta cotización?</p><div role="group" aria-label="Origen de la cotización"><button type="button" className={source==="OPPORTUNITY"?"active":""} onClick={()=>chooseSource("OPPORTUNITY")}><Target size={17}/><span><strong>Oportunidad</strong><small>Usa el pipeline comercial</small></span></button><button type="button" className={source==="CLIENT"?"active":""} onClick={()=>chooseSource("CLIENT")}><Building2 size={17}/><span><strong>Cliente</strong><small>Cotiza directamente a un cliente</small></span></button><button type="button" className={source==="LEAD"?"active":""} onClick={()=>chooseSource("LEAD")}><UserRound size={17}/><span><strong>Lead</strong><small>Prepara una propuesta preliminar</small></span></button></div>{source==="OPPORTUNITY"?<label>Oportunidad abierta<select required value={b.opportunityId||""} onChange={(e)=>chooseOpportunity(e.target.value)}><option value="">Seleccionar oportunidad</option>{openOpportunities.map((item)=><option value={item.id} key={item.id}>{item.company} · {item.name}</option>)}</select>{!openOpportunities.length?<em>No hay oportunidades abiertas. Puedes cotizar directamente a un cliente o lead usando las opciones de arriba.</em>:null}</label>:null}{source==="CLIENT"?<label>Cliente<select required disabled={loadingClients} value={b.clientId||""} onChange={(e)=>chooseClient(e.target.value)}><option value="">{loadingClients?"Cargando clientes…":"Seleccionar cliente"}</option>{clients.filter((item)=>item.status!=="ARCHIVED").map((item)=><option value={item.id} key={item.id}>{item.tradeName||item.legalName} · {item.rut}</option>)}</select></label>:null}{source==="LEAD"?<label>Lead<select required value={b.leadId||""} onChange={(e)=>chooseLead(e.target.value)}><option value="">Seleccionar lead</option>{selectableLeads.map((item)=><option value={item.id} key={item.id}>{item.companyName} · {item.contactName}</option>)}</select>{!selectableLeads.length?<em>No hay leads disponibles. Puedes seleccionar un cliente existente.</em>:null}</label>:null}<div className="quoteSourceSummary"><span>{source==="OPPORTUNITY"?"Oportunidad":source==="CLIENT"?"Cliente":"Lead"}</span><strong>{b.companyName||"Selecciona un origen para continuar"}</strong></div></div>:null}
-    {step===2?<><label className="wide">Contacto guardado<select value="" disabled={!contacts.length} onChange={(e)=>{const contact=contacts.find((item)=>item.id===e.target.value);if(contact)set({...b,contactName:contact.name,contactEmail:contact.email});}}><option value="">{contacts.length?"Seleccionar contacto del cliente":"Sin contactos guardados; completa los datos abajo"}</option>{contacts.map((contact)=><option value={contact.id} key={contact.id}>{contact.name} · {contact.email}{contact.isPrimary?" · Principal":""}</option>)}</select></label><label>Contacto receptor<input required value={b.contactName||""} onChange={(e)=>set({...b,contactName:e.target.value})}/></label><label>Email<input required type="email" value={b.contactEmail||""} onChange={(e)=>set({...b,contactEmail:e.target.value})}/></label></>:null}
-    {step===3?<div className="quoteItems wide"><header><div><span>ALCANCE COTIZADO</span><strong>{items.length} {items.length===1?"servicio":"servicios"}</strong></div><button type="button" onClick={addItem}><Plus size={14}/>Agregar servicio</button></header>{items.map((item,index)=><article key={item.key}><div><b>{index+1}</b><label>Servicio del catálogo<select required={requiresCatalog} value={item.catalogServiceId||""} onChange={(e)=>selectCatalog(item.key,e.target.value)}>{requiresCatalog?<option value="">Selecciona un servicio autorizado</option>:<option value="">Alcance personalizado</option>}{catalog.map((entry)=><option value={entry.id} key={entry.id}>{entry.code} · {entry.name}</option>)}</select></label>{items.length>1?<button type="button" className="quoteRemove" aria-label={`Quitar servicio ${index+1}`} onClick={()=>removeItem(item.key)}><Trash2 size={14}/></button>:null}</div><label>Descripción / alcance<textarea required value={item.description} onChange={(e)=>updateItem(item.key,{description:e.target.value})}/></label></article>)}</div>:null}
-    {step===4?<div className="quotePricing wide"><label>Moneda<select value={b.currency} onChange={(e)=>set({...b,currency:e.target.value})}><option>CLP</option><option>UF</option><option>USD</option></select></label><label>Tasa IVA %<input required type="number" min="0" max="100" value={b.taxRate} onChange={(e)=>set({...b,taxRate:e.target.value})}/></label>{items.map((item,index)=><article key={item.key}><strong>{index+1}. {item.description}</strong><label>Cantidad<input required type="number" min="0.001" step="0.001" value={item.quantity} onChange={(e)=>updateItem(item.key,{quantity:Number(e.target.value)})}/></label><label>Precio unitario<input required type="number" min="0" value={item.unitPrice} onChange={(e)=>updateItem(item.key,{unitPrice:Number(e.target.value)})}/></label><label>Descuento %<input type="number" min="0" max="100" value={item.discountPercent} onChange={(e)=>updateItem(item.key,{discountPercent:Number(e.target.value)})}/></label><label className="quoteTax"><input type="checkbox" checked={item.taxable} onChange={(e)=>updateItem(item.key,{taxable:e.target.checked})}/>Afecto a IVA</label><b>{money(item.quantity*item.unitPrice*(1-item.discountPercent/100),b.currency)}</b></article>)}<QuoteTotals totals={totals} currency={b.currency}/></div>:null}
-    {step===5?<label className="wide">Condiciones comerciales<textarea required placeholder="Alcance, exclusiones, entregables y condiciones relevantes" value={b.commercialTerms||""} onChange={(e)=>set({...b,commercialTerms:e.target.value})}/></label>:null}
-    {step===6?<><label>Modalidad de cobro<select value={b.billingType||"ONE_TIME"} onChange={e=>set({...b,billingType:e.target.value})}><option value="ONE_TIME">Pago único</option><option value="SUBSCRIPTION">Suscripción mensual</option></select></label><label>Vigencia<input required type="date" value={b.validUntil||""} onChange={(e)=>set({...b,validUntil:e.target.value})}/></label><label>Forma de pago<input required placeholder="Ej. 50% anticipo y 50% contra entrega" value={b.paymentTerms||""} onChange={(e)=>set({...b,paymentTerms:e.target.value})}/></label></>:null}
-    {step===7?<label className="wide">Notas internas o para la propuesta<textarea placeholder="Opcional" value={b.notes||""} onChange={(e)=>set({...b,notes:e.target.value})}/></label>:null}
-    {step===8?<div className="quoteReview"><header><div><span>PROPUESTA PARA</span><strong>{b.companyName}</strong><small>{b.contactName} · {b.contactEmail}</small></div><b>Borrador</b></header><div className="quoteReviewItems">{items.map((item,index)=><div key={item.key}><span>{index+1}. {item.description}<small>{item.quantity} × {money(item.unitPrice,b.currency)} · {item.discountPercent}% desc.</small></span><strong>{money(item.quantity*item.unitPrice*(1-item.discountPercent/100),b.currency)}</strong></div>)}</div><QuoteTotals totals={totals} currency={b.currency}/><footer><span>Vigencia</span><strong>{formatDate(b.validUntil)}</strong><span>Pago</span><strong>{b.paymentTerms}</strong></footer></div>:null}
-    <footer>{step>1?<button type="button" disabled={busy} onClick={()=>setStep(step-1)}>Anterior</button>:<button type="button" onClick={close}>Cancelar</button>}<button className="salesPrimary" disabled={busy}>{busy?"Guardando…":step===8?"Guardar borrador":"Continuar"}</button></footer>
-  </form></Modal>;
+function LeadInbox({
+  items,
+  roleAction,
+  busy,
+  focusLeadId,
+}: {
+  items: SalesLead[];
+  busy: boolean;
+  focusLeadId: string;
+  roleAction: (id: string, action: string, body?: unknown) => Promise<unknown>;
+}) {
+  useEffect(() => {
+    if (focusLeadId)
+      document
+        .querySelector(`[data-lead-id="${CSS.escape(focusLeadId)}"]`)
+        ?.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+  }, [items, focusLeadId]);
+  const columns = [
+    "NEW",
+    "ASSIGNED",
+    "CONTACT_PENDING",
+    "CONTACTED",
+    "QUALIFYING",
+    "QUALIFIED",
+    "DISQUALIFIED",
+    "CONVERTED",
+  ] as const;
+  return (
+    <section className="leadInbox">
+      {columns.map((status) => {
+        const current = items.filter((item) => item.status === status);
+        return (
+          <article key={status}>
+            <header>
+              <span>{status.replaceAll("_", " ")}</span>
+              <b>{current.length}</b>
+            </header>
+            {current.length > 0 ? (
+              current.map((lead) => (
+                <div className="leadCard" key={lead.id} data-lead-id={lead.id}>
+                  <small>{lead.sourceName || "Origen no informado"}</small>
+                  <h3>{lead.companyName}</h3>
+                  <p>{lead.contactName}</p>
+                  <p>{lead.email || lead.phone || lead.whatsapp}</p>
+                  <footer>
+                    {lead.status !== "QUALIFIED" &&
+                    lead.status !== "CONVERTED" &&
+                    lead.status !== "DISQUALIFIED" ? (
+                      <button
+                        disabled={busy}
+                        onClick={() => {
+                          void roleAction(lead.id, "qualify");
+                        }}
+                      >
+                        Calificar
+                      </button>
+                    ) : null}
+                    {lead.status === "QUALIFIED" ? (
+                      <button
+                        disabled={busy}
+                        onClick={() => {
+                          void roleAction(lead.id, "convert", {});
+                        }}
+                      >
+                        Convertir
+                      </button>
+                    ) : null}
+                  </footer>
+                </div>
+              ))
+            ) : (
+              <Empty title="Sin leads" text={"No existen leads en " + status.toLowerCase() + "."} />
+            )}
+          </article>
+        );
+      })}
+    </section>
+  );
 }
-function QuoteTotals({totals,currency}:{totals:{subtotal:number;discount:number;net:number;tax:number;total:number};currency:string}){return <dl className="quoteTotals"><div><dt>Subtotal</dt><dd>{money(totals.subtotal,currency)}</dd></div><div><dt>Descuento</dt><dd>− {money(totals.discount,currency)}</dd></div><div><dt>Neto</dt><dd>{money(totals.net,currency)}</dd></div><div><dt>IVA</dt><dd>{money(totals.tax,currency)}</dd></div><div><dt>Total</dt><dd>{money(totals.total,currency)}</dd></div></dl>}
-function GoalForm({close,save}:{close:()=>void;save:(b:Partial<SalesGoal>)=>Promise<void>}){const[b,set]=useState<Partial<SalesGoal>>({periodType:"MONTH",goalType:"AMOUNT",target:0});return <Modal title="Nueva meta" close={close}><form className="salesForm" onSubmit={async(e)=>{e.preventDefault();await save(b);}}><label>Período<select value={b.periodType} onChange={(e)=>set({...b,periodType:e.target.value as SalesGoal["periodType"]})}><option value="MONTH">Mes</option><option value="QUARTER">Trimestre</option><option value="YEAR">Año</option></select></label><label>Tipo<select value={b.goalType} onChange={(e)=>set({...b,goalType:e.target.value as SalesGoal["goalType"]})}><option value="AMOUNT">Monto vendido</option><option value="SALES">N° ventas</option><option value="NEW_CLIENTS">Nuevos clientes</option><option value="QUOTES">Cotizaciones</option><option value="CONVERSION">Conversión</option></select></label><label>Inicio<input required type="date" onChange={(e)=>set({...b,periodStart:e.target.value})}/></label><label>Término<input required type="date" onChange={(e)=>set({...b,periodEnd:e.target.value})}/></label><label className="wide">Objetivo<input required min="0.01" step="0.01" type="number" onChange={(e)=>set({...b,target:Number(e.target.value)})}/></label><footer><button type="button" onClick={close}>Cancelar</button><button className="salesPrimary">Crear meta</button></footer></form></Modal>}
+function OpportunityList({ items }: { items: SalesOpportunity[] }) {
+  return items.length ? (
+    <section className="salesList">
+      {items.map((i) => (
+        <article key={i.id}>
+          <div className="salesListMark">
+            <Target size={17} />
+          </div>
+          <div>
+            <small>{i.stageName || "Pipeline"}</small>
+            <h3>
+              {i.company} · {i.name}
+            </h3>
+            <p>
+              Próxima acción {formatDateTime(i.nextActionAt)} · Cierre{" "}
+              {formatDate(i.expectedCloseDate)}
+            </p>
+          </div>
+          <strong>{money(i.estimatedValue, i.currency)}</strong>
+          <span>{i.probability}%</span>
+        </article>
+      ))}
+    </section>
+  ) : (
+    <Empty
+      title="No hay oportunidades"
+      text="Convierte un lead calificado para abrir una oportunidad real."
+    />
+  );
+}
+function Pipeline({
+  items,
+  stages,
+  onMove,
+}: {
+  items: SalesOpportunity[];
+  stages: SalesPipelineStage[];
+  onMove: (id: string, stageId: string, reason?: string) => Promise<void>;
+}) {
+  return (
+    <section className="salesPipeline">
+      {stages.map((stage) => (
+        <article
+          key={stage.id}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            const id = e.dataTransfer.getData("opportunity");
+            if (!id) return;
+            const reason =
+              stage.kind === "LOST" ? window.prompt("Motivo de pérdida") || undefined : undefined;
+            if (stage.kind === "LOST" && !reason) return;
+            void onMove(id, stage.id, reason);
+          }}
+        >
+          <header>
+            <span>{stage.name}</span>
+            <b>{items.filter((i) => i.stageId === stage.id).length}</b>
+          </header>
+          {items
+            .filter((i) => i.stageId === stage.id)
+            .map((i) => (
+              <div
+                draggable
+                onDragStart={(e) => e.dataTransfer.setData("opportunity", i.id)}
+                className="opportunityCard"
+                key={i.id}
+              >
+                <GripVertical size={13} />
+                <small>{i.company}</small>
+                <h3>{i.name}</h3>
+                <strong>{money(i.estimatedValue, i.currency)}</strong>
+                <p>
+                  {i.probability}% · cierre {formatDate(i.expectedCloseDate)}
+                </p>
+                <label>
+                  Mover de etapa
+                  <select
+                    aria-label={`Mover ${i.name}`}
+                    value={i.stageId}
+                    onChange={(e) => {
+                      const next = stages.find((s) => s.id === e.target.value);
+                      const reason =
+                        next?.kind === "LOST"
+                          ? window.prompt("Motivo de pérdida") || undefined
+                          : undefined;
+                      if (next?.kind === "LOST" && !reason) return;
+                      void onMove(i.id, e.target.value, reason);
+                    }}
+                  >
+                    {stages.map((s) => (
+                      <option value={s.id} key={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            ))}
+        </article>
+      ))}
+    </section>
+  );
+}
+function FollowUpCenter({
+  items,
+  onComplete,
+  onReschedule,
+  onNext,
+}: {
+  items: SalesFollowUp[];
+  onComplete: (id: string) => Promise<void>;
+  onReschedule: (id: string) => Promise<void>;
+  onNext: () => void;
+}) {
+  const groups = [
+    { id: "OVERDUE", label: "Vencidos" },
+    { id: "TODAY", label: "Hoy" },
+    { id: "UPCOMING", label: "Próximos" },
+    { id: "COMPLETED", label: "Completados" },
+  ];
+  const today = new Date().toISOString().slice(0, 10);
+  return (
+    <section className="followUpAgenda">
+      {groups.map((g) => {
+        const current = items.filter((i) =>
+          g.id === "OVERDUE"
+            ? i.status === "OVERDUE"
+            : g.id === "TODAY"
+              ? i.status === "PENDING" && i.scheduledAt.startsWith(today)
+              : g.id === "UPCOMING"
+                ? i.status === "PENDING" && !i.scheduledAt.startsWith(today)
+                : i.status === "COMPLETED",
+        );
+        return (
+          <article key={g.id}>
+            <header>
+              <span>{g.label}</span>
+              <b>{current.length}</b>
+            </header>
+            {current.length ? (
+              current.map((i) => (
+                <div className="followUpCard" key={i.id}>
+                  <span>{i.type}</span>
+                  <h3>{i.title}</h3>
+                  <time>{formatDateTime(i.scheduledAt)}</time>
+                  <p>{i.description || "Sin descripción adicional"}</p>
+                  {i.status !== "COMPLETED" ? (
+                    <div className="followUpActions">
+                      <button onClick={() => void onComplete(i.id)}>
+                        <Check size={13} />
+                        Completar
+                      </button>
+                      <button onClick={() => void onReschedule(i.id)}>Reprogramar</button>
+                    </div>
+                  ) : (
+                    <div className="followUpActions">
+                      <small>{i.outcome}</small>
+                      <button onClick={onNext}>Crear siguiente</button>
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <Empty title={`Sin ${g.label.toLowerCase()}`} text="No hay acciones en esta vista." />
+            )}
+          </article>
+        );
+      })}
+    </section>
+  );
+}
+function QuoteCenter({
+  items,
+  role,
+  act,
+  busy,
+}: {
+  items: SalesQuote[];
+  role: string;
+  busy: boolean;
+  act: (id: string, action: string, body?: unknown, idem?: boolean) => Promise<unknown>;
+}) {
+  const canManage = ["GERENTE_GENERAL", "COMERCIAL", "JEFE_VENTAS"].includes(role);
+  return items.length ? (
+    <section className="quoteGrid">
+      {items.map((q) => (
+        <article key={q.id}>
+          <header>
+            <div>
+              <small>
+                {q.quoteNumber} · V{q.version}
+              </small>
+              <h3>{q.companyName}</h3>
+            </div>
+            <span>{q.status.replaceAll("_", " ")}</span>
+          </header>
+          <p>
+            {q.items.length} servicios · Vigencia {formatDate(q.validUntil)}
+          </p>
+          <strong>{money(q.totalAmount, q.currency)}</strong>
+          <footer>
+            <button
+              disabled={busy}
+              title="Descarga un borrador sin emitir la cotización"
+              onClick={() => void act(q.id, "preview")}
+            >
+              <FileText size={13} />
+              Descargar borrador PDF
+            </button>
+            {q.status === "DRAFT" ? (
+              <button disabled={busy} onClick={() => void act(q.id, "submit-approval")}>
+                Enviar aprobación
+              </button>
+            ) : null}
+            {q.status === "PENDING_APPROVAL" && canManage ? (
+              <>
+                <button disabled={busy} onClick={() => void act(q.id, "approve")}>
+                  Aprobar
+                </button>
+                <button
+                  disabled={busy}
+                  onClick={() => {
+                    const reason = window.prompt("Motivo de rechazo");
+                    if (reason) void act(q.id, "reject", { reason });
+                  }}
+                >
+                  Rechazar
+                </button>
+              </>
+            ) : null}
+            {q.status === "APPROVED" ? (
+              <button
+                disabled={busy}
+                className="quoteIssuePdf"
+                title="Registra la versión aprobada en Documentos"
+                onClick={() => void act(q.id, "pdf")}
+              >
+                <FileText size={13} />
+                Emitir PDF final
+              </button>
+            ) : null}
+            {q.status === "READY_TO_SEND" ? (
+              <button
+                disabled={busy || !q.contactEmail}
+                title={!q.contactEmail ? "La cotización no tiene email receptor" : undefined}
+                onClick={() => void act(q.id, "send", { to: q.contactEmail }, true)}
+              >
+                <Send size={13} />
+                Enviar
+              </button>
+            ) : null}
+            {["SENT", "NEGOTIATING"].includes(q.status) && canManage ? (
+              <button disabled={busy} onClick={() => void act(q.id, "accept", {}, true)}>
+                Aceptar
+              </button>
+            ) : null}
+            {["SENT", "NEGOTIATING"].includes(q.status) ? (
+              <button
+                disabled={busy}
+                onClick={() => {
+                  const reason = window.prompt("Motivo del rechazo del cliente");
+                  if (reason) void act(q.id, "decline", { reason });
+                }}
+              >
+                Declinar
+              </button>
+            ) : null}
+            {["SENT", "NEGOTIATING", "REJECTED", "EXPIRED"].includes(q.status) ? (
+              <button disabled={busy} onClick={() => void act(q.id, "version")}>
+                Nueva versión
+              </button>
+            ) : null}
+            <button disabled={busy} onClick={() => void act(q.id, "duplicate")}>
+              Duplicar
+            </button>
+            {[
+              "DRAFT",
+              "PENDING_APPROVAL",
+              "APPROVED",
+              "READY_TO_SEND",
+              "SENT",
+              "NEGOTIATING",
+            ].includes(q.status) ? (
+              <button
+                disabled={busy}
+                onClick={() => {
+                  if (window.confirm("¿Cancelar esta cotización?")) void act(q.id, "cancel");
+                }}
+              >
+                Cancelar
+              </button>
+            ) : null}
+            {q.status === "ACCEPTED" && !q.clientId && canManage ? (
+              <button
+                disabled={busy}
+                onClick={() => {
+                  const rut = window.prompt("RUT del nuevo cliente (con dígito verificador)");
+                  if (!rut) return;
+                  void act(q.id, "convert-to-client", {
+                    legalName: q.companyName,
+                    tradeName: q.companyName,
+                    rut,
+                    country: "Chile",
+                    generalEmail: q.contactEmail || undefined,
+                    source: "SALES",
+                    status: "ONBOARDING",
+                  });
+                }}
+              >
+                Crear cliente
+              </button>
+            ) : null}
+            {q.status === "ACCEPTED" && q.clientId && canManage ? (
+              <button disabled={busy} onClick={() => void act(q.id, "convert-to-contract")}>
+                Crear contrato
+              </button>
+            ) : null}
+            {q.status === "ACCEPTED" && q.clientId && canManage ? (
+              <button
+                disabled={busy}
+                onClick={() => void act(q.id, "convert-to-work-order", {}, true)}
+              >
+                Crear OT
+              </button>
+            ) : null}
+            {["ACCEPTED", "CONVERTED"].includes(q.status) ? (
+              <QuotePaymentsButton quoteId={q.id} quoteNumber={q.quoteNumber} role={role} />
+            ) : null}
+          </footer>
+        </article>
+      ))}
+    </section>
+  ) : (
+    <Empty
+      title="No existen cotizaciones"
+      text="Crea una cotización desde una oportunidad, un cliente o un lead y agrega los servicios reales."
+    />
+  );
+}
+function SalesCenter({ items, summary }: { items: Sale[]; summary: CommercialSummary }) {
+  return (
+    <>
+      <section className="salesStrip">
+        <div>
+          <small>Ventas del mes</small>
+          <strong>{money(summary.monthSales)}</strong>
+        </div>
+        <div>
+          <small>Clientes ganados</small>
+          <strong>{summary.wonClients}</strong>
+        </div>
+        <div>
+          <small>Conversión</small>
+          <strong>{items.length ? "Con datos" : "—"}</strong>
+        </div>
+      </section>
+      {items.length ? (
+        <section className="salesList">
+          {items.map((i) => (
+            <article key={i.id}>
+              <div className="salesListMark">
+                <CircleDollarSign size={17} />
+              </div>
+              <div>
+                <small>Venta ganada · {formatDate(i.closedAt)}</small>
+                <h3>
+                  {i.clientId
+                    ? `Cliente ${i.clientId.slice(0, 8)}`
+                    : "Prospecto pendiente de convertir"}
+                </h3>
+                <p>
+                  Cotización {i.quoteId.slice(0, 8)} · OT{" "}
+                  {i.workOrderId ? i.workOrderId.slice(0, 8) : "pendiente"}
+                </p>
+              </div>
+              <strong>{money(i.amount, i.currency)}</strong>
+            </article>
+          ))}
+        </section>
+      ) : (
+        <Empty
+          title="Aún no hay ventas"
+          text="Una venta se crea únicamente después de verificar un pago efectivo mediante el flujo controlado."
+        />
+      )}
+    </>
+  );
+}
+function GoalCenter({ items }: { items: SalesGoal[] }) {
+  return items.length ? (
+    <section className="goalGrid">
+      {items.map((g) => {
+        const p = Math.min(100, g.target ? (g.actual / g.target) * 100 : 0);
+        return (
+          <article key={g.id}>
+            <Target size={18} />
+            <small>
+              {g.goalType.replaceAll("_", " ")} · {g.periodType}
+            </small>
+            <h3>
+              {g.actual.toLocaleString("es-CL")} / {g.target.toLocaleString("es-CL")}
+            </h3>
+            <div>
+              <i style={{ width: `${p}%` }} />
+            </div>
+            <p>
+              {p.toFixed(1)}% de cumplimiento · {formatDate(g.periodEnd)}
+            </p>
+          </article>
+        );
+      })}
+    </section>
+  ) : (
+    <Empty
+      title="No hay metas configuradas"
+      text="Gerencia o Jefatura de Ventas puede crear la primera meta."
+    />
+  );
+}
+function CommissionCenter({ items }: { items: Commission[] }) {
+  return items.length ? (
+    <section className="salesList">
+      {items.map((i) => (
+        <article key={i.id}>
+          <div className="salesListMark">
+            <CircleDollarSign size={17} />
+          </div>
+          <div>
+            <small>{i.status}</small>
+            <h3>{money(i.amount, i.currency)}</h3>
+            <p>
+              Venta {i.saleId.slice(0, 8)} · No se considera pagada hasta confirmación de Finanzas.
+            </p>
+          </div>
+        </article>
+      ))}
+    </section>
+  ) : (
+    <Empty
+      title="No hay comisiones calculadas"
+      text="Las reglas configuradas se aplicarán a ventas reales; el pago depende del evento de Finanzas."
+    />
+  );
+}
+function HandoffCenter({
+  items,
+  sales,
+  create,
+}: {
+  items: SalesHandoff[];
+  sales: Sale[];
+  create: (body: Partial<SalesHandoff>) => Promise<void>;
+}) {
+  const available = sales.filter(
+    (sale) => sale.workOrderId && !items.some((handoff) => handoff.saleId === sale.id),
+  );
+  return (
+    <>
+      <section className="handoffIntro">
+        <div>
+          <small>COMERCIAL → DESARROLLO</small>
+          <h2>Entrega controlada del alcance vendido</h2>
+          <p>
+            La OT, el cliente y la versión aceptada quedan enlazados. Riesgos y compromisos no se
+            pierden en mensajes informales.
+          </p>
+        </div>
+        {available.length ? (
+          <button
+            className="salesPrimary"
+            onClick={() => {
+              const sale = available[0];
+              if (!sale) return;
+              const scope = window.prompt("Alcance comprometido para Desarrollo");
+              if (!scope) return;
+              const committedDeadline = window.prompt("Fecha comprometida (AAAA-MM-DD)") || null;
+              const risks = window.prompt("Riesgos identificados") || null;
+              const dependencies = window.prompt("Dependencias") || null;
+              void create({
+                saleId: sale.id,
+                clientId: sale.clientId,
+                quoteId: sale.quoteId,
+                workOrderId: sale.workOrderId,
+                status: "READY",
+                scope,
+                committedDeadline,
+                risks,
+                dependencies,
+              });
+            }}
+          >
+            <Plus size={14} />
+            Crear handoff
+          </button>
+        ) : null}
+      </section>
+      {items.length ? (
+        <section className="salesList">
+          {items.map((i) => (
+            <article key={i.id}>
+              <div className="salesListMark">
+                <ArrowRight size={17} />
+              </div>
+              <div>
+                <small>
+                  {i.status} · Venta {i.saleId.slice(0, 8)}
+                </small>
+                <h3>{i.scope}</h3>
+                <p>
+                  Plazo {formatDate(i.committedDeadline)} · OT{" "}
+                  {i.workOrderId?.slice(0, 8) || "sin OT"}
+                </p>
+                {i.risks ? <p>Riesgos: {i.risks}</p> : null}
+              </div>
+              <span>{i.status}</span>
+            </article>
+          ))}
+        </section>
+      ) : (
+        <Empty
+          title="No hay handoffs pendientes"
+          text={
+            available.length
+              ? "Hay ventas listas para documentar y entregar a Desarrollo."
+              : "Se habilitará cuando una venta aceptada tenga cliente y OT real."
+          }
+        />
+      )}
+    </>
+  );
+}
+function Empty({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="salesEmpty">
+      <span>·</span>
+      <strong>{title}</strong>
+      <p>{text}</p>
+    </div>
+  );
+}
+function Modal({
+  title,
+  close,
+  children,
+}: {
+  title: string;
+  close: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="domainModal">
+      <div>
+        <button className="modalClose" onClick={close} aria-label="Cerrar">
+          <X size={17} />
+        </button>
+        <span>Sales Operations</span>
+        <h2>{title}</h2>
+        {children}
+      </div>
+    </div>
+  );
+}
+function LeadForm({
+  sources,
+  users,
+  close,
+  save,
+}: {
+  sources: Array<{ id: string; code: string; name: string }>;
+  users: UserDirectoryItem[];
+  close: () => void;
+  save: (b: Partial<SalesLead>) => Promise<void>;
+}) {
+  const [b, set] = useState<Partial<SalesLead>>({
+      companyName: "",
+      contactName: "",
+      email: "",
+      phone: "",
+      whatsapp: "",
+      website: "",
+      interest: "",
+      notes: "",
+      status: "NEW",
+    }),
+    [busy, setBusy] = useState(false);
+  const salesUsers = users.filter(
+    (user) =>
+      user.role &&
+      ["GERENTE_GENERAL", "JEFE_VENTAS", "EJECUTIVA_VENTAS", "COMERCIAL"].includes(user.role),
+  );
+  return (
+    <Modal title="Nuevo lead" close={close}>
+      <form
+        className="salesForm"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setBusy(true);
+          try {
+            await save(b);
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        <label>
+          Empresa
+          <input
+            required
+            value={b.companyName}
+            onChange={(e) => set({ ...b, companyName: e.target.value })}
+          />
+        </label>
+        <label>
+          Contacto
+          <input
+            required
+            value={b.contactName}
+            onChange={(e) => set({ ...b, contactName: e.target.value })}
+          />
+        </label>
+        <label>
+          Email
+          <input
+            type="email"
+            value={b.email || ""}
+            onChange={(e) => set({ ...b, email: e.target.value })}
+          />
+        </label>
+        <label>
+          Teléfono
+          <input value={b.phone || ""} onChange={(e) => set({ ...b, phone: e.target.value })} />
+        </label>
+        <label>
+          WhatsApp
+          <input
+            value={b.whatsapp || ""}
+            onChange={(e) => set({ ...b, whatsapp: e.target.value })}
+          />
+        </label>
+        <label>
+          Sitio web
+          <input
+            type="url"
+            value={b.website || ""}
+            onChange={(e) => set({ ...b, website: e.target.value })}
+          />
+        </label>
+        <label>
+          Origen
+          <select
+            value={b.sourceId || ""}
+            onChange={(e) => set({ ...b, sourceId: e.target.value || null })}
+          >
+            <option value="">Sin informar</option>
+            {sources.map((source) => (
+              <option value={source.id} key={source.id}>
+                {source.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Ejecutiva responsable
+          <select
+            value={b.assignedTo || ""}
+            onChange={(e) => set({ ...b, assignedTo: e.target.value || null })}
+          >
+            <option value="">Sin asignar</option>
+            {salesUsers.map((user) => (
+              <option value={user.id} key={user.id}>
+                {user.name} · {user.role}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="wide">
+          Servicio de interés
+          <input
+            value={b.interest || ""}
+            onChange={(e) => set({ ...b, interest: e.target.value })}
+          />
+        </label>
+        <label className="wide">
+          Descripción de la necesidad
+          <textarea value={b.notes || ""} onChange={(e) => set({ ...b, notes: e.target.value })} />
+        </label>
+        <label className="wide">
+          Próximo seguimiento
+          <input
+            type="datetime-local"
+            onChange={(e) =>
+              set({
+                ...b,
+                nextActionAt: e.target.value ? new Date(e.target.value).toISOString() : null,
+              })
+            }
+          />
+        </label>
+        <footer>
+          <button type="button" onClick={close}>
+            Cancelar
+          </button>
+          <button className="salesPrimary" disabled={busy}>
+            {busy ? "Guardando…" : "Crear lead"}
+          </button>
+        </footer>
+      </form>
+    </Modal>
+  );
+}
+function OpportunityForm({
+  leads,
+  users,
+  close,
+  save,
+}: {
+  leads: SalesLead[];
+  users: UserDirectoryItem[];
+  close: () => void;
+  save: (body: Partial<SalesOpportunity>) => Promise<void>;
+}) {
+  const [b, set] = useState<Partial<SalesOpportunity>>({
+      company: "",
+      name: "",
+      estimatedValue: 0,
+      currency: "CLP",
+    }),
+    [busy, setBusy] = useState(false);
+  const selectable = leads.filter(
+    (lead) => lead.status !== "CONVERTED" && lead.status !== "DISQUALIFIED",
+  );
+  return (
+    <Modal title="Nueva oportunidad" close={close}>
+      <form
+        className="salesForm"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setBusy(true);
+          try {
+            await save(b);
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        <label className="wide">
+          Lead relacionado
+          <select
+            required
+            value={b.leadId || ""}
+            onChange={(e) => {
+              const lead = leads.find((item) => item.id === e.target.value);
+              set({
+                ...b,
+                leadId: lead?.id || null,
+                clientId: lead?.clientId || null,
+                company: lead?.companyName || "",
+                name: lead?.interest || `Oportunidad ${lead?.companyName || ""}`,
+                ownerId: lead?.assignedTo || null,
+              });
+            }}
+          >
+            <option value="">Seleccionar lead</option>
+            {selectable.map((lead) => (
+              <option value={lead.id} key={lead.id}>
+                {lead.companyName} · {lead.contactName}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Empresa
+          <input
+            required
+            value={b.company || ""}
+            onChange={(e) => set({ ...b, company: e.target.value })}
+          />
+        </label>
+        <label>
+          Oportunidad
+          <input
+            required
+            value={b.name || ""}
+            onChange={(e) => set({ ...b, name: e.target.value })}
+          />
+        </label>
+        <label>
+          Valor estimado
+          <input
+            required
+            min="0"
+            type="number"
+            value={b.estimatedValue || 0}
+            onChange={(e) => set({ ...b, estimatedValue: Number(e.target.value) })}
+          />
+        </label>
+        <label>
+          Moneda
+          <select
+            value={b.currency}
+            onChange={(e) =>
+              set({ ...b, currency: e.target.value as SalesOpportunity["currency"] })
+            }
+          >
+            <option>CLP</option>
+            <option>UF</option>
+            <option>USD</option>
+          </select>
+        </label>
+        <label>
+          Responsable
+          <select
+            value={b.ownerId || ""}
+            onChange={(e) => set({ ...b, ownerId: e.target.value || null })}
+          >
+            <option value="">Sin asignar</option>
+            {users
+              .filter(
+                (user) =>
+                  user.role &&
+                  ["GERENTE_GENERAL", "JEFE_VENTAS", "EJECUTIVA_VENTAS", "COMERCIAL"].includes(
+                    user.role,
+                  ),
+              )
+              .map((user) => (
+                <option value={user.id} key={user.id}>
+                  {user.name}
+                </option>
+              ))}
+          </select>
+        </label>
+        <label>
+          Cierre esperado
+          <input
+            type="date"
+            value={b.expectedCloseDate || ""}
+            onChange={(e) => set({ ...b, expectedCloseDate: e.target.value || null })}
+          />
+        </label>
+        <label className="wide">
+          Descripción
+          <textarea
+            value={b.description || ""}
+            onChange={(e) => set({ ...b, description: e.target.value })}
+          />
+        </label>
+        <footer>
+          <button type="button" onClick={close}>
+            Cancelar
+          </button>
+          <button className="salesPrimary" disabled={busy}>
+            {busy ? "Guardando…" : "Crear oportunidad"}
+          </button>
+        </footer>
+      </form>
+    </Modal>
+  );
+}
+function FollowUpForm({
+  leads,
+  opportunities,
+  close,
+  save,
+}: {
+  leads: SalesLead[];
+  opportunities: SalesOpportunity[];
+  close: () => void;
+  save: (b: Partial<SalesFollowUp>) => Promise<void>;
+}) {
+  const [b, set] = useState<Partial<SalesFollowUp>>({ title: "", type: "CALL" });
+  return (
+    <Modal title="Nuevo seguimiento" close={close}>
+      <form
+        className="salesForm"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          await save(b);
+        }}
+      >
+        <label>
+          Vincular a
+          <select
+            required
+            onChange={(e) => {
+              const [type, id] = e.target.value.split(":");
+              set({
+                ...b,
+                leadId: type === "lead" ? id : null,
+                opportunityId: type === "opportunity" ? id : null,
+              });
+            }}
+          >
+            <option value="">Seleccionar</option>
+            {leads
+              .filter((i) => i.status !== "CONVERTED")
+              .map((i) => (
+                <option value={`lead:${i.id}`} key={i.id}>
+                  Lead · {i.companyName}
+                </option>
+              ))}
+            {opportunities
+              .filter((i) => i.status === "OPEN")
+              .map((i) => (
+                <option value={`opportunity:${i.id}`} key={i.id}>
+                  Oportunidad · {i.company}
+                </option>
+              ))}
+          </select>
+        </label>
+        <label>
+          Tipo
+          <select
+            value={b.type}
+            onChange={(e) => set({ ...b, type: e.target.value as SalesFollowUp["type"] })}
+          >
+            {["CALL", "EMAIL", "WHATSAPP", "MEETING", "PROPOSAL", "FOLLOW_UP", "OTHER"].map((i) => (
+              <option key={i}>{i}</option>
+            ))}
+          </select>
+        </label>
+        <label className="wide">
+          Título
+          <input required value={b.title} onChange={(e) => set({ ...b, title: e.target.value })} />
+        </label>
+        <label className="wide">
+          Fecha y hora
+          <input
+            required
+            type="datetime-local"
+            onChange={(e) => set({ ...b, scheduledAt: new Date(e.target.value).toISOString() })}
+          />
+        </label>
+        <label className="wide">
+          Descripción
+          <textarea onChange={(e) => set({ ...b, description: e.target.value })} />
+        </label>
+        <footer>
+          <button type="button" onClick={close}>
+            Cancelar
+          </button>
+          <button className="salesPrimary">Agendar</button>
+        </footer>
+      </form>
+    </Modal>
+  );
+}
+type QuoteSource = "OPPORTUNITY" | "CLIENT" | "LEAD";
+type QuoteDraftItem = Omit<Partial<QuoteItem>, "id" | "quoteId"> & {
+  key: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  discountPercent: number;
+  taxable: boolean;
+};
+const blankQuoteItem = (key = "initial"): QuoteDraftItem => ({
+  key,
+  catalogServiceId: null,
+  description: "",
+  quantity: 1,
+  unitPrice: 0,
+  discountPercent: 0,
+  taxable: true,
+});
+type QuoteFormState = Omit<Partial<SalesQuote>, "taxRate" | "currency"> & {
+  taxRate: number | string;
+  currency: string;
+  billingType: string;
+};
+function QuoteWizard({
+  opportunities,
+  leads,
+  catalog,
+  role,
+  initialClientId,
+  close,
+  save,
+}: {
+  opportunities: SalesOpportunity[];
+  leads: SalesLead[];
+  catalog: CatalogItem[];
+  role: Role;
+  initialClientId: string | null;
+  close: () => void;
+  save: (
+    b: Omit<Partial<SalesQuote>, "items"> & { items: Partial<QuoteItem>[]; billingType?: string },
+  ) => Promise<SalesQuote>;
+}) {
+  const [step, setStep] = useState(1),
+    [source, setSource] = useState<QuoteSource>(initialClientId ? "CLIENT" : "OPPORTUNITY"),
+    [b, set] = useState<QuoteFormState>({
+      clientId: initialClientId || null,
+      currency: "CLP",
+      taxRate: 19,
+      billingType: "ONE_TIME",
+    }),
+    [items, setItems] = useState<QuoteDraftItem[]>([blankQuoteItem()]),
+    [clients, setClients] = useState<Client[]>([]),
+    [contacts, setContacts] = useState<ClientContact[]>([]),
+    [loadingClients, setLoadingClients] = useState(true),
+    [busy, setBusy] = useState(false),
+    [formError, setFormError] = useState("");
+  const openOpportunities = opportunities.filter((item) => item.status === "OPEN"),
+    selectableLeads = leads.filter((item) => !["DISQUALIFIED", "CONVERTED"].includes(item.status)),
+    requiresCatalog = role === "EJECUTIVA_VENTAS";
+  useEffect(() => {
+    let active = true;
+    const params = new URLSearchParams({ page: "1", pageSize: "100" });
+    clientsApi
+      .list(role, params)
+      .then(async (result) => {
+        let values = result.items;
+        if (initialClientId && !values.some((client) => client.id === initialClientId)) {
+          const selected = await clientsApi.get(role, initialClientId);
+          values = [selected, ...values];
+        }
+        if (active) setClients(values);
+      })
+      .catch((cause: Error) => {
+        if (active) setFormError(cause.message);
+      })
+      .finally(() => {
+        if (active) setLoadingClients(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [role, initialClientId]);
+  useEffect(() => {
+    if (!b.clientId) {
+      setContacts([]);
+      return;
+    }
+    let active = true;
+    clientsApi
+      .contacts(role, b.clientId)
+      .then((values) => {
+        if (!active) return;
+        setContacts(values.filter((contact) => contact.status === "ACTIVE"));
+        const preferred =
+          values.find((contact) => contact.status === "ACTIVE" && contact.isPrimary) ||
+          values.find((contact) => contact.status === "ACTIVE" && contact.commercialContact) ||
+          values.find((contact) => contact.status === "ACTIVE");
+        if (preferred)
+          set((current) => ({
+            ...current,
+            contactName: current.contactName || preferred.name,
+            contactEmail: current.contactEmail || preferred.email,
+          }));
+      })
+      .catch(() => {
+        if (active) setContacts([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [b.clientId, role]);
+  useEffect(() => {
+    if (!initialClientId || !clients.length) return;
+    const client = clients.find((item) => item.id === initialClientId);
+    if (client)
+      set((current) => ({
+        ...current,
+        clientId: client.id,
+        companyName: client.tradeName || client.legalName,
+        contactEmail: current.contactEmail || client.generalEmail || "",
+        currency: client.currency || current.currency,
+        paymentTerms: current.paymentTerms || client.paymentTerms || "",
+      }));
+  }, [clients, initialClientId]);
+  const chooseSource = (next: QuoteSource) => {
+    const initialClient =
+      next === "CLIENT" && initialClientId
+        ? clients.find((item) => item.id === initialClientId)
+        : null;
+    setSource(next);
+    setFormError("");
+    set((current) => ({
+      ...current,
+      opportunityId: null,
+      leadId: null,
+      clientId: initialClient?.id || null,
+      companyName: initialClient ? initialClient.tradeName || initialClient.legalName : "",
+      contactName: "",
+      contactEmail: initialClient?.generalEmail || "",
+      ownerId: initialClient?.accountExecutiveId || null,
+      currency: initialClient?.currency || current.currency,
+      paymentTerms: initialClient?.paymentTerms || current.paymentTerms || "",
+    }));
+  };
+  const chooseOpportunity = (id: string) => {
+    const value = openOpportunities.find((item) => item.id === id),
+      lead = value?.leadId ? leads.find((item) => item.id === value.leadId) : null;
+    if (!value) {
+      set((current) => ({ ...current, opportunityId: null }));
+      return;
+    }
+    set((current) => ({
+      ...current,
+      opportunityId: value.id,
+      leadId: value.leadId,
+      clientId: value.clientId,
+      companyName: value.company,
+      ownerId: value.ownerId,
+      currency: value.currency,
+      contactName: lead?.contactName || current.contactName || "",
+      contactEmail: lead?.email || current.contactEmail || "",
+    }));
+  };
+  const chooseClient = (id: string) => {
+    const value = clients.find((item) => item.id === id);
+    if (!value) {
+      set((current) => ({ ...current, clientId: null }));
+      return;
+    }
+    set((current) => ({
+      ...current,
+      clientId: value.id,
+      leadId: null,
+      opportunityId: null,
+      companyName: value.tradeName || value.legalName,
+      contactName: "",
+      contactEmail: value.generalEmail || "",
+      ownerId: value.accountExecutiveId,
+      currency: value.currency || "CLP",
+      paymentTerms: value.paymentTerms || current.paymentTerms || "",
+    }));
+  };
+  const chooseLead = (id: string) => {
+    const value = selectableLeads.find((item) => item.id === id);
+    if (!value) {
+      set((current) => ({ ...current, leadId: null }));
+      return;
+    }
+    set((current) => ({
+      ...current,
+      leadId: value.id,
+      clientId: value.clientId,
+      opportunityId: null,
+      companyName: value.companyName,
+      contactName: value.contactName,
+      contactEmail: value.email || "",
+      ownerId: value.assignedTo,
+    }));
+  };
+  const updateItem = (key: string, patch: Partial<QuoteDraftItem>) =>
+    setItems((current) => current.map((item) => (item.key === key ? { ...item, ...patch } : item)));
+  const selectCatalog = (key: string, id: string) => {
+    const value = catalog.find((item) => item.id === id);
+    updateItem(key, {
+      catalogServiceId: value?.id || null,
+      description: value?.name || "",
+      unitPrice: value?.default_price ?? 0,
+    });
+    if (value?.currency) set((current) => ({ ...current, currency: value.currency }));
+  };
+  const addItem = () => setItems((current) => [...current, blankQuoteItem(crypto.randomUUID())]);
+  const removeItem = (key: string) =>
+    setItems((current) =>
+      current.length === 1 ? current : current.filter((item) => item.key !== key),
+    );
+  const totals = items.reduce(
+    (sum, item) => {
+      const raw = Number(item.quantity || 0) * Number(item.unitPrice || 0),
+        discount = (raw * Number(item.discountPercent || 0)) / 100,
+        net = raw - discount,
+        tax = item.taxable ? (net * Number(b.taxRate || 0)) / 100 : 0;
+      return {
+        subtotal: sum.subtotal + raw,
+        discount: sum.discount + discount,
+        net: sum.net + net,
+        tax: sum.tax + tax,
+        total: sum.total + net + tax,
+      };
+    },
+    { subtotal: 0, discount: 0, net: 0, tax: 0, total: 0 },
+  );
+  const submit = async () => {
+    setBusy(true);
+    setFormError("");
+    try {
+      if (!["CLP", "UF", "USD"].includes(b.currency)) throw Error("Moneda de cotización inválida.");
+      return await save({
+        opportunityId: b.opportunityId || null,
+        leadId: b.leadId || null,
+        clientId: b.clientId || null,
+        companyName: b.companyName,
+        contactName: b.contactName || null,
+        contactEmail: b.contactEmail || null,
+        ownerId: b.ownerId || null,
+        currency: b.currency as SalesQuote["currency"],
+        billingType: b.billingType || "ONE_TIME",
+        validUntil: b.validUntil,
+        paymentTerms: b.paymentTerms || null,
+        commercialTerms: b.commercialTerms || null,
+        notes: b.notes || null,
+        taxRate: Number(b.taxRate),
+        items: items.map(({ key, ...item }) => {
+          void key;
+          return item;
+        }),
+      });
+    } catch (cause) {
+      setFormError(cause instanceof Error ? cause.message : "No fue posible crear la cotización.");
+      return undefined;
+    } finally {
+      setBusy(false);
+    }
+  };
+  const steps = [
+    "Origen",
+    "Contacto",
+    "Servicios",
+    "Precios",
+    "Condiciones",
+    "Vigencia",
+    "Notas",
+    "Revisión",
+  ];
+  return (
+    <Modal title="Nueva cotización" close={close}>
+      <div className="quoteSteps" aria-label={`Paso ${step} de 8`}>
+        {steps.map((label, index) => (
+          <span
+            title={label}
+            aria-label={`${index + 1}. ${label}`}
+            className={step === index + 1 ? "active" : step > index + 1 ? "done" : ""}
+            key={label}
+          >
+            <b>{index + 1}</b>
+            <small>{label}</small>
+          </span>
+        ))}
+      </div>
+      {formError ? <p className="quoteFormError">{formError}</p> : null}
+      <form
+        className="salesForm quoteWizard"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setFormError("");
+          if (step < 8) setStep(step + 1);
+          else await submit();
+        }}
+      >
+        {step === 1 ? (
+          <div className="quoteSource wide">
+            <p>¿Desde dónde nace esta cotización?</p>
+            <div role="group" aria-label="Origen de la cotización">
+              <button
+                type="button"
+                className={source === "OPPORTUNITY" ? "active" : ""}
+                onClick={() => chooseSource("OPPORTUNITY")}
+              >
+                <Target size={17} />
+                <span>
+                  <strong>Oportunidad</strong>
+                  <small>Usa el pipeline comercial</small>
+                </span>
+              </button>
+              <button
+                type="button"
+                className={source === "CLIENT" ? "active" : ""}
+                onClick={() => chooseSource("CLIENT")}
+              >
+                <Building2 size={17} />
+                <span>
+                  <strong>Cliente</strong>
+                  <small>Cotiza directamente a un cliente</small>
+                </span>
+              </button>
+              <button
+                type="button"
+                className={source === "LEAD" ? "active" : ""}
+                onClick={() => chooseSource("LEAD")}
+              >
+                <UserRound size={17} />
+                <span>
+                  <strong>Lead</strong>
+                  <small>Prepara una propuesta preliminar</small>
+                </span>
+              </button>
+            </div>
+            {source === "OPPORTUNITY" ? (
+              <label>
+                Oportunidad abierta
+                <select
+                  required
+                  value={b.opportunityId || ""}
+                  onChange={(e) => chooseOpportunity(e.target.value)}
+                >
+                  <option value="">Seleccionar oportunidad</option>
+                  {openOpportunities.map((item) => (
+                    <option value={item.id} key={item.id}>
+                      {item.company} · {item.name}
+                    </option>
+                  ))}
+                </select>
+                {!openOpportunities.length ? (
+                  <em>
+                    No hay oportunidades abiertas. Puedes cotizar directamente a un cliente o lead
+                    usando las opciones de arriba.
+                  </em>
+                ) : null}
+              </label>
+            ) : null}
+            {source === "CLIENT" ? (
+              <label>
+                Cliente
+                <select
+                  required
+                  disabled={loadingClients}
+                  value={b.clientId || ""}
+                  onChange={(e) => chooseClient(e.target.value)}
+                >
+                  <option value="">
+                    {loadingClients ? "Cargando clientes…" : "Seleccionar cliente"}
+                  </option>
+                  {clients
+                    .filter((item) => item.status !== "ARCHIVED")
+                    .map((item) => (
+                      <option value={item.id} key={item.id}>
+                        {item.tradeName || item.legalName} · {item.rut}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            ) : null}
+            {source === "LEAD" ? (
+              <label>
+                Lead
+                <select
+                  required
+                  value={b.leadId || ""}
+                  onChange={(e) => chooseLead(e.target.value)}
+                >
+                  <option value="">Seleccionar lead</option>
+                  {selectableLeads.map((item) => (
+                    <option value={item.id} key={item.id}>
+                      {item.companyName} · {item.contactName}
+                    </option>
+                  ))}
+                </select>
+                {!selectableLeads.length ? (
+                  <em>No hay leads disponibles. Puedes seleccionar un cliente existente.</em>
+                ) : null}
+              </label>
+            ) : null}
+            <div className="quoteSourceSummary">
+              <span>
+                {source === "OPPORTUNITY"
+                  ? "Oportunidad"
+                  : source === "CLIENT"
+                    ? "Cliente"
+                    : "Lead"}
+              </span>
+              <strong>{b.companyName || "Selecciona un origen para continuar"}</strong>
+            </div>
+          </div>
+        ) : null}
+        {step === 2 ? (
+          <>
+            <label className="wide">
+              Contacto guardado
+              <select
+                value=""
+                disabled={!contacts.length}
+                onChange={(e) => {
+                  const contact = contacts.find((item) => item.id === e.target.value);
+                  if (contact)
+                    set({ ...b, contactName: contact.name, contactEmail: contact.email });
+                }}
+              >
+                <option value="">
+                  {contacts.length
+                    ? "Seleccionar contacto del cliente"
+                    : "Sin contactos guardados; completa los datos abajo"}
+                </option>
+                {contacts.map((contact) => (
+                  <option value={contact.id} key={contact.id}>
+                    {contact.name} · {contact.email}
+                    {contact.isPrimary ? " · Principal" : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Contacto receptor
+              <input
+                required
+                value={b.contactName || ""}
+                onChange={(e) => set({ ...b, contactName: e.target.value })}
+              />
+            </label>
+            <label>
+              Email
+              <input
+                required
+                type="email"
+                value={b.contactEmail || ""}
+                onChange={(e) => set({ ...b, contactEmail: e.target.value })}
+              />
+            </label>
+          </>
+        ) : null}
+        {step === 3 ? (
+          <div className="quoteItems wide">
+            <header>
+              <div>
+                <span>ALCANCE COTIZADO</span>
+                <strong>
+                  {items.length} {items.length === 1 ? "servicio" : "servicios"}
+                </strong>
+              </div>
+              <button type="button" onClick={addItem}>
+                <Plus size={14} />
+                Agregar servicio
+              </button>
+            </header>
+            {items.map((item, index) => (
+              <article key={item.key}>
+                <div>
+                  <b>{index + 1}</b>
+                  <label>
+                    Servicio del catálogo
+                    <select
+                      required={requiresCatalog}
+                      value={item.catalogServiceId || ""}
+                      onChange={(e) => selectCatalog(item.key, e.target.value)}
+                    >
+                      {requiresCatalog ? (
+                        <option value="">Selecciona un servicio autorizado</option>
+                      ) : (
+                        <option value="">Alcance personalizado</option>
+                      )}
+                      {catalog.map((entry) => (
+                        <option value={entry.id} key={entry.id}>
+                          {entry.code} · {entry.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {items.length > 1 ? (
+                    <button
+                      type="button"
+                      className="quoteRemove"
+                      aria-label={`Quitar servicio ${index + 1}`}
+                      onClick={() => removeItem(item.key)}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  ) : null}
+                </div>
+                <label>
+                  Descripción / alcance
+                  <textarea
+                    required
+                    value={item.description}
+                    onChange={(e) => updateItem(item.key, { description: e.target.value })}
+                  />
+                </label>
+              </article>
+            ))}
+          </div>
+        ) : null}
+        {step === 4 ? (
+          <div className="quotePricing wide">
+            <label>
+              Moneda
+              <select value={b.currency} onChange={(e) => set({ ...b, currency: e.target.value })}>
+                <option>CLP</option>
+                <option>UF</option>
+                <option>USD</option>
+              </select>
+            </label>
+            <label>
+              Tasa IVA %
+              <input
+                required
+                type="number"
+                min="0"
+                max="100"
+                value={b.taxRate}
+                onChange={(e) => set({ ...b, taxRate: e.target.value })}
+              />
+            </label>
+            {items.map((item, index) => (
+              <article key={item.key}>
+                <strong>
+                  {index + 1}. {item.description}
+                </strong>
+                <label>
+                  Cantidad
+                  <input
+                    required
+                    type="number"
+                    min="0.001"
+                    step="0.001"
+                    value={item.quantity}
+                    onChange={(e) => updateItem(item.key, { quantity: Number(e.target.value) })}
+                  />
+                </label>
+                <label>
+                  Precio unitario
+                  <input
+                    required
+                    type="number"
+                    min="0"
+                    value={item.unitPrice}
+                    onChange={(e) => updateItem(item.key, { unitPrice: Number(e.target.value) })}
+                  />
+                </label>
+                <label>
+                  Descuento %
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={item.discountPercent}
+                    onChange={(e) =>
+                      updateItem(item.key, { discountPercent: Number(e.target.value) })
+                    }
+                  />
+                </label>
+                <label className="quoteTax">
+                  <input
+                    type="checkbox"
+                    checked={item.taxable}
+                    onChange={(e) => updateItem(item.key, { taxable: e.target.checked })}
+                  />
+                  Afecto a IVA
+                </label>
+                <b>
+                  {money(
+                    item.quantity * item.unitPrice * (1 - item.discountPercent / 100),
+                    b.currency,
+                  )}
+                </b>
+              </article>
+            ))}
+            <QuoteTotals totals={totals} currency={b.currency} />
+          </div>
+        ) : null}
+        {step === 5 ? (
+          <label className="wide">
+            Condiciones comerciales
+            <textarea
+              required
+              placeholder="Alcance, exclusiones, entregables y condiciones relevantes"
+              value={b.commercialTerms || ""}
+              onChange={(e) => set({ ...b, commercialTerms: e.target.value })}
+            />
+          </label>
+        ) : null}
+        {step === 6 ? (
+          <>
+            <label>
+              Modalidad de cobro
+              <select
+                value={b.billingType || "ONE_TIME"}
+                onChange={(e) => set({ ...b, billingType: e.target.value })}
+              >
+                <option value="ONE_TIME">Pago único</option>
+                <option value="SUBSCRIPTION">Suscripción mensual</option>
+              </select>
+            </label>
+            <label>
+              Vigencia
+              <input
+                required
+                type="date"
+                value={b.validUntil || ""}
+                onChange={(e) => set({ ...b, validUntil: e.target.value })}
+              />
+            </label>
+            <label>
+              Forma de pago
+              <input
+                required
+                placeholder="Ej. 50% anticipo y 50% contra entrega"
+                value={b.paymentTerms || ""}
+                onChange={(e) => set({ ...b, paymentTerms: e.target.value })}
+              />
+            </label>
+          </>
+        ) : null}
+        {step === 7 ? (
+          <label className="wide">
+            Notas internas o para la propuesta
+            <textarea
+              placeholder="Opcional"
+              value={b.notes || ""}
+              onChange={(e) => set({ ...b, notes: e.target.value })}
+            />
+          </label>
+        ) : null}
+        {step === 8 ? (
+          <div className="quoteReview">
+            <header>
+              <div>
+                <span>PROPUESTA PARA</span>
+                <strong>{b.companyName}</strong>
+                <small>
+                  {b.contactName} · {b.contactEmail}
+                </small>
+              </div>
+              <b>Borrador</b>
+            </header>
+            <div className="quoteReviewItems">
+              {items.map((item, index) => (
+                <div key={item.key}>
+                  <span>
+                    {index + 1}. {item.description}
+                    <small>
+                      {item.quantity} × {money(item.unitPrice, b.currency)} · {item.discountPercent}
+                      % desc.
+                    </small>
+                  </span>
+                  <strong>
+                    {money(
+                      item.quantity * item.unitPrice * (1 - item.discountPercent / 100),
+                      b.currency,
+                    )}
+                  </strong>
+                </div>
+              ))}
+            </div>
+            <QuoteTotals totals={totals} currency={b.currency} />
+            <footer>
+              <span>Vigencia</span>
+              <strong>{formatDate(b.validUntil)}</strong>
+              <span>Pago</span>
+              <strong>{b.paymentTerms}</strong>
+            </footer>
+          </div>
+        ) : null}
+        <footer>
+          {step > 1 ? (
+            <button type="button" disabled={busy} onClick={() => setStep(step - 1)}>
+              Anterior
+            </button>
+          ) : (
+            <button type="button" onClick={close}>
+              Cancelar
+            </button>
+          )}
+          <button className="salesPrimary" disabled={busy}>
+            {busy ? "Guardando…" : step === 8 ? "Guardar borrador" : "Continuar"}
+          </button>
+        </footer>
+      </form>
+    </Modal>
+  );
+}
+function QuoteTotals({
+  totals,
+  currency,
+}: {
+  totals: { subtotal: number; discount: number; net: number; tax: number; total: number };
+  currency: string;
+}) {
+  return (
+    <dl className="quoteTotals">
+      <div>
+        <dt>Subtotal</dt>
+        <dd>{money(totals.subtotal, currency)}</dd>
+      </div>
+      <div>
+        <dt>Descuento</dt>
+        <dd>− {money(totals.discount, currency)}</dd>
+      </div>
+      <div>
+        <dt>Neto</dt>
+        <dd>{money(totals.net, currency)}</dd>
+      </div>
+      <div>
+        <dt>IVA</dt>
+        <dd>{money(totals.tax, currency)}</dd>
+      </div>
+      <div>
+        <dt>Total</dt>
+        <dd>{money(totals.total, currency)}</dd>
+      </div>
+    </dl>
+  );
+}
+function GoalForm({
+  close,
+  save,
+}: {
+  close: () => void;
+  save: (b: Partial<SalesGoal>) => Promise<void>;
+}) {
+  const [b, set] = useState<Partial<SalesGoal>>({
+    periodType: "MONTH",
+    goalType: "AMOUNT",
+    target: 0,
+  });
+  return (
+    <Modal title="Nueva meta" close={close}>
+      <form
+        className="salesForm"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          await save(b);
+        }}
+      >
+        <label>
+          Período
+          <select
+            value={b.periodType}
+            onChange={(e) => set({ ...b, periodType: e.target.value as SalesGoal["periodType"] })}
+          >
+            <option value="MONTH">Mes</option>
+            <option value="QUARTER">Trimestre</option>
+            <option value="YEAR">Año</option>
+          </select>
+        </label>
+        <label>
+          Tipo
+          <select
+            value={b.goalType}
+            onChange={(e) => set({ ...b, goalType: e.target.value as SalesGoal["goalType"] })}
+          >
+            <option value="AMOUNT">Monto vendido</option>
+            <option value="SALES">N° ventas</option>
+            <option value="NEW_CLIENTS">Nuevos clientes</option>
+            <option value="QUOTES">Cotizaciones</option>
+            <option value="CONVERSION">Conversión</option>
+          </select>
+        </label>
+        <label>
+          Inicio
+          <input
+            required
+            type="date"
+            onChange={(e) => set({ ...b, periodStart: e.target.value })}
+          />
+        </label>
+        <label>
+          Término
+          <input required type="date" onChange={(e) => set({ ...b, periodEnd: e.target.value })} />
+        </label>
+        <label className="wide">
+          Objetivo
+          <input
+            required
+            min="0.01"
+            step="0.01"
+            type="number"
+            onChange={(e) => set({ ...b, target: Number(e.target.value) })}
+          />
+        </label>
+        <footer>
+          <button type="button" onClick={close}>
+            Cancelar
+          </button>
+          <button className="salesPrimary">Crear meta</button>
+        </footer>
+      </form>
+    </Modal>
+  );
+}
