@@ -87,6 +87,34 @@ async function handle(request: Request, { params }: { params: Promise<{ path?: s
   if (body.length > 25_000_000)
     return NextResponse.json({ message: "Archivo demasiado grande." }, { status: 413 });
   const path = "/" + segments.slice(1).join("/");
+  // The combined register owns pagination. Asking the old two-row source for
+  // page two first can produce a PostgREST 416 even when native rows remain.
+  if (request.method === "GET" && path === "/quotes") {
+    const page = Number(url.searchParams.get("page") || 1);
+    const size = Number(url.searchParams.get("pageSize") || 25);
+    const clientId = url.searchParams.get("clientId");
+    if (
+      !Number.isSafeInteger(page) ||
+      page < 1 ||
+      !Number.isSafeInteger(size) ||
+      size < 1 ||
+      size > 100 ||
+      (clientId &&
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clientId)) ||
+      (url.searchParams.get("search")?.length || 0) > 200
+    )
+      return NextResponse.json({ message: "Filtros o paginación inválidos." }, { status: 400 });
+    try {
+      return NextResponse.json(await mergeLegacyRead(path, url.searchParams, { items: [] }), {
+        headers: { "cache-control": "no-store" },
+      });
+    } catch {
+      return NextResponse.json(
+        { message: "No fue posible consultar el registro de cotizaciones." },
+        { status: 503 },
+      );
+    }
+  }
   const sourceWebsiteQuoteId =
     path === "/clients" && request.method === "POST"
       ? url.searchParams.get("sourceWebsiteQuoteId")
