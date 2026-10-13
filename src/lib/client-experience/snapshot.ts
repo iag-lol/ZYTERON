@@ -1,3 +1,5 @@
+import { portalModulePermissions } from "@/lib/portal/module-permissions";
+import { scopedPublications } from "@/lib/portal/canonical-publications";
 import "server-only";
 import { projectStatus } from "./project-status";
 import { getClientPortalSnapshot } from "@/lib/portal/data";
@@ -82,7 +84,21 @@ export async function connectedPortalSnapshot(userId: string) {
           }>
         >`SELECT id,thread_id,direction,actor_kind,body_text,created_at FROM sales_messages ORDER BY created_at DESC LIMIT 200`,
       ]);
-    return { services, events, debts, payments, quotes, lifecycle, webThreads, webMessages };
+    const permissions = await portalModulePermissions(db);
+    if (!permissions.enabled) throw new Error("PORTAL_DISABLED");
+    const publications = await scopedPublications(db);
+    return {
+      services,
+      events,
+      debts,
+      payments,
+      quotes,
+      lifecycle,
+      webThreads,
+      webMessages,
+      publications,
+      permissions,
+    };
   });
   const quotes = extra.quotes.map((q) => {
     const v = enrichQuoteRecord({ ...q, createdAt: q.createdAt.toISOString() }),
@@ -182,38 +198,53 @@ export async function connectedPortalSnapshot(userId: string) {
       date: e.occurred_at.toISOString(),
       kind: e.event_type,
     })),
-    projects: base.projects.map((p) => ({
-      id: p.id,
-      title: p.title,
-      status: projectStatus(p.status),
-      category: p.serviceArea,
-      description: p.description || "",
-      scope: p.scope || "",
-      start: p.startDate?.toISOString() || null,
-      end: p.endDate?.toISOString() || null,
-    })),
-    documents: base.documents.map((d) => ({
-      id: d.id,
-      title: d.title,
-      description: d.description || "",
-      category: d.category,
-      fileName: d.fileName || "",
-      date: d.createdAt.toISOString(),
-    })),
-    tickets: base.tickets.map((t) => ({
-      id: t.id,
-      title: t.title,
-      status: t.status,
-      category: t.category || "Asistencia",
-      description: t.description,
-      date: t.updatedAt.toISOString(),
-      messages: t.messages.map((m) => ({
-        id: m.id,
-        actor: m.authorRole === "CLIENT" ? "Tú" : "Equipo Zyteron",
-        text: m.message,
-        date: m.createdAt.toISOString(),
-      })),
-    })),
+    projects: !extra.permissions.projects
+      ? []
+      : [
+          ...extra.publications.projects,
+          ...base.projects.map((p) => ({
+            id: p.id,
+            title: p.title,
+            status: projectStatus(p.status),
+            category: p.serviceArea,
+            description: p.description || "",
+            scope: p.scope || "",
+            start: p.startDate?.toISOString() || null,
+            end: p.endDate?.toISOString() || null,
+          })),
+        ],
+    documents: !extra.permissions.documents
+      ? []
+      : [
+          ...extra.publications.documents,
+          ...base.documents.map((d) => ({
+            id: d.id,
+            title: d.title,
+            description: d.description || "",
+            category: d.category,
+            fileName: d.fileName || "",
+            date: d.createdAt.toISOString(),
+          })),
+        ],
+    tickets: !extra.permissions.tickets
+      ? []
+      : [
+          ...extra.publications.tickets,
+          ...base.tickets.map((t) => ({
+            id: t.id,
+            title: t.title,
+            status: t.status,
+            category: t.category || "Asistencia",
+            description: t.description,
+            date: t.updatedAt.toISOString(),
+            messages: t.messages.map((m) => ({
+              id: m.id,
+              actor: m.authorRole === "CLIENT" ? "Tú" : "Equipo Zyteron",
+              text: m.message,
+              date: m.createdAt.toISOString(),
+            })),
+          })),
+        ],
     requests: base.portalRequests.map((r) => ({
       id: r.id,
       title: r.title,
@@ -246,7 +277,7 @@ export async function connectedPortalSnapshot(userId: string) {
       notes: c.notes || "",
       project: c.project?.title || "",
     })),
-    invoices: extra.debts.map((d) => {
+    invoices: (extra.permissions.invoices ? extra.debts : []).map((d) => {
       const paid = d.allocations.reduce((sum, a) => sum + a.amount, 0),
         balance = Math.max(0, d.totalAmount - paid);
       return {
@@ -262,7 +293,7 @@ export async function connectedPortalSnapshot(userId: string) {
           balance === 0 ? "Pagada" : d.dueAt && d.dueAt.getTime() < now ? "Vencida" : "Pendiente",
       };
     }),
-    payments: extra.payments.map((p) => ({
+    payments: (extra.permissions.invoices ? extra.payments : []).map((p) => ({
       id: p.id,
       amount: p.amount,
       date: p.receivedAt.toISOString(),

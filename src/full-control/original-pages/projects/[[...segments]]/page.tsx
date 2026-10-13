@@ -1,0 +1,3 @@
+import { ProjectMonitoringSlot } from "@control/components/monitoring/embedded";
+import { OperationsWorkspace } from "@control/components/operations/operations-workspace";
+export default async function Page({ params, searchParams }: { params: Promise<{ segments?: string[] }>; searchParams: Promise<{ clientId?: string }> }) { const [{ segments = [] }, query] = await Promise.all([params, searchParams]); return <><OperationsWorkspace section={segments[0] ? "project" : "projects"} detailId={segments[0]} initialClientId={query.clientId || null}/>{segments[0] ? <ProjectMonitoringSlot projectId={segments[0]}/> : null}</>; }

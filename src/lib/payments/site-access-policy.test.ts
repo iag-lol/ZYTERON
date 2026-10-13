@@ -52,7 +52,7 @@ test("annual projection clamps month days, excludes canceled subscriptions and r
   };
   const p = projectMonthlyPayments(s, 2026);
   assert.equal(p.length, 12);
-  assert.equal(projectMonthlyPayments({ ...s, state: "CANCEL_REQUESTED" }, 2026).length, 12);
+  assert.equal(projectMonthlyPayments({ ...s, state: "CANCEL_REQUESTED" }, 2026).length, 0);
   assert.equal(p[1].date, "2026-02-28");
   assert.equal(p[3].date, "2026-04-30");
   assert.deepEqual(projectMonthlyPayments({ ...s, state: "CANCEL_SCHEDULED" }, 2026), []);

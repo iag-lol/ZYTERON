@@ -1,2 +1,2 @@
-import {redirect} from "next/navigation";
-export default function Page(){redirect("/administracion/control/cotizaciones");}
+import {redirect} from 'next/navigation';
+export default function Page(){redirect('/administracion/commercial/quotes');}

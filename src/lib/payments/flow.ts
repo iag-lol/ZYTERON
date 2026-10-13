@@ -1,3 +1,4 @@
+import {assertBusinessPaymentEnvironment} from "./payment-environment";
 import { normalizeProviderPayment, providerClpAmount } from "./provider-money";
 import { createHmac } from "node:crypto";
 
@@ -139,6 +140,7 @@ function getFlowConfig() {
     throw new Error("La conexión de pagos no tiene un origen autorizado.");
   }
 
+  assertBusinessPaymentEnvironment(normalizedBase);
   return {
     apiKey,
     secret,

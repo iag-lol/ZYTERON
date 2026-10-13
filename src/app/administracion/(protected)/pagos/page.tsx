@@ -1,2 +1,2 @@
-import {redirect} from "next/navigation";
-export default function Page(){redirect("/administracion/control/finanzas");}
+import {redirect} from 'next/navigation';
+export default function Page(){redirect('/administracion/finance/payments');}

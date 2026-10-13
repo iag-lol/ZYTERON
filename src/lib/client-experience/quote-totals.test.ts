@@ -21,3 +21,5 @@ test("fractional quantities and quotes excluding VAT retain their amount", () =>
     { subtotal: 13000, totalDescuento: 3000, iva: 0, grandTotal: 13000 },
   );
 });
+
+test('mixed taxable and exempt lines only tax the agreed taxable base',()=>{assert.deepEqual(quoteTotals([{qty:1,unitPrice:10000,taxable:true},{qty:1,unitPrice:20000,taxable:false}],true),{subtotal:30000,totalDescuento:0,iva:1900,grandTotal:31900});});

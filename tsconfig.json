@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -19,7 +23,18 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@control/*": [
+        "./src/full-control/*"
+      ],
+      "@zyteron/contracts": [
+        "./src/full-control/contracts/index.ts"
+      ],
+      "@zyteron/contracts/monitoring": [
+        "./src/full-control/contracts/monitoring.ts"
+      ]
     }
   },
   "include": [
@@ -30,5 +45,9 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "prisma/seed.ts"]
+  "exclude": [
+    "node_modules",
+    "prisma/seed.ts",
+    "control-runtime"
+  ]
 }

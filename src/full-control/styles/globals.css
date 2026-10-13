@@ -1,0 +1,699 @@
+@import "./commercial.css";
+@import "./operations.css";
+@import "./development.css";
+
+.zy-full-control {
+  --ink: #17211d;
+  --muted: #66716c;
+  --line: #dde4df;
+  --paper: #f4f6f3;
+  --panel: #ffffff;
+  --green: #0d5b43;
+  --green-bright: #b9f44a;
+  --green-soft: #eaf5e5;
+  --amber: #f3b63f;
+}
+
+:where(.zy-full-control) * { box-sizing: border-box; }
+.zy-full-control { scroll-behavior: smooth; }
+.zy-full-control { margin: 0; color: var(--ink); background: var(--paper); font-family: Arial, Helvetica, sans-serif; }
+:where(.zy-full-control) button, :where(.zy-full-control) input, :where(.zy-full-control) select { font: inherit; }
+:where(.zy-full-control) .authBoot {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  color: #48695d;
+}
+
+:where(.zy-full-control) .authScreen {
+  position: relative;
+  min-height: 100svh;
+  padding: clamp(24px, 4vw, 58px);
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 9% 12%, rgba(174, 238, 62, .15), transparent 27%),
+    radial-gradient(circle at 91% 88%, rgba(13, 91, 67, .09), transparent 32%),
+    linear-gradient(145deg, #f4f8f3 0%, #edf4ef 50%, #f7f9f7 100%);
+}
+
+:where(.zy-full-control) .authScreen::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  opacity: .28;
+  background-image: linear-gradient(rgba(13, 91, 67, .035) 1px, transparent 1px), linear-gradient(90deg, rgba(13, 91, 67, .035) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom right, #000, transparent 68%);
+}
+
+:where(.zy-full-control) .authPanel {
+  width: min(1140px, 100%);
+  min-height: 670px;
+  display: grid;
+  grid-template-columns: 1.05fr .95fr;
+  overflow: hidden;
+  border: 1px solid rgba(17, 78, 59, .13);
+  border-radius: 30px;
+  background: #fff;
+  box-shadow: 0 32px 90px rgba(9, 48, 35, .14), 0 3px 12px rgba(9, 48, 35, .06);
+}
+
+:where(.zy-full-control) .authIdentity {
+  position: relative;
+  min-width: 0;
+  padding: 56px 58px 50px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(145deg, #073c2d 0%, #0b503a 48%, #0d684b 100%);
+}
+
+:where(.zy-full-control) .authIdentity::after {
+  position: absolute;
+  right: -105px;
+  bottom: -130px;
+  width: 390px;
+  height: 390px;
+  border: 1px solid rgba(255, 255, 255, .09);
+  border-radius: 50%;
+  content: "";
+  box-shadow: 0 0 0 52px rgba(255, 255, 255, .025), 0 0 0 108px rgba(255, 255, 255, .018);
+}
+
+:where(.zy-full-control) .authGlow {
+  position: absolute;
+  top: -140px;
+  right: -110px;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(185, 244, 74, .28), transparent 68%);
+  filter: blur(4px);
+}
+
+:where(.zy-full-control) .authBrand {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+:where(.zy-full-control) .authBrand > span {
+  width: 43px;
+  height: 43px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  color: #113b2d;
+  background: #b9f44a;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .18);
+  font-size: 19px;
+  font-weight: 900;
+}
+
+:where(.zy-full-control) .authBrand > div { display: grid; gap: 2px; }
+:where(.zy-full-control) .authBrand strong { font-size: 13px; letter-spacing: .12em; }
+:where(.zy-full-control) .authBrand small { color: #a9c8bc; font-size: 8px; font-weight: 800; letter-spacing: .25em; }
+
+:where(.zy-full-control) .authIdentityContent {
+  position: relative;
+  z-index: 1;
+  max-width: 490px;
+  margin: auto 0;
+}
+
+:where(.zy-full-control) .authIdentityIcon {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-radius: 17px;
+  color: #b9f44a;
+  background: rgba(4, 39, 28, .3);
+  backdrop-filter: blur(8px);
+}
+
+:where(.zy-full-control) .authIdentityIcon svg { width: 25px; }
+:where(.zy-full-control) .authKicker { margin: 22px 0 0; color: #9fc6b7; font-size: 9px; font-weight: 900; letter-spacing: .2em; }
+:where(.zy-full-control) .authIdentity h1 { margin: 14px 0 17px; font-size: clamp(41px, 4vw, 57px); line-height: .99; letter-spacing: -.058em; }
+:where(.zy-full-control) .authIdentityCopy { max-width: 440px; margin: 0; color: #c6ddd4; font-size: 14px; line-height: 1.7; }
+
+:where(.zy-full-control) .authIdentityFooter {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 11px 19px;
+  color: #c4dacf;
+}
+
+:where(.zy-full-control) .authIdentityFooter span { display: inline-flex; align-items: center; gap: 7px; font-size: 10px; }
+:where(.zy-full-control) .authIdentityFooter svg { width: 14px; color: #b9f44a; }
+
+:where(.zy-full-control) .authForm {
+  min-width: 0;
+  padding: 58px clamp(48px, 5vw, 74px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: linear-gradient(150deg, #fff, #fbfcfb);
+}
+
+:where(.zy-full-control) .authFormHeader { margin-bottom: 33px; }
+:where(.zy-full-control) .authFormIcon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d8e6df;
+  border-radius: 15px;
+  color: #0d5b43;
+  background: #f0f7f3;
+}
+:where(.zy-full-control) .authFormIcon svg { width: 21px; }
+:where(.zy-full-control) .authFormHeader .authKicker { margin-top: 20px; color: #497364; }
+:where(.zy-full-control) .authFormHeader h2 { margin: 10px 0 8px; color: #14231e; font-size: 32px; line-height: 1.1; letter-spacing: -.045em; }
+:where(.zy-full-control) .authFormHeader > p:last-child { margin: 0; color: #73817b; font-size: 13px; line-height: 1.55; }
+
+:where(.zy-full-control) .authForm label {
+  margin-bottom: 17px;
+  display: grid;
+  gap: 9px;
+  color: #516960;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+:where(.zy-full-control) .authInput {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 15px;
+  border: 1px solid #d8e3dd;
+  border-radius: 12px;
+  color: #71837b;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(12, 57, 42, .025);
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+:where(.zy-full-control) .authInput:focus-within { border-color: #4c9b78; background: #fefffe; box-shadow: 0 0 0 4px rgba(76, 155, 120, .11); }
+:where(.zy-full-control) .authInput > svg { flex: 0 0 auto; width: 17px; }
+:where(.zy-full-control) .authInput input { min-width: 0; width: 100%; height: 100%; padding: 0; border: 0; outline: 0; color: #17251f; background: transparent; font-size: 13px; }
+:where(.zy-full-control) .authInput input::placeholder { color: #a2aca7; }
+
+:where(.zy-full-control) .authPrimaryButton {
+  position: relative;
+  height: 52px;
+  margin-top: 5px;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 0;
+  border-radius: 12px;
+  color: #15392c;
+  background: linear-gradient(135deg, #b9f44a, #a5ea2d);
+  box-shadow: 0 10px 24px rgba(126, 188, 31, .2);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 900;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+:where(.zy-full-control) .authPrimaryButton:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 13px 28px rgba(126, 188, 31, .26); }
+:where(.zy-full-control) .authPrimaryButton:disabled { cursor: wait; opacity: .7; }
+:where(.zy-full-control) .authPrimaryButton svg { width: 17px; }
+:where(.zy-full-control) .authButtonArrow { position: absolute; right: 17px; }
+
+:where(.zy-full-control) .authReset {
+  min-height: 42px;
+  border: 0;
+  color: #426f5f;
+  background: transparent;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+}
+:where(.zy-full-control) .authReset:hover { color: #0d5b43; text-decoration: underline; text-underline-offset: 3px; }
+
+:where(.zy-full-control) .authFormFooter {
+  margin-top: 25px;
+  padding-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-top: 1px solid #e7ece9;
+  color: #7a8882;
+  font-size: 10px;
+}
+:where(.zy-full-control) .authFormFooter svg { width: 15px; color: #4f7d6c; }
+
+:where(.zy-full-control) .authError,
+:where(.zy-full-control) .authNotice {
+  margin: 1px 0 12px;
+  padding: 12px 13px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+:where(.zy-full-control) .authError { color: #8b3129; border-color: #f3cbc6; background: #fff2f0; }
+:where(.zy-full-control) .authNotice { color: #176044; border-color: #cae9d5; background: #effaf2; }
+:where(.zy-full-control) .authError svg,
+:where(.zy-full-control) .authNotice svg { flex: 0 0 auto; width: 15px; }
+
+:where(.zy-full-control) .authPasswordRules { margin: -4px 0 15px; color: #77857f; font-size: 10px; line-height: 1.45; }
+:where(.zy-full-control) .authLegal { margin: 0; color: #75827c; font-size: 9px; letter-spacing: .03em; text-align: center; }
+:where(.zy-full-control) .authSpin { animation: authSpin 1s linear infinite; }
+@keyframes authSpin { to { transform: rotate(360deg); } }
+
+:where(.zy-full-control) .authenticatedRole { padding-right: 5px; }
+:where(.zy-full-control) .authenticatedRole button { width: 31px; height: 31px; display: grid; place-items: center; border: 0; border-radius: 8px; color: #526f64; background: #edf3ef; cursor: pointer; }
+
+@media (max-width: 900px) {
+  :where(.zy-full-control) .authScreen { padding: 24px; }
+  :where(.zy-full-control) .authPanel { width: min(680px, 100%); min-height: 0; grid-template-columns: 1fr; }
+  :where(.zy-full-control) .authIdentity { min-height: 290px; padding: 36px 40px; }
+  :where(.zy-full-control) .authIdentityContent { margin: 44px 0 4px; }
+  :where(.zy-full-control) .authIdentityIcon { display: none; }
+  :where(.zy-full-control) .authIdentity .authKicker { margin-top: 0; }
+  :where(.zy-full-control) .authIdentity h1 { max-width: 520px; font-size: 38px; }
+  :where(.zy-full-control) .authIdentityFooter { display: none; }
+  :where(.zy-full-control) .authForm { padding: 44px 48px; }
+}
+
+@media (max-width: 560px) {
+  :where(.zy-full-control) .authScreen { padding: 12px; align-content: start; }
+  :where(.zy-full-control) .authPanel { border-radius: 21px; }
+  :where(.zy-full-control) .authIdentity { min-height: 235px; padding: 28px 25px; }
+  :where(.zy-full-control) .authBrand > span { width: 38px; height: 38px; border-radius: 11px; }
+  :where(.zy-full-control) .authIdentityContent { margin-top: 35px; }
+  :where(.zy-full-control) .authIdentity h1 { margin-bottom: 10px; font-size: 31px; }
+  :where(.zy-full-control) .authIdentityCopy { font-size: 12px; }
+  :where(.zy-full-control) .authForm { padding: 34px 24px; }
+  :where(.zy-full-control) .authFormHeader { margin-bottom: 28px; }
+  :where(.zy-full-control) .authFormHeader h2 { font-size: 28px; }
+  :where(.zy-full-control) .authLegal { padding-bottom: 8px; }
+}
+
+:where(.zy-full-control) .shell { min-height: 100vh; display: grid; grid-template-columns: 228px 1fr; }
+:where(.zy-full-control) .sidebar { position: sticky; top: 0; height: 100vh; padding: 28px 20px; background: #102b22; color: white; display: flex; flex-direction: column; }
+:where(.zy-full-control) .brand { display: flex; align-items: center; gap: 11px; color: white; text-decoration: none; font-size: 20px; font-weight: 700; letter-spacing: -0.03em; }
+:where(.zy-full-control) .brandMark { width: 31px; height: 31px; border-radius: 9px; display: grid; place-items: center; color: #102b22; background: var(--green-bright); font-weight: 900; }
+:where(.zy-full-control) .sidebar nav { display: grid; gap: 8px; margin-top: 54px; }
+:where(.zy-full-control) .navItem { padding: 11px 13px; color: #aac1b7; text-decoration: none; border-radius: 9px; font-size: 14px; }
+:where(.zy-full-control) .navItem:hover, :where(.zy-full-control) .navItem.active { color: white; background: rgba(255, 255, 255, 0.1); }
+:where(.zy-full-control) .sidebarFooter { margin-top: auto; display: flex; align-items: center; gap: 8px; color: #aac1b7; font-size: 12px; }
+:where(.zy-full-control) .statusDot { width: 8px; height: 8px; border-radius: 99px; background: var(--amber); box-shadow: 0 0 0 4px rgba(243, 182, 63, .12); }
+:where(.zy-full-control) .statusDot.online { background: var(--green-bright); box-shadow: 0 0 0 4px rgba(185, 244, 74, .12); }
+
+:where(.zy-full-control) .workspace { min-width: 0; }
+:where(.zy-full-control) .topbar { height: 92px; padding: 0 42px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); background: rgba(244, 246, 243, .9); }
+:where(.zy-full-control) .topbar h1 { margin: 3px 0 0; font-size: 25px; letter-spacing: -0.04em; }
+:where(.zy-full-control) .eyebrow { margin: 0; text-transform: uppercase; letter-spacing: .13em; color: #7a8580; font-size: 10px; font-weight: 800; }
+:where(.zy-full-control) .profile { display: flex; align-items: center; gap: 12px; }
+:where(.zy-full-control) .profileText { display: grid; gap: 2px; text-align: right; color: var(--muted); font-size: 11px; }
+:where(.zy-full-control) .profileText strong { color: var(--ink); font-size: 13px; }
+:where(.zy-full-control) .avatar { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--green); color: white; font-weight: 800; font-size: 12px; }
+:where(.zy-full-control) .content { padding: 32px 42px 64px; max-width: 1500px; margin: 0 auto; }
+
+:where(.zy-full-control) .hero { padding: 42px; min-height: 260px; border-radius: 24px; color: white; background: radial-gradient(circle at 85% 15%, rgba(185,244,74,.24), transparent 30%), linear-gradient(120deg, #123e30, #0d5b43); display: flex; align-items: flex-end; justify-content: space-between; overflow: hidden; }
+:where(.zy-full-control) .eyebrow.light { color: #b9cfbf; }
+:where(.zy-full-control) .hero h2 { margin: 12px 0 16px; max-width: 620px; font-size: clamp(38px, 5vw, 64px); line-height: .96; letter-spacing: -.065em; }
+:where(.zy-full-control) .heroCopy { max-width: 520px; margin: 0; color: #c8dbd3; line-height: 1.6; font-size: 14px; }
+:where(.zy-full-control) .heroMetric { min-width: 265px; padding: 25px; border: 1px solid rgba(255,255,255,.14); border-radius: 18px; background: rgba(8,34,25,.42); backdrop-filter: blur(8px); display: grid; gap: 8px; }
+:where(.zy-full-control) .heroMetric span, :where(.zy-full-control) .heroMetric small { color: #b9cfbf; font-size: 12px; }
+:where(.zy-full-control) .heroMetric strong { color: var(--green-bright); font-size: 31px; letter-spacing: -.05em; }
+
+:where(.zy-full-control) .metricGrid { margin: 18px 0 34px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+:where(.zy-full-control) .metricCard { min-height: 135px; padding: 22px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); display: grid; align-content: space-between; }
+:where(.zy-full-control) .metricCard span, :where(.zy-full-control) .metricCard small { color: var(--muted); font-size: 12px; }
+:where(.zy-full-control) .metricCard strong { font-size: 31px; letter-spacing: -.05em; }
+:where(.zy-full-control) .metricCard.accent { background: var(--green-soft); border-color: #cfdfca; }
+
+:where(.zy-full-control) .sectionBlock, :where(.zy-full-control) .activity { padding: 28px; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); }
+:where(.zy-full-control) .sectionHeading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+:where(.zy-full-control) .sectionHeading h2, :where(.zy-full-control) .activity h2 { margin: 6px 0 0; font-size: 25px; letter-spacing: -.04em; }
+:where(.zy-full-control) .sectionHeading button { border: 0; border-radius: 10px; padding: 11px 16px; color: white; background: var(--green); cursor: pointer; font-weight: 700; font-size: 13px; }
+:where(.zy-full-control) .sectionHeading button:hover { background: #0a4936; }
+:where(.zy-full-control) .pipeline { overflow-x: auto; display: grid; grid-template-columns: repeat(5, minmax(205px, 1fr)); gap: 12px; }
+:where(.zy-full-control) .stage { min-height: 250px; padding: 13px; border-radius: 13px; background: var(--paper); }
+:where(.zy-full-control) .stageHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; color: #56625d; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
+:where(.zy-full-control) .stageHeader b { display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 99px; background: white; color: var(--ink); }
+:where(.zy-full-control) .deal { padding: 15px; border: 1px solid var(--line); border-radius: 11px; background: white; display: grid; gap: 8px; box-shadow: 0 4px 12px rgba(23,33,29,.04); }
+:where(.zy-full-control) .deal + .deal { margin-top: 9px; }
+:where(.zy-full-control) .company, :where(.zy-full-control) .amount { color: var(--green); font-size: 11px; font-weight: 800; }
+:where(.zy-full-control) .deal strong { line-height: 1.3; font-size: 14px; }
+:where(.zy-full-control) .dealMeta { display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid #edf0ed; color: #89918e; font-size: 10px; }
+:where(.zy-full-control) .empty { margin: 38px 0; text-align: center; color: #a0aaa5; font-size: 12px; }
+
+:where(.zy-full-control) .activity { margin-top: 18px; display: grid; grid-template-columns: 230px 1fr; gap: 30px; }
+:where(.zy-full-control) .activityRows { display: grid; }
+:where(.zy-full-control) .activityRows p { margin: 0; padding: 14px 0; display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 12px; border-bottom: 1px solid #edf0ed; }
+:where(.zy-full-control) .activityRows p:last-child { border-bottom: 0; }
+:where(.zy-full-control) .activityRows strong { font-size: 13px; }
+:where(.zy-full-control) .activityRows small { color: var(--muted); font-size: 11px; }
+:where(.zy-full-control) .activityIcon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; font-size: 9px; font-weight: 900; }
+:where(.zy-full-control) .activityIcon.amber { background: #fff3d9; color: #8a5d05; }
+:where(.zy-full-control) .activityIcon.blue { background: #e5effc; color: #215b98; }
+:where(.zy-full-control) .activityIcon.green { background: var(--green-soft); color: var(--green); }
+
+:where(.zy-full-control) .modalBackdrop { position: fixed; inset: 0; z-index: 20; padding: 24px; display: grid; place-items: center; background: rgba(10, 25, 20, .55); backdrop-filter: blur(6px); }
+:where(.zy-full-control) .modal { width: min(620px, 100%); padding: 28px; border-radius: 20px; background: white; box-shadow: 0 30px 80px rgba(9, 33, 25, .3); }
+:where(.zy-full-control) .modalHeader { margin-bottom: 22px; display: flex; align-items: start; justify-content: space-between; }
+:where(.zy-full-control) .modalHeader h2 { margin: 6px 0 0; font-size: 28px; letter-spacing: -.04em; }
+:where(.zy-full-control) .closeButton { width: 34px; height: 34px; border: 0; border-radius: 10px; background: var(--paper); color: var(--ink); cursor: pointer; font-size: 24px; }
+:where(.zy-full-control) .modal form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+:where(.zy-full-control) .modal label { display: grid; gap: 7px; color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+:where(.zy-full-control) .modal label.wide { grid-column: 1 / -1; }
+:where(.zy-full-control) .modal input { width: 100%; padding: 12px 13px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: white; outline: none; }
+:where(.zy-full-control) .modal input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(13, 91, 67, .1); }
+:where(.zy-full-control) .formError { grid-column: 1 / -1; margin: 0; padding: 10px 12px; border-radius: 8px; color: #8d271f; background: #ffebe8; font-size: 12px; }
+:where(.zy-full-control) .formActions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+:where(.zy-full-control) .formActions button { padding: 11px 16px; border-radius: 9px; cursor: pointer; font-weight: 800; font-size: 12px; }
+:where(.zy-full-control) .secondaryButton { border: 1px solid var(--line); background: white; color: var(--ink); }
+:where(.zy-full-control) .primaryButton { border: 1px solid var(--green); background: var(--green); color: white; }
+:where(.zy-full-control) .primaryButton:disabled { cursor: wait; opacity: .65; }
+
+@media (max-width: 1040px) {
+  :where(.zy-full-control) .metricGrid { grid-template-columns: repeat(2, 1fr); }
+  :where(.zy-full-control) .hero { align-items: start; flex-direction: column; gap: 30px; }
+  :where(.zy-full-control) .heroMetric { width: 100%; }
+}
+
+@media (max-width: 720px) {
+  :where(.zy-full-control) .shell { display: block; }
+  :where(.zy-full-control) .sidebar { position: static; width: 100%; height: auto; padding: 16px 20px; flex-direction: row; align-items: center; }
+  :where(.zy-full-control) .sidebar nav { margin: 0 0 0 auto; display: flex; }
+  :where(.zy-full-control) .sidebarFooter, :where(.zy-full-control) .navItem:not(.active) { display: none; }
+  :where(.zy-full-control) .topbar { height: 78px; padding: 0 20px; }
+  :where(.zy-full-control) .profileText { display: none; }
+  :where(.zy-full-control) .content { padding: 20px 14px 40px; }
+  :where(.zy-full-control) .hero { padding: 28px; min-height: 360px; }
+  :where(.zy-full-control) .hero h2 { font-size: 42px; }
+  :where(.zy-full-control) .metricGrid { grid-template-columns: 1fr 1fr; }
+  :where(.zy-full-control) .sectionBlock, :where(.zy-full-control) .activity { padding: 20px; }
+  :where(.zy-full-control) .activity { grid-template-columns: 1fr; }
+  :where(.zy-full-control) .activityRows p { grid-template-columns: 36px 1fr; }
+  :where(.zy-full-control) .activityRows small { grid-column: 2; }
+  :where(.zy-full-control) .modal form { grid-template-columns: 1fr; }
+  :where(.zy-full-control) .modal label.wide, :where(.zy-full-control) .formError, :where(.zy-full-control) .formActions { grid-column: 1; }
+}
+
+/* Enterprise shell — Fase A */
+:where(.zy-full-control) .enterpriseShell { min-height: 100vh; display: grid; grid-template-columns: 286px minmax(0, 1fr); transition: grid-template-columns .2s ease; }
+:where(.zy-full-control) .enterpriseShell.isCollapsed { grid-template-columns: 78px minmax(0, 1fr); }
+:where(.zy-full-control) .enterpriseSidebar { position: sticky; top: 0; z-index: 10; height: 100vh; min-width: 0; display: flex; flex-direction: column; color: white; background: #102b22; border-right: 1px solid rgba(255,255,255,.06); }
+:where(.zy-full-control) .sidebarBrandRow { min-height: 76px; padding: 16px 14px 15px 18px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid rgba(255,255,255,.08); }
+:where(.zy-full-control) .sidebarBrandRow .brand { min-width: 0; }
+:where(.zy-full-control) .brandCopy { display: grid; line-height: 1; }
+:where(.zy-full-control) .brandCopy strong { font-size: 17px; }
+:where(.zy-full-control) .brandCopy small { margin-top: 4px; color: #8faaa0; font-size: 9px; text-transform: uppercase; letter-spacing: .15em; }
+:where(.zy-full-control) .collapseButton, :where(.zy-full-control) .mobileMenuButton, :where(.zy-full-control) .notificationButton, :where(.zy-full-control) .userMenuButton { border: 0; cursor: pointer; }
+:where(.zy-full-control) .collapseButton { flex: 0 0 auto; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; color: #9db3aa; background: rgba(255,255,255,.06); }
+:where(.zy-full-control) .collapseButton:hover { color: white; background: rgba(255,255,255,.12); }
+:where(.zy-full-control) .isCollapsed .sidebarBrandRow { padding-inline: 14px; justify-content: center; flex-wrap: wrap; }
+:where(.zy-full-control) .isCollapsed .collapseButton { width: 26px; height: 24px; }
+
+:where(.zy-full-control) .enterpriseNav { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 10px 24px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.18) transparent; }
+:where(.zy-full-control) .navGroup + .navGroup { margin-top: 4px; }
+:where(.zy-full-control) .navGroupButton { width: 100%; min-height: 40px; padding: 0 10px; display: grid; grid-template-columns: 20px 1fr 16px; align-items: center; gap: 9px; border: 0; border-radius: 9px; color: #a9beb5; background: transparent; cursor: pointer; text-align: left; }
+:where(.zy-full-control) .navGroupButton:hover, :where(.zy-full-control) .navGroup.hasActive > .navGroupButton { color: white; background: rgba(255,255,255,.08); }
+:where(.zy-full-control) .navGroupButton span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+:where(.zy-full-control) .navGroupButton .rotated { transform: rotate(180deg); }
+:where(.zy-full-control) .navGroupButton svg { transition: transform .18s ease; }
+:where(.zy-full-control) .isCollapsed .navGroupButton { grid-template-columns: 1fr; justify-items: center; padding: 0; }
+:where(.zy-full-control) .navSubmenu { position: relative; margin: 3px 0 8px 19px; padding-left: 19px; display: grid; }
+:where(.zy-full-control) .navSubmenu::before { content: ""; position: absolute; inset: 2px auto 2px 0; width: 1px; background: rgba(255,255,255,.1); }
+:where(.zy-full-control) .navSubmenu a { min-height: 32px; padding: 7px 9px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-radius: 7px; color: #8fa79d; text-decoration: none; font-size: 12px; }
+:where(.zy-full-control) .navSubmenu a:hover { color: white; background: rgba(255,255,255,.06); }
+:where(.zy-full-control) .navSubmenu a.active { color: #132a22; background: var(--green-bright); font-weight: 800; }
+:where(.zy-full-control) .navSubmenu a b { min-width: 18px; height: 18px; padding: 0 5px; display: grid; place-items: center; border-radius: 99px; color: #17392d; background: var(--green-bright); font-size: 9px; }
+:where(.zy-full-control) .navSubmenu a.active b { color: white; background: var(--green); }
+:where(.zy-full-control) .sidebarIdentity { min-height: 68px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; border-top: 1px solid rgba(255,255,255,.08); }
+:where(.zy-full-control) .sidebarIdentity > span:last-child { min-width: 0; display: grid; }
+:where(.zy-full-control) .sidebarIdentity strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+:where(.zy-full-control) .sidebarIdentity small { margin-top: 3px; color: #8fa79d; font-size: 10px; }
+:where(.zy-full-control) .isCollapsed .sidebarIdentity { justify-content: center; padding-inline: 8px; }
+
+:where(.zy-full-control) .enterpriseWorkspace { min-width: 0; }
+:where(.zy-full-control) .enterpriseTopbar { position: sticky; top: 0; z-index: 8; height: 76px; padding: 0 30px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line); background: rgba(248,250,247,.94); backdrop-filter: blur(10px); }
+:where(.zy-full-control) .topbarContext { display: flex; align-items: center; gap: 12px; }
+:where(.zy-full-control) .topbarContext p { margin: 0 0 3px; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
+:where(.zy-full-control) .topbarContext strong { font-size: 15px; }
+:where(.zy-full-control) .mobileMenuButton { display: none; width: 36px; height: 36px; place-items: center; border-radius: 9px; color: var(--ink); background: white; box-shadow: inset 0 0 0 1px var(--line); }
+:where(.zy-full-control) .topbarActions { display: flex; align-items: center; gap: 10px; }
+:where(.zy-full-control) .globalSearch { width: min(300px, 24vw); height: 38px; padding: 0 12px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; background: white; color: #89938e; }
+:where(.zy-full-control) .globalSearch input { width: 100%; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 12px; }
+:where(.zy-full-control) .globalSearchWrap { position: relative; }
+:where(.zy-full-control) .globalSearchResults { position: absolute; z-index: 30; top: 45px; right: 0; width: 340px; padding: 8px; display: grid; gap: 3px; border: 1px solid var(--line); border-radius: 12px; background: white; box-shadow: 0 18px 50px rgba(10,30,23,.16); }
+:where(.zy-full-control) .globalSearchResults > small { padding: 5px 7px; color: var(--muted); font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
+:where(.zy-full-control) .globalSearchResults a { padding: 8px; display: flex; align-items: center; gap: 9px; border-radius: 8px; color: var(--ink); text-decoration: none; }
+:where(.zy-full-control) .globalSearchResults a:hover { background: var(--paper); }:where(.zy-full-control) .globalSearchResults a > span { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; color: white; background: var(--green); font-size: 8px; font-weight: 900; }:where(.zy-full-control) .globalSearchResults a div { display: grid; gap: 3px; }:where(.zy-full-control) .globalSearchResults a strong { font-size: 10px; }:where(.zy-full-control) .globalSearchResults a small { color: var(--muted); font-size: 8px; }
+:where(.zy-full-control) .notificationButton { position: relative; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; color: var(--ink); background: white; box-shadow: inset 0 0 0 1px var(--line); }
+:where(.zy-full-control) .notificationButton span { position: absolute; top: -4px; right: -4px; min-width: 17px; height: 17px; padding: 0 4px; display: grid; place-items: center; border: 2px solid var(--paper); border-radius: 99px; color: #132a22; background: var(--green-bright); font-size: 8px; font-weight: 900; }
+:where(.zy-full-control) .userMenuButton { padding: 4px 7px 4px 4px; display: flex; align-items: center; gap: 8px; border-radius: 11px; color: var(--ink); background: transparent; }
+:where(.zy-full-control) .userMenuButton:hover { background: white; }
+:where(.zy-full-control) .userMenuButton > span:nth-child(2) { display: grid; text-align: left; }
+:where(.zy-full-control) .userMenuButton strong { font-size: 11px; }
+:where(.zy-full-control) .userMenuButton small { margin-top: 2px; color: var(--muted); font-size: 9px; }
+:where(.zy-full-control) .avatar.small { width: 32px; height: 32px; border-radius: 9px; font-size: 10px; }
+:where(.zy-full-control) .roleSwitcher { position: relative; padding: 4px 7px 4px 4px; display: flex; align-items: center; gap: 8px; border-radius: 11px; color: var(--ink); cursor: pointer; }
+:where(.zy-full-control) .roleSwitcher:hover { background: white; }
+:where(.zy-full-control) .roleSwitcherText { min-width: 115px; display: grid; }
+:where(.zy-full-control) .roleSwitcherText strong { font-size: 11px; }
+:where(.zy-full-control) .roleSwitcherText small { margin-top: 2px; color: var(--muted); font-size: 9px; }
+:where(.zy-full-control) .roleSwitcher select { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
+:where(.zy-full-control) .enterpriseContent { min-width: 0; }
+:where(.zy-full-control) .mobileScrim { display: none; }
+
+:where(.zy-full-control) .dashboardContent { max-width: 1540px; margin: 0 auto; padding: 28px 32px 64px; }
+:where(.zy-full-control) .pageHeader { margin-bottom: 22px; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+:where(.zy-full-control) .pageHeader h1 { margin: 8px 0 5px; font-size: 30px; letter-spacing: -.045em; }
+:where(.zy-full-control) .pageHeader p { margin: 0; color: var(--muted); font-size: 13px; }
+:where(.zy-full-control) .phasePill { display: inline-flex; padding: 5px 8px; border-radius: 99px; color: var(--green); background: var(--green-soft); font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
+:where(.zy-full-control) .connectionStatus { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; }
+:where(.zy-full-control) .connectionStatus span { width: 8px; height: 8px; border-radius: 99px; }
+:where(.zy-full-control) .connectionStatus.online span { background: #66c73e; box-shadow: 0 0 0 4px rgba(102,199,62,.13); }
+:where(.zy-full-control) .connectionStatus.offline span { background: var(--amber); box-shadow: 0 0 0 4px rgba(243,182,63,.13); }
+:where(.zy-full-control) .compactOverview { min-height: 170px; padding: 28px 32px; display: flex; align-items: center; justify-content: space-between; gap: 28px; overflow: hidden; border-radius: 19px; color: white; background: radial-gradient(circle at 88% 10%, rgba(185,244,74,.22), transparent 32%), linear-gradient(120deg,#123e30,#0d5b43); }
+:where(.zy-full-control) .compactOverview h2 { margin: 8px 0 0; font-size: clamp(29px,3.4vw,45px); line-height: 1; letter-spacing: -.055em; }
+:where(.zy-full-control) .overviewValue { min-width: 250px; padding: 20px 22px; display: grid; gap: 7px; border: 1px solid rgba(255,255,255,.13); border-radius: 15px; background: rgba(8,34,25,.4); }
+:where(.zy-full-control) .overviewValue span, :where(.zy-full-control) .overviewValue small { color: #bfd2c9; font-size: 11px; }
+:where(.zy-full-control) .overviewValue strong { color: var(--green-bright); font-size: 27px; letter-spacing: -.04em; }
+:where(.zy-full-control) .executiveMetrics { margin: 14px 0 22px; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+:where(.zy-full-control) .executiveMetrics article { min-height: 118px; padding: 18px; display: flex; align-items: flex-start; gap: 13px; border: 1px solid var(--line); border-radius: 14px; background: white; }
+:where(.zy-full-control) .metricIcon { flex: 0 0 auto; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; color: var(--green); background: var(--green-soft); }
+:where(.zy-full-control) .executiveMetrics article div { display: grid; gap: 5px; }
+:where(.zy-full-control) .executiveMetrics small { color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+:where(.zy-full-control) .executiveMetrics strong { font-size: 20px; letter-spacing: -.04em; }
+:where(.zy-full-control) .executiveMetrics p { margin: 0; color: #8a938f; font-size: 10px; }
+:where(.zy-full-control) .emptyOperations { margin-top: 18px; padding: 26px; display: grid; grid-template-columns: 220px 1fr; gap: 26px; border: 1px solid var(--line); border-radius: 18px; background: white; }
+:where(.zy-full-control) .emptyOperations h2 { margin: 6px 0 0; font-size: 22px; letter-spacing: -.035em; }
+:where(.zy-full-control) .enterpriseEmptyState { min-height: 105px; display: grid; place-content: center; justify-items: center; text-align: center; color: var(--muted); }
+:where(.zy-full-control) .enterpriseEmptyState > span { width: 28px; height: 28px; margin-bottom: 8px; display: grid; place-items: center; border-radius: 99px; color: var(--green); background: var(--green-soft); font-weight: 900; }
+:where(.zy-full-control) .enterpriseEmptyState strong { color: var(--ink); font-size: 13px; }
+:where(.zy-full-control) .enterpriseEmptyState p { margin: 5px 0 0; font-size: 11px; }
+:where(.zy-full-control) .executiveAttentionList { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+:where(.zy-full-control) .executiveAttentionList a { min-height: 52px; padding: 10px 12px; display: grid; grid-template-columns: 30px 1fr auto; grid-template-rows: auto auto; align-items: center; column-gap: 10px; color: var(--ink); border: 1px solid var(--line); border-radius: 11px; text-decoration: none; transition: transform .15s ease,box-shadow .15s ease,border-color .15s ease; }
+:where(.zy-full-control) .executiveAttentionList a:hover { transform: translateY(-1px); border-color: #b8d7c7; box-shadow: 0 8px 22px #123d2e12; }
+:where(.zy-full-control) .executiveAttentionList a>span { grid-row: 1/3; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; color: #71372f; background: #fff0ed; font-weight: 900; }
+:where(.zy-full-control) .executiveAttentionList strong { font-size: 11px; }
+:where(.zy-full-control) .executiveAttentionList small { color: var(--muted); font-size: 8px; letter-spacing: .08em; }
+:where(.zy-full-control) .executiveAttentionList svg { grid-column: 3; grid-row: 1/3; color: var(--green); }
+:where(.zy-full-control) .enterpriseEmptyState.large { min-height: 250px; }
+:where(.zy-full-control) .enterpriseEmptyState.large > span { width: 34px; height: 34px; }
+
+:where(.zy-full-control) .modulePage { max-width: 1540px; margin: 0 auto; padding: 28px 32px 64px; }
+:where(.zy-full-control) .pagePrimaryAction { padding: 10px 14px; display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 9px; color: white; background: var(--green); cursor: pointer; font-weight: 800; font-size: 11px; }
+:where(.zy-full-control) .capabilityGrid { margin-bottom: 16px; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 11px; }
+:where(.zy-full-control) .capabilityGrid article { min-height: 76px; padding: 15px; display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 9px; border: 1px solid var(--line); border-radius: 13px; background: white; }
+:where(.zy-full-control) .capabilityGrid article > svg { color: var(--green); }
+:where(.zy-full-control) .capabilityGrid strong { font-size: 12px; }
+:where(.zy-full-control) .statusBadge { display: inline-flex; padding: 4px 7px; border-radius: 99px; color: #56625d; background: var(--paper); font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
+:where(.zy-full-control) .statusBadge.success { color: var(--green); background: var(--green-soft); }
+:where(.zy-full-control) .statusBadge.warning { color: #8a5d05; background: #fff3d9; }
+:where(.zy-full-control) .statusBadge.danger { color: #8d271f; background: #ffebe8; }
+:where(.zy-full-control) .modulePanel { overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: white; }
+:where(.zy-full-control) .filterBar { min-height: 60px; padding: 11px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); }
+:where(.zy-full-control) .filterBar label { width: min(360px,60%); height: 36px; padding: 0 11px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 9px; color: #89938e; }
+:where(.zy-full-control) .filterBar input { width: 100%; border: 0; outline: 0; background: transparent; }
+:where(.zy-full-control) .filterBar button { padding: 9px 11px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: white; }
+:where(.zy-full-control) .dataTableEmpty { min-height: 280px; }
+:where(.zy-full-control) .dataTableWrap { overflow-x: auto; }
+:where(.zy-full-control) .dataTableWrap table { width: 100%; border-collapse: collapse; }
+:where(.zy-full-control) .dataTableWrap th, :where(.zy-full-control) .dataTableWrap td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: left; font-size: 11px; }
+:where(.zy-full-control) .dataTableWrap th { color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+:where(.zy-full-control) .guardDenied { max-width: 900px; margin: 60px auto; padding: 30px; border: 1px solid var(--line); border-radius: 16px; background: white; }
+:where(.zy-full-control) .inlineEmpty { color: var(--muted); font-size: 12px; }
+:where(.zy-full-control) .activityFeed article { padding: 12px 0; display: grid; grid-template-columns: 10px 1fr auto; gap: 10px; border-bottom: 1px solid var(--line); }
+:where(.zy-full-control) .activityFeed article > span { width: 7px; height: 7px; margin-top: 5px; border-radius: 99px; background: var(--green); }
+:where(.zy-full-control) .activityFeed p { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
+:where(.zy-full-control) .activityFeed time { color: var(--muted); font-size: 10px; }
+:where(.zy-full-control) .enterpriseSelector { display: grid; gap: 5px; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+:where(.zy-full-control) .enterpriseSelector select { padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: white; }
+:where(.zy-full-control) .documentUploader { min-height: 130px; display: grid; place-content: center; justify-items: center; border: 1px dashed #b9c5bf; border-radius: 12px; background: var(--paper); cursor: pointer; }
+:where(.zy-full-control) .documentUploader input { display: none; }
+:where(.zy-full-control) .documentUploader span { margin-top: 4px; color: var(--muted); font-size: 10px; }
+:where(.zy-full-control) .auditDrawer { position: fixed; z-index: 30; inset: 0 0 0 auto; width: min(460px,90vw); padding: 24px; background: white; box-shadow: -20px 0 60px rgba(10,30,23,.2); }
+:where(.zy-full-control) .notificationCenter { position: absolute; z-index: 20; top: 64px; right: 120px; width: 340px; padding: 15px; border: 1px solid var(--line); border-radius: 13px; background: white; box-shadow: 0 18px 60px rgba(10,30,23,.16); }
+:where(.zy-full-control) .notificationCenter header { display: flex; justify-content: space-between; }
+:where(.zy-full-control) .notificationCenter a { color: var(--green); font-size: 10px; }
+
+/* Completed Client Domain */
+:where(.zy-full-control) .contactDirectory,:where(.zy-full-control) .contractCenter,:where(.zy-full-control) .contractDetail,:where(.zy-full-control) .serviceOperations,:where(.zy-full-control) .renewalCenter{max-width:1600px;margin:0 auto;padding:30px 34px 70px}:where(.zy-full-control) .contactHeader,:where(.zy-full-control) .contractHeader,:where(.zy-full-control) .serviceHeader,:where(.zy-full-control) .renewalHeader{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:20px}:where(.zy-full-control) .contactHeader>div:first-child>span,:where(.zy-full-control) .contractHeader>div:first-child>span,:where(.zy-full-control) .serviceHeader>div:first-child>span,:where(.zy-full-control) .renewalHeader>div:first-child>span,:where(.zy-full-control) .domainModal form>span{color:var(--green);font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.14em}:where(.zy-full-control) .contactHeader h1,:where(.zy-full-control) .contractHeader h1,:where(.zy-full-control) .serviceHeader h1,:where(.zy-full-control) .renewalHeader h1,:where(.zy-full-control) .contractDetail h1{margin:6px 0 5px;font-size:36px;letter-spacing:-.05em}:where(.zy-full-control) .contactHeader p,:where(.zy-full-control) .contractHeader p,:where(.zy-full-control) .serviceHeader p,:where(.zy-full-control) .renewalHeader p{margin:0;color:var(--muted);font-size:12px}:where(.zy-full-control) .contactHeader>div:last-child,:where(.zy-full-control) .contractHeader>div:last-child{display:flex;gap:7px}:where(.zy-full-control) .contactHeader button,:where(.zy-full-control) .contractHeader button,:where(.zy-full-control) .serviceHeader button,:where(.zy-full-control) .renewalHeader button,:where(.zy-full-control) .domainPrimary{min-height:39px;padding:0 13px;display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font-size:10px;font-weight:850;cursor:pointer}:where(.zy-full-control) .domainPrimary,:where(.zy-full-control) .contactHeader .domainPrimary,:where(.zy-full-control) .contractHeader .domainPrimary{color:white;border-color:var(--green);background:var(--green)}
+:where(.zy-full-control) .domainToolbar{min-height:65px;padding:12px 14px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--line)}:where(.zy-full-control) .domainToolbar>label{height:39px;flex:1;display:flex;align-items:center;gap:8px;padding:0 11px;border:1px solid var(--line);border-radius:9px;color:var(--muted)}:where(.zy-full-control) .domainToolbar input{width:100%;border:0;outline:0;background:transparent}:where(.zy-full-control) .domainToolbar select{height:39px;padding:0 10px;border:1px solid var(--line);border-radius:9px;background:white}:where(.zy-full-control) .viewButtons,:where(.zy-full-control) .serviceViews,:where(.zy-full-control) .renewalViews{display:flex;gap:4px}:where(.zy-full-control) .viewButtons button,:where(.zy-full-control) .serviceViews button,:where(.zy-full-control) .renewalViews button{min-height:35px;padding:0 9px;display:flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:8px;background:white;font-size:9px;cursor:pointer}:where(.zy-full-control) .viewButtons button.active,:where(.zy-full-control) .serviceViews button.active,:where(.zy-full-control) .renewalViews button.active{color:var(--green);border-color:#9ebcae;background:var(--green-soft)}:where(.zy-full-control) .domainLoading,:where(.zy-full-control) .domainEmpty{min-height:320px;display:grid;place-content:center;justify-items:center;text-align:center;color:var(--muted)}:where(.zy-full-control) .domainEmpty h2{margin:13px 0 5px;color:var(--ink);font-size:20px}:where(.zy-full-control) .domainEmpty p{max-width:470px;margin:0;font-size:10px;line-height:1.6}:where(.zy-full-control) .domainEmpty button{margin-top:14px;padding:10px 13px;border:0;border-radius:8px;color:#fff;background:var(--green);font-size:10px;font-weight:850}:where(.zy-full-control) .domainError,:where(.zy-full-control) .cardError{padding:11px 13px;border:1px solid #efb9b4;border-radius:9px;color:#922c23;background:#ffebe8;font-size:10px}:where(.zy-full-control) .domainTable{overflow:auto}:where(.zy-full-control) .domainTable table{width:100%;min-width:950px;border-collapse:collapse}:where(.zy-full-control) .domainTable th,:where(.zy-full-control) .domainTable td{padding:12px 14px;border-bottom:1px solid #edf0ed;text-align:left;font-size:10px}:where(.zy-full-control) .domainTable th{color:var(--muted);background:#fafbfa;font-size:8px;text-transform:uppercase}:where(.zy-full-control) .domainTable a{color:var(--green);text-decoration:none}
+:where(.zy-full-control) .contactMetrics{display:grid;grid-template-columns:repeat(8,1fr);overflow:hidden;border:1px solid var(--line);border-radius:14px;background:#fff}:where(.zy-full-control) .contactMetrics button{min-height:78px;padding:13px;display:grid;gap:5px;border:0;border-right:1px solid var(--line);background:white;text-align:left;cursor:pointer}:where(.zy-full-control) .contactMetrics button.active{background:var(--green-soft)}:where(.zy-full-control) .contactMetrics strong{font-size:20px}:where(.zy-full-control) .contactMetrics span{color:var(--muted);font-size:8px}:where(.zy-full-control) .contactWorkspace,:where(.zy-full-control) .contractWorkspace,:where(.zy-full-control) .serviceWorkspace,:where(.zy-full-control) .renewalWorkspace{margin-top:14px;overflow:hidden;border:1px solid var(--line);border-radius:16px;background:white}:where(.zy-full-control) .contactCards{padding:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:11px}:where(.zy-full-control) .contactCard{padding:17px;border:1px solid var(--line);border-radius:13px}:where(.zy-full-control) .contactCardTop{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:start}:where(.zy-full-control) .contactAvatar.large{width:44px;height:44px}:where(.zy-full-control) .contactCard h3{margin:2px 0 3px;font-size:13px}:where(.zy-full-control) .contactCard p,:where(.zy-full-control) .contactCard a{margin:0;color:var(--muted);font-size:9px}:where(.zy-full-control) .contactCard a{color:var(--green);text-decoration:none}:where(.zy-full-control) .contactCardTop>b{padding:4px 6px;border-radius:99px;color:var(--green);background:var(--green-soft);font-size:7px}:where(.zy-full-control) .contactTypes{margin:13px 0 10px;display:flex;gap:4px;flex-wrap:wrap}:where(.zy-full-control) .contactTypes span,:where(.zy-full-control) .requirementChips span{padding:4px 6px;border-radius:99px;color:#3f6657;background:#edf4ef;font-size:7px;font-weight:800}:where(.zy-full-control) .contactCard dl{margin:0;display:grid;gap:6px}:where(.zy-full-control) .contactCard dl div{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:9px}:where(.zy-full-control) .contactCard dl div>:nth-child(2){flex:1}:where(.zy-full-control) .contactCard dl button{display:grid;place-items:center;border:0;background:transparent;color:var(--green);cursor:pointer}:where(.zy-full-control) .contactCard footer{margin-top:13px;padding-top:11px;display:flex;gap:5px;border-top:1px solid var(--line);flex-wrap:wrap}:where(.zy-full-control) .contactCard footer button,:where(.zy-full-control) .renewalActions button{padding:6px 7px;display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:6px;background:white;font-size:8px;cursor:pointer}:where(.zy-full-control) .contactGroups{padding:14px;display:grid;gap:13px}:where(.zy-full-control) .contactGroups>section{padding:14px;border:1px solid var(--line);border-radius:12px}:where(.zy-full-control) .contactGroups>section>header{display:flex;justify-content:space-between}:where(.zy-full-control) .contactGroups>section>header span{color:var(--muted);font-size:9px}:where(.zy-full-control) .contactGroups>section>div{margin-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:9px}:where(.zy-full-control) .duplicateNotice{position:fixed;z-index:45;right:25px;bottom:25px;max-width:360px;padding:15px;display:grid;gap:7px;border:1px solid #e6c76f;border-radius:11px;background:#fff8dd;box-shadow:0 15px 45px #0002;font-size:9px}:where(.zy-full-control) .duplicateNotice button{justify-self:end;border:0;background:transparent;color:var(--green)}
+:where(.zy-full-control) .domainModal{position:fixed;z-index:50;inset:0;padding:20px;display:grid;place-items:center;background:#09241bb8;backdrop-filter:blur(3px)}:where(.zy-full-control) .domainModal>form,:where(.zy-full-control) .domainModal>div{position:relative;width:min(760px,96vw);max-height:92vh;overflow:auto;padding:25px;border-radius:16px;background:white;box-shadow:0 25px 80px #0005}:where(.zy-full-control) .domainModal h2{margin:6px 0 18px;font-size:25px}:where(.zy-full-control) .modalClose{position:absolute;right:14px;top:13px;width:32px;height:32px;border:1px solid var(--line);border-radius:8px;background:white;font-size:20px}:where(.zy-full-control) .domainModal form>label,:where(.zy-full-control) .formGrid label{display:grid;gap:6px;margin-bottom:12px;color:var(--muted);font-size:9px;font-weight:800;text-transform:uppercase}:where(.zy-full-control) .domainModal input,:where(.zy-full-control) .domainModal select,:where(.zy-full-control) .domainModal textarea{padding:10px;border:1px solid var(--line);border-radius:8px;background:white}:where(.zy-full-control) .domainModal textarea{min-height:75px;resize:vertical}:where(.zy-full-control) .formGrid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}:where(.zy-full-control) .domainModal fieldset{margin:5px 0 14px;padding:11px;display:flex;gap:7px;flex-wrap:wrap;border:1px solid var(--line);border-radius:9px}:where(.zy-full-control) .domainModal legend{padding:0 5px;color:var(--muted);font-size:8px}:where(.zy-full-control) .domainModal fieldset label,:where(.zy-full-control) .formChecks label,:where(.zy-full-control) .inlineCheck{display:flex!important;align-items:center;gap:5px!important;font-size:8px!important}:where(.zy-full-control) .domainModal fieldset input,:where(.zy-full-control) .formChecks input,:where(.zy-full-control) .inlineCheck input{width:auto}:where(.zy-full-control) .formChecks{display:flex;gap:14px}:where(.zy-full-control) .domainModal form>footer{margin-top:18px;padding-top:14px;display:flex;justify-content:flex-end;gap:7px;border-top:1px solid var(--line)}:where(.zy-full-control) .domainModal form>footer button{min-height:37px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:white}:where(.zy-full-control) .domainModal form>footer .domainPrimary{background:var(--green)}
+:where(.zy-full-control) .contractStatusStrip{display:grid;grid-template-columns:repeat(6,1fr) 1.4fr;overflow:hidden;border-radius:15px;color:white;background:linear-gradient(120deg,#173f34,#082f25)}:where(.zy-full-control) .contractStatusStrip button,:where(.zy-full-control) .contractStatusStrip>div{min-height:88px;padding:15px;display:grid;gap:4px;border:0;border-right:1px solid #ffffff17;color:white;background:transparent;text-align:left}:where(.zy-full-control) .contractStatusStrip button.active{background:#b9f44a18}:where(.zy-full-control) .contractStatusStrip strong{font-size:20px}:where(.zy-full-control) .contractStatusStrip span,:where(.zy-full-control) .contractStatusStrip small{color:#aec9bf;font-size:8px}:where(.zy-full-control) .contractList{display:grid}:where(.zy-full-control) .contractList>a{min-height:84px;padding:14px;display:grid;grid-template-columns:45px 1.7fr 1.2fr .7fr auto;align-items:center;gap:12px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}:where(.zy-full-control) .contractDocIcon{width:42px;height:48px;display:grid;place-items:center;border-radius:8px;color:var(--green);background:var(--green-soft)}:where(.zy-full-control) .contractList span{color:var(--green);font-size:8px;font-weight:900}:where(.zy-full-control) .contractList h3{margin:4px 0;font-size:13px}:where(.zy-full-control) .contractList p,:where(.zy-full-control) .contractList small{margin:0;color:var(--muted);font-size:8px}:where(.zy-full-control) .contractList>a>div strong{display:block;margin-top:5px;font-size:9px}:where(.zy-full-control) .contractBadge{width:max-content;padding:5px 7px;border-radius:99px;color:#685007;background:#fff0c4;font-size:7px}:where(.zy-full-control) .contractBadge.active,:where(.zy-full-control) .contractBadge.signed{color:var(--green);background:var(--green-soft)}:where(.zy-full-control) .contractBadge.expired,:where(.zy-full-control) .contractBadge.cancelled,:where(.zy-full-control) .contractBadge.terminated{color:#902d25;background:#ffe1de}:where(.zy-full-control) .contractDetail>a{color:var(--green);text-decoration:none;font-size:10px}:where(.zy-full-control) .contractDetail>header{margin:15px 0;padding:24px;display:flex;justify-content:space-between;align-items:center;border-radius:16px;color:white;background:linear-gradient(130deg,#163e32,#0b6248)}:where(.zy-full-control) .contractDetail>header h1{font-size:30px}:where(.zy-full-control) .contractDetail>header p{color:#bed4cb}:where(.zy-full-control) .contractDetailGrid{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}:where(.zy-full-control) .contractDetailGrid>article{padding:19px;border:1px solid var(--line);border-radius:14px;background:white}:where(.zy-full-control) .contractValidity{display:flex;align-items:center;gap:14px}:where(.zy-full-control) .contractValidity>span{display:grid;gap:5px}:where(.zy-full-control) .contractValidity>span:nth-of-type(1){flex:1}:where(.zy-full-control) .contractValidity small,:where(.zy-full-control) .contractEconomics small,:where(.zy-full-control) .contractSignature small,:where(.zy-full-control) .contractDocuments small,:where(.zy-full-control) .contractTimeline small{color:var(--muted);font-size:8px;text-transform:uppercase}:where(.zy-full-control) .contractValidity strong{font-size:10px}:where(.zy-full-control) .contractEconomics>strong{display:block;margin:8px 0;font-size:23px}:where(.zy-full-control) .contractEconomics p{color:var(--muted);font-size:9px}:where(.zy-full-control) .contractSignature{display:flex;align-items:center;gap:12px}:where(.zy-full-control) .contractSignature>div{flex:1}:where(.zy-full-control) .contractSignature strong{display:block;margin:5px 0}:where(.zy-full-control) .contractSignature p{margin:0;color:var(--muted);font-size:9px}:where(.zy-full-control) .contractSignature button:disabled{padding:9px;border:1px solid var(--line);border-radius:8px;color:var(--muted);background:#f3f4f2}:where(.zy-full-control) .contractDocuments{grid-column:1/-1}:where(.zy-full-control) .contractDocuments>header{display:flex;justify-content:space-between}:where(.zy-full-control) .contractDocuments input{display:none}:where(.zy-full-control) .contractDocuments>div{padding:11px 0;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--line)}:where(.zy-full-control) .contractDocuments>div span{flex:1;display:grid;gap:4px}:where(.zy-full-control) .contractTimeline{grid-column:1/-1}:where(.zy-full-control) .contractTimeline h2{margin:6px 0 12px}:where(.zy-full-control) .contractTimeline>div{display:flex;gap:7px}:where(.zy-full-control) .contractTimeline button{padding:8px 10px;border:1px solid #9dbdaf;border-radius:7px;color:var(--green);background:var(--green-soft)}:where(.zy-full-control) .contractTimeline p{color:var(--muted);font-size:9px}
+:where(.zy-full-control) .serviceMetrics{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}:where(.zy-full-control) .serviceMetrics button,:where(.zy-full-control) .serviceMetrics article{min-height:95px;padding:14px;display:grid;gap:4px;border:1px solid var(--line);border-radius:12px;background:white;text-align:left}:where(.zy-full-control) .serviceMetrics svg{color:var(--green)}:where(.zy-full-control) .serviceMetrics strong{font-size:19px}:where(.zy-full-control) .serviceMetrics span{color:var(--muted);font-size:8px}:where(.zy-full-control) .serviceMetrics article{color:white;border:0;background:linear-gradient(130deg,#164433,#0b6548)}:where(.zy-full-control) .serviceMetrics article svg,:where(.zy-full-control) .serviceMetrics article span{color:#c1dacf}:where(.zy-full-control) .serviceOpsCards{padding:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:11px}:where(.zy-full-control) .serviceOpsCard{padding:18px;border:1px solid var(--line);border-top:3px solid #cca94e;border-radius:13px}:where(.zy-full-control) .serviceOpsCard.active{border-top-color:#38a36e}:where(.zy-full-control) .serviceOpsCard.suspended{border-top-color:#d15d52}:where(.zy-full-control) .serviceOpsCard>header{display:flex;justify-content:space-between}:where(.zy-full-control) .serviceOpsCard>header>span{width:38px;height:38px;display:grid;place-items:center;border-radius:11px;color:var(--green);background:var(--green-soft)}:where(.zy-full-control) .serviceOpsCard>header b{font-size:7px}:where(.zy-full-control) .serviceOpsCard>small{display:block;margin-top:13px;color:var(--green);font-size:7px}:where(.zy-full-control) .serviceOpsCard h3{margin:5px 0;font-size:16px}:where(.zy-full-control) .serviceOpsCard>a{color:var(--muted);font-size:9px;text-decoration:none}:where(.zy-full-control) .serviceOpsCard dl{margin:16px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px}:where(.zy-full-control) .serviceOpsCard dt{color:var(--muted);font-size:7px}:where(.zy-full-control) .serviceOpsCard dd{margin:4px 0 0;font-size:9px;font-weight:800}:where(.zy-full-control) .requirementChips{display:flex;gap:4px}:where(.zy-full-control) .serviceOpsCard footer{margin-top:13px;padding-top:11px;border-top:1px solid var(--line)}:where(.zy-full-control) .serviceOpsCard footer button{padding:7px 9px;display:flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:7px;background:white;font-size:8px}:where(.zy-full-control) .catalogRequirements{padding:10px;display:flex;gap:7px;flex-wrap:wrap;border-radius:8px;background:var(--green-soft);font-size:8px}:where(.zy-full-control) .catalogRequirements strong{width:100%;color:var(--green)}
+:where(.zy-full-control) .renewalOverview{display:grid;grid-template-columns:repeat(4,1fr) 1.6fr;gap:8px}:where(.zy-full-control) .renewalOverview article{min-height:92px;padding:15px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:13px;background:white}:where(.zy-full-control) .renewalOverview article>svg{color:var(--green)}:where(.zy-full-control) .renewalOverview span{display:grid;gap:3px}:where(.zy-full-control) .renewalOverview small{color:var(--muted);font-size:8px}:where(.zy-full-control) .renewalOverview strong{font-size:20px}:where(.zy-full-control) .renewalOverview em{color:var(--muted);font-size:8px;font-style:normal}:where(.zy-full-control) .renewalOverview article:last-child{color:white;border:0;background:linear-gradient(130deg,#433e1a,#746412)}:where(.zy-full-control) .renewalOverview article:last-child svg,:where(.zy-full-control) .renewalOverview article:last-child small,:where(.zy-full-control) .renewalOverview article:last-child em{color:#e7dda0}:where(.zy-full-control) .renewalPipeline{padding:14px;display:grid;grid-template-columns:repeat(6,minmax(200px,1fr));gap:8px;overflow-x:auto;background:#f7f9f6}:where(.zy-full-control) .renewalPipeline>section{min-height:410px;padding:9px;border:1px solid var(--line);border-radius:11px;background:#fff}:where(.zy-full-control) .renewalPipeline>section>header{padding:5px;display:flex;justify-content:space-between;font-size:8px}:where(.zy-full-control) .renewalPipeline>section>header span{width:20px;height:20px;display:grid;place-items:center;border-radius:99px;background:var(--paper)}:where(.zy-full-control) .renewalPipeline>section>div{display:grid;gap:7px}:where(.zy-full-control) .renewalCard{padding:12px;border:1px solid var(--line);border-left:3px solid #729c88;border-radius:9px;background:white}:where(.zy-full-control) .renewalCard.warning{border-left-color:#d19a28}:where(.zy-full-control) .renewalCard.critical,:where(.zy-full-control) .renewalCard.overdue{border-left-color:#d05449}:where(.zy-full-control) .renewalCard>div:first-child{display:flex;justify-content:space-between}:where(.zy-full-control) .renewalCard small{color:var(--muted);font-size:7px}:where(.zy-full-control) .renewalCard>div:first-child b{font-size:7px}:where(.zy-full-control) .renewalCard h3{margin:9px 0 3px;font-size:11px}:where(.zy-full-control) .renewalCard>a{color:var(--green);font-size:8px;text-decoration:none}:where(.zy-full-control) .renewalCard>p{display:flex;gap:5px;color:var(--muted);font-size:8px}:where(.zy-full-control) .renewalCard>strong{font-size:9px}:where(.zy-full-control) .renewalActions{margin-top:10px;display:flex;gap:4px;flex-wrap:wrap}:where(.zy-full-control) .renewalActions button{padding:5px}:where(.zy-full-control) .renewalActions small{width:100%;color:#a22}:where(.zy-full-control) .renewalTimeline{padding:20px}:where(.zy-full-control) .renewalTimeline>div{display:grid;grid-template-columns:110px 12px 1fr;gap:10px}:where(.zy-full-control) .renewalTimeline time{font-size:9px;text-align:right}:where(.zy-full-control) .renewalTimeline>div>span{width:10px;height:10px;border:2px solid white;border-radius:50%;background:var(--green);box-shadow:0 0 0 2px #abc9bc}:where(.zy-full-control) .renewalTimeline .renewalCard{margin-bottom:10px}:where(.zy-full-control) .renewalCalendar{padding:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}:where(.zy-full-control) .renewalCalendar>section{padding:14px;border:1px solid var(--line);border-radius:11px}:where(.zy-full-control) .renewalCalendar>section>header{display:flex;align-items:center;gap:8px;padding-bottom:9px;border-bottom:1px solid var(--line)}:where(.zy-full-control) .renewalCalendar>section>header strong{flex:1;text-transform:capitalize}:where(.zy-full-control) .renewalCalendar>section>div{padding:9px 0;display:flex;gap:10px;border-bottom:1px solid #edf0ed}:where(.zy-full-control) .renewalCalendar>section>div>b{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;color:var(--green);background:var(--green-soft)}:where(.zy-full-control) .renewalCalendar>section>div span{display:grid;gap:3px}:where(.zy-full-control) .renewalCalendar small{color:var(--muted);font-size:8px}
+@media(max-width:1150px){:where(.zy-full-control) .contactMetrics{grid-template-columns:repeat(4,1fr)}:where(.zy-full-control) .contactCards,:where(.zy-full-control) .contactGroups>section>div,:where(.zy-full-control) .serviceOpsCards,:where(.zy-full-control) .renewalCalendar{grid-template-columns:1fr 1fr}:where(.zy-full-control) .contractStatusStrip{grid-template-columns:repeat(4,1fr)}:where(.zy-full-control) .serviceMetrics{grid-template-columns:repeat(4,1fr)}:where(.zy-full-control) .renewalOverview{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:780px){:where(.zy-full-control) .contactDirectory,:where(.zy-full-control) .contractCenter,:where(.zy-full-control) .contractDetail,:where(.zy-full-control) .serviceOperations,:where(.zy-full-control) .renewalCenter{padding:20px 14px 50px}:where(.zy-full-control) .contactHeader,:where(.zy-full-control) .contractHeader,:where(.zy-full-control) .serviceHeader,:where(.zy-full-control) .renewalHeader{align-items:flex-start;flex-direction:column}:where(.zy-full-control) .contactHeader>div:last-child{flex-wrap:wrap}:where(.zy-full-control) .contactMetrics{grid-template-columns:repeat(2,1fr)}:where(.zy-full-control) .contactCards,:where(.zy-full-control) .contactGroups>section>div,:where(.zy-full-control) .serviceOpsCards,:where(.zy-full-control) .renewalCalendar{grid-template-columns:1fr}:where(.zy-full-control) .domainToolbar{align-items:stretch;flex-direction:column}:where(.zy-full-control) .viewButtons,:where(.zy-full-control) .serviceViews,:where(.zy-full-control) .renewalViews{overflow-x:auto}:where(.zy-full-control) .contractStatusStrip{grid-template-columns:repeat(2,1fr)}:where(.zy-full-control) .contractList>a{grid-template-columns:40px 1fr auto}:where(.zy-full-control) .contractList>a>div:nth-of-type(n+3){display:none}:where(.zy-full-control) .contractDetailGrid{grid-template-columns:1fr}:where(.zy-full-control) .contractDocuments,:where(.zy-full-control) .contractTimeline{grid-column:1}:where(.zy-full-control) .serviceMetrics,:where(.zy-full-control) .renewalOverview{grid-template-columns:1fr 1fr}:where(.zy-full-control) .formGrid{grid-template-columns:1fr}:where(.zy-full-control) .contractValidity{align-items:flex-start;flex-direction:column}}
+
+/* Contractual System CL */
+:where(.zy-full-control) .contractBuilder{max-width:1540px;margin:0 auto;padding:30px 34px 80px}:where(.zy-full-control) .builderHeader{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:22px}:where(.zy-full-control) .builderHeader>div:first-child{display:grid;gap:4px}:where(.zy-full-control) .builderHeader a{width:max-content;color:var(--green);font-size:9px;font-weight:800;text-decoration:none}:where(.zy-full-control) .builderHeader span,:where(.zy-full-control) .panelTitle span{color:var(--green);font-size:8px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}:where(.zy-full-control) .builderHeader h1{margin:2px 0 0;font-size:38px;letter-spacing:-.055em}:where(.zy-full-control) .builderHeader p,:where(.zy-full-control) .panelTitle p{margin:0;color:var(--muted);font-size:10px}:where(.zy-full-control) .legalFlag{max-width:390px;padding:13px 15px;display:flex;align-items:center;gap:11px;border:1px solid #d7b75b;border-radius:12px;color:#71570b;background:#fff9e8}:where(.zy-full-control) .legalFlag>svg{flex:0 0 auto}:where(.zy-full-control) .legalFlag span{display:grid;gap:3px;color:inherit;letter-spacing:0;text-transform:none}:where(.zy-full-control) .legalFlag strong{font-size:10px}:where(.zy-full-control) .legalFlag small{font-size:8px;font-weight:500}:where(.zy-full-control) .builderSteps{margin-bottom:15px;padding:8px;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;border:1px solid var(--line);border-radius:14px;background:#fff}:where(.zy-full-control) .builderSteps button{min-height:48px;padding:8px 10px;display:flex;align-items:center;gap:8px;border:0;border-radius:9px;color:var(--muted);background:transparent;font-size:9px;font-weight:800;cursor:pointer}:where(.zy-full-control) .builderSteps i{width:24px;height:24px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;font-style:normal}:where(.zy-full-control) .builderSteps svg{width:12px}:where(.zy-full-control) .builderSteps button.active{color:#fff;background:var(--green)}:where(.zy-full-control) .builderSteps button.active i{border-color:#ffffff55}:where(.zy-full-control) .builderSteps button.done{color:var(--green);background:var(--green-soft)}:where(.zy-full-control) .builderAlert{margin-bottom:12px;padding:11px 13px;display:flex;gap:8px;align-items:center;border:1px solid #efaaa3;border-radius:10px;color:#8b2f28;background:#fff0ee;font-size:9px}:where(.zy-full-control) .builderAlert svg{width:15px}:where(.zy-full-control) .builderCanvas{min-height:540px;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 18px 50px #113b2b09}:where(.zy-full-control) .builderPanel{padding:26px}:where(.zy-full-control) .panelTitle{display:flex;align-items:flex-start;gap:13px;margin-bottom:24px}:where(.zy-full-control) .panelTitle>i{width:40px;height:40px;display:grid;place-items:center;border-radius:11px;color:var(--green);background:var(--green-soft)}:where(.zy-full-control) .panelTitle svg{width:19px}:where(.zy-full-control) .panelTitle h2{margin:4px 0 5px;font-size:22px;letter-spacing:-.035em}:where(.zy-full-control) .builderGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}:where(.zy-full-control) .builderGrid label,:where(.zy-full-control) .variableEditor label{display:grid;gap:6px;color:#49675d;font-size:8px;font-weight:850;text-transform:uppercase}:where(.zy-full-control) .builderGrid input,:where(.zy-full-control) .builderGrid select,:where(.zy-full-control) .builderGrid textarea,:where(.zy-full-control) .variableEditor textarea{width:100%;min-height:42px;padding:10px 11px;border:1px solid #cadbd4;border-radius:9px;color:var(--ink);background:#fbfdfc;font:inherit;font-size:10px;font-weight:600;text-transform:none;outline:none}:where(.zy-full-control) .builderGrid textarea,:where(.zy-full-control) .variableEditor textarea{min-height:78px;resize:vertical}:where(.zy-full-control) .builderGrid input:focus,:where(.zy-full-control) .builderGrid select:focus,:where(.zy-full-control) .builderGrid textarea:focus,:where(.zy-full-control) .variableEditor textarea:focus{border-color:#4c9b7c;box-shadow:0 0 0 3px #1e805215}:where(.zy-full-control) .sourceSnapshot{margin-top:17px;padding:12px;display:flex;align-items:center;gap:8px;border-radius:10px;background:#f0f6f3}:where(.zy-full-control) .sourceSnapshot strong{margin-right:auto;font-size:9px}:where(.zy-full-control) .sourceSnapshot span{padding:5px 7px;border-radius:99px;color:#3d6858;background:#fff;font-size:7px}:where(.zy-full-control) .templatePicker{display:grid;grid-template-columns:1fr 1fr;gap:10px}:where(.zy-full-control) .templatePicker label{min-height:84px;padding:14px;display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:12px;cursor:pointer}:where(.zy-full-control) .templatePicker label.selected{border-color:#75a991;background:#f1f8f4}:where(.zy-full-control) .templatePicker input{accent-color:var(--green)}:where(.zy-full-control) .templatePicker svg{width:20px;color:var(--green)}:where(.zy-full-control) .templatePicker span{flex:1;display:grid;gap:5px}:where(.zy-full-control) .templatePicker strong{font-size:10px}:where(.zy-full-control) .templatePicker small{color:var(--muted);font-size:7px}:where(.zy-full-control) .templatePicker b{padding:4px 6px;border-radius:99px;color:#4f6c61;background:#e8f1ed;font-size:6px}:where(.zy-full-control) .variableEditor{max-height:620px;padding-right:7px;display:grid;grid-template-columns:1fr 1fr;gap:11px;overflow:auto}:where(.zy-full-control) .variableEditor label>span{display:flex;justify-content:space-between;gap:10px}:where(.zy-full-control) .variableEditor label small{color:#789087;font-size:6px}:where(.zy-full-control) .reviewGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}:where(.zy-full-control) .reviewGrid article{padding:15px;border:1px solid var(--line);border-radius:11px;background:#fbfdfc}:where(.zy-full-control) .reviewGrid strong{font-size:9px}:where(.zy-full-control) .reviewGrid p{margin:8px 0 0;color:var(--muted);font-size:8px;line-height:1.45}:where(.zy-full-control) .validationList,:where(.zy-full-control) .validationOk,:where(.zy-full-control) .legalNotice{margin-top:14px;padding:14px;border-radius:11px}:where(.zy-full-control) .validationList{border:1px solid #efb0a9;background:#fff2f0}:where(.zy-full-control) .validationList strong{font-size:9px}:where(.zy-full-control) .validationList p{margin:7px 0 0;display:flex;align-items:center;gap:6px;color:#8a3029;font-size:8px}:where(.zy-full-control) .validationList svg,:where(.zy-full-control) .validationOk svg,:where(.zy-full-control) .legalNotice svg{width:14px;flex:0 0 auto}:where(.zy-full-control) .validationOk{display:flex;align-items:center;gap:8px;color:#225f49;background:#edf8f2;font-size:9px;font-weight:800}:where(.zy-full-control) .legalNotice{display:flex;gap:10px;color:#66520d;background:#fff8de}:where(.zy-full-control) .legalNotice p{margin:0;font-size:8px;line-height:1.55}:where(.zy-full-control) .builderFooter{padding-top:14px;display:flex;align-items:center;justify-content:space-between}:where(.zy-full-control) .builderFooter>span{color:var(--muted);font-size:8px}:where(.zy-full-control) .builderFooter button{min-height:39px;padding:0 13px;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:9px;background:#fff;font-size:9px;font-weight:850;cursor:pointer}:where(.zy-full-control) .builderFooter button svg{width:14px}:where(.zy-full-control) .builderFooter button:disabled{opacity:.45;cursor:not-allowed}:where(.zy-full-control) .projectContractAction{display:inline-flex!important;align-items:center;gap:5px;background:#b5f238!important;color:#133e2f!important;font-weight:850}
+:where(.zy-full-control) .contractProgress{margin:-5px 0 22px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}:where(.zy-full-control) .contractProgress article{padding:14px 16px;display:flex;align-items:center;gap:11px;border:1px solid #d7e4de;border-radius:12px;background:#f8fbf9}:where(.zy-full-control) .contractProgress article>svg{width:19px;color:var(--green)}:where(.zy-full-control) .contractProgress article>span{display:grid;gap:3px}:where(.zy-full-control) .contractProgress strong{font-size:13px}:where(.zy-full-control) .contractProgress small{color:var(--muted);font-size:8px}:where(.zy-full-control) .contractProgress .attention{border-color:#ead293;background:#fff9e9}:where(.zy-full-control) .contractProgress .attention>svg{color:#9a6d00}:where(.zy-full-control) .contractProgress .ready{border-color:#b9dfcb;background:#eef9f3}
+:where(.zy-full-control) .contractPartyGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}:where(.zy-full-control) .contractQuestionCard,:where(.zy-full-control) .contractDecisionCard{padding:20px;border:1px solid var(--line);border-radius:14px;background:#fcfefd}:where(.zy-full-control) .contractQuestionCard>header,:where(.zy-full-control) .contractDecisionCard>header{margin-bottom:17px;display:flex;align-items:flex-start;gap:11px}:where(.zy-full-control) .contractQuestionCard>header i{width:34px;height:34px;display:grid;place-items:center;flex:0 0 auto;border-radius:10px;color:var(--green);background:var(--green-soft)}:where(.zy-full-control) .contractQuestionCard>header svg{width:16px}:where(.zy-full-control) .contractQuestionCard>header div,:where(.zy-full-control) .contractDecisionCard>header div{display:grid;gap:3px}:where(.zy-full-control) .contractQuestionCard header span,:where(.zy-full-control) .contractDecisionCard header span{color:var(--green);font-size:7px;font-weight:900;letter-spacing:.13em}:where(.zy-full-control) .contractQuestionCard h3,:where(.zy-full-control) .contractDecisionCard h3{margin:0;font-size:15px}:where(.zy-full-control) .contractQuestionCard header p,:where(.zy-full-control) .contractDecisionCard header p{margin:0;color:var(--muted);font-size:8px;line-height:1.5}:where(.zy-full-control) .contractQuestionCard>label,:where(.zy-full-control) .contractDecisionGrid label,:where(.zy-full-control) .contractAdvancedGrid label{margin-top:11px;display:grid;gap:5px;color:#385e50;font-size:8px;font-weight:850}:where(.zy-full-control) .contractQuestionCard input,:where(.zy-full-control) .contractQuestionCard select,:where(.zy-full-control) .contractQuestionCard textarea,:where(.zy-full-control) .contractDecisionGrid input,:where(.zy-full-control) .contractDecisionGrid select,:where(.zy-full-control) .contractDecisionGrid textarea,:where(.zy-full-control) .contractAdvancedGrid textarea{width:100%;min-height:41px;padding:10px 11px;border:1px solid #cbdcd5;border-radius:9px;color:var(--ink);background:#fff;font:inherit;font-size:10px;font-weight:600;outline:none}:where(.zy-full-control) .contractQuestionCard textarea,:where(.zy-full-control) .contractDecisionGrid textarea{min-height:72px;resize:vertical}:where(.zy-full-control) .contractQuestionCard input:focus,:where(.zy-full-control) .contractQuestionCard select:focus,:where(.zy-full-control) .contractQuestionCard textarea:focus,:where(.zy-full-control) .contractDecisionGrid input:focus,:where(.zy-full-control) .contractDecisionGrid select:focus,:where(.zy-full-control) .contractDecisionGrid textarea:focus,:where(.zy-full-control) .contractAdvancedGrid textarea:focus{border-color:#4c9b7c;box-shadow:0 0 0 3px #1e805215}:where(.zy-full-control) .contractQuestionCard label>small,:where(.zy-full-control) .contractDecisionGrid label>small,:where(.zy-full-control) .contractAdvancedGrid label>small{color:#778e85;font-size:7px;font-weight:500;line-height:1.4}:where(.zy-full-control) .contractDecisionCard{margin-top:14px;background:#f7faf8}:where(.zy-full-control) .contractDecisionGrid{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px}:where(.zy-full-control) .contractDecisionGrid .wide{grid-column:1/-1}:where(.zy-full-control) .contractAdvanced{margin-top:14px;border:1px solid var(--line);border-radius:12px;background:#fff}:where(.zy-full-control) .contractAdvanced summary{padding:14px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none}:where(.zy-full-control) .contractAdvanced summary::-webkit-details-marker{display:none}:where(.zy-full-control) .contractAdvanced summary>svg:first-child{width:17px;color:var(--green)}:where(.zy-full-control) .contractAdvanced summary>svg:last-child{width:15px;margin-left:auto;transition:transform .2s}:where(.zy-full-control) .contractAdvanced[open] summary>svg:last-child{transform:rotate(90deg)}:where(.zy-full-control) .contractAdvanced summary span{display:grid;gap:3px}:where(.zy-full-control) .contractAdvanced summary strong{font-size:9px}:where(.zy-full-control) .contractAdvanced summary small{color:var(--muted);font-size:7px}:where(.zy-full-control) .contractAdvancedGrid{max-height:520px;padding:4px 16px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;overflow:auto;border-top:1px solid var(--line)}:where(.zy-full-control) .contractAdvancedGrid textarea{min-height:62px;resize:vertical}
+:where(.zy-full-control) .contractStateRail{margin:0 0 12px;display:grid;grid-template-columns:repeat(5,1fr);overflow:hidden;border:1px solid var(--line);border-radius:12px;background:#fff}:where(.zy-full-control) .contractStateRail>div{padding:11px 13px;display:grid;gap:5px;border-right:1px solid var(--line)}:where(.zy-full-control) .contractStateRail>div:last-child{border:0}:where(.zy-full-control) .contractStateRail small{color:var(--muted);font-size:7px;text-transform:uppercase}:where(.zy-full-control) .contractStateRail strong{font-size:9px}:where(.zy-full-control) .contractReview{grid-column:1/-1}:where(.zy-full-control) .contractReview>header{display:flex;justify-content:space-between;align-items:center}:where(.zy-full-control) .contractReview h2{margin:5px 0 0;font-size:17px}:where(.zy-full-control) .contractReview header>b{padding:5px 8px;border-radius:99px;font-size:7px}:where(.zy-full-control) .contractReview header>b.ok{color:#1f6b4d;background:#e7f7ef}:where(.zy-full-control) .contractReview header>b.pending{color:#765808;background:#fff4cf}:where(.zy-full-control) .contractReview>p{margin:7px 0;color:#91352e;font-size:8px}:where(.zy-full-control) .contractReview>small{display:block;margin-top:7px;color:var(--muted);font-size:8px}:where(.zy-full-control) .contractReview>footer{margin-top:15px;padding-top:13px;display:flex;align-items:center;gap:8px;border-top:1px solid var(--line)}:where(.zy-full-control) .contractReview>footer button{padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:8px;font-weight:850;cursor:pointer}:where(.zy-full-control) .contractReview>footer strong{margin-left:auto;color:var(--green);font-size:8px}
+:where(.zy-full-control) .contractAuthority{grid-column:1/-1}:where(.zy-full-control) .contractAuthority>header,:where(.zy-full-control) .contractAuthority>footer{display:flex;align-items:center;justify-content:space-between;gap:12px}:where(.zy-full-control) .contractAuthority h2{margin:5px 0 0;font-size:17px}:where(.zy-full-control) .contractAuthority>header>span{padding:5px 8px;border-radius:99px;color:var(--green);background:var(--green-soft);font-size:7px;font-weight:850}:where(.zy-full-control) .contractAuthority>div{margin:14px 0;display:grid;grid-template-columns:1fr 1fr;gap:9px}:where(.zy-full-control) .contractAuthority section{padding:12px;border:1px solid var(--line);border-radius:9px}:where(.zy-full-control) .contractAuthority section strong{font-size:8px}:where(.zy-full-control) .contractAuthority section p{color:var(--muted);font-size:8px}:where(.zy-full-control) .contractAuthority button{padding:7px 9px;border:1px solid #91b6a6;border-radius:7px;color:var(--green);background:var(--green-soft);font-size:8px;font-weight:850;cursor:pointer}:where(.zy-full-control) .contractAuthority>footer{padding-top:11px;border-top:1px solid var(--line);color:var(--muted);font-size:8px}
+@media(max-width:900px){:where(.zy-full-control) .contractBuilder{padding:20px 14px 60px}:where(.zy-full-control) .builderHeader{align-items:flex-start;flex-direction:column}:where(.zy-full-control) .builderSteps{grid-template-columns:1fr}:where(.zy-full-control) .builderSteps button{min-height:38px}:where(.zy-full-control) .builderGrid,:where(.zy-full-control) .templatePicker,:where(.zy-full-control) .variableEditor,:where(.zy-full-control) .reviewGrid{grid-template-columns:1fr}:where(.zy-full-control) .sourceSnapshot{align-items:flex-start;flex-direction:column}:where(.zy-full-control) .sourceSnapshot strong{margin:0}:where(.zy-full-control) .builderPanel{padding:18px}:where(.zy-full-control) .contractStateRail{grid-template-columns:1fr 1fr}:where(.zy-full-control) .contractReview,:where(.zy-full-control) .contractAuthority{grid-column:1}:where(.zy-full-control) .contractReview>footer,:where(.zy-full-control) .contractAuthority>footer{align-items:flex-start;flex-direction:column}:where(.zy-full-control) .contractReview>footer strong{margin:0}:where(.zy-full-control) .contractAuthority>div{grid-template-columns:1fr}}
+@media(max-width:900px){:where(.zy-full-control) .contractProgress,:where(.zy-full-control) .contractPartyGrid,:where(.zy-full-control) .contractDecisionGrid,:where(.zy-full-control) .contractAdvancedGrid{grid-template-columns:1fr}:where(.zy-full-control) .contractDecisionGrid .wide{grid-column:1}:where(.zy-full-control) .contractQuestionCard,:where(.zy-full-control) .contractDecisionCard{padding:15px}}
+:where(.zy-full-control) .pipelineSummary { margin-bottom: 14px; display: grid; grid-template-columns: repeat(2, minmax(0,240px)); gap: 10px; }
+:where(.zy-full-control) .pipelineSummary > div { padding: 16px; display: grid; gap: 5px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+:where(.zy-full-control) .pipelineSummary small { color: var(--muted); font-size: 10px; text-transform: uppercase; }
+:where(.zy-full-control) .pipelineSummary strong { font-size: 23px; }
+
+@media (max-width: 1120px) {
+  :where(.zy-full-control) .enterpriseShell { grid-template-columns: 250px minmax(0,1fr); }
+  :where(.zy-full-control) .executiveMetrics { grid-template-columns: repeat(2,1fr); }
+  :where(.zy-full-control) .globalSearch { display: none; }
+}
+
+@media (max-width: 780px) {
+  :where(.zy-full-control) .enterpriseShell, :where(.zy-full-control) .enterpriseShell.isCollapsed { display: block; }
+  :where(.zy-full-control) .enterpriseSidebar { position: fixed; left: 0; top: 0; width: min(310px,86vw); transform: translateX(-105%); transition: transform .2s ease; box-shadow: 18px 0 50px rgba(10,30,23,.28); }
+  :where(.zy-full-control) .enterpriseSidebar.mobileOpen { transform: translateX(0); }
+  :where(.zy-full-control) .mobileScrim { position: fixed; inset: 0; z-index: 9; display: block; border: 0; background: rgba(9,25,19,.48); }
+  :where(.zy-full-control) .collapseButton { display: none; }
+  :where(.zy-full-control) .mobileMenuButton { display: grid; }
+  :where(.zy-full-control) .enterpriseTopbar { height: 68px; padding: 0 16px; }
+  :where(.zy-full-control) .userMenuButton > span:nth-child(2), :where(.zy-full-control) .userMenuButton > svg { display: none; }
+  :where(.zy-full-control) .roleSwitcherText, :where(.zy-full-control) .roleSwitcher > svg { display: none; }
+  :where(.zy-full-control) .dashboardContent { padding: 20px 14px 40px; }
+  :where(.zy-full-control) .pageHeader { align-items: flex-start; flex-direction: column; }
+  :where(.zy-full-control) .compactOverview { align-items: stretch; flex-direction: column; }
+  :where(.zy-full-control) .overviewValue { min-width: 0; }
+  :where(.zy-full-control) .executiveMetrics { grid-template-columns: 1fr 1fr; }
+  :where(.zy-full-control) .emptyOperations { grid-template-columns: 1fr; }
+  :where(.zy-full-control) .modulePage { padding: 20px 14px 40px; }
+  :where(.zy-full-control) .capabilityGrid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 520px) {
+  :where(.zy-full-control) .executiveMetrics { grid-template-columns: 1fr; }
+  :where(.zy-full-control) .compactOverview { padding: 24px; }
+}
+
+/* Client Operations Hub / Client 360 */
+:where(.zy-full-control) .clientHub, :where(.zy-full-control) .client360, :where(.zy-full-control) .clientWizard { max-width: 1600px; margin: 0 auto; padding: 30px 34px 70px; }
+:where(.zy-full-control) .clientKicker { color: #3f7d65; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: .15em; }
+:where(.zy-full-control) .clientHubHeader { display: flex; align-items: flex-end; justify-content: space-between; gap: 25px; margin-bottom: 22px; }
+:where(.zy-full-control) .clientHubHeader h1, :where(.zy-full-control) .wizardHeader h1 { margin: 7px 0 5px; font-size: 36px; letter-spacing: -.055em; }
+:where(.zy-full-control) .clientHubHeader p, :where(.zy-full-control) .wizardHeader p { margin: 0; color: var(--muted); font-size: 13px; }
+:where(.zy-full-control) .clientHeaderActions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+:where(.zy-full-control) .clientHeaderActions a, :where(.zy-full-control) .clientHeaderActions button, :where(.zy-full-control) .clientPrimaryButton { min-height: 38px; padding: 0 12px; display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: white; text-decoration: none; cursor: pointer; font-size: 11px; font-weight: 800; }
+:where(.zy-full-control) .clientHeaderActions .clientPrimaryButton { color: white; border-color: var(--green); background: var(--green); }
+:where(.zy-full-control) .clientHeaderActions button:disabled, :where(.zy-full-control) .clientActionBar button:disabled { cursor: not-allowed; opacity: .46; }
+:where(.zy-full-control) .portfolioStrip { display: grid; grid-template-columns: 225px minmax(0,1fr); overflow: hidden; border: 1px solid #2a654f; border-radius: 18px; color: white; background: linear-gradient(125deg,#143d30,#0c5f45); box-shadow: 0 16px 45px rgba(18,61,48,.1); }
+:where(.zy-full-control) .portfolioIntro { padding: 22px; display: flex; align-items: center; gap: 12px; border-right: 1px solid rgba(255,255,255,.12); }
+:where(.zy-full-control) .portfolioIntro > svg { color: var(--green-bright); }
+:where(.zy-full-control) .portfolioIntro span { display: grid; gap: 4px; }
+:where(.zy-full-control) .portfolioIntro strong { font-size: 13px; }:where(.zy-full-control) .portfolioIntro small { color: #b4cdc3; font-size: 9px; }
+:where(.zy-full-control) .portfolioMetrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); }
+:where(.zy-full-control) .portfolioMetrics button { min-height: 90px; padding: 16px; display: grid; gap: 4px; border: 0; border-right: 1px solid rgba(255,255,255,.09); border-bottom: 1px solid rgba(255,255,255,.09); color: white; background: transparent; text-align: left; cursor: pointer; }
+:where(.zy-full-control) .portfolioMetrics button:hover:not(:disabled) { background: rgba(185,244,74,.08); }:where(.zy-full-control) .portfolioMetrics button:disabled { cursor: default; }
+:where(.zy-full-control) .portfolioMetrics strong { color: var(--green-bright); font-size: 22px; }:where(.zy-full-control) .portfolioMetrics span { font-size: 10px; font-weight: 800; }:where(.zy-full-control) .portfolioMetrics small { color: #91b0a4; font-size: 8px; }
+:where(.zy-full-control) .clientWorkspace { margin-top: 16px; overflow: hidden; border: 1px solid var(--line); border-radius: 17px; background: white; }
+:where(.zy-full-control) .clientToolbar { min-height: 65px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line); }
+:where(.zy-full-control) .clientSearch { flex: 1; max-width: 620px; height: 39px; padding: 0 12px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 9px; color: #819089; }
+:where(.zy-full-control) .clientSearch input { flex: 1; border: 0; outline: 0; background: transparent; font-size: 11px; }
+:where(.zy-full-control) .clientToolbar > button, :where(.zy-full-control) .viewSwitcher button, :where(.zy-full-control) .advancedFilters button { min-height: 37px; padding: 0 11px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: white; cursor: pointer; font-size: 10px; font-weight: 800; }
+:where(.zy-full-control) .clientToolbar button.active, :where(.zy-full-control) .viewSwitcher button.active { color: var(--green); border-color: #9ebcae; background: var(--green-soft); }
+:where(.zy-full-control) .viewSwitcher { margin-left: auto; display: flex; gap: 4px; }:where(.zy-full-control) .viewSwitcher button { width: 37px; justify-content: center; padding: 0; }
+:where(.zy-full-control) .advancedFilters { padding: 14px; display: flex; align-items: flex-end; gap: 12px; border-bottom: 1px solid var(--line); background: #f8faf7; }
+:where(.zy-full-control) .advancedFilters > svg { margin-bottom: 9px; color: var(--green); }:where(.zy-full-control) .advancedFilters label { display: grid; gap: 5px; color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+:where(.zy-full-control) .advancedFilters select { min-width: 170px; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: white; }
+:where(.zy-full-control) .clientError, :where(.zy-full-control) .wizardError { margin: 14px; padding: 12px 14px; border: 1px solid #f0b7b0; border-radius: 10px; color: #8d271f; background: #ffebe8; font-size: 11px; }
+:where(.zy-full-control) .clientEmpty { min-height: 330px; padding: 35px; display: grid; place-content: center; justify-items: center; text-align: center; }:where(.zy-full-control) .clientEmpty.compact { min-height: 240px; }
+:where(.zy-full-control) .clientEmpty > span { width: 50px; height: 50px; display: grid; place-items: center; border-radius: 17px; color: var(--green); background: var(--green-soft); }
+:where(.zy-full-control) .clientEmpty h2, :where(.zy-full-control) .clientEmpty h3 { margin: 15px 0 6px; font-size: 20px; }:where(.zy-full-control) .clientEmpty p { max-width: 430px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+:where(.zy-full-control) .clientEmpty a { margin-top: 16px; padding: 10px 13px; display: inline-flex; gap: 6px; color: white; border-radius: 8px; background: var(--green); text-decoration: none; font-size: 10px; font-weight: 800; }
+:where(.zy-full-control) .clientPagination { min-height: 52px; padding: 0 15px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }:where(.zy-full-control) .clientPagination small { color: #95a09b; }
+:where(.zy-full-control) .clientTableWrap { overflow-x: auto; }:where(.zy-full-control) .clientTableWrap table { width: 100%; min-width: 1050px; border-collapse: collapse; }
+:where(.zy-full-control) .clientTableWrap th, :where(.zy-full-control) .clientTableWrap td { padding: 13px 14px; border-bottom: 1px solid #edf0ed; text-align: left; font-size: 10px; white-space: nowrap; }
+:where(.zy-full-control) .clientTableWrap th { color: #78847e; background: #fbfcfa; font-size: 8px; text-transform: uppercase; letter-spacing: .07em; }:where(.zy-full-control) .clientTableWrap tr:hover td { background: #fbfcfa; }
+:where(.zy-full-control) .clientTableWrap td > a { display: flex; align-items: center; gap: 9px; color: var(--ink); text-decoration: none; }:where(.zy-full-control) .clientTableWrap td > a > span:last-child { display: grid; gap: 3px; }:where(.zy-full-control) .clientTableWrap td small { color: var(--muted); }
+:where(.zy-full-control) .clientOperationCounts { display:flex;align-items:center;gap:6px; }:where(.zy-full-control) .clientOperationCounts a { display:inline-flex;align-items:center;gap:3px;padding:5px 7px;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:8px;text-decoration:none; }:where(.zy-full-control) .clientOperationCounts a:hover { border-color:#8caf9f;background:#f2f8f4;color:var(--green-dark); }:where(.zy-full-control) .clientOperationCounts strong { color:var(--ink);font-size:10px; }
+:where(.zy-full-control) .clientAvatar { width: 45px; height: 45px; display: grid; place-items: center; border-radius: 14px; color: white; background: linear-gradient(145deg,#1a684e,#0c3d2d); font-size: 12px; font-weight: 900; }:where(.zy-full-control) .clientAvatar.small { width: 32px; height: 32px; border-radius: 10px; font-size: 9px; }
+:where(.zy-full-control) .clientHealth { width: max-content; padding: 5px 8px; display: inline-flex; border-radius: 99px; color: #5f6964; background: #eef1ee; font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: .04em; }:where(.zy-full-control) .clientHealth.healthy { color: #0c6043; background: #dff4e7; }:where(.zy-full-control) .clientHealth.attention { color: #8a5d05; background: #fff2ce; }:where(.zy-full-control) .clientHealth.risk,:where(.zy-full-control) .clientHealth.critical { color: #8d271f; background: #ffdfda; }
+:where(.zy-full-control) .clientCardGrid { padding: 15px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }:where(.zy-full-control) .clientPortfolioCard { position: relative; min-height: 220px; padding: 20px; border: 1px solid var(--line); border-radius: 15px; color: var(--ink); text-decoration: none; }:where(.zy-full-control) .clientPortfolioCard:hover { border-color: #90b3a3; box-shadow: 0 10px 30px rgba(21,59,45,.08); transform: translateY(-1px); }:where(.zy-full-control) .clientPortfolioCard .clientHealth { position: absolute; top: 20px; right: 20px; }:where(.zy-full-control) .clientPortfolioCard h3 { margin: 16px 0 4px; font-size: 18px; }:where(.zy-full-control) .clientPortfolioCard > p { margin: 0; color: var(--muted); font-size: 10px; }:where(.zy-full-control) .clientPortfolioCard dl { margin: 20px 0 0; padding-top: 13px; display: grid; grid-template-columns: repeat(3,1fr); border-top: 1px solid var(--line); }:where(.zy-full-control) .clientPortfolioCard dl div { display: grid; gap: 4px; }:where(.zy-full-control) .clientPortfolioCard dt { color: var(--muted); font-size: 8px; text-transform: uppercase; }:where(.zy-full-control) .clientPortfolioCard dd { margin: 0; font-size: 10px; font-weight: 800; }
+:where(.zy-full-control) .clientCompactList { display: grid; }:where(.zy-full-control) .clientCompactList a { min-height: 58px; padding: 10px 15px; display: grid; grid-template-columns: 34px 1.5fr 1fr 1fr 1fr; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none; font-size: 10px; }
+:where(.zy-full-control) .clientSkeleton { padding: 15px; display: grid; gap: 10px; }:where(.zy-full-control) .clientSkeleton span { height: 54px; border-radius: 10px; background: linear-gradient(90deg,#edf1ed,#f8faf8,#edf1ed); background-size: 200% 100%; animation: clientPulse 1.3s infinite; }:where(.zy-full-control) .clientSkeleton.detail { grid-template-columns: repeat(2,1fr); }:where(.zy-full-control) .clientSkeleton.detail span { height: 150px; }@keyframes clientPulse { to { background-position: -200% 0; } }
+:where(.zy-full-control) .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+:where(.zy-full-control) .entityReferenceSelect { display:flex; width:100%; min-width:0; flex-direction:column; gap:5px; }
+:where(.zy-full-control) .entityReferenceSelect select { width:100%; min-width:0; }
+:where(.zy-full-control) .entityReferenceSelect small { color:#a23b32; font-size:11px; font-weight:650; line-height:1.35; text-transform:none; letter-spacing:0; }
+
+:where(.zy-full-control) .wizardHeader { text-align: center; }:where(.zy-full-control) .wizardHeader > a, :where(.zy-full-control) .clientBack { margin-bottom: 18px; display: inline-flex; align-items: center; gap: 6px; color: var(--green); text-decoration: none; font-size: 10px; font-weight: 800; }
+:where(.zy-full-control) .wizardSteps { max-width: 1150px; margin: 28px auto 18px; display: grid; grid-template-columns: repeat(7,1fr); }:where(.zy-full-control) .wizardSteps button { position: relative; min-width: 0; padding: 0 5px; display: grid; justify-items: center; gap: 3px; border: 0; color: #909a95; background: transparent; }:where(.zy-full-control) .wizardSteps button::before { content:""; position:absolute; top:17px; left:-50%; width:100%; height:1px; background:var(--line); }:where(.zy-full-control) .wizardSteps button:first-child::before { display:none; }:where(.zy-full-control) .wizardSteps button span { position:relative; z-index:1; width:34px; height:34px; display:grid; place-items:center; border:1px solid var(--line); border-radius:99px; background:white; }:where(.zy-full-control) .wizardSteps button small { font-size:8px; }:where(.zy-full-control) .wizardSteps button strong { overflow:hidden; text-overflow:ellipsis; font-size:9px; }:where(.zy-full-control) .wizardSteps button.active { color:var(--green); }:where(.zy-full-control) .wizardSteps button.active span { color:white; border-color:var(--green); background:var(--green); box-shadow:0 0 0 5px var(--green-soft); }:where(.zy-full-control) .wizardSteps button.done span { color:#183d31; border-color:var(--green-bright); background:var(--green-bright); }
+:where(.zy-full-control) .wizardPanel { max-width: 1050px; margin: 0 auto; padding: 28px; border: 1px solid var(--line); border-radius: 18px; background: white; }:where(.zy-full-control) .wizardTitle { margin-bottom:22px; display:flex; align-items:center; gap:12px; }:where(.zy-full-control) .wizardTitle>span { width:38px;height:38px;display:grid;place-items:center;border-radius:12px;color:var(--green);background:var(--green-soft);font-weight:900; }:where(.zy-full-control) .wizardTitle p { margin:0 0 3px;color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.08em; }:where(.zy-full-control) .wizardTitle h2 { margin:0;font-size:22px; }
+:where(.zy-full-control) .wizardForm { display:grid;grid-template-columns:repeat(2,1fr);gap:15px; }:where(.zy-full-control) .wizardForm label { display:grid;gap:6px;color:#627069;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.05em; }:where(.zy-full-control) .wizardForm label.wide { grid-column:1/-1; }:where(.zy-full-control) .wizardForm input,:where(.zy-full-control) .wizardForm select { width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:9px;outline:0;background:white;color:var(--ink);text-transform:none;letter-spacing:0; }:where(.zy-full-control) .wizardForm input:focus,:where(.zy-full-control) .wizardForm select:focus { border-color:#75a28f;box-shadow:0 0 0 3px rgba(13,91,67,.08); }:where(.zy-full-control) .wizardForm input.invalid { border-color:#d76257; }:where(.zy-full-control) .wizardForm label small { color:#a8352c; }
+:where(.zy-full-control) .assignmentNotice { grid-column:1/-1;padding:14px 16px;border:1px solid #d9e7d3;border-radius:10px;background:var(--green-soft); }:where(.zy-full-control) .assignmentNotice strong { color:var(--green);font-size:11px; }:where(.zy-full-control) .assignmentNotice p { margin:5px 0 0;color:#627069;font-size:10px;line-height:1.5; }
+:where(.zy-full-control) .wizardActions { margin-top:24px;padding-top:18px;display:flex;justify-content:space-between;border-top:1px solid var(--line); }:where(.zy-full-control) .wizardActions button { min-height:40px;padding:0 14px;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:9px;background:white;cursor:pointer;font-size:10px;font-weight:800; }:where(.zy-full-control) .wizardActions button.primary { margin-left:auto;color:white;border-color:var(--green);background:var(--green); }:where(.zy-full-control) .wizardActions button:disabled { cursor:not-allowed;opacity:.45; }
+:where(.zy-full-control) .servicePicker { display:grid;grid-template-columns:repeat(3,1fr);gap:10px; }:where(.zy-full-control) .servicePicker>p { grid-column:1/-1;margin:0 0 6px;color:var(--muted);font-size:11px; }:where(.zy-full-control) .servicePicker label input { display:none; }:where(.zy-full-control) .servicePicker label span { min-height:58px;padding:12px;display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-size:10px;font-weight:800; }:where(.zy-full-control) .servicePicker label input:checked+span { color:var(--green);border-color:#75a28f;background:var(--green-soft); }
+:where(.zy-full-control) .clientReview { display:grid;grid-template-columns:1fr 1fr;gap:12px; }:where(.zy-full-control) .clientReview>div { padding:16px;border:1px solid var(--line);border-radius:11px; }:where(.zy-full-control) .clientReview .wide { grid-column:1/-1; }:where(.zy-full-control) .clientReview span { color:var(--muted);font-size:8px;text-transform:uppercase; }:where(.zy-full-control) .clientReview strong { margin-top:7px;display:block;font-size:13px; }:where(.zy-full-control) .clientReview p { margin:4px 0 0;color:var(--muted);font-size:10px; }
+
+:where(.zy-full-control) .client360 { max-width: 1700px; }:where(.zy-full-control) .client360Header { padding:25px;display:flex;align-items:center;justify-content:space-between;gap:20px;border-radius:18px;color:white;background:radial-gradient(circle at 85% 10%,rgba(185,244,74,.2),transparent 27%),linear-gradient(125deg,#143d30,#0a5b42); }:where(.zy-full-control) .clientCompanyIdentity { display:flex;align-items:center;gap:18px; }:where(.zy-full-control) .clientLogo { width:72px;height:72px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.2);border-radius:21px;color:#193a2e;background:var(--green-bright);font-size:23px;font-weight:900; }:where(.zy-full-control) .client360Header h1 { margin:6px 0 4px;font-size:31px;letter-spacing:-.05em; }:where(.zy-full-control) .client360Header p { margin:0;color:#b9d0c6;font-size:11px; }:where(.zy-full-control) .clientIdentityMeta { margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap; }:where(.zy-full-control) .clientIdentityMeta>b,:where(.zy-full-control) .clientIdentityMeta>span:not(.clientHealth) { padding:5px 8px;border:1px solid rgba(255,255,255,.13);border-radius:99px;color:#d4e2dc;font-size:8px; }:where(.zy-full-control) .clientOwnership { display:grid;grid-template-columns:1fr 1fr;gap:10px; }:where(.zy-full-control) .clientOwnership span { min-width:170px;padding:13px;border:1px solid rgba(255,255,255,.13);border-radius:11px;background:rgba(7,43,31,.38);display:grid;gap:5px; }:where(.zy-full-control) .clientOwnership small { color:#9dbdb0;font-size:8px;text-transform:uppercase; }:where(.zy-full-control) .clientOwnership strong { font-size:10px; }
+:where(.zy-full-control) .clientActionBar { margin:12px 0;display:flex;gap:7px;overflow-x:auto; }:where(.zy-full-control) .clientActionBar a,:where(.zy-full-control) .clientActionBar button { flex:0 0 auto;min-height:37px;padding:0 11px;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:white;text-decoration:none;font-size:9px;font-weight:800;cursor:pointer; }
+:where(.zy-full-control) .clientTabs { display:flex;gap:3px;overflow-x:auto;border-bottom:1px solid var(--line); }:where(.zy-full-control) .clientTabs a { flex:0 0 auto;padding:12px 11px;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em; }:where(.zy-full-control) .clientTabs a.active { color:var(--green);border-color:var(--green); }:where(.zy-full-control) .clientTabContent { padding-top:16px; }
+:where(.zy-full-control) .clientSummaryGrid { display:grid;grid-template-columns:repeat(12,1fr);gap:12px; }:where(.zy-full-control) .clientSummaryGrid>section { padding:20px;border:1px solid var(--line);border-radius:15px;background:white; }:where(.zy-full-control) .relationshipPanel { grid-column:span 5; }:where(.zy-full-control) .healthPanel { grid-column:span 7; }:where(.zy-full-control) .snapshotPanel { grid-column:span 3;min-height:180px; }:where(.zy-full-control) .timelinePanel { grid-column:1/-1; }:where(.zy-full-control) .panelHeading>span,:where(.zy-full-control) .clientSectionHeader span,:where(.zy-full-control) .domainHero+span { color:var(--green);font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.09em; }:where(.zy-full-control) .panelHeading h2 { margin:6px 0 14px;font-size:19px;letter-spacing:-.03em; }:where(.zy-full-control) .relationshipPanel dl { display:grid;grid-template-columns:1fr 1fr;gap:13px;margin:0; }:where(.zy-full-control) .relationshipPanel dl div { display:grid;gap:4px; }:where(.zy-full-control) .relationshipPanel dt,:where(.zy-full-control) .serviceCards dt { color:var(--muted);font-size:8px;text-transform:uppercase; }:where(.zy-full-control) .relationshipPanel dd,:where(.zy-full-control) .serviceCards dd { margin:0;font-size:10px;font-weight:800; }:where(.zy-full-control) .healthPanel>p { margin:-8px 0 14px;color:var(--muted);font-size:10px; }:where(.zy-full-control) .healthFactors { display:grid;grid-template-columns:1fr 1fr;gap:7px; }:where(.zy-full-control) .healthFactors div { padding:8px;display:grid;grid-template-columns:8px 1fr;gap:3px 7px;border-radius:8px;background:#f7f9f6; }:where(.zy-full-control) .healthFactors div>span { width:7px;height:7px;margin-top:2px;border-radius:99px;background:#cbd2ce; }:where(.zy-full-control) .healthFactors strong { font-size:9px; }:where(.zy-full-control) .healthFactors small { grid-column:2;color:var(--muted);font-size:8px; }:where(.zy-full-control) .snapshotPanel>p { padding:8px 0;display:flex;justify-content:space-between;border-bottom:1px solid var(--line);font-size:9px; }:where(.zy-full-control) .snapshotPanel>p span { color:var(--muted); }
+:where(.zy-full-control) .clientInlineEmpty { min-height:70px;display:grid;place-content:center;justify-items:center;text-align:center;color:var(--muted); }:where(.zy-full-control) .clientInlineEmpty span { width:23px;height:23px;display:grid;place-items:center;border-radius:99px;color:var(--green);background:var(--green-soft);font-size:9px;font-weight:900; }:where(.zy-full-control) .clientInlineEmpty p { margin:7px 0 0;font-size:9px; }
+:where(.zy-full-control) .clientSection { overflow:hidden;border:1px solid var(--line);border-radius:15px;background:white; }:where(.zy-full-control) .clientSectionHeader { padding:20px;display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid var(--line); }:where(.zy-full-control) .clientSectionHeader h2 { margin:5px 0 4px;font-size:21px; }:where(.zy-full-control) .clientSectionHeader p { margin:0;color:var(--muted);font-size:10px; }:where(.zy-full-control) .clientSectionHeader button,:where(.zy-full-control) .domainHero a,:where(.zy-full-control) .inlineClientForm button { min-height:38px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;border:0;border-radius:8px;color:white;background:var(--green);cursor:pointer;text-decoration:none;font-size:9px;font-weight:800; }
+:where(.zy-full-control) .inlineClientForm { padding:14px;display:grid;grid-template-columns:repeat(6,1fr);gap:8px;border-bottom:1px solid var(--line);background:#f8faf7; }:where(.zy-full-control) .inlineClientForm.compact { grid-template-columns:2fr 1fr auto; }:where(.zy-full-control) .inlineClientForm input { min-width:0;padding:10px;border:1px solid var(--line);border-radius:8px;outline:0; }:where(.zy-full-control) .inlineClientForm button:disabled { opacity:.5;cursor:not-allowed; }
+:where(.zy-full-control) .contactGrid,:where(.zy-full-control) .serviceCards { padding:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:11px; }:where(.zy-full-control) .contactGrid article { padding:17px;display:flex;gap:12px;border:1px solid var(--line);border-radius:12px; }:where(.zy-full-control) .contactAvatar { flex:0 0 auto;width:40px;height:40px;display:grid;place-items:center;border-radius:13px;color:var(--green);background:var(--green-soft);font-size:10px;font-weight:900; }:where(.zy-full-control) .contactGrid h3 { margin:0 0 4px;font-size:12px; }:where(.zy-full-control) .contactGrid h3 b { margin-left:6px;padding:3px 5px;border-radius:99px;color:var(--green);background:var(--green-soft);font-size:7px;text-transform:uppercase; }:where(.zy-full-control) .contactGrid p,:where(.zy-full-control) .contactGrid a,:where(.zy-full-control) .contactGrid small { margin:2px 0;display:block;color:var(--muted);font-size:9px; }:where(.zy-full-control) .contactGrid a { color:var(--green);text-decoration:none; }
+:where(.zy-full-control) .serviceCards article { padding:18px;border:1px solid var(--line);border-radius:12px; }:where(.zy-full-control) .serviceCards article>div:first-child { display:flex;justify-content:space-between;color:var(--green); }:where(.zy-full-control) .serviceStatus { padding:4px 6px;border-radius:99px;color:#725408;background:#fff3d9;font-size:7px;font-weight:900; }:where(.zy-full-control) .serviceStatus.active { color:var(--green);background:var(--green-soft); }:where(.zy-full-control) .serviceCards h3 { margin:17px 0 13px;font-size:14px; }:where(.zy-full-control) .serviceCards dl { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0; }:where(.zy-full-control) .serviceCards dl div { display:grid;gap:4px; }
+:where(.zy-full-control) .domainHero { min-height:115px;padding:22px;display:grid;grid-template-columns:45px 1fr auto;align-items:center;gap:14px;border-bottom:1px solid var(--line);background:linear-gradient(115deg,#f5faf3,#fff); }:where(.zy-full-control) .domainHero>span { width:45px;height:45px;display:grid;place-items:center;border-radius:14px;color:var(--green);background:var(--green-soft); }:where(.zy-full-control) .domainHero h2 { margin:0 0 5px;font-size:20px; }:where(.zy-full-control) .domainHero p { margin:0;color:var(--muted);font-size:10px; }:where(.zy-full-control) .commercialClientView { display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:15px;background:white;overflow:hidden; }:where(.zy-full-control) .commercialClientView>section { padding:28px;color:white;background:linear-gradient(145deg,#123f31,#0d5b43); }:where(.zy-full-control) .commercialClientView>section>span { color:var(--green-bright);font-size:8px;text-transform:uppercase; }:where(.zy-full-control) .commercialClientView h2 { margin:7px 0;font-size:25px; }:where(.zy-full-control) .commercialClientView p { color:#bad0c7;font-size:10px;line-height:1.6; }:where(.zy-full-control) .commercialClientView section>div { margin-top:20px;display:flex;gap:8px; }:where(.zy-full-control) .commercialClientView a { padding:10px;display:flex;gap:6px;border-radius:8px;color:#163a2e;background:var(--green-bright);text-decoration:none;font-size:9px;font-weight:900; }
+:where(.zy-full-control) .financeClientPanel { display:grid;grid-template-columns:repeat(4,1fr);gap:11px; }:where(.zy-full-control) .financeClientPanel>div { grid-column:1/-1;padding:23px;border-radius:15px;color:white;background:linear-gradient(120deg,#143d30,#0c5f45); }:where(.zy-full-control) .financeClientPanel>div span { color:var(--green-bright);font-size:8px;text-transform:uppercase; }:where(.zy-full-control) .financeClientPanel h2 { margin:7px 0;font-size:23px; }:where(.zy-full-control) .financeClientPanel>div p { margin:0;color:#bbd0c8;font-size:10px; }:where(.zy-full-control) .financeClientPanel article { min-height:105px;padding:17px;display:grid;gap:6px;border:1px solid var(--line);border-radius:12px;background:white; }:where(.zy-full-control) .financeClientPanel article span,:where(.zy-full-control) .financeClientPanel article small { color:var(--muted);font-size:8px; }:where(.zy-full-control) .financeClientPanel article strong { font-size:16px; }:where(.zy-full-control) .financeClientPanel aside { grid-column:1/-1;padding:15px;display:flex;gap:10px;border:1px solid #d9e7d3;border-radius:11px;background:var(--green-soft);color:var(--green); }:where(.zy-full-control) .financeClientPanel aside p { margin:0;font-size:9px;line-height:1.5; }
+:where(.zy-full-control) .clientTimeline article { position:relative;min-height:65px;display:grid;grid-template-columns:145px 10px 1fr;gap:13px; }:where(.zy-full-control) .clientTimeline time { color:var(--muted);font-size:9px;text-align:right; }:where(.zy-full-control) .clientTimeline article>span { width:9px;height:9px;border:2px solid white;border-radius:99px;background:var(--green);box-shadow:0 0 0 2px #b8d1c5; }:where(.zy-full-control) .clientTimeline article>span::after { content:"";position:absolute;top:12px;bottom:0;width:1px;margin-left:3px;background:#cfdbd5; }:where(.zy-full-control) .clientTimeline article:last-child>span::after { display:none; }:where(.zy-full-control) .clientTimeline strong { font-size:10px; }:where(.zy-full-control) .clientTimeline p { margin:4px 0;color:var(--muted);font-size:9px; }:where(.zy-full-control) .clientTimeline small { color:var(--green);font-size:7px;text-transform:uppercase; }
+:where(.zy-full-control) .portalClientPanel,:where(.zy-full-control) .clientSettings { overflow:hidden;border:1px solid var(--line);border-radius:15px;background:white; }:where(.zy-full-control) .portalClientPanel>div { padding:22px;display:flex;align-items:center;gap:13px;color:white;background:linear-gradient(120deg,#143d30,#0c5f45); }:where(.zy-full-control) .portalClientPanel>div>span { flex:1; }:where(.zy-full-control) .portalClientPanel h2 { margin:0 0 4px; }:where(.zy-full-control) .portalClientPanel p { margin:0;color:#b9cfc6;font-size:9px; }:where(.zy-full-control) .portalClientPanel b { padding:6px 8px;border-radius:99px;color:#755106;background:#fff1c8;font-size:8px;text-transform:uppercase; }:where(.zy-full-control) .portalClientPanel section { padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px; }:where(.zy-full-control) .portalClientPanel label { padding:12px;display:grid;grid-template-columns:20px 1fr;gap:3px 8px;border:1px solid var(--line);border-radius:9px;font-size:9px; }:where(.zy-full-control) .portalClientPanel label small { grid-column:2;color:var(--muted);font-size:8px; }:where(.zy-full-control) .portalClientPanel aside { margin:0 16px 16px;padding:13px;border-radius:9px;color:var(--muted);background:var(--paper);font-size:9px; }
+:where(.zy-full-control) .clientSettings { padding:22px;display:grid;gap:16px; }:where(.zy-full-control) .clientSettings>section { display:flex;gap:12px; }:where(.zy-full-control) .clientSettings h2 { margin:0 0 4px; }:where(.zy-full-control) .clientSettings p { margin:0;color:var(--muted);font-size:9px; }:where(.zy-full-control) .clientSettings>label { display:grid;gap:6px;max-width:350px;color:var(--muted);font-size:9px;font-weight:800;text-transform:uppercase; }:where(.zy-full-control) .clientSettings select { padding:10px;border:1px solid var(--line);border-radius:8px;background:white; }:where(.zy-full-control) .clientSettings>button { width:max-content;padding:10px 13px;border:0;border-radius:8px;color:white;background:var(--green);font-size:9px;font-weight:800; }:where(.zy-full-control) .clientSettings button:disabled { opacity:.5; }:where(.zy-full-control) .dangerZone { margin-top:15px;padding:16px;display:flex;align-items:center;gap:12px;border:1px solid #efc8c4;border-radius:11px;background:#fff9f8;color:#8d271f; }:where(.zy-full-control) .dangerZone span { flex:1; }:where(.zy-full-control) .dangerZone button { padding:9px 11px;border:1px solid #b5453b;border-radius:7px;color:#8d271f;background:white;font-size:9px;font-weight:800; }
+
+@media (max-width: 1150px) {
+  :where(.zy-full-control) .portfolioStrip { grid-template-columns:1fr; }:where(.zy-full-control) .portfolioIntro { border-right:0;border-bottom:1px solid rgba(255,255,255,.12); }:where(.zy-full-control) .clientCardGrid { grid-template-columns:1fr 1fr; }:where(.zy-full-control) .client360Header { align-items:flex-start;flex-direction:column; }:where(.zy-full-control) .relationshipPanel,:where(.zy-full-control) .healthPanel { grid-column:1/-1; }:where(.zy-full-control) .snapshotPanel { grid-column:span 6; }:where(.zy-full-control) .contactGrid,:where(.zy-full-control) .serviceCards { grid-template-columns:1fr 1fr; }:where(.zy-full-control) .inlineClientForm { grid-template-columns:repeat(3,1fr); }
+}
+@media (max-width: 780px) {
+  :where(.zy-full-control) .clientHub,:where(.zy-full-control) .client360,:where(.zy-full-control) .clientWizard { padding:20px 14px 45px; }:where(.zy-full-control) .clientHubHeader { align-items:flex-start;flex-direction:column; }:where(.zy-full-control) .clientHeaderActions { justify-content:flex-start; }:where(.zy-full-control) .portfolioMetrics { grid-template-columns:repeat(2,1fr); }:where(.zy-full-control) .clientToolbar { flex-wrap:wrap; }:where(.zy-full-control) .clientSearch { flex:1 0 100%;max-width:none; }:where(.zy-full-control) .advancedFilters { align-items:stretch;flex-direction:column; }:where(.zy-full-control) .advancedFilters>svg { display:none; }:where(.zy-full-control) .clientCardGrid { grid-template-columns:1fr; }:where(.zy-full-control) .clientCompactList a { grid-template-columns:34px 1fr auto; }:where(.zy-full-control) .clientCompactList a>span:nth-of-type(n+2) { display:none; }:where(.zy-full-control) .wizardSteps button strong,:where(.zy-full-control) .wizardSteps button small { display:none; }:where(.zy-full-control) .wizardPanel { padding:19px; }:where(.zy-full-control) .wizardForm,:where(.zy-full-control) .clientReview,:where(.zy-full-control) .servicePicker { grid-template-columns:1fr; }:where(.zy-full-control) .wizardForm label.wide,:where(.zy-full-control) .clientReview .wide,:where(.zy-full-control) .servicePicker>p { grid-column:1; }:where(.zy-full-control) .clientOwnership { width:100%; }:where(.zy-full-control) .clientOwnership span { min-width:0; }:where(.zy-full-control) .clientActionBar { margin-inline:-3px; }:where(.zy-full-control) .snapshotPanel { grid-column:1/-1; }:where(.zy-full-control) .healthFactors { grid-template-columns:1fr; }:where(.zy-full-control) .contactGrid,:where(.zy-full-control) .serviceCards { grid-template-columns:1fr; }:where(.zy-full-control) .inlineClientForm,:where(.zy-full-control) .inlineClientForm.compact { grid-template-columns:1fr; }:where(.zy-full-control) .domainHero { grid-template-columns:45px 1fr; }:where(.zy-full-control) .domainHero a { grid-column:1/-1;justify-self:start; }:where(.zy-full-control) .commercialClientView { grid-template-columns:1fr; }:where(.zy-full-control) .financeClientPanel { grid-template-columns:1fr 1fr; }:where(.zy-full-control) .portalClientPanel section { grid-template-columns:1fr; }:where(.zy-full-control) .clientTimeline article { grid-template-columns:95px 10px 1fr; }
+}
+@media (max-width: 480px) {
+  :where(.zy-full-control) .portfolioMetrics { grid-template-columns:1fr 1fr; }:where(.zy-full-control) .portfolioMetrics button { min-height:78px; }:where(.zy-full-control) .clientHubHeader h1,:where(.zy-full-control) .wizardHeader h1 { font-size:30px; }:where(.zy-full-control) .clientCompanyIdentity { align-items:flex-start; }:where(.zy-full-control) .clientLogo { width:52px;height:52px;border-radius:15px;font-size:17px; }:where(.zy-full-control) .client360Header h1 { font-size:24px; }:where(.zy-full-control) .clientOwnership { grid-template-columns:1fr; }:where(.zy-full-control) .financeClientPanel { grid-template-columns:1fr; }:where(.zy-full-control) .clientTimeline article { grid-template-columns:10px 1fr; }:where(.zy-full-control) .clientTimeline time { grid-column:2;text-align:left; }:where(.zy-full-control) .clientTimeline article>span { grid-row:1/3; }:where(.zy-full-control) .clientTimeline article>div { grid-column:2; }
+}

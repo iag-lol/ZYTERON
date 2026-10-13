@@ -1,0 +1,126 @@
+import type { PortalData } from "@/lib/client-experience/snapshot";
+export const money = (amount: number, currency = "CLP") =>
+  new Intl.NumberFormat("es-CL", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: currency === "CLP" ? 0 : 2,
+  }).format(amount);
+export const civil = (value: string | null) =>
+  value
+    ? new Intl.DateTimeFormat("es-CL", { timeZone: "America/Santiago" }).format(new Date(value))
+    : "Por coordinar";
+export const initials = (value: string) =>
+  value
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((x) => x[0])
+    .join("")
+    .toUpperCase();
+export function presentation(data: PortalData) {
+  return {
+    services: data.services.map((s) => ({
+      id: s.id,
+      name: s.name,
+      domain: "Servicio contratado",
+      icon: "globe",
+      category: "SERVICIOS DIGITALES",
+      description: s.description,
+      price: s.price === null ? "Según acuerdo" : money(s.price, s.currency),
+      period: s.frequency || "Según acuerdo",
+      renewal: civil(s.renewal),
+      status: s.status === "ACTIVE" ? "Activo" : s.status,
+      scope: s.description ? [s.description] : [],
+      color: "green",
+    })),
+    projects: data.projects.map((p) => ({
+      id: p.id,
+      name: p.title,
+      short: p.title,
+      category: p.category || "PROYECTO",
+      description: p.description,
+      progress: null as number | null,
+      status: p.status,
+      phase: p.status === "DONE" ? "Entregado" : p.status === "IN_PROGRESS" ? "En curso" : p.status,
+      date: civil(p.end),
+      next: "Consulta los próximos pasos al equipo",
+      initials: [] as string[],
+      color: "forest",
+      steps: [] as string[],
+      current: -1,
+    })),
+    invoices: data.invoices.map((i) => ({
+      id: i.id,
+      quoteId: i.quoteId,
+      concept: i.concept,
+      period: "Obligación registrada",
+      issued: civil(i.issued),
+      due: civil(i.due),
+      amount: money(i.total, i.currency),
+      net: "Consulta el documento de origen",
+      tax: "Consulta el documento de origen",
+      balance: money(i.balance, i.currency),
+      status: i.status,
+      obligation: i.balance > 0 ? "Pendiente" : "Saldada",
+      document: "Cuenta por cobrar",
+      payable: data.quotes.some((q) => q.id === i.quoteId && q.payable),
+    })),
+    documents: data.documents.map((d) => ({
+      id: d.id,
+      name: d.title,
+      type:
+        (
+          {
+            CONTRACT: "Contrato",
+            REPORT: "Informe",
+            MANUAL: "Manual",
+            DELIVERABLE: "Entregable",
+          } as Record<string, string>
+        )[d.category] || d.category,
+      project: d.description || "Documento compartido",
+      date: civil(d.date),
+      version: "Publicado",
+      status: "Compartido",
+      size: d.fileName,
+    })),
+    tickets: data.tickets.map((t) => ({
+      ...t,
+      service: "Asistencia Zyteron",
+      date: civil(t.date),
+      status:
+        (
+          {
+            OPEN: "Abierta",
+            IN_PROGRESS: "En curso",
+            WAITING_CLIENT: "Esperando tu respuesta",
+            RESOLVED: "Resuelta",
+            CLOSED: "Cerrada",
+          } as Record<string, string>
+        )[t.status] || t.status,
+      messages: t.messages.map((m) => ({ ...m, time: civil(m.date) })),
+    })),
+    notifications: data.notifications.map((n) => ({
+      ...n,
+      time: civil(n.date),
+      section: "notificaciones",
+      icon: "bell",
+      unread: !n.read,
+    })),
+    events: data.events.map((e) => ({
+      ...e,
+      day: new Intl.DateTimeFormat("es-CL", {
+        day: "2-digit",
+        timeZone: "America/Santiago",
+      }).format(new Date(e.date)),
+      month: new Intl.DateTimeFormat("es-CL", { month: "short", timeZone: "America/Santiago" })
+        .format(new Date(e.date))
+        .toUpperCase(),
+      date: civil(e.date),
+      time: new Intl.DateTimeFormat("es-CL", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "America/Santiago",
+      }).format(new Date(e.date)),
+    })),
+  };
+}

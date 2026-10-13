@@ -1,2 +1,2 @@
-import {redirect} from "next/navigation";
-export default function Page(){redirect("/administracion/control/conversaciones");}
+import {redirect} from 'next/navigation';
+export default function Page(){redirect('/administracion/support/inbox');}

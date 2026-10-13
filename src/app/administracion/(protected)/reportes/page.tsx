@@ -1,2 +1,2 @@
-import {redirect} from "next/navigation";
-export default function Page(){redirect("/administracion/control/actividad");}
+import {redirect} from 'next/navigation';
+export default function Page(){redirect('/administracion/reports');}

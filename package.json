@@ -5,9 +5,9 @@
   "scripts": {
     "predev": "prisma generate",
     "dev": "next dev",
-    "prebuild": "prisma generate",
+    "prebuild": "prisma generate && npm --prefix control-runtime ci --no-audit --no-fund && npm --prefix control-runtime run build",
     "build": "next build",
-    "start": "next start",
+    "start": "node --max-old-space-size=256 scripts/start-connected-site.mjs",
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write .",
     "db:generate": "prisma generate",

@@ -1,2 +1,2 @@
-import { ConnectedPortalView } from "@/components/connected-portal/view";
-export default function Page() {return <ConnectedPortalView section="monitoreo"/>;}
+import { FullPortalView } from "@/full-portal/view";
+export default function Page() {return <FullPortalView section="monitoreo"/>;}

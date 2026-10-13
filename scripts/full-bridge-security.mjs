@@ -1,0 +1,8 @@
+import assert from 'node:assert/strict';import {createHmac,createHash,randomBytes,randomUUID} from 'node:crypto';
+import {nativeBridgeIdentity} from '../control-runtime/dist/auth/native-bridge.js';
+process.env.CONTROL_BRIDGE_KEY=randomBytes(48).toString('hex');let checks=0;
+function signed(overrides={}){const method='POST',originalUrl='/api/security/workspace',rawBody=Buffer.from('{}');const context={role:'GERENTE_GENERAL',userId:randomUUID(),sessionId:'native:verified-local-authority',time:Date.now(),nonce:randomUUID(),...overrides};const encoded=Buffer.from(JSON.stringify(context)).toString('base64url');const signature=createHmac('sha256',process.env.CONTROL_BRIDGE_KEY).update([method,originalUrl,createHash('sha256').update(rawBody).digest('hex'),encoded].join('\n')).digest('hex');return{ip:'127.0.0.1',method,originalUrl,rawBody,headers:{'x-zyteron-native-context':encoded,'x-zyteron-native-signature':signature}};}
+const valid=signed({aal:'aal2'});assert.equal(nativeBridgeIdentity(valid).aal,'aal1');checks++;assert.throws(()=>nativeBridgeIdentity(valid));checks++;
+for(const update of [r=>({...r,ip:'203.0.113.1'}),r=>({...r,method:'GET'}),r=>({...r,originalUrl:'/api/finance/payments'}),r=>({...r,rawBody:Buffer.from('{"amount":1}')}),r=>({...r,headers:{...r.headers,'x-zyteron-native-signature':'0'.repeat(64)}})]){assert.throws(()=>nativeBridgeIdentity(update(signed())));checks++;}
+for(const invalid of [{time:Date.now()-60_000},{role:'PORTAL_CLIENT'},{sessionId:'unverified'}]){assert.throws(()=>nativeBridgeIdentity(signed(invalid)));checks++;}
+assert.equal(nativeBridgeIdentity({ip:'127.0.0.1',headers:{'x-zyteron-role':'GERENTE_GENERAL'}}),null);checks++;console.log({internalBridgeChecks:checks,passed:true});

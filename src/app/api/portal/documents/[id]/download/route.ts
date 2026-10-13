@@ -1,3 +1,4 @@
+import { canonicalDocumentForCustomer } from "@/lib/portal/canonical-publications";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
@@ -35,7 +36,26 @@ export async function GET(_request: Request, { params }: Context) {
     where: { id },
     select: { id: true, userId: true, storagePath: true, fileUrl: true },
   });
-  if (!document) return NextResponse.json({ error: "Documento no encontrado." }, { status: 404 });
+  if (!document) {
+    if (!isAdmin && authenticatedUserId) {
+      const published = await canonicalDocumentForCustomer(authenticatedUserId, id);
+      if (published) {
+        const { supabase } = createSupabaseServerClient();
+        const signed = await supabase.storage
+          .from("enterprise-documents")
+          .createSignedUrl(published.storage_path, SIGNED_URL_TTL_SECONDS, {
+            download: published.filename,
+          });
+        if (signed.error || !signed.data.signedUrl)
+          return NextResponse.json({ error: "No se pudo autorizar la descarga." }, { status: 502 });
+        return NextResponse.redirect(signed.data.signedUrl, {
+          status: 307,
+          headers: { "Cache-Control": "private,no-store" },
+        });
+      }
+    }
+    return NextResponse.json({ error: "Documento no encontrado." }, { status: 404 });
+  }
 
   if (!isAdmin && document.userId !== authenticatedUserId) {
     return NextResponse.json({ error: "No autorizado." }, { status: 403 });

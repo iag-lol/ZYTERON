@@ -51,6 +51,7 @@ const schemas = {
               detail: z.string().trim().max(2000).optional(),
               unit: z.string().trim().max(40).optional(),
               discountPct: z.number().min(0).max(100).optional(),
+              taxable:z.boolean().optional(),
               qty: z.number().positive().max(10000),
               unitPrice: z.number().int().nonnegative().max(1000000000),
             })

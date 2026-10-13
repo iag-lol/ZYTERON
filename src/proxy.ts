@@ -110,6 +110,7 @@ export const config = {
     "/clientes/:path*",
     "/api/admin/:path*",
     "/api/control/:path*",
+    "/api/control-core/:path*",
     "/api/portal/:path*",
     "/api/checkout/:path*",
     "/api/contacto",

@@ -8,6 +8,7 @@ export type QuoteLineItem = {
   unit?: string;
   unitPrice: number;
   discountPct?: number;
+  taxable?:boolean;
 };
 
 export type QuotePaymentChannel = "FLOW" | "TRANSFER";
@@ -259,6 +260,7 @@ export function parseQuoteMessage(message?: string | null): QuoteMeta {
             unit: item.unit || "unidad",
             unitPrice: Number(item.unitPrice || 0),
             discountPct: Number(item.discountPct || 0),
+            taxable: item.taxable!==false,
           }))
         : [],
       subtotal: Number(raw.subtotal || 0),

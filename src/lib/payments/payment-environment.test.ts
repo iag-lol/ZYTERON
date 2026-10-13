@@ -1,0 +1,3 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {assertBusinessPaymentEnvironment} from './payment-environment';
+test('sandbox never credits a remote or unknown business database',()=>{for(const DATABASE_URL of [undefined,'postgres://user:pass@pooler.supabase.com/db','postgres://user:pass@localhost.example.com/db'])assert.throws(()=>assertBusinessPaymentEnvironment('https://sandbox.flow.cl/api',{DATABASE_URL}));});
+test('explicit loopback test ledger and production provider remain supported',()=>{assert.doesNotThrow(()=>assertBusinessPaymentEnvironment('https://sandbox.flow.cl/api',{DATABASE_URL:'postgres://user:pass@127.0.0.1/test'}));assert.doesNotThrow(()=>assertBusinessPaymentEnvironment('https://www.flow.cl/api',{}));});

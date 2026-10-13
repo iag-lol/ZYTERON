@@ -1,21 +1,23 @@
-# Portal y Zyteron Control conectados
+# Aplicaciones originales conectadas
 
-La navegación principal de clientes usa una aplicación nueva en `src/components/connected-portal`, basada en el portal aprobado de `apps/portal/components/portal.tsx`. Las quince rutas ya no renderizan los cuerpos de los módulos antiguos. Las tarjetas, búsqueda, filtros, dialogs, formularios y calendario trabajan con DTO propios obtenidos mediante el rol limitado `zyteron_portal_client` y RLS.
+La administración monta la aplicación completa de `iag-lol/zyteroncontrol/apps/web`: sus componentes, navegación, espacios de trabajo y páginas originales se conservan bajo `/administracion`. No usa la adaptación reducida `connected-control`.
 
-La navegación administrativa principal usa el diseño de Zyteron Control (`.integration/control/apps/web` en el workspace de integración), adaptado al mismo servicio pagado y a la identidad existente. `connected-control` reemplaza AdminSidebar, AdminTopbar y las vistas principales con ejecutivo, Cliente 360°, CRM, cotizaciones, entradas, proyectos, finanzas, servicios, agenda, documentos, conversaciones y auditoría. Los endpoints y herramientas especializadas heredadas ajenas al portal permanecen en el repositorio; no se sustituyó su modelo de negocio ni se migró la identidad a Supabase Auth.
+El portal monta el componente aprobado de `NEW ZYTERON/apps/portal/components/portal.tsx`, con sus quince secciones y estilos originales. Se cambiaron los datos sintéticos y las acciones de demostración por consultas y operaciones del servidor; no se sustituyeron sus páginas por otro diseño.
 
-## Datos y acciones
+La API Nest original se ejecuta en el mismo proceso Node que Next.js, sólo en loopback. El puente verifica cada sesión administrativa, rechaza orígenes ajenos y firma método, ruta, cuerpo, sesión y nonce. El servidor interno rechaza firmas alteradas, vencidas y repetidas. La autenticación nativa proporciona AAL1: las operaciones que requieren MFA conservan su bloqueo; no se inventan usuarios ni factores verificados.
 
-- Conserva los registros nativos de User, Lead, Quote, Project, Receivable, Payment, ClientDocument, SupportTicket, PortalRequest, ClientCommunication y ClientNotification. Reutiliza client_services/client_events y el vínculo canónico existente.
-- Los formularios públicos y cotizadores continúan entrando en sus registros originales; se muestran en la nueva bandeja y CRM. El chat web persistido está en sales_threads/sales_messages, con vistas de web y portal para el equipo y lectura RLS del historial propio para clientes.
-- Cliente: tickets/respuestas, conversaciones, pedidos, reunión/cambio de datos, perfil/contraseña, lectura de notificaciones, documentos privados, cotizaciones PDF, códigos de acceso y cargos/cancelaciones.
-- Administración: propuestas pendientes, proyectos, servicios y agenda publicados, archivos privados, credenciales cifradas, respuestas al chat/tickets/solicitudes y mensajes al portal. /api/control exige sesión de administrador revalidada, origen permitido y payload acotado/validado.
-- Preparar una cotización no crea venta ni acredita dinero. Un borrador con payment.enabled=false no puede cobrar; habilitar exige una etapa existente. Una propuesta con pagos confirmados no puede cambiar sus importes desde el editor nuevo.
-- Las ventanas de resultado derivan de etapas persistidas y pagos CONFIRMED; el éxito tiene enlaces al comprobante PDF real. No se interpreta el estado de pago desde parámetros de URL. La pasarela usa la misma pestaña y su dominio de checkout autorizado.
-- La activación/cancelación mensual conserva códigos de correo de un uso. Las proyecciones se distinguen de pagos confirmados. La continuidad usa cobertura efectivamente pagada y reconciliación; no se inventan mediciones técnicas.
+Las migraciones añaden los módulos originales ausentes (desarrollo, auditorías, soporte y RR. HH.) y políticas de publicación para proyectos, documentos y tickets. Los clientes usan un rol PostgreSQL sin login ni bypass de RLS. Las notas internas y los registros ajenos permanecen inaccesibles. Los clientes nuevos pueden preparar una cuenta pendiente de verificación; una coincidencia con una cuenta existente requiere revisión y nunca se vincula automáticamente.
 
-## Verificación de esta corrección
+Los registros históricos de la web se proyectan en las pantallas originales: formularios/leads, cotizaciones, proyectos, documentos, solicitudes, conversaciones del chat y pagos. Los libros financieros históricos se conservan y no se duplican. Algunas mutaciones de registros históricos requieren el flujo de origen o una nueva versión y devuelven un bloqueo explícito en vez de fabricar un resultado.
 
-272 pruebas nativas, tipos, lint sin errores (6 advertencias heredadas), build. Regresión financiera local con proveedores simulados. En el workspace: 24 controles HTTP de portal/rutas, 12 RLS/atomicidad, 18 de formularios/chat/admin, 6 de autenticación y 25 de las vistas y acciones nuevas. Esas pruebas mutan únicamente PostgreSQL local y no cobran dinero. Inspección visual de los dos diseños en escritorio y vista móvil local a 390 × 844; el override del conector no aplicó móvil, por lo que se usó emulación real de Chrome.
+Se mantiene el checkout nativo y el piloto Sandbox aislado. Sandbox no puede abonar un libro real remoto. Aceptar una cotización o volver del checkout no crea una venta ni acredita dinero; se cerró además el antiguo endpoint de venta manual sin pago. La prueba externa de suscripción mensual sigue aplazada por decisión del propietario. No se realizaron cobros reales ni se enviaron invitaciones durante la verificación.
 
-La prueba externa de suscripción Sandbox continúa pendiente por decisión del propietario. Las webs futuras necesitan su agente Next.js y vínculo específico para comprobar la suspensión real. La validación local de IA/correo no acredita entrega externa; deben comprobarse con un caso controlado del propietario. Esta corrección reutiliza el servicio Render existente y no contrata recursos nuevos.
+## Validación local
+
+- 278 pruebas unitarias correctas; compilación de Next y de la API original correcta.
+- 42 comprobaciones de pantallas/API originales, permisos, origen y creación local de una propuesta mensual con partidas gravadas y exentas.
+- 18 comprobaciones de aislamiento de publicaciones en la base real, dentro de transacciones revertidas: cliente A/B, notas privadas, documentos internos, escritura no autorizada y acceso anónimo.
+- 11 comprobaciones de la firma interna: alteraciones de método/ruta/cuerpo, replay, vencimiento, red externa y falsa declaración de MFA.
+- 9 comprobaciones en modo producción con ambos servidores dentro de un único proceso; consumo observado en macOS cercano a 400 MB tras el recorrido. Debe comprobarse también el servicio real tras publicar.
+
+La regresión financiera local con proveedor simulado pasó: concurrencia, callbacks repetidos, venta/comprobante/correo sólo tras pago, cuotas y cancelación/suspensión con cobertura pagada. No equivale a una transacción externa.

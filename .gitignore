@@ -47,3 +47,8 @@ next-env.d.ts
 
 # graphify knowledge graph (generado localmente)
 graphify-out/
+
+# Isolated original API build artifacts
+/control-runtime/node_modules/
+/control-runtime/dist/
+/control-runtime/contracts/dist/

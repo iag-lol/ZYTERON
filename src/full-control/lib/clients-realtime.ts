@@ -1,0 +1,2 @@
+/** Authenticated same-origin refresh; no browser service credentials or unsupported session bridge. */
+export function subscribeToClient(clientId:string,onChange:()=>void){void clientId;const refresh=()=>{if(document.visibilityState==='visible')onChange();};const timer=window.setInterval(refresh,45_000);window.addEventListener('focus',refresh);return()=>{clearInterval(timer);window.removeEventListener('focus',refresh);};}

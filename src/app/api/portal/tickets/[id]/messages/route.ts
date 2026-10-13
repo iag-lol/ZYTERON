@@ -1,3 +1,4 @@
+import { replyToCanonicalTicket } from "@/lib/portal/canonical-publications";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { Role } from "@prisma/client";
@@ -37,6 +38,8 @@ export async function POST(req: Request, { params }: Context) {
       select: { id: true, userId: true, status: true },
     });
     if (!ticket) {
+      if (await replyToCanonicalTicket(session.user.id, id, parsed.data.message))
+        return NextResponse.json({ ok: true });
       return NextResponse.json({ error: "Ticket no encontrado." }, { status: 404 });
     }
     if (ticket.userId !== session.user.id) {

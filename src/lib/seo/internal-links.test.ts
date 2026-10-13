@@ -4,6 +4,7 @@ import path from "node:path";
 import { describe, it } from "node:test";
 
 import nextConfig from "../../../next.config";
+import { mountControlPath } from "../../full-control/lib/mount-path";
 
 const SRC_DIR = path.join(process.cwd(), "src");
 const APP_DIR = path.join(SRC_DIR, "app");
@@ -23,9 +24,7 @@ const NON_PUBLIC_PREFIXES = [
 ] as const;
 
 function isNonPublicRoute(route: string) {
-  return NON_PUBLIC_PREFIXES.some(
-    (prefix) => route === prefix || route.startsWith(`${prefix}/`),
-  );
+  return NON_PUBLIC_PREFIXES.some((prefix) => route === prefix || route.startsWith(`${prefix}/`));
 }
 
 function walk(dir: string, out: string[] = []): string[] {
@@ -83,7 +82,10 @@ function collectInternalLinks(): Map<string, string[]> {
   for (const file of walk(SRC_DIR)) {
     const contents = readFileSync(file, "utf8");
     for (const match of contents.matchAll(/href:?\s*[=:]?\s*["'`](\/[^"'`{}\s]*)["'`]/g)) {
-      const route = match[1].split("?")[0].split("#")[0].replace(/\/$/, "") || "/";
+      const sourceRoute = match[1].split("?")[0].split("#")[0].replace(/\/$/, "") || "/";
+      const route = file.startsWith(path.join(SRC_DIR, "full-control"))
+        ? mountControlPath(sourceRoute)
+        : sourceRoute;
       if (!links.has(route)) links.set(route, []);
       links.get(route)!.push(path.relative(process.cwd(), file));
     }
