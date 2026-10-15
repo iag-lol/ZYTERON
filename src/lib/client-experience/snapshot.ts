@@ -2,6 +2,8 @@ import { isSafePortalLink } from "@/lib/portal/safe-link";
 import { portalModulePermissions } from "@/lib/portal/module-permissions";
 import { scopedPublications } from "@/lib/portal/canonical-publications";
 import "server-only";
+import { prisma } from "@/lib/prisma";
+import { credentialPaymentStates } from "@/lib/security/credential-payment-access";
 import { projectStatus } from "./project-status";
 import { getClientPortalSnapshot } from "@/lib/portal/data";
 import { clientDatabase } from "@/lib/portal/scoped-db";
@@ -14,6 +16,7 @@ import {
 export async function connectedPortalSnapshot(userId: string) {
   const base = await getClientPortalSnapshot(userId);
   if (!base.user) throw new Error("PORTAL_ACCESS_DENIED");
+  const credentialAccess = await prisma.$transaction((db) => credentialPaymentStates(db, userId, base.credentials.map((c) => c.project?.id || null)));
   const extra = await clientDatabase(userId, async (db) => {
     const [services, events, debts, payments, quotes, lifecycle, webThreads, webMessages] =
       await Promise.all([
@@ -286,11 +289,12 @@ export async function connectedPortalSnapshot(userId: string) {
     credentials: base.credentials.map((c) => ({
       id: c.id,
       name: c.serviceName,
-      username: c.username || "",
+      username: "",
       masked: c.secretMasked,
-      url: c.url || "",
-      notes: c.notes || "",
+      url: "",
+      notes: "",
       project: c.project?.title || "",
+      access: credentialAccess.get(c.project?.id || null)!,
     })),
     invoices: (extra.permissions.invoices ? extra.debts : []).map((d) => {
       const paid = d.allocations.reduce((sum, a) => sum + a.amount, 0),

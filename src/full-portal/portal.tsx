@@ -1197,8 +1197,9 @@ export default function Portal({
                               Estado: {c.status} · Firma: {c.signature} · Vigencia: {c.effective}
                             </p>
                             <p>
-                              {c.start ? civil(c.start.slice(0,10)+"T12:00:00Z") : "Sin inicio"} —{" "}
-                              {c.end ? civil(c.end.slice(0,10)+"T12:00:00Z") : "Indefinido"} · {money(c.total, c.currency)}
+                              {c.start ? civil(c.start.slice(0, 10) + "T12:00:00Z") : "Sin inicio"}{" "}
+                              — {c.end ? civil(c.end.slice(0, 10) + "T12:00:00Z") : "Indefinido"} ·{" "}
+                              {money(c.total, c.currency)}
                             </p>
                           </article>
                         ))}
@@ -1293,7 +1294,9 @@ export default function Portal({
                         <span className="row-text">
                           <b>{c.name}</b>
                           <small>
-                            {c.username} · {c.masked}
+                            {c.access.allowed
+                              ? "Disponible con verificación"
+                              : "Bloqueada hasta completar pago y vinculación"}
                           </small>
                         </span>
                         <ChevronRight size={17} />

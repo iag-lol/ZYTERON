@@ -2,6 +2,7 @@
 
 import Link from "@control/components/routed-link";
 import { ClientCommunications } from "./client-communications";
+import { ClientCredentials } from "./client-credentials";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Archive,
@@ -1417,6 +1418,7 @@ function PortalPanel({ client }: { client: Client }) {
         El portal utiliza los mismos registros con políticas CLIENT_VISIBLE; nunca copia la
         información del cliente. Cliente: {client.legalName}.
       </aside>
+      {canManage && <ClientCredentials key={`credentials-${client.id}`} clientId={client.id} />}
       <ClientCommunications key={client.id} clientId={client.id} />
     </div>
   );

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { csvCell } from "@/lib/client-experience/csv";
 import { signOut } from "next-auth/react";
+import { CredentialAccessForm } from "@/components/portal/panel/credential-access-form";
 import type { PortalData } from "@/lib/client-experience/snapshot";
 import { projectMonthlyPayments } from "@/lib/payments/payment-projection";
 import {
@@ -317,8 +318,7 @@ export default function Portal({
     [year, setYear] = useState(new Date(data.asOf).getFullYear()),
     [month, setMonth] = useState(new Date(data.asOf).getMonth() + 1),
     [view, setView] = useState("year"),
-    [challenge, setChallenge] = useState(""),
-    [secret, setSecret] = useState("");
+    [challenge, setChallenge] = useState("");
   const user = data.user,
     company = user.company || user.name,
     unread = data.notifications.filter((n) => !n.read && !read.includes(n.id)).length;
@@ -356,11 +356,6 @@ export default function Portal({
     const t = setTimeout(() => setToast(""), 5000);
     return () => clearTimeout(t);
   }, [toast]);
-  useEffect(() => {
-    if (!secret) return;
-    const t = setTimeout(() => setSecret(""), 30000);
-    return () => clearTimeout(t);
-  }, [secret]);
   function go(id: string) {
     setSection(id);
     setFilter("Todos");
@@ -373,7 +368,6 @@ export default function Portal({
   function open(kind: string, id?: string) {
     setError("");
     setChallenge("");
-    setSecret("");
     setModal({ kind, id });
   }
   async function send(url: string, body: unknown, method = "POST", reload = true) {
@@ -1707,7 +1701,7 @@ export default function Portal({
                     <ShieldCheck size={21} />
                     <div>
                       <b>Credenciales protegidas</b>
-                      <p>Contraseña y dos códigos para revelar accesos.</p>
+                      <p>Proyecto pagado, contraseña y código a tu correo para consultar accesos.</p>
                     </div>
                   </div>
                   <div className="security-setting">
@@ -1793,8 +1787,7 @@ export default function Portal({
           onClose={() => {
             if (!busy) {
               setModal(null);
-              setSecret("");
-              setError("");
+                        setError("");
             }
           }}
         >
@@ -1998,104 +1991,7 @@ export default function Portal({
             data.credentials
               .filter((c) => c.id === modal.id)
               .map((c) => (
-                <div key={c.id} className="connected-form">
-                  <span className="service-icon green">
-                    <KeyRound size={27} />
-                  </span>
-                  <h3>{c.name}</h3>
-                  <p>{c.username}</p>
-                  <p>{c.notes}</p>
-                  {c.url && /^https:\/\//.test(c.url) && (
-                    <a className="text-button" href={c.url} rel="noreferrer">
-                      Abrir recurso <ArrowUpRight size={15} />
-                    </a>
-                  )}
-                  <div className="info-note">
-                    <ShieldCheck size={17} />
-                    La revelación requiere tu contraseña y los códigos de usuario y aprobación de
-                    esta solicitud.
-                  </div>
-                  {!challenge ? (
-                    <button
-                      className="button primary"
-                      disabled={busy}
-                      onClick={() =>
-                        void send(
-                          "/api/portal/credentials/send-code",
-                          { credentialId: c.id },
-                          "POST",
-                          false,
-                        ).then((b) => {
-                          if (b) {
-                            setChallenge(b.challengeId);
-                            setToast(
-                              "Códigos solicitados. Revisa tu correo y la autorización de Zyteron.",
-                            );
-                          }
-                        })
-                      }
-                    >
-                      Solicitar códigos
-                    </button>
-                  ) : (
-                    <form
-                      className="connected-form"
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        void send(
-                          `/api/portal/credentials/${c.id}/reveal`,
-                          {
-                            ...Object.fromEntries(new FormData(e.currentTarget)),
-                            challengeId: challenge,
-                          },
-                          "POST",
-                          false,
-                        ).then((b) => {
-                          if (b) setSecret(b.secret || b.password || "");
-                        });
-                      }}
-                    >
-                      <label>
-                        Tu contraseña
-                        <input
-                          name="password"
-                          type="password"
-                          autoComplete="current-password"
-                          maxLength={256}
-                          required
-                        />
-                      </label>
-                      <label>
-                        Código recibido
-                        <input
-                          name="code"
-                          inputMode="numeric"
-                          pattern="[0-9]{6}"
-                          maxLength={6}
-                          required
-                        />
-                      </label>
-                      <label>
-                        Código de aprobación de Zyteron
-                        <input
-                          name="approvalCode"
-                          inputMode="numeric"
-                          pattern="[0-9]{6}"
-                          maxLength={6}
-                          required
-                        />
-                      </label>
-                      <button className="button primary" disabled={busy}>
-                        Revelar por 30 segundos
-                      </button>
-                    </form>
-                  )}
-                  {secret && (
-                    <output className="credential-secret" aria-live="polite">
-                      {secret}
-                    </output>
-                  )}
-                </div>
+                <CredentialAccessForm key={c.id} credentialId={c.id} name={c.name} project={c.project} access={c.access} />
               ))}
           {modal.kind === "checkout" && selectedQuote && (
             <form

@@ -8,6 +8,7 @@ declare module "next-auth" {
       role: Role;
       accountStatus: AccountStatus;
       emailVerifiedAt?: string | null;
+      credentialSessionId?: string;
     } & DefaultSession["user"];
   }
 }
@@ -15,6 +16,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     sessionVersion?: number;
+    credentialSessionId?: string;
     role?: Role;
     accountStatus?: AccountStatus;
     emailVerifiedAt?: string | null;
