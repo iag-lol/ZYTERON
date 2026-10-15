@@ -698,4 +698,67 @@
   :where(.zy-full-control) .portfolioMetrics { grid-template-columns:1fr 1fr; }:where(.zy-full-control) .portfolioMetrics button { min-height:78px; }:where(.zy-full-control) .clientHubHeader h1,:where(.zy-full-control) .wizardHeader h1 { font-size:30px; }:where(.zy-full-control) .clientCompanyIdentity { align-items:flex-start; }:where(.zy-full-control) .clientLogo { width:52px;height:52px;border-radius:15px;font-size:17px; }:where(.zy-full-control) .client360Header h1 { font-size:24px; }:where(.zy-full-control) .clientOwnership { grid-template-columns:1fr; }:where(.zy-full-control) .financeClientPanel { grid-template-columns:1fr; }:where(.zy-full-control) .clientTimeline article { grid-template-columns:10px 1fr; }:where(.zy-full-control) .clientTimeline time { grid-column:2;text-align:left; }:where(.zy-full-control) .clientTimeline article>span { grid-row:1/3; }:where(.zy-full-control) .clientTimeline article>div { grid-column:2; }
 }
 
-.credentialAdmin{display:grid;gap:18px}.credentialAdmin .clientSectionHeader h2{display:flex;gap:8px;align-items:center}.credentialAdmin>label,.credentialAdminForm label{display:grid;gap:7px;font-size:12px;font-weight:600}.credentialAdmin select,.credentialAdmin input,.credentialAdmin textarea{box-sizing:border-box;width:100%;padding:11px 13px;border:1px solid #dbe3ed;border-radius:9px;background:white;color:#1f3348;font:inherit;font-size:13px}.credentialAdminNote{display:flex;gap:10px;padding:16px;background:#eff6f2;border:1px solid #d4e7db;border-radius:11px;font-size:12px;line-height:1.7;color:#3c6550}.credentialAdminNote svg{flex:none;margin-top:2px}.credentialAdminRow{display:flex;justify-content:space-between;gap:18px;align-items:center;border:1px solid #e1e7ef;padding:16px;border-radius:11px}.credentialAdminRow>div{display:grid;gap:6px}.credentialAdminRow strong{font-size:13px}.credentialAdminRow small{font-size:11px;color:#6d7a8b}.credentialAdmin button{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 12px;border:1px solid #dbe3ed;border-radius:8px;background:#fff;color:#2f4967;cursor:pointer;font-size:12px}.credentialAdmin button:disabled{opacity:.5}.credentialAdminForm{display:grid;gap:16px;background:#f7f9fc;border:1px solid #dbe3ed;border-radius:12px;padding:22px}.credentialAdminForm h3{margin:0;font-size:17px}.credentialAdminForm p{font-size:12px;line-height:1.7;color:#6d7a8b}.credentialAdminForm footer{display:flex;justify-content:flex-end;gap:10px}.credentialAdminForm footer button[type=submit]{background:#254f3b;color:#fff;border-color:#254f3b}
+:where(.zy-full-control) .portalClientPanel .credentialAdmin {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  margin: 16px;
+  padding: 22px;
+  overflow: hidden;
+}
+.credentialAdmin > * { min-width: 0; }
+.credentialAdmin .clientSectionHeader { padding: 0 0 16px; flex-wrap: wrap; }
+.credentialAdmin .clientSectionHeader h2 { display: flex; gap: 8px; align-items: center; }
+:where(.zy-full-control) .portalClientPanel .credentialAdmin .clientSectionHeader p {
+  color: #637368; font-size: 13px; line-height: 1.6;
+}
+:where(.zy-full-control) .portalClientPanel .credentialAdmin label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  color: #294237;
+  font-size: 13px;
+  font-weight: 600;
+}
+.credentialAdmin > label { max-width: 540px; }
+.credentialAdmin select, .credentialAdmin input, .credentialAdmin textarea {
+  box-sizing: border-box; min-width: 0; width: 100%; min-height: 44px;
+  padding: 11px 13px; border: 1px solid #dbe3de; border-radius: 9px;
+  background: white; color: #233e30; font: inherit; font-size: 14px;
+}
+.credentialAdmin textarea { min-height: 90px; resize: vertical; }
+:where(.zy-full-control) .portalClientPanel .credentialAdmin .credentialAdminNote {
+  display: flex; gap: 10px; margin: 0; padding: 16px; background: #eff6f2;
+  border: 1px solid #d4e7db; border-radius: 11px; font-size: 13px;
+  line-height: 1.7; color: #3c6550;
+}
+.credentialAdminNote svg { flex: none; margin-top: 3px; }
+.credentialAdminRow {
+  display: flex; justify-content: space-between; gap: 18px; align-items: center;
+  border: 1px solid #e1e7e3; padding: 16px; border-radius: 11px;
+}
+.credentialAdminRow > div { display: grid; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
+.credentialAdminRow strong { font-size: 14px; }
+.credentialAdminRow small { font-size: 12px; color: #637368; line-height: 1.5; }
+.credentialAdmin button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  flex-shrink: 0; min-height: 40px; padding: 9px 12px; border: 1px solid #dbe3de;
+  border-radius: 8px; background: #fff; color: #2f5940; cursor: pointer; font-size: 13px;
+}
+.credentialAdmin button:disabled { opacity: .5; }
+.credentialAdminForm {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px;
+  background: #f7faf8; border: 1px solid #dbe3de; border-radius: 12px; padding: 22px;
+}
+.credentialAdminForm h3 { margin: 0; font-size: 19px; }
+:where(.zy-full-control) .portalClientPanel .credentialAdmin .credentialAdminForm p {
+  margin: 0; font-size: 13px; line-height: 1.7; color: #637368;
+}
+.credentialAdminForm footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+.credentialAdminForm footer button[type=submit] { background: #254f3b; color: #fff; border-color: #254f3b; }
+@media (max-width: 700px) {
+  :where(.zy-full-control) .portalClientPanel .credentialAdmin { margin: 10px; padding: 16px; }
+  .credentialAdminForm { padding: 16px; }
+}
