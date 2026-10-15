@@ -158,7 +158,7 @@ export async function getClientPortalSnapshot(userId: string) {
         take: 80,
       }),
       prisma.clientCredential.findMany({
-        where: { userId },
+        where: { userId, project: { is: { clientId: userId } } },
         orderBy: { createdAt: "desc" },
         take: 80,
         select: {
