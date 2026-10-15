@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { CredentialAccessForm } from "@/components/portal/panel/credential-access-form";
+import { useState } from "react";
 import type { PortalData } from "@/lib/client-experience/snapshot";
-import { KeyRound, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 async function request(url: string, body: unknown, method = "POST") {
   const response = await fetch(url, {
     method,
@@ -133,108 +134,14 @@ export function CredentialAccess({
 }: {
   credential?: PortalData["credentials"][number];
 }) {
-  const [challenge, setChallenge] = useState(""),
-    [secret, setSecret] = useState(""),
-    [busy, setBusy] = useState(false),
-    [message, setMessage] = useState("");
-  useEffect(() => {
-    if (!secret) return;
-    const timer = setTimeout(() => setSecret(""), 30_000);
-    return () => clearTimeout(timer);
-  }, [secret]);
-  if (!credential) return <p>No existe un acceso publicado para esta cuenta.</p>;
-  return (
-    <div>
-      <h3>{credential.name}</h3>
-      <p>{credential.username}</p>
-      <div className="info-note">
-        <ShieldCheck size={17} />
-        La revelación exige tu contraseña y los códigos de cliente y aprobación de Zyteron.
-      </div>
-      {!challenge ? (
-        <button
-          className="button primary"
-          disabled={busy}
-          onClick={async () => {
-            if (busy) return;
-            setBusy(true);
-            try {
-              const value = await request("/api/portal/credentials/send-code", {
-                credentialId: credential.id,
-              });
-              setChallenge(value.challengeId);
-              setMessage("Revisa tu correo y solicita la aprobación al equipo.");
-            } catch (error) {
-              setMessage(error instanceof Error ? error.message : "No se pudo conectar.");
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          Solicitar códigos <KeyRound size={16} />
-        </button>
-      ) : (
-        <form
-          className="support-form"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            if (busy) return;
-            const form = e.currentTarget;
-            setBusy(true);
-            try {
-              const value = await request(`/api/portal/credentials/${credential.id}/reveal`, {
-                ...Object.fromEntries(new FormData(form)),
-                challengeId: challenge,
-              });
-              form.reset();
-              setSecret(value.secret || value.password || "");
-              setChallenge("");
-              setMessage("El acceso se ocultará en 30 segundos.");
-            } catch (error) {
-              setMessage(error instanceof Error ? error.message : "No se pudo conectar.");
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          <label>
-            Tu contraseña
-            <input
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              maxLength={256}
-              required
-            />
-          </label>
-          <label>
-            Código recibido
-            <input name="code" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required />
-          </label>
-          <label>
-            Código de aprobación de Zyteron
-            <input
-              name="approvalCode"
-              inputMode="numeric"
-              pattern="[0-9]{6}"
-              maxLength={6}
-              required
-            />
-          </label>
-          <button className="button primary" disabled={busy}>
-            Revelar temporalmente
-          </button>
-        </form>
-      )}
-      {message && <p role="status">{message}</p>}
-      {secret && (
-        <div className="info-note">
-          <code>{secret}</code>
-          <button className="text-button" onClick={() => setSecret("")}>
-            Ocultar
-          </button>
-        </div>
-      )}
-    </div>
+  return credential ? (
+    <CredentialAccessForm
+      credentialId={credential.id}
+      name={credential.name}
+      project={credential.project}
+      access={credential.access}
+    />
+  ) : (
+    <p>No existe un acceso publicado para esta cuenta.</p>
   );
 }

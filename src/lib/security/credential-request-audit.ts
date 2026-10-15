@@ -10,6 +10,30 @@ const noStoreHeaders = {
   "X-Content-Type-Options": "nosniff",
 };
 
+export async function readCredentialBody(req: Request) {
+  if (!req.headers.get("content-type")?.startsWith("application/json"))
+    throw new CredentialAccessError("Formato inválido.", 400);
+  const reader = req.body?.getReader();
+  if (!reader) throw new CredentialAccessError("Datos inválidos.", 400);
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      length += value.byteLength;
+      if (length > 8192) {
+        await reader.cancel();
+        throw new CredentialAccessError("Solicitud demasiado grande.", 413);
+      }
+      chunks.push(value);
+    }
+    return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks)));
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 /** Every entry point records the attempt, including unauthenticated/invalid requests.
  * A successful response is withheld if audit persistence or notification fails. */
 export async function auditCredentialRequest(

@@ -1,75 +1,166 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
-import { logPortalAdminAction } from "@/lib/portal/audit";
 import { prisma } from "@/lib/prisma";
 import { encryptSecret } from "@/lib/security/secret-crypto";
-
-const schema = z.object({
-  serviceName: z.string().trim().min(2).max(140),
-  username: z.string().trim().max(140).optional().or(z.literal("")),
-  secret: z.string().trim().max(4000).optional().or(z.literal("")),
-  url: z.string().trim().url().optional().or(z.literal("")),
-  notes: z.string().trim().max(3000).optional().or(z.literal("")),
-  projectId: z.string().trim().optional().or(z.literal("")),
-  isSensitive: z.boolean().optional(),
-});
-
-type Context = {
-  params: Promise<{ id: string }>;
-};
-
-export async function POST(req: Request, { params }: Context) {
+import { credentialAdminSchema } from "@/lib/security/credential-admin-schema";
+import { credentialPaymentStates } from "@/lib/security/credential-payment-access";
+import { boundedJson } from "@/lib/security/public-intake";
+import { configuredRequestOrigins, isAllowedMutationOrigin } from "@/lib/security/request-origin";
+type Context = { params: Promise<{ id: string }> };
+const headers = { "cache-control": "no-store, private", "x-content-type-options": "nosniff" };
+export async function GET(_req: Request, { params }: Context) {
   const auth = await requirePortalAdminApiSession();
   if (auth.error) return auth.error;
-
+  const { id } = await params;
   try {
-    const { id } = await params;
-    const body = await req.json();
-    const parsed = schema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.issues[0]?.message || "Datos inválidos." }, { status: 400 });
-    }
-
-    const client = await prisma.user.findUnique({ where: { id }, select: { id: true } });
-    if (!client) return NextResponse.json({ error: "Cliente no encontrado." }, { status: 404 });
-    const actorId = auth.legacy ? null : auth.session.user.id;
-
-    let encryption: ReturnType<typeof encryptSecret> | null = null;
-    if (parsed.data.secret) {
-      encryption = encryptSecret(parsed.data.secret);
-    }
-
-    const credential = await prisma.clientCredential.create({
-      data: {
-        userId: id,
-        projectId: parsed.data.projectId || null,
-        serviceName: parsed.data.serviceName,
-        username: parsed.data.username || null,
-        secretCiphertext: encryption?.ciphertext || null,
-        secretIv: encryption?.iv || null,
-        secretTag: encryption?.tag || null,
-        url: parsed.data.url || null,
-        notes: parsed.data.notes || null,
-        isSensitive: parsed.data.isSensitive ?? true,
-        createdById: actorId,
-        updatedById: actorId,
-      },
-      select: { id: true },
+    const data = await prisma.$transaction(async (db) => {
+      const client = await db.user.findFirst({
+        where: { id, role: "CLIENT" },
+        select: { id: true, email: true },
+      });
+      if (!client) return null;
+      const [rows, projects] = await Promise.all([
+        db.clientCredential.findMany({
+          where: { userId: id },
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            serviceName: true,
+            username: true,
+            url: true,
+            notes: true,
+            projectId: true,
+            secretCiphertext: true,
+          },
+        }),
+        db.project.findMany({
+          where: { clientId: id },
+          select: { id: true, title: true, totalCharge: true },
+          orderBy: { createdAt: "desc" },
+        }),
+      ]);
+      const access = await credentialPaymentStates(db, id, [null, ...projects.map((p) => p.id)]);
+      return {
+        client,
+        projects: projects.map((p) => ({ ...p, access: access.get(p.id) })),
+        credentials: rows.map(({ secretCiphertext, ...c }) => ({
+          ...c,
+          hasSecret: Boolean(secretCiphertext),
+          access: access.get(c.projectId) || access.get(null),
+        })),
+      };
     });
-
-    await logPortalAdminAction({
-      actorId,
-      targetUserId: id,
-      action: "ADMIN_CLIENT_CREDENTIAL_CREATE",
-      entityType: "ClientCredential",
-      entityId: credential.id,
-      details: { serviceName: parsed.data.serviceName, projectId: parsed.data.projectId || null },
-    });
-
-    return NextResponse.json({ ok: true, id: credential.id });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "No se pudo registrar la credencial.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return data
+      ? NextResponse.json(data, { headers })
+      : NextResponse.json({ error: "Cliente no encontrado." }, { status: 404, headers });
+  } catch {
+    return NextResponse.json(
+      { error: "No fue posible consultar las credenciales." },
+      { status: 503, headers },
+    );
   }
 }
+async function save(req: Request, { params }: Context) {
+  const auth = await requirePortalAdminApiSession();
+  if (auth.error) return auth.error;
+  if (
+    !isAllowedMutationOrigin({
+      requestOrigin: new URL(req.url).origin,
+      origin: req.headers.get("origin"),
+      referer: req.headers.get("referer"),
+      secFetchSite: req.headers.get("sec-fetch-site"),
+      allowedOrigins: configuredRequestOrigins(),
+    })
+  )
+    return NextResponse.json({ error: "Origen no autorizado." }, { status: 403, headers });
+  const input = credentialAdminSchema.safeParse(await boundedJson(req, 12000).catch(() => null));
+  if (!input.success)
+    return NextResponse.json(
+      {
+        error:
+          "Revisa el servicio, el proyecto y la URL HTTPS. Las claves se ingresan sólo en el campo secreto.",
+      },
+      { status: 400, headers },
+    );
+  const { id } = await params,
+    value = input.data,
+    editing = req.method === "PATCH";
+  if (editing !== Boolean(value.credentialId))
+    return NextResponse.json({ error: "Operación inválida." }, { status: 400, headers });
+  const actorId = auth.legacy ? null : auth.session.user.id;
+  try {
+    const result = await prisma.$transaction(async (db) => {
+      const client = await db.user.findFirst({
+        where: { id, role: "CLIENT" },
+        select: { id: true },
+      });
+      const project = await db.project.findFirst({
+        where: { id: value.projectId, clientId: id },
+        select: { id: true },
+      });
+      if (!client || !project) throw Error("INVALID_BINDING");
+      const existing = editing
+        ? await db.clientCredential.findFirst({ where: { id: value.credentialId, userId: id } })
+        : null;
+      if (editing && !existing) throw Error("INVALID_BINDING");
+      if (!value.secret && !value.url && !existing?.secretCiphertext)
+        throw Error("EMPTY_CREDENTIAL");
+      const encrypted = value.secret ? encryptSecret(value.secret) : null;
+      const data = {
+        projectId: project.id,
+        serviceName: value.serviceName,
+        username: value.username || null,
+        url: value.url || null,
+        notes: value.notes || null,
+        isSensitive: true,
+        updatedById: actorId,
+        ...(encrypted
+          ? {
+              secretCiphertext: encrypted.ciphertext,
+              secretIv: encrypted.iv,
+              secretTag: encrypted.tag,
+            }
+          : {}),
+      };
+      const saved = existing
+        ? await db.clientCredential.update({
+            where: { id: existing.id },
+            data,
+            select: { id: true },
+          })
+        : await db.clientCredential.create({
+            data: { ...data, userId: id, createdById: actorId },
+            select: { id: true },
+          });
+      await db.emailVerificationCode.updateMany({
+        where: { userId: id, email: { startsWith: "credential-reveal:" }, consumedAt: null },
+        data: { consumedAt: new Date() },
+      });
+      await db.clientAuditLog.create({
+        data: {
+          actorId,
+          targetUserId: id,
+          action: existing ? "ADMIN_CLIENT_CREDENTIAL_UPDATE" : "ADMIN_CLIENT_CREDENTIAL_CREATE",
+          entityType: "ClientCredential",
+          entityId: saved.id,
+          details: {
+            serviceName: value.serviceName,
+            projectId: project.id,
+            secretChanged: Boolean(encrypted),
+          },
+        },
+      });
+      return saved;
+    });
+    return NextResponse.json({ ok: true, id: result.id }, { headers });
+  } catch {
+    return NextResponse.json(
+      {
+        error:
+          "No se pudo guardar. Selecciona un proyecto del cliente y registra un secreto o una URL válida.",
+      },
+      { status: 400, headers },
+    );
+  }
+}
+export { save as POST, save as PATCH };

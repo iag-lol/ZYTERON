@@ -4,13 +4,25 @@ import { hash } from "bcrypt";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { encryptSecret } from "./secret-crypto";
-import { revealCredential, sendCredentialCodes } from "./credential-challenges";
+import { revealCredential as reveal, sendCredentialCodes as send } from "./credential-challenges";
 import {
   credentialCodeScope,
   credentialHashesEqual,
   hashCredentialCode,
 } from "./credential-challenge-policy";
 
+const sendCredentialCodes = (
+  userId: string,
+  id: string,
+  password = "correct-password",
+  binding = "session-a",
+) => send(userId, id, password, binding);
+const revealCredential = (
+  userId: string,
+  id: string,
+  input: { password: string; code: string; challengeId: string },
+  binding = "session-a",
+) => reveal(userId, id, input, binding);
 type CodeRecord = {
   id: string;
   userId: string;
@@ -31,7 +43,7 @@ type Where = {
   attempts?: { lt: number };
 };
 
-describe("credential dual authorization", () => {
+describe("credential payment and email authorization", () => {
   let records: CodeRecord[];
   let messages: Array<{ to: string[]; text: string }>;
   let user: {
@@ -51,7 +63,29 @@ describe("credential dual authorization", () => {
     secretCiphertext: string;
     secretIv: string;
     secretTag: string;
+    projectId: string | null;
+    updatedAt: Date;
   };
+  let canonicalPending: boolean;
+  let sendAttempts: number;
+  let project: {
+    id: string;
+    clientId: string;
+    quoteId: string | null;
+    saleId: string | null;
+    totalCharge: number;
+    quote: null;
+    sale: null;
+  };
+  let debts: Array<{
+    clientId: string;
+    projectId: string;
+    quoteId: null;
+    saleId: null;
+    totalAmount: number;
+    currency: string;
+    allocations: Array<{ amount: number }>;
+  }>;
   let providerFails: boolean;
   let locks: number;
   const originalTransaction = prisma.$transaction;
@@ -83,6 +117,8 @@ describe("credential dual authorization", () => {
     messages = [];
     providerFails = false;
     locks = 0;
+    canonicalPending = false;
+    sendAttempts = 0;
     user = {
       id: "owner",
       email: "owner@example.com",
@@ -98,13 +134,38 @@ describe("credential dual authorization", () => {
       id: "credential-a",
       userId: user.id,
       serviceName: "Service",
+      projectId: "project-a",
+      updatedAt: new Date("2026-10-01T00:00:00Z"),
       secretCiphertext: encrypted.ciphertext,
       secretIv: encrypted.iv,
       secretTag: encrypted.tag,
     };
+    project = {
+      id: "project-a",
+      clientId: user.id,
+      quoteId: null,
+      saleId: null,
+      totalCharge: 1000,
+      quote: null,
+      sale: null,
+    };
+    debts = [
+      {
+        clientId: user.id,
+        projectId: project.id,
+        quoteId: null,
+        saleId: null,
+        totalAmount: 1000,
+        currency: "CLP",
+        allocations: [{ amount: 1000 }],
+      },
+    ];
     const tx = {
+      project: { findMany: async () => [project] },
+      receivable: { findMany: async () => debts },
+      clientAuditLog: { count: async () => sendAttempts },
       $queryRaw: async (sql: TemplateStringsArray) => {
-        assert.match(sql.join("?"), /FOR UPDATE/);
+        if (!sql.join("?").includes("FOR UPDATE")) return [{ pending: canonicalPending }];
         locks++;
         return [{ id: user.id }];
       },
@@ -191,18 +252,16 @@ describe("credential dual authorization", () => {
   async function issued() {
     const response = await sendCredentialCodes(user.id, credential.id);
     const code = messages[0].text.match(/Código de seguridad: (\d{6})/)![1];
-    const approvalCode = messages[1].text.match(/Código de seguridad: (\d{6})/)![1];
-    return { challengeId: response.challengeId, code, approvalCode, password: "correct-password" };
+    assert.ok(!JSON.stringify(response).includes(code));
+    return { challengeId: response.challengeId, code, password: "correct-password" };
   }
 
-  it("sends different codes separately and reveals only after both validations", async () => {
+  it("sends one code only to the verified owner, stores only its hash and consumes it", async () => {
     const input = await issued();
     assert.deepEqual(
       messages.map((m) => m.to),
-      [["owner@example.com"], ["contacto@zyteron.cl"]],
+      [["owner@example.com"]],
     );
-    assert.notEqual(input.code, input.approvalCode);
-    assert.ok(!messages[0].text.includes(input.approvalCode));
     assert.ok(!JSON.stringify(records).includes(input.code));
     assert.equal(records[0].email, credentialCodeScope(credential.id, "owner"));
     assert.equal(
@@ -213,13 +272,10 @@ describe("credential dual authorization", () => {
     assert.equal(locks, 2);
   });
 
-  it("rejects a missing or wrong second code and commits failure counters", async () => {
+  it("rejects wrong codes and commits the failure counter", async () => {
     const input = await issued();
-    await assert.rejects(revealCredential(user.id, credential.id, { ...input, approvalCode: "" }));
-    await assert.rejects(
-      revealCredential(user.id, credential.id, { ...input, approvalCode: input.code }),
-    );
-    assert.ok(records.every((r) => r.attempts === 2 && !r.consumedAt));
+    await assert.rejects(revealCredential(user.id, credential.id, { ...input, code: "invalid" }));
+    assert.equal(records[0].attempts, 1);
   });
 
   it("locks out after five incorrect passwords even with correct codes", async () => {
@@ -267,7 +323,7 @@ describe("credential dual authorization", () => {
     });
     await assert.rejects(revealCredential(user.id, credential.id, input));
     records[0].email = credentialCodeScope("other-credential", "owner");
-    records[1].email = credentialCodeScope("other-credential", "approval");
+
     await assert.rejects(revealCredential(user.id, credential.id, input));
   });
 
@@ -301,12 +357,46 @@ describe("credential dual authorization", () => {
     await assert.rejects(sendCredentialCodes(user.id, credential.id), { status: 429 });
   });
 
-  it("invalidates both codes if either email cannot be sent", async () => {
+  it("invalidates the code if its email cannot be sent", async () => {
     providerFails = true;
     await assert.rejects(sendCredentialCodes(user.id, credential.id), { status: 503 });
     assert.ok(records.every((r) => r.consumedAt));
   });
 
+  it("denies sending and revealing when payment is partial, missing or later reversed", async () => {
+    debts[0].allocations = [{ amount: 999 }];
+    await assert.rejects(sendCredentialCodes(user.id, credential.id), { status: 403 });
+    assert.equal(messages.length, 0);
+    debts[0].allocations = [{ amount: 1000 }];
+    const input = await issued();
+    debts[0].allocations = [];
+    await assert.rejects(revealCredential(user.id, credential.id, input), { status: 403 });
+    assert.equal(records[0].consumedAt, null);
+  });
+  it("denies unrelated unpaid debt, canonical pending balances and an unlinked project", async () => {
+    canonicalPending = true;
+    await assert.rejects(sendCredentialCodes(user.id, credential.id), { status: 403 });
+    canonicalPending = false;
+    credential.projectId = null;
+    await assert.rejects(sendCredentialCodes(user.id, credential.id), { status: 403 });
+    assert.equal(messages.length, 0);
+  });
+  it("requires the password before sending and rate limits password guessing", async () => {
+    await assert.rejects(sendCredentialCodes(user.id, credential.id, "wrong"), { status: 401 });
+    assert.equal(records.length, 0);
+    sendAttempts = 11;
+    await assert.rejects(sendCredentialCodes(user.id, credential.id), { status: 429 });
+    assert.equal(messages.length, 0);
+  });
+  it("binds codes to the requesting session, email and credential version", async () => {
+    const input = await issued();
+    await assert.rejects(revealCredential(user.id, credential.id, input, "session-b"));
+    user.email = "changed@example.com";
+    await assert.rejects(revealCredential(user.id, credential.id, input));
+    user.email = "owner@example.com";
+    credential.updatedAt = new Date();
+    await assert.rejects(revealCredential(user.id, credential.id, input));
+  });
   it("binds code hashes to recipient, factor, credential, requester and challenge", () => {
     const base = {
       userId: "owner",

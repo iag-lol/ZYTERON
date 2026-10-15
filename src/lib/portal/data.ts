@@ -188,12 +188,12 @@ export async function getClientPortalSnapshot(userId: string) {
         id: cred.id,
         project: cred.project,
         serviceName: cred.serviceName,
-        username: cred.username,
+        username: null,
         // El listado nunca descifra secretos. La revelación exige contraseña +
         // código de un solo uso en su endpoint dedicado y queda auditada.
         secretMasked: cred.secretCiphertext ? "••••••••" : null,
-        url: cred.url,
-        notes: cred.notes,
+        url: null,
+        notes: null,
         isSensitive: cred.isSensitive,
         createdAt: cred.createdAt,
         updatedAt: cred.updatedAt,

@@ -4,18 +4,26 @@ import {
   CredentialAccessError,
   sendCredentialCodes,
 } from "@/lib/security/credential-access";
+import { readCredentialBody } from "@/lib/security/credential-request-audit";
 
-const schema = z.object({ credentialId: z.string().min(1).max(200) }).strict();
+const schema = z
+  .object({ credentialId: z.string().min(1).max(200), password: z.string().min(1).max(256) })
+  .strict();
 
 export async function POST(req: Request) {
-  const parsed = schema.safeParse(await req.json().catch(() => null));
+  const parsed = schema.safeParse(await readCredentialBody(req).catch(() => null));
   return auditedCredentialRequest(
     req,
     "SEND_CODES",
     parsed.success ? parsed.data.credentialId : null,
-    async (userId) => {
+    async (userId, sessionBinding) => {
       if (!parsed.success) throw new CredentialAccessError("Datos inválidos.", 400);
-      return sendCredentialCodes(userId, parsed.data.credentialId);
+      return sendCredentialCodes(
+        userId,
+        parsed.data.credentialId,
+        parsed.data.password,
+        sessionBinding,
+      );
     },
   );
 }

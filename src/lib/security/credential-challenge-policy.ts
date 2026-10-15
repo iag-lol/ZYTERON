@@ -1,6 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-export const CREDENTIAL_SECURITY_EMAIL = "contacto@zyteron.cl";
 export const CREDENTIAL_CODE_MINUTES = 5;
 export const CREDENTIAL_MAX_ATTEMPTS = 5;
 export const CREDENTIAL_CODE_PREFIX = "credential-reveal:";
@@ -17,6 +16,8 @@ export function hashCredentialCode(input: {
   recipient: string;
   factor: "owner" | "approval";
   code: string;
+  sessionBinding?: string;
+  credentialVersion?: string;
 }) {
   const key =
     process.env.PORTAL_CODE_PEPPER || process.env.PORTAL_SECRET_KEY || process.env.NEXTAUTH_SECRET;
@@ -24,15 +25,27 @@ export function hashCredentialCode(input: {
   return createHmac("sha256", key)
     .update(
       JSON.stringify([
-        "credential-reveal-v1",
+        "credential-reveal-v2",
         input.challengeId,
         input.userId,
         input.credentialId,
         input.recipient.trim().toLowerCase(),
         input.factor,
         input.code,
+        input.sessionBinding || "",
+        input.credentialVersion || "",
       ]),
     )
+    .digest("hex");
+}
+
+export function credentialSessionBinding(userId: string, sessionId: string) {
+  if (!userId || !sessionId) throw new Error("Credential session is unavailable.");
+  const key =
+    process.env.PORTAL_CODE_PEPPER || process.env.PORTAL_SECRET_KEY || process.env.NEXTAUTH_SECRET;
+  if (!key) throw new Error("Credential verification secret is not configured.");
+  return createHmac("sha256", key)
+    .update(JSON.stringify(["credential-session-v1", userId, sessionId]))
     .digest("hex");
 }
 

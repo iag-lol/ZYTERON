@@ -317,6 +317,9 @@ export const portalAuthOptions: NextAuthOptions = {
           return token;
         }
         token.sessionVersion = dbUser.sessionVersion;
+        // Stable across JWT renewal; a new sign-in receives a distinct identity.
+        if (user || !token.credentialSessionId)
+          token.credentialSessionId = user ? randomUUID() : String(token.jti || randomUUID());
         token.sub = dbUser.id;
         token.role = dbUser.role;
         token.accountStatus = dbUser.accountStatus;
@@ -356,6 +359,7 @@ export const portalAuthOptions: NextAuthOptions = {
         session.user.accountStatus =
           (token.accountStatus as AccountStatus | undefined) || AccountStatus.DISABLED;
         session.user.emailVerifiedAt = (token.emailVerifiedAt as string | null | undefined) || null;
+        session.user.credentialSessionId = token.credentialSessionId as string | undefined;
       }
       return session;
     },
