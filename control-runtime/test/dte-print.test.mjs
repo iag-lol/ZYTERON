@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   DteCertificateProvider,
+  DteSchemaValidator,
   SiiDirectDteProvider,
 } from "../dist/finance/finance.dte-providers.js";
 import { DteService } from "../dist/finance/finance.dte.js";
@@ -84,6 +85,7 @@ const createFixture = async (overrides = {}) => {
   const bytes = Buffer.from(provider.standalone(signed), "latin1");
   return {
     input,
+    signedFragment: signed,
     signed: bytes,
     envelope,
     record: {
@@ -132,6 +134,57 @@ before(async () => {
     { validate: async () => [], available: () => true },
   );
   fixture = await createFixture();
+});
+
+test("el caso de certificación conserva SET primero y la factura original en segundo lugar", async () => {
+  const item = await createFixture({
+    documentTypeCode: 61,
+    certificationCaseId: "1234-6",
+    reference: { documentTypeCode: 33, folio: 7, date: "2026-01-01", code: 3, reason: "Corrección sintética" },
+    caf: { ...fixture.input.caf, documentTypeCode: 61, cafXml: fixture.input.caf.cafXml.replace("<TD>33</TD>", "<TD>61</TD>") },
+  });
+  const xml = item.envelope.toString("latin1");
+  assert.match(xml, /<Referencia><NroLinRef>1<\/NroLinRef><TpoDocRef>SET<\/TpoDocRef>[\s\S]*?<RazonRef>CASO 1234-6<\/RazonRef><\/Referencia><Referencia><NroLinRef>2<\/NroLinRef><TpoDocRef>33<\/TpoDocRef><FolioRef>7<\/FolioRef>/);
+  assert.deepEqual(await new DteSchemaValidator().validate(xml), []);
+});
+
+test("un documento comercial normal no adquiere referencias SET", async () => {
+  assert.doesNotMatch(fixture.signedFragment, /<TpoDocRef>SET<\/TpoDocRef>/);
+});
+
+test("referencias de pruebas inválidas o productivas se rechazan antes de generar el timbre", async () => {
+  for (const certificationCaseId of ["", "1234", "1234-0", "1234-1<xml>", " 1234-1", "1234-1\n"]) {
+    await assert.rejects(provider.createDraft({ ...fixture.input, certificationCaseId }), /referencia SET/);
+  }
+  await assert.rejects(provider.createDraft({ ...fixture.input, certificationCaseId: "1234-1", environment: "PRODUCTION" }), /referencia SET/);
+});
+
+test("un envío mixto declara cantidades reales por tipo y mantiene el orden oficial de los casos", async () => {
+  const second = await createFixture({
+    documentTypeCode: 34, folio: 43, certificationCaseId: "1234-2",
+    lines: fixture.input.lines.map(line => ({ ...line, isExempt: true })),
+    totals: { net: 0, exempt: 100000, taxRate: null, tax: 0, total: 100000 },
+    caf: { ...fixture.input.caf, documentTypeCode: 34, cafXml: fixture.input.caf.cafXml.replace("<TD>33</TD>", "<TD>34</TD>") },
+  });
+  const third = await createFixture({ folio: 44, certificationCaseId: "1234-3" });
+  const xml = provider.envelope([fixture.signedFragment, second.signedFragment, third.signedFragment], fixture.input);
+  assert.match(xml, /<SubTotDTE><TpoDTE>33<\/TpoDTE><NroDTE>2<\/NroDTE><\/SubTotDTE>/);
+  assert.match(xml, /<SubTotDTE><TpoDTE>34<\/TpoDTE><NroDTE>1<\/NroDTE><\/SubTotDTE>/);
+  assert.ok(xml.indexOf('ID="F42T33"') < xml.indexOf('ID="F43T34"'));
+  assert.ok(xml.indexOf('ID="F43T34"') < xml.indexOf('ID="F44T33"'));
+  assert.deepEqual(await new DteSchemaValidator().validate(xml), []);
+});
+
+test("el envío rechaza duplicados, otro emisor y documentos sin firma", () => {
+  assert.throws(() => provider.envelope([], fixture.input), /al menos un documento/);
+  assert.throws(() => provider.envelope([fixture.signedFragment, fixture.signedFragment], fixture.input), /duplicados/);
+  assert.throws(() => provider.envelope([fixture.signedFragment.replace("<RUTEmisor>11111111-1</RUTEmisor>", "<RUTEmisor>22222222-2</RUTEmisor>")], fixture.input), /otro emisor/);
+  assert.throws(() => provider.envelope([fixture.signedFragment.replace(/<Signature[\s\S]*?<\/Signature>/, "")], fixture.input), /firmado inválido/);
+});
+
+test("un documento SET ya firmado tampoco puede ensobrarse para producción", async () => {
+  const item = await createFixture({ certificationCaseId: "1234-1" });
+  assert.throws(() => provider.envelope([item.signedFragment], { ...fixture.input, environment: "PRODUCTION" }), /SET no están permitidas en producción/);
 });
 after(() => {
   if (previousSecret === undefined) delete process.env.ZYTERON_SYNTHETIC_CERTIFICATE;
