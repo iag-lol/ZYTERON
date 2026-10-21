@@ -7,8 +7,16 @@ export interface OfficialCertificationCase {
   section: string;
   raw: string;
   referenceCaseId: string | null;
+  requiredLines?: Array<{
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    exempt: boolean;
+    unit?: string;
+  }>;
 }
 export interface OfficialCertificationSet {
+  format: "DTE" | "BOLETA";
   sha256: string;
   encoding: "UTF-8" | "ISO-8859-1";
   cases: OfficialCertificationCase[];
@@ -59,6 +67,69 @@ export function parseOfficialCertificationSet(bytes: Buffer): OfficialCertificat
   }
   if (raw.includes("\0")) reject("El set contiene datos binarios.");
   raw = raw.replaceAll("\r\n", "\n").replaceAll("\r", "\n");
+  const boletaHeading = "SII SET DE PRUEBA DE BOLETA ELECTRONICA DE VENTAS Y SERVICIOS";
+  if (raw.trimStart().startsWith(boletaHeading)) {
+    const markers = [...raw.matchAll(/^CASO-([1-9]\d{0,5})[\t ]*$/gm)];
+    if (markers.length !== 5 || markers.some((m, i) => Number(m[1]) !== i + 1))
+      reject("El set de boletas debe contener los cinco casos oficiales, completos y ordenados.");
+    const cases = markers.map((m, i) => {
+      const body = raw.slice(m.index, markers[i + 1]?.index ?? raw.length);
+      const header = /^Item[\t ]+Cantidad[\t ]+Precio Unitario con IVA[\t ]*$/m.exec(body);
+      if (!header) reject(`El caso CASO-${m[1]} no contiene el encabezado de precios con IVA.`);
+      const table = body
+        .slice(header!.index + header![0].length)
+        .trimStart()
+        .split(/\n[\t ]*\n|\nOBSERVACION|\n=+/)[0]!;
+      const requiredLines = table.split("\n").map((row) => {
+        const cells = row
+          .trim()
+          .split(/\t+| {2,}/)
+          .map((s) => s.trim());
+        if (
+          cells.length !== 3 ||
+          !/^\d+(?:\.\d+)?$/.test(cells[1]!) ||
+          !/^\d+(?:\.\d+)?$/.test(cells[2]!)
+        )
+          reject(`Partida incompleta en CASO-${m[1]}.`);
+        const quantity = Number(cells[1]),
+          unitPrice = Number(cells[2]);
+        if (
+          !cells[0] ||
+          cells[0].length > 80 ||
+          !Number.isFinite(quantity) ||
+          !Number.isFinite(unitPrice) ||
+          quantity <= 0 ||
+          unitPrice < 0 ||
+          quantity * unitPrice > 1e11
+        )
+          reject(`Partida inválida en CASO-${m[1]}.`);
+        return {
+          description: cells[0]!,
+          quantity,
+          unitPrice,
+          exempt: /\bEXENTO\b/.test(normalized(cells[0]!)),
+          ...(/UNIDAD DE MEDIDA EN KG\b/.test(normalized(body)) ? { unit: "Kg" } : {}),
+        };
+      });
+      if (!requiredLines.length) reject(`Faltan las partidas del caso CASO-${m[1]}.`);
+      return {
+        id: `CASO-${m[1]}`,
+        type: 39,
+        section: boletaHeading,
+        raw: body,
+        referenceCaseId: null,
+        requiredLines,
+      };
+    });
+    return {
+      format: "BOLETA",
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+      encoding,
+      cases,
+      sections: [{ name: boletaHeading, attention: "", raw, caseIds: cases.map((c) => c.id) }],
+      requiredFolios: { "39": 5 },
+    };
+  }
   const starts = [...raw.matchAll(/^SET[^\n]*NUMERO DE ATENCI[OÓ]N:\s*(\d+)\s*$/gim)];
   if (!starts.length) reject("El archivo no contiene secciones oficiales con número de atención.");
   const cases: OfficialCertificationCase[] = [],
@@ -99,6 +170,7 @@ export function parseOfficialCertificationSet(bytes: Buffer): OfficialCertificat
   const requiredFolios: Record<string, number> = {};
   for (const c of cases) requiredFolios[c.type] = (requiredFolios[c.type] ?? 0) + 1;
   return {
+    format: "DTE",
     sha256: createHash("sha256").update(bytes).digest("hex"),
     encoding,
     cases,

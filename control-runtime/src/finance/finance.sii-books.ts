@@ -479,7 +479,8 @@ export function certificationConsumption(
       integer(r.vat);
       integer(r.total);
       need(
-        r.total === r.net + r.exempt + r.vat && r.vat === tax(r.net),
+        r.total === r.net + r.exempt + r.vat &&
+          Math.abs(r.vat - tax(r.net)) <= (r.type === 39 ? 1 : 0),
         "Totales incompatibles con consumo.",
       );
     }

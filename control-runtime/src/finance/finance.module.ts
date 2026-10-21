@@ -27,11 +27,12 @@ import { FinanceSettingsService } from "./finance.settings.js";
 import { FinanceSources } from "./finance.sources.js";
 import { SiiCertificationController } from "./finance.sii-controller.js";
 import { SiiCertificationWorkspace } from "./finance.sii-workspace.js";
+import { PublicBoletaController } from "./finance.boleta-controller.js";
 
 /** Módulo 07 · Financial & Accounting Control Center. Consume Clientes, Servicios, Contratos, Ventas y Operaciones sin duplicarlos. */
 @Module({
   imports:[ClientsModule,ClientServicesModule,ContractsModule,CommercialModule,OperationsModule],
-  controllers:[SiiCertificationController,FlowInternalController,FlowClientSubscriptionsController,FlowCapabilityController,FlowCallbackController,FlowSiteModeController,FinanceController,PaymentWebhookController,PublicPaymentController,PortalQuotePaymentsController],
+  controllers:[PublicBoletaController,SiiCertificationController,FlowInternalController,FlowClientSubscriptionsController,FlowCapabilityController,FlowCallbackController,FlowSiteModeController,FinanceController,PaymentWebhookController,PublicPaymentController,PortalQuotePaymentsController],
   providers:[SiiCertificationWorkspace,FlowPaymentProvider,FlowFinanceService,FlowSubscriptionService,FlowWorker,FlowSiteModeService,FinanceRepository,FinanceSources,FinanceContext,FinanceSettingsService,LedgerService,AccountingRuleEngine,StatementsService,InvoiceService,BillingScheduleService,DteCertificateProvider,DteSchemaValidator,SiiDirectDteProvider,ExternalCertifiedDteProvider,DteService,ReceivedDocumentsService,RcvService,MercadoPagoPaymentProvider,{provide:PaymentProvider,useExisting:MercadoPagoPaymentProvider},PaymentService,OnlinePaymentService,CollectionsService,VendorService,ApprovalService,ExpenseService,PayableService,BankService,StatementImportService,ReconciliationService,CloseService,BudgetService,TaxService,CommissionFinanceService,AnalyticsService,ReportsService,CopilotService,QuotePaymentService,FinanceScheduler],
   exports:[AnalyticsService],
 })

@@ -6,6 +6,7 @@ export interface SiiCaseSource {
   referenceCaseId: string | null;
 }
 export interface SiiSetView {
+  format?: "DTE" | "BOLETA";
   sha256: string;
   encoding: string;
   cases: SiiCaseSource[];
@@ -119,13 +120,13 @@ export function initialSiiCase(source: SiiCaseSource, target?: SiiCaseDraft): Si
     rows = raw.split("\n");
   let header = "";
   for (const row of rows) {
-    if (/^ITEM\b/.test(row.trim()) && /CANTIDAD|PRECIO|VALOR/.test(normalize(row))) {
+    if (/^ITEM\b/.test(normalize(row.trim())) && /CANTIDAD|PRECIO|VALOR/.test(normalize(row))) {
       header = normalize(row);
       continue;
     }
     if (!header || !row.trim()) continue;
     if (
-      /^(REFERENCIA|RAZON|DESCUENTO GLOBAL|COMISIONES|MONEDA|EL PRECIO|LOS PRECIOS|INSTRUCCIONES|---)/.test(
+      /^(REFERENCIA|RAZON|DESCUENTO GLOBAL|COMISIONES|MONEDA|EL PRECIO|LOS PRECIOS|INSTRUCCIONES|OBSERVACION|---|===)/.test(
         normalize(row.trim()),
       )
     )
@@ -161,6 +162,7 @@ export function initialSiiCase(source: SiiCaseSource, target?: SiiCaseDraft): Si
     const priceIndex = hasQuantity ? 1 : 0,
       hasPrice = /PRECIO|VALOR/.test(header);
     const unit = header.includes("UNIDAD MEDIDA") ? cells[hasQuantity ? 2 : 1] : undefined;
+    const requiredUnit = /UNIDAD DE MEDIDA EN KG\b/.test(normalized) ? "Kg" : undefined;
     const price = hasPrice
       ? Number(values[priceIndex + (unit ? 1 : 0)])
       : (inherited?.unitPrice ?? 0);
@@ -168,7 +170,7 @@ export function initialSiiCase(source: SiiCaseSource, target?: SiiCaseDraft): Si
       description,
       quantity,
       unitPrice: Number.isFinite(price) ? price : 0,
-      ...(unit ? { unit } : {}),
+      ...(unit || requiredUnit ? { unit: unit || requiredUnit } : {}),
       exempt:
         [34, 41, 110, 111, 112].includes(source.type) ||
         /EXENTO/.test(normalize(description)) ||

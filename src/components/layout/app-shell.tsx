@@ -22,7 +22,7 @@ export function AppShell({ children, header, footer }: AppShellProps) {
   const isPortalRoute =
     pathname.startsWith("/clientes") || pathname.startsWith("/portal-comercial");
 
-  if (isAdminRoute || isPortalRoute) {
+  if (isAdminRoute || isPortalRoute || pathname === "/boletas/consulta") {
     return <div className="min-h-screen">{children}</div>;
   }
 

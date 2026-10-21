@@ -8,6 +8,12 @@ const source = (raw: string, type = 33, referenceCaseId: string | null = null): 
   referenceCaseId,
   section: "SET SINTÉTICO",
 });
+test("boletas captura encabezado Item, precio con IVA, exento y unidad Kg de la instrucción",()=>{
+  const result=initialSiiCase({...source('Item\tCantidad\tPrecio Unitario con IVA\nArroz\t5\t700\n\nOBSERVACION: "Se debe informar en el XML Unidad de medida en Kg."',39),id:"CASO-5"});
+  assert.deepEqual(result.lines,[{description:"Arroz",quantity:5,unitPrice:700,unit:"Kg",exempt:false}]);
+  const mixed=initialSiiCase({...source('Item\tCantidad\tPrecio Unitario con IVA\nitem afecto 1\t8\t1590\nitem exento 2\t2\t1000\nOBSERVACION: texto',39),id:"CASO-4"});
+  assert.equal(mixed.lines.length,2);assert.equal(mixed.lines[0]?.exempt,false);assert.equal(mixed.lines[1]?.exempt,true);
+});
 test("captura preserva partidas ITEM 2, tildes y descuentos sin confundirlas con encabezados", () => {
   const result = initialSiiCase(
     source(

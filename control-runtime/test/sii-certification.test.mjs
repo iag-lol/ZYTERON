@@ -30,6 +30,257 @@ import {
 } from "../dist/finance/finance.sii-set.js";
 import { renderPrintedDte } from "../dist/finance/finance.dte-print.js";
 import { PDFDocument } from "pdf-lib";
+import {
+  boletaLookupToken,
+  verifyBoletaLookupToken,
+  boletaVerificationUrl,
+} from "../dist/finance/finance.boleta-lookup.js";
+
+const boletaRows = [
+  [
+    { description: "Cambio de aceite", quantity: 1, unitPrice: 19900, exempt: false },
+    { description: "Alineacion y balanceo", quantity: 1, unitPrice: 9900, exempt: false },
+  ],
+  [{ description: "Papel de regalo", quantity: 17, unitPrice: 120, exempt: false }],
+  [
+    { description: "Sandwic", quantity: 2, unitPrice: 1500, exempt: false },
+    { description: "Bebida", quantity: 2, unitPrice: 550, exempt: false },
+  ],
+  [
+    { description: "item afecto 1", quantity: 8, unitPrice: 1590, exempt: false },
+    { description: "item exento 2", quantity: 2, unitPrice: 1000, exempt: true },
+  ],
+  [{ description: "Arroz", quantity: 5, unitPrice: 700, exempt: false, unit: "Kg" }],
+];
+const boletaSet =
+  "SII SET DE PRUEBA DE BOLETA ELECTRONICA DE VENTAS Y SERVICIOS\n\n" +
+  boletaRows
+    .map(
+      (rows, i) =>
+        `CASO-${i + 1}\n==========\nItem\tCantidad\tPrecio Unitario con IVA\n${rows.map((r) => `${r.description}\t${r.quantity}\t${r.unitPrice}`).join("\n")}\n${i === 4 ? 'OBSERVACION: "Se debe informar en el XML Unidad de medida en Kg."' : ""}\n`,
+    )
+    .join("\n");
+
+test("set de boletas conserva cinco casos, precios brutos, exento y unidad; rechaza archivo parcial", () => {
+  const set = parseOfficialCertificationSet(Buffer.from(boletaSet));
+  assert.equal(set.format, "BOLETA");
+  assert.deepEqual(set.requiredFolios, { 39: 5 });
+  assert.equal(set.sections.length, 1);
+  assert.equal(set.sections[0].attention, "");
+  assert.deepEqual(
+    set.cases.map((c) => c.requiredLines),
+    boletaRows,
+  );
+  for (const invalid of [
+    boletaSet.replace("CASO-5", "CASO-4"),
+    boletaSet.slice(0, boletaSet.indexOf("CASO-5")),
+    boletaSet.replace("Precio Unitario con IVA", "Precio Unitario"),
+    boletaSet.replace("Alineacion y balanceo\t1\t9900", "Alineacion y balanceo\t1\t"),
+  ])
+    assert.throws(() => parseOfficialCertificationSet(Buffer.from(invalid)));
+});
+test("cinco boletas forman un único sobre y RCOF con totales del set, firmas y XSD", async () => {
+  const old = process.env.FINANCE_ENCRYPTION_KEY;
+  process.env.FINANCE_ENCRYPTION_KEY = "a".repeat(64);
+  try {
+    const totals = [
+      [25042, 0, 4758, 29800],
+      [1714, 0, 326, 2040],
+      [3445, 0, 655, 4100],
+      [10689, 2000, 2031, 14720],
+      [2941, 0, 559, 3500],
+    ];
+    const docs = boletaRows.map((lines, i) => {
+      const f = fixture(39, {
+        caseId: `CASO-${i + 1}`,
+        folio: i + 1,
+        pricesIncludeVat: true,
+        lines,
+      });
+      const built = certificationDocumentXml(f.input, f.caf, certificate);
+      assert.deepEqual(
+        [built.totals.net, built.totals.exempt, built.totals.tax, built.totals.total],
+        totals[i],
+      );
+      assert(built.xml.includes(`<CodRef>SET</CodRef><RazonRef>CASO-${i + 1}</RazonRef>`));
+      assert(!built.xml.includes("IndMntNeto"));
+      return { ...f, ...built };
+    });
+    assert(docs[4].xml.includes("<UnmdItem>Kg</UnmdItem>"));
+    const envelope = certificationEnvelope(
+      docs.map((d) => d.xml),
+      company,
+      "33333333-3",
+      certificate,
+      "CERTIFICATION",
+    );
+    assert.equal((envelope.match(/<DTE version=/g) || []).length, 5);
+    assert(envelope.includes("<NroDTE>5</NroDTE>"));
+    await validateCertificationXml(envelope, "EnvioBOLETA_v11.xsd");
+    assert.equal(
+      verifySiiXmlSignatures(envelope, certificate.certificate.fingerprint256).length,
+      6,
+    );
+    const entries = docs.map((d) => ({
+      type: 39,
+      folio: d.input.folio,
+      date: d.input.date,
+      status: "USED",
+      net: d.totals.net,
+      exempt: d.totals.exempt,
+      vat: d.totals.tax,
+      total: d.totals.total,
+    }));
+    const rcof = certificationConsumption(
+      {
+        environment: "CERTIFICATION",
+        company,
+        senderRut: "33333333-3",
+        period: "2026-01",
+        notificationFolio: 1,
+      },
+      "2026-01-02",
+      1,
+      entries,
+      certificate,
+    );
+    for (const fragment of [
+      "<MntNeto>43831</MntNeto>",
+      "<MntIva>8329</MntIva>",
+      "<MntExento>2000</MntExento>",
+      "<MntTotal>54160</MntTotal>",
+      "<FoliosEmitidos>5</FoliosEmitidos>",
+      "<Inicial>1</Inicial><Final>5</Final>",
+    ])
+      assert(rcof.includes(fragment));
+    await validateCertificationXml(rcof, "ConsumoFolio_v10.xsd");
+    verifySiiXmlSignatures(rcof, certificate.certificate.fingerprint256);
+    const output = process.env.ZYTERON_BOLETA_QA_OUTPUT;
+    if (output) {
+      mkdirSync(output, { recursive: true });
+      writeFileSync(join(output, "sobre.xml"), Buffer.from(envelope, "latin1"));
+      writeFileSync(join(output, "rcof.xml"), Buffer.from(rcof, "latin1"));
+    }
+    const manifest = [];
+    for (const [i, d] of docs.entries()) {
+      const caseId = `CASO-${i + 1}`,
+        url = boletaVerificationUrl("11111111-1111-4111-8111-111111111111", caseId);
+      const signed = Buffer.from(
+        `<?xml version="1.0" encoding="ISO-8859-1"?>${d.xml.replace('<DTE version="1.0">', '<DTE xmlns="http://www.sii.cl/SiiDte" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0">')}`,
+        "latin1",
+      );
+      const expected = {
+        documentTypeCode: 39,
+        folio: i + 1,
+        environment: "CERTIFICATION",
+        status: "SIGNED",
+        emitterRut: company.rut,
+        receiverRut: d.input.receiver.rut,
+        issueDate: d.input.date,
+        totalAmount: totals[i][3],
+      };
+      const pdf = await renderPrintedDte(
+        signed,
+        Buffer.from(envelope, "latin1"),
+        expected,
+        "OFICINA QA",
+        "TRIBUTARY",
+        url,
+      );
+      assert(pdf.length < 500000);
+      assert.equal((await PDFDocument.load(pdf)).getPageCount(), 1);
+      await assert.rejects(
+        () =>
+          renderPrintedDte(
+            signed,
+            Buffer.from(envelope, "latin1"),
+            expected,
+            "OFICINA QA",
+            "TRIBUTARY",
+            url.replace("www.zyteron.cl", "example.invalid"),
+          ),
+        /URL/,
+      );
+      if (output) {
+        writeFileSync(join(output, `${caseId}.pdf`), pdf);
+        writeFileSync(join(output, `${caseId}.xml`), signed);
+        manifest.push({ caseId, url, total: totals[i][3], bytes: pdf.length });
+      }
+    }
+    if (output) writeFileSync(join(output, "manifest.json"), JSON.stringify(manifest, null, 2));
+  } finally {
+    if (old === undefined) delete process.env.FINANCE_ENCRYPTION_KEY;
+    else process.env.FINANCE_ENCRYPTION_KEY = old;
+  }
+});
+test("consulta de boleta verifica código, empresa, tipo, ruta y huella; nunca acepta rutas del visitante", async () => {
+  const old = process.env.FINANCE_ENCRYPTION_KEY;
+  process.env.FINANCE_ENCRYPTION_KEY = "a".repeat(64);
+  try {
+    const runId = "11111111-1111-4111-8111-111111111111",
+      token = boletaLookupToken(runId, "CASO-1");
+    assert.deepEqual(verifyBoletaLookupToken(token), { runId, caseId: "CASO-1" });
+    for (const invalid of [
+      null,
+      "",
+      token + "x",
+      token.replace(/.$/, token.endsWith("A") ? "B" : "A"),
+      "v1." + "x".repeat(400),
+    ])
+      assert.throws(() => verifyBoletaLookupToken(invalid));
+    const { SiiCertificationWorkspace } = await import("../dist/finance/finance.sii-workspace.js"),
+      { sha256 } = await import("../dist/finance/finance.util.js");
+    const bytes = Buffer.from("%PDF-synthetic"),
+      hash = sha256(bytes),
+      rows = {
+        sii_certification_runs: {
+          id: runId,
+          companyRut: company.rut,
+          environment: "CERTIFICATION",
+        },
+        sii_certification_cases: { runId, caseId: "CASO-1", documentTypeCode: 39 },
+        sii_certification_artifacts: {
+          runId,
+          name: "caso-CASO-1.pdf",
+          kind: "PDF",
+          storagePath: `sii-certification/${runId}/${hash}.pdf`,
+          sha256: hash,
+        },
+      };
+    let reads = 0;
+    const repo = {
+      configured: () => true,
+      settings: async () => ({ companyRut: company.rut }),
+      findOne: async (table, filters) =>
+        Object.entries(filters).every(([k, v]) => rows[table]?.[k] === v) ? rows[table] : null,
+      readFile: async (bucket, path) => {
+        assert.equal(bucket, "finance-documents");
+        assert.equal(path, `sii-certification/${runId}/${hash}.pdf`);
+        reads++;
+        return bytes;
+      },
+    };
+    const service = new SiiCertificationWorkspace({ repo }, null, null);
+    assert.deepEqual((await service.publicBoleta({ token })).bytes, bytes);
+    assert.equal(reads, 1);
+    await assert.rejects(() => service.publicBoleta({ token, path: "other.pdf" }));
+    rows.sii_certification_runs.companyRut = "22222222-2";
+    await assert.rejects(() => service.publicBoleta({ token }), /no está disponible/);
+    rows.sii_certification_runs.companyRut = company.rut;
+    rows.sii_certification_cases.documentTypeCode = 33;
+    await assert.rejects(() => service.publicBoleta({ token }), /no está disponible/);
+    rows.sii_certification_cases.documentTypeCode = 39;
+    rows.sii_certification_artifacts.storagePath = "other.pdf";
+    await assert.rejects(() => service.publicBoleta({ token }), /no está disponible/);
+    assert.equal(reads, 1);
+    rows.sii_certification_artifacts.storagePath = `sii-certification/${runId}/${hash}.pdf`;
+    rows.sii_certification_artifacts.sha256 = "b".repeat(64);
+    await assert.rejects(() => service.publicBoleta({ token }), /no está disponible/);
+  } finally {
+    if (old === undefined) delete process.env.FINANCE_ENCRYPTION_KEY;
+    else process.env.FINANCE_ENCRYPTION_KEY = old;
+  }
+});
 
 let directory, certificate, key, m, e;
 before(() => {

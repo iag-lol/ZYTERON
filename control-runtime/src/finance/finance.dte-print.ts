@@ -1,7 +1,7 @@
 import { UnprocessableEntityException } from "@nestjs/common";
 import { createPublicKey, verify } from "node:crypto";
 import bwipjs from "bwip-js";
-import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
+import { PDFDocument, PDFName, PDFString, StandardFonts, rgb, type PDFFont } from "pdf-lib";
 import { children, local, parseXml, textOf, type XmlNode } from "./finance.formats.js";
 import { normalizeRut } from "./finance.util.js";
 import { verifySiiXmlSignatures } from "./finance.sii-signatures.js";
@@ -331,8 +331,19 @@ export async function renderPrintedDte(
   expected: PrintedDteRecord,
   siiOffice?: string,
   copy: "TRIBUTARY" | "TRANSFERABLE" = "TRIBUTARY",
+  verificationUrl?: string,
 ) {
   const data = printedDteData(signed, envelope, expected);
+  if (
+    verificationUrl &&
+    (!/^https:\/\/www\.zyteron\.cl\/boletas\/consulta#v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/.test(
+      verificationUrl,
+    ) ||
+      ![39, 41].includes(data.type))
+  )
+    reject("URL de consulta de boleta inválida.");
+  if ([39, 41].includes(data.type) && expected.environment === "PRODUCTION" && !verificationUrl)
+    reject("La representación de boleta requiere su consulta web disponible.");
   if (
     copy === "TRANSFERABLE" &&
     ![
@@ -490,7 +501,12 @@ export async function renderPrintedDte(
   for (const [label, x] of [
     ["DETALLE", 44],
     ["CANT.", 354],
-    ["P. UNITARIO", 407],
+    [
+      [39, 41].includes(data.type) && textOf(data.identity, "IndMntNeto") !== "2"
+        ? "P. UNIT. CON IVA"
+        : "P. UNITARIO",
+      407,
+    ],
     ["MONTO", 508],
   ] as const)
     text(label, x, y + 1, 8, true, rgb(1, 1, 1));
@@ -498,9 +514,9 @@ export async function renderPrintedDte(
   for (const item of data.lines) {
     const name = textOf(item, "NmbItem"),
       detail = textOf(item, "DscItem");
-    const description = detail.startsWith(name)
-      ? detail
-      : [name, detail].filter(Boolean).join(" - ");
+    const description =
+      (detail.startsWith(name) ? detail : [name, detail].filter(Boolean).join(" - ")) +
+      (textOf(item, "IndExe") === "1" ? " · Exento" : "");
     const rows = wrap(description, regular, 8.5, 296),
       height =
         Math.max(24, rows.length * 11 + 8) + (Number(textOf(item, "DescuentoMonto")) ? 11 : 0);
@@ -510,7 +526,11 @@ export async function renderPrintedDte(
       );
     rows.forEach((line, index) => text(line, 44, y - index * 11, 8.5));
     for (const [value, x, right] of [
-      [textOf(item, "QtyItem") || "-", 395, true],
+      [
+        [textOf(item, "QtyItem") || "-", textOf(item, "UnmdItem")].filter(Boolean).join(" "),
+        395,
+        true,
+      ],
       [
         textOf(item, "PrcItem")
           ? (data.type >= 110 ? currencyCode + " " : "$") +
@@ -564,9 +584,10 @@ export async function renderPrintedDte(
   if (y < 270) reject("Los cargos y descuentos exceden el espacio disponible de impresión.");
   if (data.references.length) {
     const refs = data.references
-      .map(
-        (reference) =>
-          `Tipo ${textOf(reference, "TpoDocRef")} · Folio ${textOf(reference, "FolioRef")} · ${presentDate(textOf(reference, "FchRef"))} · ${textOf(reference, "RazonRef")}`,
+      .map((reference) =>
+        [39, 41].includes(data.type)
+          ? `${textOf(reference, "CodRef")} · ${textOf(reference, "RazonRef")}`
+          : `Tipo ${textOf(reference, "TpoDocRef")} · Folio ${textOf(reference, "FolioRef")} · ${presentDate(textOf(reference, "FchRef"))} · ${textOf(reference, "RazonRef")}`,
       )
       .join("; ");
     const rows = wrap(`REFERENCIAS: ${refs}`, regular, 7.5, 523);
@@ -590,11 +611,51 @@ export async function renderPrintedDte(
   page.drawImage(image, { x: 58, y: 117, width: barcodeWidth, height: barcodeHeight });
   text("Timbre Electrónico SII", 58, 86, 8, true);
   text(`Res. ${data.resolutionNumber} de ${presentDate(data.resolutionDate)}`, 58, 74, 8);
-  text("Verifique documento: www.sii.cl", 58, 62, 8);
+  text(
+    verificationUrl
+      ? "Verifique boleta: www.zyteron.cl/boletas/consulta"
+      : "Verifique documento: www.sii.cl",
+    58,
+    62,
+    verificationUrl ? 7 : 8,
+  );
+  if (verificationUrl) {
+    const qr = await bwipjs.toBuffer({
+      bcid: "qrcode",
+      text: verificationUrl,
+      scale: 3,
+      padding: 4,
+    });
+    const image = await pdf.embedPng(qr);
+    page.drawImage(image, { x: 492, y: 38, width: 60, height: 60 });
+    page.node.addAnnot(
+      pdf.context.register(
+        pdf.context.obj({
+          Type: PDFName.of("Annot"),
+          Subtype: PDFName.of("Link"),
+          Rect: [342, 38, 556, 98],
+          Border: [0, 0, 0],
+          A: {
+            Type: PDFName.of("Action"),
+            S: PDFName.of("URI"),
+            URI: PDFString.of(verificationUrl),
+          },
+        }),
+      ),
+    );
+    text("Consulta tu boleta", 350, 84, 8, true);
+    text("Escanea el código QR", 350, 71, 7);
+    text("o abre el enlace del documento.", 350, 59, 6);
+  }
   const totalRows: Array<[string, string]> = [
     ["Neto", textOf(data.totals, "MntNeto")],
     ["Exento", textOf(data.totals, "MntExe")],
-    [`IVA (${textOf(data.totals, "TasaIVA") || "0"}%)`, textOf(data.totals, "IVA")],
+    [
+      [39, 41].includes(data.type)
+        ? "IVA (19%)"
+        : `IVA (${textOf(data.totals, "TasaIVA") || "0"}%)`,
+      textOf(data.totals, "IVA"),
+    ],
     ...children(data.totals, "ImptoReten").map((r): [string, string] => [
       `IVA retenido (${textOf(r, "TasaImp")}%)`,
       "-" + textOf(r, "MontoImp"),

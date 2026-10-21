@@ -49,6 +49,65 @@ async function fixture() {
   await db.exec(migration);
   return db;
 }
+test("ampliación de identificadores conserva DTE y limita CASO-1 a boletas sin cambiar folios", async () => {
+  const db = await fixture();
+  try {
+    await prepare(db);
+    const before = (await db.query("select * from tax_folios order by id")).rows;
+    const casesBefore = (await db.query("select * from sii_certification_cases order by case_id"))
+      .rows;
+    const sql = await readFile(
+      new URL(
+        "../../supabase/migrations/20261021101426_boleta_certification_case_ids.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    await db.exec(sql);
+    assert.deepEqual((await db.query("select * from tax_folios order by id")).rows, before);
+    assert.deepEqual(
+      (await db.query("select * from sii_certification_cases order by case_id")).rows,
+      casesBefore,
+    );
+    await db.query("update sii_certification_cases set case_id=$1 where document_type_code=33", [
+      "1234567-10",
+    ]);
+    await assert.rejects(
+      () =>
+        db.query("update sii_certification_cases set case_id=$1 where document_type_code=33", [
+          "CASO-1",
+        ]),
+      /case_id_check/,
+    );
+    await db.exec("insert into tax_document_types values(39)");
+    await db.exec(
+      "insert into tax_folios(id,authorization_id,document_type_code,environment,folio,status) values('55555555-5555-4555-8555-555555555555','22222222-2222-4222-8222-222222222222',39,'CERTIFICATION',1,'AVAILABLE')",
+    );
+    await db.query(
+      "insert into sii_certification_cases(run_id,case_id,document_type_code,folio_id,folio) values($1,'CASO-1',39,'55555555-5555-4555-8555-555555555555',1)",
+      [run],
+    );
+    await assert.rejects(
+      () =>
+        db.query("update sii_certification_cases set case_id='CASO-0' where document_type_code=39"),
+      /case_id_check/,
+    );
+    const after = (await db.query("select * from tax_folios where document_type_code=39")).rows[0];
+    assert.equal(after.status, "AVAILABLE");
+    assert.equal(after.reserved_at, null);
+    assert.equal(before.length, 2);
+    for (const role of ["anon", "authenticated"]) {
+      await db.exec(`set role ${role}`);
+      await assert.rejects(
+        () => db.query("select * from sii_certification_cases"),
+        /permission denied/,
+      );
+      await db.exec("reset role");
+    }
+  } finally {
+    await db.close();
+  }
+});
 const prepare = (db, p = plan, a = artifacts, id = run) =>
   db.query(
     "select public.finance_prepare_sii_certification($1::uuid,$2,$3::jsonb,$4::jsonb,$5) as id",

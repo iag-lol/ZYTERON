@@ -101,8 +101,16 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      { source: "/clientes/admin", destination: "/administracion/portal-clientes", permanent: false },
-      { source: "/clientes/admin/:path*", destination: "/administracion/portal-clientes/:path*", permanent: false },
+      {
+        source: "/clientes/admin",
+        destination: "/administracion/portal-clientes",
+        permanent: false,
+      },
+      {
+        source: "/clientes/admin/:path*",
+        destination: "/administracion/portal-clientes/:path*",
+        permanent: false,
+      },
       { source: "/admin/:path*", destination: "/administracion/:path*", permanent: false },
       { source: "/portal-clientes/:path*", destination: "/clientes/:path*", permanent: false },
       // Consolidación SEO: estas URLs antiguas o duplicadas ya compiten con
@@ -370,6 +378,10 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/boletas/consulta",
+        headers: [...privateNoIndexHeaders, { key: "Cache-Control", value: "private, no-store" }],
       },
       {
         source: "/:all*(svg|jpg|jpeg|png|webp|gif|ico|avif|woff|woff2|ttf)",

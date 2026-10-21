@@ -97,6 +97,7 @@ export interface CertificationDocument {
   };
   export?: CertificationExport;
   service?: 1 | 2 | 3 | 4;
+  pricesIncludeVat?: boolean;
 }
 const fail = (message: string): never => {
   throw new UnprocessableEntityException(message);
@@ -153,6 +154,10 @@ export function assertCertification(environment: string) {
 
 export function certificationTotals(input: CertificationDocument) {
   assertCertification(input.environment);
+  need(
+    !input.pricesIncludeVat || boolBoleta(input.type),
+    "Precios con IVA permitidos sólo en boletas.",
+  );
   const places = input.type >= 110 ? 2 : 0;
   need(
     input.lines.length > 0 && input.lines.length <= (boolBoleta(input.type) ? 1000 : 60),
@@ -210,7 +215,9 @@ export function certificationTotals(input: CertificationDocument) {
   need(input.type === 43 || (net >= 0 && exempt >= 0), "Los descuentos exceden la base imponible.");
   if ([34, 41, 110, 111, 112].includes(input.type))
     need(net === 0, "Este tipo de documento requiere líneas exentas.");
-  const tax = percentage(net, 19, places);
+  const taxableGross = net;
+  if (input.pricesIncludeVat) net = Number(divideRound(BigInt(net) * 100n, 119n));
+  const tax = input.pricesIncludeVat ? taxableGross - net : percentage(net, 19, places);
   if (input.retention)
     need(
       [46, 56, 61].includes(input.type) &&
@@ -268,7 +275,11 @@ export function certificationDocumentXml(
     certificationTypes.includes(input.type as (typeof certificationTypes)[number]),
     "Tipo de certificación no permitido.",
   );
-  need(/^\d{1,12}-[1-9]\d{0,5}$/.test(input.caseId), "Identificador de caso inválido.");
+  need(
+    /^\d{1,12}-[1-9]\d{0,5}$/.test(input.caseId) ||
+      (boolBoleta(input.type) && /^CASO-[1-9]\d{0,5}$/.test(input.caseId)),
+    "Identificador de caso inválido.",
+  );
   date(input.date);
   need(
     Number.isSafeInteger(input.folio) && input.folio >= caf.rangeFrom && input.folio <= caf.rangeTo,
@@ -320,7 +331,10 @@ export function certificationDocumentXml(
       ? [el("TipoDespacho", dispatch.responsibility), el("IndTraslado", dispatch.transfer)]
       : []),
     ...(b
-      ? [el("IndServicio", input.service ?? 3), el("IndMntNeto", 2)]
+      ? [
+          el("IndServicio", input.service ?? 3),
+          ...(!input.pricesIncludeVat && input.type === 39 ? [el("IndMntNeto", 2)] : []),
+        ]
       : x?.service
         ? [el("IndServicio", x.service)]
         : []),
@@ -447,9 +461,9 @@ export function certificationDocumentXml(
   const references = [
     el("Referencia", [
       el("NroLinRef", 1),
-      el("TpoDocRef", "SET"),
+      el(b ? "CodRef" : "TpoDocRef", "SET"),
       ...(!b ? [el("FolioRef", 1), el("FchRef", input.date)] : []),
-      el("RazonRef", `CASO ${input.caseId}`),
+      el("RazonRef", input.caseId.startsWith("CASO-") ? input.caseId : `CASO ${input.caseId}`),
     ]),
     ...refs.map((r, i) =>
       el("Referencia", [
@@ -577,14 +591,15 @@ export function certificationEnvelope(
     const refs = children(doc, "Referencia"),
       r = refs[0],
       caseId = textOf(r, "RazonRef");
+    const b = boolBoleta(type);
     need(
-      textOf(r, "TpoDocRef") === "SET" &&
-        /^CASO \d{1,12}-[1-9]\d{0,5}$/.test(caseId) &&
+      textOf(r, b ? "CodRef" : "TpoDocRef") === "SET" &&
+        (/^CASO \d{1,12}-[1-9]\d{0,5}$/.test(caseId) ||
+          (b && /^CASO-[1-9]\d{0,5}$/.test(caseId))) &&
         !cases.has(caseId),
       "Caso SET ausente, fuera de orden o duplicado.",
     );
     cases.add(caseId);
-    const b = boolBoleta(type);
     need(boleta === undefined || boleta === b, "Boletas y DTE deben enviarse por separado.");
     boleta = b;
     types.set(type, (types.get(type) ?? 0) + 1);

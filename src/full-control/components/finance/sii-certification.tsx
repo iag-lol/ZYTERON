@@ -255,7 +255,11 @@ function CaseEditor({
               ) : (
                 <>
                   <NumberField
-                    label="Precio unitario"
+                    label={
+                      source.type === 39 && source.id.startsWith("CASO-")
+                        ? "Precio unitario con IVA"
+                        : "Precio unitario"
+                    }
                     value={line.unitPrice}
                     onChange={(unitPrice) => updateLine(index, { unitPrice })}
                   />

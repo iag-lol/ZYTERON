@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  NotFoundException,
   Injectable,
   ServiceUnavailableException,
   UnprocessableEntityException,
@@ -34,6 +35,7 @@ import {
   type CertificationGuideEntry,
 } from "./finance.sii-books.js";
 import { renderPrintedDte } from "./finance.dte-print.js";
+import { boletaVerificationUrl, verifyBoletaLookupToken } from "./finance.boleta-lookup.js";
 import {
   decryptSecret,
   encryptSecret,
@@ -482,6 +484,28 @@ export class SiiCertificationWorkspace {
           `Completa motivo y código de referencia del caso ${c.caseId}.`,
         );
       const { caseId, additionalReferences, referenceCode, referenceReason, ...fields } = c;
+      if (set.format === "BOLETA") {
+        const actual = c.lines.map((l) => ({
+          description: l.description,
+          quantity: l.quantity ?? 1,
+          unitPrice: l.unitPrice ?? 0,
+          exempt: Boolean(l.exempt),
+          ...(l.unit ? { unit: l.unit } : {}),
+        }));
+        if (
+          !isDeepStrictEqual(actual, official.requiredLines) ||
+          c.lines.some(
+            (l) => l.discountPct || l.surchargePct || l.liquidationAmount !== undefined,
+          ) ||
+          c.adjustments?.length ||
+          c.commissions?.length ||
+          c.retention ||
+          additionalReferences?.length
+        )
+          throw new BadRequestException(
+            `Las partidas y los precios con IVA de ${caseId} deben coincidir con el set oficial.`,
+          );
+      }
       if (target) {
         if (normalizeRut(c.receiver.rut) !== normalizeRut(target.input.receiver.rut))
           throw new BadRequestException(
@@ -504,6 +528,7 @@ export class SiiCertificationWorkspace {
         ...fields,
         caseId,
         type: official.type,
+        pricesIncludeVat: set.format === "BOLETA",
         folio: candidate.folio,
         date: form.date,
         environment: "CERTIFICATION",
@@ -569,6 +594,10 @@ export class SiiCertificationWorkspace {
           Buffer.from(xml, "latin1"),
           expected,
           process.env.DTE_SII_OFFICE,
+          "TRIBUTARY",
+          boleta && d.input.caseId.startsWith("CASO-")
+            ? boletaVerificationUrl(form.runId, d.input.caseId)
+            : undefined,
         );
         payloads.push({ name: `caso-${d.input.caseId}.pdf`, kind: "PDF", bytes: printable });
         if (
@@ -805,6 +834,40 @@ export class SiiCertificationWorkspace {
             : "application/xml",
       fileName: artifact.name,
     };
+  }
+  async publicBoleta(body: unknown) {
+    const value = parse(z.strictObject({ token: z.string().max(220) }), body);
+    const identity = verifyBoletaLookupToken(value.token);
+    if (!this.repo.configured())
+      throw new ServiceUnavailableException("La consulta de boletas no está disponible.");
+    const settings = await this.repo.settings();
+    const run = await this.repo.findOne<Row>("sii_certification_runs", {
+      id: identity.runId,
+      companyRut: settings.companyRut,
+      environment: "CERTIFICATION",
+    });
+    const unavailable = () => new NotFoundException("La boleta no está disponible para consulta.");
+    if (!run) throw unavailable();
+    const caseRecord = await this.repo.findOne<Row>("sii_certification_cases", {
+      runId: run.id,
+      caseId: identity.caseId,
+    });
+    if (!caseRecord || ![39, 41].includes(caseRecord.documentTypeCode)) throw unavailable();
+    const artifact = await this.repo.findOne<Row>("sii_certification_artifacts", {
+      runId: run.id,
+      name: `caso-${identity.caseId}.pdf`,
+      kind: "PDF",
+    });
+    if (
+      !artifact ||
+      !/^[a-f0-9]{64}$/.test(artifact.sha256) ||
+      artifact.storagePath !== `sii-certification/${run.id}/${artifact.sha256}.pdf`
+    )
+      throw unavailable();
+    const bytes = await this.repo.readFile("finance-documents", artifact.storagePath);
+    if (!bytes || sha256(bytes) !== artifact.sha256 || bytes.subarray(0, 5).toString() !== "%PDF-")
+      throw unavailable();
+    return { bytes, fileName: artifact.name };
   }
   private async submission(runId: string, id: string, actor: FinanceActor) {
     const detail = await this.detail(runId, actor);
