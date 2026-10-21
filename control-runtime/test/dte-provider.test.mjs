@@ -20,6 +20,18 @@ test('encuentra los cuatro XSD desde el proceso combinado en la raíz', () => {
   assert.equal(schema.available(), true);
   assert.match(schema.directory(), /control-runtime\/resources\/sii\/xsd/);
 });
+test('RPR del consumo de folios es aceptación con reparos sin contadores de DTE', async () => {
+  const provider = new SiiDirectDteProvider({}, schema);
+  provider.authenticate = async () => 'synthetic-token';
+  provider.soap = async () => parseXml('<RESPUESTA><RESP_HDR><ESTADO>RPR</ESTADO><GLOSA>Aceptado con Reparos</GLOSA></RESP_HDR></RESPUESTA>');
+  const result = await provider.getSubmissionStatus('123456', 'CERTIFICATION', '76086428-5');
+  assert.equal(result.status, 'ACCEPTED_WITH_REPAIRS');
+  assert.equal(result.code, 'RPR');
+  assert.equal(result.message, 'Aceptado con Reparos');
+  assert.equal(result.detail.accepted, 0);
+  provider.soap = async () => parseXml('<RESPUESTA><RESP_HDR><ESTADO>RPR</ESTADO></RESP_HDR><RESP_BODY><RECHAZADOS>1</RECHAZADOS></RESP_BODY></RESPUESTA>');
+  assert.equal((await provider.getSubmissionStatus('123456', 'CERTIFICATION', '76086428-5')).status, 'REJECTED');
+});
 test('valida el ejemplo oficial del SII con los esquemas publicados', async () => {
   const xml = await readFile(new URL('./fixtures/F60T33-ejemplo.xml', import.meta.url), 'latin1');
   assert.deepEqual(await schema.validate(xml), []);

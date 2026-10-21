@@ -227,7 +227,9 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
     if((/^\d+$/.test(state)&&Number(state)>0)||state.startsWith("-"))throw new ServiceUnavailableException(`No se pudo consultar el envío en el SII (${state}: ${glosa||"consulta no confirmada"}). Se conserva el último estado registrado.`);
     const detail={state,glosa,accepted,rejected,repairs,informados:textOf(body,"INFORMADOS")};
     if(state==="EPR")return rejected>0?{status:"REJECTED",code:state,message:glosa||"Documento rechazado por el SII.",detail}:repairs>0?{status:"ACCEPTED_WITH_REPAIRS",code:state,message:glosa||"Aceptado con reparos.",detail}:accepted>0?{status:"ACCEPTED",code:state,message:glosa||"Aceptado por el SII.",detail}:{status:"RECEIVED_BY_SII",code:state,message:glosa||"Procesado sin detalle de aceptación.",detail};
-    if(["RCT","RFR","RCO","RPR","RLV","RSC","RFC","FAN","RCS"].includes(state)||state.startsWith("-"))return{status:"REJECTED",code:state,message:glosa||`Envío rechazado (${state}).`,detail};
+    // El RCOF usa RPR para aceptación con reparos, incluso sin contadores de DTE.
+    if(state==="RPR")return{status:rejected>0?"REJECTED":"ACCEPTED_WITH_REPAIRS",code:state,message:glosa||"Aceptado con reparos.",detail};
+    if(["RCT","RFR","RCO","RLV","RSC","RFC","FAN","RCS"].includes(state)||state.startsWith("-"))return{status:"REJECTED",code:state,message:glosa||`Envío rechazado (${state}).`,detail};
     return{status:"RECEIVED_BY_SII",code:state||null,message:glosa||"Envío en proceso de validación en el SII.",detail};
   }
   async getDocumentStatus(document:Row,companyRut:string){if(!document.trackId)throw new UnprocessableEntityException("El documento no tiene Track ID.");return this.getSubmissionStatus(document.trackId,document.environment,companyRut);}
