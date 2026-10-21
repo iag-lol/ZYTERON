@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { subscribeContactLive } from "@/lib/whatsapp/live-events";
 import { TemplatePicker, ContactAlertsPanel } from "./communication-tools";
+import { MessageMedia, MediaComposer } from "./media-tools";
 import {
   mergeThreadMessages,
   nearThreadBottom,
@@ -75,6 +76,9 @@ type Message = {
   content: string | null;
   status: string;
   error_message: string | null;
+  file_name?: string | null;
+  mime_type?: string | null;
+  media_id?: string | null;
   created_at: string;
 };
 
@@ -753,6 +757,23 @@ export function WhatsappInbox({
                 </span>
               </div>
               <Composer
+                key={active.id}
+                conversationId={active.id}
+                onMediaStart={() => {
+                  followBottom.current = true;
+                  setAtBottom(true);
+                }}
+                onMediaResult={() => {
+                  const id = active.id;
+                  void fetch(`/api/admin/whatsapp/conversations/${id}`, { cache: "no-store" })
+                    .then((r) => (r.ok ? r.json() : null))
+                    .then((data: { messages?: Message[] } | null) => {
+                      if (activeIdRef.current === id && data?.messages)
+                        setMessages((previous) => mergeThreadMessages(previous, data.messages!));
+                    })
+                    .catch(() => {});
+                  void fetchConversations();
+                }}
                 disabled={!windowOpen}
                 windowOpen={windowOpen}
                 value={input}
@@ -989,12 +1010,18 @@ function MessageBubble({ msg }: { msg: Message }) {
             {msg.status === "draft" && " · borrador"}
           </span>
         )}
-        {msg.message_type !== "text" && (
-          <span className="mb-0.5 block text-[11px] font-semibold uppercase opacity-70">
-            [{msg.message_type}]
-          </span>
+        {["image", "document"].includes(msg.message_type) && !msg.id.startsWith("temp-") ? (
+          <MessageMedia message={msg} />
+        ) : (
+          msg.message_type !== "text" && (
+            <span className="mb-0.5 block text-[11px] font-semibold uppercase opacity-70">
+              [{msg.message_type}]
+            </span>
+          )
         )}
-        <span className="break-words whitespace-pre-wrap">{msg.content}</span>
+        {!["[imagen]", "[documento]"].includes(msg.content || "") && (
+          <span className="break-words whitespace-pre-wrap">{msg.content}</span>
+        )}
         <span
           className={cn(
             "mt-0.5 flex items-center justify-end gap-1 text-[10px]",
@@ -1004,7 +1031,7 @@ function MessageBubble({ msg }: { msg: Message }) {
           {formatTime(msg.created_at)}
           {isOut && <StatusTicks status={msg.status} />}
         </span>
-        {msg.status === "failed" && msg.error_message && (
+        {["failed", "unknown"].includes(msg.status) && msg.error_message && (
           <span className="mt-0.5 block text-[10px] text-rose-200">{msg.error_message}</span>
         )}
       </div>
@@ -1013,6 +1040,9 @@ function MessageBubble({ msg }: { msg: Message }) {
 }
 
 function Composer({
+  conversationId,
+  onMediaStart,
+  onMediaResult,
   disabled,
   windowOpen,
   value,
@@ -1021,6 +1051,9 @@ function Composer({
   sending,
   inputRef,
 }: {
+  conversationId: string;
+  onMediaStart: () => void;
+  onMediaResult: () => void;
   disabled: boolean;
   windowOpen: boolean;
   value: string;
@@ -1029,6 +1062,7 @@ function Composer({
   sending: boolean;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
 }) {
+  const [mediaState, setMediaState] = useState({ hasFile: false, busy: false, uncertain: false });
   return (
     <div className="border-t border-slate-200 bg-white px-3 py-2.5 sm:px-4">
       {!windowOpen && (
@@ -1046,11 +1080,11 @@ function Composer({
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
-              onSend();
+              if (!mediaState.hasFile && !mediaState.busy && !sending) onSend();
             }
           }}
           rows={1}
-          disabled={disabled}
+          disabled={disabled || sending || mediaState.busy || mediaState.uncertain}
           maxLength={4000}
           placeholder={
             disabled ? "Selecciona una plantilla para retomar el contacto" : "Escribe un mensaje…"
@@ -1059,13 +1093,23 @@ function Composer({
         />
         <button
           onClick={onSend}
-          disabled={disabled || sending || !value.trim()}
-          aria-label="Enviar"
+          disabled={disabled || sending || mediaState.hasFile || mediaState.busy || !value.trim()}
+          aria-label="Enviar texto"
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
         >
           {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </button>
       </div>
+      <MediaComposer
+        conversationId={conversationId}
+        disabled={disabled}
+        textBusy={sending}
+        caption={value}
+        onCaptionChange={onChange}
+        onStart={onMediaStart}
+        onResult={onMediaResult}
+        onState={setMediaState}
+      />
     </div>
   );
 }

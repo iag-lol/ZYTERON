@@ -3,6 +3,7 @@ export type ThreadMessage = {
   created_at: string;
   direction: string;
   content: string | null;
+  message_type?: string;
 };
 export function mergeThreadMessages<T extends ThreadMessage>(current: T[], incoming: T[]) {
   const server = new Map(incoming.map((m) => [m.id, m]));
@@ -10,7 +11,10 @@ export function mergeThreadMessages<T extends ThreadMessage>(current: T[], incom
   const result = current.flatMap((m) => {
     if (m.id.startsWith("temp-")) {
       const index = remaining.findIndex(
-        (s) => s.direction === m.direction && s.content === m.content,
+        (s) =>
+          s.direction === m.direction &&
+          s.content === m.content &&
+          (!s.message_type || !m.message_type || s.message_type === m.message_type),
       );
       if (index >= 0) {
         remaining.splice(index, 1);
