@@ -4,6 +4,12 @@
 
 21-10-2026. Postulación aceptada y autenticación técnica del servidor comprobada en certificación. Producción permanece sin autorización. La aceptación de una postulación no acredita aceptación de los documentos de prueba.
 
+El set oficial vigente contiene 32 casos y sus libros asociados. Se descargaron diez CAF de certificación para esos casos. Los tipos 33, 34, 46, 52, 56 y 61 están cargados en almacenamiento privado cifrado: 22 folios disponibles, cero usados y cero anulados al verificar la carga.
+
+Los tipos 43, 110, 111 y 112 tienen CAF descargados y resguardados, pero carecen de registro en `tax_document_types`. La carga del tipo 43 devuelve «Tipo de documento 43 no catalogado» antes de almacenar el archivo. La migración local `20261021080550_complete_sii_document_catalog.sql` añade únicamente esos cuatro tipos con `enabled_for_issue=false` y `certified=false`. `ON CONFLICT DO NOTHING` conserva las filas, evidencias y habilitaciones existentes. La migración no se ha aplicado en producción.
+
+El registro del catálogo permite custodiar un CAF; no implementa su formato, no acredita certificación y no habilita emisión. Los conjuntos de boletas tienen un proceso separado y su descarga todavía no está confirmada.
+
 ## Preparación del set
 
 El motor interno admite `certificationCaseId` con formato numérico `numero-caso`, únicamente en `CERTIFICATION`. La primera referencia contiene `TpoDocRef=SET` y `RazonRef=CASO numero-caso`. Las notas conservan la referencia al documento original en la segunda posición. Sin el campo, el documento comercial conserva sus referencias habituales.
@@ -24,6 +30,7 @@ El campo es interno: no existe todavía un editor ni un ejecutor del set oficial
 ## Validación local del cambio
 
 - Backend y TypeScript: aprobados.
+- Migración del catálogo: cuatro pruebas en PostgreSQL embebido con datos sintéticos aprobadas (inserción, reintentos, catálogo parcial y rollback ante un fallo). No valida concurrencia entre sesiones ni constituye prueba productiva.
 - 42 pruebas de backend con datos sintéticos: aprobadas, incluidas seis nuevas de certificación.
 - Casos SET y envío mixto: validados contra los XSD oficiales.
 - Lint dirigido: cero errores y advertencias. Lint en clon limpio: cero errores y cinco advertencias preexistentes. El workspace conserva artefactos de pruebas no versionados que generan diagnósticos ajenos al cambio.
