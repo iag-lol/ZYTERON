@@ -163,234 +163,244 @@ export function QuoteEditor({
     if (!busy) onClose();
   };
   return createPortal(
-    <Drawer
-      open
-      wide
-      title={data ? `Cotización · ${data.quoteNumber}` : "Cargando cotización"}
-      subtitle="Servicios, importes, condiciones y cuenta del cliente."
-      onClose={close}
-    >
-      <div className="fx-stack quoteEditor">
-        <Feedback error={error} notice={notice} />
-        {!data && !error ? <Loading /> : null}
-        {data ? (
-          <>
-            <section className="quotePortalLink">
-              <h4>Cuenta del cliente</h4>
-              <p>
-                Selecciona la cuenta que verá la propuesta y sus cobros. El correo debe corresponder
-                al cliente.
-              </p>
-              <select
-                aria-label="Cuenta del cliente"
-                value={selected}
-                disabled={busy || !!data.clientId}
-                onChange={(e) => setSelected(e.target.value)}
+    <div className="zy-full-control">
+      <Drawer
+        open
+        wide
+        title={data ? `Cotización · ${data.quoteNumber}` : "Cargando cotización"}
+        subtitle="Servicios, importes, condiciones y cuenta del cliente."
+        onClose={close}
+      >
+        <div className="fx-stack quoteEditor">
+          <Feedback error={error} notice={notice} />
+          {!data && !error ? <Loading /> : null}
+          {data ? (
+            <>
+              <section className="quotePortalLink">
+                <h4>Cuenta del cliente</h4>
+                <p>
+                  Selecciona la cuenta que verá la propuesta y sus cobros. El correo debe
+                  corresponder al cliente.
+                </p>
+                <select
+                  aria-label="Cuenta del cliente"
+                  value={selected}
+                  disabled={busy || !!data.clientId}
+                  onChange={(e) => setSelected(e.target.value)}
+                >
+                  <option value="">Seleccionar cliente</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.legalName}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  className="fx-btn"
+                  disabled={busy || !selected || !!data.clientId}
+                  onClick={() => void link()}
+                >
+                  <Link2 size={14} />
+                  {data.clientId ? "Cuenta vinculada" : "Vincular al portal"}
+                </button>
+                <small>
+                  La habilitación y verificación del acceso se administran en la ficha del cliente.
+                </small>
+              </section>
+              {!data.editable ? (
+                <p className="fx-hint">
+                  Esta versión conserva sus documentos y compromisos. Usa Crear revisión editable o
+                  Duplicar en el listado para cambiar importes.
+                </p>
+              ) : null}
+              {!data.editable ? (
+                <button className="fx-btn primary" disabled={busy} onClick={() => void copy()}>
+                  Crear copia editable
+                </button>
+              ) : null}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void save();
+                }}
               >
-                <option value="">Seleccionar cliente</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.legalName}
-                  </option>
-                ))}
-              </select>
-              <button
-                className="fx-btn"
-                disabled={busy || !selected || !!data.clientId}
-                onClick={() => void link()}
-              >
-                <Link2 size={14} />
-                {data.clientId ? "Cuenta vinculada" : "Vincular al portal"}
-              </button>
-              <small>
-                La habilitación y verificación del acceso se administran en la ficha del cliente.
-              </small>
-            </section>
-            {!data.editable ? (
-              <p className="fx-hint">
-                Esta versión conserva sus documentos y compromisos. Usa Crear revisión editable o
-                Duplicar en el listado para cambiar importes.
-              </p>
-            ) : null}
-            {!data.editable ? (
-              <button className="fx-btn primary" disabled={busy} onClick={() => void copy()}>
-                Crear copia editable
-              </button>
-            ) : null}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                void save();
-              }}
-            >
-              <fieldset disabled={busy || !data.editable}>
-                <div className="fx-form-grid">
-                  <Field label="Empresa">
-                    <input
-                      required
-                      value={data.companyName}
-                      onChange={(e) => patch({ companyName: e.target.value })}
-                    />
-                  </Field>
-                  <Field label="Contacto">
-                    <input
-                      required
-                      value={data.contactName}
-                      onChange={(e) => patch({ contactName: e.target.value })}
-                    />
-                  </Field>
-                  <Field label="Correo">
-                    <input
-                      type="email"
-                      value={data.contactEmail}
-                      onChange={(e) => patch({ contactEmail: e.target.value })}
-                    />
-                  </Field>
-                  <Field label="Vigencia">
-                    <DateInput value={data.validUntil} onChange={(v) => patch({ validUntil: v })} />
-                  </Field>
-                </div>
-                <h4>Servicios e importes · {data.currency}</h4>
-                <div className="quoteEditItems">
-                  {data.items.map((item, index) => (
-                    <section key={index}>
-                      <label>
-                        Descripción
-                        <textarea
-                          required
-                          value={item.description}
-                          onChange={(e) =>
-                            patch({
-                              items: data.items.map((i, n) =>
-                                n === index ? { ...i, description: e.target.value } : i,
-                              ),
-                            })
-                          }
-                        />
-                      </label>
-                      <div className="quoteEditNumbers">
-                        {(
-                          [
-                            ["quantity", "Cantidad", 0.001],
-                            ["unitPrice", "Precio unitario", 0],
-                            ["discountPercent", "Descuento %", 0],
-                          ] as const
-                        ).map(([key, label, min]) => (
-                          <label key={key}>
-                            {label}
-                            <input
-                              required
-                              type="number"
-                              min={min}
-                              max={key === "discountPercent" ? 100 : undefined}
-                              step="any"
-                              value={item[key]}
-                              onChange={(e) =>
-                                patch({
-                                  items: data.items.map((i, n) =>
-                                    n === index ? { ...i, [key]: Number(e.target.value) } : i,
-                                  ),
-                                })
-                              }
-                            />
-                          </label>
-                        ))}
+                <fieldset disabled={busy || !data.editable}>
+                  <div className="fx-form-grid">
+                    <Field label="Empresa">
+                      <input
+                        required
+                        value={data.companyName}
+                        onChange={(e) => patch({ companyName: e.target.value })}
+                      />
+                    </Field>
+                    <Field label="Contacto">
+                      <input
+                        required
+                        value={data.contactName}
+                        onChange={(e) => patch({ contactName: e.target.value })}
+                      />
+                    </Field>
+                    <Field label="Correo">
+                      <input
+                        type="email"
+                        value={data.contactEmail}
+                        onChange={(e) => patch({ contactEmail: e.target.value })}
+                      />
+                    </Field>
+                    <Field label="Vigencia">
+                      <DateInput
+                        value={data.validUntil}
+                        onChange={(v) => patch({ validUntil: v })}
+                      />
+                    </Field>
+                  </div>
+                  <h4>Servicios e importes · {data.currency}</h4>
+                  <div className="quoteEditItems">
+                    {data.items.map((item, index) => (
+                      <section key={index}>
                         <label>
-                          <input
-                            type="checkbox"
-                            checked={item.taxable}
+                          Descripción
+                          <textarea
+                            required
+                            value={item.description}
                             onChange={(e) =>
                               patch({
                                 items: data.items.map((i, n) =>
-                                  n === index ? { ...i, taxable: e.target.checked } : i,
+                                  n === index ? { ...i, description: e.target.value } : i,
                                 ),
                               })
                             }
-                          />{" "}
-                          Afecto a IVA
+                          />
                         </label>
-                        <button
-                          type="button"
-                          aria-label={`Quitar servicio ${index + 1}`}
-                          disabled={data.items.length === 1}
-                          onClick={() => patch({ items: data.items.filter((_, n) => n !== index) })}
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </section>
-                  ))}
-                </div>
-                <button
-                  className="fx-btn"
-                  type="button"
-                  onClick={() =>
-                    patch({
-                      items: [
-                        ...data.items,
-                        {
-                          description: "",
-                          quantity: 1,
-                          unitPrice: 0,
-                          discountPercent: 0,
-                          taxable: true,
-                        },
-                      ],
-                    })
-                  }
-                >
-                  <Plus size={14} />
-                  Agregar servicio
-                </button>
-                <Field label="Impuestos">
-                  <select
-                    value={data.taxRate}
-                    onChange={(e) => patch({ taxRate: Number(e.target.value) as 0 | 19 })}
+                        <div className="quoteEditNumbers">
+                          {(
+                            [
+                              ["quantity", "Cantidad", 0.001],
+                              ["unitPrice", "Precio unitario", 0],
+                              ["discountPercent", "Descuento %", 0],
+                            ] as const
+                          ).map(([key, label, min]) => (
+                            <label key={key}>
+                              {label}
+                              <input
+                                required
+                                type="number"
+                                min={min}
+                                max={key === "discountPercent" ? 100 : undefined}
+                                step="any"
+                                value={item[key]}
+                                onChange={(e) =>
+                                  patch({
+                                    items: data.items.map((i, n) =>
+                                      n === index ? { ...i, [key]: Number(e.target.value) } : i,
+                                    ),
+                                  })
+                                }
+                              />
+                            </label>
+                          ))}
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={item.taxable}
+                              onChange={(e) =>
+                                patch({
+                                  items: data.items.map((i, n) =>
+                                    n === index ? { ...i, taxable: e.target.checked } : i,
+                                  ),
+                                })
+                              }
+                            />{" "}
+                            Afecto a IVA
+                          </label>
+                          <button
+                            type="button"
+                            aria-label={`Quitar servicio ${index + 1}`}
+                            disabled={data.items.length === 1}
+                            onClick={() =>
+                              patch({ items: data.items.filter((_, n) => n !== index) })
+                            }
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+                  <button
+                    className="fx-btn"
+                    type="button"
+                    onClick={() =>
+                      patch({
+                        items: [
+                          ...data.items,
+                          {
+                            description: "",
+                            quantity: 1,
+                            unitPrice: 0,
+                            discountPercent: 0,
+                            taxable: true,
+                          },
+                        ],
+                      })
+                    }
                   >
-                    <option value={19}>IVA 19%</option>
-                    <option value={0}>Sin IVA</option>
-                  </select>
-                </Field>
-                <div className="quoteEditTotal">
-                  Neto {new Intl.NumberFormat("es-CL").format(total?.net || 0)} · IVA{" "}
-                  {new Intl.NumberFormat("es-CL").format(total?.tax || 0)}
-                  <strong>
-                    Total{" "}
-                    {new Intl.NumberFormat("es-CL", {
-                      style: "currency",
-                      currency: data.currency === "UF" ? "CLF" : data.currency,
-                      maximumFractionDigits: data.currency === "CLP" ? 0 : 2,
-                    }).format(total?.total || 0)}
-                  </strong>
-                </div>
-                <Field label="Condiciones de pago">
-                  <textarea
-                    value={data.paymentTerms}
-                    onChange={(e) => patch({ paymentTerms: e.target.value })}
-                  />
-                </Field>
-                <Field label="Condiciones comerciales">
-                  <textarea
-                    rows={4}
-                    value={data.commercialTerms}
-                    onChange={(e) => patch({ commercialTerms: e.target.value })}
-                  />
-                </Field>
-                <Field label="Observaciones de la propuesta">
-                  <textarea value={data.notes} onChange={(e) => patch({ notes: e.target.value })} />
-                </Field>
-                {data.editable ? (
-                  <button className="fx-btn primary" type="submit">
-                    <Save size={15} />
-                    {busy ? "Guardando…" : "Guardar borrador"}
+                    <Plus size={14} />
+                    Agregar servicio
                   </button>
-                ) : null}
-              </fieldset>
-            </form>
-          </>
-        ) : null}
-      </div>
-    </Drawer>,
+                  <Field label="Impuestos">
+                    <select
+                      value={data.taxRate}
+                      onChange={(e) => patch({ taxRate: Number(e.target.value) as 0 | 19 })}
+                    >
+                      <option value={19}>IVA 19%</option>
+                      <option value={0}>Sin IVA</option>
+                    </select>
+                  </Field>
+                  <div className="quoteEditTotal">
+                    Neto {new Intl.NumberFormat("es-CL").format(total?.net || 0)} · IVA{" "}
+                    {new Intl.NumberFormat("es-CL").format(total?.tax || 0)}
+                    <strong>
+                      Total{" "}
+                      {new Intl.NumberFormat("es-CL", {
+                        style: "currency",
+                        currency: data.currency === "UF" ? "CLF" : data.currency,
+                        maximumFractionDigits: data.currency === "CLP" ? 0 : 2,
+                      }).format(total?.total || 0)}
+                    </strong>
+                  </div>
+                  <Field label="Condiciones de pago">
+                    <textarea
+                      value={data.paymentTerms}
+                      onChange={(e) => patch({ paymentTerms: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="Condiciones comerciales">
+                    <textarea
+                      rows={4}
+                      value={data.commercialTerms}
+                      onChange={(e) => patch({ commercialTerms: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="Observaciones de la propuesta">
+                    <textarea
+                      value={data.notes}
+                      onChange={(e) => patch({ notes: e.target.value })}
+                    />
+                  </Field>
+                  {data.editable ? (
+                    <button className="fx-btn primary" type="submit">
+                      <Save size={15} />
+                      {busy ? "Guardando…" : "Guardar borrador"}
+                    </button>
+                  ) : null}
+                </fieldset>
+              </form>
+            </>
+          ) : null}
+        </div>
+      </Drawer>
+    </div>,
     document.body,
   );
 }

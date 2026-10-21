@@ -132,7 +132,7 @@ export function QuotePaymentsButton({quoteId,quoteNumber,role,onChanged}:{quoteI
   if(!hasFinancePermission(role,"quote_payment.view"))return null;
   // Portal al <body>: el panel no hereda los estilos de la tarjeta comercial que lo contiene.
   return <><button onClick={()=>setOpen(true)}><CalendarDays size={13}/>Calendario y pagos</button>
-    {open&&mounted?createPortal(<Drawer open wide title={`Calendario de pagos · ${quoteNumber}`} subtitle="Cuotas, pagos registrados y facturas SII adjuntas." onClose={()=>setOpen(false)}><QuotePaymentPanel quoteId={quoteId} onChanged={()=>void onChanged?.()}/></Drawer>,document.body):null}</>;
+    {open&&mounted?createPortal(<div className="zy-full-control"><Drawer open wide title={`Calendario de pagos · ${quoteNumber}`} subtitle="Cuotas, pagos registrados y facturas SII adjuntas." onClose={()=>setOpen(false)}><QuotePaymentPanel quoteId={quoteId} onChanged={()=>void onChanged?.()}/></Drawer></div>,document.body):null}</>;
 }
 
 // =========================================================================================== sección de Finanzas

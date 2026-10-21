@@ -191,55 +191,59 @@ export async function generateMonthlyReceivables(now = new Date()) {
       }
       return { generated };
     },
-    { timeout: 20000 },
+    { maxWait: 10000, timeout: 20000 },
   );
 }
 export async function queueMonthlyNotices(now = new Date()) {
   const today = billingToday(now);
-  return prisma.$transaction(async (db) => {
-    const [lock] = await db.$queryRaw<
-      Array<{ locked: boolean }>
-    >`SELECT pg_try_advisory_xact_lock(hashtext('zyteron:monthly-notices')) AS locked`;
-    if (!lock?.locked) return;
-    const rows = await db.$queryRaw<
-      Array<{
-        id: string;
-        plan_id: string;
-        user_id: string;
-        email: string;
-        description: string;
-        balance: number;
-        due: string;
-      }>
-    >`
+  return prisma.$transaction(
+    async (db) => {
+      const [lock] = await db.$queryRaw<
+        Array<{ locked: boolean }>
+      >`SELECT pg_try_advisory_xact_lock(hashtext('zyteron:monthly-notices')) AS locked`;
+      if (!lock?.locked) return;
+      const rows = await db.$queryRaw<
+        Array<{
+          id: string;
+          plan_id: string;
+          user_id: string;
+          email: string;
+          description: string;
+          balance: number;
+          due: Date;
+        }>
+      >`
  SELECT r.id,p.id AS plan_id,p.user_id,u.email,r.description,
  r."totalAmount"-COALESCE((SELECT sum(a.amount) FROM "PaymentAllocation" a JOIN "Payment" pay ON pay.id=a."paymentId" WHERE a."receivableId"=r.id AND pay.status='CONFIRMED' AND pay.currency=r.currency),0) AS balance,
- (r."dueAt" AT TIME ZONE 'America/Santiago')::date::text AS due
+ r."dueAt" AS due
  FROM "Receivable" r JOIN zyteron_monthly_plans p ON r.metadata->>'monthlyPlanId'=p.id::text JOIN "User" u ON u.id=p.user_id
  WHERE p.status='ACTIVE' AND p.reminders_enabled AND r.status NOT IN ('CANCELLED','VOID') AND r."clientId"=p.user_id
  AND u.role='CLIENT' AND u."accountStatus"='ACTIVE' AND u."emailVerifiedAt" IS NOT NULL
  AND (NOT EXISTS(SELECT 1 FROM zyteron_legacy_client_link l WHERE l.user_id=u.id) OR EXISTS(SELECT 1 FROM zyteron_legacy_client_link l JOIN client_portal_settings s ON s.client_id=l.client_id WHERE l.user_id=u.id AND s.enabled AND s.invoices_visible))
  ORDER BY r."dueAt" LIMIT 500`;
-    for (const r of rows) {
-      const phase = billingPhase(r.due, today);
-      if (!phase || Number(r.balance) <= 0) continue;
-      const title = phase === "UPCOMING" ? "Próximo pago mensual" : "Pago mensual pendiente";
-      const amount = new Intl.NumberFormat("es-CL", {
-        style: "currency",
-        currency: "CLP",
-        maximumFractionDigits: 0,
-      }).format(Number(r.balance));
-      const date = r.due.split("-").reverse().join("-");
-      const body = `${r.description}. Saldo pendiente: ${amount}. Vencimiento: ${date}. Revisa el detalle y los medios de pago en https://www.zyteron.cl/portal. Si ya enviaste un comprobante, su validación aparecerá en tu cuenta.`;
-      const inserted = await db.$queryRaw<
-        Array<{ id: string }>
-      >`INSERT INTO zyteron_billing_notices(plan_id,receivable_id,phase,recipient,balance,subject,body) VALUES(${r.plan_id}::uuid,${r.id},${phase},${r.email},${Number(r.balance)},${title},${body}) ON CONFLICT(receivable_id,phase) DO NOTHING RETURNING id`;
-      if (inserted.length)
-        await db.clientNotification.create({
-          data: { userId: r.user_id, title, body, type: "PAYMENT", link: "/portal" },
-        });
-    }
-  });
+      for (const r of rows) {
+        const due = billingToday(r.due);
+        const phase = billingPhase(due, today);
+        if (!phase || Number(r.balance) <= 0) continue;
+        const title = phase === "UPCOMING" ? "Próximo pago mensual" : "Pago mensual pendiente";
+        const amount = new Intl.NumberFormat("es-CL", {
+          style: "currency",
+          currency: "CLP",
+          maximumFractionDigits: 0,
+        }).format(Number(r.balance));
+        const date = due.split("-").reverse().join("-");
+        const body = `${r.description}. Saldo pendiente: ${amount}. Vencimiento: ${date}. Revisa el detalle y los medios de pago en https://www.zyteron.cl/portal. Si ya enviaste un comprobante, su validación aparecerá en tu cuenta.`;
+        const inserted = await db.$queryRaw<
+          Array<{ id: string }>
+        >`INSERT INTO zyteron_billing_notices(plan_id,receivable_id,phase,recipient,balance,subject,body) VALUES(${r.plan_id}::uuid,${r.id},${phase},${r.email},${Number(r.balance)},${title},${body}) ON CONFLICT(receivable_id,phase) DO NOTHING RETURNING id`;
+        if (inserted.length)
+          await db.clientNotification.create({
+            data: { userId: r.user_id, title, body, type: "PAYMENT", link: "/portal" },
+          });
+      }
+    },
+    { maxWait: 10000, timeout: 20000 },
+  );
 }
 export async function sendMonthlyNotices() {
   const key = process.env.RESEND_API_KEY,

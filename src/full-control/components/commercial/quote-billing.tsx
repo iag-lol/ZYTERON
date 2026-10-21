@@ -59,7 +59,7 @@ export function WebsiteQuoteBillingButton({
     return () => {
       active = false;
     };
-  }, [open, quoteId, billing.frequency]);
+  }, [open, quoteId, billing.frequency, billing.balance, billing.paid]);
   const save = async () => {
     if (busy) return;
     setBusy(true);
@@ -88,106 +88,108 @@ export function WebsiteQuoteBillingButton({
       </button>
       {open
         ? createPortal(
-            <Drawer
-              open
-              wide
-              title={`Cobros · ${quoteNumber}`}
-              subtitle="Pagos confirmados y asignados a esta cotización."
-              onClose={() => {
-                if (!busy) setOpen(false);
-              }}
-            >
-              <div className="fx-stack">
-                <KeyValue
-                  items={[
-                    [
-                      "Modalidad",
-                      billing.frequency === "MONTHLY" ? "Mensual" : "Fijo · pago único",
-                    ],
-                    ["Pagado confirmado", money(billing.paid, billing.currency)],
-                    [
-                      billing.frequency === "MONTHLY"
-                        ? "Saldo de períodos registrados"
-                        : "Saldo de la cotización",
-                      money(billing.balance, billing.currency),
-                    ],
-                    ["Anticipo / períodos adelantados", money(billing.advance, billing.currency)],
-                  ]}
-                />
-                <Feedback error={error} />
-                {billing.editable ? (
-                  <div className="quoteBillingEdit">
-                    <label>
-                      Modalidad de cobro
-                      <select
-                        value={frequency}
-                        disabled={busy}
-                        onChange={(e) => setFrequency(e.target.value as "MONTHLY" | "ONE_TIME")}
+            <div className="zy-full-control">
+              <Drawer
+                open
+                wide
+                title={`Cobros · ${quoteNumber}`}
+                subtitle="Pagos confirmados y asignados a esta cotización."
+                onClose={() => {
+                  if (!busy) setOpen(false);
+                }}
+              >
+                <div className="fx-stack">
+                  <KeyValue
+                    items={[
+                      [
+                        "Modalidad",
+                        billing.frequency === "MONTHLY" ? "Mensual" : "Fijo · pago único",
+                      ],
+                      ["Pagado confirmado", money(billing.paid, billing.currency)],
+                      [
+                        billing.frequency === "MONTHLY"
+                          ? "Saldo de períodos registrados"
+                          : "Saldo de la cotización",
+                        money(billing.balance, billing.currency),
+                      ],
+                      ["Anticipo / períodos adelantados", money(billing.advance, billing.currency)],
+                    ]}
+                  />
+                  <Feedback error={error} />
+                  {billing.editable ? (
+                    <div className="quoteBillingEdit">
+                      <label>
+                        Modalidad de cobro
+                        <select
+                          value={frequency}
+                          disabled={busy}
+                          onChange={(e) => setFrequency(e.target.value as "MONTHLY" | "ONE_TIME")}
+                        >
+                          <option value="ONE_TIME">Fijo · pago único</option>
+                          <option value="MONTHLY">Mensual</option>
+                        </select>
+                      </label>
+                      <p>
+                        Define la propuesta. No activa una suscripción ni registra un pago; la
+                        autorización del cliente se realiza en su portal.
+                      </p>
+                      <button
+                        className="fx-btn primary"
+                        disabled={busy || frequency === billing.frequency}
+                        onClick={() => void save()}
                       >
-                        <option value="ONE_TIME">Fijo · pago único</option>
-                        <option value="MONTHLY">Mensual</option>
-                      </select>
-                    </label>
-                    <p>
-                      Define la propuesta. No activa una suscripción ni registra un pago; la
-                      autorización del cliente se realiza en su portal.
+                        <Save size={14} />
+                        {busy ? "Guardando…" : "Guardar modalidad"}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="fx-hint">
+                      La modalidad forma parte de la propuesta. Si ya fue enviada, aceptada o tiene
+                      cobros, prepara una nueva versión para cambiarla y conservar el historial.
                     </p>
-                    <button
-                      className="fx-btn primary"
-                      disabled={busy || frequency === billing.frequency}
-                      onClick={() => void save()}
-                    >
-                      <Save size={14} />
-                      {busy ? "Guardando…" : "Guardar modalidad"}
-                    </button>
-                  </div>
-                ) : (
+                  )}
+                  {billing.frequency === "MONTHLY" ? (
+                    <MonthlyPlanControls quoteId={quoteId} onChanged={onChanged} />
+                  ) : null}
+                  {billing.paidThrough ? (
+                    <p className="fx-hint">
+                      Período confirmado hasta el {formatDate(billing.paidThrough)}.
+                    </p>
+                  ) : null}
+                  {!rows && !error ? (
+                    <Loading text="Consultando pagos confirmados…" />
+                  ) : rows?.length ? (
+                    <div className="quoteCollections">
+                      {rows.map((row) => (
+                        <article key={row.id}>
+                          <h3>{row.description}</h3>
+                          <p>Vencimiento {formatDate(row.dueDate)}</p>
+                          <strong>
+                            {money(row.paid, row.currency)} pagados de{" "}
+                            {money(row.amount, row.currency)}
+                          </strong>
+                          {row.payments.map((p, index) => (
+                            <p key={index}>
+                              Confirmado el {formatDate(p.receivedAt)} ·{" "}
+                              {money(p.amount, row.currency)}
+                            </p>
+                          ))}
+                        </article>
+                      ))}
+                    </div>
+                  ) : rows ? (
+                    <p className="fx-hint">
+                      No hay cuentas por cobrar ni pagos confirmados asignados a esta cotización. La
+                      aceptación no acredita un pago.
+                    </p>
+                  ) : null}
                   <p className="fx-hint">
-                    La modalidad forma parte de la propuesta. Si ya fue enviada, aceptada o tiene
-                    cobros, prepara una nueva versión para cambiarla y conservar el historial.
+                    Los créditos sin asignar del cliente se consultan en Finanzas → Pagos; no
+                    reducen el saldo de esta cotización.
                   </p>
-                )}
-                {billing.frequency === "MONTHLY" ? (
-                  <MonthlyPlanControls quoteId={quoteId} onChanged={onChanged} />
-                ) : null}
-                {billing.paidThrough ? (
-                  <p className="fx-hint">
-                    Período confirmado hasta el {formatDate(billing.paidThrough)}.
-                  </p>
-                ) : null}
-                {!rows && !error ? (
-                  <Loading text="Consultando pagos confirmados…" />
-                ) : rows?.length ? (
-                  <div className="quoteCollections">
-                    {rows.map((row) => (
-                      <article key={row.id}>
-                        <h3>{row.description}</h3>
-                        <p>Vencimiento {formatDate(row.dueDate)}</p>
-                        <strong>
-                          {money(row.paid, row.currency)} pagados de{" "}
-                          {money(row.amount, row.currency)}
-                        </strong>
-                        {row.payments.map((p, index) => (
-                          <p key={index}>
-                            Confirmado el {formatDate(p.receivedAt)} ·{" "}
-                            {money(p.amount, row.currency)}
-                          </p>
-                        ))}
-                      </article>
-                    ))}
-                  </div>
-                ) : rows ? (
-                  <p className="fx-hint">
-                    No hay cuentas por cobrar ni pagos confirmados asignados a esta cotización. La
-                    aceptación no acredita un pago.
-                  </p>
-                ) : null}
-                <p className="fx-hint">
-                  Los créditos sin asignar del cliente se consultan en Finanzas → Pagos; no reducen
-                  el saldo de esta cotización.
-                </p>
-              </div>
-            </Drawer>,
+                </div>
+              </Drawer>
+            </div>,
             document.body,
           )
         : null}

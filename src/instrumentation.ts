@@ -2,18 +2,33 @@ export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs" && process.env.BILLING_WORKER_ENABLED === "true") {
     const { runMonthlyBilling } = await import("./lib/payments/monthly-billing");
     let busy = false;
+    let ready = false;
     const tick = () => {
       if (busy) return;
       busy = true;
       void runMonthlyBilling()
-        .catch(() => console.error("MONTHLY_BILLING_UNAVAILABLE"))
+        .then(() => {
+          if (!ready) {
+            console.info("MONTHLY_BILLING_READY");
+            ready = true;
+          }
+        })
+        .catch((error: unknown) =>
+          console.error(
+            "MONTHLY_BILLING_UNAVAILABLE",
+            error && typeof error === "object" && "code" in error
+              ? String(error.code)
+              : "UNAVAILABLE",
+          ),
+        )
         .finally(() => {
           busy = false;
         });
     };
     const timer = setInterval(tick, 60000);
     timer.unref();
-    tick();
+    const initial = setTimeout(tick, 10000);
+    initial.unref();
   }
   if (process.env.NEXT_RUNTIME === "nodejs" && process.env.PAYMENT_WORKER_ENABLED === "true") {
     const { runPaymentInbox } = await import("./lib/payments/durable-callbacks");
