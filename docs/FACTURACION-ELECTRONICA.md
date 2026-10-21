@@ -6,7 +6,7 @@ Estado al 21-10-2026: emisión tributaria en producción pendiente de activació
 
 El certificado debe pertenecer al firmante autorizado para operar por Zyteron SpA. La compra y validación de identidad se completan personalmente en el proveedor acreditado. No se comparte la clave por chat ni se carga el PFX en formularios generales.
 
-Certificado Acepta adquirido, activado y descargado. Pendientes: apertura local con su clave, comprobación de vigencia y correspondencia de llave, instalación en el servidor y autorización tributaria. La activación del proveedor no acredita autorización del SII.
+Certificado Acepta adquirido, activado y descargado. Validación local aprobada: llave RSA de 2048 bits coincidente, exportación cifrada comprobada y vigencia hasta el 21-10-2029 a las 01:31 (America/Santiago). Pendientes: cadena de confianza, facultades del firmante, instalación en el servidor y autorización tributaria. La activación del proveedor no acredita autorización del SII.
 
 El secreto de firma se configura exclusivamente en el servidor existente:
 

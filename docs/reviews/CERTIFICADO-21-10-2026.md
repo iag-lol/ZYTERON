@@ -1,6 +1,6 @@
 # Preparación del certificado digital — 21-10-2026
 
-Certificado Acepta adquirido, activado y descargado. Apertura del PFX real y validación de su llave pendientes de ingreso privado de clave en Terminal. No hay instalación del certificado en Render, registro de metadatos reales ni trámites o emisiones ante el SII en esta revisión.
+Certificado Acepta adquirido, activado y descargado. PFX abierto por el titular mediante ingreso privado de su clave en Terminal. Exportación cifrada real verificada localmente: llave RSA de 2048 bits coincidente, huella coincidente y vigencia hasta el 21-10-2029 a las 01:31 (America/Santiago). Directorio 0700 y archivos regulares 0600 del propietario local. No hay instalación del certificado en Render, registro de metadatos reales ni trámites o emisiones ante el SII en esta revisión.
 
 ## Cambios locales
 
@@ -21,10 +21,9 @@ Certificado Acepta adquirido, activado y descargado. Apertura del PFX real y val
 
 ## Pendientes
 
-1. Ejecutar la preparación local mediante ingreso privado de la clave original. El control automático de aplicaciones no permite acceder a Terminal.
-2. Verificar solo metadatos y permisos de la exportación real, sin copiar secretos al chat o logs.
-3. Aprobar expresamente la transferencia del secreto al servicio existente y cualquier reinicio/despliegue. La compra del certificado no autoriza estas acciones por sí sola.
-4. Verificar facultades del firmante, cadena de confianza y proceso de certificación SII. La herramienta local no realiza esas verificaciones.
-5. Completar y validar PDF417, representación tributaria e intercambio electrónico antes de anunciar emisión operativa desde la web.
+1. Aprobar expresamente la transferencia del certificado cifrado, su clave de exportación y el RUT del titular al servicio ZYTERON existente en Render (`srv-d7emn6dckfvc73ekrh70`), junto con cualquier reinicio/despliegue. Las cuatro variables DTE previstas no están presentes en la configuración individual inspeccionada; no hay grupos enlazados. La versión activa sigue siendo `ecf8a5e`.
+2. Instalar únicamente `DTE_CERTIFICATE_PEM`, `DTE_CERTIFICATE_PEM_PASSPHRASE`, `DTE_CERTIFICATE_SECRET_REF` y `DTE_SENDER_RUT`, preservando las demás variables. La clave original del PFX no se transfiere. Guardar o activar configuración requiere la autorización del punto anterior.
+3. Verificar facultades del firmante, cadena de confianza y proceso de certificación SII. El RUT se obtuvo del campo serialNumber del titular y pasó validación de dígito verificador; eso no acredita facultades ante el SII. La exportación contiene un certificado, sin cadena intermedia adjunta.
+4. Completar y validar PDF417, representación tributaria e intercambio electrónico antes de anunciar emisión operativa desde la web.
 
 Los cambios previos de finanzas, RRHH, multimedia WhatsApp y leads permanecen en la rama local, sin publicación.
