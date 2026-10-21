@@ -263,7 +263,7 @@ function HrSiiScreen({
               const itemStatus = data?.types.find((type) => type.code === item.code);
               return (
                 <Link
-                  className={`hrSiiCard${item.code === code ? "selected" : ""}`}
+                  className={item.code === code ? "hrSiiCard selected" : "hrSiiCard"}
                   href={siiTypePath(item.code)}
                   key={item.code}
                   aria-current={item.code === code ? "page" : undefined}
@@ -636,7 +636,7 @@ function HrSiiScreen({
 
 function Notice({ title, text, error = false }: { title: string; text: string; error?: boolean }) {
   return (
-    <div className={`hrSiiNotice${error ? "error" : ""}`} role={error ? "alert" : "note"}>
+    <div className={error ? "hrSiiNotice error" : "hrSiiNotice"} role={error ? "alert" : "note"}>
       <LockKeyhole size={17} />
       <div>
         <strong>{title}</strong>
