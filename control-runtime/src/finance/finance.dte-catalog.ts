@@ -3,7 +3,7 @@ import type { Row } from "./finance.util.js";
 
 export const dteCatalog = siiDocumentCatalog.map(item => [item.code, item.name] as const);
 
-export const directDteImplemented = (code: number) => [33, 34, 56, 61].includes(code);
+export const directDteImplemented = (code: number) => [33, 34, 56, 61].includes(code) || ([39,41].includes(code) && process.env.DTE_BOLETA_REST_ENABLED === "true");
 
 // El formato XML no acredita que el transporte REST de boletas esté validado.
 export const directDteXmlImplemented = (code: number) => directDteImplemented(code) || [39, 41].includes(code);
@@ -18,7 +18,7 @@ export function documentTypeCatalog(stored: Row[], provider: string): Row[] {
   return [...rows.values()].sort((a, b) => a.code - b.code).map(row => {
     const configured = persisted.has(Number(row.code));
     const implementationStatus = provider === "SII_DIRECT"
-      ? directDteImplemented(Number(row.code)) ? "IMPLEMENTED" : "PENDING_IMPLEMENTATION"
+      ? directDteImplemented(Number(row.code)) ? "IMPLEMENTED" : [39,41].includes(Number(row.code)) ? "PENDING_VALIDATION" : "PENDING_IMPLEMENTATION"
       : provider === "EXTERNAL" ? "PROVIDER_DEPENDENT" : "PROVIDER_NOT_CONFIGURED";
     return { ...row, catalogConfigured: configured, implementationStatus,
       canEnable: configured && (implementationStatus === "IMPLEMENTED" || implementationStatus === "PROVIDER_DEPENDENT") };

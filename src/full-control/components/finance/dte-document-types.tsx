@@ -14,6 +14,7 @@ export interface DteCatalogRow {
 
 const implementationLabels: Record<string, string> = {
   IMPLEMENTED: "Implementado · requiere certificación y configuración",
+  PENDING_VALIDATION: "Implementado · pendiente de validación integral REST",
   PENDING_IMPLEMENTATION: "Pendiente de implementación",
   PROVIDER_DEPENDENT: "Compatibilidad por validar con el proveedor",
   PROVIDER_NOT_CONFIGURED: "Proveedor no configurado",

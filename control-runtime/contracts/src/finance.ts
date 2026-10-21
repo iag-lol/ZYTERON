@@ -47,7 +47,7 @@ export interface Invoice {
   billingScheduleId: string | null; referenceInvoiceId: string | null; referenceCode: number | null; referenceReason: string | null; currency: string; exchangeRate: number;
   netAmount: number; exemptAmount: number; taxAmount: number; totalAmount: number; taxRate: number | null; taxRuleVersionId: string | null; amountPaid: number; amountCredited: number; balanceDue: number;
   status: InvoiceStatus; effectiveStatus: InvoiceStatus | "OVERDUE"; issueDate: string | null; dueDate: string | null; paymentTermsDays: number | null; paymentTerms: string | null; description: string | null; notes: string | null;
-  clientSnapshot: Partial<ClientBillingSnapshot>; taxDocumentId: string | null; approvalRequired: boolean; approvedBy: string | null; approvedAt: string | null; issuedAt: string | null;
+  boletaPaymentMethod?: number | null; clientSnapshot: Partial<ClientBillingSnapshot>; taxDocumentId: string | null; approvalRequired: boolean; approvedBy: string | null; approvedAt: string | null; issuedAt: string | null;
   cancelledAt: string | null; cancelReason: string | null; createdBy: string | null; createdAt: string; updatedAt: string; lines?: InvoiceLine[]; daysOverdue?: number;
 }
 export interface BillingSchedule { id: string; clientId: string; clientName?: string | null; clientServiceId: string | null; contractId: string | null; description: string; frequency: "MONTHLY" | "QUARTERLY" | "SEMIANNUAL" | "ANNUAL" | "CUSTOM_DAYS"; intervalDays: number | null; amount: number; currency: string; isExempt: boolean; nextBillingDate: string; endDate: string | null; active: boolean; paymentTermsDays: number | null; revenueAccountId: string | null; costCenterId: string | null; createdAt: string; }

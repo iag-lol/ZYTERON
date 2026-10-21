@@ -487,6 +487,8 @@ export async function renderPrintedDte(
       .join(" · "),
   ])
     if (value) y = paragraphs(value, 36, y, 523);
+  const paymentMethod=Number(textOf(data.identity,"MedioPago"));
+  if([39,41].includes(data.type)&&paymentMethod)y=paragraphs(`Medio de pago declarado: ${{1:"Efectivo",2:"Pago electrónico",3:"Transferencia electrónica",4:"Cheque",5:"Otro"}[paymentMethod]??"Revisar"}`,36,y,523,9);
   if (data.type === 52)
     y = paragraphs(
       `Tipo de traslado: ${textOf(data.identity, "IndTraslado")} · Despacho: ${textOf(data.identity, "TipoDespacho")}`,

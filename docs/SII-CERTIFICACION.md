@@ -1,77 +1,80 @@
 # Certificación SII
 
-## Estado al 21-10-2026
+## Estado verificado al 21-10-2026
 
-La postulación y la autenticación técnica del servidor están comprobadas en certificación. La versión publicada es `4577898722f387b330200fca133535ea4da2708f`. Producción continúa sin autorización del SII; aceptar la postulación no acredita aceptación de documentos ni habilita el cambio de sistema.
+La versión publicada es `8e53aa0`. El servicio de Zyteron responde y conserva `CERTIFICATION`, proveedor `SII_DIRECT` y autorización de producción desactivada. La postulación y el catálogo de documentos no habilitan emisión real.
 
-El set oficial de DTE vigente contiene 32 casos, libros de compras, ventas y guías, y tiene huella `7a4c7c5d7cc900a30eadf1a34d6d44f6b033af3d2f41781e441ec1380fadfceb`. Los diez CAF de certificación están cargados en almacenamiento privado cifrado: 33, 34, 43, 46, 52, 56, 61, 110, 111 y 112. La última lectura productiva comprobada registra 32 folios disponibles, cero reservados, cero usados y cero anulados. No se han enviado los casos oficiales.
+La certificación de boletas tiene V°B° del SII. El sobre `0263014070` registra cinco boletas aceptadas, sin rechazos ni reparos. El RCOF `0263014112` figura aceptado con reparos: código 250 por la eliminación de la obligación de RVD desde agosto de 2022. La revisión oficial del set es `SOK`, proceso `set5142242`. Los cinco folios tipo 39 permanecen utilizados; no se reutilizan para pruebas de integración.
 
-La consulta oficial «Datos para impresión de documentos tributarios» confirmó la oficina **PROVIDENCIA**, los Acteco 620200 y 620900 y el domicilio de casa matriz. El archivo CSV oficial respalda esos antecedentes. La configuración `DTE_SII_OFFICE=PROVIDENCIA` está pendiente de incorporación al servidor.
+La Declaración de Cumplimiento continúa sin presentar. Exige acreditar procedimientos operativos, conservación, control de folios, generación, consulta e impresión. El transporte REST ordinario de boletas todavía requiere validación integral en certificación y habilitación expresa. No hay autorización ni CAF de producción registrados.
 
-La certificación de boletas es independiente. El formulario consultado ofrece el set de boleta afecta; la descarga del nuevo archivo todavía no está comprobada. No hay CAF 39/41 solicitados o cargados para ese ejercicio. La opción 41 permanece en el catálogo y en el motor de certificación; el formulario observado no demuestra su habilitación ante el SII.
+El set general de DTE contiene 32 casos, con huella `7a4c7c5d7cc900a30eadf1a34d6d44f6b033af3d2f41781e441ec1380fadfceb`. Sus 32 folios de certificación siguen disponibles: tipos 33, 34, 43, 46, 52, 56, 61, 110, 111 y 112. Casos, libros, simulación, intercambio y muestras requieren sus propias presentaciones y resultados. El V°B° de boletas no acredita estas etapas ni autoriza facturas de software propio.
 
-## Funciones locales de certificación
+La oficina verificada es PROVIDENCIA; está configurada en el servidor. Los Acteco registrados son 620200 y 620900.
 
-El módulo `/finance/certification` incorpora importación del archivo oficial, instrucciones íntegras por caso, editor de partidas y receptores, referencias por ID persistente de caso, borradores privados con control de versión, libros, archivos firmados, muestras PDF y registro de envíos. El código nuevo y su migración no están publicados ni aplicados en producción.
+## Alcance del código pendiente de instalación
 
-El motor específico de certificación genera las estructuras de los doce tipos del catálogo: Documento, Liquidacion, Exportaciones y EnvioBOLETA. Incluye descuentos, recargos, comisiones, retención de IVA y conversión a pesos para exportación. La captura asistida requiere revisión: no acredita por sí sola que todos los antecedentes aduaneros o instrucciones particulares del set estén completos.
+- XML, firmas, sobre específico y PDF de boleta afecta 39 y exenta 41. Los sobres de boletas y facturas permanecen separados.
+- Borradores para clientes identificados por su RUT real, con medio de pago declarado editable antes de emitir. El medio declarado no registra pagos ni modifica saldos. Se incluye en el XML y la representación impresa. Su cambio invalida una aprobación pendiente.
+- API REST de boletas según la especificación SII 1.0.5: semilla, token, carga y consulta. Autenticación separada de SOAP y aislada por certificado y ambiente. Límites de respuesta, validación de empresa, Track ID, tipo, folio y estadísticas; sin retransmisión automática.
+- Nota de crédito desde una boleta emitida, referenciada por su ID persistente. Las notas de débito mantienen el alcance soportado por su flujo específico.
+- Registro transaccional de emisión ordinaria: adquisición única, reserva de folio, preparación, inicio de transmisión y confirmación del recibo. El archivo exacto del sobre se conserva antes del POST. La confirmación utiliza el movimiento original del envío.
+- Recibo cifrado en almacenamiento privado y recuperación por ID de documento. Un fallo posterior al envío no autoriza a transmitir nuevamente.
+- Consulta de PDF por código seguro ligado al UUID y huella del XML firmado. Sólo documentos propios, productivos y aceptados; sin listados ni XML públicos. `DTE_BOLETA_PUBLIC_LOOKUP_ENABLED` permanece desactivado hasta autorización expresa.
 
-Las notas conservan el receptor y el régimen de retención del documento original. Una factura del mismo proceso vinculada a una guía debe tener el mismo receptor y cubrir su monto. Las referencias de factura en papel del ejercicio son exclusivamente datos de certificación; no crean documentos comerciales.
+`DTE_BOLETA_REST_ENABLED` permanece desactivado. Los tipos 39/41 muestran «pendiente de validación integral REST» y no pueden habilitarse como operativos mientras falte esa comprobación. El catálogo conserva todas las opciones de la postulación; los formatos restantes no adquieren implementación comercial por existir en el motor de certificación.
 
-La primera referencia contiene `TpoDocRef=SET` y `RazonRef=CASO numero-caso`. Las referencias tributarias de las notas comienzan después. Cada sección conserva el orden oficial y su propio envío; los conjuntos de exportación permanecen separados. El ensobrado rechaza identidades repetidas, documentos de otro emisor y mezcla de boletas con DTE. Una sección que mezcle formatos incompatibles requiere adaptación al set efectivamente descargado y se bloquea antes de reservar.
+## Persistencia, permisos y estados
 
-Los archivos se validan contra esquemas oficiales y se verifican las firmas XML, sus digest y referencias locales. Los esquemas originales, sus fuentes y huellas están en `control-runtime/resources/sii/xsd/certification-schemas.json`. La verificación criptográfica de un archivo recibido no demuestra por sí sola autorización del firmante ni aceptación comercial.
+El módulo de certificación usa procesos, casos, archivos, envíos y borradores privados con RLS. Las descargas verifican IDs, empresa, pertenencia, rutas derivadas y SHA-256. Sus reservas no crean facturas comerciales, pagos, contratos ni remuneraciones.
 
-El acuse de intercambio es técnico. Verifica el receptor, las firmas y el DigestValue del envío recibido antes de producir una respuesta firmada. No acepta comercialmente facturas ni transmite la respuesta automáticamente.
+La emisión ordinaria utiliza `tax_document_transmissions`, sin acceso directo para `anon` o `authenticated`. Sus funciones son `SECURITY INVOKER`, con esquema fijo y ejecución exclusiva del servidor. No se amplían roles de aplicación.
 
-El cálculo de consumo diario dispone de emitidos, anulados y rangos discontinuos. Los movimientos del ejercicio no anulan folios comerciales. El flujo del set de boletas deberá contrastarse con su archivo oficial antes de solicitar folios o enviarlo.
+Un intento sólo puede adquirirse una vez. Si falla antes del POST, puede revisarse y abandonarse explícitamente. Después de iniciar la transmisión, un timeout produce recepción incierta: conserva el documento, el folio y la factura bloqueados. La recuperación confirma el recibo archivado sin repetir el POST. Si fallan simultáneamente almacenamiento y base, se conserva el Track ID conocido en el error y se exige revisión manual; no hay garantía de recuperación automática en ese fallo doble.
 
-El proveedor comercial SII directo conserva su límite a tipos 33, 34, 56 y 61. El motor de certificación no habilita emisión comercial de los otros formatos. Ningún tipo adquiere certificación o habilitación productiva por aparecer en el catálogo o generar XML localmente.
+La compatibilidad con el esquema anterior completa `document_type` e `idempotency_key` en nuevas escrituras vinculadas a una factura de Finanzas. Sincroniza sus estados informativos y protege identidad, vínculo, folio y archivo firmado. No crea otra fila tributaria ni convierte obligaciones históricas en facturas. Los documentos sin vínculo a Finanzas conservan su flujo anterior.
 
-## Persistencia, permisos y reintentos
+El campo `folio` se amplía a `bigint` para admitir los diez dígitos del formato SII. La instalación no reserva, consume, libera ni anula folios existentes.
 
-La nueva migración `20261021084523_sii_certification_workspace.sql` crea cinco tablas privadas: procesos, casos, archivos, envíos y borradores. Todas tienen RLS; `anon` y `authenticated` carecen de acceso directo. Los permisos de usuario existentes se conservan: gestión requiere `dte.manage`; transmitir y recuperar un recibo exige además `dte.issue`. No hay ampliación de roles de RRHH.
+## Plan de instalación sujeto a aprobación
 
-La reserva usa una transacción, bloqueo por empresa/set y bloqueos de los folios y sus CAF. Repetir exactamente el mismo plan devuelve el proceso existente. Cambiar el plan ya reservado, reutilizar un folio, repetir un caso o dejarlo fuera del envío revierte el lote. Los borradores no reservan folios y sólo se consultan por empresa, usuario y huella del set.
+1. Verificar el proyecto `bwybwrxrbzjkwpxhpkcr`, empresa 78398774-0, ambiente de certificación, autorización productiva desactivada y huella exacta de la función de reserva vigente. Si aparecen documentos ordinarios o cambia la base comprobada, detener la instalación para revisar el alcance.
+2. Aplicar en una sola transacción únicamente:
+   - `20261021193657_dte_submission_journal.sql`.
+   - `20261021201120_boleta_payment_metadata.sql`.
+   - `20261021202723_finance_dte_compatibility.sql`.
+3. Comprobar fuentes de las funciones, RLS, privilegios, triggers y tipos. Comparar las huellas de configuración y de todos los folios antes y después; deben permanecer idénticas. Ante cualquier diferencia, revertir la transacción.
+4. Publicar y desplegar el commit revisado. Verificar el SHA efectivo y la salud del servicio, después revisar en navegador los controles nuevos sin crear documentos comerciales.
+5. Mantener desactivados producción, emisión real y consulta pública de documentos reales. La instalación no autoriza CAF adicionales, envíos de prueba nuevos ni la Declaración de Cumplimiento.
 
-El original TXT se conserva cifrado en `finance-secrets`; XML y PDF se conservan en `finance-documents`. Las descargas requieren IDs de proceso y archivo; se comprueban empresa, pertenencia, ruta derivada y SHA-256. No se reciben rutas arbitrarias del navegador. La reserva y el registro de certificación no crean clientes, facturas comerciales, pagos, contratos ni remuneraciones.
+El historial de migraciones del proyecto no acredita las aplicaciones manuales anteriores. No procede ejecutar un `db push` general ni marcar migraciones históricas como aplicadas sin conciliación del historial. El manifiesto de instalación registra las huellas de los tres SQL revisados.
 
-Un envío se adquiere una sola vez mediante cambio atómico `PREPARED → SENDING`. El destino está limitado a certificación. Se conserva el Track ID en la base y una copia cifrada del recibo en almacenamiento privado. Repetir el guardado con el mismo Track ID no transmite el archivo de nuevo. Si la recepción es incierta, el registro queda bloqueado y requiere revisión en el SII. Si también fallan almacenamiento y base tras la recepción, el mensaje conserva el Track ID conocido para revisión manual; no existe garantía de recuperación automática en ese fallo simultáneo.
+## Respaldos y límites de verificación
 
-La consulta de estado usa el Track ID persistido. Un error de autenticación o consulta no demuestra rechazo tributario. Las respuestas tardías no degradan estados finales. Recibido, aceptado y aceptado con reparos son estados distintos; ninguno sustituye la aprobación de la etapa completa en el portal de certificación.
+El respaldo del facturador vigente contiene 11 documentos emitidos y 32 recibidos de Zyteron. Los archivos originales conservan sus octetos; se verificaron empresa, cantidades, identidades únicas y SHA-256. La verificación de firmas del formato de exportación archivado y una restauración completa siguen pendientes. No se importan automáticamente como nuevas facturas ni se concilian por monto, nombre o referencia visible.
 
-## Plan de instalación pendiente de aprobación
+Los archivos privados requieren conservación por al menos seis años conforme al artículo 58 de la Ley de IVA. El respaldo local no acredita por sí solo una política automática, copia externa ni restauración probada.
 
-1. Confirmar nuevamente proyecto `bwybwrxrbzjkwpxhpkcr`, empresa, ambiente, versión desplegada, restricciones y estado de folios. Respaldar los metadatos actuales sin copiar claves privadas a logs.
-2. Aplicar únicamente la migración nueva revisada. Es aditiva y no reserva folios al instalarse. No ejecutar indiscriminadamente migraciones históricas pendientes.
-3. Publicar el commit revisado, configurar la oficina verificada y desplegar el código. Verificar el SHA real desplegado, la salud del servicio y los permisos de las rutas nuevas.
-4. Consultar el módulo sin reservar ni enviar al navegar. Preparar el plan oficial con todos los datos revisados y comprobar sus archivos antes de transmitir casos.
-5. Presentar los casos y libros de certificación, conservar los Track ID y revisar resultados efectivos. Resolver rechazos con trazabilidad, sin liberar o reutilizar automáticamente folios inciertos.
+La revisión local registra 121 pruebas de runtime, 402 pruebas del frontend y una prueba de la ruta pública aprobadas. Las pruebas locales emplean datos sintéticos. Cubren acceso incorrecto, IDs y rutas inválidos, respuestas incompletas, reintentos, adquisición exclusiva, recepción incierta, recuperación, validación de recibos y compatibilidad con columnas y protecciones del esquema existente. PGlite ejecuta PostgreSQL embebido: sus llamadas concurrentes no sustituyen una prueba con dos conexiones independientes al servidor real.
 
-La migración anterior `20261021080550_complete_sii_document_catalog.sql` sí se aplicó manualmente con aprobación expresa. Añadió cuatro tipos deshabilitados y sin certificar; preservó las ocho filas originales. Esa ejecución no figura en el historial de migraciones de Supabase. La sentencia es idempotente mediante `ON CONFLICT DO NOTHING`, pero el historial deberá reconciliarse de forma controlada antes de un `db push` general.
+El build del backend y el control de tipos frontend están comprobados. La compilación Next.js con Webpack y su fase TypeScript terminan; la generación completa del sitio público se detiene en RSS por ausencia de configuración Supabase local. No se utilizaron credenciales productivas para resolver ese límite. La configuración aislada de dependencias tampoco permite usar Turbopack local como evidencia de build productivo.
 
-## Comprobaciones locales y límites
+El lint dirigido conserva la deuda previa en controlador, repositorio y vista de Finanzas; la comparación con la base no muestra diagnósticos nuevos. El análisis de seguridad previo detecta cinco vistas con privilegios del propietario y 40 funciones con esquema de búsqueda mutable. Esos hallazgos requieren una revisión separada de definiciones y accesos; no se modifican permisos para ocultarlos.
 
-- 81 pruebas de runtime aprobadas: incluye XML/XSD, firmas, libros, PDF, permisos, rutas inválidas, datos ausentes, reintentos, adquisición exclusiva, recuperación de recibos y nueve pruebas SQL con datos sintéticos.
-- 401 pruebas del repositorio principal aprobadas, incluidas seis de captura del set y conservación de octetos del archivo.
-- Typecheck frontend en checkout aislado aprobado; build backend aprobado. El build Next.js completo aprobó con una fuente local sintética de sólo lectura para los datos del sitio público; sin esa configuración, falla en el RSS por ausencia de variables de entorno. No se utilizaron datos ni credenciales productivas para el build. El checkout original contiene artefactos ajenos no versionados que impiden usar su typecheck global como evidencia limpia.
-- Lint dirigido real con `--no-ignore` aprobado en los archivos nuevos y el generador PDF. El lint global del checkout limpio conserva cero errores y cinco advertencias preexistentes. En los archivos existentes comprobados con `--no-ignore` permanecen los mismos trece errores de la versión base, sin diagnósticos nuevos.
-- Diff-check aprobado. Los XSD originales conservan sus octetos, CRLF y espacios del proveedor mediante atributos exclusivos para esa carpeta; el código propio mantiene la comprobación habitual de espacios.
-- 17 PDF sintéticos comprobados: una página, menos de 500 KB, timbre PDF417 decodificado con una librería independiente y bytes iguales al TED original. La inspección visual incluye copias cedibles y documentos en moneda extranjera.
-- Prueba de pantalla local con API y lector de archivos simulados: edición, cambio rápido de caso, descarte de respuesta tardía, doble clic al guardar y recuperación del borrador tras recargar. El diseño se revisó en escritorio y a 390 px. Esta prueba no acredita la carga real de archivos, la conectividad productiva ni la aceptación del SII.
-- La lectura real del archivo no terminó en la sesión automatizada del navegador. El conversor se comprobó por separado con un objeto File y octetos ISO-8859-1. La integración real de carga continúa pendiente de verificación; no se presenta como aprobada.
+## Condiciones para producción
 
-## Etapas tributarias pendientes
+La declaración sólo debe presentarse cuando sus afirmaciones estén acreditadas. Se requiere completar la validación integral REST, comprobar la consulta e impresión reales, la conservación y recuperación, y obtener la autorización efectiva del SII. El cambio de ambiente, los CAF productivos, la activación de tipos y la exposición por código seguro son pasos posteriores y expresos.
 
-Se requiere ejecutar y obtener aceptación de los casos y libros oficiales, cumplir la simulación exigida, presentar y aprobar intercambio y muestras impresas y declarar requisitos efectivamente cumplidos. La simulación todavía no tiene un ejecutor completo en este paquete. El acuse generado y los PDF locales tampoco equivalen a presentación o aprobación en el portal.
-
-Antes de cambiar definitivamente de sistema se requiere respaldar el facturador vigente y revisar la autorización final. La declaración de cumplimiento no debe afirmar capacidades pendientes. El proceso permanece abierto hasta contar con evidencia real de todas las etapas.
+La certificación general de facturas y otros DTE continúa abierta hasta cumplir sus casos, libros, simulación, intercambio y muestras. No se declara operativo un formato por una prueba XML aislada ni por una recepción de archivo sin aceptación.
 
 ## Referencias oficiales
 
-- [Construcción del set](https://www.sii.cl/factura_electronica/factura_mercado/inst_set_pruebas.pdf).
+- [API REST de boletas, especificación 1.0.5](https://www4c.sii.cl/bolcoreinternetui/api/openapi.yaml).
+- [Formato de boletas, versión 4.2](https://www.sii.cl/factura_electronica/factura_mercado/formato_boleta_electronica.pdf).
+- [Instructivo de emisión de boletas](https://www.sii.cl/factura_electronica/factura_mercado/Instructivo_Emision_Boleta_Elect.pdf).
+- [Eliminación del RVD](https://www.sii.cl/preguntas_frecuentes/bol_electr_vtas_serv/001_380_7679.htm).
+- [Conservación de DTE](https://www.sii.cl/preguntas_frecuentes/factura_electronica/001_003_2356.htm).
+- [Respaldo del facturador SII](https://www.sii.cl/destacados/factura_electronica/guias_ayuda/como_generar_archivo_respaldo.htm).
+- [Construcción del set general](https://www.sii.cl/factura_electronica/factura_mercado/inst_set_pruebas.pdf).
 - [Proceso de certificación](https://www.sii.cl/factura_electronica/factura_mercado/proceso_certificacion.htm).
-- [Formatos XML y libros](https://www.sii.cl/servicios_online/1039-descripcion_formato-1184.html).
-- [Formato DTE de febrero de 2026](https://www.sii.cl/factura_electronica/factura_mercado/formato_dte_202602.pdf).
 - [Intercambio entre contribuyentes](https://www.sii.cl/factura_electronica/factura_mercado/formato_ic.pdf).
-- [Muestras impresas](https://www.sii.cl/factura_electronica/manual_muestras_impresas.pdf).

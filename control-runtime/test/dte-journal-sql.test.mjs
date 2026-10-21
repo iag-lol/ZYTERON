@@ -15,19 +15,20 @@ const document = "11111111-1111-4111-8111-111111111111",
 const signed = "a".repeat(64),
   envelope = "b".repeat(64),
   base = "dte/certification/33/1/";
-export async function journalFixture() {
+export async function journalFixture(documentType = 33) {
+  assert([33, 39].includes(documentType));
   const db = new PGlite();
   await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;
     create table finance_settings(company_rut text,dte_environment text,dte_provider text,dte_production_authorized boolean);
     insert into finance_settings values('11111111-1','CERTIFICATION','SII_DIRECT',false);
     create table invoices(id uuid primary key,status text,document_type_code integer,currency text,issue_date date,
       net_amount numeric,exempt_amount numeric,tax_amount numeric,total_amount numeric,tax_document_id uuid,client_snapshot jsonb);
-    insert into invoices values('${invoice}','READY_TO_ISSUE',33,'CLP','2026-01-02',1000,0,190,1190,null,'{"rut":"22222222-2"}');
-    create table tax_documents(id uuid primary key,invoice_id uuid,status text,provider text,environment text,document_type_code integer,
-      folio bigint,emitter_rut text,receiver_rut text,issue_date date,net_amount numeric,exempt_amount numeric,tax_amount numeric,total_amount numeric,
+    insert into invoices values('${invoice}','READY_TO_ISSUE',${documentType},'CLP','2026-01-02',1000,0,190,1190,null,'{"rut":"22222222-2"}');
+    create table tax_documents(id uuid primary key,document_type integer not null,idempotency_key text not null unique,internal_status text not null default 'draft',sii_status text not null default 'not_sent',invoice_id uuid,status text,provider text,environment text,document_type_code integer,
+      folio integer,emitter_rut text,receiver_rut text,issue_date date,net_amount numeric,exempt_amount numeric,tax_amount numeric,total_amount numeric,
       xml_unsigned_path text,xml_unsigned_sha256 text,xml_signed_path text,xml_signed_sha256 text,track_id text,submitted_at timestamptz,response_path text,status_message text);
-    insert into tax_documents(id,invoice_id,status,provider,environment,document_type_code,emitter_rut,receiver_rut,issue_date,net_amount,exempt_amount,tax_amount,total_amount)
-      values('${document}','${invoice}','DRAFT','SII_DIRECT','CERTIFICATION',33,'11111111-1','22222222-2','2026-01-02',1000,0,190,1190);
+    insert into tax_documents(id,document_type,idempotency_key,invoice_id,status,provider,environment,document_type_code,emitter_rut,receiver_rut,issue_date,net_amount,exempt_amount,tax_amount,total_amount)
+      values('${document}',${documentType},'synthetic-existing','${invoice}','DRAFT','SII_DIRECT','CERTIFICATION',${documentType},'11111111-1','22222222-2','2026-01-02',1000,0,190,1190);
     create table tax_folio_authorizations(id integer primary key,status text);insert into tax_folio_authorizations values(1,'ACTIVE');
     create table tax_folios(id uuid primary key default gen_random_uuid(),authorization_id integer,document_type_code integer,environment text,folio bigint,
       status text,tax_document_id uuid,reserved_at timestamptz,used_at timestamptz,voided_at timestamptz,void_reason text,
@@ -40,6 +41,24 @@ export async function journalFixture() {
     await readFile(new URL("./fixtures/dte-existing-guards.sql", import.meta.url), "utf8"),
   );
   await db.exec(migration);
+  await db.exec(
+    await readFile(
+      new URL(
+        "../../supabase/migrations/20261021201120_boleta_payment_metadata.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  await db.exec(
+    await readFile(
+      new URL(
+        "../../supabase/migrations/20261021202723_finance_dte_compatibility.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
   return db;
 }
 const value = async (db, sql, args = []) => Object.values((await db.query(sql, args)).rows[0])[0];
@@ -156,8 +175,11 @@ test("emisor, moneda, receptor, importes, ambientes e IDs incompatibles no adqui
   ]) {
     const db = await journalFixture();
     try {
-      await db.exec(sql);
-      await assert.rejects(claim(db));
+      if (sql.includes("set status=null")) await assert.rejects(db.exec(sql), /REQUIRED_IDENTITY/);
+      else {
+        await db.exec(sql);
+        await assert.rejects(claim(db));
+      }
       assert.equal(await value(db, "select count(*)::int from tax_document_transmissions"), 0);
       assert.equal(
         await value(db, "select count(*)::int from tax_folios where status='RESERVED'"),
@@ -267,7 +289,10 @@ test("hashes nulos, rutas ajenas y folios inconsistentes no inician transmisión
         db.query("select finance_start_dte_transmission($1,$2,$3,$4)", args),
         /MISMATCH/,
       );
-    await assert.rejects(db.exec("update tax_folios set environment='PRODUCTION' where folio=1"), /identidad de folio inmutable/);
+    await assert.rejects(
+      db.exec("update tax_folios set environment='PRODUCTION' where folio=1"),
+      /identidad de folio inmutable/,
+    );
     await db.exec("update tax_folios set tax_document_id=null where folio=1");
     await assert.rejects(start(db), /FOLIO_MISMATCH/);
     assert.deepEqual((await db.query("select amount,status from synthetic_payments")).rows, [
@@ -543,5 +568,89 @@ test("recuperación después de un fallo de base usa el recibo cifrado sin reenv
     if (old === undefined) delete process.env.FINANCE_ENCRYPTION_KEY;
     else process.env.FINANCE_ENCRYPTION_KEY = old;
     await x.db.close();
+  }
+});
+
+test("medio declarado de boleta se vincula al documento y no confirma pagos", async () => {
+  const db = await journalFixture(39);
+  try {
+    await assert.rejects(claim(db), /PAYMENT_METHOD_MISMATCH/);
+    assert.equal(await value(db, "select count(*)::int from tax_document_transmissions"), 0);
+    await db.exec(
+      "update invoices set boleta_payment_method=3;update tax_documents set boleta_payment_method=2",
+    );
+    await assert.rejects(claim(db), /PAYMENT_METHOD_MISMATCH/);
+    await db.exec("update tax_documents set boleta_payment_method=3");
+    assert.equal(await claim(db), true);
+    await assert.rejects(db.exec("update invoices set boleta_payment_method=4"), /IMMUTABLE/);
+    await assert.rejects(db.exec("update tax_documents set boleta_payment_method=4"), /IMMUTABLE/);
+    assert.equal(await value(db, "select amount from synthetic_payments"), 1190);
+    assert.equal(
+      await value(
+        db,
+        "select has_function_privilege('authenticated','finance_guard_boleta_payment()','EXECUTE')",
+      ),
+      false,
+    );
+  } finally {
+    await db.close();
+  }
+});
+
+test("alta DTE completa las columnas obligatorias heredadas y conserva un solo documento", async () => {
+  const db = await journalFixture();
+  const id = "44444444-4444-4444-8444-444444444444";
+  try {
+    await db.query(
+      "insert into tax_documents(id,invoice_id,document_type_code,environment,provider,status,folio) values($1,$2,33,'CERTIFICATION','SII_DIRECT','DRAFT',null)",
+      [id, invoice],
+    );
+    assert.equal(await value(db,"select data_type from information_schema.columns where table_name='tax_documents' and column_name='folio'"),"bigint");
+    const row = (
+      await db.query(
+        "select document_type,document_type_code,idempotency_key,internal_status,sii_status from tax_documents where id=$1",
+        [id],
+      )
+    ).rows[0];
+    assert.deepEqual(row, {
+      document_type: 33,
+      document_type_code: 33,
+      idempotency_key: `finance:dte:${id}`,
+      internal_status: "draft",
+      sii_status: "not_sent",
+    });
+    await assert.rejects(
+      db.query("update tax_documents set internal_status='validated',folio=9 where id=$1", [id]),
+      /WORKFLOW_REQUIRED/,
+    );
+    await db.query("update tax_documents set status='ACCEPTED_WITH_REPAIRS' where id=$1", [id]);
+    assert.deepEqual(
+      (await db.query("select internal_status,sii_status from tax_documents where id=$1", [id]))
+        .rows[0],
+      { internal_status: "emitted", sii_status: "accepted_with_remarks" },
+    );
+    await assert.rejects(
+      db.query("update tax_documents set invoice_id=null where id=$1", [id]),
+      /BINDING_IMMUTABLE/,
+    );
+    await db.query(
+      "insert into tax_documents(id,document_type,idempotency_key,environment,status,folio) values('55555555-5555-4555-8555-555555555555',34,'synthetic-legacy','CERTIFICATION','DRAFT',9999999999)",
+    );
+    assert.equal(
+      await value(
+        db,
+        "select document_type_code from tax_documents where id='55555555-5555-4555-8555-555555555555'",
+      ),
+      null,
+    );
+    assert.equal(
+      await value(
+        db,
+        "select has_function_privilege('anon','finance_sync_dte_compatibility()','EXECUTE')",
+      ),
+      false,
+    );
+  } finally {
+    await db.close();
   }
 });

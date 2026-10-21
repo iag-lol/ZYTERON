@@ -159,7 +159,7 @@ test("un documento comercial normal no adquiere referencias SET", async () => {
 const boletaFixture = async (type = 39, overrides = {}) => {
   const original = fixture.input;
   return createFixture({
-    ...original, documentTypeCode: type, dueDate: null,
+    ...original, documentTypeCode: type, dueDate: null, boletaPaymentMethod:3,
     lines: original.lines.map(line => ({ ...line, isExempt: type === 41 })),
     totals: type === 41 ? { net: 0, exempt: 100000, taxRate: null, tax: 0, total: 100000 } : original.totals,
     caf: { ...original.caf, documentTypeCode: type, cafXml: original.caf.cafXml.replace('<TD>33</TD>', `<TD>${type}</TD>`) },
@@ -199,7 +199,7 @@ test("un formato XML preparado no habilita emisión ni envía boletas por el ser
   const item = await boletaFixture();
   assert.equal(directDteImplemented(39), false);
   assert.equal((await provider.requirements('PRODUCTION', 39)).find(r => r.key === 'boleta_transport').satisfied, false);
-  await assert.rejects(() => provider.send(item.signedFragment, item.input), /transporte REST aún no está validado/);
+  await assert.rejects(() => provider.send(item.signedFragment, item.input), /transporte REST de boletas requiere validación/);
   const cert = await boletaFixture(39, { certificationCaseId: 'CASO-1' });
   assert.match(cert.signedFragment, /<CodRef>SET<\/CodRef><RazonRef>CASO-1/);
   assert.throws(() => provider.envelope([cert.signedFragment], { ...cert.input, environment: 'PRODUCTION' }), /SET/);
@@ -578,4 +578,13 @@ test("los cuatro tipos implementados generan una representación sin habilitar o
       /no está implementado/,
     );
   }
+});
+
+test("boleta productiva identifica al cliente e incorpora medio de pago sin acreditar dinero",async()=>{
+  const item=await boletaFixture(39,{environment:'PRODUCTION',boletaPaymentMethod:3});
+  assert.match(item.signed.toString('latin1'),/<MedioPago>3<\/MedioPago>/);
+  assert.deepEqual(await new DteSchemaValidator().validate(item.envelope.toString('latin1'),'EnvioBOLETA_v11.xsd'),[]);
+  await assert.rejects(boletaFixture(39,{environment:'PRODUCTION',boletaPaymentMethod:undefined}),/medio de pago/);
+  await assert.rejects(boletaFixture(39,{environment:'PRODUCTION',receiver:{...fixture.input.receiver,rut:'66666666-6'}}),/RUT real/);
+  await assert.rejects(boletaFixture(41,{boletaPaymentMethod:6}),/Medio de pago/);
 });
