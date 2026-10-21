@@ -5,6 +5,7 @@ import { FinanceContext } from "./finance.core.js";
 import { type CafData, DteCertificateProvider, type DteDocumentInput, type DteStatus, ExternalCertifiedDteProvider, parseCaf, parseReceivedXml, SiiDirectDteProvider, structuralErrors, type TaxDocumentProvider } from "./finance.dte-providers.js";
 import { renderPrintedDte, type PrintedDteRecord } from "./finance.dte-print.js";
 import { productionBoletaVerificationUrl } from "./finance.boleta-lookup.js";
+import { DteSubmissionJournal } from "./finance.dte-journal.js";
 import { dteCatalog, documentTypeCatalog, directDteImplemented } from "./finance.dte-catalog.js";
 import { parseCsv, readXlsx } from "./finance.formats.js";
 import type { PageQuery } from "./finance.repository.js";
@@ -27,6 +28,8 @@ const dteRequirementActions:Record<string,{actionHref:string;actionLabel:string}
   document_type:{actionHref:"/finance/settings#dte-document-types",actionLabel:"Habilitar documento"},
   document_format:{actionHref:"/finance/settings#dte-document-types",actionLabel:"Revisar tipos implementados"},
   printed_office:{actionHref:"/finance/settings#dte-integrations",actionLabel:"Configurar oficina en servidor"},
+  dte_journal:{actionHref:"/finance/settings#dte-integrations",actionLabel:"Revisar conexión"},
+  receipt_encryption:{actionHref:"/finance/settings#dte-integrations",actionLabel:"Revisar respaldo privado"},
   folios:{actionHref:"/finance/settings#dte-caf",actionLabel:"Cargar CAF"},
   receiver:{actionHref:"/clients",actionLabel:"Completar cliente"},
   status:{actionHref:"/finance/invoices",actionLabel:"Revisar factura"},
@@ -38,6 +41,7 @@ export const guideDteRequirements=(requirements:DteRequirement[])=>requirements.
 export class DteService {
   constructor(private readonly ctx:FinanceContext,private readonly invoices:InvoiceService,private readonly sii:SiiDirectDteProvider,private readonly external:ExternalCertifiedDteProvider,private readonly certificates:DteCertificateProvider){}
   private get repo(){return this.ctx.repo;}
+  private get journal(){return new DteSubmissionJournal(this.repo);}
   private provider(name:string):TaxDocumentProvider|null{return name==="SII_DIRECT"?this.sii:name==="EXTERNAL"?this.external:null;}
 
   // ---------------------------------------------------------------------------------- preparación (requisitos explícitos; nunca un botón habilitado sin ellos)
@@ -51,6 +55,12 @@ export class DteService {
     const settings=await this.repo.settings();const requirements:DteRequirement[]=[];const add=(key:string,label:string,satisfied:boolean,detail:string)=>requirements.push({key,label,satisfied,detail});
     add("persistence","Almacenamiento persistente",this.repo.configured(),this.repo.configured()?"Fuente persistente configurada; los errores de lectura se reportan por separado.":"Persistencia no configurada. Un registro temporal vacío no acredita ausencia de documentos productivos.");
     add("provider","Proveedor DTE configurado",settings.dteProvider!=="NONE",settings.dteProvider==="NONE"?"Selecciona integración directa SII o proveedor certificado en Configuración contable.":settings.dteProvider==="SII_DIRECT"?"Integración directa con servicios oficiales del SII.":"Proveedor de facturación electrónica certificado.");
+    if(settings.dteProvider==="SII_DIRECT"){
+      let journal=false;
+      if(this.repo.configured())try{journal=await this.repo.dteEmissionRpc<boolean>("finance_dte_journal_ready",{});}catch{/* Una consulta fallida no acredita instalación del registro transaccional. */}
+      add("dte_journal","Control transaccional de envíos",journal,journal?"Adquisición única, recepción incierta y recuperación de recibos configuradas.":"El registro transaccional no está verificado. Revisa su instalación y la conexión antes de emitir.");
+      add("receipt_encryption","Cifrado de recibos de envío",encryptionConfigured(),"FINANCE_ENCRYPTION_KEY debe permitir respaldar los recibos en almacenamiento privado.");
+    }
     const company=this.companyMissing(settings);add("company","Datos del emisor completos",!company.length,company.length?`Falta: ${company.join(", ")}.`:`${settings.companyLegalName} · ${settings.companyRut}`);
     add("resolution","Resolución SII (número y fecha)",Boolean(settings.dteResolutionDate&&settings.dteResolutionNumber!==null&&settings.dteResolutionNumber!==undefined),settings.dteResolutionDate?`Resolución N° ${settings.dteResolutionNumber} del ${String(settings.dteResolutionDate).split("-").reverse().join("-")}`:"Registra la resolución de autorización (en certificación: número 0 y fecha de postulación).");
     const production=settings.dteEnvironment==="PRODUCTION";add("environment",production?"Autorización de producción del SII":"Ambiente de certificación",!production||Boolean(settings.dteProductionAuthorized),production?(settings.dteProductionAuthorized?"Producción autorizada.":"Completa set de pruebas, simulación, intercambio, muestras y declaración de cumplimiento antes de producción."):"Ambiente de certificación (maullin.sii.cl): los documentos no tienen validez tributaria.");
@@ -91,30 +101,40 @@ export class DteService {
     if(documents.some(document=>!["DRAFT","VALIDATED","SIGNED","REJECTED","CANCELLED"].includes(document.status)))throw new ConflictException("Existe un documento enviado o emitido vinculado a esta factura. Revisa su estado; no se puede emitir nuevamente.");
   }
   async issue(invoiceId:string,actor:FinanceActor){
+    if(!actor.userId)throw new BadRequestException("La emisión requiere un usuario identificado.");
     this.ctx.requireAny(actor,"dte.issue","invoice.issue");await this.assertNoSubmittedDocument(invoiceId);const readiness=await this.readiness(invoiceId);if(!readiness.canIssue)throw new ConflictException({message:"No se puede emitir el DTE: faltan requisitos.",missing:readiness.missing});
     const settings=await this.repo.settings();const environment=settings.dteEnvironment as "CERTIFICATION"|"PRODUCTION";const provider=this.provider(settings.dteProvider)!;
     let invoice=await this.invoices.prepareForIssue(invoiceId,todayCl());
     const pre=structuralErrors({...(await this.buildInput(invoice,"pending",1,null,environment)),caf:null});if(pre.length)throw new UnprocessableEntityException({message:"El documento no cumple el formato SII.",errors:pre});
     const existing=(await this.repo.list<TaxDocument>("tax_documents",{invoiceId,status:{notIn:["REJECTED","CANCELLED"]}}))[0];if(existing&&!["DRAFT","VALIDATED","SIGNED"].includes(existing.status))throw new ConflictException(`El documento ya fue enviado (estado ${existing.status}).`);
     const taxDocument=existing??await guarded(()=>this.repo.create<TaxDocument>("tax_documents",{invoiceId,documentTypeCode:invoice.documentTypeCode,folio:null,provider:provider.name,environment,status:"DRAFT",emitterRut:settings.companyRut,receiverRut:invoice.clientSnapshot.rut??null,issueDate:invoice.issueDate,netAmount:invoice.netAmount,exemptAmount:invoice.exemptAmount,taxAmount:invoice.taxAmount,totalAmount:invoice.totalAmount,createdBy:actor.userId}));
-    invoice=await this.repo.update<Invoice>("invoices",invoiceId,{status:"ISSUING",taxDocumentId:taxDocument.id});await this.log(taxDocument.id,"DRAFT","Emisión iniciada",actor);
+    if(provider.name==="SII_DIRECT")await this.journal.claim(taxDocument.id,actor.userId);
     const base=`dte/${environment.toLowerCase()}/${invoice.documentTypeCode}`;
     try{
+      if(provider.name!=="SII_DIRECT")invoice=await this.repo.update<Invoice>("invoices",invoiceId,{status:"ISSUING",taxDocumentId:taxDocument.id});
+      await this.log(taxDocument.id,"DRAFT","Emisión iniciada",actor);
       if(provider.name==="SII_DIRECT"){
         const folio=await guarded(()=>this.repo.reserveFolio(invoice.documentTypeCode,environment,taxDocument.id));const caf=await this.cafFor(invoice.documentTypeCode,environment,folio);const input=await this.buildInput(invoice,taxDocument.id,folio,caf,environment);
         const unsigned=await provider.createDraft(input);const errors=await provider.validate(unsigned,input);if(errors.length){await this.log(taxDocument.id,"DRAFT","Validación fallida",actor,{errors});throw new UnprocessableEntityException({message:"Validación del DTE fallida.",errors});}
-        const u=await this.store(`${base}/${folio}/unsigned.xml`,unsigned);await this.repo.update("tax_documents",taxDocument.id,{status:"VALIDATED",xmlUnsignedPath:u.path,xmlUnsignedSha256:u.sha});await this.log(taxDocument.id,"VALIDATED","XML generado y validado estructuralmente",actor,{folio});
-        const signed=await provider.sign(unsigned,input);const s=await this.store(`${base}/${folio}/signed.xml`,this.sii.standalone(signed));await this.repo.update("tax_documents",taxDocument.id,{status:"SIGNED",xmlSignedPath:s.path,xmlSignedSha256:s.sha});await this.log(taxDocument.id,"SIGNED","Documento firmado con el certificado del servidor",actor,{sha256:s.sha});
-        const{trackId,envelopeXml}=await provider.send(signed,input);const envelope=envelopeXml?await this.store(`${base}/${folio}/envio.xml`,envelopeXml):null;
-        const folioRow=await this.repo.findOne<Row>("tax_folios",{taxDocumentId:taxDocument.id});if(folioRow)await this.repo.update("tax_folios",folioRow.id,{status:"USED",usedAt:nowIso()});
-        await this.repo.update("tax_documents",taxDocument.id,{status:"SUBMITTED",trackId,submittedAt:nowIso(),responsePath:envelope?.path??null,statusMessage:"Envío recibido por el SII; pendiente de validación."});await this.log(taxDocument.id,"SUBMITTED",`Track ID ${trackId}`,actor,{trackId});
+        const u=await this.store(`${base}/${folio}/unsigned.xml`,unsigned);await this.journal.stage(taxDocument.id,"VALIDATED",u.path,u.sha);await this.log(taxDocument.id,"VALIDATED","XML generado y validado estructuralmente",actor,{folio});
+        const signed=await provider.sign(unsigned,input);const s=await this.store(`${base}/${folio}/signed.xml`,this.sii.standalone(signed));await this.journal.stage(taxDocument.id,"SIGNED",s.path,s.sha);await this.log(taxDocument.id,"SIGNED","Documento firmado con el certificado del servidor",actor,{sha256:s.sha});
+        const archived={...taxDocument,folio};let envelopeSha:string|undefined;
+        const{trackId}=await provider.send(signed,input,async envelopeXml=>{envelopeSha=await this.journal.start(archived,s.sha,envelopeXml);});
+        if(!envelopeSha)throw new ConflictException("No se confirmó el registro previo del envío. Revisa su situación en el SII; no vuelvas a emitir.");
+        await this.journal.received(archived,s.sha,envelopeSha,trackId);
+        await this.log(taxDocument.id,"SUBMITTED",`Track ID ${trackId}`,actor,{trackId});
       }else{
         const input=await this.buildInput(invoice,taxDocument.id,0,null,environment);const result=await provider.issue(input);
         const xml=result.signedXml?await this.store(`${base}/${result.folio??taxDocument.id}/signed.xml`,result.signedXml):null;const pdf=result.pdf?await this.store(`${base}/${result.folio??taxDocument.id}/documento.pdf`,result.pdf,"application/pdf"):null;
         await this.repo.update("tax_documents",taxDocument.id,{folio:result.folio??null,status:result.status,trackId:result.trackId,submissionId:result.submissionId,submittedAt:nowIso(),statusMessage:result.message,xmlSignedPath:xml?.path??null,xmlSignedSha256:xml?.sha??null,pdfPath:pdf?.path??null});await this.log(taxDocument.id,result.status,result.message,actor,{submissionId:result.submissionId});
         if(result.status==="ACCEPTED"||result.status==="ACCEPTED_WITH_REPAIRS"||result.status==="REJECTED")await this.apply(taxDocument.id,{status:result.status,code:null,message:result.message,detail:{}},actor);
       }
-    }catch(error){await this.log(taxDocument.id,"ERROR",String((error as Error).message).slice(0,500),actor);const current=await this.repo.get<TaxDocument>("tax_documents",taxDocument.id);if(current&&["DRAFT","VALIDATED","SIGNED"].includes(current.status))await this.repo.update("invoices",invoiceId,{status:"READY_TO_ISSUE"});throw error;}
+    }catch(error){
+      const message=String((error as Error).message).slice(0,500);
+      if(provider.name==="SII_DIRECT")await this.journal.fail(taxDocument.id,message).catch(()=>{});
+      else{const current=await this.repo.get<TaxDocument>("tax_documents",taxDocument.id);if(current&&["DRAFT","VALIDATED","SIGNED"].includes(current.status))await this.repo.update("invoices",invoiceId,{status:"READY_TO_ISSUE"});}
+      await this.log(taxDocument.id,"ERROR",message,actor).catch(()=>{});throw error;
+    }
     await this.repo.audit(actor,"DTE_SUBMITTED","TAX_DOCUMENT",taxDocument.id,`${documentLabel(invoice)} enviada (${provider.name}, ${environment})`);return this.document(taxDocument.id,actor);
   }
   /** Aplica la respuesta oficial. Un rechazo nunca deja la factura como emitida. */
@@ -129,10 +149,24 @@ export class DteService {
     if(doc.statusMessage?.startsWith("Emitido fuera de Zyteron"))throw new ConflictException("Documento emitido externamente: registra la evidencia de aceptación.");
     const provider=this.provider(doc.provider)!;const settings=await this.repo.settings();const status=await provider.getDocumentStatus(doc as unknown as Row,settings.companyRut!);await this.apply(taxDocumentId,status,actor);return this.document(taxDocumentId,actor);
   }
+  async recoverReceipt(taxDocumentId:string,actor:FinanceActor){
+    this.ctx.requireAny(actor,"dte.issue","dte.manage");
+    if(!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(taxDocumentId))throw new BadRequestException("Identificador de documento inválido.");
+    await this.ctx.must<TaxDocument>("tax_documents",taxDocumentId,"Documento tributario");
+    const trackId=await this.journal.recover(taxDocumentId);
+    await this.repo.audit(actor,"DTE_RECEIPT_RECOVERED","TAX_DOCUMENT",taxDocumentId,`Recibo recuperado sin retransmisión (Track ID ${trackId})`);
+    return this.document(taxDocumentId,actor);
+  }
   async pollPending(actor:FinanceActor){const pending=await this.repo.list<TaxDocument>("tax_documents",{status:["SUBMITTED","RECEIVED_BY_SII"]});let checked=0,failed=0;for(const doc of pending){if(doc.statusMessage?.startsWith("Emitido fuera de Zyteron"))continue;try{await this.refreshStatus(doc.id,actor);checked++;}catch{failed++;}}return{checked,failed};}
   /** Abandona un intento no enviado: el folio reservado queda anulado (nunca se reutiliza). */
   async abandon(taxDocumentId:string,body:Row,actor:FinanceActor){
     this.ctx.require(actor,"dte.manage");const reason=requiredText(body.reason,"Motivo",300);const doc=await this.ctx.must<TaxDocument>("tax_documents",taxDocumentId,"Documento tributario");if(!["DRAFT","VALIDATED","SIGNED"].includes(doc.status))throw new ConflictException("Sólo se abandona un DTE no enviado al SII.");
+    if(doc.provider==="SII_DIRECT"){
+      await this.repo.dteEmissionRpc("finance_abandon_dte_issue",{p_document:taxDocumentId,p_reason:reason});
+      await this.log(taxDocumentId,"CANCELLED",reason,actor,{folio:doc.folio});
+      await this.repo.audit(actor,"DTE_ABANDONED","TAX_DOCUMENT",taxDocumentId,`Intento local abandonado; folio ${doc.folio??"-"} anulado`);
+      return this.document(taxDocumentId,actor);
+    }
     await this.repo.update("tax_documents",taxDocumentId,{status:"CANCELLED",statusMessage:`Abandonado: ${reason}`});const folio=await this.repo.findOne<Row>("tax_folios",{taxDocumentId});if(folio)await this.repo.update("tax_folios",folio.id,{status:"VOIDED",voidedAt:nowIso(),voidReason:reason});
     await this.repo.update("invoices",doc.invoiceId,{status:"READY_TO_ISSUE",taxDocumentId:null});await this.log(taxDocumentId,"CANCELLED",reason,actor,{folio:doc.folio});await this.repo.audit(actor,"DTE_ABANDONED","TAX_DOCUMENT",taxDocumentId,`Intento de emisión abandonado; folio ${doc.folio??"-"} anulado (informar anulación de folio al SII)`);return this.document(taxDocumentId,actor);
   }
@@ -149,7 +183,7 @@ export class DteService {
   async registerAcceptance(taxDocumentId:string,body:Row,actor:FinanceActor){this.ctx.require(actor,"dte.manage");const doc=await this.ctx.must<TaxDocument>("tax_documents",taxDocumentId,"Documento tributario");if(doc.provider!=="EXTERNAL"||!["SUBMITTED","RECEIVED_BY_SII"].includes(doc.status))throw new ConflictException("Sólo aplica a documentos emitidos externamente pendientes de confirmación.");const evidence=decodeUpload(body.evidence,"Evidencia de aceptación SII");const stored=await this.store(`dte/external/acceptance/${taxDocumentId}-${evidence.fileName}`,evidence.bytes,evidence.mimeType);const accepted=body.status==="ACCEPTED_WITH_REPAIRS"?"ACCEPTED_WITH_REPAIRS":"ACCEPTED";await this.repo.update("tax_documents",taxDocumentId,{status:accepted,acceptedAt:nowIso(),responsePath:stored.path,statusMessage:"Aceptación respaldada con evidencia del SII registrada por usuario."});await this.log(taxDocumentId,accepted,"Evidencia de aceptación registrada",actor,{sha256:stored.sha});await this.repo.audit(actor,"DTE_ACCEPTANCE_EVIDENCE","TAX_DOCUMENT",taxDocumentId,"Evidencia de aceptación SII registrada");return this.document(taxDocumentId,actor);}
 
   async documents(q:PageQuery&{status?:string;documentTypeCode?:string},actor:FinanceActor){this.ctx.require(actor,"dte.view");return this.repo.page<TaxDocument>("tax_documents",{status:q.status||undefined,documentTypeCode:q.documentTypeCode?Number(q.documentTypeCode):undefined},{...q,order:"createdAt",searchColumns:["trackId","receiverRut"]});}
-  async document(id:string,actor:FinanceActor){this.ctx.require(actor,"dte.view");const doc=await this.ctx.must<TaxDocument>("tax_documents",id,"Documento tributario");const[events,invoice]=await Promise.all([this.repo.list<TaxDocumentEvent>("tax_document_events",{taxDocumentId:id},{order:"occurredAt"}),this.repo.get<Invoice>("invoices",doc.invoiceId)]);return{...doc,events,invoice};}
+  async document(id:string,actor:FinanceActor){this.ctx.require(actor,"dte.view");const doc=await this.ctx.must<TaxDocument>("tax_documents",id,"Documento tributario");const[events,invoice]=await Promise.all([this.repo.list<TaxDocumentEvent>("tax_document_events",{taxDocumentId:id},{order:"occurredAt"}),this.repo.get<Invoice>("invoices",doc.invoiceId)]);let transmission:Row|null=null;if(doc.provider==="SII_DIRECT"){try{const row=await this.repo.findOne<Row>("tax_document_transmissions",{taxDocumentId:id});transmission=row?{state:row.state,message:row.message??null,startedAt:row.startedAt??null}:{state:"NOT_RECORDED"};}catch{transmission={state:"UNAVAILABLE"};}}return{...doc,events,invoice,transmission};}
   async download(id:string,kind:"xml"|"pdf",actor:FinanceActor){this.ctx.require(actor,"dte.view");const doc=await this.ctx.must<Row>("tax_documents",id,"Documento tributario");const path=kind==="xml"?doc.xmlSignedPath:doc.pdfPath;if(path){const bytes=await this.repo.readFile("finance-documents",path);if(bytes)return{bytes,fileName:`${doc.documentTypeCode}-${doc.folio??id}.${kind}`,mime:kind==="xml"?"application/xml":"application/pdf"};}
     if(kind==="pdf"&&doc.provider==="SII_DIRECT"&&doc.xmlSignedPath){
       const signed=await this.repo.readFile("finance-documents",doc.xmlSignedPath);

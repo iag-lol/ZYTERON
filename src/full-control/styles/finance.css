@@ -285,3 +285,5 @@
   :where(.zy-full-control) .fx-invoice-lines .fx-lines-foot dl>div:last-child{grid-column:1/-1}
   :where(.zy-full-control) .fx-drawer-body>.fx-actions{position:sticky;bottom:0;z-index:2;background:#fff}
 }
+
+:where(.zy-full-control) .fx-feedback.warning{background:var(--fx-amber-soft);color:#724707;border:1px solid #e9c98d;line-height:1.5}

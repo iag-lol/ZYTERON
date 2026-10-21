@@ -36,7 +36,7 @@ export abstract class TaxDocumentProvider {
   abstract createDraft(input:DteDocumentInput):Promise<string>;
   abstract validate(xml:string,input:DteDocumentInput):Promise<string[]>;
   abstract sign(xml:string,input:DteDocumentInput):Promise<string>;
-  abstract send(signed:string,input:DteDocumentInput):Promise<{trackId:string;envelopeXml:string|null}>;
+  abstract send(signed:string,input:DteDocumentInput,beforeTransmit?:(envelopeXml:string)=>Promise<void>):Promise<{trackId:string;envelopeXml:string|null}>;
   abstract issue(input:DteDocumentInput):Promise<DteIssueResult>;
   issueCreditNote(input:DteDocumentInput){if(input.documentTypeCode!==61||!input.reference)throw new UnprocessableEntityException("La nota de crédito requiere referencia.");return this.issue(input);}
   issueDebitNote(input:DteDocumentInput){if(input.documentTypeCode!==56||!input.reference)throw new UnprocessableEntityException("La nota de débito requiere referencia.");return this.issue(input);}
@@ -259,12 +259,13 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
     if(status!=="0"||!/^\d{1,30}$/.test(trackId))throw new UnprocessableEntityException(`SII certificación: recepción no confirmada (STATUS ${status||"?"}); requiere revisión sin reintento automático.`);
     return {trackId,status};
   }
-  async send(signed:string,input:DteDocumentInput){
+  async send(signed:string,input:DteDocumentInput,beforeTransmit?:(envelopeXml:string)=>Promise<void>){
     if([39,41].includes(input.documentTypeCode))throw new ServiceUnavailableException("El formato de boleta está disponible; su transporte REST aún no está validado. No se envía por el servicio de facturas.");
     const envelopeXml=this.envelope([signed],input);const xsdErrors=await this.schema.validate(envelopeXml);if(xsdErrors.length)throw new UnprocessableEntityException(`El EnvioDTE no valida contra el XSD oficial: ${xsdErrors.join(" | ")}`);
     await renderPrintedDte(Buffer.from(this.standalone(signed),"latin1"),Buffer.from(envelopeXml,"latin1"),{documentTypeCode:input.documentTypeCode,folio:input.folio,environment:input.environment,status:"SIGNED",emitterRut:input.company.rut,receiverRut:input.receiver.rut,issueDate:input.issueDate,totalAmount:input.totals.total},process.env.DTE_SII_OFFICE);
     const token=await this.authenticate(input.environment);const sender=normalizeRut(this.senderRut()).split("-");const company=normalizeRut(input.company.rut).split("-");
     const form=new FormData();form.set("rutSender",sender[0]!);form.set("dvSender",sender[1]!);form.set("rutCompany",company[0]!);form.set("dvCompany",company[1]!);form.set("archivo",new Blob([Buffer.from(envelopeXml,"latin1")],{type:"text/xml"}),`envio_${input.folio}.xml`);
+    if(beforeTransmit)await beforeTransmit(envelopeXml);
     const response=await fetch(`https://${siiHost(input.environment)}/cgi_dte/UPL/DTEUpload`,{method:"POST",headers:{Cookie:`TOKEN=${token}`,"User-Agent":"Mozilla/4.0 (compatible; PROG 1.0; Windows NT 5.0; YComp 5.0.2.4)"},body:form,signal:AbortSignal.timeout(60000)});
     const result=parseXml(await response.text());const status=textOf(result,"STATUS");const trackId=textOf(result,"TRACKID");if(status!=="0"||!trackId)throw new UnprocessableEntityException(`El SII rechazó la recepción del envío (STATUS ${status||"?"}).`);return{trackId,envelopeXml};
   }

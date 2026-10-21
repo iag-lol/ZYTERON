@@ -164,6 +164,15 @@ export class FinanceRepository {
     return this.rpc<T>(name,args);
   }
   private async rpc<T>(name:string,args:Row):Promise<T>{const{data,error}=await(this.supabase as any).rpc(name,args);if(error)throw toHttp(error);return data as T;}
+  async dteEmissionRpc<T>(name:"finance_dte_journal_ready"|"finance_claim_dte_issue"|"finance_update_dte_preparation"|"finance_start_dte_transmission"|"finance_fail_dte_issue"|"finance_complete_dte_submission"|"finance_abandon_dte_issue",args:Row):Promise<T>{
+    if(!this.supabase)throw new ServiceUnavailableException("La emisión requiere el registro transaccional persistente; no se emite en memoria.");
+    try{return await this.rpc<T>(name,args);}catch(error){
+      const message=String((error as Error)?.message??error);
+      if(message.startsWith("DTE_REQUIRES_SII_REVIEW"))throw new ConflictException("El envío ya se inició o su recepción es incierta. No se abandonó el intento; revisa su situación en el SII.");
+      if(/^DTE_[A-Z_]+/.test(message))throw new ConflictException("El documento o sus antecedentes cambiaron. Revisa el intento antes de continuar; no se realizará otra emisión automáticamente.");
+      throw error;
+    }
+  }
   async certificationRpc<T>(name:"finance_prepare_sii_certification"|"finance_claim_sii_certification_submission"|"finance_complete_sii_certification_submission"|"finance_save_sii_certification_draft"|"finance_record_sii_certification_status",args:Row):Promise<T>{
     if(!this.supabase)throw new ServiceUnavailableException("La certificación requiere persistencia configurada; no se reservan folios en memoria.");
     return this.rpc<T>(name,args);

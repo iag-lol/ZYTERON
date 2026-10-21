@@ -137,6 +137,7 @@ export class FinanceController {
   @Get("tax-documents") taxDocuments(@Query() q:Q,@Headers() h:H){return this.dte.documents(page(q),actor(h));}
   @Get("tax-documents/:id") taxDocument(@Param("id") id:string,@Headers() h:H){return this.dte.document(id,actor(h));}
   @Post("tax-documents/:id/refresh") refreshDte(@Param("id") id:string,@Headers() h:H){return this.dte.refreshStatus(id,actor(h));}
+  @Post("tax-documents/:id/recover-receipt") recoverDteReceipt(@Param("id") id:string,@Headers() h:H){return this.dte.recoverReceipt(id,actor(h));}
   @Post("tax-documents/:id/abandon") abandonDte(@Param("id") id:string,@Body() b:any,@Headers() h:H){return this.dte.abandon(id,b,actor(h));}
   @Post("tax-documents/:id/acceptance") acceptance(@Param("id") id:string,@Body() b:any,@Headers() h:H){return this.dte.registerAcceptance(id,b,actor(h));}
   @Get("tax-documents/:id/:kind") async downloadDte(@Param("id") id:string,@Param("kind") kind:string,@Headers() h:H,@Res({passthrough:true}) res:any){if(kind!=="xml"&&kind!=="pdf")throw new BadRequestException("Formato inválido.");return file(res,await this.dte.download(id,kind,actor(h)));}
