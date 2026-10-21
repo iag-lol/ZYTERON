@@ -20,6 +20,7 @@ import {
   assertCertification,
   certificationDocumentXml,
   certificationEnvelope,
+  certificationBoletaUploadEnvelope,
   certificationTotals,
   validateCertificationXml,
   type CertificationDocument,
@@ -559,13 +560,16 @@ export class SiiCertificationWorkspace {
     for (const section of set.sections.filter((s) => s.caseIds.length)) {
       const docs = documents.filter((d) => section.caseIds.includes(d.input.caseId)),
         boleta = docs.every((d) => [39, 41].includes(d.input.type)),
-        xml = certificationEnvelope(
+        envelope = certificationEnvelope(
           docs.map((d) => d.xml),
           company,
           this.sii.senderRut(),
           certificate,
           "CERTIFICATION",
         );
+      const xml = boleta
+        ? await certificationBoletaUploadEnvelope(envelope, company, this.sii.senderRut(), certificate, "CERTIFICATION")
+        : envelope;
       await validateCertificationXml(xml, boleta ? "EnvioBOLETA_v11.xsd" : "EnvioDTE_v10.xsd");
       verifySiiXmlSignatures(xml, certificate.certificate.fingerprint256);
       payloads.push({
@@ -848,10 +852,11 @@ export class SiiCertificationWorkspace {
     });
     const unavailable = () => new NotFoundException("La boleta no está disponible para consulta.");
     if (!run) throw unavailable();
-    const caseRecord = await this.repo.findOne<Row>("sii_certification_cases", {
-      runId: run.id,
-      caseId: identity.caseId,
-    });
+    const [caseRecord] = await this.repo.list<Row>(
+      "sii_certification_cases",
+      { runId: run.id, caseId: identity.caseId },
+      { order: "id", limit: 1 },
+    );
     if (!caseRecord || ![39, 41].includes(caseRecord.documentTypeCode)) throw unavailable();
     const artifact = await this.repo.findOne<Row>("sii_certification_artifacts", {
       runId: run.id,
@@ -1014,6 +1019,11 @@ export class SiiCertificationWorkspace {
       xml = file.bytes.toString("latin1");
     await validateCertificationXml(xml, schemas[artifact.kind]!);
     verifySiiXmlSignatures(xml, this.certificates.metadata(this.sii.secretRef()).fingerprintSha256);
+    await this.sii.validateCertificationArtifact(
+      xml,
+      detail.run.companyRut,
+      `sii-cert-${id}.xml`,
+    );
     await this.sii.authenticate("CERTIFICATION");
     const claimed = await this.repo.certificationRpc<boolean>(
       "finance_claim_sii_certification_submission",

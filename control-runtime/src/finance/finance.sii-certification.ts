@@ -651,3 +651,45 @@ export async function validateCertificationXml(xml: string, schemaName: string) 
     bytes: Buffer.byteLength(xml, "latin1"),
   };
 }
+
+/** El UPLOAD clásico de certificación aún rechaza RUTProvSW, opcional en el XSD publicado. */
+export async function certificationBoletaUploadEnvelope(
+  xml: string,
+  company: DteCompany,
+  senderRut: string,
+  certificate: LoadedCertificate,
+  environment: string,
+) {
+  assertCertification(environment);
+  need(local(parseXml(xml).name) === "EnvioBOLETA", "Se requiere un sobre de boletas.");
+  await validateCertificationXml(xml, "EnvioBOLETA_v11.xsd");
+  const { verifySiiXmlSignatures } = await import("./finance.sii-signatures.js");
+  verifySiiXmlSignatures(xml, certificate.certificate.fingerprint256);
+  const cover = child(child(parseXml(xml), "SetDTE"), "Caratula");
+  need(
+    normalizeRut(textOf(cover, "RutEmisor")) === normalizeRut(company.rut) &&
+    normalizeRut(textOf(cover, "RutEnvia")) === normalizeRut(senderRut) &&
+    normalizeRut(textOf(cover, "RutReceptor")) === "60803000-K" &&
+    textOf(cover, "FchResol") === company.resolutionDate &&
+    Number(textOf(cover, "NroResol")) === company.resolutionNumber,
+    "La carátula no coincide con el proceso de certificación.",
+  );
+  const source = [...xml.matchAll(/<DTE version="1\.0">(<Documento ID="F\d+T(?:39|41)">[\s\S]*?<\/Documento>)<Signature\b[\s\S]*?<\/Signature><\/DTE>/g)];
+  need(source.length === children(child(parseXml(xml), "SetDTE"), "DTE").length && source.length > 0,
+    "El sobre debe conservar la estructura generada para certificación.");
+  const documents = source.map((match) => {
+    const original = match[1]!;
+    const header = child(parseXml(original), "Encabezado");
+    const provider = textOf(header, "RUTProvSW");
+    need(provider !== "" && normalizeRut(provider) === normalizeRut(company.rut), "Proveedor de software ajeno al emisor.");
+    const content = original.replace(/<RUTProvSW>[^<]+<\/RUTProvSW>/, "");
+    need(content !== original && !content.includes("<RUTProvSW>"), "Proveedor de software duplicado.");
+    const id = parseXml(content).attrs.ID!;
+    const canonical = content.replace("<Documento ", `<Documento xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" `);
+    return el("DTE", [content, xmlSignature(canonical, `#${id}`, certificate, ` xmlns:xsi="${XSI_NS}"`)], { version: "1.0" });
+  });
+  const result = certificationEnvelope(documents, company, senderRut, certificate, environment);
+  await validateCertificationXml(result, "EnvioBOLETA_v11.xsd");
+  verifySiiXmlSignatures(result, certificate.certificate.fingerprint256);
+  return result;
+}

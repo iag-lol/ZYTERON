@@ -14,6 +14,7 @@ import { join } from "node:path";
 import {
   certificationDocumentXml,
   certificationEnvelope,
+  certificationBoletaUploadEnvelope,
   certificationTotals,
   validateCertificationXml,
 } from "../dist/finance/finance.sii-certification.js";
@@ -29,6 +30,7 @@ import {
   previewCertificationFolios,
 } from "../dist/finance/finance.sii-set.js";
 import { renderPrintedDte } from "../dist/finance/finance.dte-print.js";
+import { DteSchemaValidator, SiiDirectDteProvider } from "../dist/finance/finance.dte-providers.js";
 import { PDFDocument } from "pdf-lib";
 import {
   boletaLookupToken,
@@ -131,6 +133,63 @@ test("cinco boletas forman un único sobre y RCOF con totales del set, firmas y 
       verifySiiXmlSignatures(envelope, certificate.certificate.fingerprint256).length,
       6,
     );
+    const provider = new SiiDirectDteProvider(
+      { metadata: () => ({ fingerprintSha256: certificate.certificate.fingerprint256 }) },
+      new DteSchemaValidator(),
+    );
+    provider.senderRut = () => "33333333-3";
+    let authentications = 0;
+    provider.authenticate = async () => {
+      authentications++;
+      return "synthetic-token";
+    };
+    const fileName = "sii-cert-11111111-1111-4111-8111-111111111111.xml";
+    await provider.validateCertificationArtifact(envelope, company.rut, fileName);
+    assert.equal(authentications, 0);
+    const uploadEnvelope = await certificationBoletaUploadEnvelope(
+      envelope, company, "33333333-3", certificate, "CERTIFICATION",
+    );
+    assert(!uploadEnvelope.includes("RUTProvSW"));
+    assert(envelope.includes("RUTProvSW"));
+    assert.deepEqual(
+      uploadEnvelope.match(/<TED\b[\s\S]*?<\/TED>/g),
+      envelope.match(/<TED\b[\s\S]*?<\/TED>/g),
+    );
+    const bodies = (source) => [...source.matchAll(/<Documento\b[\s\S]*?<\/Documento>/g)]
+      .map((m) => m[0].replace(/<RUTProvSW>[^<]+<\/RUTProvSW>/, ""));
+    assert.deepEqual(bodies(uploadEnvelope), bodies(envelope));
+    assert.equal(verifySiiXmlSignatures(uploadEnvelope, certificate.certificate.fingerprint256).length, 6);
+    for (const [source, issuer, sender, environment] of [
+      [envelope, company, "33333333-3", "PRODUCTION"],
+      [envelope, { ...company, rut: "22222222-2" }, "33333333-3", "CERTIFICATION"],
+      [envelope, company, "22222222-2", "CERTIFICATION"],
+      [envelope.replace("Cambio de aceite", "Cambio"), company, "33333333-3", "CERTIFICATION"],
+    ]) await assert.rejects(() => certificationBoletaUploadEnvelope(source, issuer, sender, certificate, environment));
+    const oldFetch = globalThis.fetch;
+    let transmissions = 0;
+    try {
+      globalThis.fetch = async (url, options) => {
+        transmissions++;
+        assert.equal(url, "https://maullin.sii.cl/cgi_dte/UPL/DTEUpload");
+        assert.equal(options.method, "POST");
+        const uploaded = await options.body.get("archivo").text();
+        assert.equal((uploaded.match(/<DTE version=/g) || []).length, 5);
+        return new Response("<RECEPCIONDTE><STATUS>0</STATUS><TRACKID>123456</TRACKID></RECEPCIONDTE>");
+      };
+      assert.deepEqual(await provider.sendCertificationArtifact(uploadEnvelope, company.rut, fileName), {
+        trackId: "123456", status: "0",
+      });
+      assert.equal(transmissions, 1);
+      await assert.rejects(
+        () => provider.sendCertificationArtifact(
+          envelope.replace(/<CodRef>SET<\/CodRef>/g, "<CodRef>OTRO</CodRef>"),
+          company.rut, fileName,
+        ),
+      );
+      assert.equal(transmissions, 1);
+    } finally {
+      globalThis.fetch = oldFetch;
+    }
     const entries = docs.map((d) => ({
       type: 39,
       folio: d.input.folio,
@@ -277,6 +336,14 @@ test("consulta de boleta verifica código, empresa, tipo, ruta y huella; nunca a
       settings: async () => ({ companyRut: company.rut }),
       findOne: async (table, filters) =>
         Object.entries(filters).every(([k, v]) => rows[table]?.[k] === v) ? rows[table] : null,
+      list: async (table, filters, options) => {
+        assert.equal(table, "sii_certification_cases");
+        assert.equal(options.order, "id");
+        assert.equal(options.limit, 1);
+        return Object.entries(filters).every(([k, v]) => rows[table]?.[k] === v)
+          ? [rows[table]]
+          : [];
+      },
       readFile: async (bucket, path) => {
         assert.equal(bucket, "finance-documents");
         assert.equal(path, `sii-certification/${runId}/${hash}.pdf`);
@@ -938,6 +1005,10 @@ async function workspaceFixture(options = {}) {
     }),
     sii = {
       secretRef: () => "qa",
+      validateCertificationArtifact: async () => {
+        calls.push({ preflight: true });
+        if (options.failPreflight) throw Error("Validación local fallida");
+      },
       authenticate: async () => "synthetic-token",
       sendCertificationArtifact: async () => {
         sent++;
@@ -946,6 +1017,7 @@ async function workspaceFixture(options = {}) {
       },
       getSubmissionStatus: async (...args) => {
         calls.push({ statusArgs: args });
+        if (options.failQuery) throw Error("SII 106: consulta no autorizada");
         return { status: "REJECTED", code: "-11", message: "Consulta no autorizada" };
       },
     };
@@ -1046,6 +1118,25 @@ test("workspace: recepción incierta bloquea el reenvío y no inventa Track ID",
     () => f.service.recoverReceipt(f.runId, f.id, admin),
     /No se encontró un recibo/,
   );
+});
+test("workspace: un error de consulta conserva el Track ID y el último estado confirmado", async () => {
+  const f = await workspaceFixture({ failQuery: true });
+  f.submission.status = "SUBMITTED";
+  f.submission.trackId = "123456";
+  f.submission.response = { receipt: "synthetic-confirmed-receipt" };
+  await assert.rejects(() => f.service.refresh(f.runId, f.id, admin), /SII 106/);
+  assert.equal(f.submission.status, "SUBMITTED");
+  assert.equal(f.submission.trackId, "123456");
+  assert.deepEqual(f.submission.response, { receipt: "synthetic-confirmed-receipt" });
+  assert.equal(f.sent(), 0);
+});
+test("workspace: una validación local fallida no adquiere el envío ni registra recepción incierta", async () => {
+  const f = await workspaceFixture({ failPreflight: true });
+  await assert.rejects(() => f.service.submit(f.runId, f.id, admin), /Validación local fallida/);
+  assert.equal(f.submission.status, "PREPARED");
+  assert.equal(f.submission.trackId, null);
+  assert.equal(f.sent(), 0);
+  assert.equal(f.calls.filter((c) => c.preflight).length, 1);
 });
 test("workspace: recibo cifrado recupera fallo posterior al envío sin retransmitir", async () => {
   const prior = process.env.FINANCE_ENCRYPTION_KEY;

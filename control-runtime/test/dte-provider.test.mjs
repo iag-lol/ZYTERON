@@ -3,8 +3,19 @@ import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { DteCertificateProvider, DteSchemaValidator, SiiDirectDteProvider } from '../dist/finance/finance.dte-providers.js';
 import { DteService } from '../dist/finance/finance.dte.js';
+import { parseXml } from '../dist/finance/finance.formats.js';
 
 const schema = new DteSchemaValidator();
+test('errores de consulta del SII no confirman recepción, aceptación ni rechazo tributario', async () => {
+  const provider = new SiiDirectDteProvider({}, schema);
+  provider.authenticate = async () => 'synthetic-token';
+  for (const code of ['106', '-11', '105']) {
+    provider.soap = async () => parseXml(`<RESPUESTA><RESP_HDR><ESTADO>${code}</ESTADO><GLOSA>Consulta no autorizada</GLOSA></RESP_HDR></RESPUESTA>`);
+    await assert.rejects(() => provider.getSubmissionStatus('123456', 'CERTIFICATION', '76086428-5'), /Se conserva el último estado/);
+  }
+  provider.soap = async () => parseXml('<RESPUESTA><RESP_HDR><ESTADO>EPR</ESTADO></RESP_HDR><RESP_BODY><ACEPTADOS>5</ACEPTADOS><RECHAZADOS>0</RECHAZADOS></RESP_BODY></RESPUESTA>');
+  assert.equal((await provider.getSubmissionStatus('123456', 'CERTIFICATION', '76086428-5')).status, 'ACCEPTED');
+});
 test('encuentra los cuatro XSD desde el proceso combinado en la raíz', () => {
   assert.equal(schema.available(), true);
   assert.match(schema.directory(), /control-runtime\/resources\/sii\/xsd/);

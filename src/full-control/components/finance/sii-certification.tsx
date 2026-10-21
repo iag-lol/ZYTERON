@@ -1496,11 +1496,19 @@ export function SiiCertification() {
                           }
                           onClick={() =>
                             void action.run(async () => {
-                              const result = await financeApi.post<SiiRunDetail>(
-                                role,
-                                `/certification/runs/${detail.run.id}/submissions/${submission.id}/submit`,
-                              );
-                              if (alive.current) setDetail(result);
+                              try {
+                                const result = await financeApi.post<SiiRunDetail>(
+                                  role,
+                                  `/certification/runs/${detail.run.id}/submissions/${submission.id}/submit`,
+                                );
+                                if (alive.current) setDetail(result);
+                              } catch (error) {
+                                const current = await financeApi
+                                  .get<SiiRunDetail>(role, `/certification/runs/${detail.run.id}`)
+                                  .catch(() => null);
+                                if (alive.current && current) setDetail(current);
+                                throw error;
+                              }
                             }, "Consulta el Track ID y la respuesta del SII para confirmar su aceptación.")
                           }
                         >

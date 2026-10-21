@@ -188,7 +188,7 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
   }
   async connectionTest(environment:string){const started=Date.now(),seedResponse=await this.soap(environment,"CrSeed","getSeed",{}),state=textOf(seedResponse,"RESP_HDR","ESTADO"),seed=textOf(seedResponse,"RESP_BODY","SEMILLA");if(state!=="00"||!seed)throw new ServiceUnavailableException(`SII no entregó semilla (estado ${state||"?"}).`);let authenticated=false,certificate:string;try{const metadata=this.certificates.metadata(this.secretRef());certificate=Date.parse(metadata.expiresAt)>Date.now()?"VALID":"EXPIRED";}catch{certificate="NOT_CONFIGURED";}if(certificate==="VALID"){await this.authenticate(environment);authenticated=true;}return{provider:this.name,environment,host:siiHost(environment),seedService:"CONNECTED",certificate,authenticated,latencyMs:Date.now()-started,checkedAt:new Date().toISOString()};}
   /** Sólo archivos previamente validados y registrados por el proceso de certificación. */
-  async sendCertificationArtifact(xml:string,companyRut:string,fileName:string){
+  async validateCertificationArtifact(xml:string,companyRut:string,fileName:string){
     const root=parseXml(xml),kind=local(root.name),schemas:Record<string,string>={EnvioDTE:"EnvioDTE_v10.xsd",EnvioBOLETA:"EnvioBOLETA_v11.xsd",LibroCompraVenta:"LibroCV_v10.xsd",LibroGuia:"LibroGuia_v10.xsd",ConsumoFolios:"ConsumoFolio_v10.xsd"};
     if(!schemas[kind])throw new UnprocessableEntityException("Archivo no admitido por certificación.");
     const errors=await this.schema.validate(xml,schemas[kind]);if(errors.length)throw new UnprocessableEntityException("El archivo de certificación no valida contra su esquema oficial.");
@@ -196,11 +196,14 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
     if(normalizeRut(textOf(cover,kind.startsWith("Libro")?"RutEmisorLibro":"RutEmisor"))!==normalizeRut(companyRut)||normalizeRut(textOf(cover,"RutEnvia"))!==normalizeRut(this.senderRut()))throw new UnprocessableEntityException("Emisor o firmante ajeno al envío registrado.");
     if(["EnvioDTE","EnvioBOLETA"].includes(kind)){
       if(normalizeRut(textOf(cover,"RutReceptor"))!=="60803000-K")throw new UnprocessableEntityException("El destinatario del envío debe ser el SII.");
-      for(const dte of (content?.children??[]).filter(n=>local(n.name)==="DTE")){const document=dte.children.find(n=>["Documento","Liquidacion","Exportaciones"].includes(local(n.name))),reference=document?.children.find(n=>local(n.name)==="Referencia");if(textOf(reference,"TpoDocRef")!=="SET")throw new UnprocessableEntityException("El documento no pertenece al set de certificación.");}
+      for(const dte of (content?.children??[]).filter(n=>local(n.name)==="DTE")){const document=dte.children.find(n=>["Documento","Liquidacion","Exportaciones"].includes(local(n.name))),references=document?.children.filter(n=>local(n.name)==="Referencia")??[];const official=references.some(reference=>kind==="EnvioBOLETA"?textOf(reference,"CodRef")==="SET"&&/^CASO-[1-9]\d{0,5}$/.test(textOf(reference,"RazonRef")):textOf(reference,"TpoDocRef")==="SET");if(!official)throw new UnprocessableEntityException("El documento no pertenece al set de certificación.");}
     }
     const {verifySiiXmlSignatures}=await import("./finance.sii-signatures.js");verifySiiXmlSignatures(xml,this.certificates.metadata(this.secretRef()).fingerprintSha256);
-    const token=await this.authenticate("CERTIFICATION"),sender=normalizeRut(this.senderRut()).split("-"),company=normalizeRut(companyRut).split("-");
     if(!validRut(companyRut)||!/^sii-cert-[a-f0-9-]{36}\.xml$/.test(fileName))throw new UnprocessableEntityException("Identidad de envío de certificación inválida.");
+  }
+  async sendCertificationArtifact(xml:string,companyRut:string,fileName:string){
+    await this.validateCertificationArtifact(xml,companyRut,fileName);
+    const token=await this.authenticate("CERTIFICATION"),sender=normalizeRut(this.senderRut()).split("-"),company=normalizeRut(companyRut).split("-");
     const form=new FormData();form.set("rutSender",sender[0]!);form.set("dvSender",sender[1]!);form.set("rutCompany",company[0]!);form.set("dvCompany",company[1]!);form.set("archivo",new Blob([Buffer.from(xml,"latin1")],{type:"text/xml"}),fileName);
     const response=await fetch("https://maullin.sii.cl/cgi_dte/UPL/DTEUpload",{method:"POST",headers:{Cookie:`TOKEN=${token}`,"User-Agent":"Mozilla/4.0 (compatible; PROG 1.0; Windows NT 5.0; YComp 5.0.2.4)"},body:form,signal:AbortSignal.timeout(60000)});
     if(!response.ok)throw new ServiceUnavailableException(`SII certificación respondió HTTP ${response.status}. Revisa el envío antes de reintentar.`);
@@ -220,6 +223,7 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
   async getSubmissionStatus(trackId:string,environment:string,companyRut:string):Promise<DteStatus>{
     const token=await this.authenticate(environment);const[rut,dv]=normalizeRut(companyRut).split("-");const response=await this.soap(environment,"QueryEstUp","getEstUp",{RutCompania:rut!,DvCompania:dv!,TrackId:trackId,Token:token});
     const state=textOf(response,"RESP_HDR","ESTADO"),glosa=textOf(response,"RESP_HDR","GLOSA");const body=path(response,"RESP_BODY");const accepted=Number(textOf(body,"ACEPTADOS")||0),rejected=Number(textOf(body,"RECHAZADOS")||0),repairs=Number(textOf(body,"REPAROS")||0);
+    if((/^\d+$/.test(state)&&Number(state)>0)||state.startsWith("-"))throw new ServiceUnavailableException(`No se pudo consultar el envío en el SII (${state}: ${glosa||"consulta no confirmada"}). Se conserva el último estado registrado.`);
     const detail={state,glosa,accepted,rejected,repairs,informados:textOf(body,"INFORMADOS")};
     if(state==="EPR")return rejected>0?{status:"REJECTED",code:state,message:glosa||"Documento rechazado por el SII.",detail}:repairs>0?{status:"ACCEPTED_WITH_REPAIRS",code:state,message:glosa||"Aceptado con reparos.",detail}:accepted>0?{status:"ACCEPTED",code:state,message:glosa||"Aceptado por el SII.",detail}:{status:"RECEIVED_BY_SII",code:state,message:glosa||"Procesado sin detalle de aceptación.",detail};
     if(["RCT","RFR","RCO","RPR","RLV","RSC","RFC","FAN","RCS"].includes(state)||state.startsWith("-"))return{status:"REJECTED",code:state,message:glosa||`Envío rechazado (${state}).`,detail};
