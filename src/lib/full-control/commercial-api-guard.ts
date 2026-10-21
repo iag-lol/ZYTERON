@@ -20,6 +20,9 @@ export async function commercialAdmin(request: Request) {
 export function commercialError(error: unknown) {
   const code = error instanceof Error ? error.message : "";
   const messages: Record<string, string> = {
+    CALENDAR_STALE: "El calendario cambió. Cierra y vuelve a abrir el panel antes de guardar.",
+    MONTHLY_PERIOD_EXISTS:
+      "Ese mes ya tiene un cobro emitido. Elige un mes posterior; los cobros emitidos conservan su vencimiento.",
     QUOTE_STALE: "La cotización cambió. Cierra y vuelve a abrir el editor antes de guardar.",
     QUOTE_EDIT_LOCKED:
       "Esta propuesta tiene documentos o compromisos. Usa Nueva versión o Duplicar para modificarla.",
@@ -40,7 +43,8 @@ export function commercialError(error: unknown) {
       "El calendario ya está creado. Puedes pausarlo o reactivarlo; los importes acordados se conservan.",
     MONTHLY_CALENDAR_EXISTS:
       "Esta cotización ya tiene un calendario de Finanzas. Adminístralo desde Pagos.",
-    MONTHLY_START_INVALID: "La primera fecha debe ser hoy o posterior.",
+    MONTHLY_START_INVALID:
+      "Elige una fecha entre hoy y dos años, que coincida con el día de cobro mensual.",
     QUOTE_TOTAL_LIMIT: "El total excede el límite permitido para esta cotización.",
   };
   return NextResponse.json(

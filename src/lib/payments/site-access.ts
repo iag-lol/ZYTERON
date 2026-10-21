@@ -6,6 +6,8 @@ import {
   siteSignature,
   decideSiteAccess,
 } from "./site-access-policy";
+import { monthlyContinuity } from "./collection-settings";
+import { legacyViewId } from "@/lib/full-control/legacy-id";
 import { limitedJson } from "./request-body";
 export async function siteAccessResponse(req: Request) {
   const b = (await limitedJson(req).catch(() => null)) as {
@@ -62,9 +64,18 @@ export async function siteAccessResponse(req: Request) {
       now: new Date(),
     });
   }
+  const collection = await monthlyContinuity(legacyViewId("quote", binding.quoteId));
+  if (collection.mode === "MAINTENANCE") mode = "MAINTENANCE";
   const version = siteSignature(
     binding.secret,
-    JSON.stringify([binding.siteId, life?.state, paidThrough?.toISOString(), mode]),
+    JSON.stringify([
+      binding.siteId,
+      life?.state,
+      paidThrough?.toISOString(),
+      mode,
+      collection.suspensionDate,
+      collection.balance,
+    ]),
   );
   if (b.ack === version && mode === "MAINTENANCE")
     await prisma.$executeRaw`UPDATE zyteron_recurring_lifecycle SET maintenance_ack_at=now(),maintenance_version=${version} WHERE quote_id=${binding.quoteId} AND state='CANCELLED'`;

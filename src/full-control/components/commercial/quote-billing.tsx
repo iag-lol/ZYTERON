@@ -82,7 +82,7 @@ export function WebsiteQuoteBillingButton({
   };
   return (
     <>
-      <button onClick={() => setOpen(true)}>
+      <button type="button" onClick={() => setOpen(true)}>
         <CalendarDays size={13} />
         Cobros y modalidad
       </button>

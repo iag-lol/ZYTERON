@@ -3,7 +3,8 @@ import { randomUUID } from "node:crypto";
 import { Temporal } from "@js-temporal/polyfill";
 import { prisma } from "@/lib/prisma";
 import { parseQuoteMessage } from "@/lib/admin/quote";
-import { nativeQuote } from "@/lib/full-control/quote-commercial";
+import { quoteBillingContext, type CollectionSettings } from "./collection-settings";
+import { calendarDate, collectionAnchor } from "./collection-calendar";
 import {
   monthlyNextDate,
   billingPhase,
@@ -29,99 +30,99 @@ export async function monthlyPlan(quoteId: string) {
   >`SELECT id,quote_id,native_quote_id,user_id,label,amount,anchor_date::text,next_due::text,status,reminders_enabled FROM zyteron_monthly_plans WHERE quote_id=${quoteId}::uuid`;
   return rows[0] || null;
 }
+export type MonthlyConfigurationInput = {
+  firstDate: string;
+  status: "DRAFT" | "ACTIVE" | "PAUSED";
+  reminders: boolean;
+  chargeDay?: number;
+  suspensionEnabled?: boolean;
+  graceDays?: number;
+  revision?: number;
+};
 export async function configureMonthly(
   quoteId: string,
-  input: { firstDate: string; status: "ACTIVE" | "PAUSED"; reminders: boolean },
+  input: MonthlyConfigurationInput,
   actorId: string | null,
 ) {
   const today = billingToday();
-  await prisma.$transaction(async (db) => {
-    await db.$queryRaw`SELECT 1 AS locked FROM pg_advisory_xact_lock(hashtext(${"monthly:" + quoteId}))`;
-    const [existing] = await db.$queryRaw<
-      MonthlyPlan[]
-    >`SELECT *,anchor_date::text AS anchor_date,next_due::text AS next_due FROM zyteron_monthly_plans WHERE quote_id=${quoteId}::uuid FOR UPDATE`;
-    if (existing) {
-      const next =
-        existing.status === "PAUSED" && input.status === "ACTIVE" && existing.next_due < today
-          ? monthlyOnOrAfter(existing.anchor_date, today)
-          : existing.next_due;
-      await db.$executeRaw`UPDATE zyteron_monthly_plans SET next_due=${next}::date,status=${input.status},reminders_enabled=${input.reminders},updated_at=now() WHERE id=${existing.id}::uuid`;
-    } else {
+  await prisma.$transaction(
+    async (db) => {
+      await db.$queryRaw`SELECT 1 AS locked FROM pg_advisory_xact_lock(hashtext(${"monthly:" + quoteId}))`;
+      const context = await quoteBillingContext(db, quoteId);
+      if (!context.monthly || context.closed) throw Error("MONTHLY_NOT_ACCEPTED");
+      const [existing] = await db.$queryRaw<
+        MonthlyPlan[]
+      >`SELECT *,anchor_date::text AS anchor_date,next_due::text AS next_due FROM zyteron_monthly_plans WHERE quote_id=${quoteId}::uuid FOR UPDATE`;
+      if (existing && context.userId !== existing.user_id) throw Error("QUOTE_OWNER_LOCKED");
+      const [settings] = await db.$queryRaw<
+        CollectionSettings[]
+      >`SELECT *,first_date::text AS first_date FROM zyteron_quote_collection_settings WHERE quote_id=${quoteId}::uuid FOR UPDATE`;
+      if (input.revision !== undefined && input.revision !== (settings?.revision || 0))
+        throw Error("CALENDAR_STALE");
+      if (input.status !== "DRAFT") {
+        if (context.flow) throw Error("MONTHLY_FLOW_MANAGED");
+        if (context.finance) throw Error("MONTHLY_CALENDAR_EXISTS");
+        if (
+          !context.accepted ||
+          !context.userId ||
+          !Number.isSafeInteger(context.amount) ||
+          context.amount <= 0 ||
+          context.amount > 2147483647
+        )
+          throw Error("MONTHLY_NOT_ACCEPTED");
+      } else if (existing) throw Error("CALENDAR_STALE");
+      const chargeDay = input.chargeDay ?? Temporal.PlainDate.from(input.firstDate).day;
       if (
-        input.firstDate < today ||
-        input.firstDate > Temporal.PlainDate.from(today).add({ years: 2 }).toString()
+        input.chargeDay !== undefined &&
+        calendarDate(input.firstDate, chargeDay) !== input.firstDate
       )
         throw Error("MONTHLY_START_INVALID");
-      const native = await nativeQuote(db, quoteId);
-      let userId: string | null = null,
-        amount = 0,
-        label = "",
-        nativeId: string | null = null;
-      if (native) {
-        const m = parseQuoteMessage(native.message) as ReturnType<typeof parseQuoteMessage> & {
-          controlState?: string;
-        };
-        if (m.payment?.subscription?.subscriptionId || m.payment?.subscription?.registerToken)
-          throw Error("MONTHLY_FLOW_MANAGED");
+      const reschedule =
+        !!existing && input.chargeDay !== undefined && input.firstDate !== existing.next_due;
+      if (!existing || reschedule) {
         if (
-          m.payment?.billingType !== "SUBSCRIPTION" ||
-          !(native.status === "WON" || m.controlState === "ACCEPTED") ||
-          !native.userId
+          input.firstDate < today ||
+          input.firstDate > Temporal.PlainDate.from(today).add({ years: 2 }).toString() ||
+          calendarDate(input.firstDate, chargeDay) !== input.firstDate
         )
-          throw Error("MONTHLY_NOT_ACCEPTED");
-        userId = native.userId;
-        amount = native.total;
-        nativeId = native.id;
-        label = m.quoteCode || m.quoteNumber || "Servicio mensual";
-      } else {
-        const [q] = await db.$queryRaw<
-          Array<{
-            client_id: string;
-            total_amount: number;
-            currency: string;
-            status: string;
-            billing_type: string;
-            quote_number: string;
-          }>
-        >`SELECT client_id,total_amount,currency,status,billing_type,quote_number FROM quotes WHERE id=${quoteId}::uuid FOR UPDATE`;
-        if (
-          !q ||
-          !["ACCEPTED", "CONVERTED"].includes(q.status) ||
-          q.billing_type !== "SUBSCRIPTION" ||
-          q.currency.trim() !== "CLP"
-        )
-          throw Error("MONTHLY_NOT_ACCEPTED");
-        const plans = await db.$queryRaw<
-          Array<{ id: string }>
-        >`SELECT id FROM quote_payment_plans WHERE quote_id=${quoteId}::uuid LIMIT 1`;
-        if (plans.length) throw Error("MONTHLY_CALENDAR_EXISTS");
-        const [l] = await db.$queryRaw<
-          Array<{ user_id: string }>
-        >`SELECT user_id FROM zyteron_legacy_client_link WHERE client_id=${q.client_id}::uuid`;
-        userId = l?.user_id || null;
-        amount = Number(q.total_amount);
-        label = q.quote_number;
+          throw Error("MONTHLY_START_INVALID");
       }
-      if (!userId || !Number.isSafeInteger(amount) || amount <= 0 || amount > 2147483647)
-        throw Error("MONTHLY_NOT_ACCEPTED");
-      await db.$executeRaw`INSERT INTO zyteron_monthly_plans(quote_id,native_quote_id,user_id,label,amount,anchor_date,next_due,status,reminders_enabled) VALUES(${quoteId}::uuid,${nativeId},${userId},${label},${amount},${input.firstDate}::date,${input.firstDate}::date,${input.status},${input.reminders})`;
-    }
-    await db.clientAuditLog.create({
-      data: {
-        actorId,
-        action: "MONTHLY_CALENDAR_CONFIGURED",
-        entityType: "Quote",
-        entityId: quoteId,
-        details: {
-          status: input.status,
-          reminders: input.reminders,
-          firstDate: existing ? undefined : input.firstDate,
-          automaticCardCharge: false,
+      if (reschedule) {
+        const [last] = await db.$queryRaw<
+          Array<{ period: string | null }>
+        >`SELECT max(metadata->>'period') AS period FROM "Receivable" WHERE metadata->>'monthlyPlanId'=${existing.id}`;
+        // Rescheduling never duplicates an already issued month, even when its account is cancelled or paid.
+        if (last?.period && input.firstDate.slice(0, 7) <= last.period.slice(0, 7))
+          throw Error("MONTHLY_PERIOD_EXISTS");
+      }
+      const anchor =
+        input.chargeDay !== undefined
+          ? collectionAnchor(chargeDay)
+          : existing?.anchor_date || input.firstDate;
+      if (existing) {
+        const next = reschedule
+          ? input.firstDate
+          : existing.status === "PAUSED" && input.status === "ACTIVE" && existing.next_due < today
+            ? monthlyOnOrAfter(anchor, today)
+            : existing.next_due;
+        await db.$executeRaw`UPDATE zyteron_monthly_plans SET anchor_date=${anchor}::date,next_due=${next}::date,status=${input.status},reminders_enabled=${input.reminders},updated_at=now() WHERE id=${existing.id}::uuid`;
+      } else if (input.status !== "DRAFT") {
+        await db.$executeRaw`INSERT INTO zyteron_monthly_plans(quote_id,native_quote_id,user_id,label,amount,anchor_date,next_due,status,reminders_enabled) VALUES(${quoteId}::uuid,${context.nativeId},${context.userId},${context.label},${context.amount},${anchor}::date,${input.firstDate}::date,${input.status},${input.reminders})`;
+      }
+      await db.$executeRaw`INSERT INTO zyteron_quote_collection_settings(quote_id,first_date,charge_day,reminders_enabled,suspension_enabled,grace_days) VALUES(${quoteId}::uuid,${input.firstDate}::date,${chargeDay},${input.reminders},${input.suspensionEnabled ?? settings?.suspension_enabled ?? false},${input.graceDays ?? settings?.grace_days ?? 7}) ON CONFLICT(quote_id) DO UPDATE SET first_date=excluded.first_date,charge_day=excluded.charge_day,reminders_enabled=excluded.reminders_enabled,suspension_enabled=excluded.suspension_enabled,grace_days=excluded.grace_days,revision=zyteron_quote_collection_settings.revision+1,updated_at=now()`;
+      await db.clientAuditLog.create({
+        data: {
+          actorId,
+          action: "MONTHLY_CALENDAR_CONFIGURED",
+          entityType: "Quote",
+          entityId: quoteId,
+          details: { ...input, automaticCardCharge: false },
         },
-      },
-    });
-  });
-  await generateMonthlyReceivables();
+      });
+    },
+    { maxWait: 10000, timeout: 20000 },
+  );
+  if (input.status !== "DRAFT") await generateMonthlyReceivables();
   return monthlyPlan(quoteId);
 }
 export async function generateMonthlyReceivables(now = new Date()) {
@@ -147,6 +148,8 @@ export async function generateMonthlyReceivables(now = new Date()) {
           if (
             !q ||
             q.userId !== p.user_id ||
+            q.status === "LOST" ||
+            ["CANCELLED", "DECLINED", "EXPIRED"].includes(m.controlState || "") ||
             !(q.status === "WON" || m.controlState === "ACCEPTED") ||
             m.payment?.subscription?.subscriptionId ||
             m.payment?.subscription?.registerToken
