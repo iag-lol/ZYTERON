@@ -50,9 +50,9 @@ const number = z.number().finite().min(0).max(1e11);
 const party = z.strictObject({
   rut: text(16),
   legalName: text(100),
-  businessActivity: text(80),
-  address: text(70),
-  commune: text(20),
+  businessActivity: z.string().trim().max(80),
+  address: z.string().trim().max(70),
+  commune: z.string().trim().max(20),
   city: z.string().max(20).optional(),
   foreignId: text(20).optional(),
   nationality: z.number().int().positive().optional(),

@@ -471,7 +471,14 @@ export async function renderPrintedDte(
   );
   let y = bannerY - 20;
   y = paragraphs(`RECEPTOR: ${textOf(data.receiver, "RznSocRecep")}`, 36, y, 523, 10, true);
-  text(`RUT: ${displayRut(data.receiverRut)}    ·    Emisión: ${presentDate(data.date)}`, 36, y, 9);
+  const genericReceiver =
+    [39, 41].includes(data.type) && normalizeRut(data.receiverRut) === "66666666-6";
+  text(
+    `${genericReceiver ? "" : `RUT: ${displayRut(data.receiverRut)}    ·    `}Emisión: ${presentDate(data.date)}`,
+    36,
+    y,
+    9,
+  );
   y -= 16;
   for (const value of [
     textOf(data.receiver, "GiroRecep"),

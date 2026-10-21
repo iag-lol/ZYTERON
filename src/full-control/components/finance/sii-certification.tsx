@@ -1032,6 +1032,25 @@ export function SiiCertification() {
                   >
                     Usar emisor como receptor
                   </button>
+                  {set?.format === "BOLETA" ? (
+                    <button
+                      className="fx-btn"
+                      onClick={() =>
+                        updateDraft({
+                          ...draft,
+                          receiver: {
+                            rut: "66666666-6",
+                            legalName: "Consumidor final",
+                            businessActivity: "",
+                            address: "",
+                            commune: "",
+                          },
+                        })
+                      }
+                    >
+                      Consumidor final (RUT genérico)
+                    </button>
+                  ) : null}
                 </div>
                 <CaseEditor
                   key={selected.id}

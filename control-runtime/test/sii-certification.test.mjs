@@ -36,6 +36,13 @@ import {
   boletaVerificationUrl,
 } from "../dist/finance/finance.boleta-lookup.js";
 
+const genericReceiver = {
+  rut: "66666666-6",
+  legalName: "Consumidor final",
+  businessActivity: "",
+  address: "",
+  commune: "",
+};
 const boletaRows = [
   [
     { description: "Cambio de aceite", quantity: 1, unitPrice: 19900, exempt: false },
@@ -95,6 +102,7 @@ test("cinco boletas forman un único sobre y RCOF con totales del set, firmas y 
         caseId: `CASO-${i + 1}`,
         folio: i + 1,
         pricesIncludeVat: true,
+        receiver: genericReceiver,
         lines,
       });
       const built = certificationDocumentXml(f.input, f.caf, certificate);
@@ -104,6 +112,8 @@ test("cinco boletas forman un único sobre y RCOF con totales del set, firmas y 
       );
       assert(built.xml.includes(`<CodRef>SET</CodRef><RazonRef>CASO-${i + 1}</RazonRef>`));
       assert(!built.xml.includes("IndMntNeto"));
+      assert(built.xml.includes(`<RUTProvSW>${company.rut}</RUTProvSW>`));
+      assert(!built.xml.includes("<DirRecep>"));
       return { ...f, ...built };
     });
     assert(docs[4].xml.includes("<UnmdItem>Kg</UnmdItem>"));
@@ -212,6 +222,20 @@ test("cinco boletas forman un único sobre y RCOF con totales del set, firmas y 
     if (old === undefined) delete process.env.FINANCE_ENCRYPTION_KEY;
     else process.env.FINANCE_ENCRYPTION_KEY = old;
   }
+});
+test("receptor genérico no inventa domicilio ni permite omitir datos en facturas o servicios periódicos", () => {
+  const f = fixture(39, { caseId: "CASO-1", receiver: genericReceiver, pricesIncludeVat: true });
+  assert.doesNotThrow(() => certificationDocumentXml(f.input, f.caf, certificate));
+  for (const service of [1, 2])
+    assert.throws(
+      () => certificationDocumentXml({ ...f.input, service }, f.caf, certificate),
+      /no periódico/,
+    );
+  const invoice = fixture(33, { receiver: genericReceiver });
+  assert.throws(
+    () => certificationDocumentXml(invoice.input, invoice.caf, certificate),
+    /Giro|Dirección|Comuna/,
+  );
 });
 test("consulta de boleta verifica código, empresa, tipo, ruta y huella; nunca acepta rutas del visitante", async () => {
   const old = process.env.FINANCE_ENCRYPTION_KEY;

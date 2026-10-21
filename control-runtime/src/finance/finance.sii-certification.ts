@@ -291,11 +291,19 @@ export function certificationDocumentXml(
     "CAF de otro tipo o emisor.",
   );
   need(validRut(input.company.rut) && validRut(input.receiver.rut), "RUT inválido.");
+  const genericReceiver =
+    boolBoleta(input.type) && normalizeRut(input.receiver.rut) === "66666666-6";
+  if (genericReceiver)
+    need(
+      (input.service ?? 3) === 3,
+      "El receptor genérico requiere una boleta de venta o servicio no periódico.",
+    );
   for (const p of [input.company, input.receiver]) {
     safeText(p.legalName, 100, "Razón social");
-    safeText(p.businessActivity, 80, "Giro");
-    safeText(p.address, 70, "Dirección");
-    safeText(p.commune, 20, "Comuna");
+    const optional = genericReceiver && p === input.receiver;
+    if (!optional || p.businessActivity) safeText(p.businessActivity, 80, "Giro");
+    if (!optional || p.address) safeText(p.address, 70, "Dirección");
+    if (!optional || p.commune) safeText(p.commune, 20, "Comuna");
   }
   const b = boolBoleta(input.type),
     exp = input.type >= 110,
@@ -362,8 +370,8 @@ export function certificationDocumentXml(
         ]
       : []),
     ...(!b ? [el("GiroRecep", input.receiver.businessActivity.slice(0, 40))] : []),
-    el("DirRecep", input.receiver.address),
-    el("CmnaRecep", input.receiver.commune),
+    str("DirRecep", input.receiver.address),
+    str("CmnaRecep", input.receiver.commune),
     str("CiudadRecep", input.receiver.city),
   ]);
   const customs = x
@@ -512,6 +520,7 @@ export function certificationDocumentXml(
         el("IdDoc", idDoc),
         emitter,
         receiver,
+        ...(b ? [el("RUTProvSW", formatRut(input.company.rut))] : []),
         transport,
         totals,
         ...(x
