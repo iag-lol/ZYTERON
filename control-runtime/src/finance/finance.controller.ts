@@ -153,6 +153,7 @@ export class FinanceController {
   // ---------------------------------------------------------------- cobros y cobranza
   @Get("payments") paymentsList(@Query() q:Q,@Headers() h:H){return this.payments.list(page(q),actor(h));}
   @Post("payments") recordPayment(@Body() b:any,@Headers() h:H){return this.payments.record(b,actor(h),h["idempotency-key"]);}
+  @Get("payments/:id/evidence") async paymentEvidence(@Param("id") id:string,@Headers() h:H,@Query("download") download:string,@Res({passthrough:true}) res:{setHeader:(key:string,value:string)=>void}){const output=await this.payments.evidence(id,actor(h));const result=file(res,output);res.setHeader("Cache-Control","private, no-store");res.setHeader("X-Content-Type-Options","nosniff");res.setHeader("Referrer-Policy","no-referrer");if(download!=="1")res.setHeader("Content-Disposition",`inline; filename="${output.fileName}"`);return result;}
   @Get("payments/:id") payment(@Param("id") id:string,@Headers() h:H){return this.payments.get(id,actor(h));}
   @Post("payments/:id/confirm") confirmPayment(@Param("id") id:string,@Body() b:any,@Headers() h:H){return this.payments.confirm(id,b,actor(h));}
   @Post("payments/:id/reject") rejectPayment(@Param("id") id:string,@Body() b:any,@Headers() h:H){return this.payments.reject(id,b,actor(h));}

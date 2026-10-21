@@ -21,7 +21,7 @@ export class InvoiceService {
     const page=await this.repo.page<Invoice>("invoices",filters,{...q,order:"createdAt",searchColumns:["invoiceNumber","description"]});return{...page,items:(await this.ctx.withClientNames(page.items)).map((i)=>withEffective(i,today))};
   }
   async get(id:string,actor:FinanceActor){
-    this.ctx.require(actor,"invoice.view");const invoice=await this.ctx.must<Invoice>("invoices",id,"Factura");await this.ctx.assertClientAccess(actor,invoice.clientId);
+    this.ctx.require(actor,"invoice.view");requiredUuid(id,"Factura");const invoice=await this.ctx.must<Invoice>("invoices",id,"Factura");await this.ctx.assertClientAccess(actor,invoice.clientId);
     const[lines,allocations,taxDocuments,credits,events]=await Promise.all([this.repo.list<InvoiceLine>("invoice_lines",{invoiceId:id},{order:"lineNumber",ascending:true}),this.repo.list<PaymentAllocation>("payment_allocations",{invoiceId:id},{order:"allocatedAt"}),this.repo.list<TaxDocument>("tax_documents",{invoiceId:id}),this.repo.list<Invoice>("invoices",{referenceInvoiceId:id}),this.repo.list<Row>("finance_events",{aggregateId:id},{order:"occurredAt"})]);
     const[named]=await this.ctx.withClientNames([invoice]);return{...withEffective(named!),lines,allocations,taxDocuments,relatedNotes:credits,events};
   }

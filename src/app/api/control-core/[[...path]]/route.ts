@@ -233,7 +233,7 @@ async function handle(request: Request, { params }: { params: Promise<{ path?: s
       const merged = await mergeLegacyRead(path, url.searchParams, await result.json());
       return NextResponse.json(merged, { headers: { "cache-control": "no-store" } });
     }
-    const out = new Headers({ "cache-control": "no-store", "x-content-type-options": "nosniff" });
+    const out = new Headers({ "cache-control": "private, no-store", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer" });
     for (const h of ["content-type", "content-disposition"]) {
       const v = result.headers.get(h);
       if (v) out.set(h, v);

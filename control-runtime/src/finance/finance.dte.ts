@@ -71,8 +71,14 @@ export class DteService {
   private async store(path:string,content:string|Buffer,mime="application/xml"){const bytes=Buffer.isBuffer(content)?content:Buffer.from(content,"latin1");await this.repo.saveFile("finance-documents",path,bytes,mime);return{path,sha:sha256(bytes)};}
   private async cafFor(type:number,environment:string,folio:number):Promise<CafData>{const authorization=(await this.repo.list<Row>("tax_folio_authorizations",{documentTypeCode:type,environment,status:"ACTIVE"})).find((a)=>folio>=a.rangeFrom&&folio<=a.rangeTo);if(!authorization)throw new UnprocessableEntityException("No se encontró el CAF del folio reservado.");const encrypted=await this.repo.readFile("finance-secrets",authorization.cafStoragePath);if(!encrypted)throw new UnprocessableEntityException("El archivo CAF no está disponible en el almacenamiento privado.");return parseCaf(decryptSecret(encrypted.toString("utf8")));}
 
+  private async assertNoSubmittedDocument(invoiceId:string){
+    const invoice=await this.ctx.must<Invoice>("invoices",invoiceId,"Factura");
+    const documents=await this.repo.list<TaxDocument>("tax_documents",{invoiceId});
+    if(invoice.taxDocumentId&&!documents.some(document=>document.id===invoice.taxDocumentId))throw new ConflictException("El vínculo tributario requiere revisión antes de una nueva emisión.");
+    if(documents.some(document=>!["DRAFT","VALIDATED","SIGNED","REJECTED","CANCELLED"].includes(document.status)))throw new ConflictException("Existe un documento enviado o emitido vinculado a esta factura. Revisa su estado; no se puede emitir nuevamente.");
+  }
   async issue(invoiceId:string,actor:FinanceActor){
-    this.ctx.requireAny(actor,"dte.issue","invoice.issue");const readiness=await this.readiness(invoiceId);if(!readiness.canIssue)throw new ConflictException({message:"No se puede emitir el DTE: faltan requisitos.",missing:readiness.missing});
+    this.ctx.requireAny(actor,"dte.issue","invoice.issue");await this.assertNoSubmittedDocument(invoiceId);const readiness=await this.readiness(invoiceId);if(!readiness.canIssue)throw new ConflictException({message:"No se puede emitir el DTE: faltan requisitos.",missing:readiness.missing});
     const settings=await this.repo.settings();const environment=settings.dteEnvironment as "CERTIFICATION"|"PRODUCTION";const provider=this.provider(settings.dteProvider)!;
     let invoice=await this.invoices.prepareForIssue(invoiceId,todayCl());
     const pre=structuralErrors({...(await this.buildInput(invoice,"pending",1,null,environment)),caf:null});if(pre.length)throw new UnprocessableEntityException({message:"El documento no cumple el formato SII.",errors:pre});
@@ -119,7 +125,7 @@ export class DteService {
   }
   /** Emisión realizada fuera de Zyteron (portal SII o proveedor) registrada con evidencia verificable. */
   async registerExternal(invoiceId:string,body:Row,actor:FinanceActor){
-    this.ctx.requireAny(actor,"dte.issue","invoice.issue");const issueDate=isoDate(body.issueDate,"Fecha de emisión");const folio=Number(body.folio);if(!Number.isInteger(folio)||folio<=0)throw new BadRequestException("Folio inválido.");
+    this.ctx.requireAny(actor,"dte.issue","invoice.issue");await this.assertNoSubmittedDocument(invoiceId);const issueDate=isoDate(body.issueDate,"Fecha de emisión");const folio=Number(body.folio);if(!Number.isInteger(folio)||folio<=0)throw new BadRequestException("Folio inválido.");
     const evidence=decodeUpload(body.evidence,"Evidencia (XML o PDF del DTE)");const settings=await this.repo.settings();const invoice=await this.invoices.prepareForIssue(invoiceId,issueDate);
     if(evidence.fileName.toLowerCase().endsWith(".xml")){const[parsed]=parseReceivedXml(evidence.bytes);const problems=[parsed!.documentTypeCode!==invoice.documentTypeCode&&"tipo de documento",parsed!.folio!==folio&&"folio",settings.companyRut&&normalizeRut(parsed!.issuerRut)!==normalizeRut(settings.companyRut)&&"RUT emisor",normalizeRut(parsed!.receiverRut)!==normalizeRut(invoice.clientSnapshot.rut)&&"RUT receptor",Math.round(parsed!.totalAmount)!==Math.round(invoice.totalAmount)&&`monto total (XML ${money(parsed!.totalAmount)} vs ${money(invoice.totalAmount)})`,parsed!.issueDate!==issueDate&&"fecha"].filter(Boolean);if(problems.length)throw new UnprocessableEntityException(`El XML no coincide con la factura: ${problems.join(", ")}.`);}
     const stored=await this.store(`dte/external/${invoice.documentTypeCode}/${folio}/${evidence.sha256.slice(0,12)}-${evidence.fileName}`,evidence.bytes,evidence.mimeType);

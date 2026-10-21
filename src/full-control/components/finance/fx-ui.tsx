@@ -13,8 +13,9 @@ export function useLoad<T>(loader:()=>Promise<T>,deps:unknown[]){
   useEffect(()=>{void reload();},[reload]);return{data,error,loading,reload,setData};
 }
 export function useAction(after?:()=>unknown){
+  const running=useRef(false);
   const[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
-  const run=useCallback(async<T,>(work:()=>Promise<T>,message?:string)=>{setBusy(true);setError("");setNotice("");try{const result=await work();if(message)setNotice(message);await after?.();return result;}catch(reason){setError(errorText(reason));return undefined;}finally{setBusy(false);}},[after]);
+  const run=useCallback(async<T,>(work:()=>Promise<T>,message?:string)=>{if(running.current)return undefined;running.current=true;setBusy(true);setError("");setNotice("");try{const result=await work();if(message)setNotice(message);await after?.();return result;}catch(reason){setError(errorText(reason));return undefined;}finally{running.current=false;setBusy(false);}},[after]);
   return{busy,error,notice,run,setError,setNotice};
 }
 export function Feedback({error,notice}:{error?:string;notice?:string}){if(!error&&!notice)return null;return <div className={`fx-feedback ${error?"bad":"good"}`} role={error?"alert":"status"}>{error?<AlertTriangle size={15}/>:<CheckCircle2 size={15}/>}<span>{error||notice}</span></div>;}

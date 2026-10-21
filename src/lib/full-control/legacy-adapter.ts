@@ -1,4 +1,7 @@
 import "server-only";
+import { historicalPaymentEvidence } from "./historical-payment-evidence";
+import { historicalReceivableDetail, historicalReceivableInclude } from "./historical-finance";
+import { projectHistoricalReceivable } from "./historical-receivable";
 import { portfolioClientCount } from "./portfolio-projection";
 import { createHash } from "node:crypto";
 import { legacyViewId } from "./legacy-id";
@@ -529,15 +532,27 @@ export async function handleLegacyDetail(request: Request, path: string, payload
       { status: 409 },
     );
   }
+  if (parts[0] === "finance" && parts[1] === "invoices" && parts[2]) {
+    const canonical = await prisma.$queryRaw<Array<{ id: string }>>`SELECT id FROM invoices WHERE id::text=${parts[2]}`;
+    if (!canonical.length) {
+      const historical = await historicalReceivableDetail(parts[2]);
+      if (historical) {
+        if (request.method === "GET" && parts.length === 3)
+          return NextResponse.json(historical, { headers: { "cache-control": "private, no-store" } });
+        return NextResponse.json({ message: "Esta obligación histórica es de consulta. No admite emisión tributaria ni modificaciones desde Facturas." }, { status: 409 });
+      }
+    }
+  }
   if (parts[0] === "finance" && parts[1] === "payments" && parts[2]) {
     const p = s.payments.find((p) => id("payment", p.id) === parts[2]);
     if (!p) return null;
-    if (request.method === "GET") {
+    if (request.method === "GET" && (parts.length === 3 || (parts.length === 4 && parts[3] === "evidence"))) {
       const actual = await prisma.payment.findUnique({
         where: { id: p.id },
         include: { allocations: { include: { receivable: true } } },
       });
       if (!actual) return null;
+      if (parts[3] === "evidence") return historicalPaymentEvidence(actual, new URL(request.url).searchParams.get("download") === "1");
       const allocated = actual.allocations.reduce((sum, a) => sum + a.amount, 0);
       return NextResponse.json({
         id: parts[2],
@@ -1032,76 +1047,9 @@ export async function handleLegacyDetail(request: Request, path: string, payload
 }
 async function legacyInvoices(s: ControlData, ls: Link[]) {
   const records = await prisma.receivable.findMany({
-    where: { id: { in: s.debts.map((d) => d.id) } },
+    where: { id: { in: s.debts.map(d => d.id) } }, include: historicalReceivableInclude,
   });
-  return s.debts.map((d) => {
-    const source = records.find((r) => r.id === d.id)!;
-    const overdue = !!d.dueAt && d.dueAt < s.asOf && d.balance > 0;
-    return {
-      id: id("receivable", d.id),
-      invoiceNumber: "AR-" + d.id.slice(0, 8).toUpperCase(),
-      documentTypeCode: 0,
-      clientId: clientId(ls, d.clientId),
-      clientName:
-        s.users.find((u) => u.id === d.clientId)?.company ||
-        s.users.find((u) => u.id === d.clientId)?.name ||
-        null,
-      saleId: source.saleId,
-      contractId: null,
-      projectId: source.projectId ? id("project", source.projectId) : null,
-      clientServiceId: null,
-      billingScheduleId: null,
-      referenceInvoiceId: null,
-      referenceCode: null,
-      referenceReason: null,
-      currency: d.currency,
-      exchangeRate: 1,
-      netAmount: null,
-      exemptAmount: null,
-      taxAmount: null,
-      totalAmount: d.total,
-      taxRate: null,
-      taxRuleVersionId: null,
-      amountPaid: d.total - d.balance,
-      amountCredited: 0,
-      balanceDue: d.balance,
-      status: d.balance === 0 ? "PAID" : d.balance < d.total ? "PARTIALLY_PAID" : "ISSUED",
-      effectiveStatus:
-        d.balance === 0
-          ? "PAID"
-          : overdue
-            ? "OVERDUE"
-            : d.balance < d.total
-              ? "PARTIALLY_PAID"
-              : "ISSUED",
-      issueDate: source.issuedAt.toISOString().slice(0, 10),
-      dueDate: d.dueAt?.slice(0, 10) || null,
-      paymentTermsDays: null,
-      paymentTerms: null,
-      description: d.description,
-      notes: "Obligación histórica de la web; no corresponde a la emisión de un nuevo DTE.",
-      clientSnapshot: {
-        legalName:
-          s.users.find((u) => u.id === d.clientId)?.company ||
-          s.users.find((u) => u.id === d.clientId)?.name ||
-          null,
-      },
-      taxDocumentId: source.taxDocumentId,
-      approvalRequired: false,
-      approvedBy: null,
-      approvedAt: null,
-      issuedAt: source.issuedAt.toISOString(),
-      cancelledAt: null,
-      cancelReason: null,
-      createdBy: null,
-      createdAt: source.createdAt.toISOString(),
-      updatedAt: source.updatedAt.toISOString(),
-      lines: [],
-      daysOverdue: overdue
-        ? Math.floor((new Date(s.asOf).getTime() - new Date(d.dueAt!).getTime()) / 86_400_000)
-        : 0,
-    };
-  });
+  return records.map(source => projectHistoricalReceivable(source, clientId(ls, source.clientId), new Date(s.asOf)));
 }
 function legacyAging(invoices: Awaited<ReturnType<typeof legacyInvoices>>, asOf: string) {
   const buckets = [
