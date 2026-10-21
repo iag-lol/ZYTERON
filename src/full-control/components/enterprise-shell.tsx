@@ -4,7 +4,7 @@ import {signOut} from "next-auth/react";
 import Link from "@control/components/routed-link";
 import { usePathname } from "@control/lib/client-navigation";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import type { AuditFinding, AuditRun, Client, Role, SupportTicket } from "@zyteron/contracts";
 import { roles } from "@zyteron/contracts";
 import type { Session } from "@supabase/supabase-js";
@@ -134,13 +134,16 @@ export function EnterpriseShell({ children, verifiedIdentity }: { children: Reac
                 </button>
                 {!collapsed && isOpen ? (
                   <div className="navSubmenu">
-                    {group.items.map((item) => {
+                    {group.items.map((item, index) => {
                       const active = item.href === activeItem?.href;
                       return (
-                        <Link className={active ? "active" : ""} href={item.href} prefetch="auto" key={item.href} onClick={() => setMobileOpen(false)}>
+                        <Fragment key={item.href}>
+                          {item.section && item.section !== group.items[index - 1]?.section ? <span className="navSectionLabel">{item.section}</span> : null}
+                        <Link className={active ? "active" : ""} href={item.href} prefetch="auto" onClick={() => setMobileOpen(false)}>
                           <span>{item.label}</span>
                           {item.badge ? <b>{item.badge}</b> : null}
                         </Link>
+                        </Fragment>
                       );
                     })}
                   </div>

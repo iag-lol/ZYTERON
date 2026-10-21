@@ -10,3 +10,14 @@
 @media(max-width:1280px){:where(.zy-full-control) .hrMetricGrid{grid-template-columns:repeat(4,1fr)}:where(.zy-full-control) .hrPeopleGrid,:where(.zy-full-control) .hrCatalog,:where(.zy-full-control) .hrOrgBranches,:where(.zy-full-control) .hrLifecycle{grid-template-columns:repeat(2,1fr)}:where(.zy-full-control) .hrReports{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:900px){:where(.zy-full-control) .hrPage{padding:20px 16px 50px}:where(.zy-full-control) .hrPageHeader{align-items:flex-start;flex-direction:column}:where(.zy-full-control) .hrHero{grid-template-columns:1fr;padding:28px}:where(.zy-full-control) .hrCommandGrid,:where(.zy-full-control) .hrEmployeeGrid,:where(.zy-full-control) .hrTime{grid-template-columns:1fr}:where(.zy-full-control) .hrMetricGrid{grid-template-columns:repeat(2,1fr)}:where(.zy-full-control) .hrEmployeeHero{grid-template-columns:auto 1fr}:where(.zy-full-control) .hrEmployeeHero aside{grid-column:1/3}:where(.zy-full-control) .hrPayrollFlow{grid-template-columns:repeat(3,1fr)}:where(.zy-full-control) .hrSettings,:where(.zy-full-control) .hrIntegrationGrid{grid-template-columns:1fr}:where(.zy-full-control) .hrPeopleGrid,:where(.zy-full-control) .hrCatalog,:where(.zy-full-control) .hrOrgBranches,:where(.zy-full-control) .hrLifecycle{grid-template-columns:1fr}}
 @media(max-width:560px){:where(.zy-full-control) .hrMetricGrid,:where(.zy-full-control) .hrStatusStrip,:where(.zy-full-control) .hrLeaveSnapshot,:where(.zy-full-control) .hrReports{grid-template-columns:1fr}:where(.zy-full-control) .hrFormGrid{grid-template-columns:1fr}:where(.zy-full-control) .hrHeaderActions{width:100%}:where(.zy-full-control) .hrHeaderActions button{flex:1}:where(.zy-full-control) .hrPayrollFlow{grid-template-columns:repeat(2,1fr)}}
+
+:where(.zy-full-control) .hrViewState{margin:0 0 16px;padding:18px;display:flex;align-items:flex-start;gap:12px;border:1px solid #dce7e0;border-radius:13px;background:#fffdf7;color:#3f574b}
+:where(.zy-full-control) .hrViewState>svg{width:20px;flex:0 0 auto;color:#8b691e}
+:where(.zy-full-control) .hrViewState strong{font-size:14px}
+:where(.zy-full-control) .hrViewState p,:where(.zy-full-control) .hrRecordNote{font-size:12px;line-height:1.6;color:#63776f}
+:where(.zy-full-control) .hrViewState p{margin:7px 0}
+:where(.zy-full-control) .hrViewState a,:where(.zy-full-control) .hrRecords a,:where(.zy-full-control) .hrBackLink{display:inline-flex;align-items:center;gap:6px;color:#125a43;font-size:12px;font-weight:700}
+:where(.zy-full-control) .hrViewState a svg,:where(.zy-full-control) .hrRecords a svg{width:14px}
+:where(.zy-full-control) .hrBackLink{margin-bottom:14px}
+:where(.zy-full-control) .hrPanel[id]{scroll-margin-top:100px}
+:where(.zy-full-control) .hrPanel>.hrRecordNote{padding:0 19px 12px}

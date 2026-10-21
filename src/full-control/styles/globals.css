@@ -444,6 +444,7 @@
 :where(.zy-full-control) .isCollapsed .navGroupButton { grid-template-columns: 1fr; justify-items: center; padding: 0; }
 :where(.zy-full-control) .navSubmenu { position: relative; margin: 3px 0 8px 19px; padding-left: 19px; display: grid; }
 :where(.zy-full-control) .navSubmenu::before { content: ""; position: absolute; inset: 2px auto 2px 0; width: 1px; background: rgba(255,255,255,.1); }
+:where(.zy-full-control) .navSectionLabel{display:block;margin:13px 10px 5px;color:#8bada0;font-size:10px;line-height:1.4;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
 :where(.zy-full-control) .navSubmenu a { min-height: 32px; padding: 7px 9px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-radius: 7px; color: #8fa79d; text-decoration: none; font-size: 12px; }
 :where(.zy-full-control) .navSubmenu a:hover { color: white; background: rgba(255,255,255,.06); }
 :where(.zy-full-control) .navSubmenu a.active { color: #132a22; background: var(--green-bright); font-weight: 800; }

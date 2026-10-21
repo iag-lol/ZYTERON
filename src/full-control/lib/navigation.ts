@@ -1,3 +1,4 @@
+import { hrSections, hrNavigationOrder } from "./hr-presentation";
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
@@ -19,6 +20,7 @@ export interface NavigationItem {
   label: string;
   href: string;
   badge?: string;
+  section?: string;
 }
 
 export interface NavigationGroup {
@@ -224,7 +226,7 @@ export const enterpriseNavigation: NavigationGroup[] = [
       { label: "Vencimientos", href: "/hr/expirations" },
       { label: "Informes", href: "/hr/reports" },
       { label: "Configuración RR.HH.", href: "/hr/settings" },
-    ],
+    ].sort((a,b) => hrNavigationOrder(a.href)-hrNavigationOrder(b.href)).map(item => ({ ...item, section: hrSections.find(section => (section.views as readonly string[]).includes(item.href === "/hr" ? "command" : item.href.split("/")[2]!))?.label })),
   },
   {
     id: "finance",
