@@ -13,7 +13,8 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
-    "test": "node --import tsx --test \"src/**/*.test.ts\""
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
+    "test:dte-certificate": "node --test scripts/prepare-dte-certificate.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

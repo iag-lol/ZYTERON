@@ -52,3 +52,8 @@ graphify-out/
 /control-runtime/node_modules/
 /control-runtime/dist/
 /control-runtime/contracts/dist/
+
+# Private signing certificates and keys
+*.pfx
+*.p12
+*.key

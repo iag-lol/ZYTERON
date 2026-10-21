@@ -6,7 +6,7 @@ Estado al 21-10-2026: emisión tributaria en producción pendiente de activació
 
 El certificado debe pertenecer al firmante autorizado para operar por Zyteron SpA. La compra y validación de identidad se completan personalmente en el proveedor acreditado. No se comparte la clave por chat ni se carga el PFX en formularios generales.
 
-Opción revisada: Acepta, certificado descargable de tres años, $21.990 netos y $26.168 con IVA al 21-10-2026. Confirmar el importe final antes de pagar: https://acepta.com/certificado-digital/.
+Certificado Acepta adquirido, activado y descargado. Pendientes: apertura local con su clave, comprobación de vigencia y correspondencia de llave, instalación en el servidor y autorización tributaria. La activación del proveedor no acredita autorización del SII.
 
 El secreto de firma se configura exclusivamente en el servidor existente:
 
@@ -16,6 +16,35 @@ El secreto de firma se configura exclusivamente en el servidor existente:
 - `DTE_SENDER_RUT`: RUT del firmante autorizado; no se deduce del RUT empresarial.
 
 Si se usa otra referencia, la clave corresponde a `<REFERENCIA>_PASSPHRASE`. Los archivos se convierten en un equipo confiable, con permisos de lectura restringidos y sin contraseñas en argumentos ni historial. El PEM, PFX y claves no se incorporan a Git, base de datos, logs o frontend. Registrar en Finanzas → Configuración contable únicamente los metadatos del secreto instalado.
+
+## Preparación local del certificado
+
+La herramienta de preparación requiere macOS, Node y `/usr/bin/openssl`. No realiza conexiones de red, no instala secretos en Render y no envía documentos al SII.
+
+```sh
+node scripts/prepare-dte-certificate.mjs
+```
+
+Selecciona únicamente un PFX/P12 regular descargado durante las últimas 24 horas. Si existen varios, requiere elegir expresamente el archivo mediante `--file`. La clave se ingresa en Terminal con entrada oculta; nunca se incluye en argumentos ni variables de entorno.
+
+La preparación valida una única llave RSA de al menos 2048 bits, su correspondencia con el certificado y las fechas de vigencia. No comprueba la cadena de confianza ni las facultades del firmante ante el SII. El archivo original permanece intacto.
+
+Los archivos resultantes se guardan fuera de Git, en `~/Library/Application Support/Zyteron/Certificates/zyteron-dte-*`, con directorios 0700 y archivos 0600:
+
+- `certificate.encrypted.pem`: llave PKCS#8 cifrada con AES-256-CBC, certificado del firmante primero y cadena adjunta.
+- `passphrase.txt`: clave aleatoria de la exportación, distinta de la clave original del PFX.
+- `metadata.json`: huella, titular, emisor, fechas y límites de la validación.
+- `installation.txt`: nombres de secretos y destino previsto, sin valores privados.
+
+La clave de exportación y el PEM se almacenan en el mismo equipo; esos permisos restringen el acceso a otros usuarios, pero no protegen frente a una sesión local comprometida. Ambos archivos requieren custodia privada y una transferencia autorizada al servidor. No adjuntarlos a incidencias, correos o chats.
+
+La instalación en el servicio existente requiere aprobación específica del destino y de cualquier reinicio o despliegue. Registrar metadatos solamente después de comprobar que el secreto está instalado en el servidor correcto.
+
+Pruebas de la herramienta, únicamente con certificados sintéticos:
+
+```sh
+npm run test:dte-certificate
+```
 
 ## Activación
 
