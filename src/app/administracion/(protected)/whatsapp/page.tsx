@@ -9,8 +9,13 @@ export const metadata: Metadata = {
 export default async function WhatsappPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ conversation?: string }>;
+  searchParams?: Promise<{ conversation?: string; search?: string }>;
 }) {
   const query = await searchParams;
-  return <WhatsappInbox initialConversationId={query?.conversation ?? null} />;
+  return (
+    <WhatsappInbox
+      initialConversationId={query?.conversation ?? null}
+      initialSearch={query?.search ?? ""}
+    />
+  );
 }

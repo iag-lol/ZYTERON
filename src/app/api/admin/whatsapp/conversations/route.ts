@@ -14,6 +14,9 @@ export async function GET() {
     return NextResponse.json({ conversations });
   } catch (err) {
     console.error("[whatsapp] list error:", err);
-    return NextResponse.json({ conversations: [] });
+    return NextResponse.json(
+      { error: "No fue posible cargar las conversaciones de WhatsApp." },
+      { status: 503 },
+    );
   }
 }

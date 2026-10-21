@@ -84,11 +84,7 @@ export async function upsertConversationByPhone(input: {
   const supabase = db();
   const phone = input.phone.replace(/\D/g, "");
 
-  const { data: existing } = await supabase
-    .from(CONV)
-    .select("*")
-    .eq("phone", phone)
-    .maybeSingle();
+  const { data: existing } = await supabase.from(CONV).select("*").eq("phone", phone).maybeSingle();
 
   if (existing) {
     const patch: Record<string, unknown> = {};
@@ -199,7 +195,9 @@ export async function insertOutboundMessage(input: {
 
 export async function updateMessage(
   id: string,
-  patch: Partial<Pick<WaMessage, "status" | "meta_message_id" | "error_message" | "delivered_at" | "read_at">>,
+  patch: Partial<
+    Pick<WaMessage, "status" | "meta_message_id" | "error_message" | "delivered_at" | "read_at">
+  >,
 ): Promise<void> {
   await db().from(MSG).update(patch).eq("id", id);
 }
@@ -261,12 +259,13 @@ export function isWindowOpen(conv: Pick<WaConversation, "window_expires_at">): b
 // -- Consultas y gestión para el panel --------------------------------------
 
 export async function listConversations(limit = 100): Promise<WaConversation[]> {
-  const { data } = await db()
+  const { data, error } = await db()
     .from(CONV)
     .select("*")
     .order("last_message_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(limit);
+  if (error) throw error;
   return (data as WaConversation[]) ?? [];
 }
 
@@ -324,7 +323,11 @@ export type WaNote = {
   created_at: string;
 };
 
-export async function addNote(conversationId: string, note: string, userId?: string | null): Promise<WaNote | null> {
+export async function addNote(
+  conversationId: string,
+  note: string,
+  userId?: string | null,
+): Promise<WaNote | null> {
   const { data, error } = await db()
     .from(NOTES)
     .insert({ conversation_id: conversationId, note: note.slice(0, 4000), user_id: userId ?? null })

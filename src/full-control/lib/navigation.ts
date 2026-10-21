@@ -48,6 +48,8 @@ export const enterpriseNavigation: NavigationGroup[] = [
       { label: "Sales Command Center", href: "/commercial" },
       { label: "CRM", href: "/commercial/crm" },
       { label: "Leads", href: "/commercial/leads" },
+      { label: "WhatsApp", href: "/commercial/whatsapp" },
+      { label: "Chat web", href: "/conversaciones-web" },
       { label: "Oportunidades", href: "/commercial/opportunities" },
       { label: "Pipeline", href: "/commercial/pipeline" },
       { label: "Seguimientos", href: "/commercial/follow-ups" },

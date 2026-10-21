@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { applyWhatsappCommercialMigration } from "./apply-whatsapp-commercial.mjs";
 process.env.NODE_ENV ||= "production";
 process.env.CONTROL_EMBEDDED = "true";
 if (process.env.SUPABASE_URL) process.env.SUPABASE_URL = new URL(process.env.SUPABASE_URL).origin;
@@ -30,6 +31,7 @@ for (const [name, value] of Object.entries({
 }))
   process.env[name] ||= value;
 // Both servers share one Node process and memory budget on the existing paid service.
+await applyWhatsappCommercialMigration();
 const { bootstrapControlApi } = await import(
   pathToFileURL(resolve("control-runtime/dist/main.js")).href
 );

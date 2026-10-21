@@ -50,6 +50,18 @@ type QuoteActionResult = Partial<SalesQuote> & {
   portalPreparation?: string;
 };
 export const commercialApi = {
+  allLeads: async (role: Role) => {
+    const items: SalesLead[] = [];
+    let page = 1;
+    let totalPages = 1;
+    do {
+      const result = await request<Page<SalesLead>>(role, `/leads?pageSize=100&page=${page}`);
+      items.push(...result.items);
+      totalPages = result.totalPages;
+      page++;
+    } while (page <= totalPages);
+    return [...new Map(items.map((lead) => [lead.id, lead])).values()];
+  },
   summary: (role: Role) => request<CommercialSummary>(role, "/commercial/summary"),
   activity: (role: Role) => request<CommercialEvent[]>(role, "/commercial/activity"),
   stages: (role: Role) => request<SalesPipelineStage[]>(role, "/commercial/pipeline-stages"),

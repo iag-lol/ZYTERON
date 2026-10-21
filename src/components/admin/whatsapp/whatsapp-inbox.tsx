@@ -85,7 +85,13 @@ const LEAD_STATUSES = [
 
 function initials(name?: string | null, phone?: string) {
   const base = (name || "").trim();
-  if (base) return base.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  if (base)
+    return base
+      .split(" ")
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase();
   return (phone || "?").slice(-2);
 }
 
@@ -95,8 +101,21 @@ function formatTime(iso: string | null) {
   if (Number.isNaN(d.getTime())) return "";
   const today = new Date();
   const sameDay = d.toDateString() === today.toDateString();
-  if (sameDay) return d.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
-  return d.toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" });
+  if (sameDay)
+    return d.toLocaleTimeString("es-CL", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "America/Santiago",
+    });
+  return d
+    .toLocaleDateString("es-CL", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      timeZone: "America/Santiago",
+    })
+    .replaceAll("/", "-");
 }
 
 function StatusTicks({ status }: { status: string }) {
@@ -109,21 +128,30 @@ function StatusTicks({ status }: { status: string }) {
 }
 
 function modeBadge(mode: string) {
-  if (mode === "human") return { label: "Humano", cls: "bg-emerald-50 text-emerald-700 ring-emerald-200" };
-  if (mode === "assisted") return { label: "Asistido", cls: "bg-amber-50 text-amber-700 ring-amber-200" };
+  if (mode === "human")
+    return { label: "Humano", cls: "bg-emerald-50 text-emerald-700 ring-emerald-200" };
+  if (mode === "assisted")
+    return { label: "Asistido", cls: "bg-amber-50 text-amber-700 ring-amber-200" };
   return { label: "IA", cls: "bg-blue-50 text-blue-700 ring-blue-200" };
 }
 
 // -- Componente principal ----------------------------------------------------
 
-export function WhatsappInbox({ initialConversationId = null }: { initialConversationId?: string | null }) {
+export function WhatsappInbox({
+  initialConversationId = null,
+  initialSearch = "",
+}: {
+  initialConversationId?: string | null;
+  initialSearch?: string;
+}) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingChat, setLoadingChat] = useState(false);
   const [notes, setNotes] = useState<Note[]>([]);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
+  const [loadError, setLoadError] = useState("");
   const [filter, setFilter] = useState<Filter>("todas");
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -135,28 +163,33 @@ export function WhatsappInbox({ initialConversationId = null }: { initialConvers
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const activeIdRef = useRef<string | null>(null);
+  const initialOpened = useRef(false);
   activeIdRef.current = activeId;
 
-  const active = useMemo(() => conversations.find((c) => c.id === activeId) ?? null, [conversations, activeId]);
+  const active = useMemo(
+    () => conversations.find((c) => c.id === activeId) ?? null,
+    [conversations, activeId],
+  );
 
   // -- Carga inicial ---------------------------------------------------------
   const fetchConversations = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/whatsapp/conversations", { cache: "no-store" });
-      const data = (await res.json().catch(() => null)) as { conversations?: Conversation[] } | null;
+      const data = (await res.json().catch(() => null)) as {
+        conversations?: Conversation[];
+      } | null;
+      if (!res.ok || !data?.conversations)
+        throw new Error("No fue posible cargar las conversaciones. Vuelve a intentarlo.");
+      setLoadError("");
       if (data?.conversations) {
         setConversations(data.conversations);
-        if (initialConversationId && data.conversations.some((item) => item.id === initialConversationId)) {
-          setActiveId((current) => current ?? initialConversationId);
-          setMobileView("chat");
-        }
       }
-    } catch {
-      /* noop */
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "No fue posible cargar WhatsApp.");
     } finally {
       setLoadingList(false);
     }
-  }, [initialConversationId]);
+  }, []);
 
   useEffect(() => {
     void fetchConversations();
@@ -189,7 +222,8 @@ export function WhatsappInbox({ initialConversationId = null }: { initialConvers
     const upsertConv = (row: Conversation) => {
       setConversations((prev) => {
         const idx = prev.findIndex((c) => c.id === row.id);
-        const next = idx >= 0 ? prev.map((c) => (c.id === row.id ? { ...c, ...row } : c)) : [row, ...prev];
+        const next =
+          idx >= 0 ? prev.map((c) => (c.id === row.id ? { ...c, ...row } : c)) : [row, ...prev];
         return next.sort(
           (a, b) =>
             new Date(b.last_message_at || b.created_at).getTime() -
@@ -200,33 +234,49 @@ export function WhatsappInbox({ initialConversationId = null }: { initialConvers
 
     const channel = client
       .channel("whatsapp-inbox")
-      .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_conversations" }, (payload) => {
-        if (payload.new && typeof payload.new === "object") upsertConv(payload.new as Conversation);
-      })
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "whatsapp_messages" }, (payload) => {
-        const msg = payload.new as Message;
-        if (msg.conversation_id === activeIdRef.current) {
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === msg.id)) return prev;
-            // Reemplaza un temporal equivalente (optimista) si existe.
-            const tempIdx = prev.findIndex(
-              (m) => m.id.startsWith("temp-") && m.direction === msg.direction && m.content === msg.content,
-            );
-            if (tempIdx >= 0) {
-              const copy = [...prev];
-              copy[tempIdx] = msg;
-              return copy;
-            }
-            return [...prev, msg];
-          });
-        }
-      })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "whatsapp_messages" }, (payload) => {
-        const msg = payload.new as Message;
-        if (msg.conversation_id === activeIdRef.current) {
-          setMessages((prev) => prev.map((m) => (m.id === msg.id ? { ...m, ...msg } : m)));
-        }
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "whatsapp_conversations" },
+        (payload) => {
+          if (payload.new && typeof payload.new === "object")
+            upsertConv(payload.new as Conversation);
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "whatsapp_messages" },
+        (payload) => {
+          const msg = payload.new as Message;
+          if (msg.conversation_id === activeIdRef.current) {
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === msg.id)) return prev;
+              // Reemplaza un temporal equivalente (optimista) si existe.
+              const tempIdx = prev.findIndex(
+                (m) =>
+                  m.id.startsWith("temp-") &&
+                  m.direction === msg.direction &&
+                  m.content === msg.content,
+              );
+              if (tempIdx >= 0) {
+                const copy = [...prev];
+                copy[tempIdx] = msg;
+                return copy;
+              }
+              return [...prev, msg];
+            });
+          }
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "whatsapp_messages" },
+        (payload) => {
+          const msg = payload.new as Message;
+          if (msg.conversation_id === activeIdRef.current) {
+            setMessages((prev) => prev.map((m) => (m.id === msg.id ? { ...m, ...msg } : m)));
+          }
+        },
+      )
       .subscribe((status) => {
         setRealtimeOk(status === "SUBSCRIBED");
       });
@@ -248,14 +298,18 @@ export function WhatsappInbox({ initialConversationId = null }: { initialConvers
     const refreshMessages = async () => {
       if (document.visibilityState !== "visible") return;
       try {
-        const res = await fetch(`/api/admin/whatsapp/conversations/${activeId}`, { cache: "no-store" });
+        const res = await fetch(`/api/admin/whatsapp/conversations/${activeId}`, {
+          cache: "no-store",
+        });
         const data = (await res.json().catch(() => null)) as { messages?: Message[] } | null;
         if (cancelled || !data?.messages) return;
         const server = data.messages;
         setMessages((prev) => {
           // Conserva mensajes optimistas (temp-) que el servidor aún no refleja.
           const temps = prev.filter(
-            (m) => m.id.startsWith("temp-") && !server.some((s) => s.direction === m.direction && s.content === m.content),
+            (m) =>
+              m.id.startsWith("temp-") &&
+              !server.some((s) => s.direction === m.direction && s.content === m.content),
           );
           return [...server, ...temps];
         });
@@ -296,6 +350,19 @@ export function WhatsappInbox({ initialConversationId = null }: { initialConvers
     setTimeout(() => inputRef.current?.focus(), 100);
   }, []);
 
+  useEffect(() => {
+    if (initialOpened.current || !conversations.length) return;
+    const digits = initialSearch.replace(/\D/g, "");
+    const target = conversations.find((item) =>
+      initialConversationId
+        ? item.id === initialConversationId
+        : digits.length >= 7 && item.phone.replace(/\D/g, "") === digits,
+    );
+    if (!target) return;
+    initialOpened.current = true;
+    void openConversation(target.id);
+  }, [conversations, initialConversationId, initialSearch, openConversation]);
+
   // Auto-scroll al último mensaje.
   useEffect(() => {
     const el = scrollRef.current;
@@ -311,7 +378,9 @@ export function WhatsappInbox({ initialConversationId = null }: { initialConvers
   }, [input]);
 
   // -- Enviar mensaje --------------------------------------------------------
-  const windowOpen = active?.window_expires_at ? new Date(active.window_expires_at).getTime() > currentTime : false;
+  const windowOpen = active?.window_expires_at
+    ? new Date(active.window_expires_at).getTime() > currentTime
+    : false;
 
   const sendMessage = useCallback(async () => {
     const text = input.trim();
@@ -342,7 +411,9 @@ export function WhatsappInbox({ initialConversationId = null }: { initialConvers
       const data = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === tempId ? { ...m, status: data?.ok ? "sent" : "failed", error_message: data?.error ?? null } : m,
+          m.id === tempId
+            ? { ...m, status: data?.ok ? "sent" : "failed", error_message: data?.error ?? null }
+            : m,
         ),
       );
     } catch {
@@ -365,7 +436,9 @@ export function WhatsappInbox({ initialConversationId = null }: { initialConvers
       });
       const data = (await res.json().catch(() => null)) as { conversation?: Conversation } | null;
       if (data?.conversation) {
-        setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, ...data.conversation! } : c)));
+        setConversations((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, ...data.conversation! } : c)),
+        );
       }
     } catch {
       /* noop */
@@ -375,7 +448,8 @@ export function WhatsappInbox({ initialConversationId = null }: { initialConvers
   const deleteConversation = useCallback(async () => {
     const id = activeIdRef.current;
     if (!id) return;
-    if (!window.confirm("¿Eliminar esta conversación y todos sus mensajes de forma permanente?")) return;
+    if (!window.confirm("¿Eliminar esta conversación y todos sus mensajes de forma permanente?"))
+      return;
     setConversations((prev) => prev.filter((c) => c.id !== id));
     setActiveId(null);
     setMessages([]);
@@ -397,18 +471,26 @@ export function WhatsappInbox({ initialConversationId = null }: { initialConvers
       if (filter === "assisted" && c.mode !== "assisted") return false;
       if (filter === "cerradas" && c.status !== "closed") return false;
       if (filter === "archivadas" && c.status !== "archived") return false;
-      if (filter !== "cerradas" && filter !== "archivadas" && (c.status === "closed" || c.status === "archived")) {
+      if (
+        filter !== "cerradas" &&
+        filter !== "archivadas" &&
+        (c.status === "closed" || c.status === "archived")
+      ) {
         if (filter !== "todas") return false;
       }
       if (q) {
-        const hay = `${c.customer_name ?? ""} ${c.profile_name ?? ""} ${c.phone} ${c.company ?? ""}`.toLowerCase();
+        const hay =
+          `${c.customer_name ?? ""} ${c.profile_name ?? ""} ${c.phone} ${c.company ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
   }, [conversations, filter, search]);
 
-  const totalUnread = useMemo(() => conversations.reduce((a, c) => a + (c.unread_count || 0), 0), [conversations]);
+  const totalUnread = useMemo(
+    () => conversations.reduce((a, c) => a + (c.unread_count || 0), 0),
+    [conversations],
+  );
 
   return (
     <div className="flex h-[calc(100vh-7rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -425,22 +507,27 @@ export function WhatsappInbox({ initialConversationId = null }: { initialConvers
               <MessageCircle className="h-4 w-4 text-emerald-600" />
               WhatsApp
               {totalUnread > 0 && (
-                <span className="rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">{totalUnread}</span>
+                <span className="rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">
+                  {totalUnread}
+                </span>
               )}
             </h2>
             {usingRealtime && !realtimeOk && (
-              <span className="flex items-center gap-1 text-[10px] font-medium text-amber-600" title="Reconectando…">
+              <span
+                className="flex items-center gap-1 text-[10px] font-medium text-amber-600"
+                title="Reconectando…"
+              >
                 <Loader2 className="h-3 w-3 animate-spin" /> Reconectando
               </span>
             )}
           </div>
           <div className="relative mt-2.5">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nombre, teléfono…"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-8 pr-3 text-[13px] text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pr-3 pl-8 text-[13px] text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:outline-none"
             />
           </div>
           <div className="mt-2 flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none]">
@@ -459,7 +546,9 @@ export function WhatsappInbox({ initialConversationId = null }: { initialConvers
                 onClick={() => setFilter(key)}
                 className={cn(
                   "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors",
-                  filter === key ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200",
+                  filter === key
+                    ? "bg-blue-600 text-white"
+                    : "bg-slate-100 text-slate-500 hover:bg-slate-200",
                 )}
               >
                 {label}
@@ -469,10 +558,21 @@ export function WhatsappInbox({ initialConversationId = null }: { initialConvers
         </header>
 
         <div className="flex-1 overflow-y-auto">
+          {loadError ? (
+            <p role="alert" className="p-4 text-sm text-rose-700">
+              {loadError}
+              <button className="block underline" onClick={() => void fetchConversations()}>
+                Reintentar
+              </button>
+            </p>
+          ) : null}
           {loadingList ? (
             <ListSkeleton />
-          ) : filtered.length === 0 ? (
-            <EmptyState icon={<MessageCircle className="h-6 w-6" />} text="No hay conversaciones aquí." />
+          ) : filtered.length === 0 && !loadError ? (
+            <EmptyState
+              icon={<MessageCircle className="h-6 w-6" />}
+              text="No hay conversaciones aquí."
+            />
           ) : (
             filtered.map((c) => (
               <ConversationItem
@@ -507,15 +607,23 @@ export function WhatsappInbox({ initialConversationId = null }: { initialConvers
               onBack={() => setMobileView("list")}
               onOpenFicha={() => setMobileView("ficha")}
               onSetMode={(mode) => void patchConversation({ mode })}
-              onClose={() => void patchConversation({ status: active.status === "closed" ? "open" : "closed" })}
+              onClose={() =>
+                void patchConversation({ status: active.status === "closed" ? "open" : "closed" })
+              }
               onDelete={() => void deleteConversation()}
             />
 
-            <div ref={scrollRef} className="flex-1 space-y-2 overflow-y-auto bg-slate-50 px-3 py-4 sm:px-5">
+            <div
+              ref={scrollRef}
+              className="flex-1 space-y-2 overflow-y-auto bg-slate-50 px-3 py-4 sm:px-5"
+            >
               {loadingChat ? (
                 <ChatSkeleton />
               ) : messages.length === 0 ? (
-                <EmptyState icon={<MessageCircle className="h-6 w-6" />} text="Sin mensajes todavía." />
+                <EmptyState
+                  icon={<MessageCircle className="h-6 w-6" />}
+                  text="Sin mensajes todavía."
+                />
               ) : (
                 messages.map((m) => <MessageBubble key={m.id} msg={m} />)
               )}
@@ -568,7 +676,15 @@ export function WhatsappInbox({ initialConversationId = null }: { initialConvers
 
 // -- Subcomponentes ----------------------------------------------------------
 
-function ConversationItem({ conv, active, onClick }: { conv: Conversation; active: boolean; onClick: () => void }) {
+function ConversationItem({
+  conv,
+  active,
+  onClick,
+}: {
+  conv: Conversation;
+  active: boolean;
+  onClick: () => void;
+}) {
   const badge = modeBadge(conv.mode);
   return (
     <button
@@ -586,7 +702,9 @@ function ConversationItem({ conv, active, onClick }: { conv: Conversation; activ
           <span className="truncate text-[13.5px] font-semibold text-slate-800">
             {conv.customer_name || conv.profile_name || `+${conv.phone}`}
           </span>
-          <span className="shrink-0 text-[11px] text-slate-400">{formatTime(conv.last_message_at)}</span>
+          <span className="shrink-0 text-[11px] text-slate-400">
+            {formatTime(conv.last_message_at)}
+          </span>
         </span>
         <span className="mt-0.5 flex items-center justify-between gap-2">
           <span className="truncate text-[12px] text-slate-500">{conv.last_message || "—"}</span>
@@ -597,9 +715,13 @@ function ConversationItem({ conv, active, onClick }: { conv: Conversation; activ
           )}
         </span>
         <span className="mt-1 flex items-center gap-1.5">
-          <span className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1", badge.cls)}>{badge.label}</span>
+          <span className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1", badge.cls)}>
+            {badge.label}
+          </span>
           {conv.status === "closed" && (
-            <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">Cerrada</span>
+            <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
+              Cerrada
+            </span>
           )}
         </span>
       </span>
@@ -627,7 +749,10 @@ function ChatHeader({
   return (
     <header className="flex flex-col gap-2 border-b border-slate-200 px-3 py-2.5 sm:px-4">
       <div className="flex items-center gap-2">
-        <button onClick={onBack} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden">
+        <button
+          onClick={onBack}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden"
+        >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-[12px] font-bold text-white">
@@ -646,7 +771,10 @@ function ChatHeader({
             )}
           </p>
         </div>
-        <button onClick={onOpenFicha} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden">
+        <button
+          onClick={onOpenFicha}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden"
+        >
           <Info className="h-4 w-4" />
         </button>
       </div>
@@ -666,7 +794,9 @@ function ChatHeader({
               onClick={() => onSetMode(mode as string)}
               className={cn(
                 "flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-colors",
-                activeMode ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200",
+                activeMode
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200",
               )}
             >
               <IconC className="h-3.5 w-3.5" />
@@ -679,7 +809,11 @@ function ChatHeader({
           onClick={onClose}
           className="flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition-colors hover:bg-slate-200"
         >
-          {conv.status === "closed" ? <Play className="h-3.5 w-3.5" /> : <CircleCheck className="h-3.5 w-3.5" />}
+          {conv.status === "closed" ? (
+            <Play className="h-3.5 w-3.5" />
+          ) : (
+            <CircleCheck className="h-3.5 w-3.5" />
+          )}
           {conv.status === "closed" ? "Reabrir" : "Cerrar"}
         </button>
         <button
@@ -697,7 +831,8 @@ function ChatHeader({
 
 function MessageBubble({ msg }: { msg: Message }) {
   const isOut = msg.direction === "out";
-  const senderLabel = msg.sender_type === "ai" ? "IA" : msg.sender_type === "human" ? "Ejecutivo" : "";
+  const senderLabel =
+    msg.sender_type === "ai" ? "IA" : msg.sender_type === "human" ? "Ejecutivo" : "";
   return (
     <div className={cn("flex", isOut ? "justify-end" : "justify-start")}>
       <div
@@ -718,10 +853,17 @@ function MessageBubble({ msg }: { msg: Message }) {
           </span>
         )}
         {msg.message_type !== "text" && (
-          <span className="mb-0.5 block text-[11px] font-semibold uppercase opacity-70">[{msg.message_type}]</span>
+          <span className="mb-0.5 block text-[11px] font-semibold uppercase opacity-70">
+            [{msg.message_type}]
+          </span>
         )}
-        <span className="whitespace-pre-wrap break-words">{msg.content}</span>
-        <span className={cn("mt-0.5 flex items-center justify-end gap-1 text-[10px]", isOut ? "text-white/80" : "text-slate-400")}>
+        <span className="break-words whitespace-pre-wrap">{msg.content}</span>
+        <span
+          className={cn(
+            "mt-0.5 flex items-center justify-end gap-1 text-[10px]",
+            isOut ? "text-white/80" : "text-slate-400",
+          )}
+        >
           {formatTime(msg.created_at)}
           {isOut && <StatusTicks status={msg.status} />}
         </span>
@@ -755,7 +897,8 @@ function Composer({
       {!windowOpen && (
         <p className="mb-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-[11px] font-medium text-amber-700">
           <Clock className="h-3.5 w-3.5" />
-          Ventana de 24h cerrada. Solo se pueden enviar plantillas aprobadas hasta que el cliente escriba.
+          Ventana de 24h cerrada. Solo se pueden enviar plantillas aprobadas hasta que el cliente
+          escriba.
         </p>
       )}
       <div className="flex items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-100">
@@ -772,7 +915,9 @@ function Composer({
           rows={1}
           disabled={disabled}
           maxLength={4000}
-          placeholder={disabled ? "Mensaje libre no disponible (ventana cerrada)" : "Escribe un mensaje…"}
+          placeholder={
+            disabled ? "Mensaje libre no disponible (ventana cerrada)" : "Escribe un mensaje…"
+          }
           className="max-h-36 flex-1 resize-none overflow-y-auto bg-transparent text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:opacity-60"
         />
         <button
@@ -824,7 +969,7 @@ function FichaPanel({
           const value = key === "estimated_budget" ? Number(form[key]) || null : form[key] || null;
           onPatch({ [key]: value });
         }}
-        className="mt-0.5 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[12.5px] text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+        className="mt-0.5 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[12.5px] text-slate-700 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:outline-none"
       />
     </label>
   );
@@ -832,7 +977,10 @@ function FichaPanel({
   return (
     <div className="flex h-full flex-col">
       <header className="flex items-center gap-2 border-b border-slate-200 px-3 py-2">
-        <button onClick={onBack} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden">
+        <button
+          onClick={onBack}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden"
+        >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <h3 className="text-[13px] font-bold text-slate-900">Ficha del cliente</h3>
@@ -891,7 +1039,9 @@ function FichaPanel({
           {field("Nombre", "customer_name")}
           <div className="block">
             <span className="text-[10.5px] font-semibold text-slate-500">Teléfono</span>
-            <p className="mt-0.5 rounded-lg bg-slate-50 px-2.5 py-1 text-[12.5px] text-slate-600">+{conv.phone}</p>
+            <p className="mt-0.5 rounded-lg bg-slate-50 px-2.5 py-1 text-[12.5px] text-slate-600">
+              +{conv.phone}
+            </p>
           </div>
           {field("Correo", "email", "email")}
           {field("Empresa", "company")}
@@ -903,13 +1053,15 @@ function FichaPanel({
 
         {/* Notas internas */}
         <div>
-          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-400">Notas internas</p>
+          <p className="mb-1.5 text-[11px] font-bold tracking-wide text-slate-400 uppercase">
+            Notas internas
+          </p>
           <div className="flex gap-1.5">
             <input
               value={noteText}
               onChange={(e) => setNoteText(e.target.value)}
               placeholder="Agregar nota…"
-              className="flex-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[12px] focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="flex-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[12px] focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:outline-none"
             />
             <button
               onClick={async () => {
@@ -927,7 +1079,10 @@ function FichaPanel({
           </div>
           <div className="mt-2 space-y-1.5">
             {notes.map((n) => (
-              <div key={n.id} className="rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1.5">
+              <div
+                key={n.id}
+                className="rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1.5"
+              >
                 <p className="text-[12px] text-slate-700">{n.note}</p>
                 <p className="mt-0.5 text-[10px] text-slate-400">{formatTime(n.created_at)}</p>
               </div>
@@ -962,7 +1117,9 @@ function ChatSkeleton() {
     <div className="space-y-3 p-2">
       {[0, 1, 2, 3].map((i) => (
         <div key={i} className={cn("flex", i % 2 ? "justify-end" : "justify-start")}>
-          <div className={cn("h-10 animate-pulse rounded-2xl bg-slate-200", i % 2 ? "w-40" : "w-52")} />
+          <div
+            className={cn("h-10 animate-pulse rounded-2xl bg-slate-200", i % 2 ? "w-40" : "w-52")}
+          />
         </div>
       ))}
     </div>
@@ -971,7 +1128,12 @@ function ChatSkeleton() {
 
 function EmptyState({ icon, text, big }: { icon: React.ReactNode; text: string; big?: boolean }) {
   return (
-    <div className={cn("flex flex-col items-center justify-center gap-2 px-6 text-center text-slate-400", big ? "h-full" : "py-14")}>
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center gap-2 px-6 text-center text-slate-400",
+        big ? "h-full" : "py-14",
+      )}
+    >
       <span className="text-slate-300">{icon}</span>
       <p className="text-[13px]">{text}</p>
     </div>

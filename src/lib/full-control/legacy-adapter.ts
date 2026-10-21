@@ -278,6 +278,9 @@ export function legacyReadPath(path: string) {
   );
 }
 export async function mergeLegacyRead(path: string, params: URLSearchParams, body: unknown) {
+  // Website and WhatsApp records are persisted in leads by database triggers.
+  // The API already filtered and paginated them; slicing again drops page two.
+  if (path === "/leads") return body;
   const s = await controlSnapshot(),
     ls = await links();
   const mirroredProjects = await prisma.$queryRaw<

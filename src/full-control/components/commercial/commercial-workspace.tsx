@@ -140,14 +140,26 @@ export function CommercialWorkspace({
       setBusyAction("");
     }
   };
-  const refresh = useCallback(async () => {
-    setLoading(true);
+  const refresh = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setError("");
     try {
+      if (section === "leads") {
+        const results = await Promise.allSettled([
+          commercialApi.allLeads(role), commercialApi.sources(role), usersDirectoryApi.list(role),
+        ]);
+        if (results[0].status === "fulfilled") setLeads(results[0].value);
+        if (results[1].status === "fulfilled") setSources(results[1].value);
+        if (results[2].status === "fulfilled") setUsers(results[2].value);
+        const labels = ["Leads", "Orígenes", "Directorio"];
+        setError(results.flatMap((result, index) => result.status === "rejected"
+          ? [`${labels[index]}: ${result.reason instanceof Error ? result.reason.message : "No disponible"}`] : []).join(" · "));
+        return;
+      }
       const scope = initialClientId ? `&clientId=${encodeURIComponent(initialClientId)}` : "";
-      const data = await Promise.all([
+      const data = await Promise.allSettled([
         commercialApi.summary(role),
-        commercialApi.leads(role),
+        commercialApi.allLeads(role),
         commercialApi.opportunities(role, scope),
         commercialApi.followUps(role, scope),
         commercialApi.allQuotes(role, scope),
@@ -161,30 +173,61 @@ export function CommercialWorkspace({
         commercialApi.stages(role),
         commercialApi.activity(role),
       ]);
-      setSummary(data[0]);
-      setLeads(data[1].items);
-      setOpportunities(data[2].items);
-      setFollowUps(data[3].items);
-      setQuotes(data[4]);
-      setSales(data[5].items);
-      setGoals(data[6]);
-      setCommissions(data[7]);
-      setHandoffs(data[8]);
-      setCatalog(data[9]);
-      setSources(data[10]);
-      setUsers(data[11]);
-      setStages(data[12]);
-      setEvents(data[13]);
+      const apply = <T,>(result: PromiseSettledResult<T>, setter: (value: T) => void) => {
+        if (result.status === "fulfilled") setter(result.value);
+      };
+      apply(data[0], setSummary);
+      apply(data[1], setLeads);
+      apply(data[2], (value) => setOpportunities(value.items));
+      apply(data[3], (value) => setFollowUps(value.items));
+      apply(data[4], setQuotes);
+      apply(data[5], (value) => setSales(value.items));
+      apply(data[6], setGoals);
+      apply(data[7], setCommissions);
+      apply(data[8], setHandoffs);
+      apply(data[9], setCatalog);
+      apply(data[10], setSources);
+      apply(data[11], setUsers);
+      apply(data[12], setStages);
+      apply(data[13], setEvents);
+      const labels = [
+        "Resumen",
+        "Leads",
+        "Oportunidades",
+        "Seguimientos",
+        "Cotizaciones",
+        "Ventas",
+        "Metas",
+        "Comisiones",
+        "Handoff",
+        "Catálogo",
+        "Orígenes",
+        "Directorio",
+        "Etapas",
+        "Actividad",
+      ];
+      const failures = data.flatMap((result, index) =>
+        result.status === "rejected"
+          ? [
+              `${labels[index]}: ${result.reason instanceof Error ? result.reason.message : "No disponible"}`,
+            ]
+          : [],
+      );
+      setError(failures.join(" · "));
     } catch (e) {
       setError(e instanceof Error ? e.message : "No fue posible cargar Comercial.");
     } finally {
       setLoading(false);
     }
-  }, [role, initialClientId]);
+  }, [role, initialClientId, section]);
   useEffect(() => {
     void refresh();
-    return subscribeToCommercial(() => void refresh());
-  }, [refresh]);
+    const unsubscribe = subscribeToCommercial(() => void refresh(true));
+    const timer = section === "leads" ? window.setInterval(() => {
+      if (document.visibilityState === "visible") void refresh(true);
+    }, 20_000) : null;
+    return () => { unsubscribe(); if (timer !== null) window.clearInterval(timer); };
+  }, [refresh, section]);
   const title = {
     command: "Sales Command Center",
     leads: "Lead Inbox",
@@ -237,6 +280,7 @@ export function CommercialWorkspace({
         {[
           ["command", "Centro"],
           ["leads", "Leads"],
+          ["whatsapp", "WhatsApp"],
           ["opportunities", "Oportunidades"],
           ["pipeline", "Pipeline"],
           ["follow-ups", "Seguimientos"],
@@ -725,6 +769,19 @@ function LeadInbox({
                   <h3>{lead.companyName}</h3>
                   <p>{lead.contactName}</p>
                   <p>{lead.email || lead.phone || lead.whatsapp}</p>
+                  {lead.interest ? <p>{lead.interest}</p> : null}
+                  <small>{formatDateTime(lead.createdAt)}</small>
+                  {lead.whatsapp ? (
+                    <Link
+                      href={
+                        lead.whatsappConversationId
+                          ? `/commercial/whatsapp?conversation=${encodeURIComponent(lead.whatsappConversationId)}`
+                          : `/commercial/whatsapp?search=${encodeURIComponent(lead.whatsapp.replace(/\D/g, ""))}`
+                      }
+                    >
+                      Abrir chat de WhatsApp
+                    </Link>
+                  ) : null}
                   <footer>
                     {lead.status !== "QUALIFIED" &&
                     lead.status !== "CONVERTED" &&

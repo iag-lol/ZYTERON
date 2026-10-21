@@ -9,16 +9,26 @@ import { siteConfig } from "@/config/site";
 function env(name: string) {
   const value = process.env[name];
   if (typeof value !== "string") return "";
-  return value.trim().replace(/^['"]|['"]$/g, "").trim();
+  return value
+    .trim()
+    .replace(/^['"]|['"]$/g, "")
+    .trim();
 }
 
 function esc(v: string) {
-  return String(v || "").replace(/[<>&"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c] || c));
+  return String(v || "").replace(
+    /[<>&"]/g,
+    (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" })[c] || c,
+  );
 }
 
 function clp(n: number) {
   try {
-    return new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(Number(n) || 0);
+    return new Intl.NumberFormat("es-CL", {
+      style: "currency",
+      currency: "CLP",
+      maximumFractionDigits: 0,
+    }).format(Number(n) || 0);
   } catch {
     return `$${Math.round(n || 0)}`;
   }
@@ -52,7 +62,7 @@ function renderHtml(input: QuoteAlertInput) {
     )
     .join("");
 
-  const adminUrl = `${siteConfig.url}/admin/cotizaciones`;
+  const adminUrl = `${siteConfig.url}/administracion/commercial/quotes`;
 
   return `<!doctype html><html lang="es"><body style="margin:0;background:#f1f5f9;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:28px 12px;">
@@ -105,7 +115,9 @@ function renderHtml(input: QuoteAlertInput) {
   </table></body></html>`;
 }
 
-export async function sendQuoteAlertEmail(input: QuoteAlertInput): Promise<{ sent: boolean; reason?: string }> {
+export async function sendQuoteAlertEmail(
+  input: QuoteAlertInput,
+): Promise<{ sent: boolean; reason?: string }> {
   const apiKey = env("RESEND_API_KEY");
   if (!apiKey) {
     console.log("[quote-alert] omitido: falta RESEND_API_KEY");
@@ -114,7 +126,10 @@ export async function sendQuoteAlertEmail(input: QuoteAlertInput): Promise<{ sen
   const from = env("RESEND_FROM_EMAIL") || `Zyteron <noreply@${siteConfig.domain}>`;
   const to =
     env("RESEND_LEAD_TO_EMAIL") || env("CHECKOUT_ALERT_EMAILS") || siteConfig.contact.email;
-  const recipients = to.split(/[,;]/).map((s) => s.trim()).filter(Boolean);
+  const recipients = to
+    .split(/[,;]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   try {
     const res = await fetch("https://api.resend.com/emails", {

@@ -108,6 +108,7 @@ export type QuoteStatus = (typeof quoteStatuses)[number];
 export interface SalesPipeline { id:string; name:string; isDefault:boolean; active:boolean; }
 export interface SalesPipelineStage { id:string; pipelineId:string; code:string; name:string; position:number; probability:number; kind:"OPEN"|"WON"|"LOST"; active:boolean; }
 export interface SalesLead {
+  whatsappConversationId?:string|null;
   id:string; companyName:string; contactName:string; email:string|null; phone:string|null; whatsapp:string|null; website:string|null; rut:string|null;
   sourceId:string|null; sourceName:string|null; campaign:string|null; interest:string|null; notes:string|null; assignedTo:string|null; status:LeadStatus;
   score:number|null; scoreReason:string; nextActionAt:string|null; clientId:string|null; assignedBy:string|null; assignedAt:string|null;
