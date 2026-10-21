@@ -127,6 +127,7 @@ test("cinco boletas forman un único sobre y RCOF con totales del set, firmas y 
       "CERTIFICATION",
     );
     assert.equal((envelope.match(/<DTE version=/g) || []).length, 5);
+    assert(Math.max(...envelope.split(/\r?\n/).map((line) => Buffer.byteLength(line, "latin1"))) <= 4090);
     assert(envelope.includes("<NroDTE>5</NroDTE>"));
     await validateCertificationXml(envelope, "EnvioBOLETA_v11.xsd");
     assert.equal(
@@ -145,11 +146,16 @@ test("cinco boletas forman un único sobre y RCOF con totales del set, firmas y 
     };
     const fileName = "sii-cert-11111111-1111-4111-8111-111111111111.xml";
     await provider.validateCertificationArtifact(envelope, company.rut, fileName);
+    await assert.rejects(
+      () => provider.validateCertificationArtifact(envelope.replace(/\n/g, ""), company.rut, fileName),
+      /4090 bytes por línea/,
+    );
     assert.equal(authentications, 0);
     const uploadEnvelope = await certificationBoletaUploadEnvelope(
       envelope, company, "33333333-3", certificate, "CERTIFICATION",
     );
     assert(!uploadEnvelope.includes("RUTProvSW"));
+    assert(Math.max(...uploadEnvelope.split(/\r?\n/).map((line) => Buffer.byteLength(line, "latin1"))) <= 4090);
     assert(envelope.includes("RUTProvSW"));
     assert.deepEqual(
       uploadEnvelope.match(/<TED\b[\s\S]*?<\/TED>/g),
@@ -223,6 +229,7 @@ test("cinco boletas forman un único sobre y RCOF con totales del set, firmas y 
     ])
       assert(rcof.includes(fragment));
     await validateCertificationXml(rcof, "ConsumoFolio_v10.xsd");
+    assert(Math.max(...rcof.split(/\r?\n/).map((line) => Buffer.byteLength(line, "latin1"))) <= 4090);
     verifySiiXmlSignatures(rcof, certificate.certificate.fingerprint256);
     const output = process.env.ZYTERON_BOLETA_QA_OUTPUT;
     if (output) {

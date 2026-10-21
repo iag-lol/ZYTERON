@@ -540,7 +540,7 @@ export function certificationDocumentXml(
       ...commissions,
       el("TED", [dd, el("FRMT", frmt, { algoritmo: "SHA1withRSA" })], { version: "1.0" }),
       el("TmstFirma", now),
-    ],
+    ].flatMap((part) => [part, "\n"]),
     { ID: id },
   );
   const canonical = content.replace(
@@ -548,7 +548,7 @@ export function certificationDocumentXml(
     `<${root} xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" `,
   );
   const signature = xmlSignature(canonical, `#${id}`, certificate, ` xmlns:xsi="${XSI_NS}"`);
-  return { xml: el("DTE", [content, signature], { version: "1.0" }), totals: t };
+  return { xml: el("DTE", [content, "\n", signature], { version: "1.0" }), totals: t };
 }
 
 export function certificationEnvelope(
@@ -628,11 +628,12 @@ export function certificationEnvelope(
     ],
     { version: "1.0" },
   );
-  const content = el("SetDTE", [cover, ...documents], { ID: "SetDoc" });
+  // El receptor clásico limita cada línea a 4090 bytes; los separadores preceden a la firma.
+  const content = el("SetDTE", [cover, "\n", ...documents.flatMap((document) => [document, "\n"])], { ID: "SetDoc" });
   const canonical = content.replace("<SetDTE ", `<SetDTE xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" `);
   return (
     '<?xml version="1.0" encoding="ISO-8859-1"?>\n' +
-    el(root, [content, xmlSignature(canonical, "#SetDoc", certificate, ` xmlns:xsi="${XSI_NS}"`)], {
+    el(root, [content, "\n", xmlSignature(canonical, "#SetDoc", certificate, ` xmlns:xsi="${XSI_NS}"`)], {
       xmlns: SII_NS,
       "xmlns:xsi": XSI_NS,
       version: boleta ? "1.0" : "1.0",
@@ -674,7 +675,7 @@ export async function certificationBoletaUploadEnvelope(
     Number(textOf(cover, "NroResol")) === company.resolutionNumber,
     "La carátula no coincide con el proceso de certificación.",
   );
-  const source = [...xml.matchAll(/<DTE version="1\.0">(<Documento ID="F\d+T(?:39|41)">[\s\S]*?<\/Documento>)<Signature\b[\s\S]*?<\/Signature><\/DTE>/g)];
+  const source = [...xml.matchAll(/<DTE version="1\.0">(<Documento ID="F\d+T(?:39|41)">[\s\S]*?<\/Documento>)\s*<Signature\b[\s\S]*?<\/Signature><\/DTE>/g)];
   need(source.length === children(child(parseXml(xml), "SetDTE"), "DTE").length && source.length > 0,
     "El sobre debe conservar la estructura generada para certificación.");
   const documents = source.map((match) => {
@@ -686,7 +687,7 @@ export async function certificationBoletaUploadEnvelope(
     need(content !== original && !content.includes("<RUTProvSW>"), "Proveedor de software duplicado.");
     const id = parseXml(content).attrs.ID!;
     const canonical = content.replace("<Documento ", `<Documento xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" `);
-    return el("DTE", [content, xmlSignature(canonical, `#${id}`, certificate, ` xmlns:xsi="${XSI_NS}"`)], { version: "1.0" });
+    return el("DTE", [content, "\n", xmlSignature(canonical, `#${id}`, certificate, ` xmlns:xsi="${XSI_NS}"`)], { version: "1.0" });
   });
   const result = certificationEnvelope(documents, company, senderRut, certificate, environment);
   await validateCertificationXml(result, "EnvioBOLETA_v11.xsd");

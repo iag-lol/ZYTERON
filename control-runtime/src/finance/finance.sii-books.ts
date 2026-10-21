@@ -80,11 +80,11 @@ function signedContainer(
   certificate: LoadedCertificate,
   schema: string,
 ) {
-  const content = el(tag, body, { ID: id }),
+  const content = el(tag, body.flatMap((part) => [part, "\n"]), { ID: id }),
     canonical = content.replace(`<${tag} `, `<${tag} xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" `);
   return (
     '<?xml version="1.0" encoding="ISO-8859-1"?>\n' +
-    el(root, [content, xmlSignature(canonical, `#${id}`, certificate, ` xmlns:xsi="${XSI_NS}"`)], {
+    el(root, [content, "\n", xmlSignature(canonical, `#${id}`, certificate, ` xmlns:xsi="${XSI_NS}"`)], {
       xmlns: SII_NS,
       "xmlns:xsi": XSI_NS,
       version: "1.0",
