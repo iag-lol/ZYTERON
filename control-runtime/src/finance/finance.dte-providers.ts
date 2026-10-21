@@ -3,6 +3,7 @@ import { createHash, createPrivateKey, createPublicKey, createSign, X509Certific
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join,resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { DteRequirement } from "@zyteron/contracts";
 import { validateXML } from "xmllint-wasm";
 import { child, descendants, local, parseXml, path, textOf, type XmlNode } from "./finance.formats.js";
@@ -104,7 +105,7 @@ export function structuralErrors(input:DteDocumentInput):string[]{
 /** Validación offline contra los cuatro XSD oficiales publicados por el SII, mediante libxml2/WASM. */
 @Injectable()
 export class DteSchemaValidator {
-  directory(){const configured=process.env.DTE_XSD_DIR?.trim();if(configured)return configured;for(const candidate of [resolve(process.cwd(),"apps/api/resources/sii/xsd"),resolve(process.cwd(),"resources/sii/xsd")])if(existsSync(join(candidate,"EnvioDTE_v10.xsd")))return candidate;return null;}
+  directory(){const configured=process.env.DTE_XSD_DIR?.trim();if(configured)return configured;for(const candidate of [fileURLToPath(new URL("../../resources/sii/xsd/",import.meta.url)),resolve(process.cwd(),"apps/api/resources/sii/xsd"),resolve(process.cwd(),"resources/sii/xsd")])if(existsSync(join(candidate,"EnvioDTE_v10.xsd")))return candidate;return null;}
   available(){const dir=this.directory();return Boolean(dir&&["EnvioDTE_v10.xsd","DTE_v10.xsd","SiiTypes_v10.xsd","xmldsignature_v10.xsd"].every((file)=>existsSync(join(dir,file))));}
   async validate(xml:string,schema="EnvioDTE_v10.xsd"):Promise<string[]>{
     const dir=this.directory();if(!dir||!this.available())return["Los cuatro esquemas XSD oficiales del SII no están disponibles en el servidor."];
@@ -122,9 +123,9 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
   constructor(private readonly certificates:DteCertificateProvider,private readonly schema:DteSchemaValidator){super();}
   secretRef(){return process.env.DTE_CERTIFICATE_SECRET_REF?.trim()||"DTE_CERTIFICATE_PEM";}
   async requirements():Promise<DteRequirement[]>{
-    const ref=this.secretRef();let certificate:DteRequirement;try{const meta=this.certificates.metadata(ref);const days=Math.floor((Date.parse(meta.expiresAt)-Date.now())/86400000);certificate={key:"certificate_secret",label:"Certificado digital en secreto del servidor",satisfied:days>0,detail:days>0?`Vigente, vence en ${days} días.`:"Certificado vencido."};}
+    const ref=this.secretRef();let certificate:DteRequirement;try{const meta=this.certificates.metadata(ref);const remaining=Date.parse(meta.expiresAt)-Date.now(),days=Math.ceil(remaining/86400000),valid=remaining>0&&Date.parse(meta.validFrom)<=Date.now();certificate={key:"certificate_secret",label:"Certificado digital en secreto del servidor",satisfied:valid,detail:valid?`Vigente, vence en ${days} días.`:"Certificado vencido o aún no vigente."};}
     catch(error){certificate={key:"certificate_secret",label:"Certificado digital en secreto del servidor",satisfied:false,detail:(error as Error).message};}
-    return[certificate,{key:"xsd",label:"Validación XSD oficial (libxml2/WASM + esquemas SII)",satisfied:this.schema.available(),detail:this.schema.available()?"Los cuatro esquemas oficiales están disponibles y la validación no depende del sistema operativo.":"Incluye los XSD oficiales o configura DTE_XSD_DIR."}];
+    return[certificate,{key:"sender",label:"RUT del firmante configurado",satisfied:validRut(process.env.DTE_SENDER_RUT??""),detail:"DTE_SENDER_RUT debe identificar al titular del certificado autorizado para enviar por la empresa."},{key:"xsd",label:"Validación XSD oficial (libxml2/WASM + esquemas SII)",satisfied:this.schema.available(),detail:this.schema.available()?"Los cuatro esquemas oficiales están disponibles y la validación no depende del sistema operativo.":"Incluye los XSD oficiales o configura DTE_XSD_DIR."}];
   }
   async createDraft(input:DteDocumentInput){
     if(!input.caf)throw new UnprocessableEntityException("Falta el CAF para timbrar el documento.");const id=`F${input.folio}T${input.documentTypeCode}`;const first=input.lines[0]!;
@@ -144,8 +145,9 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
   async sign(documentXml:string,input:DteDocumentInput){const certificate=this.certificates.load(this.secretRef());const inScope=` xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}"`;const canonical=documentXml.replace(/^<Documento /,`<Documento${inScope} `);const signature=xmlSignature(canonical,`#F${input.folio}T${input.documentTypeCode}`,certificate,` xmlns:xsi="${XSI_NS}"`);return`<DTE version="1.0">${documentXml}${signature}</DTE>`;}
   /** Versión archivable del DTE firmado: declara los mismos namespaces usados al firmar. */
   standalone(signedDte:string){return`<?xml version="1.0" encoding="ISO-8859-1"?>\n${signedDte.replace(/^<DTE version="1.0">/,`<DTE xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" version="1.0">`)}`;}
+  senderRut(){const rut=process.env.DTE_SENDER_RUT?.trim();if(!rut||!validRut(rut))throw new UnprocessableEntityException("Configura DTE_SENDER_RUT con el RUT válido del titular autorizado del certificado.");return formatRut(rut);}
   envelope(signedDtes:string[],input:DteDocumentInput){
-    const certificate=this.certificates.load(this.secretRef());const sender=formatRut(process.env.DTE_SENDER_RUT??input.company.rut);
+    const certificate=this.certificates.load(this.secretRef());const sender=this.senderRut();
     const counts=new Map<number,number>();counts.set(input.documentTypeCode,signedDtes.length);
     const caratula=el("Caratula",[el("RutEmisor",siiRut(input.company.rut)),el("RutEnvia",siiRut(sender)),el("RutReceptor","60803000-K"),el("FchResol",input.company.resolutionDate),el("NroResol",input.company.resolutionNumber),el("TmstFirmaEnv",timestamp()),...[...counts].map(([type,count])=>el("SubTotDTE",[el("TpoDTE",type),el("NroDTE",count)]))],{version:"1.0"});
     const setBody=caratula+signedDtes.join("");const inScope=` xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}"`;const canonicalSet=`<SetDTE${inScope} ID="SetDoc">${setBody}</SetDTE>`;
@@ -169,7 +171,7 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
   async connectionTest(environment:string){const started=Date.now(),seedResponse=await this.soap(environment,"CrSeed","getSeed",{}),state=textOf(seedResponse,"RESP_HDR","ESTADO"),seed=textOf(seedResponse,"RESP_BODY","SEMILLA");if(state!=="00"||!seed)throw new ServiceUnavailableException(`SII no entregó semilla (estado ${state||"?"}).`);let authenticated=false,certificate:string;try{const metadata=this.certificates.metadata(this.secretRef());certificate=Date.parse(metadata.expiresAt)>Date.now()?"VALID":"EXPIRED";}catch{certificate="NOT_CONFIGURED";}if(certificate==="VALID"){await this.authenticate(environment);authenticated=true;}return{provider:this.name,environment,host:siiHost(environment),seedService:"CONNECTED",certificate,authenticated,latencyMs:Date.now()-started,checkedAt:new Date().toISOString()};}
   async send(signed:string,input:DteDocumentInput){
     const envelopeXml=this.envelope([signed],input);const xsdErrors=await this.schema.validate(envelopeXml);if(xsdErrors.length)throw new UnprocessableEntityException(`El EnvioDTE no valida contra el XSD oficial: ${xsdErrors.join(" | ")}`);
-    const token=await this.authenticate(input.environment);const sender=normalizeRut(process.env.DTE_SENDER_RUT??input.company.rut).split("-");const company=normalizeRut(input.company.rut).split("-");
+    const token=await this.authenticate(input.environment);const sender=normalizeRut(this.senderRut()).split("-");const company=normalizeRut(input.company.rut).split("-");
     const form=new FormData();form.set("rutSender",sender[0]!);form.set("dvSender",sender[1]!);form.set("rutCompany",company[0]!);form.set("dvCompany",company[1]!);form.set("archivo",new Blob([Buffer.from(envelopeXml,"latin1")],{type:"text/xml"}),`envio_${input.folio}.xml`);
     const response=await fetch(`https://${siiHost(input.environment)}/cgi_dte/UPL/DTEUpload`,{method:"POST",headers:{Cookie:`TOKEN=${token}`,"User-Agent":"Mozilla/4.0 (compatible; PROG 1.0; Windows NT 5.0; YComp 5.0.2.4)"},body:form,signal:AbortSignal.timeout(60000)});
     const result=parseXml(await response.text());const status=textOf(result,"STATUS");const trackId=textOf(result,"TRACKID");if(status!=="0"||!trackId)throw new UnprocessableEntityException(`El SII rechazó la recepción del envío (STATUS ${status||"?"}).`);return{trackId,envelopeXml};
