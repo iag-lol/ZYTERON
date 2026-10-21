@@ -41,16 +41,7 @@ export async function scopedCommercial(db: Prisma.TransactionClient) {
   ]);
   return { quotes, invoices, plans };
 }
-export function nativeProposalVisible(
-  status: string,
-  meta: { items?: unknown[]; controlState?: string },
-) {
-  return (
-    status === "SENT" ||
-    status === "WON" ||
-    ["SENT", "NEGOTIATING", "ACCEPTED"].includes(meta.controlState || "")
-  );
-}
+export { nativeProposalVisible } from "./quote-visibility";
 export async function canonicalProposalFile(userId: string, quoteId: string) {
   if (!/^[0-9a-f-]{36}$/i.test(quoteId)) return null;
   const { clientDatabase } = await import("./scoped-db");

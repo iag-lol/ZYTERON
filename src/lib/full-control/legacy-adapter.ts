@@ -696,6 +696,7 @@ export async function handleLegacyDetail(request: Request, path: string, payload
         data: {
           message: serializeQuoteMessage({
             ...meta,
+            ...({ controlState: "DRAFT" } as object),
             validUntil: typeof body.validUntil === "string" ? body.validUntil : undefined,
             paymentTerms: typeof body.paymentTerms === "string" ? body.paymentTerms : undefined,
             terms: typeof body.commercialTerms === "string" ? body.commercialTerms : meta.terms,
