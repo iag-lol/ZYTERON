@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "@control/components/routed-link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   ChangeRequest,
   Client,
@@ -50,6 +50,7 @@ import {
   type OperationsCreateKind,
 } from "@control/lib/operations-form";
 import { subscribeToOperations } from "@control/lib/operations-realtime";
+import { projectLabels } from "@/lib/operations/project-guide";
 import { nextTaskStates, ProjectProgress } from "./project-progress";
 import { ProjectPublication } from "./project-publication";
 
@@ -99,7 +100,19 @@ const otColumns: WorkOrder["status"][] = [
   "WAITING_CLIENT",
   "COMPLETED",
 ];
-const label = (value: string) => value.replaceAll("_", " ");
+const operationLabels: Record<string, string> = {
+  ...projectLabels,
+  ON_TRACK: "Sin alertas",
+  ATTENTION: "Requiere atención",
+  AT_RISK: "En riesgo",
+  CRITICAL: "Crítico",
+  PLANNED: "Planificado",
+  DONE: "Terminada",
+  BACKLOG: "Por planificar",
+  TODO: "Pendiente",
+  REVIEW: "En revisión",
+};
+const label = (value: string) => operationLabels[value] || value.replaceAll("_", " ");
 const hours = (minutes: number) => `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
 
 export function OperationsWorkspace({
@@ -131,51 +144,66 @@ export function OperationsWorkspace({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const projectContext = section === "project" ? detailId : undefined;
-      const projectQuery = projectContext ? `&projectId=${encodeURIComponent(projectContext)}` : "";
-      const clientQuery = initialClientId ? `&clientId=${encodeURIComponent(initialClientId)}` : "";
-      const [s, p, w, pr, t, m, wl, d, dp, ev, directory, clientPage] = await Promise.all([
-        operationsApi.summary(role),
-        operationsApi.priorities(role),
-        operationsApi.workOrders(role, clientQuery),
-        projectContext
-          ? operationsApi.project(role, projectContext).then((project) => ({ items: [project] }))
-          : operationsApi.projects(role, clientQuery),
-        operationsApi.tasks(role, projectQuery),
-        operationsApi.milestones(role, projectContext),
-        operationsApi.worklogs(role, projectQuery),
-        operationsApi.deliverables(role, projectQuery),
-        operationsApi.deployments(role, projectQuery),
-        operationsApi.activity(role, projectContext),
-        usersDirectoryApi.list(role).catch(() => []),
-        clientsApi
-          .list(role, new URLSearchParams({ pageSize: "100" }))
-          .catch(() => ({ items: [] }) as { items: Client[] }),
-      ]);
-      setSummary(s);
-      setPriorities(p);
-      setWorkOrders(w.items);
-      setProjects(pr.items);
-      setTasks(t.items);
-      setMilestones(m);
-      setWorklogs(wl.items);
-      setDeliverables(d.items);
-      setDeployments(dp.items);
-      setEvents(ev);
-      setUsers(directory);
-      setClients(clientPage.items);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "No fue posible cargar Operaciones.");
-    } finally {
-      setLoading(false);
-    }
-  }, [role, initialClientId, detailId, section]);
+  const loadVersion = useRef(0);
+  const refresh = useCallback(
+    async (showLoading = false) => {
+      const version = ++loadVersion.current;
+      if (showLoading) setLoading(true);
+      setError("");
+      try {
+        const projectContext = section === "project" ? detailId : undefined;
+        const projectQuery = projectContext
+          ? `&projectId=${encodeURIComponent(projectContext)}`
+          : "";
+        const clientQuery = initialClientId
+          ? `&clientId=${encodeURIComponent(initialClientId)}`
+          : "";
+        const [s, p, w, pr, t, m, wl, d, dp, ev, directory, clientPage] = await Promise.all([
+          projectContext ? Promise.resolve(emptySummary) : operationsApi.summary(role),
+          projectContext ? Promise.resolve([]) : operationsApi.priorities(role),
+          projectContext
+            ? Promise.resolve({ items: [] })
+            : operationsApi.workOrders(role, clientQuery),
+          projectContext
+            ? operationsApi.project(role, projectContext).then((project) => ({ items: [project] }))
+            : operationsApi.projects(role, clientQuery),
+          operationsApi.tasks(role, projectQuery),
+          operationsApi.milestones(role, projectContext),
+          operationsApi.worklogs(role, projectQuery),
+          operationsApi.deliverables(role, projectQuery),
+          operationsApi.deployments(role, projectQuery),
+          projectContext ? Promise.resolve([]) : operationsApi.activity(role, projectContext),
+          usersDirectoryApi.list(role).catch(() => []),
+          projectContext
+            ? Promise.resolve({ items: [] })
+            : clientsApi
+                .list(role, new URLSearchParams({ pageSize: "100" }))
+                .catch(() => ({ items: [] }) as { items: Client[] }),
+        ]);
+        if (version !== loadVersion.current) return;
+        setSummary(s);
+        setPriorities(p);
+        setWorkOrders(w.items);
+        setProjects(pr.items);
+        setTasks(t.items);
+        setMilestones(m);
+        setWorklogs(wl.items);
+        setDeliverables(d.items);
+        setDeployments(dp.items);
+        setEvents(ev);
+        setUsers(directory);
+        setClients(clientPage.items);
+      } catch (cause) {
+        if (version !== loadVersion.current) return;
+        setError(cause instanceof Error ? cause.message : "No fue posible cargar Operaciones.");
+      } finally {
+        if (version === loadVersion.current) setLoading(false);
+      }
+    },
+    [role, initialClientId, detailId, section],
+  );
   useEffect(() => {
-    void refresh();
+    void refresh(true);
     return subscribeToOperations(() => void refresh());
   }, [refresh]);
   const selected = detailId ? projects.find((item) => item.id === detailId) : undefined;
@@ -192,7 +220,7 @@ export function OperationsWorkspace({
               milestones: "Hitos",
               worklogs: "Registro de trabajo",
               deliverables: "Entregables",
-              deployments: "Deployments",
+              deployments: "Publicaciones",
             } as const
           )[section];
   const create =
@@ -220,6 +248,13 @@ export function OperationsWorkspace({
     }
   };
 
+  const reportProgress = async (message: string, action: () => Promise<unknown>) => {
+    setError("");
+    await action();
+    setNotice(message);
+    await refresh();
+  };
+
   return (
     <main className="opsWorkspace">
       <header className="opsHeader">
@@ -229,7 +264,7 @@ export function OperationsWorkspace({
           <p>
             {section === "command"
               ? "Carga, plazos, bloqueos y entregas desde señales operacionales reales."
-              : "Un flujo trazable desde la orden comercial hasta la entrega en producción."}
+              : "Organiza el trabajo, marca lo terminado y sigue el próximo paso de cada proyecto."}
           </p>
         </div>
         <div>
@@ -251,9 +286,9 @@ export function OperationsWorkspace({
           ["projects", "Proyectos", "/projects"],
           ["tasks", "Tareas", "/tasks"],
           ["milestones", "Hitos", "/milestones"],
-          ["worklogs", "Worklogs", "/worklogs"],
+          ["worklogs", "Registro de trabajo", "/worklogs"],
           ["deliverables", "Entregables", "/deliverables"],
-          ["deployments", "Deployments", "/deployments"],
+          ["deployments", "Publicaciones", "/deployments"],
         ].map(([id, text, href]) => (
           <Link className={section === id ? "active" : ""} href={href!} key={id}>
             {text}
@@ -328,14 +363,6 @@ export function OperationsWorkspace({
             />
           ) : null}
           {section === "deployments" ? <Deployments items={deployments} /> : null}
-          {section === "project" && selected ? (
-            <ProjectPublication
-              id={selected.id}
-              clientId={selected.clientId}
-              visibility={selected.clientVisibility}
-              updated={refresh}
-            />
-          ) : null}
           {section === "project" ? (
             <Project360
               project={selected}
@@ -347,20 +374,38 @@ export function OperationsWorkspace({
               users={users}
               create={setModal}
               complete={(id) =>
-                done("Hito completado y avance recalculado.", () =>
+                reportProgress("Hito completado y avance recalculado.", () =>
                   operationsApi.completeMilestone(role, id),
                 )
               }
               moveTask={(id, status, reason) =>
-                done("Tarea actualizada y avance recalculado.", () =>
+                reportProgress("Tarea actualizada y avance recalculado.", () =>
                   operationsApi.taskStatus(role, id, status, reason),
                 )
               }
               moveProject={(status) =>
-                done("Etapa del proyecto actualizada.", () =>
+                reportProgress("Etapa del proyecto actualizada.", () =>
                   operationsApi.projectAction(role, selected!.id, "status", { status }),
                 )
               }
+              addTask={(title) =>
+                reportProgress("Tarea agregada.", () =>
+                  operationsApi.createTask(role, {
+                    projectId: selected!.id,
+                    title,
+                    status: "TODO",
+                    priority: "NORMAL",
+                  }),
+                )
+              }
+            />
+          ) : null}
+          {section === "project" && selected ? (
+            <ProjectPublication
+              id={selected.id}
+              clientId={selected.clientId}
+              visibility={selected.clientVisibility}
+              updated={refresh}
             />
           ) : null}
         </>
@@ -677,9 +722,7 @@ function Projects({ items }: { items: OperationsProject[] }) {
             <strong>{project.progress == null ? "—" : `${project.progress ?? 0}%`}</strong>
           </div>
           <div className="opsProgress">
-            <i
-              style={{ width: project.progress == null ? "0%" : `${project.progress}%` }}
-            />
+            <i style={{ width: project.progress == null ? "0%" : `${project.progress}%` }} />
           </div>
           <footer>
             <span>{label(project.status)}</span>
@@ -971,6 +1014,7 @@ function Project360({
   complete,
   moveTask,
   moveProject,
+  addTask,
 }: {
   project?: OperationsProject;
   tasks: OperationsTask[];
@@ -983,6 +1027,7 @@ function Project360({
   complete: (id: string) => Promise<void>;
   moveTask: (id: string, status: OperationsTask["status"], reason?: string) => Promise<void>;
   moveProject: (status: OperationsProject["status"]) => Promise<void>;
+  addTask: (title: string) => Promise<void>;
 }) {
   const { role } = useAccess();
   const [members, setMembers] = useState<ProjectMember[]>([]),
@@ -1036,7 +1081,7 @@ function Project360({
           <div>
             <span>{label(project.status)}</span>
             <span>{label(project.health)}</span>
-            <span>Meta {formatDate(project.targetDate)}</span>
+            <span>Fecha objetivo {formatDate(project.targetDate)}</span>
             <Link href={`/development/projects/${project.id}`}>Desarrollo</Link>
             {project.clientId ? (
               <Link
@@ -1065,220 +1110,224 @@ function Project360({
         complete={complete}
         moveTask={moveTask}
         moveProject={moveProject}
+        addTask={addTask}
       />
-      <section className="project360Grid">
-        <article>
-          <header>
-            <Flag size={17} />
-            <span>Hitos</span>
-            <b>{projectMilestones.length}</b>
-          </header>
-          {projectMilestones.map((item) => (
-            <p key={item.id}>
-              <span>{item.name}</span>
-              <small>
-                {item.weight}% · {label(item.status)}
-              </small>
-            </p>
-          ))}
-        </article>
-        <article>
-          <header>
-            <FolderKanban size={17} />
-            <span>Tareas</span>
-            <b>{projectTasks.length}</b>
-          </header>
-          <p>
-            <span>Abiertas</span>
-            <strong>
-              {projectTasks.filter((item) => !["DONE", "CANCELLED"].includes(item.status)).length}
-            </strong>
-          </p>
-          <p>
-            <span>Bloqueadas</span>
-            <strong>{projectTasks.filter((item) => item.status === "BLOCKED").length}</strong>
-          </p>
-          <p>
-            <span>Vencidas</span>
-            <strong>{projectTasks.filter((item) => item.overdue).length}</strong>
-          </p>
-        </article>
-        <article>
-          <header>
-            <Clock3 size={17} />
-            <span>Consumo</span>
-          </header>
-          <p>
-            <span>Tiempo real</span>
-            <strong>
-              {hours(
-                worklogs
-                  .filter((item) => item.projectId === project.id)
-                  .reduce((sum, item) => sum + item.durationMinutes, 0),
-              )}
-            </strong>
-          </p>
-          <p>
-            <span>Estimación</span>
-            <strong>{project.estimatedHours ?? "—"}h</strong>
-          </p>
-        </article>
-        <article>
-          <header>
-            <Rocket size={17} />
-            <span>Entrega</span>
-          </header>
-          <p>
-            <span>Entregables</span>
-            <strong>{deliverables.filter((item) => item.projectId === project.id).length}</strong>
-          </p>
-          <p>
-            <span>Deployments</span>
-            <strong>{deployments.filter((item) => item.projectId === project.id).length}</strong>
-          </p>
-        </article>
-      </section>
-      <p className="healthReason">
-        <AlertTriangle size={15} />
-        <strong>Health explicable:</strong> {project.healthReason}
-      </p>
-      {detailError ? (
-        <p role="alert" className="opsAlert error">
-          {detailError}
-        </p>
-      ) : null}
-      <section className="projectDetailBand">
-        <article>
-          <header>
-            <span>Equipo</span>
-            <button
-              onClick={() => {
-                const available = users.find(
-                  (user) => !members.some((member) => member.userId === user.id),
-                );
-                if (available)
-                  run(
-                    operationsApi.addMember(role, project.id, {
-                      userId: available.id,
-                      projectRole: "DEVELOPER",
-                    }),
-                  );
-                else window.alert("No hay más usuarios disponibles en el directorio.");
-              }}
-            >
-              <Plus size={12} />
-              Integrar
-            </button>
-          </header>
-          {members.map((member) => (
-            <p key={member.id}>
+      <details className="projectTechnicalDetails">
+        <summary>Equipo, enlaces y detalles técnicos</summary>
+        <section className="project360Grid">
+          <article>
+            <header>
+              <Flag size={17} />
+              <span>Hitos</span>
+              <b>{projectMilestones.length}</b>
+            </header>
+            {projectMilestones.map((item) => (
+              <p key={item.id}>
+                <span>{item.name}</span>
+                <small>
+                  {item.weight}% · {label(item.status)}
+                </small>
+              </p>
+            ))}
+          </article>
+          <article>
+            <header>
+              <FolderKanban size={17} />
+              <span>Tareas</span>
+              <b>{projectTasks.length}</b>
+            </header>
+            <p>
+              <span>Abiertas</span>
               <strong>
-                {member.userName ||
-                  users.find((user) => user.id === member.userId)?.name ||
-                  member.userId.slice(0, 8)}
+                {projectTasks.filter((item) => !["DONE", "CANCELLED"].includes(item.status)).length}
               </strong>
-              <small>{label(member.projectRole)}</small>
             </p>
-          ))}
-          {!members.length ? (
-            <Empty title="Sin equipo" text="Incorpora usuarios desde el directorio." />
-          ) : null}
-        </article>
-        <article>
-          <header>
-            <span>Endpoints</span>
-            <button
-              onClick={() => {
-                const url = window.prompt("URL del endpoint");
-                if (url)
-                  run(
-                    operationsApi.createEndpoint(role, project.id, {
-                      name: "Web principal",
-                      url,
-                      environment: "PRODUCTION",
-                      endpointType: "WEB",
-                    }),
+            <p>
+              <span>Bloqueadas</span>
+              <strong>{projectTasks.filter((item) => item.status === "BLOCKED").length}</strong>
+            </p>
+            <p>
+              <span>Vencidas</span>
+              <strong>{projectTasks.filter((item) => item.overdue).length}</strong>
+            </p>
+          </article>
+          <article>
+            <header>
+              <Clock3 size={17} />
+              <span>Consumo</span>
+            </header>
+            <p>
+              <span>Tiempo real</span>
+              <strong>
+                {hours(
+                  worklogs
+                    .filter((item) => item.projectId === project.id)
+                    .reduce((sum, item) => sum + item.durationMinutes, 0),
+                )}
+              </strong>
+            </p>
+            <p>
+              <span>Estimación</span>
+              <strong>{project.estimatedHours ?? "—"}h</strong>
+            </p>
+          </article>
+          <article>
+            <header>
+              <Rocket size={17} />
+              <span>Entrega</span>
+            </header>
+            <p>
+              <span>Entregables</span>
+              <strong>{deliverables.filter((item) => item.projectId === project.id).length}</strong>
+            </p>
+            <p>
+              <span>Publicaciones</span>
+              <strong>{deployments.filter((item) => item.projectId === project.id).length}</strong>
+            </p>
+          </article>
+        </section>
+        <p className="healthReason">
+          <AlertTriangle size={15} />
+          <strong>Estado del proyecto:</strong> {project.healthReason}
+        </p>
+        {detailError ? (
+          <p role="alert" className="opsAlert error">
+            {detailError}
+          </p>
+        ) : null}
+        <section className="projectDetailBand">
+          <article>
+            <header>
+              <span>Equipo</span>
+              <button
+                onClick={() => {
+                  const available = users.find(
+                    (user) => !members.some((member) => member.userId === user.id),
                   );
-              }}
-            >
-              <Plus size={12} />
-              Agregar
-            </button>
-          </header>
-          {endpoints.map((item) => (
-            <p key={item.id}>
-              <a href={item.url} target="_blank" rel="noreferrer">
-                {item.name}
-              </a>
-              <small>{item.environment}</small>
-            </p>
-          ))}
-          {!endpoints.length ? (
-            <Empty title="Sin endpoints" text="Registra URLs sin activar monitoreo ficticio." />
-          ) : null}
-        </article>
-        <article>
-          <header>
-            <span>Riesgos</span>
-            <button
-              onClick={() => {
-                const title = window.prompt("Riesgo identificado");
-                if (title)
-                  run(
-                    operationsApi.createRisk(role, project.id, {
-                      title,
-                      probability: 3,
-                      impact: 3,
-                    }),
-                  );
-              }}
-            >
-              <Plus size={12} />
-              Registrar
-            </button>
-          </header>
-          {risks.map((item) => (
-            <p key={item.id}>
-              <strong>{item.title}</strong>
-              <small>
-                {item.severity}/25 · {item.status}
-              </small>
-            </p>
-          ))}
-          {!risks.length ? (
-            <Empty title="Sin riesgos" text="No hay riesgos operacionales registrados." />
-          ) : null}
-        </article>
-        <article>
-          <header>
-            <span>Cambios</span>
-            <button
-              onClick={() => {
-                const description = window.prompt("Solicitud de cambio");
-                if (description)
-                  run(
-                    operationsApi.createChange(role, project.id, {
-                      description,
-                      source: "INTERNAL",
-                    }),
-                  );
-              }}
-            >
-              <Plus size={12} />
-              Solicitar
-            </button>
-          </header>
-          {changes.map((item) => (
-            <p key={item.id}>
-              <strong>{item.description}</strong>
-              <small>{label(item.status)}</small>
-            </p>
-          ))}
-          {!changes.length ? (
-            <Empty title="Sin cambios" text="El alcance original permanece sin solicitudes." />
-          ) : null}
-        </article>
-      </section>
+                  if (available)
+                    run(
+                      operationsApi.addMember(role, project.id, {
+                        userId: available.id,
+                        projectRole: "DEVELOPER",
+                      }),
+                    );
+                  else window.alert("No hay más usuarios disponibles en el directorio.");
+                }}
+              >
+                <Plus size={12} />
+                Integrar
+              </button>
+            </header>
+            {members.map((member) => (
+              <p key={member.id}>
+                <strong>
+                  {member.userName ||
+                    users.find((user) => user.id === member.userId)?.name ||
+                    member.userId.slice(0, 8)}
+                </strong>
+                <small>{label(member.projectRole)}</small>
+              </p>
+            ))}
+            {!members.length ? (
+              <Empty title="Sin equipo" text="Incorpora usuarios desde el directorio." />
+            ) : null}
+          </article>
+          <article>
+            <header>
+              <span>Enlaces del proyecto</span>
+              <button
+                onClick={() => {
+                  const url = window.prompt("URL del endpoint");
+                  if (url)
+                    run(
+                      operationsApi.createEndpoint(role, project.id, {
+                        name: "Web principal",
+                        url,
+                        environment: "PRODUCTION",
+                        endpointType: "WEB",
+                      }),
+                    );
+                }}
+              >
+                <Plus size={12} />
+                Agregar
+              </button>
+            </header>
+            {endpoints.map((item) => (
+              <p key={item.id}>
+                <a href={item.url} target="_blank" rel="noreferrer">
+                  {item.name}
+                </a>
+                <small>{item.environment}</small>
+              </p>
+            ))}
+            {!endpoints.length ? (
+              <Empty title="Sin endpoints" text="Registra URLs sin activar monitoreo ficticio." />
+            ) : null}
+          </article>
+          <article>
+            <header>
+              <span>Riesgos</span>
+              <button
+                onClick={() => {
+                  const title = window.prompt("Riesgo identificado");
+                  if (title)
+                    run(
+                      operationsApi.createRisk(role, project.id, {
+                        title,
+                        probability: 3,
+                        impact: 3,
+                      }),
+                    );
+                }}
+              >
+                <Plus size={12} />
+                Registrar
+              </button>
+            </header>
+            {risks.map((item) => (
+              <p key={item.id}>
+                <strong>{item.title}</strong>
+                <small>
+                  {item.severity}/25 · {item.status}
+                </small>
+              </p>
+            ))}
+            {!risks.length ? (
+              <Empty title="Sin riesgos" text="No hay riesgos operacionales registrados." />
+            ) : null}
+          </article>
+          <article>
+            <header>
+              <span>Cambios</span>
+              <button
+                onClick={() => {
+                  const description = window.prompt("Solicitud de cambio");
+                  if (description)
+                    run(
+                      operationsApi.createChange(role, project.id, {
+                        description,
+                        source: "INTERNAL",
+                      }),
+                    );
+                }}
+              >
+                <Plus size={12} />
+                Solicitar
+              </button>
+            </header>
+            {changes.map((item) => (
+              <p key={item.id}>
+                <strong>{item.description}</strong>
+                <small>{label(item.status)}</small>
+              </p>
+            ))}
+            {!changes.length ? (
+              <Empty title="Sin cambios" text="El alcance original permanece sin solicitudes." />
+            ) : null}
+          </article>
+        </section>
+      </details>
     </>
   );
 }
@@ -1330,7 +1379,7 @@ function CreateModal({
             {
               "work-order": "Nueva orden de trabajo",
               task: "Nueva tarea",
-              milestone: "Nuevo hito",
+              milestone: "Nueva etapa del trabajo",
               worklog: "Registrar trabajo",
               deliverable: "Nuevo entregable",
               deployment: "Nuevo despliegue",
@@ -1473,16 +1522,24 @@ function CreateModal({
                 Nombre
                 <input required onChange={(event) => set("name", event.target.value)} />
               </label>
-              <label>
-                Peso en el plan (%)
-                <input
-                  required
-                  type="number"
-                  min="1"
-                  max="100"
-                  onChange={(event) => set("weight", Number(event.target.value))}
-                />
-              </label>
+              <details className="wide projectMilestoneWeight">
+                <summary>Importancia de la etapa (opcional)</summary>
+                <p>
+                  Con 1 punto todas las etapas nuevas pesan lo mismo. Usa más puntos sólo si esta
+                  etapa representa más trabajo.
+                </p>
+                <label>
+                  Importancia en el plan (puntos)
+                  <input
+                    required
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={Number(value.weight ?? 1)}
+                    onChange={(event) => set("weight", Number(event.target.value))}
+                  />
+                </label>
+              </details>
               <label>
                 Vence
                 <input
