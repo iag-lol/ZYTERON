@@ -1494,3 +1494,42 @@
 .quoteEditor .fx-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.quoteEditor .fx-form-grid .fx-field{margin:0}@media(max-width:600px){.quoteEditor .fx-form-grid{grid-template-columns:1fr}}
 
 .collectionFields{display:grid;grid-template-columns:1fr 1fr;gap:16px}.collectionCalendar label{display:grid;gap:7px;font-size:13px;font-weight:600}.collectionCalendar input:not([type=checkbox]),.collectionCalendar select{width:100%;padding:10px;border:1px solid #d8e5dc;border-radius:9px;background:#fff;color:#173c2e}.collectionCalendar .collectionCheck{display:flex;align-items:flex-start;gap:10px;font-weight:400}.collectionCheck input{margin-top:3px}.collectionPreview{padding:14px;border-radius:10px;background:#f5f9f2}.collectionPreview table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}.collectionPreview th,.collectionPreview td{text-align:left;padding:8px;border-bottom:1px solid #d8e5dc}.collectionCalendar small{color:#5d7569;line-height:1.5}@media(max-width:600px){.collectionFields{grid-template-columns:1fr}}
+
+:where(.zy-full-control) .leadStageNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+:where(.zy-full-control) .leadStageNav button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid var(--sales-line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--sales-green);
+  font-size: 11px;
+}
+:where(.zy-full-control) .leadStageNav button:hover,
+:where(.zy-full-control) .leadStageNav button:focus-visible {
+  background: #edf5e4;
+  outline: 2px solid #93b684;
+  outline-offset: 1px;
+}
+:where(.zy-full-control) .leadStageNav b {
+  min-width: 20px;
+  text-align: center;
+}
+:where(.zy-full-control) .leadCardUpdated {
+  border-color: #598b40;
+  box-shadow: 0 0 0 2px #deedcc;
+}
+:where(.zy-full-control) .leadUpdatedMark {
+  display: block;
+  margin-bottom: 8px;
+  color: #366a24;
+  font-size: 10px;
+  font-weight: 700;
+}

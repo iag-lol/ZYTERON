@@ -131,7 +131,7 @@ export function CommercialWorkspace({
     setNotice("");
     try {
       const result = await task();
-      await refresh();
+      await refresh(section === "leads");
       setNotice(message);
       return result;
     } catch (e) {
@@ -367,12 +367,14 @@ export function CommercialWorkspace({
                 );
               }}
               roleAction={async (id, action, body) => {
+                const name =
+                  leads.find((lead) => lead.id === id)?.companyName || "El lead seleccionado";
                 const result = await perform(
                   `${id}:${action}`,
                   () => commercialApi.leadAction(role, id, action, body),
                   action === "convert"
-                    ? "Lead convertido en oportunidad. Puedes continuar en Oportunidades o Pipeline."
-                    : "Lead calificado. Ya puedes convertirlo en oportunidad.",
+                    ? `${name}: convertido en oportunidad. Puedes continuar en Oportunidades o Pipeline.`
+                    : `${name}: calificado. Ya puedes preparar su cotización o convertirlo en oportunidad.`,
                 );
                 if (result) setFocusLeadId(id);
                 return result;
@@ -785,12 +787,17 @@ function LeadInbox({
   focusLeadId: string;
   roleAction: (id: string, action: string, body?: unknown) => Promise<unknown>;
 }) {
-  useEffect(() => {
-    if (focusLeadId)
-      document
-        .querySelector(`[data-lead-id="${CSS.escape(focusLeadId)}"]`)
-        ?.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
-  }, [items, focusLeadId]);
+  const boardRef = useRef<HTMLElement>(null);
+  const labels: Record<SalesLead["status"], string> = {
+    NEW: "Nuevos",
+    ASSIGNED: "Asignados",
+    CONTACT_PENDING: "Por contactar",
+    CONTACTED: "Contactados",
+    QUALIFYING: "En calificación",
+    QUALIFIED: "Calificados",
+    DISQUALIFIED: "Descartados",
+    CONVERTED: "Convertidos",
+  };
   const columns = [
     "NEW",
     "ASSIGNED",
@@ -802,74 +809,107 @@ function LeadInbox({
     "CONVERTED",
   ] as const;
   return (
-    <section className="leadInbox">
-      {columns.map((status) => {
-        const current = items.filter((item) => item.status === status);
-        return (
-          <article key={status}>
-            <header>
-              <span>{status.replaceAll("_", " ")}</span>
-              <b>{current.length}</b>
-            </header>
-            {current.length > 0 ? (
-              current.map((lead) => (
-                <div className="leadCard" key={lead.id} data-lead-id={lead.id}>
-                  <small>{lead.sourceName || "Origen no informado"}</small>
-                  <h3>{lead.companyName}</h3>
-                  <p>{lead.contactName}</p>
-                  <p>{lead.email || lead.phone || lead.whatsapp}</p>
-                  {lead.interest ? <p>{lead.interest}</p> : null}
-                  <small>{formatDateTime(lead.createdAt)}</small>
-                  {lead.whatsapp ? (
-                    <Link
-                      href={
-                        lead.whatsappConversationId
-                          ? `/commercial/whatsapp?conversation=${encodeURIComponent(lead.whatsappConversationId)}`
-                          : `/commercial/whatsapp?search=${encodeURIComponent(lead.whatsapp.replace(/\D/g, ""))}`
-                      }
-                    >
-                      Abrir chat de WhatsApp
-                    </Link>
-                  ) : null}
-                  <footer>
-                    {["QUALIFIED", "CONVERTED"].includes(lead.status) ? (
-                      <button disabled={busy} onClick={() => void prepareQuote(lead.id)}>
-                        <FileText size={13} />
-                        Preparar cotización
-                      </button>
+    <div className="leadWorkspace">
+      <nav className="leadStageNav" aria-label="Etapas y cantidades de leads">
+        {columns.map((status) => (
+          <button
+            type="button"
+            key={status}
+            onClick={() => {
+              const board = boardRef.current;
+              const column = board?.querySelector<HTMLElement>(`[data-lead-stage="${status}"]`);
+              if (board && column)
+                board.scrollTo({
+                  left:
+                    board.scrollLeft +
+                    column.getBoundingClientRect().left -
+                    board.getBoundingClientRect().left,
+                  behavior: "smooth",
+                });
+            }}
+          >
+            <span>{labels[status]}</span>
+            <b>{items.filter((lead) => lead.status === status).length}</b>
+          </button>
+        ))}
+      </nav>
+      <section className="leadInbox" ref={boardRef} aria-label="Tablero de leads">
+        {columns.map((status) => {
+          const current = items.filter((item) => item.status === status);
+          return (
+            <article key={status} data-lead-stage={status} aria-label={labels[status]}>
+              <header>
+                <span>{labels[status]}</span>
+                <b>{current.length}</b>
+              </header>
+              {current.length > 0 ? (
+                current.map((lead) => (
+                  <div
+                    className={lead.id === focusLeadId ? "leadCard leadCardUpdated" : "leadCard"}
+                    key={lead.id}
+                    data-lead-id={lead.id}
+                  >
+                    {lead.id === focusLeadId ? (
+                      <span className="leadUpdatedMark">Actualizado en esta acción</span>
                     ) : null}
-                    {lead.status !== "QUALIFIED" &&
-                    lead.status !== "CONVERTED" &&
-                    lead.status !== "DISQUALIFIED" ? (
-                      <button
-                        disabled={busy}
-                        onClick={() => {
-                          void roleAction(lead.id, "qualify");
-                        }}
+                    <small>{lead.sourceName || "Origen no informado"}</small>
+                    <h3>{lead.companyName}</h3>
+                    <p>{lead.contactName}</p>
+                    <p>{lead.email || lead.phone || lead.whatsapp}</p>
+                    {lead.interest ? <p>{lead.interest}</p> : null}
+                    <small>Creado {formatDateTime(lead.createdAt)}</small>
+                    <small>Actualizado {formatDateTime(lead.updatedAt)}</small>
+                    {lead.whatsapp ? (
+                      <Link
+                        href={
+                          lead.whatsappConversationId
+                            ? `/commercial/whatsapp?conversation=${encodeURIComponent(lead.whatsappConversationId)}`
+                            : `/commercial/whatsapp?search=${encodeURIComponent(lead.whatsapp.replace(/\D/g, ""))}`
+                        }
                       >
-                        Calificar
-                      </button>
+                        Abrir chat de WhatsApp
+                      </Link>
                     ) : null}
-                    {lead.status === "QUALIFIED" ? (
-                      <button
-                        disabled={busy}
-                        onClick={() => {
-                          void roleAction(lead.id, "convert", {});
-                        }}
-                      >
-                        Convertir
-                      </button>
-                    ) : null}
-                  </footer>
-                </div>
-              ))
-            ) : (
-              <Empty title="Sin leads" text={"No existen leads en " + status.toLowerCase() + "."} />
-            )}
-          </article>
-        );
-      })}
-    </section>
+                    <footer>
+                      {["QUALIFIED", "CONVERTED"].includes(lead.status) ? (
+                        <button disabled={busy} onClick={() => void prepareQuote(lead.id)}>
+                          <FileText size={13} />
+                          Preparar cotización
+                        </button>
+                      ) : null}
+                      {lead.status !== "QUALIFIED" &&
+                      lead.status !== "CONVERTED" &&
+                      lead.status !== "DISQUALIFIED" ? (
+                        <button
+                          disabled={busy}
+                          onClick={() => {
+                            void roleAction(lead.id, "qualify");
+                          }}
+                        >
+                          Calificar
+                        </button>
+                      ) : null}
+                      {lead.status === "QUALIFIED" ? (
+                        <button
+                          disabled={busy}
+                          onClick={() => {
+                            void roleAction(lead.id, "convert", {});
+                          }}
+                        >
+                          Convertir
+                        </button>
+                      ) : null}
+                    </footer>
+                  </div>
+                ))
+              ) : (
+                <Empty title="Sin leads" text={"No hay leads en esta etapa."} />
+              )}
+            </article>
+          );
+        })}
+      </section>
+    </div>
   );
 }
 function OpportunityList({ items }: { items: SalesOpportunity[] }) {
