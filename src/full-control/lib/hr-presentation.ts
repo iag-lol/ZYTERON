@@ -1,3 +1,4 @@
+import { siiDocumentDefinition } from "@zyteron/contracts";
 import type { HrProviderReadiness, HrWorkspace, Role } from "../contracts";
 
 export const hrSections = [
@@ -14,7 +15,7 @@ export const hrSections = [
     label: "Tiempo y ausencias",
     views: ["vacations", "permissions", "medical-leave", "absences", "schedules", "attendance"],
   },
-  { label: "Remuneraciones y cumplimiento", views: ["payroll", "lre", "expirations"] },
+  { label: "Remuneraciones y cumplimiento", views: ["payroll", "lre", "sii", "expirations"] },
   { label: "Desarrollo y servicios", views: ["performance", "goals", "training", "requests"] },
   { label: "Informes y configuración", views: ["reports", "settings"] },
 ] as const;
@@ -46,13 +47,14 @@ export function resolveHrRoute(segments: string[]) {
     !known ||
     segments.length > 2 ||
     Boolean(
-      id && (!uuid.test(id) || (view !== "employees" && !Object.hasOwn(recordSources, view))),
+      id && (view === "sii" ? !/^[0-9]+$/.test(id) || String(Number(id)) !== id || !siiDocumentDefinition(Number(id)) : !uuid.test(id) || (view !== "employees" && !Object.hasOwn(recordSources, view))),
     );
   return {
     view,
     invalid,
+    ...(view === "sii" ? { documentTypeCode: id ? Number(id) : 33 } : {}),
     employeeId: !invalid && view === "employees" ? id : null,
-    recordId: !invalid && view !== "employees" ? id : null,
+    recordId: !invalid && view !== "employees" && view !== "sii" ? id : null,
   };
 }
 

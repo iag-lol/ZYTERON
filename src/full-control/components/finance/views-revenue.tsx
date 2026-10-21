@@ -26,8 +26,8 @@ export function LinesEditor({lines,onChange,exemptOnly=false}:{lines:Line[];onCh
 }
 const emptyLine=():Line=>({description:"",quantity:"1",unitPrice:"",isExempt:false});
 
-function InvoiceComposer({open,onClose,onCreated}:{open:boolean;onClose:()=>void;onCreated:(id:string)=>void}){
-  const{role}=useAccess();const[clientId,setClientId]=useState("");const[type,setType]=useState("33");const[lines,setLines]=useState<Line[]>([emptyLine()]);const[terms,setTerms]=useState("");const[dueDate,setDueDate]=useState("");const[notes,setNotes]=useState("");const action=useAction();
+function InvoiceComposer({open,onClose,onCreated,initialType="33"}:{open:boolean;onClose:()=>void;onCreated:(id:string)=>void;initialType?:"33"|"34"}){
+  const{role}=useAccess();const[clientId,setClientId]=useState("");const[type,setType]=useState<string>(initialType);const[lines,setLines]=useState<Line[]>([emptyLine()]);const[terms,setTerms]=useState("");const[dueDate,setDueDate]=useState("");const[notes,setNotes]=useState("");const action=useAction();
   const save=async()=>{const created=await action.run(()=>financeApi.post<Invoice>(role,"/invoices",{clientId,documentTypeCode:Number(type),lines:lines.map((l)=>({description:l.description,quantity:Number(l.quantity),unitPrice:Number(l.unitPrice),isExempt:type==="34"||l.isExempt})),paymentTermsDays:terms===""?undefined:Number(terms),dueDate:dueDate||undefined,notes}));if(created){onCreated(created.id);setLines([emptyLine()]);setClientId("");}};
   return <Drawer open={open} onClose={onClose} title="Nuevo borrador de factura" subtitle="Documento interno: no es un DTE hasta su emisión ante el SII." wide>
     <div className="fx-form"><Field label="Cliente" span={3}><ClientPicker value={clientId} onChange={(id)=>setClientId(id)}/></Field><Field label="Tipo de documento"><select value={type} onChange={(e)=>setType(e.target.value)}><option value="33">33 · Factura electrónica</option><option value="34">34 · Factura exenta</option></select></Field><Field label="Plazo de pago (días)" hint="Vacío: días de crédito del cliente"><input inputMode="numeric" value={terms} onChange={(e)=>setTerms(e.target.value.replace(/\D/g,""))}/></Field><Field label="Vencimiento (opcional)"><DateInput value={dueDate} onChange={setDueDate}/></Field></div>
@@ -94,7 +94,7 @@ function Recurring(){
 }
 
 export function Invoices({tick}:ViewProps){
-  const{role}=useAccess();const[tab,setTab]=useState<"register"|"recurring"|"pending">("register");const[q,setQ]=useState({search:"",status:"",page:1});const[open,setOpen]=useState<string|null>(null);useQueryParams((p)=>{if(p.get("invoice"))setOpen(p.get("invoice"));});const[compose,setCompose]=useState(false);
+  const{role}=useAccess();const[tab,setTab]=useState<"register"|"recurring"|"pending">("register");const[q,setQ]=useState({search:"",status:"",page:1});const[open,setOpen]=useState<string|null>(null);const[compose,setCompose]=useState(false);const[draftType,setDraftType]=useState<"33"|"34">("33");useQueryParams((p)=>{if(p.get("invoice"))setOpen(p.get("invoice"));const requested=p.get("newType");if((requested==="33"||requested==="34")&&canFinance(role,"invoice.create")){setDraftType(requested);setCompose(true);}});
   const list=useLoad(()=>financeApi.get<Paged<Invoice&{clientName:string|null}>>(role,`/invoices?page=${q.page}&pageSize=25${q.search?`&search=${encodeURIComponent(q.search)}`:""}${q.status==="OVERDUE"?"&overdue=true":q.status?`&status=${q.status}`:""}`),[role,q,tick]);
   const pending=useLoad(()=>tab==="pending"?financeApi.get<any[]>(role,"/pending-to-invoice"):Promise.resolve([]),[role,tab,tick]);const action=useAction(async()=>{await list.reload();await pending.reload();});
   return <div className="fx-stack">
@@ -104,7 +104,7 @@ export function Invoices({tick}:ViewProps){
       {list.data&&list.data.totalPages>1?<div className="fx-pager"><button disabled={q.page<=1} onClick={()=>setQ({...q,page:q.page-1})}>Anterior</button><span>Página {q.page} de {list.data.totalPages}</span><button disabled={q.page>=list.data.totalPages} onClick={()=>setQ({...q,page:q.page+1})}>Siguiente</button></div>:null}
     </Section>:tab==="recurring"?<Recurring/>:<Section eyebrow="DESDE COMERCIAL" title="Ventas ganadas pendientes de facturar" description="El borrador se precarga con las líneas de la cotización aceptada y los datos del Cliente 360.">
       <Feedback error={action.error} notice={action.notice}/>{pending.data?<Register rows={pending.data} rowKey={(p)=>p.saleId} columns={[{key:"c",label:"Cliente",render:(p)=>p.clientName??"—"},{key:"d",label:"Cierre",render:(p)=>day(p.closedAt.slice(0,10))},{key:"a",label:"Venta",align:"right",render:(p)=><Amount value={p.amount}/>},{key:"i",label:"Facturado",align:"right",render:(p)=><Amount value={p.invoiced}/>},{key:"p",label:"Pendiente",align:"right",render:(p)=><Amount value={p.pending} strong/>},{key:"x",label:"",render:(p)=>canFinance(role,"invoice.create")?<button className="fx-btn small" disabled={action.busy} onClick={async()=>{const r=await action.run(()=>financeApi.post<Invoice>(role,`/invoices/from-sale/${p.saleId}`),"Borrador creado.");if(r){setOpen(r.id);setTab("register");}}}>Crear borrador</button>:null}]} empty="No hay ventas pendientes de facturar"/>:<Loading/>}</Section>}
-    <InvoiceComposer open={compose} onClose={()=>setCompose(false)} onCreated={(id)=>{setCompose(false);setOpen(id);void list.reload();}}/>
+    <InvoiceComposer key={draftType} initialType={draftType} open={compose} onClose={()=>setCompose(false)} onCreated={(id)=>{setCompose(false);setOpen(id);void list.reload();}}/>
     {open?<InvoiceDetail key={open} id={open} onClose={()=>setOpen(null)} onChanged={()=>void list.reload()}/>:null}
   </div>;
 }

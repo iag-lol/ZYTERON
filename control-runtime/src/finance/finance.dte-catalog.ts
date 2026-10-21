@@ -1,19 +1,7 @@
+import { siiDocumentCatalog } from "@zyteron/contracts";
 import type { Row } from "./finance.util.js";
 
-export const dteCatalog = [
-  [33, "Factura electrónica"],
-  [34, "Factura no afecta o exenta electrónica"],
-  [39, "Boleta electrónica"],
-  [41, "Boleta no afecta o exenta electrónica"],
-  [43, "Liquidación factura electrónica"],
-  [46, "Factura de compra electrónica"],
-  [52, "Guía de despacho electrónica"],
-  [56, "Nota de débito electrónica"],
-  [61, "Nota de crédito electrónica"],
-  [110, "Factura de exportación electrónica"],
-  [111, "Nota de débito de exportación electrónica"],
-  [112, "Nota de crédito de exportación electrónica"],
-] as const;
+export const dteCatalog = siiDocumentCatalog.map(item => [item.code, item.name] as const);
 
 export const directDteImplemented = (code: number) => [33, 34, 56, 61].includes(code);
 

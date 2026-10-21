@@ -33,11 +33,12 @@ test('no reemplaza el firmante por el RUT de la empresa', async () => {
 });
 test('la preparación global muestra folios y tipo 33 pendientes aunque no haya factura', async () => {
   const repo = {
+    configured: () => false,
     settings: async () => ({ dteProvider: 'SII_DIRECT', dteEnvironment: 'CERTIFICATION' }),
     list: async () => [], get: async () => ({ enabledForIssue: false }), count: async () => 0,
   };
   const service = new DteService({ repo }, {}, { requirements: async () => [], secretRef: () => 'DTE_CERTIFICATE_PEM' }, {}, { metadata: () => { throw Error('Sin certificado'); } });
   const ready = await service.readiness();
   assert.equal(ready.canIssue, false);
-  for (const key of ['document_type', 'folios', 'certificate_registry']) assert.equal(ready.requirements.find(r => r.key === key).satisfied, false);
+  for (const key of ['persistence', 'document_type', 'folios', 'certificate_registry']) assert.equal(ready.requirements.find(r => r.key === key).satisfied, false);
 });

@@ -124,14 +124,15 @@ export class FinanceController {
   @Patch("billing-schedules/:id") updateSchedule(@Param("id") id:string,@Body() b:any,@Headers() h:H){return this.schedules.update(id,b,actor(h));}
 
   // ---------------------------------------------------------------- documentos tributarios
-  @Get("dte/readiness") dteReadiness(@Headers() h:H){return this.dte.readiness(undefined,actor(h));}
+  @Get("dte/readiness") @RequireRoles(...rolesFor("dte.view")) dteReadiness(@Headers() h:H){return this.dte.readiness(undefined,actor(h));}
   @Post("dte/test-connection") testDteConnection(@Headers() h:H){return this.dte.connectionTest(actor(h));}
   @Get("dte/certificates") certificates(@Headers() h:H){return this.dte.certificatesList(actor(h));}
   @Post("dte/certificates") registerCertificate(@Body() b:any,@Headers() h:H){return this.dte.registerCertificate(b,actor(h));}
   @Post("dte/certificates/:id/retire") retireCertificate(@Param("id") id:string,@Headers() h:H){return this.dte.retireCertificate(id,actor(h));}
   @Get("dte/folios") folios(@Headers() h:H){return this.dte.folioAuthorizations(actor(h));}
   @Post("dte/caf") caf(@Body() b:any,@Headers() h:H){return this.dte.uploadCaf(b,actor(h));}
-  @Get("dte/document-types") documentTypes(){return this.dte.documentTypes();}
+  @Get("dte/document-types") @RequireRoles(...rolesFor("dte.view")) documentTypes(@Headers() h:H){return this.dte.documentTypes(actor(h));}
+  @Get("dte/document-types/:code/readiness") @RequireRoles(...rolesFor("dte.view")) documentTypeReadiness(@Param("code") code:string,@Headers() h:H){return this.dte.documentTypeReadiness(Number(code),actor(h));}
   @Patch("dte/document-types/:code") updateDocumentType(@Param("code") code:string,@Body() b:any,@Headers() h:H){return this.dte.updateDocumentType(Number(code),b,actor(h));}
   @Get("tax-documents") taxDocuments(@Query() q:Q,@Headers() h:H){return this.dte.documents(page(q),actor(h));}
   @Get("tax-documents/:id") taxDocument(@Param("id") id:string,@Headers() h:H){return this.dte.document(id,actor(h));}

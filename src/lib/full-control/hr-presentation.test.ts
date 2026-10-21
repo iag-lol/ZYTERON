@@ -123,8 +123,8 @@ function view(viewName: string, data = workspace(), role: Role = "GERENTE_GENERA
 
 test("every HR menu entry resolves once and each section stays contiguous", () => {
   const items = enterpriseNavigation.find((group) => group.id === "hr")!.items;
-  assert.equal(items.length, 27);
-  assert.equal(new Set(items.map((item) => item.href)).size, 27);
+  assert.equal(items.length, 28);
+  assert.equal(new Set(items.map((item) => item.href)).size, 28);
   const finished = new Set<string>();
   let current = "";
   for (const item of items) {
@@ -140,7 +140,7 @@ test("every HR menu entry resolves once and each section stays contiguous", () =
       current = item.section!;
     }
   }
-  assert.equal(hrSections.flatMap((section) => [...section.views]).length, 27);
+  assert.equal(hrSections.flatMap((section) => [...section.views]).length, 28);
 });
 
 test("attention record routes select their target without falling back to an unrelated list", () => {

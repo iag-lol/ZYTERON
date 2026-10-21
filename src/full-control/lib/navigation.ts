@@ -218,6 +218,7 @@ export const enterpriseNavigation: NavigationGroup[] = [
       { label: "Asistencia", href: "/hr/attendance" },
       { label: "Remuneraciones", href: "/hr/payroll" },
       { label: "LRE / DT", href: "/hr/lre" },
+      { label: "SII y documentos tributarios", href: "/hr/sii" },
       { label: "Activos asignados", href: "/hr/assets" },
       { label: "Evaluaciones", href: "/hr/performance" },
       { label: "Objetivos", href: "/hr/goals" },

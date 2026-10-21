@@ -1,5 +1,6 @@
 "use client";
 import Link from "@control/components/routed-link";
+import { HrSiiWorkspace } from "./hr-sii-workspace";
 import { useEffect, useMemo, useState } from "react";
 import type {
   Employee,
@@ -272,6 +273,7 @@ export function HrWorkspace({ segments }: { segments: string[] }) {
         />
       </main>
     );
+  if (route.view === "sii") return <HrSiiWorkspace key={role} role={role} documentTypeCode={route.documentTypeCode ?? 33}/>;
   return (
     <HrWorkspaceContent
       key={`${role}:${route.view}:${route.employeeId ?? route.recordId ?? "list"}`}
@@ -1347,6 +1349,7 @@ function PayrollArea({ view, data }: { view: string; data: HrWorkspaceData }) {
         : ["Nómina cerrada", "Generar", "Validar", "Exportar", "Adjuntar respaldo", "Declarado"];
   return (
     <>
+      <div className="hrSourceBanner" role="note"><ShieldCheck/><div><strong>Preparación laboral pendiente de validación integral</strong><p>El motor actual no acredita el cálculo completo de cotizaciones previsionales e impuestos. La consulta de períodos o exportaciones no confirma pagos ni presentación oficial.</p><Link href="/hr/sii">Ver conexión tributaria y circuitos laborales</Link></div></div>
       <section className="hrPayrollFlow">
         {steps.map((item, index) => (
           <div key={item}>
