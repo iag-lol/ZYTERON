@@ -93,7 +93,7 @@ export default function BoletaLookup() {
           </div>
           <div className="px-7 py-8 sm:px-10">
             <div className="mb-7 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
-              Ambiente de certificación. Los documentos de prueba no tienen validez tributaria.
+              Los documentos de certificación llevan una marca de prueba y no tienen validez tributaria.
             </div>
             <form onSubmit={consult}>
               <label htmlFor="boleta-code" className="block text-sm font-semibold">
@@ -145,7 +145,7 @@ export default function BoletaLookup() {
                 </a>
                 <a
                   href={pdf}
-                  download="boleta-certificacion.pdf"
+                  download="boleta.pdf"
                   className="ml-5 text-sm font-semibold underline"
                 >
                   Descargar

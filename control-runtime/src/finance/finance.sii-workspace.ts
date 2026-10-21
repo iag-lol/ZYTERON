@@ -37,6 +37,7 @@ import {
 } from "./finance.sii-books.js";
 import { renderPrintedDte } from "./finance.dte-print.js";
 import { boletaVerificationUrl, verifyBoletaLookupToken } from "./finance.boleta-lookup.js";
+import { publicProductionBoleta } from "./finance.boleta-public.js";
 import {
   decryptSecret,
   encryptSecret,
@@ -841,6 +842,7 @@ export class SiiCertificationWorkspace {
   }
   async publicBoleta(body: unknown) {
     const value = parse(z.strictObject({ token: z.string().max(220) }), body);
+    if (value.token.startsWith("v2.")) return publicProductionBoleta(this.repo, value.token);
     const identity = verifyBoletaLookupToken(value.token);
     if (!this.repo.configured())
       throw new ServiceUnavailableException("La consulta de boletas no está disponible.");

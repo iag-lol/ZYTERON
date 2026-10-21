@@ -6,7 +6,7 @@ const { prisma } = require("../src/lib/prisma.ts");
 const { POST } = require("../src/app/api/boletas/consulta/route.ts");
 
 const origin = "https://www.zyteron.cl";
-const token = "v1." + "a".repeat(60) + "." + "b".repeat(43);
+let token = "v1." + "a".repeat(60) + "." + "b".repeat(43);
 const request = (body, suppliedOrigin = origin) =>
   new Request("http://localhost:3000/api/boletas/consulta", {
     method: "POST",
@@ -61,6 +61,11 @@ test("consulta pública limita origen, carga, destinos, reintentos y respuestas 
     assert.equal(await ok.text(), "%PDF-synthetic");
     assert.equal(ok.headers.get("cache-control"), "private, no-store");
     assert.equal(ok.headers.get("referrer-policy"), "no-referrer");
+    token = token.replace('v1.', 'v2.');
+    const productionCode = await POST(request({ token }));
+    assert.equal(productionCode.status, 200);
+    assert.match(productionCode.headers.get('content-disposition'), /filename="boleta.pdf"/);
+    assert.equal((await POST(request({ token: token.replace('v2.', 'v3.') }))).status, 400);
     for (const status of [400, 403, 404]) {
       response = () => new Response("private diagnostic", { status });
       const rejected = await POST(request({ token }));

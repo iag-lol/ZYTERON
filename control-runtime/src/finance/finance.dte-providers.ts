@@ -1,4 +1,4 @@
-import { directDteImplemented } from "./finance.dte-catalog.js";
+import { directDteImplemented, directDteXmlImplemented } from "./finance.dte-catalog.js";
 import { Injectable, ServiceUnavailableException, UnprocessableEntityException } from "@nestjs/common";
 import { createHash, createPrivateKey, createPublicKey, createSign, X509Certificate, type KeyObject } from "node:crypto";
 import { existsSync } from "node:fs";
@@ -15,6 +15,10 @@ import { formatRut, normalizeRut, type Row, validRut } from "./finance.util.js";
 
 export const SII_NS="http://www.sii.cl/SiiDte",DSIG_NS="http://www.w3.org/2000/09/xmldsig#",XSI_NS="http://www.w3.org/2001/XMLSchema-instance";
 export const siiHost=(environment:string)=>environment==="PRODUCTION"?"palena.sii.cl":"maullin.sii.cl";
+export const siiBoletaApiHost=(environment:string)=>{
+  if(!["CERTIFICATION","PRODUCTION"].includes(environment))throw new UnprocessableEntityException("Ambiente SII inválido.");
+  return environment==="PRODUCTION"?"api.sii.cl":"apicert.sii.cl";
+};
 /** SOAP 1.1 RPC/encoded compatible con los WSDL oficiales de CrSeed, GetTokenFromSeed y QueryEstUp. */
 export function siiSoapEnvelope(environment:string,service:string,method:string,params:Record<string,string>){const namespace=`https://${siiHost(environment)}/DTEWS/${service}.jws`;return`<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soapenv:Body><m:${method} xmlns:m="${namespace}">${Object.entries(params).map(([key,value])=>`<${key} xsi:type="xsd:string">${c14nText(value)}</${key}>`).join("")}</m:${method}></soapenv:Body></soapenv:Envelope>`;}
 
@@ -105,6 +109,14 @@ export function structuralErrors(input:DteDocumentInput):string[]{
   const net=input.lines.filter((l)=>!l.isExempt).reduce((t,l)=>t+l.netAmount,0),exempt=input.lines.filter((l)=>l.isExempt).reduce((t,l)=>t+l.netAmount,0);
   need(Math.round(net)===Math.round(input.totals.net)&&Math.round(exempt)===Math.round(input.totals.exempt),"Los totales no cuadran con el detalle.");need(Math.round(input.totals.net+input.totals.exempt+input.totals.tax)===Math.round(input.totals.total),"MntTotal ≠ MntNeto + MntExe + IVA.");
   if([56,61].includes(input.documentTypeCode))need(input.reference,"Las notas requieren referencia al documento original.");
+  if([39,41].includes(input.documentTypeCode)){
+    const values=[...Object.values(input.company),...Object.values(input.receiver),...input.lines.map(line=>line.description)];
+    need(values.every(value=>typeof value!=="string"||[...value].every(character=>character.charCodeAt(0)<=255&&!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(character))),"La boleta contiene caracteres no admitidos por su codificación XML; corrige los datos antes de firmar.");
+    need(input.lines.every((line,index)=>line.lineNumber===index+1&&Number.isFinite(line.quantity)&&line.quantity>0&&[line.unitPrice,line.discountAmount,line.netAmount].every(value=>Number.isFinite(value)&&value>=0)&&Math.round(line.quantity*line.unitPrice-line.discountAmount)===Math.round(line.netAmount)),"Detalle de boleta inválido: revisa secuencia, cantidades, descuentos y montos.");
+    need(Object.values(input.totals).every(value=>value===null||Number.isFinite(value)&&value>=0)&&input.totals.total>0,"Los montos de boleta deben ser finitos y el total mayor que cero.");
+    if(input.documentTypeCode===41)need(input.lines.every(line=>line.isExempt)&&input.totals.net===0&&input.totals.tax===0,"La boleta exenta sólo admite líneas exentas y no lleva IVA.");
+    else need(input.totals.net>0&&input.totals.taxRate===0.19&&Math.round(input.totals.net*0.19)===Math.round(input.totals.tax),"La boleta afecta requiere monto neto e IVA de 19% consistente.");
+  }
   return errors;
 }
 /** Validación offline contra los cuatro XSD oficiales publicados por el SII, mediante libxml2/WASM. */
@@ -125,28 +137,33 @@ export class DteSchemaValidator {
 export class SiiDirectDteProvider extends TaxDocumentProvider {
   readonly name="SII_DIRECT" as const;
   private token:{value:string;environment:string;expires:number}|null=null;
+  private boletaTokens=new Map<string,{value:string;expires:number}>();
+  private boletaAuthentication=new Map<string,Promise<string>>();
   constructor(private readonly certificates:DteCertificateProvider,private readonly schema:DteSchemaValidator){super();}
   secretRef(){return process.env.DTE_CERTIFICATE_SECRET_REF?.trim()||"DTE_CERTIFICATE_PEM";}
   async requirements(environment="CERTIFICATION",documentTypeCode=33):Promise<DteRequirement[]>{
     const ref=this.secretRef();let certificate:DteRequirement;try{const meta=this.certificates.metadata(ref);const remaining=Date.parse(meta.expiresAt)-Date.now(),days=Math.ceil(remaining/86400000),valid=remaining>0&&Date.parse(meta.validFrom)<=Date.now();certificate={key:"certificate_secret",label:"Certificado digital en secreto del servidor",satisfied:valid,detail:valid?`Vigente, vence en ${days} días.`:"Certificado vencido o aún no vigente."};}
     catch(error){certificate={key:"certificate_secret",label:"Certificado digital en secreto del servidor",satisfied:false,detail:(error as Error).message};}
-    return[{key:"document_format",label:"Formato de documento implementado",satisfied:directDteImplemented(documentTypeCode),detail:directDteImplemented(documentTypeCode)?"Factura, factura exenta y notas de crédito y débito. Los demás tipos requieren un flujo específico.":`El tipo ${documentTypeCode} no está implementado en SII directo; no se reservan folios para ese formato.`},...(environment==="PRODUCTION"?[{key:"printed_office",label:"Oficina SII de la representación impresa",satisfied:Boolean(process.env.DTE_SII_OFFICE?.trim()),detail:"DTE_SII_OFFICE debe contener la oficina regional real del emisor, verificada con el SII."}]:[]),certificate,{key:"sender",label:"RUT del firmante configurado",satisfied:validRut(process.env.DTE_SENDER_RUT??""),detail:"DTE_SENDER_RUT debe identificar al titular del certificado autorizado para enviar por la empresa."},{key:"xsd",label:"Validación XSD oficial (libxml2/WASM + esquemas SII)",satisfied:this.schema.available(),detail:this.schema.available()?"Los cuatro esquemas oficiales están disponibles y la validación no depende del sistema operativo.":"Incluye los XSD oficiales o configura DTE_XSD_DIR."}];
+    return[{key:"document_format",label:"Formato de documento implementado",satisfied:directDteXmlImplemented(documentTypeCode),detail:[39,41].includes(documentTypeCode)?"XML y sobre de boletas disponibles; el transporte REST y su habilitación se verifican por separado.":directDteImplemented(documentTypeCode)?"Factura, factura exenta y notas de crédito y débito. Los demás tipos requieren un flujo específico.":`El tipo ${documentTypeCode} no está implementado en SII directo; no se reservan folios para ese formato.`},...([39,41].includes(documentTypeCode)?[{key:"boleta_transport",label:"Transporte REST de boletas validado",satisfied:false,detail:"Pendiente de validación contra la API oficial del SII. No se envían boletas por SOAP ni por el servicio de facturas."},{key:"boleta_lookup",label:"Consulta pública de boletas habilitada",satisfied:process.env.DTE_BOLETA_PUBLIC_LOOKUP_ENABLED==="true",detail:"Requiere habilitación expresa; sólo permite consultar el PDF de la boleta aceptada mediante su código seguro."}]:[]),...(environment==="PRODUCTION"?[{key:"printed_office",label:"Oficina SII de la representación impresa",satisfied:Boolean(process.env.DTE_SII_OFFICE?.trim()),detail:"DTE_SII_OFFICE debe contener la oficina regional real del emisor, verificada con el SII."}]:[]),certificate,{key:"sender",label:"RUT del firmante configurado",satisfied:validRut(process.env.DTE_SENDER_RUT??""),detail:"DTE_SENDER_RUT debe identificar al titular del certificado autorizado para enviar por la empresa."},{key:"xsd",label:"Validación XSD oficial (libxml2/WASM + esquemas SII)",satisfied:this.schema.available(),detail:this.schema.available()?"Los cuatro esquemas oficiales están disponibles y la validación no depende del sistema operativo.":"Incluye los XSD oficiales o configura DTE_XSD_DIR."}];
   }
   async createDraft(input:DteDocumentInput){
-    if(input.certificationCaseId!==undefined&&(input.environment!=="CERTIFICATION"||!/^\d{1,12}-[1-9]\d{0,5}$/.test(input.certificationCaseId)))throw new UnprocessableEntityException("La referencia SET requiere un caso válido y ambiente de certificación.");
-    if(!directDteImplemented(input.documentTypeCode))throw new UnprocessableEntityException(`El tipo ${input.documentTypeCode} no está implementado en SII directo.`);
+    const boleta=[39,41].includes(input.documentTypeCode);
+    if(input.certificationCaseId!==undefined&&(input.environment!=="CERTIFICATION"||!(boleta?/^CASO-[1-9]\d{0,5}$/:/^\d{1,12}-[1-9]\d{0,5}$/).test(input.certificationCaseId)))throw new UnprocessableEntityException("La referencia SET requiere un caso válido y ambiente de certificación.");
+    if(!directDteXmlImplemented(input.documentTypeCode))throw new UnprocessableEntityException(`El tipo ${input.documentTypeCode} no está implementado en SII directo.`);
+    if(boleta){const errors=structuralErrors(input);if(errors.length)throw new UnprocessableEntityException(errors.join(" "));if(input.reference)throw new UnprocessableEntityException("Las correcciones de boletas requieren una nota de crédito referenciada, no una boleta nueva.");}
     if(!input.caf)throw new UnprocessableEntityException("Falta el CAF para timbrar el documento.");const id=`F${input.folio}T${input.documentTypeCode}`;const first=input.lines[0]!;
-    const idDoc=[el("TipoDTE",input.documentTypeCode),el("Folio",input.folio),el("FchEmis",input.issueDate),...(input.dueDate&&[33,34,56].includes(input.documentTypeCode)?[el("FmaPago",input.dueDate>input.issueDate?2:1),el("FchVenc",input.dueDate)]:[])];
-    const emisor=[el("RUTEmisor",siiRut(input.company.rut)),el("RznSoc",clip(input.company.legalName,100)),el("GiroEmis",clip(input.company.businessActivity,80)),el("Acteco",input.company.activityCode),el("DirOrigen",clip(input.company.address,70)),el("CmnaOrigen",clip(input.company.commune,20)),opt("CiudadOrigen",clip(input.company.city,20))];
-    const receptor=[el("RUTRecep",siiRut(input.receiver.rut)),el("RznSocRecep",clip(input.receiver.legalName,100)),opt("GiroRecep",clip(input.receiver.businessActivity,40)),opt("DirRecep",clip(input.receiver.address,70)),opt("CmnaRecep",clip(input.receiver.commune,20)),opt("CiudadRecep",clip(input.receiver.city,20))];
-    const totales=[...(input.totals.net>0?[el("MntNeto",Math.round(input.totals.net))]:[]),...(input.totals.exempt>0?[el("MntExe",Math.round(input.totals.exempt))]:[]),...(input.totals.net>0&&input.totals.taxRate!==null?[el("TasaIVA",(input.totals.taxRate*100).toFixed(2).replace(/\.?0+$/,"")),el("IVA",Math.round(input.totals.tax))]:[]),el("MntTotal",Math.round(input.totals.total))];
+    const idDoc=[el("TipoDTE",input.documentTypeCode),el("Folio",input.folio),el("FchEmis",input.issueDate),...(boleta?[el("IndServicio",3),...(input.documentTypeCode===39?[el("IndMntNeto",2)]:[])]:[]),...(input.dueDate&&[33,34,56].includes(input.documentTypeCode)?[el("FmaPago",input.dueDate>input.issueDate?2:1),el("FchVenc",input.dueDate)]:[])];
+    const emisor=[el("RUTEmisor",siiRut(input.company.rut)),el(boleta?"RznSocEmisor":"RznSoc",clip(input.company.legalName,100)),el(boleta?"GiroEmisor":"GiroEmis",clip(input.company.businessActivity,80)),...(!boleta?[el("Acteco",input.company.activityCode)]:[]),el("DirOrigen",clip(input.company.address,70)),el("CmnaOrigen",clip(input.company.commune,20)),opt("CiudadOrigen",clip(input.company.city,20))];
+    const receptor=[el("RUTRecep",siiRut(input.receiver.rut)),el("RznSocRecep",clip(input.receiver.legalName,100)),...(!boleta?[opt("GiroRecep",clip(input.receiver.businessActivity,40))]:[]),opt("DirRecep",clip(input.receiver.address,70)),opt("CmnaRecep",clip(input.receiver.commune,20)),opt("CiudadRecep",clip(input.receiver.city,20))];
+    const totales=[...(input.totals.net>0?[el("MntNeto",Math.round(input.totals.net))]:[]),...(input.totals.exempt>0?[el("MntExe",Math.round(input.totals.exempt))]:[]),...(input.totals.net>0&&input.totals.taxRate!==null?[...(!boleta?[el("TasaIVA",(input.totals.taxRate*100).toFixed(2).replace(/\.?0+$/,""))]:[]),el("IVA",Math.round(input.totals.tax))]:[]),el("MntTotal",Math.round(input.totals.total))];
     const detalle=input.lines.map((line)=>el("Detalle",[el("NroLinDet",line.lineNumber),...(line.isExempt?[el("IndExe",1)]:[]),el("NmbItem",clip(line.description,80)),...(line.description.length>80?[el("DscItem",clip(line.description,1000))]:[]),el("QtyItem",Number(line.quantity.toFixed(6))),el("PrcItem",Number(line.unitPrice.toFixed(6))),...(line.discountAmount>0?[el("DescuentoMonto",Math.round(line.discountAmount))]:[]),el("MontoItem",Math.round(line.netAmount))]));
     // El SII exige SET en la primera referencia; las notas conservan después su documento original.
-    const referencia=[...(input.certificationCaseId?[el("Referencia",[el("NroLinRef",1),el("TpoDocRef","SET"),el("FolioRef",1),el("FchRef",input.issueDate),el("RazonRef",`CASO ${input.certificationCaseId}`)])]:[]),...(input.reference?[el("Referencia",[el("NroLinRef",input.certificationCaseId?2:1),el("TpoDocRef",input.reference.documentTypeCode),el("FolioRef",input.reference.folio),el("FchRef",input.reference.date),el("CodRef",input.reference.code),el("RazonRef",clip(input.reference.reason,90))])]:[])];
+    const referencia=[...(input.certificationCaseId?[el("Referencia",boleta?[el("NroLinRef",1),el("CodRef","SET"),el("RazonRef",input.certificationCaseId)]:[el("NroLinRef",1),el("TpoDocRef","SET"),el("FolioRef",1),el("FchRef",input.issueDate),el("RazonRef",`CASO ${input.certificationCaseId}`)])]:[]),...(input.reference?[el("Referencia",[el("NroLinRef",input.certificationCaseId?2:1),el("TpoDocRef",input.reference.documentTypeCode),el("FolioRef",input.reference.folio),el("FchRef",input.reference.date),el("CodRef",input.reference.code),el("RazonRef",clip(input.reference.reason,90))])]:[])];
     const stamp=timestamp();const dd=el("DD",[el("RE",siiRut(input.company.rut)),el("TD",input.documentTypeCode),el("F",input.folio),el("FE",input.issueDate),el("RR",siiRut(input.receiver.rut)),el("RSR",clip(input.receiver.legalName,40)),el("MNT",Math.round(input.totals.total)),el("IT1",clip(first.description,40)),input.caf.cafXml,el("TSTED",stamp)]).replace(/>\s+</g,"><");
     const frmt=createSign("RSA-SHA1").update(dd,"latin1").sign(createPrivateKey(input.caf.privateKeyPem),"base64");
     const ted=el("TED",[dd,el("FRMT",frmt,{algoritmo:"SHA1withRSA"})],{version:"1.0"});
-    return el("Documento",[el("Encabezado",[el("IdDoc",idDoc),el("Emisor",emisor),el("Receptor",receptor),el("Totales",totales)]),...detalle,...referencia,ted,el("TmstFirma",stamp)],{ID:id});
+    const parts=[el("Encabezado",[el("IdDoc",idDoc),el("Emisor",emisor),el("Receptor",receptor),...(boleta?[el("RUTProvSW",siiRut(input.company.rut))]:[]),el("Totales",totales)]),...detalle,...referencia,ted,el("TmstFirma",stamp)];
+    return el("Documento",boleta?parts.flatMap(part=>[part,"\n"]):parts,{ID:id});
   }
   async validate(xml:string,input:DteDocumentInput){const errors=structuralErrors(input);try{parseXml(xml);}catch(error){errors.push((error as Error).message);}return errors;}
   /** Firma el Documento con los mismos namespaces que tendrá dentro de EnvioDTE (evita firmas inválidas al ensobrar). */
@@ -159,18 +176,21 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
     const counts=new Map<number,number>(),identities=new Set<string>();
     for(const signed of signedDtes){
       const root=parseXml(signed),document=child(root,"Documento"),header=child(document,"Encabezado"),type=Number(textOf(header,"IdDoc","TipoDTE")),folio=Number(textOf(header,"IdDoc","Folio"));
-      if(local(root.name)!=="DTE"||!document||!child(root,"Signature")||!directDteImplemented(type)||!Number.isSafeInteger(folio)||folio<=0||document.attrs.ID!==`F${folio}T${type}`)throw new UnprocessableEntityException("Documento firmado inválido para el envío.");
+      if(local(root.name)!=="DTE"||!document||!child(root,"Signature")||!directDteXmlImplemented(type)||!Number.isSafeInteger(folio)||folio<=0||document.attrs.ID!==`F${folio}T${type}`)throw new UnprocessableEntityException("Documento firmado inválido para el envío.");
+      if([39,41].includes(type)!==[39,41].includes(input.documentTypeCode))throw new UnprocessableEntityException("Las boletas y los demás DTE requieren sobres y servicios separados.");
       if(normalizeRut(textOf(header,"Emisor","RUTEmisor"))!==normalizeRut(input.company.rut))throw new UnprocessableEntityException("El envío contiene documentos de otro emisor.");
       if(identities.has(document.attrs.ID))throw new UnprocessableEntityException("El envío contiene un tipo y folio duplicados.");
       identities.add(document.attrs.ID);counts.set(type,(counts.get(type)??0)+1);
-      const setReferences=(document.children??[]).filter((node)=>local(node.name)==="Referencia"&&textOf(node,"TpoDocRef")==="SET");
+      const setReferences=(document.children??[]).filter((node)=>local(node.name)==="Referencia"&&(textOf(node,"TpoDocRef")==="SET"||textOf(node,"CodRef")==="SET"));
       if(setReferences.length&&input.environment!=="CERTIFICATION")throw new UnprocessableEntityException("Las referencias SET no están permitidas en producción.");
     }
     const certificate=this.certificates.load(this.secretRef());const sender=this.senderRut();
     const caratula=el("Caratula",[el("RutEmisor",siiRut(input.company.rut)),el("RutEnvia",siiRut(sender)),el("RutReceptor","60803000-K"),el("FchResol",input.company.resolutionDate),el("NroResol",input.company.resolutionNumber),el("TmstFirmaEnv",timestamp()),...[...counts].map(([type,count])=>el("SubTotDTE",[el("TpoDTE",type),el("NroDTE",count)]))],{version:"1.0"});
     const setBody=caratula+signedDtes.join("");const inScope=` xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}"`;const canonicalSet=`<SetDTE${inScope} ID="SetDoc">${setBody}</SetDTE>`;
     const signature=xmlSignature(canonicalSet,"#SetDoc",certificate,` xmlns:xsi="${XSI_NS}"`);
-    return`<?xml version="1.0" encoding="ISO-8859-1"?>\n<EnvioDTE xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" version="1.0" xsi:schemaLocation="${SII_NS} EnvioDTE_v10.xsd"><SetDTE ID="SetDoc">${setBody}</SetDTE>${signature}</EnvioDTE>`;
+    const boleta=[39,41].includes(input.documentTypeCode),root=boleta?"EnvioBOLETA":"EnvioDTE",schema=boleta?"EnvioBOLETA_v11.xsd":"EnvioDTE_v10.xsd";
+    if(boleta&&signedDtes.length>500)throw new UnprocessableEntityException("Un sobre de boletas admite como máximo 500 documentos.");
+    return`<?xml version="1.0" encoding="ISO-8859-1"?>\n<${root} xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" version="1.0" xsi:schemaLocation="${SII_NS} ${schema}"><SetDTE ID="SetDoc">${setBody}</SetDTE>${signature}</${root}>`;
   }
   private async soap(environment:string,service:string,method:string,params:Record<string,string>){
     const body=siiSoapEnvelope(environment,service,method,params);
@@ -185,6 +205,33 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
     const signed=`<?xml version="1.0"?><getToken>${content}${xmlSignature(canonical,"",certificate,"",true)}</getToken>`;
     const tokenResponse=await this.soap(environment,"GetTokenFromSeed","getToken",{pszXml:signed});const tokenState=textOf(tokenResponse,"RESP_HDR","ESTADO");const token=textOf(tokenResponse,"RESP_BODY","TOKEN");if(tokenState!=="00"||!token)throw new ServiceUnavailableException(`SII rechazó la autenticación (estado ${tokenState||"?"}: ${textOf(tokenResponse,"RESP_HDR","GLOSA")}).`);
     this.token={value:token,environment,expires:Date.now()+50*60*1000};return token;
+  }
+  /** El token REST de boletas es distinto del token SOAP; no se intercambian entre ambientes o certificados. */
+  async authenticateBoleta(environment:string):Promise<string>{
+    const host=siiBoletaApiHost(environment),certificate=this.certificates.load(this.secretRef());
+    const key=`${environment}:${certificate.certificate.fingerprint256}`;
+    const cached=this.boletaTokens.get(key);if(cached&&cached.expires>Date.now())return cached.value;
+    const pending=this.boletaAuthentication.get(key);if(pending)return pending;
+    const request=(async()=>{
+      const read=async(response:Response)=>{
+        if(!response.ok||!response.body)throw new ServiceUnavailableException("La autenticación REST de boletas no respondió correctamente.");
+        const reader=response.body.getReader(),chunks:Uint8Array[]=[];let size=0;
+        try{for(;;){const{done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>16384){await reader.cancel();throw new ServiceUnavailableException("La respuesta de autenticación REST de boletas excede el tamaño permitido.");}chunks.push(value);}}finally{reader.releaseLock();}
+        const bytes=Buffer.concat(chunks);
+        try{return parseXml(bytes.toString("utf8"));}catch{throw new ServiceUnavailableException("La autenticación REST de boletas devolvió una respuesta inválida.");}
+      };
+      const seedResponse=await read(await fetch(`https://${host}/recursos/v1/boleta.electronica.semilla`,{headers:{Accept:"application/xml"},redirect:"error",signal:AbortSignal.timeout(20000)}));
+      const seed=textOf(seedResponse,"RESP_BODY","SEMILLA");
+      if(textOf(seedResponse,"RESP_HDR","ESTADO")!=="00"||!/^\d{1,20}$/.test(seed))throw new ServiceUnavailableException("El SII no confirmó la semilla REST de boletas.");
+      const content=`<item><Semilla>${seed}</Semilla></item>`,canonical=`<getToken>${content}</getToken>`;
+      const body=`<?xml version="1.0"?><getToken>${content}${xmlSignature(canonical,"",certificate,"",true)}</getToken>`;
+      const tokenResponse=await read(await fetch(`https://${host}/recursos/v1/boleta.electronica.token`,{method:"POST",headers:{"Content-Type":"application/xml",Accept:"application/xml"},body,redirect:"error",signal:AbortSignal.timeout(20000)}));
+      const value=textOf(tokenResponse,"RESP_BODY","TOKEN");
+      if(textOf(tokenResponse,"RESP_HDR","ESTADO")!=="00"||! /^[A-Za-z0-9_-]{8,256}$/.test(value))throw new ServiceUnavailableException("El SII no confirmó la autenticación REST de boletas.");
+      this.boletaTokens.set(key,{value,expires:Date.now()+5*60*1000});return value;
+    })();
+    this.boletaAuthentication.set(key,request);
+    try{return await request;}finally{this.boletaAuthentication.delete(key);}
   }
   async connectionTest(environment:string){const started=Date.now(),seedResponse=await this.soap(environment,"CrSeed","getSeed",{}),state=textOf(seedResponse,"RESP_HDR","ESTADO"),seed=textOf(seedResponse,"RESP_BODY","SEMILLA");if(state!=="00"||!seed)throw new ServiceUnavailableException(`SII no entregó semilla (estado ${state||"?"}).`);let authenticated=false,certificate:string;try{const metadata=this.certificates.metadata(this.secretRef());certificate=Date.parse(metadata.expiresAt)>Date.now()?"VALID":"EXPIRED";}catch{certificate="NOT_CONFIGURED";}if(certificate==="VALID"){await this.authenticate(environment);authenticated=true;}return{provider:this.name,environment,host:siiHost(environment),seedService:"CONNECTED",certificate,authenticated,latencyMs:Date.now()-started,checkedAt:new Date().toISOString()};}
   /** Sólo archivos previamente validados y registrados por el proceso de certificación. */
@@ -213,6 +260,7 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
     return {trackId,status};
   }
   async send(signed:string,input:DteDocumentInput){
+    if([39,41].includes(input.documentTypeCode))throw new ServiceUnavailableException("El formato de boleta está disponible; su transporte REST aún no está validado. No se envía por el servicio de facturas.");
     const envelopeXml=this.envelope([signed],input);const xsdErrors=await this.schema.validate(envelopeXml);if(xsdErrors.length)throw new UnprocessableEntityException(`El EnvioDTE no valida contra el XSD oficial: ${xsdErrors.join(" | ")}`);
     await renderPrintedDte(Buffer.from(this.standalone(signed),"latin1"),Buffer.from(envelopeXml,"latin1"),{documentTypeCode:input.documentTypeCode,folio:input.folio,environment:input.environment,status:"SIGNED",emitterRut:input.company.rut,receiverRut:input.receiver.rut,issueDate:input.issueDate,totalAmount:input.totals.total},process.env.DTE_SII_OFFICE);
     const token=await this.authenticate(input.environment);const sender=normalizeRut(this.senderRut()).split("-");const company=normalizeRut(input.company.rut).split("-");

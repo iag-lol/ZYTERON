@@ -18,6 +18,10 @@ import {
   pdf417ByteCodewords,
 } from "../dist/finance/finance.dte-print.js";
 import { PDFDocument } from "pdf-lib";
+import { productionBoletaLookupToken, verifyProductionBoletaLookupToken, verifyBoletaLookupToken, productionBoletaVerificationUrl } from "../dist/finance/finance.boleta-lookup.js";
+import { publicProductionBoleta } from "../dist/finance/finance.boleta-public.js";
+import { verifySiiXmlSignatures } from "../dist/finance/finance.sii-signatures.js";
+import { directDteImplemented } from "../dist/finance/finance.dte-catalog.js";
 
 let directory, provider, fixture;
 const previousSecret = process.env.ZYTERON_SYNTHETIC_CERTIFICATE;
@@ -150,6 +154,152 @@ test("el caso de certificación conserva SET primero y la factura original en se
 
 test("un documento comercial normal no adquiere referencias SET", async () => {
   assert.doesNotMatch(fixture.signedFragment, /<TpoDocRef>SET<\/TpoDocRef>/);
+});
+
+const boletaFixture = async (type = 39, overrides = {}) => {
+  const original = fixture.input;
+  return createFixture({
+    ...original, documentTypeCode: type, dueDate: null,
+    lines: original.lines.map(line => ({ ...line, isExempt: type === 41 })),
+    totals: type === 41 ? { net: 0, exempt: 100000, taxRate: null, tax: 0, total: 100000 } : original.totals,
+    caf: { ...original.caf, documentTypeCode: type, cafXml: original.caf.cafXml.replace('<TD>33</TD>', `<TD>${type}</TD>`) },
+    ...overrides,
+  });
+};
+
+test("boletas netas y exentas generan sobres propios, validan XSD y conservan las firmas", async () => {
+  for (const type of [39, 41]) {
+    const item = await boletaFixture(type);
+    const xml = item.envelope.toString('latin1');
+    assert.match(xml, /<EnvioBOLETA /);
+    assert.match(xml, /<RznSocEmisor>/);
+    assert.doesNotMatch(xml, /<Acteco>|<TasaIVA>|<TpoDocRef>SET/);
+    assert.equal(xml.includes('<IndMntNeto>2</IndMntNeto>'), type === 39);
+    assert.deepEqual(await new DteSchemaValidator().validate(xml, 'EnvioBOLETA_v11.xsd'), []);
+    assert.equal(verifySiiXmlSignatures(xml).length, 2);
+    assert.equal(verifySiiXmlSignatures(item.signed.toString('latin1')).length, 1);
+    assert.equal((await renderPrintedDte(item.signed, item.envelope, item.record)).subarray(0, 5).toString(), '%PDF-');
+  }
+});
+
+test("las boletas rechazan montos incoherentes, IVA en exentas y sobres mezclados", async () => {
+  await assert.rejects(boletaFixture(41, { totals: fixture.input.totals }), /exenta|totales/);
+  await assert.rejects(boletaFixture(39, { totals: { ...fixture.input.totals, tax: 19001, total: 119001 } }), /19%/);
+  await assert.rejects(boletaFixture(39, { lines: [{ ...fixture.input.lines[0], quantity: 2 }] }), /Detalle/);
+  await assert.rejects(boletaFixture(39, { lines: [] }), /entre 1 y 60/);
+  await assert.rejects(boletaFixture(39, { lines: [{ ...fixture.input.lines[0], unitPrice: NaN }] }), /Detalle/);
+  await assert.rejects(boletaFixture(39, { receiver: { ...fixture.input.receiver, legalName: 'Nombre 🙂' } }), /codificación XML/);
+  await assert.rejects(boletaFixture(39, { reference: { documentTypeCode: 39, folio: 1 } }), /nota de crédito/);
+  const item = await boletaFixture();
+  assert.throws(() => provider.envelope([item.signedFragment, fixture.signedFragment], item.input), /sobres y servicios separados/);
+  assert.throws(() => provider.envelope([item.signedFragment, item.signedFragment], item.input), /duplicados/);
+});
+
+test("un formato XML preparado no habilita emisión ni envía boletas por el servicio de facturas", async () => {
+  const item = await boletaFixture();
+  assert.equal(directDteImplemented(39), false);
+  assert.equal((await provider.requirements('PRODUCTION', 39)).find(r => r.key === 'boleta_transport').satisfied, false);
+  await assert.rejects(() => provider.send(item.signedFragment, item.input), /transporte REST aún no está validado/);
+  const cert = await boletaFixture(39, { certificationCaseId: 'CASO-1' });
+  assert.match(cert.signedFragment, /<CodRef>SET<\/CodRef><RazonRef>CASO-1/);
+  assert.throws(() => provider.envelope([cert.signedFragment], { ...cert.input, environment: 'PRODUCTION' }), /SET/);
+});
+
+test("REST autentica con semilla firmada y aísla tokens SOAP, ambientes y llamadas concurrentes", async (t) => {
+  const p = new SiiDirectDteProvider({ load: () => new DteCertificateProvider().load('ZYTERON_SYNTHETIC_CERTIFICATE') }, {});
+  p.token = { value: 'SOAP_ONLY', environment: 'CERTIFICATION', expires: Date.now() + 60000 };
+  const calls = [];
+  t.mock.method(globalThis, 'fetch', async (url, init) => {
+    calls.push(url);
+    const tokenRequest = url.endsWith('.token');
+    assert.equal(init.redirect, 'error');
+    if (tokenRequest) {
+      assert.equal(init.method, 'POST');
+      assert.equal(init.headers['Content-Type'], 'application/xml');
+      assert.match(init.body, /<Semilla>123456789<\/Semilla>/);
+      assert.match(init.body, /<Signature xmlns=/);
+      assert.doesNotMatch(init.body, /PRIVATE KEY|SOAP_ONLY/);
+    }
+    return new Response(tokenRequest ? '<RESPUESTA><RESP_HDR><ESTADO>00</ESTADO></RESP_HDR><RESP_BODY><TOKEN>SYNTHETIC_REST_TOKEN</TOKEN></RESP_BODY></RESPUESTA>' : '<RESPUESTA><RESP_HDR><ESTADO>00</ESTADO></RESP_HDR><RESP_BODY><SEMILLA>123456789</SEMILLA></RESP_BODY></RESPUESTA>');
+  });
+  assert.deepEqual(await Promise.all([p.authenticateBoleta('CERTIFICATION'),p.authenticateBoleta('CERTIFICATION')]), ['SYNTHETIC_REST_TOKEN','SYNTHETIC_REST_TOKEN']);
+  assert.equal(calls.length, 2);
+  await p.authenticateBoleta('CERTIFICATION');
+  assert.equal(calls.length, 2);
+  await p.authenticateBoleta('PRODUCTION');
+  assert.deepEqual(calls.map(url => new URL(url).host), ['apicert.sii.cl','apicert.sii.cl','api.sii.cl','api.sii.cl']);
+  assert.equal(p.token.value, 'SOAP_ONLY');
+  await assert.rejects(() => p.authenticateBoleta('UNKNOWN'), /Ambiente/);
+});
+
+test("REST rechaza errores, HTML, semilla alterada y respuestas enormes; un reintento puede recuperarse", async (t) => {
+  let reply = () => new Response('unavailable', {status:503});
+  let calls = 0;
+  t.mock.method(globalThis, 'fetch', async () => { calls++; return reply(); });
+  const make = () => new SiiDirectDteProvider({ load: () => new DteCertificateProvider().load('ZYTERON_SYNTHETIC_CERTIFICATE') }, {});
+  const p = make();
+  for (const response of [() => new Response('unavailable',{status:503}), () => new Response('<html>not xml</html>'), () => new Response('<RESPUESTA><RESP_HDR><ESTADO>00</ESTADO></RESP_HDR><RESP_BODY><SEMILLA>&lt;attacker&gt;</SEMILLA></RESP_BODY></RESPUESTA>'), () => new Response('x'.repeat(16385))]) {
+    reply = response;
+    await assert.rejects(() => p.authenticateBoleta('CERTIFICATION'));
+  }
+  const failedCalls = calls;
+  reply = () => new Response('<RESPUESTA><RESP_HDR><ESTADO>00</ESTADO></RESP_HDR><RESP_BODY><SEMILLA>1234</SEMILLA><TOKEN>SYNTHETIC_REST_TOKEN</TOKEN></RESP_BODY></RESPUESTA>');
+  assert.equal(await p.authenticateBoleta('CERTIFICATION'), 'SYNTHETIC_REST_TOKEN');
+  assert.equal(calls, failedCalls+2);
+  let phase = 0;
+  reply = () => new Response(++phase === 1 ? '<RESPUESTA><RESP_HDR><ESTADO>00</ESTADO></RESP_HDR><RESP_BODY><SEMILLA>1234</SEMILLA></RESP_BODY></RESPUESTA>' : '<RESPUESTA><RESP_HDR><ESTADO>11</ESTADO></RESP_HDR><RESP_BODY><TOKEN>DO_NOT_USE</TOKEN></RESP_BODY></RESPUESTA>');
+  await assert.rejects(() => make().authenticateBoleta('CERTIFICATION'), /no confirmó la autenticación/);
+});
+
+test("el código productivo vincula ID y huella sin admitir códigos de certificación ni alterados", () => {
+  const oldKey = process.env.FINANCE_ENCRYPTION_KEY;
+  process.env.FINANCE_ENCRYPTION_KEY = 'b'.repeat(64);
+  try {
+    const id = '11111111-1111-4111-8111-111111111111', hash = 'a'.repeat(64);
+    const token = productionBoletaLookupToken(id, hash);
+    assert.ok(token.length <= 220);
+    assert.deepEqual(verifyProductionBoletaLookupToken(token), { documentId: id, signedXmlSha256: hash });
+    for (const bad of [token.replace('v2.', 'v1.'), token.slice(0, -2) + 'xx', token + '.', '../archivo']) assert.throws(() => verifyProductionBoletaLookupToken(bad));
+    assert.throws(() => verifyBoletaLookupToken(token));
+    assert.throws(() => productionBoletaLookupToken('../archivo', hash));
+  } finally { if (oldKey === undefined) delete process.env.FINANCE_ENCRYPTION_KEY; else process.env.FINANCE_ENCRYPTION_KEY = oldKey; }
+});
+
+test("consulta productiva exige habilitación, empresa, aceptación, tipo, ruta, huella y firma", async () => {
+  const previous = { key: process.env.FINANCE_ENCRYPTION_KEY, enabled: process.env.DTE_BOLETA_PUBLIC_LOOKUP_ENABLED, office: process.env.DTE_SII_OFFICE };
+  process.env.FINANCE_ENCRYPTION_KEY = 'b'.repeat(64);
+  process.env.DTE_SII_OFFICE = 'OFICINA DE PRUEBA';
+  const item = await boletaFixture(39, { environment: 'PRODUCTION' });
+  const id = '11111111-1111-4111-8111-111111111111';
+  const hash = createHash('sha256').update(item.signed).digest('hex');
+  const base = 'dte/production/39/42';
+  const document = { ...item.record, id, environment: 'PRODUCTION', status: 'ACCEPTED', responsePath: `${base}/envio.xml`, xmlSignedPath: `${base}/signed.xml`, xmlSignedSha256: hash };
+  const token = productionBoletaLookupToken(id, hash);
+  let current = document, reads = [], content = item.signed;
+  const repo = { configured: () => true, settings: async () => ({ companyRut: item.input.company.rut }), get: async (table, requested) => { assert.equal(table, 'tax_documents'); assert.equal(requested, id); return current; }, readFile: async (bucket, path) => { assert.equal(bucket, 'finance-documents'); reads.push(path); return path.endsWith('signed.xml') ? content : item.envelope; } };
+  try {
+    delete process.env.DTE_BOLETA_PUBLIC_LOOKUP_ENABLED;
+    await assert.rejects(() => publicProductionBoleta(repo, token), /no está disponible/);
+    assert.equal(reads.length, 0);
+    process.env.DTE_BOLETA_PUBLIC_LOOKUP_ENABLED = 'true';
+    const result = await publicProductionBoleta(repo, token);
+    assert.equal(result.bytes.subarray(0, 5).toString(), '%PDF-');
+    assert.deepEqual(reads, [`${base}/signed.xml`, `${base}/envio.xml`]);
+    const pdf = await PDFDocument.load(result.bytes);
+    assert.ok(pdf.getPages().length > 0);
+    for (const patch of [ { id: '22222222-2222-4222-8222-222222222222' }, { emitterRut: '22222222-2' }, { environment: 'CERTIFICATION' }, { documentTypeCode: 33 }, { provider: 'EXTERNAL' }, { xmlSignedPath: '../other/signed.xml' }, { responsePath: 'another/envio.xml' }, { xmlSignedSha256: 'c'.repeat(64) }, ...['DRAFT','SIGNED','SUBMITTED','REJECTED','CANCELLED'].map(status => ({status})) ]) {
+      current = { ...document, ...patch }; reads = [];
+      await assert.rejects(() => publicProductionBoleta(repo, token), /no está disponible/);
+      assert.equal(reads.length, 0);
+    }
+    current = document; content = Buffer.from(item.signed.toString('latin1').replace('100000', '100001'), 'latin1');
+    await assert.rejects(() => publicProductionBoleta(repo, token), /no está disponible/);
+    content = null;
+    await assert.rejects(() => publicProductionBoleta(repo, token), /no está disponible/);
+    assert.match(productionBoletaVerificationUrl(id, hash), /#v2\./);
+  } finally {
+    for (const [name, value] of [['FINANCE_ENCRYPTION_KEY',previous.key],['DTE_BOLETA_PUBLIC_LOOKUP_ENABLED',previous.enabled],['DTE_SII_OFFICE',previous.office]]) { if (value === undefined) delete process.env[name]; else process.env[name] = value; }
+  }
 });
 
 test("referencias de pruebas inválidas o productivas se rechazan antes de generar el timbre", async () => {
@@ -416,7 +566,7 @@ test("los cuatro tipos implementados generan una representación sin habilitar o
       1,
     );
   }
-  for (const code of [39, 41, 46, 52]) {
+  for (const code of [46, 52]) {
     assert.equal(
       (await provider.requirements("CERTIFICATION", code)).find(
         (row) => row.key === "document_format",

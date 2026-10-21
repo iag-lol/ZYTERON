@@ -5,6 +5,9 @@ export const dteCatalog = siiDocumentCatalog.map(item => [item.code, item.name] 
 
 export const directDteImplemented = (code: number) => [33, 34, 56, 61].includes(code);
 
+// El formato XML no acredita que el transporte REST de boletas esté validado.
+export const directDteXmlImplemented = (code: number) => directDteImplemented(code) || [39, 41].includes(code);
+
 // Las opciones sin registro persistente son informativas; una consulta no crea configuración.
 export function documentTypeCatalog(stored: Row[], provider: string): Row[] {
   const rows = new Map<number, Row>(stored.map(row => [Number(row.code), { ...row }]));

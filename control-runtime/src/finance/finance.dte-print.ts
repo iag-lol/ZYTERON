@@ -336,7 +336,7 @@ export async function renderPrintedDte(
   const data = printedDteData(signed, envelope, expected);
   if (
     verificationUrl &&
-    (!/^https:\/\/www\.zyteron\.cl\/boletas\/consulta#v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/.test(
+    (!/^https:\/\/www\.zyteron\.cl\/boletas\/consulta#v[12]\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/.test(
       verificationUrl,
     ) ||
       ![39, 41].includes(data.type))

@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       Array.isArray(body) ||
       Object.keys(body).length !== 1 ||
       typeof body.token !== "string" ||
-      !/^v1\.[A-Za-z0-9_-]{20,150}\.[A-Za-z0-9_-]{43}$/.test(body.token)
+      !/^v[12]\.[A-Za-z0-9_-]{20,150}\.[A-Za-z0-9_-]{43}$/.test(body.token)
     )
       return failure(400, "Revisa el código de consulta impreso en tu boleta.");
     const port = process.env.CONTROL_INTERNAL_PORT || "4010";
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
       headers: {
         ...headers,
         "content-type": "application/pdf",
-        "content-disposition": 'attachment; filename="boleta-certificacion.pdf"',
+        "content-disposition": 'attachment; filename="boleta.pdf"',
         "x-content-type-options": "nosniff",
       },
     });

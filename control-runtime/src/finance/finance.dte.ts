@@ -4,6 +4,7 @@ import { documentLabel, InvoiceService } from "./finance.billing.js";
 import { FinanceContext } from "./finance.core.js";
 import { type CafData, DteCertificateProvider, type DteDocumentInput, type DteStatus, ExternalCertifiedDteProvider, parseCaf, parseReceivedXml, SiiDirectDteProvider, structuralErrors, type TaxDocumentProvider } from "./finance.dte-providers.js";
 import { renderPrintedDte, type PrintedDteRecord } from "./finance.dte-print.js";
+import { productionBoletaVerificationUrl } from "./finance.boleta-lookup.js";
 import { dteCatalog, documentTypeCatalog, directDteImplemented } from "./finance.dte-catalog.js";
 import { parseCsv, readXlsx } from "./finance.formats.js";
 import type { PageQuery } from "./finance.repository.js";
@@ -157,7 +158,8 @@ export class DteService {
       if(!String(doc.xmlSignedPath).endsWith("/signed.xml"))throw new ConflictException("La ubicación archivada del documento requiere revisión.");
       const envelope=await this.repo.readFile("finance-documents",String(doc.xmlSignedPath).replace(/\/signed\.xml$/,"/envio.xml"));
       if(!envelope)throw new NotFoundException("No está disponible el envío original con su resolución. No se reconstruye desde la configuración actual.");
-      const bytes=await renderPrintedDte(signed,envelope,doc as unknown as PrintedDteRecord,process.env.DTE_SII_OFFICE);
+      const verificationUrl=doc.environment==="PRODUCTION"&&[39,41].includes(doc.documentTypeCode)?productionBoletaVerificationUrl(doc.id,doc.xmlSignedSha256):undefined;
+      const bytes=await renderPrintedDte(signed,envelope,doc as unknown as PrintedDteRecord,process.env.DTE_SII_OFFICE,"TRIBUTARY",verificationUrl);
       return{bytes,fileName:`${doc.documentTypeCode}-${doc.folio??id}.pdf`,mime:"application/pdf"};
     }
     const provider=this.provider(doc.provider);const bytes=provider?(kind==="xml"?await provider.downloadXml(doc):await provider.downloadPdf(doc)):null;if(!bytes)throw new NotFoundException(kind==="pdf"?"No existe representación impresa con folio y timbre real para este documento.":"XML no disponible.");return{bytes,fileName:`${doc.documentTypeCode}-${doc.folio??id}.${kind}`,mime:kind==="xml"?"application/xml":"application/pdf"};}
