@@ -3,6 +3,8 @@ import type { DteCertificate, DteReadiness, DteRequirement, FolioAuthorization, 
 import { documentLabel, InvoiceService } from "./finance.billing.js";
 import { FinanceContext } from "./finance.core.js";
 import { type CafData, DteCertificateProvider, type DteDocumentInput, type DteStatus, ExternalCertifiedDteProvider, parseCaf, parseReceivedXml, SiiDirectDteProvider, structuralErrors, type TaxDocumentProvider } from "./finance.dte-providers.js";
+import { renderPrintedDte, type PrintedDteRecord } from "./finance.dte-print.js";
+import { documentTypeCatalog, directDteImplemented } from "./finance.dte-catalog.js";
 import { parseCsv, readXlsx } from "./finance.formats.js";
 import type { PageQuery } from "./finance.repository.js";
 import { daysBetween, decryptSecret, encryptionConfigured, encryptSecret, type FinanceActor, formatRut, guarded, isoDate, money, normalizeRut, nowIso, oneOf, optionalText, r2, requiredText, requireRut, type Row, sha256, todayCl, validRut } from "./finance.util.js";
@@ -21,6 +23,8 @@ const dteRequirementActions:Record<string,{actionHref:string;actionLabel:string}
   xsd:{actionHref:"/finance/settings#dte-integrations",actionLabel:"Configurar esquemas"},
   external_provider:{actionHref:"/finance/settings#dte-integrations",actionLabel:"Configurar credenciales"},
   document_type:{actionHref:"/finance/settings#dte-document-types",actionLabel:"Habilitar documento"},
+  document_format:{actionHref:"/finance/settings#dte-document-types",actionLabel:"Revisar tipos implementados"},
+  printed_office:{actionHref:"/finance/settings#dte-integrations",actionLabel:"Configurar oficina en servidor"},
   folios:{actionHref:"/finance/settings#dte-caf",actionLabel:"Cargar CAF"},
   receiver:{actionHref:"/clients",actionLabel:"Completar cliente"},
   status:{actionHref:"/finance/invoices",actionLabel:"Revisar factura"},
@@ -41,15 +45,15 @@ export class DteService {
     const company=this.companyMissing(settings);add("company","Datos del emisor completos",!company.length,company.length?`Falta: ${company.join(", ")}.`:`${settings.companyLegalName} · ${settings.companyRut}`);
     add("resolution","Resolución SII (número y fecha)",Boolean(settings.dteResolutionDate&&settings.dteResolutionNumber!==null&&settings.dteResolutionNumber!==undefined),settings.dteResolutionDate?`Resolución N° ${settings.dteResolutionNumber} del ${String(settings.dteResolutionDate).split("-").reverse().join("-")}`:"Registra la resolución de autorización (en certificación: número 0 y fecha de postulación).");
     const production=settings.dteEnvironment==="PRODUCTION";add("environment",production?"Autorización de producción del SII":"Ambiente de certificación",!production||Boolean(settings.dteProductionAuthorized),production?(settings.dteProductionAuthorized?"Producción autorizada.":"Completa set de pruebas, simulación, intercambio, muestras y declaración de cumplimiento antes de producción."):"Ambiente de certificación (maullin.sii.cl): los documentos no tienen validez tributaria.");
-    const provider=this.provider(settings.dteProvider);if(provider)requirements.push(...await provider.requirements(settings.dteEnvironment,33));
+    const invoice:Invoice|undefined=invoiceId?await this.ctx.must<Invoice>("invoices",invoiceId,"Factura"):undefined;
+    const provider=this.provider(settings.dteProvider);if(provider)requirements.push(...await provider.requirements(settings.dteEnvironment,invoice?.documentTypeCode??33));
     if(settings.dteProvider==="SII_DIRECT"){const certificates=await this.repo.list<Row>("dte_certificates",{status:"ACTIVE"});let fingerprint:string|undefined;try{fingerprint=this.certificates.metadata(this.sii.secretRef()).fingerprintSha256;}catch{}const valid=certificates.find((c)=>c.secretRef===this.sii.secretRef()&&c.fingerprintSha256===fingerprint&&Date.parse(c.validFrom)<=Date.now()&&Date.parse(c.expiresAt)>Date.now());add("certificate_registry","Certificado registrado y vigente",Boolean(valid),valid?`${valid.label}: vence el ${String(valid.expiresAt).slice(0,10).split("-").reverse().join("-")}`:"Registra los metadatos del certificado vigente que está configurado para la firma en el servidor.");}
     if(!invoiceId&&provider){
       const type=await this.repo.get<Row>("tax_document_types",33);
       add("document_type","Factura electrónica (33) habilitada",Boolean(type?.enabledForIssue&&(!production||type?.certified)),production?"Requiere habilitación y certificación SII acreditada para producción.":"Habilita el tipo 33 para las pruebas de certificación; esto no lo certifica ante el SII.");
       if(settings.dteProvider==="SII_DIRECT"){const available=await this.repo.count("tax_folios",{documentTypeCode:33,environment:settings.dteEnvironment,status:"AVAILABLE"});add("folios","Folios CAF de factura (33)",available>0,available>0?`${available} folios disponibles en este ambiente.`:"Descarga un CAF del SII para este ambiente y cárgalo cifrado. Los folios de certificación y producción son distintos.");}
     }
-    let invoice:Invoice|undefined;
-    if(invoiceId){invoice=await this.ctx.must<Invoice>("invoices",invoiceId,"Factura");const type=await this.repo.get<Row>("tax_document_types",invoice.documentTypeCode);add("document_type",`Tipo ${invoice.documentTypeCode} habilitado para emisión`,Boolean(type?.enabledForIssue&&(!production||type?.certified)),type?.enabledForIssue?(production&&!type.certified?"El tipo no está certificado para producción.":"Habilitado."):"Habilítalo en Configuración contable una vez certificado.");
+    if(invoice){const type=await this.repo.get<Row>("tax_document_types",invoice.documentTypeCode);add("document_type",`Tipo ${invoice.documentTypeCode} habilitado para emisión`,Boolean(type?.enabledForIssue&&(!production||type?.certified)),type?.enabledForIssue?(production&&!type.certified?"El tipo no está certificado para producción.":"Habilitado."):"Habilítalo en Configuración contable una vez certificado.");
       if(settings.dteProvider==="SII_DIRECT"){const available=await this.repo.count("tax_folios",{documentTypeCode:invoice.documentTypeCode,environment:settings.dteEnvironment,status:"AVAILABLE"});add("folios",`Folios CAF disponibles (tipo ${invoice.documentTypeCode})`,available>0,available>0?`${available} folios disponibles.`:"Carga un CAF vigente descargado desde el SII.");}
       add("status","Factura aprobada y lista para emitir",invoice.status==="READY_TO_ISSUE",invoice.status==="READY_TO_ISSUE"?"Lista.":invoice.status==="PENDING_APPROVAL"?"Pendiente de aprobación.":`Estado actual: ${invoice.status}.`);
       const client=await this.ctx.sources.client(invoice.clientId);const receiver=[!validRut(client?.billingRut||client?.rut)&&"RUT válido",!(client?.billingLegalName||client?.legalName)&&"razón social",[33,56,61].includes(invoice.documentTypeCode)&&!(client?.billingActivity||client?.businessActivity)&&"giro",[33,56,61].includes(invoice.documentTypeCode)&&!(client?.billingAddress||client?.address)&&"dirección",[33,56,61].includes(invoice.documentTypeCode)&&!client?.commune&&"comuna"].filter(Boolean) as string[];
@@ -138,6 +142,16 @@ export class DteService {
   async documents(q:PageQuery&{status?:string;documentTypeCode?:string},actor:FinanceActor){this.ctx.require(actor,"dte.view");return this.repo.page<TaxDocument>("tax_documents",{status:q.status||undefined,documentTypeCode:q.documentTypeCode?Number(q.documentTypeCode):undefined},{...q,order:"createdAt",searchColumns:["trackId","receiverRut"]});}
   async document(id:string,actor:FinanceActor){this.ctx.require(actor,"dte.view");const doc=await this.ctx.must<TaxDocument>("tax_documents",id,"Documento tributario");const[events,invoice]=await Promise.all([this.repo.list<TaxDocumentEvent>("tax_document_events",{taxDocumentId:id},{order:"occurredAt"}),this.repo.get<Invoice>("invoices",doc.invoiceId)]);return{...doc,events,invoice};}
   async download(id:string,kind:"xml"|"pdf",actor:FinanceActor){this.ctx.require(actor,"dte.view");const doc=await this.ctx.must<Row>("tax_documents",id,"Documento tributario");const path=kind==="xml"?doc.xmlSignedPath:doc.pdfPath;if(path){const bytes=await this.repo.readFile("finance-documents",path);if(bytes)return{bytes,fileName:`${doc.documentTypeCode}-${doc.folio??id}.${kind}`,mime:kind==="xml"?"application/xml":"application/pdf"};}
+    if(kind==="pdf"&&doc.provider==="SII_DIRECT"&&doc.xmlSignedPath){
+      const signed=await this.repo.readFile("finance-documents",doc.xmlSignedPath);
+      if(!signed)throw new NotFoundException("No está disponible el XML firmado archivado del documento.");
+      if(!doc.xmlSignedSha256||sha256(signed)!==doc.xmlSignedSha256)throw new ConflictException("El XML firmado no coincide con su huella archivada.");
+      if(!String(doc.xmlSignedPath).endsWith("/signed.xml"))throw new ConflictException("La ubicación archivada del documento requiere revisión.");
+      const envelope=await this.repo.readFile("finance-documents",String(doc.xmlSignedPath).replace(/\/signed\.xml$/,"/envio.xml"));
+      if(!envelope)throw new NotFoundException("No está disponible el envío original con su resolución. No se reconstruye desde la configuración actual.");
+      const bytes=await renderPrintedDte(signed,envelope,doc as unknown as PrintedDteRecord,process.env.DTE_SII_OFFICE);
+      return{bytes,fileName:`${doc.documentTypeCode}-${doc.folio??id}.pdf`,mime:"application/pdf"};
+    }
     const provider=this.provider(doc.provider);const bytes=provider?(kind==="xml"?await provider.downloadXml(doc):await provider.downloadPdf(doc)):null;if(!bytes)throw new NotFoundException(kind==="pdf"?"No existe representación impresa con folio y timbre real para este documento.":"XML no disponible.");return{bytes,fileName:`${doc.documentTypeCode}-${doc.folio??id}.${kind}`,mime:kind==="xml"?"application/xml":"application/pdf"};}
 
   // ---------------------------------------------------------------------------------- certificados y CAF
@@ -160,8 +174,30 @@ export class DteService {
     await this.repo.audit(actor,"CAF_UPLOADED","FOLIO_AUTHORIZATION",authorization.id,`CAF tipo ${caf.documentTypeCode} folios ${caf.rangeFrom}–${caf.rangeTo} (${environment})`,{sha256:file.sha256});return authorization;
   }
   async folioAuthorizations(actor:FinanceActor):Promise<FolioAuthorization[]>{this.ctx.require(actor,"dte.view");const authorizations=await this.repo.list<Row>("tax_folio_authorizations",{},{order:"createdAt"});const out:FolioAuthorization[]=[];for(const a of authorizations){const count=(status:string)=>this.repo.count("tax_folios",{authorizationId:a.id,status});out.push({id:a.id,documentTypeCode:a.documentTypeCode,environment:a.environment,rangeFrom:a.rangeFrom,rangeTo:a.rangeTo,authorizedAt:a.authorizedAt,status:a.status,available:await count("AVAILABLE"),used:await count("USED"),reserved:await count("RESERVED"),voided:await count("VOIDED")});}return out;}
-  documentTypes(){return this.repo.list<Row>("tax_document_types",{},{order:"code",ascending:true});}
-  async updateDocumentType(code:number,body:Row,actor:FinanceActor){this.ctx.require(actor,"dte.manage");const patch:Row={};if(body.enabledForIssue!==undefined)patch.enabledForIssue=Boolean(body.enabledForIssue);if(body.certified!==undefined){if(body.certified&&!String(body.notes??"").trim())throw new BadRequestException("Indica la evidencia de certificación SII (resolución / fecha) al marcar como certificado.");patch.certified=Boolean(body.certified);patch.notes=optionalText(body.notes,500);}const updated=await this.repo.update("tax_document_types",code,patch);await this.repo.audit(actor,"DTE_TYPE_UPDATED","TAX_DOCUMENT_TYPE",null,`Tipo ${code} actualizado`,patch);return updated;}
+  async documentTypes(){
+    const [stored,settings]=await Promise.all([this.repo.list<Row>("tax_document_types",{},{order:"code",ascending:true}),this.repo.settings()]);
+    return documentTypeCatalog(stored,settings.dteProvider);
+  }
+  async updateDocumentType(code:number,body:Row,actor:FinanceActor){
+    this.ctx.require(actor,"dte.manage");
+    if(!Number.isInteger(code)||code<=0)throw new BadRequestException("Código de documento inválido.");
+    for(const key of ["enabledForIssue","certified"])if(body[key]!==undefined&&typeof body[key]!=="boolean")throw new BadRequestException(`${key} debe ser booleano.`);
+    if(!await this.repo.get("tax_document_types",code))throw new NotFoundException("Documento visible en el catálogo, pendiente de configuración persistente. No se ha habilitado ni certificado.");
+    if(body.enabledForIssue===true){
+      const settings=await this.repo.settings();
+      if(settings.dteProvider==="NONE")throw new ConflictException("Configura el proveedor DTE antes de habilitar documentos.");
+      if(settings.dteProvider==="SII_DIRECT"&&!directDteImplemented(code))throw new ConflictException("Este documento se conserva en el catálogo y está pendiente de implementación en SII directo. No puede habilitarse todavía.");
+    }
+    const patch:Row={};
+    if(body.enabledForIssue!==undefined)patch.enabledForIssue=body.enabledForIssue;
+    if(body.certified!==undefined){
+      if(body.certified&&!String(body.notes??"").trim())throw new BadRequestException("Indica la evidencia de certificación SII (resolución / fecha) al marcar como certificado.");
+      patch.certified=body.certified;patch.notes=optionalText(body.notes,500);
+    }
+    if(!Object.keys(patch).length)throw new BadRequestException("Indica el cambio de habilitación o certificación.");
+    const updated=await this.repo.update("tax_document_types",code,patch);
+    await this.repo.audit(actor,"DTE_TYPE_UPDATED","TAX_DOCUMENT_TYPE",null,`Tipo ${code} actualizado`,patch);return updated;
+  }
 }
 
 // =========================================================================================== DTE recibidos (bandeja de compras)

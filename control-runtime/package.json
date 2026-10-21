@@ -13,6 +13,7 @@
     "@nestjs/platform-express": "12.1.1",
     "@supabase/supabase-js": "2.117.2",
     "@zyteron/contracts": "file:./contracts",
+    "bwip-js": "4.11.4",
     "dotenv": "18.0.4",
     "pdf-lib": "1.17.1",
     "reflect-metadata": "0.2.2",
