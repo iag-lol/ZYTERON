@@ -13,9 +13,11 @@ import { Banks, Reconciliation } from "./views-treasury";
 import { AccountingHome, Budgets, ChartOfAccounts, CostCenters, GeneralLedger, Journal } from "./views-ledger";
 import { Closing, Commissions, FinanceSettings, Reports, Taxes } from "./views-management";
 import { QuotePayments } from "./quote-payments";
+import { SiiCertification } from "./sii-certification";
 
 export interface ViewProps { periodKey:string; tick:number; segments:string[]; }
 const descriptions:Record<string,string>={
+  certification:"Set de pruebas, documentos, libros, muestras impresas y trazabilidad de envíos en certificación SII.",
   command:"Facturación, cobranza, caja, salud contable y acciones del período en una sola mesa de control.",invoices:"Borradores internos, aprobación y emisión con requisitos tributarios explícitos. Un borrador no es un DTE.",
   "tax-documents":"DTE emitidos y recibidos, folios CAF, certificado y conciliación RCV. Sin scraping ni automatización de sii.cl.",receivables:"Saldos abiertos con antigüedad calculada desde la fecha de vencimiento.",collections:"Prioridad por antigüedad y monto, gestiones, promesas y recordatorios sin spam.",
   "quote-payments":"Cotizaciones aceptadas con pago único o mensual: la opción de pago se habilita antes de cada vencimiento y se registra sólo con la factura SII adjunta.",payments:"Cobros registrados con evidencia, verificación humana, aplicación a documentos y devoluciones.",payables:"Obligaciones con proveedores, aprobación, programación y pagos respaldados.",vendors:"Proveedores con RUT validado y datos bancarios enmascarados.",
@@ -42,6 +44,6 @@ export function FinanceWorkspace({segments}:{segments:string[]}){
     :view==="command"?<CommandCenter {...props}/>:view==="invoices"?<Invoices {...props}/>:view==="tax-documents"?<TaxDocuments {...props}/>:view==="receivables"?<Receivables {...props}/>:view==="collections"?<Collections {...props}/>:view==="payments"?<Payments {...props}/>:view==="quote-payments"?<QuotePayments {...props}/>
     :view==="payables"?<Payables {...props}/>:view==="vendors"?<Vendors {...props}/>:view==="expenses"?<Expenses {...props}/>:view==="banks"?<Banks {...props}/>:view==="reconciliation"?<Reconciliation {...props}/>
     :view==="accounting"?<AccountingHome {...props}/>:view==="journal"?<Journal {...props}/>:view==="general-ledger"?<GeneralLedger {...props}/>:view==="chart-of-accounts"?<ChartOfAccounts {...props}/>:view==="cost-centers"?<CostCenters {...props}/>:view==="budgets"?<Budgets {...props}/>
-    :view==="taxes"?<Taxes {...props}/>:view==="commissions"?<Commissions {...props}/>:view==="closing"?<Closing {...props}/>:view==="reports"?<Reports {...props}/>:view==="settings"?<FinanceSettings {...props}/>:<CommandCenter {...props}/>}
+    :view==="certification"?<SiiCertification key={role}/>:view==="taxes"?<Taxes {...props}/>:view==="commissions"?<Commissions {...props}/>:view==="closing"?<Closing {...props}/>:view==="reports"?<Reports {...props}/>:view==="settings"?<FinanceSettings {...props}/>:<CommandCenter {...props}/>}
   </main>;
 }

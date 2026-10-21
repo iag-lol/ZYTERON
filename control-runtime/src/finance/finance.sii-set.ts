@@ -1,0 +1,136 @@
+import { createHash } from "node:crypto";
+import { UnprocessableEntityException } from "@nestjs/common";
+
+export interface OfficialCertificationCase {
+  id: string;
+  type: number;
+  section: string;
+  raw: string;
+  referenceCaseId: string | null;
+}
+export interface OfficialCertificationSet {
+  sha256: string;
+  encoding: "UTF-8" | "ISO-8859-1";
+  cases: OfficialCertificationCase[];
+  sections: Array<{ name: string; attention: string; raw: string; caseIds: string[] }>;
+  requiredFolios: Record<string, number>;
+}
+const reject = (message: string): never => {
+  throw new UnprocessableEntityException(message);
+};
+const normalized = (text: string) =>
+  text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+const documentType = (name: string) => {
+  const value = normalized(name);
+  const types: Record<string, number> = {
+    "FACTURA ELECTRONICA": 33,
+    "FACTURA NO AFECTA O EXENTA ELECTRONICA": 34,
+    "GUIA DE DESPACHO": 52,
+    "GUIA DE DESPACHO ELECTRONICA": 52,
+    "NOTA DE CREDITO ELECTRONICA": 61,
+    "NOTA DE DEBITO ELECTRONICA": 56,
+    "FACTURA DE EXPORTACION ELECTRONICA": 110,
+    "NOTA DE DEBITO DE EXPORTACION ELECTRONICA": 111,
+    "NOTA DE CREDITO DE EXPORTACION ELECTRONICA": 112,
+    "LIQUIDACION FACTURA ELECTRONICA": 43,
+    "FACTURA DE COMPRA ELECTRONICA": 46,
+    "BOLETA ELECTRONICA": 39,
+    "BOLETA EXENTA ELECTRONICA": 41,
+  };
+  return types[value] ?? reject(`Documento del set no reconocido: ${value.slice(0, 100)}.`);
+};
+
+/** Conserva las instrucciones íntegras; no transforma texto ambiguo en montos o referencias comerciales. */
+export function parseOfficialCertificationSet(bytes: Buffer): OfficialCertificationSet {
+  if (!bytes.length || bytes.length > 1024 * 1024)
+    reject("El set debe ser un archivo de texto de hasta 1 MB.");
+  let raw: string, encoding: OfficialCertificationSet["encoding"];
+  try {
+    raw = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    encoding = "UTF-8";
+  } catch {
+    raw = bytes.toString("latin1");
+    encoding = "ISO-8859-1";
+  }
+  if (raw.includes("\0")) reject("El set contiene datos binarios.");
+  raw = raw.replaceAll("\r\n", "\n").replaceAll("\r", "\n");
+  const starts = [...raw.matchAll(/^SET[^\n]*NUMERO DE ATENCI[OÓ]N:\s*(\d+)\s*$/gim)];
+  if (!starts.length) reject("El archivo no contiene secciones oficiales con número de atención.");
+  const cases: OfficialCertificationCase[] = [],
+    sections: OfficialCertificationSet["sections"] = [],
+    seen = new Set<string>();
+  for (let s = 0; s < starts.length; s++) {
+    const heading = starts[s]!,
+      sectionText = raw.slice(heading.index, starts[s + 1]?.index ?? raw.length),
+      markers = [...sectionText.matchAll(/^CASO\s+(\d{1,12}-[1-9]\d{0,5})\s*$/gim)];
+    const section = {
+      name: heading[0].trim(),
+      attention: heading[1]!,
+      raw: sectionText,
+      caseIds: [] as string[],
+    };
+    for (let i = 0; i < markers.length; i++) {
+      const marker = markers[i]!,
+        id = marker[1]!,
+        body = sectionText.slice(marker.index, markers[i + 1]?.index ?? sectionText.length);
+      if (seen.has(id) || id.split("-")[0] !== section.attention)
+        reject("Caso duplicado o ajeno al número de atención de su sección.");
+      const documents = [...body.matchAll(/^DOCUMENTO[\t ]+([^\n]+)$/gim)];
+      if (documents.length !== 1) reject(`El caso ${id} no identifica un documento único.`);
+      const reference =
+        /^REFERENCIA[\t ]+[^\n]*\bCASO\s+(\d{1,12}-[1-9]\d{0,5})/im.exec(body)?.[1] ?? null;
+      if (reference && !seen.has(reference))
+        reject(`El caso ${id} referencia un caso ausente o posterior.`);
+      const type = documentType(documents[0]![1]!);
+      if ([56, 61, 111, 112].includes(type) && !reference)
+        reject(`La nota ${id} no tiene vínculo explícito con un caso anterior.`);
+      cases.push({ id, type, section: section.name, raw: body, referenceCaseId: reference });
+      seen.add(id);
+      section.caseIds.push(id);
+    }
+    sections.push(section);
+  }
+  if (!cases.length || cases.length > 500) reject("Cantidad de casos inválida.");
+  const requiredFolios: Record<string, number> = {};
+  for (const c of cases) requiredFolios[c.type] = (requiredFolios[c.type] ?? 0) + 1;
+  return {
+    sha256: createHash("sha256").update(bytes).digest("hex"),
+    encoding,
+    cases,
+    sections,
+    requiredFolios,
+  };
+}
+
+export interface CertificationCasePlan {
+  caseId: string;
+  type: number;
+  referenceCaseId: string | null;
+  folio: number;
+}
+/** Los folios de esta vista son candidatos; sólo una transacción posterior puede reservarlos. */
+export function previewCertificationFolios(
+  set: OfficialCertificationSet,
+  available: Array<{ type: number; folio: number }>,
+): CertificationCasePlan[] {
+  const pools = new Map<number, number[]>(),
+    identities = new Set<string>();
+  for (const row of available) {
+    const key = `${row.type}:${row.folio}`;
+    if (!Number.isSafeInteger(row.folio) || row.folio <= 0 || identities.has(key))
+      reject("Lista de folios candidatos inválida.");
+    identities.add(key);
+    pools.set(row.type, [...(pools.get(row.type) ?? []), row.folio]);
+  }
+  for (const values of pools.values()) values.sort((a, b) => a - b);
+  return set.cases.map((c) => {
+    const folio = pools.get(c.type)?.shift();
+    if (!folio) reject(`Faltan folios de certificación para el tipo ${c.type}.`);
+    return { caseId: c.id, type: c.type, referenceCaseId: c.referenceCaseId, folio: folio! };
+  });
+}

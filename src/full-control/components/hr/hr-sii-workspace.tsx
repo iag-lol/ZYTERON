@@ -166,6 +166,7 @@ function HrSiiScreen({
           </Link>
           <h1>SII y documentación</h1>
           <p>Control tributario conectado con Finanzas y acceso a los procesos laborales.</p>
+          {hasFinancePermission(role,"dte.manage")?<Link href="/finance/certification">Abrir certificación SII <ArrowRight size={14}/></Link>:null}
         </div>
         <button className="hrSiiButton" disabled={Boolean(busy)} onClick={refresh}>
           <RefreshCw size={15} />

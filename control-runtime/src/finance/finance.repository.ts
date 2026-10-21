@@ -164,6 +164,10 @@ export class FinanceRepository {
     return this.rpc<T>(name,args);
   }
   private async rpc<T>(name:string,args:Row):Promise<T>{const{data,error}=await(this.supabase as any).rpc(name,args);if(error)throw toHttp(error);return data as T;}
+  async certificationRpc<T>(name:"finance_prepare_sii_certification"|"finance_claim_sii_certification_submission"|"finance_complete_sii_certification_submission"|"finance_save_sii_certification_draft"|"finance_record_sii_certification_status",args:Row):Promise<T>{
+    if(!this.supabase)throw new ServiceUnavailableException("La certificación requiere persistencia configurada; no se reservan folios en memoria.");
+    return this.rpc<T>(name,args);
+  }
   async ensurePeriod(date:string):Promise<string>{
     if(this.supabase)return this.rpc<string>("finance_ensure_period",{p_date:date});
     const key=date.slice(0,7);const existing=[...this.store("accounting_periods").values()].find((row)=>row.periodKey===key);if(existing)return existing.id;

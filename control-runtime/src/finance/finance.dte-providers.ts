@@ -7,6 +7,8 @@ import { join,resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { DteRequirement } from "@zyteron/contracts";
 import { validateXML } from "xmllint-wasm";
+import { C14nCanonicalization } from "xml-crypto";
+import { DOMParser } from "@xmldom/xmldom";
 import { renderPrintedDte } from "./finance.dte-print.js";
 import { child, descendants, local, parseXml, path, textOf, type XmlNode } from "./finance.formats.js";
 import { formatRut, normalizeRut, type Row, validRut } from "./finance.util.js";
@@ -83,12 +85,13 @@ const clip=(value:unknown,max:number)=>String(value??"").replace(/\s+/g," ").tri
 const siiRut=(value:string)=>formatRut(value).replace(/^0+/,"");
 const timestamp=()=>new Date().toLocaleString("sv-SE",{timeZone:"America/Santiago"}).replace(" ","T");
 const sha1=(value:string)=>createHash("sha1").update(value,"utf8").digest("base64");
+const canonicalXml=(xml:string)=>{parseXml(xml);const dom=new DOMParser({onError:()=>{throw new UnprocessableEntityException("XML de firma mal formado.");}}).parseFromString(xml,"text/xml");return new C14nCanonicalization().process(dom.documentElement! as unknown as Parameters<C14nCanonicalization["process"]>[0],{});};
 /** Firma XMLDSig RSA-SHA1 (estándar exigido por el SII) sobre el elemento con `ID`, con los namespaces en alcance declarados. */
 export function xmlSignature(canonicalTarget:string,referenceUri:string,certificate:LoadedCertificate,inScope:string,transformsEnveloped=false){
-  const digest=sha1(canonicalTarget);
+  const digest=sha1(canonicalXml(canonicalTarget));
   const signedInfoBody=`<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod><Reference URI="${referenceUri}">${transformsEnveloped?`<Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></Transform></Transforms>`:""}<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod><DigestValue>${digest}</DigestValue></Reference>`;
   const canonicalSignedInfo=`<SignedInfo xmlns="${DSIG_NS}"${inScope}>${signedInfoBody}</SignedInfo>`;
-  const value=createSign("RSA-SHA1").update(canonicalSignedInfo,"utf8").sign(certificate.key,"base64");
+  const value=createSign("RSA-SHA1").update(canonicalXml(canonicalSignedInfo),"utf8").sign(certificate.key,"base64");
   return`<Signature xmlns="${DSIG_NS}"><SignedInfo>${signedInfoBody}</SignedInfo><SignatureValue>${value}</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>${certificate.modulus}</Modulus><Exponent>${certificate.exponent}</Exponent></RSAKeyValue></KeyValue><X509Data><X509Certificate>${certificate.certificateBase64}</X509Certificate></X509Data></KeyInfo></Signature>`;
 }
 
@@ -111,8 +114,8 @@ export class DteSchemaValidator {
   available(){const dir=this.directory();return Boolean(dir&&["EnvioDTE_v10.xsd","DTE_v10.xsd","SiiTypes_v10.xsd","xmldsignature_v10.xsd"].every((file)=>existsSync(join(dir,file))));}
   async validate(xml:string,schema="EnvioDTE_v10.xsd"):Promise<string[]>{
     const dir=this.directory();if(!dir||!this.available())return["Los cuatro esquemas XSD oficiales del SII no están disponibles en el servidor."];
-    const allowed=new Set(["EnvioDTE_v10.xsd","DTE_v10.xsd"]);if(!allowed.has(schema))return["Esquema DTE no permitido."];
-    try{const main=await readFile(join(dir,schema)),dependencies=await Promise.all(["DTE_v10.xsd","SiiTypes_v10.xsd","xmldsignature_v10.xsd"].filter((file)=>file!==schema).map(async(file)=>({fileName:file,contents:await readFile(join(dir,file))})));const result=await validateXML({xml:{fileName:"envio.xml",contents:Buffer.from(xml,"latin1")},schema:[{fileName:schema,contents:main}],preload:dependencies,maxMemoryPages:1024});return result.valid?[]:result.errors.map((error)=>error.message).filter(Boolean).slice(0,20);}
+    const allowed=new Set(["EnvioDTE_v10.xsd","DTE_v10.xsd","LibroCV_v10.xsd","LibroGuia_v10.xsd","RespuestaEnvioDTE_v10.xsd","EnvioBOLETA_v11.xsd","ConsumoFolio_v10.xsd"]);if(!allowed.has(schema))return["Esquema DTE no permitido."];
+    try{const files=["DTE_v10.xsd","SiiTypes_v10.xsd","xmldsignature_v10.xsd",...(schema==="LibroCV_v10.xsd"?["LceCoCertif_v10.xsd","LceCal_v10.xsd","LceSiiTypes_v10.xsd"]:[])];const main=await readFile(join(dir,schema)),dependencies=await Promise.all(files.filter((file)=>file!==schema).map(async(file)=>({fileName:file,contents:await readFile(join(dir,file))})));const result=await validateXML({xml:{fileName:"envio.xml",contents:Buffer.from(xml,"latin1")},schema:[{fileName:schema,contents:main}],preload:dependencies,maxMemoryPages:1024});return result.valid?[]:result.errors.map((error)=>error.message).filter(Boolean).slice(0,20);}
     catch(error){return[String((error as Error).message||error).slice(0,1000)];}
   }
 }
@@ -184,6 +187,27 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
     this.token={value:token,environment,expires:Date.now()+50*60*1000};return token;
   }
   async connectionTest(environment:string){const started=Date.now(),seedResponse=await this.soap(environment,"CrSeed","getSeed",{}),state=textOf(seedResponse,"RESP_HDR","ESTADO"),seed=textOf(seedResponse,"RESP_BODY","SEMILLA");if(state!=="00"||!seed)throw new ServiceUnavailableException(`SII no entregó semilla (estado ${state||"?"}).`);let authenticated=false,certificate:string;try{const metadata=this.certificates.metadata(this.secretRef());certificate=Date.parse(metadata.expiresAt)>Date.now()?"VALID":"EXPIRED";}catch{certificate="NOT_CONFIGURED";}if(certificate==="VALID"){await this.authenticate(environment);authenticated=true;}return{provider:this.name,environment,host:siiHost(environment),seedService:"CONNECTED",certificate,authenticated,latencyMs:Date.now()-started,checkedAt:new Date().toISOString()};}
+  /** Sólo archivos previamente validados y registrados por el proceso de certificación. */
+  async sendCertificationArtifact(xml:string,companyRut:string,fileName:string){
+    const root=parseXml(xml),kind=local(root.name),schemas:Record<string,string>={EnvioDTE:"EnvioDTE_v10.xsd",EnvioBOLETA:"EnvioBOLETA_v11.xsd",LibroCompraVenta:"LibroCV_v10.xsd",LibroGuia:"LibroGuia_v10.xsd",ConsumoFolios:"ConsumoFolio_v10.xsd"};
+    if(!schemas[kind])throw new UnprocessableEntityException("Archivo no admitido por certificación.");
+    const errors=await this.schema.validate(xml,schemas[kind]);if(errors.length)throw new UnprocessableEntityException("El archivo de certificación no valida contra su esquema oficial.");
+    const content=root.children.find(n=>["SetDTE","EnvioLibro","DocumentoConsumoFolios"].includes(local(n.name))),cover=child(content,"Caratula");
+    if(normalizeRut(textOf(cover,kind.startsWith("Libro")?"RutEmisorLibro":"RutEmisor"))!==normalizeRut(companyRut)||normalizeRut(textOf(cover,"RutEnvia"))!==normalizeRut(this.senderRut()))throw new UnprocessableEntityException("Emisor o firmante ajeno al envío registrado.");
+    if(["EnvioDTE","EnvioBOLETA"].includes(kind)){
+      if(normalizeRut(textOf(cover,"RutReceptor"))!=="60803000-K")throw new UnprocessableEntityException("El destinatario del envío debe ser el SII.");
+      for(const dte of (content?.children??[]).filter(n=>local(n.name)==="DTE")){const document=dte.children.find(n=>["Documento","Liquidacion","Exportaciones"].includes(local(n.name))),reference=document?.children.find(n=>local(n.name)==="Referencia");if(textOf(reference,"TpoDocRef")!=="SET")throw new UnprocessableEntityException("El documento no pertenece al set de certificación.");}
+    }
+    const {verifySiiXmlSignatures}=await import("./finance.sii-signatures.js");verifySiiXmlSignatures(xml,this.certificates.metadata(this.secretRef()).fingerprintSha256);
+    const token=await this.authenticate("CERTIFICATION"),sender=normalizeRut(this.senderRut()).split("-"),company=normalizeRut(companyRut).split("-");
+    if(!validRut(companyRut)||!/^sii-cert-[a-f0-9-]{36}\.xml$/.test(fileName))throw new UnprocessableEntityException("Identidad de envío de certificación inválida.");
+    const form=new FormData();form.set("rutSender",sender[0]!);form.set("dvSender",sender[1]!);form.set("rutCompany",company[0]!);form.set("dvCompany",company[1]!);form.set("archivo",new Blob([Buffer.from(xml,"latin1")],{type:"text/xml"}),fileName);
+    const response=await fetch("https://maullin.sii.cl/cgi_dte/UPL/DTEUpload",{method:"POST",headers:{Cookie:`TOKEN=${token}`,"User-Agent":"Mozilla/4.0 (compatible; PROG 1.0; Windows NT 5.0; YComp 5.0.2.4)"},body:form,signal:AbortSignal.timeout(60000)});
+    if(!response.ok)throw new ServiceUnavailableException(`SII certificación respondió HTTP ${response.status}. Revisa el envío antes de reintentar.`);
+    const result=parseXml(await response.text()),status=textOf(result,"STATUS"),trackId=textOf(result,"TRACKID");
+    if(status!=="0"||!/^\d{1,30}$/.test(trackId))throw new UnprocessableEntityException(`SII certificación: recepción no confirmada (STATUS ${status||"?"}); requiere revisión sin reintento automático.`);
+    return {trackId,status};
+  }
   async send(signed:string,input:DteDocumentInput){
     const envelopeXml=this.envelope([signed],input);const xsdErrors=await this.schema.validate(envelopeXml);if(xsdErrors.length)throw new UnprocessableEntityException(`El EnvioDTE no valida contra el XSD oficial: ${xsdErrors.join(" | ")}`);
     await renderPrintedDte(Buffer.from(this.standalone(signed),"latin1"),Buffer.from(envelopeXml,"latin1"),{documentTypeCode:input.documentTypeCode,folio:input.folio,environment:input.environment,status:"SIGNED",emitterRut:input.company.rut,receiverRut:input.receiver.rut,issueDate:input.issueDate,totalAmount:input.totals.total},process.env.DTE_SII_OFFICE);

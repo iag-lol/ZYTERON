@@ -1,0 +1,2 @@
+# Esquemas SII originales: conservar octetos y saltos de línea del proveedor.
+control-runtime/resources/sii/xsd/*.xsd -text -whitespace

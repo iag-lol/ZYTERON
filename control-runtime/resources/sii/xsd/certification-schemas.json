@@ -1,0 +1,52 @@
+[
+  {
+    "file": "LceCal_v10.xsd",
+    "source": "https://www.sii.cl/factura_electronica/factura_mercado/schema_iecv.zip",
+    "sha256": "47378044d6dff87a9ccda7f02e338bda7665f5bcd9da1b54c79e81da5ddf5257"
+  },
+  {
+    "file": "LceCoCertif_v10.xsd",
+    "source": "https://www.sii.cl/factura_electronica/factura_mercado/schema_iecv.zip",
+    "sha256": "3fc1c20b35e916a427a4800f8bbc3616489833784372f5bce9d3c121ca9fbde8"
+  },
+  {
+    "file": "LceSiiTypes_v10.xsd",
+    "source": "https://www.sii.cl/factura_electronica/factura_mercado/schema_iecv.zip",
+    "sha256": "fcccac6db4de9a74e157316d46abfa3f529086f55d45e68a9974204a25d98ca2"
+  },
+  {
+    "file": "LibroCV_v10.xsd",
+    "source": "https://www.sii.cl/factura_electronica/factura_mercado/schema_iecv.zip",
+    "sha256": "d38672ec612888b4f952264372afc836d5b905579d9735159fefe9ddacf167ce"
+  },
+  {
+    "file": "xmldsignature_v10.xsd",
+    "source": "https://www.sii.cl/factura_electronica/factura_mercado/schema_iecv.zip",
+    "sha256": "427e3225cd379ae92bae464b892dbf964665af92d453ac61774cffab38b95edb"
+  },
+  {
+    "file": "LibroGuia_v10.xsd",
+    "source": "https://www.sii.cl/factura_electronica/factura_mercado/schema_lgd.zip",
+    "sha256": "8be863658400bc87958e5f71a36a4b08fa31dfc05b470045e320ecfc4db242e7"
+  },
+  {
+    "file": "RespuestaEnvioDTE_v10.xsd",
+    "source": "https://www.sii.cl/factura_electronica/factura_mercado/schema_ic.zip",
+    "sha256": "89d1102d2d78133af077651c574a4386299d2a3c3b406f8fe9f16884f27f4f68"
+  },
+  {
+    "file": "EnvioBOLETA_v11.xsd",
+    "source": "https://www.sii.cl/factura_electronica/factura_mercado/schema_envio_bol.zip",
+    "sha256": "e0fbbaf70b0ac8ea2c0ac2310edac41bdd3773cef20fccf6d97e5b92ebeedaa9"
+  },
+  {
+    "file": "xmldsignature_v10.xsd",
+    "source": "https://www.sii.cl/factura_electronica/factura_mercado/schema_envio_bol.zip",
+    "sha256": "427e3225cd379ae92bae464b892dbf964665af92d453ac61774cffab38b95edb"
+  },
+  {
+    "file": "ConsumoFolio_v10.xsd",
+    "source": "https://www.sii.cl/factura_electronica/factura_mercado/ConsumoFolio_v10.xsd",
+    "sha256": "ab56a92683a32f8621203b5416ebd0787bb50935bd34e3eef98c54ba25387cfc"
+  }
+]

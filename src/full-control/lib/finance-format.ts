@@ -38,6 +38,7 @@ export const financeSections:Array<{key:string;href:string;label:string;group:st
   {key:"command",href:"/finance",label:"Financial Command Center",group:"Control",permission:"finance.dashboard.view"},
   {key:"invoices",href:"/finance/invoices",label:"Facturación",group:"Ingresos",permission:"invoice.view"},
   {key:"tax-documents",href:"/finance/tax-documents",label:"Documentos tributarios",group:"Ingresos",permission:"dte.view"},
+  {key:"certification",href:"/finance/certification",label:"Certificación SII",group:"Ingresos",permission:"dte.manage"},
   {key:"receivables",href:"/finance/receivables",label:"Cuentas por cobrar",group:"Ingresos",permission:"receivable.view"},
   {key:"collections",href:"/finance/collections",label:"Cobranza",group:"Ingresos",permission:"collection.manage"},
   {key:"payments",href:"/finance/payments",label:"Pagos recibidos",group:"Ingresos",permission:"payment.view"},

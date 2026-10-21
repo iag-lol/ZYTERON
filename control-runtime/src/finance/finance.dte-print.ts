@@ -4,6 +4,7 @@ import bwipjs from "bwip-js";
 import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
 import { children, local, parseXml, textOf, type XmlNode } from "./finance.formats.js";
 import { normalizeRut } from "./finance.util.js";
+import { verifySiiXmlSignatures } from "./finance.sii-signatures.js";
 
 export interface PrintedDteRecord {
   documentTypeCode: number;
@@ -20,6 +21,14 @@ const labels: Record<number, string> = {
   34: "FACTURA NO AFECTA O EXENTA ELECTRÓNICA",
   56: "NOTA DE DÉBITO ELECTRÓNICA",
   61: "NOTA DE CRÉDITO ELECTRÓNICA",
+  39: "BOLETA ELECTRÓNICA",
+  41: "BOLETA EXENTA ELECTRÓNICA",
+  43: "LIQUIDACIÓN FACTURA ELECTRÓNICA",
+  46: "FACTURA DE COMPRA ELECTRÓNICA",
+  52: "GUÍA DE DESPACHO ELECTRÓNICA",
+  110: "FACTURA DE EXPORTACIÓN ELECTRÓNICA",
+  111: "NOTA DE DÉBITO DE EXPORTACIÓN ELECTRÓNICA",
+  112: "NOTA DE CRÉDITO DE EXPORTACIÓN ELECTRÓNICA",
 };
 const reject = (message: string): never => {
   throw new UnprocessableEntityException(message);
@@ -73,19 +82,39 @@ export function printedDteData(signed: Buffer, envelope: Buffer, expected: Print
     envelopeXml = envelope.toString("latin1");
   const root = parseXml(signedXml),
     outer = parseXml(envelopeXml);
-  if (local(root.name) !== "DTE" || local(outer.name) !== "EnvioDTE")
+  const documentTag =
+    expected.documentTypeCode === 43
+      ? "Liquidacion"
+      : expected.documentTypeCode >= 110
+        ? "Exportaciones"
+        : "Documento";
+  if (local(root.name) !== "DTE" || !["EnvioDTE", "EnvioBOLETA"].includes(local(outer.name)))
     reject("Se requiere el DTE firmado y su envío original.");
-  const document = exactlyOne(root, "Documento"),
+  const document = exactlyOne(root, documentTag),
     signature = exactlyOne(root, "Signature");
   const set = exactlyOne(outer, "SetDTE"),
     cover = exactlyOne(set, "Caratula"),
-    archivedDte = exactlyOne(set, "DTE");
-  const archivedDocument = exactlyOne(archivedDte, "Documento");
+    archivedCandidates = children(set, "DTE").filter((d) =>
+      children(d, documentTag).some(
+        (n) => n.attrs.ID === `F${expected.folio}T${expected.documentTypeCode}`,
+      ),
+    );
+  if (archivedCandidates.length !== 1)
+    reject("El XML firmado no coincide con un documento único del envío original.");
+  const archivedDte = archivedCandidates[0]!,
+    archivedDocument = exactlyOne(archivedDte, documentTag);
   const id = `F${expected.folio}T${expected.documentTypeCode}`;
   if (
     document.attrs.ID !== id ||
     archivedDocument.attrs.ID !== id ||
-    oneFragment(signedXml, "Documento") !== oneFragment(envelopeXml, "Documento")
+    oneFragment(signedXml, documentTag) !==
+      [
+        ...envelopeXml.matchAll(
+          new RegExp(`<${documentTag}\\b[^>]*>[\\s\\S]*?<\\/${documentTag}>`, "g"),
+        ),
+      ]
+        .map((m) => m[0])
+        .find((fragment) => fragment.includes(`ID="${id}"`))
   )
     reject("El XML firmado no coincide con el envío original.");
   if (
@@ -101,7 +130,13 @@ export function printedDteData(signed: Buffer, envelope: Buffer, expected: Print
     totals = exactlyOne(header, "Totales");
   const type = amount(textOf(identity, "TipoDTE")),
     folio = amount(textOf(identity, "Folio")),
-    total = amount(textOf(totals, "MntTotal"));
+    total = Number(textOf(totals, "MntTotal"));
+  if (
+    !Number.isFinite(total) ||
+    !/^-?\d+(?:\.\d{1,2})?$/.test(textOf(totals, "MntTotal")) ||
+    (expected.documentTypeCode !== 43 && total < 0)
+  )
+    reject("Monto del DTE inválido.");
   const date = textOf(identity, "FchEmis"),
     issuerRut = textOf(issuer, "RUTEmisor"),
     receiverRut = textOf(receiver, "RUTRecep");
@@ -127,7 +162,7 @@ export function printedDteData(signed: Buffer, envelope: Buffer, expected: Print
   if (
     amount(textOf(ddNode, "TD")) !== type ||
     amount(textOf(ddNode, "F")) !== folio ||
-    amount(textOf(ddNode, "MNT")) !== total ||
+    amount(textOf(ddNode, "MNT")) !== Math.round(total) ||
     textOf(ddNode, "FE") !== date ||
     !sameRut(textOf(ddNode, "RE"), issuerRut) ||
     !sameRut(textOf(ddNode, "RR"), receiverRut)
@@ -168,12 +203,24 @@ export function printedDteData(signed: Buffer, envelope: Buffer, expected: Print
     reject("El receptor o detalle del timbre no coincide con el documento.");
   if (
     totals.children.some(
-      (node) => !["MntNeto", "MntExe", "TasaIVA", "IVA", "MntTotal"].includes(local(node.name)),
+      (node) =>
+        ![
+          "MntNeto",
+          "MntExe",
+          "TasaIVA",
+          "IVA",
+          "MntTotal",
+          ...(type >= 110 ? ["TpoMoneda"] : []),
+          ...(type === 43 ? ["Comisiones"] : []),
+          ...([46, 56, 61].includes(type) ? ["ImptoReten"] : []),
+        ].includes(local(node.name)),
     )
   )
     reject("Los impuestos adicionales requieren un formato de impresión específico.");
   for (const line of lines) {
-    amount(textOf(line, "MontoItem"));
+    const value = textOf(line, "MontoItem");
+    if (!(type === 43 ? /^-?\d+$/ : type >= 110 ? /^\d+(?:\.\d{1,2})?$/ : /^\d+$/).test(value))
+      reject("Monto de línea inválido.");
     for (const field of ["QtyItem", "PrcItem"]) {
       const value = textOf(line, field);
       if (value && !/^\d+(?:\.\d{1,6})?$/.test(value))
@@ -182,6 +229,7 @@ export function printedDteData(signed: Buffer, envelope: Buffer, expected: Print
   }
   if (!lines.length || lines.length > 60)
     reject("El documento no tiene un detalle imprimible en una hoja.");
+  verifySiiXmlSignatures(envelopeXml);
   return {
     type,
     folio,
@@ -197,6 +245,10 @@ export function printedDteData(signed: Buffer, envelope: Buffer, expected: Print
     resolutionDate,
     resolutionNumber,
     references: children(document, "Referencia"),
+    adjustments: children(document, "DscRcgGlobal"),
+    commissions: children(document, "Comisiones"),
+    transport: children(header, "Transporte")[0],
+    identity,
     environment: expected.environment,
     status: expected.status,
   };
@@ -248,17 +300,26 @@ const presentDate = (value: string) => value.slice(0, 10).split("-").reverse().j
 const wrap = (value: string, font: PDFFont, size: number, width: number) => {
   const lines: string[] = [];
   let line = "";
-  for (const character of value.replace(/\s+/g, " ").trim()) {
+  for (const word of value.replace(/\s+/g, " ").trim().split(" ")) {
     try {
-      font.encodeText(character);
+      font.encodeText(word);
     } catch {
       reject("El texto del DTE contiene caracteres no representables por la fuente de impresión.");
     }
-    if (font.widthOfTextAtSize(line + character, size) > width && line) {
-      lines.push(line.trimEnd());
-      line = "";
+    const next = line ? line + " " + word : word;
+    if (font.widthOfTextAtSize(next, size) <= width) {
+      line = next;
+      continue;
     }
-    line += character;
+    if (line) lines.push(line);
+    line = "";
+    for (const character of word) {
+      if (font.widthOfTextAtSize(line + character, size) > width && line) {
+        lines.push(line);
+        line = "";
+      }
+      line += character;
+    }
   }
   if (line) lines.push(line.trim());
   return lines.length ? lines : [""];
@@ -269,8 +330,41 @@ export async function renderPrintedDte(
   envelope: Buffer,
   expected: PrintedDteRecord,
   siiOffice?: string,
+  copy: "TRIBUTARY" | "TRANSFERABLE" = "TRIBUTARY",
 ) {
   const data = printedDteData(signed, envelope, expected);
+  if (
+    copy === "TRANSFERABLE" &&
+    ![
+      33,
+      34,
+      43,
+      46,
+      ...(data.type === 52 && [1, 9].includes(Number(textOf(data.identity, "IndTraslado")))
+        ? [52]
+        : []),
+    ].includes(data.type)
+  )
+    reject("Este documento o traslado no admite copia cedible.");
+  const currencyCode =
+    ({ "DOLAR USA": "USD", EURO: "EUR", "PESO CL": "CLP" } as Record<string, string>)[
+      textOf(data.totals, "TpoMoneda")
+    ] || textOf(data.totals, "TpoMoneda");
+  const displayMoney = (value: string | number) =>
+    data.type >= 110
+      ? currencyCode +
+        " " +
+        new Intl.NumberFormat("es-CL", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(Number(value))
+      : currency(value);
+  const displayRut = (value: string) =>
+    value.replace(
+      /^(\d+)-([\dkK])$/,
+      (full, digits: string, digit: string) =>
+        digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "-" + digit,
+    );
   if (expected.environment === "PRODUCTION" && !siiOffice?.trim())
     reject(
       "Configura la oficina regional real del SII (DTE_SII_OFFICE) antes de generar la representación de producción.",
@@ -303,8 +397,21 @@ export async function renderPrintedDte(
     }
     return y;
   };
-  let issuerY = paragraphs(textOf(data.issuer, "RznSoc"), 36, 796, 305, 15, true);
-  issuerY = paragraphs(textOf(data.issuer, "GiroEmis"), 36, issuerY - 4, 305, 9);
+  let issuerY = paragraphs(
+    textOf(data.issuer, "RznSoc") || textOf(data.issuer, "RznSocEmisor"),
+    36,
+    796,
+    305,
+    15,
+    true,
+  );
+  issuerY = paragraphs(
+    textOf(data.issuer, "GiroEmis") || textOf(data.issuer, "GiroEmisor"),
+    36,
+    issuerY - 4,
+    305,
+    9,
+  );
   issuerY = paragraphs(
     [textOf(data.issuer, "DirOrigen"), textOf(data.issuer, "CmnaOrigen")]
       .filter(Boolean)
@@ -322,7 +429,7 @@ export async function renderPrintedDte(
     borderColor: red,
     borderWidth: 1.6,
   });
-  text(`R.U.T.: ${data.issuerRut}`, 366, 794, 12, true, red);
+  text(`R.U.T.: ${displayRut(data.issuerRut)}`, 366, 794, 12, true, red);
   paragraphs(labels[data.type]!, 366, 773, 182, 11, true);
   text(`N° ${data.folio}`, 366, 733, 16, true, red);
   const officeLines = wrap(
@@ -353,7 +460,7 @@ export async function renderPrintedDte(
   );
   let y = bannerY - 20;
   y = paragraphs(`RECEPTOR: ${textOf(data.receiver, "RznSocRecep")}`, 36, y, 523, 10, true);
-  text(`RUT: ${data.receiverRut}    ·    Emisión: ${presentDate(data.date)}`, 36, y, 9);
+  text(`RUT: ${displayRut(data.receiverRut)}    ·    Emisión: ${presentDate(data.date)}`, 36, y, 9);
   y -= 16;
   for (const value of [
     textOf(data.receiver, "GiroRecep"),
@@ -362,6 +469,22 @@ export async function renderPrintedDte(
       .join(" · "),
   ])
     if (value) y = paragraphs(value, 36, y, 523);
+  if (data.type === 52)
+    y = paragraphs(
+      `Tipo de traslado: ${textOf(data.identity, "IndTraslado")} · Despacho: ${textOf(data.identity, "TipoDespacho")}`,
+      36,
+      y,
+      523,
+      8,
+    );
+  const customs = children(data.transport!, "Aduana")[0];
+  if (customs) {
+    for (const value of [
+      `Moneda: ${textOf(data.totals, "TpoMoneda")} · País receptor: ${textOf(customs, "CodPaisRecep")} · Destino: ${textOf(customs, "CodPaisDestin")}`,
+      `Embarque: ${textOf(customs, "CodPtoEmbarque") || "No aplica"} · Desembarque: ${textOf(customs, "CodPtoDesemb") || "No aplica"} · Bultos: ${textOf(customs, "TotBultos") || "No aplica"}`,
+    ])
+      y = paragraphs(value, 36, y, 523, 8);
+  }
   y -= 8;
   page.drawRectangle({ x: 36, y: y - 6, width: 523, height: 22, color: green });
   for (const [label, x] of [
@@ -390,7 +513,7 @@ export async function renderPrintedDte(
       [textOf(item, "QtyItem") || "-", 395, true],
       [
         textOf(item, "PrcItem")
-          ? "$" +
+          ? (data.type >= 110 ? currencyCode + " " : "$") +
             new Intl.NumberFormat("es-CL", { maximumFractionDigits: 6 }).format(
               Number(textOf(item, "PrcItem")),
             )
@@ -398,9 +521,11 @@ export async function renderPrintedDte(
         491,
         true,
       ],
-      [currency(textOf(item, "MontoItem")), 551, true],
-    ] as const)
-      text(value, right ? x - regular.widthOfTextAtSize(value, 8) : x, y, 8);
+      [displayMoney(textOf(item, "MontoItem")), 551, true],
+    ] as const) {
+      const size = Math.min(8, (82 / Math.max(1, regular.widthOfTextAtSize(value, 8))) * 8);
+      text(value, right ? x - regular.widthOfTextAtSize(value, size) : x, y, size);
+    }
     if (Number(textOf(item, "DescuentoMonto")))
       text(
         `Descuento: ${currency(textOf(item, "DescuentoMonto"))}`,
@@ -418,6 +543,25 @@ export async function renderPrintedDte(
       color: rgb(0.83, 0.87, 0.84),
     });
   }
+  for (const adjustment of data.adjustments) {
+    y = paragraphs(
+      `${textOf(adjustment, "TpoMov") === "D" ? "Descuento" : "Recargo"} global: ${textOf(adjustment, "GlosaDR")} · ${textOf(adjustment, "TpoValor") === "%" ? textOf(adjustment, "ValorDR") + "%" : displayMoney(textOf(adjustment, "ValorDR"))}`,
+      36,
+      y,
+      523,
+      7.5,
+    );
+  }
+  for (const commission of data.commissions) {
+    y = paragraphs(
+      `${textOf(commission, "Glosa")}: neto ${displayMoney(textOf(commission, "ValComNeto"))} · IVA ${displayMoney(textOf(commission, "ValComIVA") || "0")}`,
+      36,
+      y,
+      523,
+      7.5,
+    );
+  }
+  if (y < 270) reject("Los cargos y descuentos exceden el espacio disponible de impresión.");
   if (data.references.length) {
     const refs = data.references
       .map(
@@ -443,26 +587,73 @@ export async function renderPrintedDte(
     height: barcodeHeight + 36,
     color: rgb(1, 1, 1),
   });
-  page.drawImage(image, { x: 54, y: 117, width: barcodeWidth, height: barcodeHeight });
-  text("Timbre Electrónico SII", 54, 86, 8, true);
-  text(`Res. ${data.resolutionNumber} de ${presentDate(data.resolutionDate)}`, 54, 74, 8);
-  text("Verifique documento: www.sii.cl", 54, 62, 8);
-  let totalY = 210;
-  for (const [label, value] of [
+  page.drawImage(image, { x: 58, y: 117, width: barcodeWidth, height: barcodeHeight });
+  text("Timbre Electrónico SII", 58, 86, 8, true);
+  text(`Res. ${data.resolutionNumber} de ${presentDate(data.resolutionDate)}`, 58, 74, 8);
+  text("Verifique documento: www.sii.cl", 58, 62, 8);
+  const totalRows: Array<[string, string]> = [
     ["Neto", textOf(data.totals, "MntNeto")],
     ["Exento", textOf(data.totals, "MntExe")],
     [`IVA (${textOf(data.totals, "TasaIVA") || "0"}%)`, textOf(data.totals, "IVA")],
-  ] as const)
+    ...children(data.totals, "ImptoReten").map((r): [string, string] => [
+      `IVA retenido (${textOf(r, "TasaImp")}%)`,
+      "-" + textOf(r, "MontoImp"),
+    ]),
+    ...children(data.totals, "Comisiones").flatMap(
+      (c) =>
+        [
+          ["Comisiones netas", textOf(c, "ValComNeto")],
+          ["Comisiones exentas", textOf(c, "ValComExe")],
+          ["IVA comisiones", textOf(c, "ValComIVA")],
+        ] as Array<[string, string]>,
+    ),
+  ];
+  let totalY = Math.max(
+    210,
+    147 + 20 * totalRows.filter(([, value]) => value && Number(value) !== 0).length,
+  );
+  for (const [label, value] of totalRows)
     if (value) {
       text(label, 352, totalY, 9);
-      const display = currency(value);
+      const display = displayMoney(value);
       text(display, 551 - regular.widthOfTextAtSize(display, 10), totalY, 10);
       totalY -= 20;
     }
   page.drawRectangle({ x: 342, y: 111, width: 217, height: 36, color: green });
   text("TOTAL", 352, 124, 11, true, rgb(1, 1, 1));
-  const totalText = currency(data.total);
-  text(totalText, 549 - bold.widthOfTextAtSize(totalText, 15), 122, 15, true, rgb(1, 1, 1));
+  const totalText = displayMoney(data.total);
+  const totalSize = Math.min(15, (145 / Math.max(1, bold.widthOfTextAtSize(totalText, 15))) * 15);
+  text(
+    totalText,
+    549 - bold.widthOfTextAtSize(totalText, totalSize),
+    122,
+    totalSize,
+    true,
+    rgb(1, 1, 1),
+  );
+  if (copy === "TRANSFERABLE") {
+    page.drawRectangle({
+      x: 342,
+      y: 22,
+      width: 217,
+      height: 79,
+      borderWidth: 0.5,
+      borderColor: muted,
+    });
+    text("ACUSE DE RECIBO", 350, 91, 7, true);
+    text("Nombre: ___________________ RUT: __________", 350, 79, 6);
+    text("Fecha: __________ Recinto: __________________", 350, 68, 6);
+    text("Firma: ___________________________________", 350, 57, 6);
+    paragraphs(
+      "El acuse de recibo que se declara en este acto, de acuerdo a lo dispuesto en la letra b) del Art. 4°, y la letra c) del Art. 5° de la Ley 19.983, acredita que la entrega de mercaderías o servicio (s) prestado (s) ha (n) sido recibido (s).",
+      350,
+      49,
+      200,
+      5.2,
+    );
+    const destination = data.type === 52 ? "CEDIBLE CON SU FACTURA" : "CEDIBLE";
+    text(destination, 559 - bold.widthOfTextAtSize(destination, 8), 8, 8, true);
+  }
   text(banner, 36, 32, 7, true, muted);
   return Buffer.from(await pdf.save());
 }

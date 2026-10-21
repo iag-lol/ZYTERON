@@ -9,3 +9,7 @@ SHA-256:
 - `EnvioDTE_v10.xsd`: `33ea8dd38c895c359dddbcd21feb5acf8a4717f7f67524a6b0dd9a83d76920eb`
 - `SiiTypes_v10.xsd`: `7a76c185045abed4cecbc4eef5328895b3d85aeedd4f4bf4bece5bb8ed7c8008`
 - `xmldsignature_v10.xsd`: `427e3225cd379ae92bae464b892dbf964665af92d453ac61774cffab38b95edb`
+
+## Libros, intercambio y boletas
+
+Los esquemas adicionales originales se incorporan sin modificar su contenido. Las fuentes oficiales de descarga, fechas y huellas individuales constan en `certification-schemas.json`. Incluyen LibroCV, LibroGuia, RespuestaEnvioDTE, EnvioBOLETA y ConsumoFolio con sus dependencias. La disponibilidad de un esquema permite validación local; no acredita aceptación ni autorización del SII.

@@ -1,0 +1,808 @@
+import assert from "node:assert/strict";
+import { after, before, test } from "node:test";
+import { execFileSync } from "node:child_process";
+import {
+  createPrivateKey,
+  createPublicKey,
+  generateKeyPairSync,
+  X509Certificate,
+  verify,
+} from "node:crypto";
+import { mkdtempSync, readFileSync, rmSync, mkdirSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import {
+  certificationDocumentXml,
+  certificationEnvelope,
+  certificationTotals,
+  validateCertificationXml,
+} from "../dist/finance/finance.sii-certification.js";
+import {
+  certificationPurchaseSalesBook,
+  certificationGuideBook,
+  certificationExchangeReceipt,
+  certificationConsumption,
+} from "../dist/finance/finance.sii-books.js";
+import { verifySiiXmlSignatures } from "../dist/finance/finance.sii-signatures.js";
+import {
+  parseOfficialCertificationSet,
+  previewCertificationFolios,
+} from "../dist/finance/finance.sii-set.js";
+import { renderPrintedDte } from "../dist/finance/finance.dte-print.js";
+import { PDFDocument } from "pdf-lib";
+
+let directory, certificate, key, m, e;
+before(() => {
+  directory = mkdtempSync(join(tmpdir(), "zyteron-sii-synthetic-"));
+  execFileSync(
+    "openssl",
+    [
+      "req",
+      "-x509",
+      "-newkey",
+      "rsa:2048",
+      "-nodes",
+      "-keyout",
+      join(directory, "key.pem"),
+      "-out",
+      join(directory, "cert.pem"),
+      "-days",
+      "1",
+      "-subj",
+      "/CN=Certificado Sintetico QA",
+    ],
+    { stdio: "ignore" },
+  );
+  const pem = readFileSync(join(directory, "cert.pem"), "utf8"),
+    privateKey = createPrivateKey(readFileSync(join(directory, "key.pem"))),
+    cert = new X509Certificate(pem),
+    pub = createPublicKey(privateKey).export({ format: "jwk" });
+  certificate = {
+    key: privateKey,
+    certificate: cert,
+    certificateBase64: cert.raw.toString("base64"),
+    modulus: Buffer.from(pub.n, "base64url").toString("base64"),
+    exponent: Buffer.from(pub.e, "base64url").toString("base64"),
+  };
+  key = generateKeyPairSync("rsa", { modulusLength: 1024 }).privateKey;
+  const jwk = createPublicKey(key).export({ format: "jwk" });
+  m = Buffer.from(jwk.n, "base64url").toString("base64");
+  e = Buffer.from(jwk.e, "base64url").toString("base64");
+});
+after(() => {
+  if (directory) rmSync(directory, { recursive: true, force: true });
+});
+const company = {
+  rut: "11111111-1",
+  legalName: "Emisor Sintético QA",
+  businessActivity: "Pruebas de software",
+  activityCode: 620200,
+  address: "Calle sintética 100",
+  commune: "Comuna QA",
+  city: null,
+  resolutionNumber: 0,
+  resolutionDate: "2026-01-01",
+};
+function fixture(type = 33, overrides = {}) {
+  const exempt = [34, 41, 110, 111, 112].includes(type);
+  const input = {
+    environment: "CERTIFICATION",
+    caseId: "1234567-1",
+    type,
+    folio: 1,
+    date: "2026-01-02",
+    company,
+    receiver: {
+      rut: "22222222-2",
+      legalName: "Receptor Sintético Ñandú",
+      businessActivity: "Pruebas",
+      address: "Calle sintética 200",
+      commune: "Comuna QA",
+    },
+    lines: [{ description: "Ítem sintético & comisión", quantity: 2, unitPrice: 1000, exempt }],
+    ...overrides,
+  };
+  if ([56, 61, 111, 112].includes(type) && !input.references)
+    input.references = [
+      {
+        type: type >= 110 ? 110 : 33,
+        folio: "1",
+        date: input.date,
+        code: 3,
+        reason: "Diferencia sintética",
+      },
+    ];
+  if (type === 43 && !overrides.lines)
+    input.lines = [
+      {
+        description: "NETO FACTURAS SINTÉTICAS",
+        quantity: 2,
+        liquidationAmount: 2000,
+        liquidatedType: 33,
+      },
+    ];
+  if (type === 46 && !input.retention) input.retention = { code: 15, rate: 19 };
+  if (type === 52 && !input.dispatch)
+    input.dispatch = {
+      transfer: 1,
+      responsibility: 2,
+      destinationAddress: "Dirección QA",
+      destinationCommune: "Comuna QA",
+    };
+  if (type >= 110 && !input.export)
+    input.export = {
+      currency: "DOLAR USA",
+      exchangeRateCLP: 1000,
+      paymentCode: 1,
+      saleMode: 1,
+      saleClause: 1,
+      receiverCountry: 224,
+      destinationCountry: 224,
+    };
+  const caf = {
+    documentTypeCode: type,
+    rangeFrom: 1,
+    rangeTo: 10,
+    companyRut: company.rut,
+    companyName: company.legalName,
+    authorizedAt: "2026-01-01",
+    privateKeyPem: key.export({ type: "pkcs1", format: "pem" }),
+    cafXml: `<CAF version="1.0"><DA><RE>${company.rut}</RE><RS>${company.legalName}</RS><TD>${type}</TD><RNG><D>1</D><H>10</H></RNG><FA>2026-01-01</FA><RSAPK><M>${m}</M><E>${e}</E></RSAPK><IDK>0</IDK></DA><FRMA algoritmo="SHA1withRSA">U1lOVEhFVElD</FRMA></CAF>`,
+  };
+  return { input, caf };
+}
+for (const type of [33, 34, 39, 41, 43, 46, 52, 56, 61, 110, 111, 112])
+  test(`tipo ${type}: XML firmado y envío validados contra XSD oficial`, async () => {
+    const { input, caf } = fixture(type),
+      built = certificationDocumentXml(input, caf, certificate);
+    const xml = certificationEnvelope(
+      [built.xml],
+      company,
+      "33333333-3",
+      certificate,
+      "CERTIFICATION",
+    );
+    await validateCertificationXml(
+      xml,
+      [39, 41].includes(type) ? "EnvioBOLETA_v11.xsd" : "EnvioDTE_v10.xsd",
+    );
+    const verified = verifySiiXmlSignatures(xml, certificate.certificate.fingerprint256);
+    assert.deepEqual(verified.map((r) => r.id).sort(), [`F1T${type}`, "SetDoc"].sort());
+    const signatureValue = built.xml.match(/<SignatureValue>([^<]+)<\/SignatureValue>/)[1];
+    const info = built.xml.match(/<SignedInfo>([\s\S]+?)<\/SignedInfo>/)[1];
+    const canonical = `<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${info}</SignedInfo>`;
+    assert.equal(
+      verify(
+        "RSA-SHA1",
+        Buffer.from(canonical),
+        certificate.certificate.publicKey,
+        Buffer.from(signatureValue, "base64"),
+      ),
+      true,
+    );
+    const signed = Buffer.from(
+      built.xml.replace(
+        '<DTE version="1.0">',
+        '<DTE xmlns="http://www.sii.cl/SiiDte" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0">',
+      ),
+      "latin1",
+    );
+    const record = {
+      documentTypeCode: type,
+      folio: 1,
+      environment: "CERTIFICATION",
+      status: "SIGNED",
+      emitterRut: company.rut,
+      receiverRut: input.receiver.rut,
+      issueDate: input.date,
+      totalAmount: built.totals.total,
+    };
+    for (const copy of [
+      "TRIBUTARY",
+      ...([33, 34, 43, 46, 52].includes(type) ? ["TRANSFERABLE"] : []),
+    ]) {
+      const pdf = await renderPrintedDte(
+        signed,
+        Buffer.from(xml, "latin1"),
+        record,
+        "OFICINA SINTÉTICA QA",
+        copy,
+      );
+      assert.equal((await PDFDocument.load(pdf)).getPageCount(), 1);
+      assert(pdf.length < 500000);
+      if (process.env.SII_SYNTHETIC_PDF_DIR) {
+        mkdirSync(process.env.SII_SYNTHETIC_PDF_DIR, { recursive: true });
+        writeFileSync(
+          join(process.env.SII_SYNTHETIC_PDF_DIR, `tipo-${type}.ted.xml`),
+          built.xml.match(/<TED\b[\s\S]*?<\/TED>/)[0],
+          "latin1",
+        );
+        writeFileSync(
+          join(process.env.SII_SYNTHETIC_PDF_DIR, `tipo-${type}-${copy.toLowerCase()}.pdf`),
+          pdf,
+        );
+      }
+    }
+  });
+test("cálculo de descuentos globales solo afectos, IVA y centavos extranjeros", () => {
+  const { input } = fixture(33, {
+    lines: [
+      { description: "Afecto sintético", quantity: 3, unitPrice: 1001, discountPct: 3 },
+      { description: "Exento sintético", quantity: 1, unitPrice: 400, exempt: true },
+    ],
+    adjustments: [{ movement: "D", kind: "%", value: 5, description: "Descuento afecto" }],
+  });
+  const t = certificationTotals(input);
+  assert.equal(t.net, 2767);
+  assert.equal(t.exempt, 400);
+  assert.equal(t.tax, 526);
+  assert.equal(t.total, 3693);
+  const foreign = fixture(110, {
+    lines: [
+      {
+        description: "Servicio sintético",
+        quantity: 1,
+        unitPrice: 44,
+        surchargePct: 10,
+        exempt: true,
+      },
+    ],
+  }).input;
+  assert.equal(certificationTotals(foreign).total, 48.4);
+});
+test("liquidación conserva valores negativos y descuenta comisiones e IVA una vez", () => {
+  const { input } = fixture(43, {
+    lines: [
+      {
+        description: "Factura sintética",
+        quantity: 1,
+        liquidationAmount: 10000,
+        liquidatedType: 33,
+      },
+      { description: "Nota sintética", quantity: 1, liquidationAmount: -2000, liquidatedType: 61 },
+    ],
+    commissions: [{ description: "Comisión sintética", net: 1000, exempt: 0 }],
+  });
+  const t = certificationTotals(input);
+  assert.equal(t.net, 8000);
+  assert.equal(t.tax, 1520);
+  assert.equal(t.total, 8330);
+});
+test("factura de compra retiene el IVA sin sumar la retención al cobro", () => {
+  const { input } = fixture(46);
+  const t = certificationTotals(input);
+  assert.equal(t.tax, 380);
+  assert.equal(t.retained, 380);
+  assert.equal(t.total, 2000);
+});
+test("producción, CAF ajeno, folio inválido y referencias ausentes bloqueados", () => {
+  const { input, caf } = fixture();
+  for (const patch of [
+    { environment: "PRODUCTION" },
+    { folio: 11 },
+    { folio: NaN },
+    { caseId: "otro" },
+    { type: 61, references: [] },
+    { type: 52 },
+    { date: "2026-02-30" },
+  ])
+    assert.throws(() => certificationDocumentXml({ ...input, ...patch }, caf, certificate));
+  assert.throws(() =>
+    certificationDocumentXml(input, { ...caf, companyRut: "22222222-2" }, certificate),
+  );
+  assert.throws(() => certificationEnvelope([], company, "33333333-3", certificate, "PRODUCTION"));
+});
+test("traslado interno con receptor externo y mezcla de boletas/DTE rechazados", () => {
+  const { input, caf } = fixture(52, {
+    dispatch: {
+      transfer: 5,
+      responsibility: 1,
+      destinationAddress: "Calle QA",
+      destinationCommune: "Comuna QA",
+    },
+  });
+  assert.throws(() => certificationDocumentXml(input, caf, certificate), /traslado interno/);
+  const a = fixture(33),
+    b = fixture(39, { caseId: "1234567-2" }),
+    ax = certificationDocumentXml(a.input, a.caf, certificate).xml,
+    bx = certificationDocumentXml(b.input, b.caf, certificate).xml;
+  assert.throws(
+    () => certificationEnvelope([ax, bx], company, "33333333-3", certificate, "CERTIFICATION"),
+    /separado/,
+  );
+  assert.throws(
+    () => certificationEnvelope([ax, ax], company, "33333333-3", certificate, "CERTIFICATION"),
+    /duplicada/,
+  );
+});
+const bookContext = {
+  environment: "CERTIFICATION",
+  company,
+  senderRut: "33333333-3",
+  period: "2026-01",
+  notificationFolio: 1,
+};
+const bookEntry = {
+  type: 33,
+  folio: 1,
+  date: "2026-01-02",
+  counterpartyRut: "22222222-2",
+  counterpartyName: "Contraparte sintética",
+  net: 10000,
+  exempt: 1000,
+  vat: 1900,
+};
+test("libros de compra y venta: resumen por tipo, IVA común, no recuperable y retención", async () => {
+  const sale = certificationPurchaseSalesBook(
+    bookContext,
+    "VENTA",
+    [
+      bookEntry,
+      {
+        ...bookEntry,
+        type: 61,
+        folio: 2,
+        net: 1000,
+        exempt: 0,
+        vat: 190,
+        reference: { type: 33, folio: 1 },
+      },
+    ],
+    certificate,
+  );
+  await validateCertificationXml(sale, "LibroCV_v10.xsd");
+  assert.match(sale, /<TotMntTotal>12900<\/TotMntTotal>/);
+  assert.match(sale, /<TotMntTotal>1190<\/TotMntTotal>/);
+  const entries = [
+    bookEntry,
+    { ...bookEntry, folio: 2, commonVat: 1900 },
+    { ...bookEntry, folio: 3, nonRecoverableVat: { code: 4, amount: 1900 } },
+    { ...bookEntry, type: 46, folio: 4, retained: 1900 },
+  ];
+  const purchase = certificationPurchaseSalesBook(
+    { ...bookContext, notificationFolio: 2 },
+    "COMPRA",
+    entries,
+    certificate,
+    0.6,
+  );
+  await validateCertificationXml(purchase, "LibroCV_v10.xsd");
+  assert.match(purchase, /<TotCredIVAUsoComun>1140<\/TotCredIVAUsoComun>/);
+  assert.equal(
+    [...purchase.matchAll(/<TotMntIVA>(\d+)<\/TotMntIVA>/g)].reduce(
+      (sum, m) => sum + Number(m[1]),
+      0,
+    ),
+    3800,
+  );
+  assert.match(purchase, /<TotMntIVANoRec>1900<\/TotMntIVANoRec>/);
+  assert.equal(verifySiiXmlSignatures(purchase).length, 1);
+});
+test("libro de guías: anulación informativa, traslado interno y guía facturada", async () => {
+  const guide = {
+    folio: 1,
+    date: "2026-01-02",
+    receiverRut: "22222222-2",
+    receiverName: "Receptor sintético",
+    transfer: 1,
+    net: 1000,
+    vat: 190,
+    total: 1190,
+  };
+  const rows = [
+    { ...guide, transfer: 5, net: 0, vat: 0, total: 0 },
+    { ...guide, folio: 2, billedReference: { type: 33, folio: 1, date: "2026-01-02" } },
+    { ...guide, folio: 3, annulled: 2 },
+  ];
+  const snapshot = JSON.stringify(rows),
+    xml = certificationGuideBook({ ...bookContext, notificationFolio: 3 }, rows, certificate);
+  await validateCertificationXml(xml, "LibroGuia_v10.xsd");
+  assert.match(xml, /<TotGuiaAnulada>1<\/TotGuiaAnulada>/);
+  assert.match(xml, /<TotGuiaVenta>1<\/TotGuiaVenta>/);
+  assert.equal(JSON.stringify(rows), snapshot);
+  assert.equal(verifySiiXmlSignatures(xml).length, 1);
+});
+test("verificación independiente rechaza cambios de total, texto, firma e ID duplicado", () => {
+  const { input, caf } = fixture(),
+    d = certificationDocumentXml(input, caf, certificate),
+    xml = certificationEnvelope([d.xml], company, "33333333-3", certificate, "CERTIFICATION");
+  for (const tampered of [
+    xml.replace("<MntTotal>2380", "<MntTotal>2381"),
+    xml.replace("Ítem sintético", "Otro sintético"),
+    xml.replace("<SignatureValue>", "<SignatureValue>AAAA"),
+    xml.replace('ID="SetDoc"', 'ID="F1T33"'),
+  ])
+    assert.throws(() => verifySiiXmlSignatures(tampered));
+  assert.throws(() => verifySiiXmlSignatures(xml, "00".repeat(32)), /esperado/);
+});
+test("libros rechazan duplicados, períodos mezclados y totales incompatibles", () => {
+  for (const rows of [
+    [bookEntry, bookEntry],
+    [{ ...bookEntry, date: "2026-02-01" }],
+    [{ ...bookEntry, vat: 1901 }],
+    [{ ...bookEntry, counterpartyRut: "inválido" }],
+  ])
+    assert.throws(() => certificationPurchaseSalesBook(bookContext, "VENTA", rows, certificate));
+  assert.throws(() =>
+    certificationPurchaseSalesBook(
+      { ...bookContext, environment: "PRODUCTION" },
+      "VENTA",
+      [bookEntry],
+      certificate,
+    ),
+  );
+  assert.throws(() => certificationPurchaseSalesBook(bookContext, "VENTA", [], certificate));
+});
+test("intercambio verifica firmas y receptor antes de generar acuse técnico", async () => {
+  const { input, caf } = fixture(),
+    d = certificationDocumentXml(input, caf, certificate),
+    xml = certificationEnvelope(
+      [d.xml],
+      company,
+      "33333333-3",
+      certificate,
+      "CERTIFICATION",
+      "22222222-2",
+    );
+  const response = await certificationExchangeReceipt(
+    "CERTIFICATION",
+    xml,
+    "envio-qa.xml",
+    "22222222-2",
+    1,
+    certificate,
+  );
+  await validateCertificationXml(response, "RespuestaEnvioDTE_v10.xsd");
+  assert.match(response, /<EstadoRecepDTE>0<\/EstadoRecepDTE>/);
+  assert.doesNotMatch(response, /<ResultadoDTE>/);
+  await assert.rejects(
+    () =>
+      certificationExchangeReceipt(
+        "CERTIFICATION",
+        xml,
+        "envio-qa.xml",
+        "44444444-4",
+        1,
+        certificate,
+      ),
+    /otro receptor/,
+  );
+  await assert.rejects(
+    () =>
+      certificationExchangeReceipt(
+        "CERTIFICATION",
+        xml.replace("Ítem sintético", "Otro ítem"),
+        "envio-qa.xml",
+        "22222222-2",
+        1,
+        certificate,
+      ),
+    /firma/i,
+  );
+});
+test("consumo de folios separa emitidos, anulados y huecos sin cambiar los registros", async () => {
+  const base = {
+    type: 39,
+    date: "2026-01-02",
+    status: "USED",
+    net: 1000,
+    vat: 190,
+    exempt: 0,
+    total: 1190,
+  };
+  const rows = [
+      { ...base, folio: 1 },
+      { ...base, folio: 2 },
+      { ...base, folio: 4, status: "VOIDED" },
+      { ...base, folio: 7 },
+    ],
+    snapshot = JSON.stringify(rows);
+  const xml = certificationConsumption(bookContext, "2026-01-02", 1, rows, certificate);
+  await validateCertificationXml(xml, "ConsumoFolio_v10.xsd");
+  verifySiiXmlSignatures(xml);
+  assert.match(xml, /<FoliosEmitidos>3<\/FoliosEmitidos>/);
+  assert.match(xml, /<FoliosAnulados>1<\/FoliosAnulados>/);
+  assert.match(xml, /<FoliosUtilizados>4<\/FoliosUtilizados>/);
+  assert.match(xml, /<MntTotal>3570<\/MntTotal>/);
+  assert.equal(JSON.stringify(rows), snapshot);
+  assert.throws(
+    () => certificationConsumption(bookContext, "2026-01-02", 1, [...rows, rows[0]], certificate),
+    /duplicado/,
+  );
+  assert.throws(
+    () =>
+      certificationConsumption(
+        bookContext,
+        "2026-01-02",
+        1,
+        [{ ...base, folio: 1, status: "RESERVED" }],
+        certificate,
+      ),
+    /incompatible/,
+  );
+});
+test("set oficial: preserva texto, identifica referencias por caso y previsualiza sin reservar", () => {
+  const raw =
+    "SET BASICO - NUMERO DE ATENCION: 1234567\n\nCASO 1234567-1\n==============\nDOCUMENTO\tFACTURA ELECTRONICA\nITEM\tCANTIDAD\tPRECIO UNITARIO\nCajón QA\t2\t1200\n\nCASO 1234567-2\n==============\nDOCUMENTO\tNOTA DE CREDITO ELECTRONICA\nREFERENCIA\tFACTURA CORRESPONDIENTE A CASO 1234567-1\nRAZON REFERENCIA\tANULA FACTURA\n";
+  const result = parseOfficialCertificationSet(Buffer.from(raw, "latin1"));
+  assert.equal(result.encoding, "ISO-8859-1");
+  assert.equal(result.cases.length, 2);
+  assert.equal(result.cases[1].referenceCaseId, "1234567-1");
+  assert.match(result.cases[0].raw, /Cajón QA/);
+  const pool = [
+      { type: 33, folio: 7 },
+      { type: 61, folio: 2 },
+    ],
+    snapshot = JSON.stringify(pool),
+    plan = previewCertificationFolios(result, pool);
+  assert.deepEqual(
+    plan.map((c) => c.folio),
+    [7, 2],
+  );
+  assert.equal(JSON.stringify(pool), snapshot);
+  assert.throws(
+    () => previewCertificationFolios(result, [{ type: 33, folio: 7 }]),
+    /Faltan folios/,
+  );
+  assert.throws(
+    () =>
+      parseOfficialCertificationSet(Buffer.from(raw.replace("CASO 1234567-2", "CASO 1234567-1"))),
+    /duplicado/,
+  );
+  assert.throws(
+    () =>
+      parseOfficialCertificationSet(
+        Buffer.from(
+          raw.replace("DOCUMENTO\tFACTURA ELECTRONICA", "DOCUMENTO\tDOCUMENTO INVENTADO"),
+        ),
+      ),
+    /no reconocido/,
+  );
+  assert.throws(
+    () =>
+      parseOfficialCertificationSet(
+        Buffer.from(
+          raw.replace(
+            "REFERENCIA\tFACTURA CORRESPONDIENTE A CASO 1234567-1",
+            "REFERENCIA\tFACTURA CORRESPONDIENTE A CASO 1234567-3",
+          ),
+        ),
+      ),
+    /ausente o posterior/,
+  );
+});
+
+async function workspaceFixture(options = {}) {
+  const { SiiCertificationWorkspace } = await import("../dist/finance/finance.sii-workspace.js"),
+    { FinanceContext } = await import("../dist/finance/finance.core.js"),
+    { sha256 } = await import("../dist/finance/finance.util.js");
+  const runId = "11111111-1111-4111-8111-111111111111",
+    id = "22222222-2222-4222-8222-222222222222",
+    artifactId = "33333333-3333-4333-8333-333333333333";
+  const { input, caf } = fixture(),
+    d = certificationDocumentXml(input, caf, certificate),
+    xml = certificationEnvelope([d.xml], company, "33333333-3", certificate, "CERTIFICATION"),
+    bytes = Buffer.from(xml, "latin1"),
+    hash = sha256(bytes);
+  const artifact = {
+      id: artifactId,
+      runId,
+      name: "set-qa.xml",
+      kind: "DTE",
+      storagePath: `sii-certification/${runId}/${hash}.xml`,
+      sha256: hash,
+    },
+    submission = { id, runId, artifactId, status: "PREPARED", trackId: null, response: null },
+    run = { id: runId, companyRut: company.rut };
+  const rows = {
+      sii_certification_runs: [run],
+      sii_certification_artifacts: [artifact],
+      sii_certification_submissions: [submission],
+      sii_certification_cases: [],
+      sii_certification_drafts: [],
+    },
+    files = new Map([[`finance-documents/${artifact.storagePath}`, bytes]]),
+    calls = [];
+  let sent = 0,
+    completed = 0;
+  const repo = {
+    configured: () => options.configured !== false,
+    settings: async () => ({
+      dteEnvironment: options.environment ?? "CERTIFICATION",
+      dteProvider: "SII_DIRECT",
+      companyRut: company.rut,
+      companyLegalName: company.legalName,
+      companyBusinessActivity: company.businessActivity,
+      companyActivityCode: company.activityCode,
+      companyAddress: company.address,
+      companyCommune: company.commune,
+      companyCity: company.city,
+      dteResolutionNumber: company.resolutionNumber,
+      dteResolutionDate: company.resolutionDate,
+    }),
+    list: async (table, filters = {}, sort = {}) => {
+      calls.push({ table, filters, sort });
+      return structuredClone(
+        (rows[table] ?? []).filter((r) => Object.entries(filters).every(([k, v]) => r[k] === v)),
+      );
+    },
+    get: async (table, rowId) => (rows[table] ?? []).find((r) => r.id === rowId),
+    readFile: async (bucket, path) => {
+      calls.push({ bucket, path });
+      return files.get(`${bucket}/${path}`) ?? null;
+    },
+    saveFile: async (bucket, path, data) => {
+      files.set(`${bucket}/${path}`, data);
+    },
+    certificationRpc: async (name, args) => {
+      if (name === "finance_claim_sii_certification_submission") {
+        if (submission.status !== "PREPARED") return false;
+        submission.status = "SENDING";
+        return true;
+      }
+      if (name === "finance_complete_sii_certification_submission") {
+        completed++;
+        if (completed <= (options.failCompletion ?? 0)) throw Error("Synthetic DB outage");
+        submission.status = args.p_unknown ? "UNKNOWN" : "SUBMITTED";
+        submission.trackId = args.p_track;
+        submission.response = args.p_response;
+        return;
+      }
+      if (name === "finance_record_sii_certification_status") {
+        submission.status = args.p_status;
+        submission.response = args.p_response;
+        return true;
+      }
+      calls.push({ rpc: name, args });
+      return 1;
+    },
+  };
+  const context = new FinanceContext(repo, {
+      client: async () => null,
+      ownClientIds: async () => [],
+    }),
+    sii = {
+      secretRef: () => "qa",
+      authenticate: async () => "synthetic-token",
+      sendCertificationArtifact: async () => {
+        sent++;
+        if (options.failSend) throw Error("Synthetic timeout");
+        return { trackId: "987654", status: "0" };
+      },
+      getSubmissionStatus: async (...args) => {
+        calls.push({ statusArgs: args });
+        return { status: "REJECTED", code: "-11", message: "Consulta no autorizada" };
+      },
+    };
+  const service = new SiiCertificationWorkspace(
+    context,
+    {
+      metadata: () => ({ fingerprintSha256: certificate.certificate.fingerprint256 }),
+      load: () => certificate,
+    },
+    sii,
+  );
+  return {
+    service,
+    repo,
+    rows,
+    files,
+    calls,
+    runId,
+    id,
+    artifactId,
+    artifact,
+    submission,
+    run,
+    sent: () => sent,
+  };
+}
+const admin = { role: "GERENTE_GENERAL", userId: "synthetic-qa-user" };
+test("workspace: acceso incorrecto, IDs inválidos, empresa ajena y producción no leen objetos privados", async () => {
+  const f = await workspaceFixture();
+  await assert.rejects(
+    () => f.service.detail(f.runId, { role: "PROGRAMADOR", userId: "qa" }),
+    /permiso/,
+  );
+  await assert.rejects(() => f.service.download("no-es-uuid", f.artifactId, admin), /uuid/i);
+  f.run.companyRut = "22222222-2";
+  await assert.rejects(() => f.service.download(f.runId, f.artifactId, admin), /otra empresa/);
+  assert.equal(f.calls.filter((c) => c.bucket).length, 0);
+  const prod = await workspaceFixture({ environment: "PRODUCTION" });
+  await assert.rejects(() => prod.service.overview(admin), /sólo admite certificación/);
+  const missing = await workspaceFixture({ configured: false });
+  await assert.rejects(() => missing.service.overview(admin), /Persistencia no configurada/);
+});
+test("workspace: descarga por ID rechaza rutas arbitrarias, objeto ausente y huella alterada", async () => {
+  const f = await workspaceFixture(),
+    original = f.artifact.storagePath,
+    stored = f.files.get(`finance-documents/${original}`);
+  f.artifact.storagePath = "clients/otro/comprobante.pdf";
+  await assert.rejects(() => f.service.download(f.runId, f.artifactId, admin), /ajeno/);
+  assert.equal(f.calls.filter((c) => c.bucket).length, 0);
+  f.artifact.storagePath = original;
+  f.artifact.runId = "otro";
+  await assert.rejects(() => f.service.download(f.runId, f.artifactId, admin), /ajeno/);
+  f.artifact.runId = f.runId;
+  f.files.clear();
+  await assert.rejects(() => f.service.download(f.runId, f.artifactId, admin), /no pudo leerse/);
+  f.files.set(`finance-documents/${original}`, Buffer.from("cambio"));
+  await assert.rejects(() => f.service.download(f.runId, f.artifactId, admin), /huella/);
+  f.files.set(`finance-documents/${original}`, stored);
+  assert((await f.service.download(f.runId, f.artifactId, admin)).bytes.equals(stored));
+  assert(
+    f.calls
+      .filter((c) => c.table === "sii_certification_submissions")
+      .every((c) => c.sort.order === "id"),
+  );
+});
+test("workspace: doble clic transmite una vez; un error de consulta no prueba rechazo", async () => {
+  const prior = process.env.FINANCE_ENCRYPTION_KEY;
+  process.env.FINANCE_ENCRYPTION_KEY = "ab".repeat(32);
+  try {
+    const f = await workspaceFixture(),
+      results = await Promise.allSettled([
+        f.service.submit(f.runId, f.id, admin),
+        f.service.submit(f.runId, f.id, admin),
+      ]);
+    assert(results.some((r) => r.status === "fulfilled"));
+    assert.equal(f.sent(), 1);
+    assert.equal(f.submission.trackId, "987654");
+    await f.service.refresh(f.runId, f.id, admin);
+    assert.equal(f.submission.status, "SUBMITTED");
+    assert.deepEqual(f.calls.find((c) => c.statusArgs).statusArgs, [
+      "987654",
+      "CERTIFICATION",
+      company.rut,
+    ]);
+  } finally {
+    if (prior === undefined) delete process.env.FINANCE_ENCRYPTION_KEY;
+    else process.env.FINANCE_ENCRYPTION_KEY = prior;
+  }
+});
+test("workspace: recepción incierta bloquea el reenvío y no inventa Track ID", async () => {
+  const f = await workspaceFixture({ failSend: true });
+  await assert.rejects(() => f.service.submit(f.runId, f.id, admin), /bloqueado/);
+  assert.equal(f.submission.status, "UNKNOWN");
+  assert.equal(f.submission.trackId, null);
+  await assert.rejects(() => f.service.submit(f.runId, f.id, admin), /adquirido/);
+  assert.equal(f.sent(), 1);
+  await assert.rejects(
+    () => f.service.recoverReceipt(f.runId, f.id, admin),
+    /No se encontró un recibo/,
+  );
+});
+test("workspace: recibo cifrado recupera fallo posterior al envío sin retransmitir", async () => {
+  const prior = process.env.FINANCE_ENCRYPTION_KEY;
+  process.env.FINANCE_ENCRYPTION_KEY = "cd".repeat(32);
+  try {
+    const f = await workspaceFixture({ failCompletion: 2 });
+    await assert.rejects(() => f.service.submit(f.runId, f.id, admin), /Track ID 987654/);
+    assert.equal(f.sent(), 1);
+    assert.equal(f.submission.status, "SENDING");
+    const receipt = f.files.get(`finance-secrets/certification-receipts/${f.runId}/${f.id}.enc`);
+    assert(receipt && !receipt.toString().includes("987654"));
+    await f.service.recoverReceipt(f.runId, f.id, admin);
+    assert.equal(f.submission.status, "SUBMITTED");
+    assert.equal(f.submission.trackId, "987654");
+    assert.equal(f.sent(), 1);
+  } finally {
+    if (prior === undefined) delete process.env.FINANCE_ENCRYPTION_KEY;
+    else process.env.FINANCE_ENCRYPTION_KEY = prior;
+  }
+});
+test("workspace: borrador se consulta exclusivamente por empresa y usuario", async () => {
+  const f = await workspaceFixture();
+  assert.equal(await f.service.draft("a".repeat(64), admin), null);
+  const call = f.calls.find((c) => c.table === "sii_certification_drafts");
+  assert.deepEqual(call.filters, {
+    companyRut: company.rut,
+    createdBy: admin.userId,
+    setSha256: "a".repeat(64),
+  });
+  assert.equal(call.sort.order, "updatedAt");
+  await assert.rejects(
+    () => f.service.draft("a".repeat(64), { ...admin, userId: null }),
+    /identidad/,
+  );
+});
