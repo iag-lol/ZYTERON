@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createQuoteDraftFromLead, getLeadForWorkflow, resolveClientIdFromLead } from "@/lib/admin/contact-workflow";
 
 type Context = {
-  params: Promise<{ id: string }> | { id: string };
+  params: Promise<{ id: string }>;
 };
 
 function jsonError(message: string, status = 400) {
@@ -11,7 +11,7 @@ function jsonError(message: string, status = 400) {
 
 export async function POST(_request: Request, context: Context) {
   try {
-    const { id } = await Promise.resolve(context.params);
+    const { id } = await context.params;
     const lead = await getLeadForWorkflow(id);
 
     if (!lead) {

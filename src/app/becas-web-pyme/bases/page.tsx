@@ -19,19 +19,20 @@ export const dynamic = "force-dynamic";
 export default async function BasesPage({
   searchParams,
 }: {
-  searchParams?: { edicion?: string };
+  searchParams?: Promise<{ edicion?: string }>;
 }) {
+  const query = await searchParams;
   let campaign = null;
   let termsVersion = null;
 
   try {
     const supabase = getBecasSupabaseClient();
     
-    if (searchParams?.edicion) {
+    if (query?.edicion) {
       const { data } = await supabase
         .from("scholarship_campaigns")
         .select("*")
-        .eq("slug", searchParams.edicion)
+        .eq("slug", query.edicion)
         .neq("status", "draft")
         .single();
       campaign = data;

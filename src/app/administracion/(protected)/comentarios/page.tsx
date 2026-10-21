@@ -8,17 +8,11 @@ export const dynamic = "force-dynamic";
 type ReviewStatus = "ALL" | "PENDING" | "APPROVED" | "REJECTED";
 
 type PageProps = {
-  searchParams?:
-    | {
-        status?: string;
-        saved?: string;
-        error?: string;
-      }
-    | Promise<{
-        status?: string;
-        saved?: string;
-        error?: string;
-      }>;
+  searchParams?: Promise<{
+    status?: string;
+    saved?: string;
+    error?: string;
+  }>;
 };
 
 function normalizeStatus(value?: string | null): ReviewStatus {
@@ -59,7 +53,7 @@ function statusLabel(status?: string | null) {
 }
 
 export default async function ComentariosPage({ searchParams }: PageProps) {
-  const query = await Promise.resolve(searchParams);
+  const query = await searchParams;
   const activeStatus = normalizeStatus(query?.status);
   const reviews = await getClientReviews();
 
