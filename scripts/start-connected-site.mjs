@@ -22,6 +22,7 @@ process.env.MONITORING_WORKER_ENABLED ||= "true";
 process.env.MONITORING_MAX_CONCURRENCY ||= "2";
 process.env.MONITORING_PROCESS_ROLE = "api";
 process.env.FLOW_WORKER_ENABLED = "false";
+process.env.BILLING_WORKER_ENABLED ||= "true";
 for (const [name, value] of Object.entries({
   RATE_LIMIT_DEFAULT_PER_MINUTE: "300",
   RATE_LIMIT_AUTH_PER_MINUTE: "60",

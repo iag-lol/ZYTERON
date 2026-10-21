@@ -1,3 +1,4 @@
+import { legacyViewId } from "@/lib/full-control/legacy-id";
 import { portalModuleEnabled } from "@/lib/portal/module-access";
 import { prisma } from "@/lib/prisma";
 import { consumeFinancialCode } from "@/lib/payments/financial-challenge";
@@ -31,7 +32,11 @@ export async function POST(req: Request, { params }: Context) {
   }
 
   try {
-    if (!(await portalModuleEnabled(session.user.id,"invoices"))) return NextResponse.json({error:"Los pagos no están habilitados para esta cuenta."},{status:403});
+    if (!(await portalModuleEnabled(session.user.id, "invoices")))
+      return NextResponse.json(
+        { error: "Los pagos no están habilitados para esta cuenta." },
+        { status: 403 },
+      );
     const body = await limitedJson(req).catch(() => null);
     const parsedBody = payloadSchema.safeParse(body);
     if (!parsedBody.success) {
@@ -45,6 +50,17 @@ export async function POST(req: Request, { params }: Context) {
     }
 
     const { quoteId } = await params;
+    const manual = await prisma.$queryRaw<
+      Array<{ id: string }>
+    >`SELECT id FROM zyteron_monthly_plans WHERE quote_id=${legacyViewId("quote", quoteId)}::uuid`;
+    if (manual.length)
+      return NextResponse.json(
+        {
+          error:
+            "Este servicio usa un calendario mensual administrado. Revisa sus cobros o solicita asistencia desde tu portal.",
+        },
+        { status: 409 },
+      );
     const authorized = await prisma.$transaction((tx) =>
       consumeFinancialCode(tx, {
         id: parsedBody.data.challengeId,

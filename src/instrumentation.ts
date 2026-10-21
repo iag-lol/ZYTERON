@@ -1,4 +1,20 @@
 export async function register() {
+  if (process.env.NEXT_RUNTIME === "nodejs" && process.env.BILLING_WORKER_ENABLED === "true") {
+    const { runMonthlyBilling } = await import("./lib/payments/monthly-billing");
+    let busy = false;
+    const tick = () => {
+      if (busy) return;
+      busy = true;
+      void runMonthlyBilling()
+        .catch(() => console.error("MONTHLY_BILLING_UNAVAILABLE"))
+        .finally(() => {
+          busy = false;
+        });
+    };
+    const timer = setInterval(tick, 60000);
+    timer.unref();
+    tick();
+  }
   if (process.env.NEXT_RUNTIME === "nodejs" && process.env.PAYMENT_WORKER_ENABLED === "true") {
     const { runPaymentInbox } = await import("./lib/payments/durable-callbacks");
     const { runPaymentMail } = await import("./lib/payments/payment-outbox");

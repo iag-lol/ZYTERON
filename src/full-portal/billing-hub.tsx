@@ -200,10 +200,34 @@ export default function BillingHub({ data, onHelp }: { data: PortalData; onHelp:
           ]
         : [];
     }),
+    ...data.invoices
+      .filter((i) => i.balance > 0 && i.currency === "CLP")
+      .flatMap((i) => {
+        const date = paymentCivilDate(i.due || i.issued);
+        return date && date.slice(0, 4) === String(year)
+          ? [
+              {
+                id: "debt:" + i.id,
+                label: i.concept,
+                date,
+                amount: i.balance,
+                kind: i.status === "Vencida" ? "overdue" : "pending",
+                receipt: false,
+              },
+            ]
+          : [];
+      }),
     ...subscriptions
       .flatMap((s) => projectMonthlyPayments(s, year))
+      .filter(
+        (p) =>
+          !data.invoices.some(
+            (i) => i.quoteId === p.quoteId && paymentCivilDate(i.due || i.issued) === p.date,
+          ),
+      )
       .map((p, i) => ({ ...p, id: p.quoteId + ":" + i, kind: "forecast", receipt: false })),
   ];
+  rows.sort((a, b) => a.date.localeCompare(b.date));
   const visible = rows.filter((r) => view === "year" || Number(r.date.slice(5, 7)) === month);
   return (
     <section className="billing-hub">
@@ -270,12 +294,18 @@ export default function BillingHub({ data, onHelp }: { data: PortalData; onHelp:
                     className="text-button cancel-link"
                     disabled={s.state !== "ACTIVE"}
                     onClick={() => {
+                      if (s.managedBy === "MANUAL") {
+                        onHelp();
+                        return;
+                      }
                       setCancel(data.quotes.find((q) => q.id === s.quoteId) || null);
                       setChallenge("");
                       setMessage("");
                     }}
                   >
-                    Cancelar suscripción
+                    {s.managedBy === "MANUAL"
+                      ? "Solicitar cambio o cancelación"
+                      : "Cancelar suscripción"}
                   </button>
                 </div>
               </article>
@@ -377,6 +407,17 @@ export default function BillingHub({ data, onHelp }: { data: PortalData; onHelp:
           </div>
           <div className="calendar-finance-summary">
             <div>
+              <span>Saldo pendiente · CLP</span>
+              <strong>
+                {money(
+                  rows
+                    .filter((r) => ["pending", "overdue"].includes(r.kind))
+                    .reduce((s, r) => s + r.amount, 0),
+                )}
+              </strong>
+              <small>Cuentas por cobrar del período</small>
+            </div>
+            <div>
               <span>Pagos del período</span>
               <strong>{rows.filter((r) => r.kind === "confirmed").length}</strong>
             </div>
@@ -414,7 +455,15 @@ export default function BillingHub({ data, onHelp }: { data: PortalData; onHelp:
                 </div>
                 <strong>{money(r.amount)}</strong>
                 <p>{r.label}</p>
-                <small>{r.kind === "forecast" ? "Proyección" : "Pago efectivo"}</small>
+                <small>
+                  {r.kind === "forecast"
+                    ? "Proyección"
+                    : r.kind === "pending"
+                      ? "Pendiente de pago"
+                      : r.kind === "overdue"
+                        ? "Pago vencido"
+                        : "Pago efectivo"}
+                </small>
                 {r.receipt && (
                   <a href={`/api/portal/payments/receipts/${r.id}`}>
                     <Download size={15} /> Comprobante PDF
@@ -427,7 +476,7 @@ export default function BillingHub({ data, onHelp }: { data: PortalData; onHelp:
             <div className="empty-state">
               <CalendarDays size={32} />
               <h3>Sin cobros para este período</h3>
-              <p>No hay pagos confirmados ni proyecciones de planes activos.</p>
+              <p>No hay pagos, cobros pendientes ni proyecciones para este período.</p>
             </div>
           )}
           <p className="source-note">

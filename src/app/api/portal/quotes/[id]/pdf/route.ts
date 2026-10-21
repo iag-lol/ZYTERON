@@ -1,3 +1,7 @@
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { canonicalProposalFile } from "@/lib/portal/commercial-publications";
+import { nativeProposalVisible } from "@/lib/portal/commercial-publications";
+import { parseQuoteMessage } from "@/lib/admin/quote";
 import { portalModuleEnabled } from "@/lib/portal/module-access";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
@@ -10,15 +14,42 @@ type Context = { params: Promise<{ id: string }> };
 
 export async function GET(_request: Request, { params }: Context) {
   const session = await getServerSession(portalAuthOptions);
-  if (!session?.user?.id || !session.user.email || session.user.accountStatus !== "ACTIVE" || !session.user.emailVerifiedAt) {
+  if (
+    !session?.user?.id ||
+    !session.user.email ||
+    session.user.accountStatus !== "ACTIVE" ||
+    !session.user.emailVerifiedAt
+  ) {
     return NextResponse.json({ error: "No autenticado." }, { status: 401 });
   }
 
-  try { if (!(await portalModuleEnabled(session.user.id,"documents"))) return NextResponse.json({error:"Documentos deshabilitados para esta cuenta."},{status:403}); }
-  catch {return NextResponse.json({error:"No fue posible validar el acceso."},{status:503});}
+  try {
+    if (!(await portalModuleEnabled(session.user.id, "documents")))
+      return NextResponse.json(
+        { error: "Documentos deshabilitados para esta cuenta." },
+        { status: 403 },
+      );
+  } catch {
+    return NextResponse.json({ error: "No fue posible validar el acceso." }, { status: 503 });
+  }
   const { id } = await params;
   const quote = await prisma.quote.findUnique({ where: { id } });
-  if (!quote) return NextResponse.json({ error: "Cotización no encontrada." }, { status: 404 });
+  if (!quote) {
+    const file = await canonicalProposalFile(session.user.id, id);
+    if (!file) return NextResponse.json({ error: "Cotización no encontrada." }, { status: 404 });
+    const { supabase } = createSupabaseServerClient();
+    const signed = await supabase.storage
+      .from("enterprise-documents")
+      .createSignedUrl(file.storage_path, 90, { download: file.filename });
+    if (signed.error || !signed.data.signedUrl)
+      return NextResponse.json({ error: "No se pudo autorizar la descarga." }, { status: 502 });
+    return NextResponse.redirect(signed.data.signedUrl, {
+      status: 307,
+      headers: { "Cache-Control": "private,no-store" },
+    });
+  }
+  if (!nativeProposalVisible(quote.status, parseQuoteMessage(quote.message)))
+    return NextResponse.json({ error: "Cotización no encontrada." }, { status: 404 });
 
   const ownsById = quote.userId === session.user.id;
   const ownsLegacyByVerifiedEmail =

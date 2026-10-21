@@ -51,3 +51,20 @@ test("confirmed timestamps use the same Chilean civil date and year as payment d
   assert.equal(paymentCivilDate("2026-09-28"), "2026-09-28");
   assert.equal(paymentCivilDate("invalid"), null);
 });
+
+test("manual schedules preserve the original anchor after a short month", () => {
+  const dates = projectMonthlyPayments(
+    {
+      quoteId: "q",
+      label: "Mensual",
+      amount: 10000,
+      nextDate: "2027-02-28",
+      anchorDate: "2027-01-31",
+      activatedAt: null,
+      state: "ACTIVE",
+      paidThrough: null,
+    },
+    2027,
+  );
+  assert.equal(dates.find((d) => d.date.startsWith("2027-03"))?.date, "2027-03-31");
+});

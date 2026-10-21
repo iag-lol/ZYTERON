@@ -67,18 +67,16 @@ export async function attachQuoteBilling(
   const byView = new Map(natives.map((q) => [legacyViewId("quote", q.id), q]));
   const nativeIds = items.flatMap((q) => (byView.has(q.id) ? [byView.get(q.id)!.id] : []));
   const canonicalIds = items.filter((q) => !byView.has(q.id)).map((q) => q.id);
-  const nativeReceivables = nativeIds.length
-    ? await prisma.receivable.findMany({
-        where: {
-          quoteId: { in: nativeIds },
-          status: { notIn: ["CANCELLED", "VOID"] },
-          currency: "CLP",
-        },
-        include: {
-          allocations: { where: { payment: { status: "CONFIRMED" } }, select: { amount: true } },
-        },
-      })
-    : [];
+  const nativeReceivables = await prisma.receivable.findMany({
+    where: {
+      OR: [{ quoteId: { in: nativeIds } }, { kind: "MONTHLY" }],
+      status: { notIn: ["CANCELLED", "VOID"] },
+      currency: "CLP",
+    },
+    include: {
+      allocations: { where: { payment: { status: "CONFIRMED" } }, select: { amount: true } },
+    },
+  });
   const plans = canonicalIds.length
     ? await prisma.$queryRaw<Row[]>`
     SELECT p.*, COALESCE((SELECT jsonb_agg(to_jsonb(i)) FROM quote_payment_installments i WHERE i.plan_id=p.id),'[]'::jsonb) AS installments
@@ -141,6 +139,23 @@ export async function attachQuoteBilling(
       evidence = ledger
         .filter((r) => r.quote_id === q.id)
         .map((r) => ({ amount: Number(r.amount), paid: Number(r.amount), dueDate: r.due_date }));
+    if (!native)
+      evidence.push(
+        ...nativeReceivables
+          .filter(
+            (r) =>
+              r.kind === "MONTHLY" &&
+              r.metadata &&
+              typeof r.metadata === "object" &&
+              !Array.isArray(r.metadata) &&
+              r.metadata.quoteId === q.id,
+          )
+          .map((r) => ({
+            amount: r.totalAmount,
+            paid: r.allocations.reduce((s, a) => s + a.amount, 0),
+            dueDate: r.dueAt?.toISOString(),
+          })),
+      );
     const finite = frequency !== "MONTHLY" || Boolean(plan?.total_installments);
     const totals = collectionSummary({
       total: plan && frequency === "ONE_TIME" ? Number(plan.amount) : q.totalAmount,

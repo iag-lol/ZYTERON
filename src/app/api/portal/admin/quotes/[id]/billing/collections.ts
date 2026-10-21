@@ -10,7 +10,7 @@ export async function websiteQuoteCollections(viewId: string) {
       Array<{ id: string }>
     >`SELECT id FROM quotes WHERE id=${viewId}::uuid`;
     if (!canonical) return null;
-    return prisma.$queryRaw<
+    const canonicalRows = await prisma.$queryRaw<
       Array<{
         id: string;
         description: string;
@@ -28,6 +28,34 @@ export async function websiteQuoteCollections(viewId: string) {
       LEFT JOIN payment_allocations a ON a.invoice_id=i.id AND a.reversed_at IS NULL AND EXISTS(SELECT 1 FROM payments pay WHERE pay.id=a.payment_id AND pay.status='CONFIRMED' AND pay.currency=i.currency)
       LEFT JOIN payments p ON p.id=a.payment_id
       WHERE COALESCE(s.quote_id,pr.quote_id)=${viewId}::uuid AND i.status NOT IN ('CANCELLED','VOID') GROUP BY i.id ORDER BY i.created_at DESC`;
+    const nativeRows = await prisma.receivable.findMany({
+      where: {
+        kind: "MONTHLY",
+        metadata: { path: ["quoteId"], equals: viewId },
+        status: { notIn: ["VOID", "CANCELLED"] },
+      },
+      include: {
+        allocations: {
+          where: { payment: { status: "CONFIRMED", currency: "CLP" } },
+          select: { amount: true, payment: { select: { receivedAt: true } } },
+        },
+      },
+    });
+    return [
+      ...canonicalRows,
+      ...nativeRows.map((r) => ({
+        id: r.id,
+        description: r.description,
+        amount: r.totalAmount,
+        currency: r.currency,
+        dueDate: r.dueAt?.toISOString() || null,
+        paid: r.allocations.reduce((s, a) => s + a.amount, 0),
+        payments: r.allocations.map((a) => ({
+          amount: a.amount,
+          receivedAt: a.payment.receivedAt.toISOString(),
+        })),
+      })),
+    ];
   }
   const rows = await prisma.receivable.findMany({
     where: { quoteId: quote.id, status: { notIn: ["CANCELLED", "VOID"] } },

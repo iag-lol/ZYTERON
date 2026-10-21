@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { MonthlyPlanControls } from "./monthly-plan";
 import { CalendarDays, Save } from "lucide-react";
 import type { QuoteBilling } from "@/lib/full-control/quote-register";
 import { Drawer, Feedback, KeyValue, Loading } from "@control/components/finance/fx-ui";
@@ -8,7 +9,7 @@ import { formatDate } from "@control/lib/date-time";
 const money = (n: number, currency: string) =>
   new Intl.NumberFormat("es-CL", {
     style: "currency",
-    currency,
+    currency: currency === "UF" ? "CLF" : currency,
     maximumFractionDigits: currency === "CLP" ? 0 : 2,
   }).format(n);
 type Collection = {
@@ -146,6 +147,9 @@ export function WebsiteQuoteBillingButton({
                     cobros, prepara una nueva versión para cambiarla y conservar el historial.
                   </p>
                 )}
+                {billing.frequency === "MONTHLY" ? (
+                  <MonthlyPlanControls quoteId={quoteId} onChanged={onChanged} />
+                ) : null}
                 {billing.paidThrough ? (
                   <p className="fx-hint">
                     Período confirmado hasta el {formatDate(billing.paidThrough)}.

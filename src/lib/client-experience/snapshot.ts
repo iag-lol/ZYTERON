@@ -1,5 +1,7 @@
+import { dueInstant } from "@/lib/payments/monthly-calendar";
 import { isSafePortalLink } from "@/lib/portal/safe-link";
 import { portalModulePermissions } from "@/lib/portal/module-permissions";
+import { scopedCommercial, nativeProposalVisible } from "@/lib/portal/commercial-publications";
 import { scopedPublications } from "@/lib/portal/canonical-publications";
 import "server-only";
 import { prisma } from "@/lib/prisma";
@@ -8,7 +10,7 @@ import { projectStatus } from "./project-status";
 import { getClientPortalSnapshot } from "@/lib/portal/data";
 import { clientDatabase } from "@/lib/portal/scoped-db";
 import { decideSiteAccess } from "@/lib/payments/site-access-policy";
-import { enrichQuoteRecord } from "@/lib/admin/quote";
+import { enrichQuoteRecord, parseQuoteMessage } from "@/lib/admin/quote";
 import {
   normalizeQuoteMetaPayment,
   quotePaymentVisibleInPortal,
@@ -16,7 +18,13 @@ import {
 export async function connectedPortalSnapshot(userId: string) {
   const base = await getClientPortalSnapshot(userId);
   if (!base.user) throw new Error("PORTAL_ACCESS_DENIED");
-  const credentialAccess = await prisma.$transaction((db) => credentialPaymentStates(db, userId, base.credentials.map((c) => c.project?.id || null)));
+  const credentialAccess = await prisma.$transaction((db) =>
+    credentialPaymentStates(
+      db,
+      userId,
+      base.credentials.map((c) => c.project?.id || null),
+    ),
+  );
   const extra = await clientDatabase(userId, async (db) => {
     const [services, events, debts, payments, quotes, lifecycle, webThreads, webMessages] =
       await Promise.all([
@@ -91,6 +99,7 @@ export async function connectedPortalSnapshot(userId: string) {
     const permissions = await portalModulePermissions(db);
     if (!permissions.enabled) throw new Error("PORTAL_DISABLED");
     const publications = await scopedPublications(db);
+    const commercial = await scopedCommercial(db);
     const managedSchema = await db.$queryRaw<
       Array<{ available: boolean }>
     >`SELECT to_regclass('public.zyteron_native_project_link') IS NOT NULL AS available`;
@@ -110,60 +119,105 @@ export async function connectedPortalSnapshot(userId: string) {
       webThreads,
       webMessages,
       publications,
+      commercial,
       managedNativeProjects,
       permissions,
     };
   });
-  const quotes = extra.quotes.map((q) => {
-    const v = enrichQuoteRecord({ ...q, createdAt: q.createdAt.toISOString() }),
-      p = normalizeQuoteMetaPayment(v.meta).payment,
-      life = extra.lifecycle.find((l) => l.quote_id === q.id);
-    return {
-      id: q.id,
-      number: v.displayNumber,
-      title:
-        v.meta.items
-          .map((i) => i.description)
-          .filter(Boolean)
-          .join(" · ")
-          .slice(0, 160) || "Propuesta de servicios",
-      status: q.status,
-      total: q.total,
-      createdAt: q.createdAt.toISOString(),
-      payable:
-        extra.permissions.invoices &&
-        quotePaymentVisibleInPortal(q.status, p) &&
-        p?.enabled !== false &&
-        q.total > 0 &&
-        (p?.billingType === "SUBSCRIPTION"
-          ? p.subscription?.status !== "ACTIVE"
-          : (p?.stages || []).some(
-              (s) =>
-                s.dueEnabled &&
-                s.paymentChannel === "FLOW" &&
-                ["READY", "REJECTED", "PROCESSING"].includes(s.status),
-            )),
-      billingType: p?.billingType || "ONE_TIME",
-      stages: (p?.stages || []).map((s) => ({
-        key: s.key,
-        label: s.label,
-        amount: s.amount,
-        status: s.status,
-        dueEnabled: !!s.dueEnabled,
-        channel: s.paymentChannel,
+  const nativeQuotes = extra.quotes
+    .filter((q) => nativeProposalVisible(q.status, parseQuoteMessage(q.message)))
+    .map((q) => {
+      const v = enrichQuoteRecord({ ...q, createdAt: q.createdAt.toISOString() }),
+        p = normalizeQuoteMetaPayment(v.meta).payment,
+        life = extra.lifecycle.find((l) => l.quote_id === q.id);
+      return {
+        id: q.id,
+        number: v.displayNumber,
+        currency: "CLP",
+        pdfUrl: `/api/portal/quotes/${q.id}/pdf`,
+        title:
+          v.meta.items
+            .map((i) => i.description)
+            .filter(Boolean)
+            .join(" · ")
+            .slice(0, 160) || "Propuesta de servicios",
+        status: q.status,
+        total: q.total,
+        createdAt: q.createdAt.toISOString(),
+        payable:
+          extra.permissions.invoices &&
+          quotePaymentVisibleInPortal(q.status, p) &&
+          p?.enabled !== false &&
+          q.total > 0 &&
+          (p?.billingType === "SUBSCRIPTION"
+            ? p.subscription?.status !== "ACTIVE"
+            : (p?.stages || []).some(
+                (s) =>
+                  s.dueEnabled &&
+                  s.paymentChannel === "FLOW" &&
+                  ["READY", "REJECTED", "PROCESSING"].includes(s.status),
+              )),
+        billingType: p?.billingType || "ONE_TIME",
+        stages: (p?.stages || []).map((s) => ({
+          key: s.key,
+          label: s.label,
+          amount: s.amount,
+          status: s.status,
+          dueEnabled: !!s.dueEnabled,
+          channel: s.paymentChannel,
+        })),
+        subscription: p?.subscription
+          ? {
+              managedBy: "FLOW",
+              anchorDate: null as string | null,
+              quoteId: q.id,
+              label: v.displayNumber + " · suscripción mensual",
+              amount: p.subscription.amount || q.total,
+              nextDate: p.subscription.nextInvoiceDate || null,
+              activatedAt: p.subscription.activatedAt || null,
+              state: life?.state || p.subscription.status || "PENDING",
+              paidThrough: life?.paid_through?.toISOString() || p.subscription.paidThrough || null,
+            }
+          : null,
+      };
+    });
+  const quotes = [
+    ...nativeQuotes,
+    ...extra.commercial.quotes
+      .filter((q) => !extra.quotes.some((n) => n.id === q.id))
+      .map((q) => ({
+        id: q.id,
+        number: q.quote_number,
+        title: q.company_name,
+        status: q.status,
+        total: Number(q.total_amount),
+        currency: q.currency.trim(),
+        createdAt: q.created_at.toISOString(),
+        payable: false,
+        pdfUrl: q.document_id ? `/api/portal/quotes/${q.id}/pdf` : null,
+        billingType: q.billing_type || "ONE_TIME",
+        stages: [],
+        subscription: null,
       })),
-      subscription: p?.subscription
-        ? {
+  ].map((q) => {
+    const plan = extra.commercial.plans.find((p) => p.quote_id === q.id);
+    return !plan || (q.subscription?.managedBy === "FLOW" && q.subscription.state === "ACTIVE")
+      ? q
+      : {
+          ...q,
+          payable: false,
+          subscription: {
             quoteId: q.id,
-            label: v.displayNumber + " · suscripción mensual",
-            amount: p.subscription.amount || q.total,
-            nextDate: p.subscription.nextInvoiceDate || null,
-            activatedAt: p.subscription.activatedAt || null,
-            state: life?.state || p.subscription.status || "PENDING",
-            paidThrough: life?.paid_through?.toISOString() || p.subscription.paidThrough || null,
-          }
-        : null,
-    };
+            label: plan.label,
+            amount: plan.amount,
+            nextDate: plan.next_due,
+            activatedAt: plan.created_at.toISOString(),
+            state: plan.status,
+            paidThrough: null,
+            managedBy: "MANUAL",
+            anchorDate: plan.anchor_date,
+          },
+        };
   });
   const now = Date.now();
   return {
@@ -296,22 +350,47 @@ export async function connectedPortalSnapshot(userId: string) {
       project: c.project?.title || "",
       access: credentialAccess.get(c.project?.id || null)!,
     })),
-    invoices: (extra.permissions.invoices ? extra.debts : []).map((d) => {
-      const paid = d.allocations.reduce((sum, a) => sum + a.amount, 0),
-        balance = Math.max(0, d.totalAmount - paid);
-      return {
+    invoices: [
+      ...(extra.permissions.invoices ? extra.commercial.invoices : []).map((d) => ({
         id: d.id,
-        quoteId: d.quoteId,
-        concept: d.description,
-        currency: d.currency,
-        total: d.totalAmount,
-        balance,
-        issued: d.issuedAt.toISOString(),
-        due: d.dueAt?.toISOString() || null,
+        quoteId: null,
+        concept: d.description || d.invoice_number,
+        currency: d.currency.trim(),
+        total: Number(d.total_amount),
+        balance: Number(d.balance_due),
+        issued: d.issue_date ? d.issue_date.toISOString().slice(0, 10) + "T12:00:00Z" : "",
+        due: d.due_date ? dueInstant(d.due_date.toISOString().slice(0, 10)).toISOString() : null,
         status:
-          balance === 0 ? "Pagada" : d.dueAt && d.dueAt.getTime() < now ? "Vencida" : "Pendiente",
-      };
-    }),
+          Number(d.balance_due) === 0
+            ? "Pagada"
+            : d.due_date && dueInstant(d.due_date.toISOString().slice(0, 10)).getTime() < now
+              ? "Vencida"
+              : "Pendiente",
+      })),
+      ...(extra.permissions.invoices ? extra.debts : []).map((d) => {
+        const paid = d.allocations.reduce((sum, a) => sum + a.amount, 0),
+          balance = Math.max(0, d.totalAmount - paid);
+        return {
+          id: d.id,
+          quoteId:
+            d.quoteId ||
+            (d.metadata &&
+            typeof d.metadata === "object" &&
+            !Array.isArray(d.metadata) &&
+            typeof d.metadata.quoteId === "string"
+              ? d.metadata.quoteId
+              : null),
+          concept: d.description,
+          currency: d.currency,
+          total: d.totalAmount,
+          balance,
+          issued: d.issuedAt.toISOString(),
+          due: d.dueAt?.toISOString() || null,
+          status:
+            balance === 0 ? "Pagada" : d.dueAt && d.dueAt.getTime() < now ? "Vencida" : "Pendiente",
+        };
+      }),
+    ],
     monitors: extra.permissions.monitoring ? extra.publications.monitors : [],
     payments: [
       ...(extra.permissions.invoices ? extra.publications.payments : []),

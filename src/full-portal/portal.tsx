@@ -1222,20 +1222,28 @@ export default function Portal({
                           <dl>
                             <div>
                               <dt>Importe acordado</dt>
-                              <dd>{money(q.total)} CLP</dd>
+                              <dd>
+                                {new Intl.NumberFormat("es-CL", {
+                                  style: "currency",
+                                  currency: q.currency === "UF" ? "CLF" : q.currency,
+                                }).format(q.total)}{" "}
+                                {q.currency}
+                              </dd>
                             </div>
                             <div>
                               <dt>Fecha</dt>
                               <dd>{civil(q.createdAt)}</dd>
                             </div>
                           </dl>
-                          <a
-                            className="button secondary"
-                            href={`/api/portal/quotes/${q.id}/pdf`}
-                            download
-                          >
-                            Descargar propuesta <Download size={16} />
-                          </a>
+                          {q.pdfUrl ? (
+                            <a className="button secondary" href={q.pdfUrl} download>
+                              Descargar propuesta <Download size={16} />
+                            </a>
+                          ) : (
+                            <p className="source-note">
+                              Documento disponible al completar su publicación.
+                            </p>
+                          )}
                           {q.payable && (
                             <FlowCheckoutPreview
                               document={q.number + " · " + q.title}

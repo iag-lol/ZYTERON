@@ -2,13 +2,21 @@ import type { PortalData } from "@/lib/client-experience/snapshot";
 export const money = (amount: number, currency = "CLP") =>
   new Intl.NumberFormat("es-CL", {
     style: "currency",
-    currency,
+    currency: currency === "UF" ? "CLF" : currency,
     maximumFractionDigits: currency === "CLP" ? 0 : 2,
   }).format(amount);
-export const civil = (value: string | null) =>
-  value
-    ? new Intl.DateTimeFormat("es-CL", { timeZone: "America/Santiago" }).format(new Date(value))
-    : "Por coordinar";
+export const civil = (value: string | null) => {
+  if (!value) return "Por coordinar";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value.split("-").reverse().join("-");
+  return new Intl.DateTimeFormat("es-CL", {
+    timeZone: "America/Santiago",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })
+    .format(new Date(value))
+    .replaceAll("/", "-");
+};
 export const initials = (value: string) =>
   value
     .split(/\s+/)

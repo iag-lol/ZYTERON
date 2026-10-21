@@ -18,6 +18,7 @@ export type RecurringProjection = {
   activatedAt: string | null;
   state: string;
   paidThrough: string | null;
+  anchorDate?: string | null;
 };
 export function projectMonthlyPayments(subscription: RecurringProjection, year: number) {
   if (
@@ -51,10 +52,16 @@ export function projectMonthlyPayments(subscription: RecurringProjection, year: 
       return [];
     }
   }
+  let anchorDay = anchor.day;
+  if (subscription.anchorDate) {
+    try {
+      anchorDay = Temporal.PlainDate.from(subscription.anchorDate).day;
+    } catch {}
+  }
   const dates = [];
   for (let month = 1; month <= 12; month++) {
     const date = Temporal.PlainDate.from({ year, month, day: 1 }).with({
-      day: Math.min(anchor.day, Temporal.PlainDate.from({ year, month, day: 1 }).daysInMonth),
+      day: Math.min(anchorDay, Temporal.PlainDate.from({ year, month, day: 1 }).daysInMonth),
     });
     if (Temporal.PlainDate.compare(date, anchor) < 0) continue;
     if (

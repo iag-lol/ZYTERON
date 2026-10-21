@@ -79,7 +79,7 @@ function leads(s: ControlData, ls: Link[]): SalesLead[] {
   }));
 }
 async function quotes(s: ControlData, ls: Link[]): Promise<SalesQuote[]> {
-  const raw = await prisma.quote.findMany({ where: { id: { in: s.quotes.map((q) => q.id) } } });
+  const raw = await prisma.quote.findMany({ orderBy: { createdAt: "desc" } });
   return raw.map((q) => {
     const e = enrichQuoteRecord({ ...q, createdAt: q.createdAt.toISOString() }),
       m = e.meta as typeof e.meta & {
@@ -96,7 +96,7 @@ async function quotes(s: ControlData, ls: Link[]): Promise<SalesQuote[]> {
           ls,
           s.users.find((u) => u.email.toLowerCase() === q.email.toLowerCase())?.id || null,
         ),
-      leadId: null,
+      leadId: (m as typeof m & { commercialLeadId?: string }).commercialLeadId || null,
       opportunityId: null,
       companyName: q.company || q.name,
       contactName: q.name,
@@ -118,8 +118,8 @@ async function quotes(s: ControlData, ls: Link[]): Promise<SalesQuote[]> {
       taxAmount: m.iva,
       totalAmount: q.total,
       validUntil: m.validUntil || null,
-      paymentTerms: m.terms || null,
-      commercialTerms: null,
+      paymentTerms: m.paymentTerms || null,
+      commercialTerms: m.terms || null,
       notes: m.notes || null,
       documentId: null,
       documentHash: null,
@@ -336,8 +336,8 @@ export async function mergeLegacyRead(path: string, params: URLSearchParams, bod
   if (path === "/quotes") {
     const native = await quotes(s, ls);
     const canonical = await canonicalQuoteRegister();
-    const seen = new Set(native.map(q => q.id));
-    const all = recentQuotes([...native, ...canonical.filter(q => !seen.has(q.id))]);
+    const seen = new Set(native.map((q) => q.id));
+    const all = recentQuotes([...native, ...canonical.filter((q) => !seen.has(q.id))]);
     const page = mergePage({ items: all }, [], params);
     return { ...page, items: await attachQuoteBilling(page.items as SalesQuote[]) };
   }
@@ -715,9 +715,11 @@ export async function handleLegacyDetail(request: Request, path: string, payload
     return NextResponse.json((await quotes(updated, ls)).find((q) => q.id === id("quote", v.id)));
   }
   if (parts[0] === "quotes" && parts[1]) {
-    const native = s.quotes.find((q) => id("quote", q.id) === parts[1]);
-    if (!native) return null;
-    const raw = await prisma.quote.findUnique({ where: { id: native.id } });
+    const nativeId = (await prisma.quote.findMany({ select: { id: true } })).find(
+      (q) => id("quote", q.id) === parts[1],
+    )?.id;
+    if (!nativeId) return null;
+    const raw = await prisma.quote.findUnique({ where: { id: nativeId } });
     if (!raw) return null;
     if (request.method === "GET")
       return NextResponse.json((await quotes(s, ls)).find((q) => q.id === parts[1]));
@@ -819,7 +821,12 @@ export async function handleLegacyDetail(request: Request, path: string, payload
           } as typeof meta),
         },
       });
-      return NextResponse.json({ filename: native.number + ".pdf", hash });
+      return NextResponse.json({
+        filename:
+          enrichQuoteRecord({ ...raw, createdAt: raw.createdAt.toISOString() }).displayNumber +
+          ".pdf",
+        hash,
+      });
     }
     if (action === "send") {
       const meta = parseQuoteMessage(raw.message) as ReturnType<typeof parseQuoteMessage> & {
@@ -835,6 +842,10 @@ export async function handleLegacyDetail(request: Request, path: string, payload
           { message: "La propuesta aprobada debe enviarse al correo vinculado a esta cuenta." },
           { status: 409 },
         );
+      if (!raw.userId) {
+        const { sendNativeProposal } = await import("./quote-proposal-delivery");
+        return NextResponse.json(await sendNativeProposal(raw.id, actorId));
+      }
       const result = await nativeAction(
         internalRequest(request, "/api/control/enable", { id: raw.id, stageKey: "FULL" }),
         { params: Promise.resolve({ action: "enable" }) },

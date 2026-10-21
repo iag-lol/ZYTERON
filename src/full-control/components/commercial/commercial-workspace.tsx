@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import { useAccess } from "@control/components/access-context";
+import { QuoteEditor } from "./quote-editor";
 import { WebsiteQuoteBillingButton } from "./quote-billing";
 import { quoteClientKey, recentQuotes, type QuoteBilling } from "@/lib/full-control/quote-register";
 import { QuotePaymentsButton } from "@control/components/finance/quote-payments";
@@ -51,7 +52,7 @@ import { formatDate, formatDateTime } from "@control/lib/date-time";
 const money = (value: number, currency = "CLP") =>
   new Intl.NumberFormat("es-CL", {
     style: "currency",
-    currency,
+    currency: currency === "UF" ? "CLF" : currency,
     maximumFractionDigits: currency === "CLP" ? 0 : 2,
   }).format(value);
 const emptySummary: CommercialSummary = {
@@ -120,6 +121,7 @@ export function CommercialWorkspace({
     [notice, setNotice] = useState("");
   const [busyAction, setBusyAction] = useState(""),
     [focusLeadId, setFocusLeadId] = useState("");
+  const [editingQuote, setEditingQuote] = useState<string | null>(null);
   const actionLock = useRef(false);
   const perform = async (key: string, task: () => Promise<unknown>, message: string) => {
     if (actionLock.current) return undefined;
@@ -140,93 +142,113 @@ export function CommercialWorkspace({
       setBusyAction("");
     }
   };
-  const refresh = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    setError("");
-    try {
-      if (section === "leads") {
-        const results = await Promise.allSettled([
-          commercialApi.allLeads(role), commercialApi.sources(role), usersDirectoryApi.list(role),
+  const refresh = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
+      setError("");
+      try {
+        if (section === "leads") {
+          const results = await Promise.allSettled([
+            commercialApi.allLeads(role),
+            commercialApi.sources(role),
+            usersDirectoryApi.list(role),
+          ]);
+          if (results[0].status === "fulfilled") setLeads(results[0].value);
+          if (results[1].status === "fulfilled") setSources(results[1].value);
+          if (results[2].status === "fulfilled") setUsers(results[2].value);
+          const labels = ["Leads", "Orígenes", "Directorio"];
+          setError(
+            results
+              .flatMap((result, index) =>
+                result.status === "rejected"
+                  ? [
+                      `${labels[index]}: ${result.reason instanceof Error ? result.reason.message : "No disponible"}`,
+                    ]
+                  : [],
+              )
+              .join(" · "),
+          );
+          return;
+        }
+        const scope = initialClientId ? `&clientId=${encodeURIComponent(initialClientId)}` : "";
+        const data = await Promise.allSettled([
+          commercialApi.summary(role),
+          commercialApi.allLeads(role),
+          commercialApi.opportunities(role, scope),
+          commercialApi.followUps(role, scope),
+          commercialApi.allQuotes(role, scope),
+          commercialApi.sales(role, scope),
+          commercialApi.goals(role),
+          commercialApi.commissions(role),
+          commercialApi.handoffs(role),
+          commercialApi.catalog(role),
+          commercialApi.sources(role),
+          usersDirectoryApi.list(role),
+          commercialApi.stages(role),
+          commercialApi.activity(role),
         ]);
-        if (results[0].status === "fulfilled") setLeads(results[0].value);
-        if (results[1].status === "fulfilled") setSources(results[1].value);
-        if (results[2].status === "fulfilled") setUsers(results[2].value);
-        const labels = ["Leads", "Orígenes", "Directorio"];
-        setError(results.flatMap((result, index) => result.status === "rejected"
-          ? [`${labels[index]}: ${result.reason instanceof Error ? result.reason.message : "No disponible"}`] : []).join(" · "));
-        return;
+        const apply = <T,>(result: PromiseSettledResult<T>, setter: (value: T) => void) => {
+          if (result.status === "fulfilled") setter(result.value);
+        };
+        apply(data[0], setSummary);
+        apply(data[1], setLeads);
+        apply(data[2], (value) => setOpportunities(value.items));
+        apply(data[3], (value) => setFollowUps(value.items));
+        apply(data[4], setQuotes);
+        apply(data[5], (value) => setSales(value.items));
+        apply(data[6], setGoals);
+        apply(data[7], setCommissions);
+        apply(data[8], setHandoffs);
+        apply(data[9], setCatalog);
+        apply(data[10], setSources);
+        apply(data[11], setUsers);
+        apply(data[12], setStages);
+        apply(data[13], setEvents);
+        const labels = [
+          "Resumen",
+          "Leads",
+          "Oportunidades",
+          "Seguimientos",
+          "Cotizaciones",
+          "Ventas",
+          "Metas",
+          "Comisiones",
+          "Handoff",
+          "Catálogo",
+          "Orígenes",
+          "Directorio",
+          "Etapas",
+          "Actividad",
+        ];
+        const failures = data.flatMap((result, index) =>
+          result.status === "rejected"
+            ? [
+                `${labels[index]}: ${result.reason instanceof Error ? result.reason.message : "No disponible"}`,
+              ]
+            : [],
+        );
+        setError(failures.join(" · "));
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "No fue posible cargar Comercial.");
+      } finally {
+        setLoading(false);
       }
-      const scope = initialClientId ? `&clientId=${encodeURIComponent(initialClientId)}` : "";
-      const data = await Promise.allSettled([
-        commercialApi.summary(role),
-        commercialApi.allLeads(role),
-        commercialApi.opportunities(role, scope),
-        commercialApi.followUps(role, scope),
-        commercialApi.allQuotes(role, scope),
-        commercialApi.sales(role, scope),
-        commercialApi.goals(role),
-        commercialApi.commissions(role),
-        commercialApi.handoffs(role),
-        commercialApi.catalog(role),
-        commercialApi.sources(role),
-        usersDirectoryApi.list(role),
-        commercialApi.stages(role),
-        commercialApi.activity(role),
-      ]);
-      const apply = <T,>(result: PromiseSettledResult<T>, setter: (value: T) => void) => {
-        if (result.status === "fulfilled") setter(result.value);
-      };
-      apply(data[0], setSummary);
-      apply(data[1], setLeads);
-      apply(data[2], (value) => setOpportunities(value.items));
-      apply(data[3], (value) => setFollowUps(value.items));
-      apply(data[4], setQuotes);
-      apply(data[5], (value) => setSales(value.items));
-      apply(data[6], setGoals);
-      apply(data[7], setCommissions);
-      apply(data[8], setHandoffs);
-      apply(data[9], setCatalog);
-      apply(data[10], setSources);
-      apply(data[11], setUsers);
-      apply(data[12], setStages);
-      apply(data[13], setEvents);
-      const labels = [
-        "Resumen",
-        "Leads",
-        "Oportunidades",
-        "Seguimientos",
-        "Cotizaciones",
-        "Ventas",
-        "Metas",
-        "Comisiones",
-        "Handoff",
-        "Catálogo",
-        "Orígenes",
-        "Directorio",
-        "Etapas",
-        "Actividad",
-      ];
-      const failures = data.flatMap((result, index) =>
-        result.status === "rejected"
-          ? [
-              `${labels[index]}: ${result.reason instanceof Error ? result.reason.message : "No disponible"}`,
-            ]
-          : [],
-      );
-      setError(failures.join(" · "));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "No fue posible cargar Comercial.");
-    } finally {
-      setLoading(false);
-    }
-  }, [role, initialClientId, section]);
+    },
+    [role, initialClientId, section],
+  );
   useEffect(() => {
     void refresh();
     const unsubscribe = subscribeToCommercial(() => void refresh(true));
-    const timer = section === "leads" ? window.setInterval(() => {
-      if (document.visibilityState === "visible") void refresh(true);
-    }, 20_000) : null;
-    return () => { unsubscribe(); if (timer !== null) window.clearInterval(timer); };
+    const timer =
+      section === "leads"
+        ? window.setInterval(() => {
+            if (document.visibilityState === "visible") void refresh(true);
+          }, 20_000)
+        : null;
+    return () => {
+      unsubscribe();
+      if (timer !== null) window.clearInterval(timer);
+    };
   }, [refresh, section]);
   const title = {
     command: "Sales Command Center",
@@ -254,6 +276,15 @@ export function CommercialWorkspace({
               : undefined;
   return (
     <main className="salesWorkspace">
+      {editingQuote ? (
+        <QuoteEditor
+          id={editingQuote}
+          onSelect={setEditingQuote}
+          role={role}
+          onClose={() => setEditingQuote(null)}
+          onChanged={() => refresh(true)}
+        />
+      ) : null}
       <header className="salesHeader">
         <div>
           <span>Comercial · Sales Operations</span>
@@ -320,6 +351,21 @@ export function CommercialWorkspace({
               items={leads}
               busy={Boolean(busyAction)}
               focusLeadId={focusLeadId}
+              prepareQuote={async (id) => {
+                await perform(
+                  `${id}:quote`,
+                  async () => {
+                    const r = await fetch(`/api/portal/admin/leads/${id}/quote`, {
+                      method: "POST",
+                    });
+                    const d = await r.json();
+                    if (!r.ok) throw Error(d.error);
+                    setEditingQuote(d.id);
+                    return d;
+                  },
+                  "Borrador preparado desde la solicitud del lead.",
+                );
+              }}
               roleAction={async (id, action, body) => {
                 const result = await perform(
                   `${id}:${action}`,
@@ -396,6 +442,7 @@ export function CommercialWorkspace({
                 setQuotes(await commercialApi.allQuotes(role, scope));
               }}
               items={quotes}
+              onEdit={setEditingQuote}
               role={role}
               busy={Boolean(busyAction)}
               act={async (id, action, body = {}, idem = false) =>
@@ -730,8 +777,10 @@ function LeadInbox({
   roleAction,
   busy,
   focusLeadId,
+  prepareQuote,
 }: {
   items: SalesLead[];
+  prepareQuote: (id: string) => Promise<void>;
   busy: boolean;
   focusLeadId: string;
   roleAction: (id: string, action: string, body?: unknown) => Promise<unknown>;
@@ -783,6 +832,12 @@ function LeadInbox({
                     </Link>
                   ) : null}
                   <footer>
+                    {["QUALIFIED", "CONVERTED"].includes(lead.status) ? (
+                      <button disabled={busy} onClick={() => void prepareQuote(lead.id)}>
+                        <FileText size={13} />
+                        Preparar cotización
+                      </button>
+                    ) : null}
                     {lead.status !== "QUALIFIED" &&
                     lead.status !== "CONVERTED" &&
                     lead.status !== "DISQUALIFIED" ? (
@@ -989,12 +1044,14 @@ function FollowUpCenter({
   );
 }
 function QuoteCenter({
+  onEdit,
   items,
   onChanged,
   role,
   act,
   busy,
 }: {
+  onEdit: (id: string) => void;
   items: Array<SalesQuote & { billing?: QuoteBilling }>;
   onChanged: () => Promise<void>;
   role: string;
@@ -1159,6 +1216,29 @@ function QuoteCenter({
                 )}
               </div>
               <footer>
+                <button disabled={busy} onClick={() => onEdit(q.id)}>
+                  Detalle y portal
+                </button>
+                <button
+                  disabled={busy}
+                  onClick={async () => {
+                    if (["DRAFT", "REJECTED"].includes(q.status)) {
+                      onEdit(q.id);
+                      return;
+                    }
+                    const result = (await act(
+                      q.id,
+                      ["ACCEPTED", "CONVERTED", "CANCELLED"].includes(q.status)
+                        ? "duplicate"
+                        : "version",
+                    )) as { id?: string } | undefined;
+                    if (result?.id) onEdit(result.id);
+                  }}
+                >
+                  {["DRAFT", "REJECTED"].includes(q.status)
+                    ? "Editar servicios y montos"
+                    : "Crear revisión editable"}
+                </button>
                 <button
                   disabled={busy}
                   title="Descarga un borrador sin emitir la cotización"
@@ -1283,7 +1363,10 @@ function QuoteCenter({
                     Crear OT
                   </button>
                 ) : null}
-                {q.billing && (q.billing.source === "WEBSITE" || q.billing.editable) ? (
+                {q.billing &&
+                (q.billing.source === "WEBSITE" ||
+                  q.billing.editable ||
+                  q.billing.frequency === "MONTHLY") ? (
                   <WebsiteQuoteBillingButton
                     quoteId={q.id}
                     quoteNumber={q.quoteNumber}
@@ -1291,7 +1374,8 @@ function QuoteCenter({
                     billing={q.billing}
                     onChanged={onChanged}
                   />
-                ) : ["ACCEPTED", "CONVERTED"].includes(q.status) ? (
+                ) : null}
+                {q.billing?.source !== "WEBSITE" && ["ACCEPTED", "CONVERTED"].includes(q.status) ? (
                   <QuotePaymentsButton
                     quoteId={q.id}
                     quoteNumber={q.quoteNumber}
