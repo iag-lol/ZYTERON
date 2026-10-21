@@ -9,7 +9,6 @@ import type { AuditFinding, AuditRun, Client, Role, SupportTicket } from "@zyter
 import { roles } from "@zyteron/contracts";
 import type { Session } from "@supabase/supabase-js";
 import {
-  Bell,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -22,7 +21,7 @@ import { enterpriseNavigation } from "@control/lib/navigation";
 import { canAccessGroup, roleProfiles } from "@control/lib/access-control";
 import { canSeeFinancePath } from "@control/lib/finance-format";
 import { AccessContext } from "@control/components/access-context";
-import { NotificationCenter } from "@control/components/enterprise/notification-center";
+import {ContactNotificationBell} from "@control/components/enterprise/contact-notification-bell";
 import { clientsApi } from "@control/lib/clients-api";
 import { commercialApi } from "@control/lib/commercial-api";
 import type { Sale, SalesLead, SalesOpportunity, SalesQuote } from "@zyteron/contracts";
@@ -35,7 +34,6 @@ export function EnterpriseShell({ children, verifiedIdentity }: { children: Reac
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState(() => new Set(["control", "commercial"]));
   const [currentRole, setCurrentRole] = useState<Role>(verifiedIdentity?.role ?? "GERENTE_GENERAL");
   const [authReady,setAuthReady]=useState(Boolean(verifiedIdentity));
@@ -169,14 +167,7 @@ export function EnterpriseShell({ children, verifiedIdentity }: { children: Reac
               <label className="globalSearch"><Search size={16} /><input aria-label="Buscar en Zyteron Control" placeholder="Buscar clientes, SUP, AUD o FND" value={globalQuery} onChange={(event) => setGlobalQuery(event.target.value)} /></label>
               {clientResults.length+commercialResults.leads.length+commercialResults.opportunities.length+commercialResults.quotes.length+commercialResults.sales.length+auditResults.audits.length+auditResults.findings.length+supportResults.length ? <div className="globalSearchResults"><small>Resultados</small>{clientResults.map((client) => <Link href={`/clients/${client.id}`} key={client.id} onClick={() => setGlobalQuery("")}><span>CL</span><div><strong>{client.tradeName || client.legalName}</strong><small>{client.rut}</small></div></Link>)}{supportResults.map(item=><Link href={`/support/inbox/${item.id}`} key={item.id} onClick={()=>setGlobalQuery("")}><span>SP</span><div><strong>{item.ticketNumber}</strong><small>{item.subject}</small></div></Link>)}{auditResults.audits.map(item=><Link href={`/audits/${item.id}`} key={item.id} onClick={()=>setGlobalQuery("")}><span>AU</span><div><strong>{item.auditNumber}</strong><small>{item.clientName||item.auditType}</small></div></Link>)}{auditResults.findings.map(item=><Link href={`/audits/${item.auditId}`} key={item.id} onClick={()=>setGlobalQuery("")}><span>FN</span><div><strong>{item.findingNumber}</strong><small>{item.title}</small></div></Link>)}{commercialResults.leads.map((item)=><Link href="/commercial/leads" key={item.id} onClick={()=>setGlobalQuery("")}><span>LD</span><div><strong>{item.companyName}</strong><small>{item.contactName}</small></div></Link>)}{commercialResults.opportunities.map((item)=><Link href="/commercial/opportunities" key={item.id} onClick={()=>setGlobalQuery("")}><span>OP</span><div><strong>{item.company}</strong><small>{item.name}</small></div></Link>)}{commercialResults.quotes.map((item)=><Link href="/commercial/quotes" key={item.id} onClick={()=>setGlobalQuery("")}><span>CT</span><div><strong>{item.quoteNumber}</strong><small>{item.companyName}</small></div></Link>)}{commercialResults.sales.map((item)=><Link href="/commercial/sales" key={item.id} onClick={()=>setGlobalQuery("")}><span>VT</span><div><strong>{item.amount.toLocaleString("es-CL")} {item.currency}</strong><small>Venta {item.id.slice(0,8)}</small></div></Link>)}</div> : null}
             </div>
-            <button
-              className="notificationButton"
-              type="button"
-              aria-label="Centro de notificaciones"
-              aria-expanded={notificationsOpen}
-              onClick={() => setNotificationsOpen((value) => !value)}
-            ><Bell size={18} /></button>
-            {notificationsOpen ? <NotificationCenter /> : null}
+            <ContactNotificationBell/>
             {isDevelopment?<label className="roleSwitcher">
               <span className="avatar small">{profile.initials}</span>
               <span className="roleSwitcherText"><strong>{profile.userName}</strong><small>{profile.label}</small></span>

@@ -1,0 +1,165 @@
+.contactBell {
+  position: relative;
+}
+.contactBellCount {
+  position: absolute;
+  right: -4px;
+  top: -4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 9px;
+  background: #c8f36d;
+  color: #18372a;
+  font-size: 10px;
+  font-weight: 750;
+  border: 2px solid white;
+}
+.contactBellPanel {
+  position: absolute;
+  right: 0;
+  top: 48px;
+  width: min(430px, calc(100vw - 24px));
+  z-index: 80;
+  background: #fff;
+  border: 1px solid #d8e3d1;
+  box-shadow: 0 14px 45px #19332620;
+  border-radius: 16px;
+  overflow: hidden;
+  color: #234231;
+}
+.contactBellPanel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 17px 18px;
+  background: #f4f7ed;
+}
+.contactBellPanel header small {
+  font-size: 8px;
+  letter-spacing: 1.4px;
+  color: #7c8871;
+}
+.contactBellPanel header strong {
+  display: block;
+  font-size: 17px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+.contactBellPanel button {
+  cursor: pointer;
+}
+.contactBellActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 16px;
+  font-size: 10px;
+  border-bottom: 1px solid #e5ecdf;
+}
+.contactBellActions a,
+.contactBellActions button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #46663a;
+}
+.contactBellItems {
+  max-height: 440px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.contactBellItems > a {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  padding: 14px 17px;
+  border-bottom: 1px solid #edf1e8;
+}
+.contactBellItems > a.unread {
+  background: #f4f9e9;
+  box-shadow: inset 3px 0 #9aba66;
+}
+.contactBellItems > a svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #79915e;
+}
+.contactBellItems strong {
+  font-size: 11px;
+  display: block;
+}
+.contactBellItems b {
+  display: block;
+  font-size: 11px;
+  margin-top: 4px;
+  font-weight: 550;
+}
+.contactBellItems p {
+  font-size: 11px;
+  color: #7a8572;
+  margin: 5px 0;
+  line-height: 1.5;
+}
+.contactBellItems small {
+  font-size: 9px;
+  color: #8b9584;
+}
+.contactBellItems > p,
+.contactBellEmpty {
+  padding: 18px;
+  font-size: 11px;
+  color: #7a8572;
+  line-height: 1.6;
+}
+.contactBellPanel summary {
+  padding: 12px 17px;
+  font-size: 11px;
+  color: #718065;
+  cursor: pointer;
+}
+.contactBellPanel details {
+  border-top: 1px solid #e3e9da;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.contactToast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 120;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: min(380px, calc(100vw - 32px));
+  padding: 16px;
+  background: #203f32;
+  color: white;
+  border: 1px solid #a7cd75;
+  border-radius: 14px;
+  box-shadow: 0 9px 30px #20362830;
+}
+.contactToast > a {
+  flex: 1;
+}
+.contactToast strong {
+  display: block;
+  font-size: 12px;
+}
+.contactToast span {
+  display: block;
+  font-size: 11px;
+  color: #dce8ce;
+  margin-top: 5px;
+  line-height: 1.5;
+}
+.contactToast > svg {
+  color: #d5ef9a;
+  flex-shrink: 0;
+}
+.contactToast button {
+  color: #dbe8ce;
+}

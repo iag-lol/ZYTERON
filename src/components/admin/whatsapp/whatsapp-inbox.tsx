@@ -1,9 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   CircleAlert,
+  ArrowDown,
+  Bell,
+  RefreshCw,
+  PanelRight,
   ArrowLeft,
   Bot,
   Check,
@@ -23,8 +27,15 @@ import {
   Trash2,
   User,
 } from "lucide-react";
+import { subscribeContactLive } from "@/lib/whatsapp/live-events";
+import { TemplatePicker, ContactAlertsPanel } from "./communication-tools";
+import {
+  mergeThreadMessages,
+  nearThreadBottom,
+  threadAnchorTop,
+} from "@/lib/whatsapp/thread-state";
+import "./whatsapp-inbox.css";
 import { cn } from "@/lib/utils";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 // -- Tipos (espejo del store del backend) -----------------------------------
 
@@ -119,6 +130,7 @@ function formatTime(iso: string | null) {
 }
 
 function StatusTicks({ status }: { status: string }) {
+  if (status === "unknown") return <Clock className="h-3 w-3 text-amber-600" />;
   if (status === "sending") return <Clock className="h-3 w-3 text-slate-300" />;
   if (status === "failed") return <CircleAlert className="h-3 w-3 text-rose-400" />;
   if (status === "read") return <CheckCheck className="h-3 w-3 text-sky-300" />;
@@ -160,6 +172,16 @@ export function WhatsappInbox({
   const [usingRealtime, setUsingRealtime] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
 
+  const [atBottom, setAtBottom] = useState(true),
+    [loadingOlder, setLoadingOlder] = useState(false),
+    [hasOlder, setHasOlder] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false),
+    [alertsOpen, setAlertsOpen] = useState(false),
+    [showDetails, setShowDetails] = useState(true);
+  const followBottom = useRef(true),
+    firstScroll = useRef(true),
+    requestVersion = useRef(0),
+    anchor = useRef<{ top: number; height: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const activeIdRef = useRef<string | null>(null);
@@ -206,19 +228,6 @@ export function WhatsappInbox({
 
   // -- Realtime + polling de respaldo ---------------------------------------
   useEffect(() => {
-    let client;
-    try {
-      client = createSupabaseBrowserClient();
-    } catch {
-      // Sin credenciales públicas de Supabase en el navegador: usamos polling
-      // (sin mostrar "Reconectando", porque el respaldo mantiene todo al día).
-      setRealtimeOk(true);
-      setUsingRealtime(false);
-      const t = setInterval(() => void fetchConversations(), 10000);
-      return () => clearInterval(t);
-    }
-    setUsingRealtime(true);
-
     const upsertConv = (row: Conversation) => {
       setConversations((prev) => {
         const idx = prev.findIndex((c) => c.id === row.id);
@@ -232,61 +241,22 @@ export function WhatsappInbox({
       });
     };
 
-    const channel = client
-      .channel("whatsapp-inbox")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "whatsapp_conversations" },
-        (payload) => {
-          if (payload.new && typeof payload.new === "object")
-            upsertConv(payload.new as Conversation);
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "whatsapp_messages" },
-        (payload) => {
-          const msg = payload.new as Message;
-          if (msg.conversation_id === activeIdRef.current) {
-            setMessages((prev) => {
-              if (prev.some((m) => m.id === msg.id)) return prev;
-              // Reemplaza un temporal equivalente (optimista) si existe.
-              const tempIdx = prev.findIndex(
-                (m) =>
-                  m.id.startsWith("temp-") &&
-                  m.direction === msg.direction &&
-                  m.content === msg.content,
-              );
-              if (tempIdx >= 0) {
-                const copy = [...prev];
-                copy[tempIdx] = msg;
-                return copy;
-              }
-              return [...prev, msg];
-            });
-          }
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "whatsapp_messages" },
-        (payload) => {
-          const msg = payload.new as Message;
-          if (msg.conversation_id === activeIdRef.current) {
-            setMessages((prev) => prev.map((m) => (m.id === msg.id ? { ...m, ...msg } : m)));
-          }
-        },
-      )
-      .subscribe((status) => {
-        setRealtimeOk(status === "SUBSCRIBED");
-      });
-
-    // Respaldo por polling (por si Realtime no está habilitado).
+    setUsingRealtime(true);
+    const unsubscribe = subscribeContactLive((kind, data) => {
+      if (kind === "connection")
+        setRealtimeOk(Boolean((data as { connected?: boolean }).connected));
+      if (kind === "conversation") upsertConv(data as Conversation);
+      if (kind === "message") {
+        const msg = data as Message;
+        if (msg.conversation_id === activeIdRef.current)
+          setMessages((prev) => mergeThreadMessages(prev, [msg]));
+      }
+      if (kind === "refresh") void fetchConversations();
+    });
     const poll = setInterval(() => void fetchConversations(), 12000);
-
     return () => {
+      unsubscribe();
       clearInterval(poll);
-      client.removeChannel(channel).catch(() => {});
     };
   }, [fetchConversations]);
 
@@ -302,17 +272,9 @@ export function WhatsappInbox({
           cache: "no-store",
         });
         const data = (await res.json().catch(() => null)) as { messages?: Message[] } | null;
-        if (cancelled || !data?.messages) return;
+        if (cancelled || activeIdRef.current !== activeId || !data?.messages) return;
         const server = data.messages;
-        setMessages((prev) => {
-          // Conserva mensajes optimistas (temp-) que el servidor aún no refleja.
-          const temps = prev.filter(
-            (m) =>
-              m.id.startsWith("temp-") &&
-              !server.some((s) => s.direction === m.direction && s.content === m.content),
-          );
-          return [...server, ...temps];
-        });
+        setMessages((prev) => mergeThreadMessages(prev, server));
       } catch {
         /* noop */
       }
@@ -327,6 +289,15 @@ export function WhatsappInbox({
 
   // -- Al abrir una conversación --------------------------------------------
   const openConversation = useCallback(async (id: string) => {
+    if (activeIdRef.current === id) return;
+    activeIdRef.current = id;
+    const version = ++requestVersion.current;
+    firstScroll.current = true;
+    followBottom.current = true;
+    anchor.current = null;
+    setAtBottom(true);
+    setHasOlder(false);
+    setLoadingOlder(false);
     setActiveId(id);
     setMobileView("chat");
     setLoadingChat(true);
@@ -337,13 +308,24 @@ export function WhatsappInbox({
         fetch(`/api/admin/whatsapp/conversations/${id}`, { cache: "no-store" }),
         fetch(`/api/admin/whatsapp/conversations/${id}/notes`, { cache: "no-store" }),
       ]);
-      const convData = (await convRes.json().catch(() => null)) as { messages?: Message[] } | null;
+      const convData = (await convRes.json().catch(() => null)) as {
+        messages?: Message[];
+        hasMore?: boolean;
+      } | null;
       const notesData = (await notesRes.json().catch(() => null)) as { notes?: Note[] } | null;
-      if (convData?.messages) setMessages(convData.messages);
+      if (version !== requestVersion.current) return;
+      if (convData?.messages) {
+        setMessages(convData.messages);
+        setHasOlder(Boolean(convData.hasMore));
+      }
       if (notesData?.notes) setNotes(notesData.notes);
+    } catch {
+      if (version === requestVersion.current)
+        setLoadError("No fue posible cargar esta conversación.");
     } finally {
-      setLoadingChat(false);
+      if (version === requestVersion.current) setLoadingChat(false);
     }
+    if (version !== requestVersion.current) return;
     // Marcar como leída.
     fetch(`/api/admin/whatsapp/conversations/${id}/read`, { method: "POST" }).catch(() => {});
     setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, unread_count: 0 } : c)));
@@ -363,11 +345,52 @@ export function WhatsappInbox({
     void openConversation(target.id);
   }, [conversations, initialConversationId, initialSearch, openConversation]);
 
-  // Auto-scroll al último mensaje.
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [messages]);
+    if (!el || loadingChat) return;
+    if (anchor.current) {
+      el.scrollTop = threadAnchorTop(anchor.current.top, anchor.current.height, el.scrollHeight);
+      anchor.current = null;
+    } else if (firstScroll.current || followBottom.current) {
+      el.scrollTop = el.scrollHeight;
+      firstScroll.current = false;
+    }
+  }, [messages, loadingChat]);
+
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !activeId) return;
+    const observer = new ResizeObserver(() => {
+      if (followBottom.current) el.scrollTop = el.scrollHeight;
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [activeId]);
+
+  const loadOlder = async () => {
+    const first = messages.find((m) => !m.id.startsWith("temp-"));
+    const id = activeIdRef.current;
+    if (!first || !id || loadingOlder) return;
+    setLoadingOlder(true);
+    try {
+      const r = await fetch(
+        `/api/admin/whatsapp/conversations/${id}?before=${encodeURIComponent(first.created_at)}&beforeId=${encodeURIComponent(first.id)}`,
+        { cache: "no-store" },
+      );
+      const d = await r.json();
+      if (!r.ok) throw Error(d.error);
+      if (activeIdRef.current !== id) return;
+      const el = scrollRef.current;
+      if (el) anchor.current = { top: el.scrollTop, height: el.scrollHeight };
+      followBottom.current = false;
+      setHasOlder(Boolean(d.hasMore));
+      setMessages((prev) => mergeThreadMessages(d.messages, prev));
+    } catch {
+      setLoadError("No fue posible cargar mensajes anteriores. Puedes reintentar.");
+    } finally {
+      if (activeIdRef.current === id) setLoadingOlder(false);
+    }
+  };
 
   // Auto-grow del textarea.
   useEffect(() => {
@@ -399,6 +422,8 @@ export function WhatsappInbox({
       error_message: null,
       created_at: new Date().toISOString(),
     };
+    followBottom.current = true;
+    setAtBottom(true);
     setMessages((prev) => [...prev, temp]);
     setInput("");
     setSending(true);
@@ -408,11 +433,20 @@ export function WhatsappInbox({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ conversationId: active.id, message: text, type: "text" }),
       });
-      const data = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+      const data = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        error?: string;
+        messageId?: string;
+      } | null;
       setMessages((prev) =>
         prev.map((m) =>
           m.id === tempId
-            ? { ...m, status: data?.ok ? "sent" : "failed", error_message: data?.error ?? null }
+            ? {
+                ...m,
+                id: data?.messageId || m.id,
+                status: data?.ok ? "sent" : "failed",
+                error_message: data?.error ?? null,
+              }
             : m,
         ),
       );
@@ -493,183 +527,284 @@ export function WhatsappInbox({
   );
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      {/* ===== Columna 1: Lista ===== */}
-      <section
-        className={cn(
-          "flex w-full flex-col border-r border-slate-200 lg:w-[300px] xl:w-[330px]",
-          mobileView === "list" ? "flex" : "hidden lg:flex",
-        )}
-      >
-        <header className="border-b border-slate-200 px-4 py-3">
-          <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-              <MessageCircle className="h-4 w-4 text-emerald-600" />
-              WhatsApp
-              {totalUnread > 0 && (
-                <span className="rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">
-                  {totalUnread}
+    <div className="wa-workspace">
+      <div className="wa-heading">
+        <div>
+          <p>RELACIONES CON CLIENTES</p>
+          <h1>
+            Centro de conversaciones <span>WhatsApp</span>
+          </h1>
+          <small>Tu equipo, la IA y cada oportunidad en un mismo lugar.</small>
+        </div>
+        <div className="wa-heading-actions">
+          <span className="wa-live">
+            <i />
+            {usingRealtime && realtimeOk ? "En vivo" : "Actualización automática"}
+          </span>
+          <button
+            type="button"
+            onClick={() => void fetchConversations()}
+            aria-label="Actualizar conversaciones"
+          >
+            <RefreshCw size={16} />
+          </button>
+          <button type="button" onClick={() => setAlertsOpen(true)}>
+            <Bell size={16} />
+            Alertas
+          </button>
+        </div>
+      </div>
+      <div className="wa-metrics">
+        <span>
+          <strong>{conversations.filter((c) => c.status === "open").length}</strong> conversaciones
+          abiertas
+        </span>
+        <span>
+          <strong>{totalUnread}</strong> mensajes sin leer
+        </span>
+        <span>
+          <strong>
+            {conversations.filter((c) => c.mode === "human" && c.unread_count > 0).length}
+          </strong>{" "}
+          necesitan al equipo
+        </span>
+      </div>
+      <div className="wa-inbox">
+        {/* ===== Columna 1: Lista ===== */}
+        <section
+          className={cn(
+            "wa-list flex min-h-0 w-full flex-col border-r border-slate-200 lg:w-[300px] xl:w-[330px]",
+            mobileView === "list" ? "flex" : "hidden lg:flex",
+          )}
+        >
+          <header className="border-b border-slate-200 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                <MessageCircle className="h-4 w-4 text-emerald-600" />
+                WhatsApp
+                {totalUnread > 0 && (
+                  <span className="rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">
+                    {totalUnread}
+                  </span>
+                )}
+              </h2>
+              {usingRealtime && !realtimeOk && (
+                <span
+                  className="flex items-center gap-1 text-[10px] font-medium text-amber-600"
+                  title="Reconectando…"
+                >
+                  <Loader2 className="h-3 w-3 animate-spin" /> Reconectando
                 </span>
               )}
-            </h2>
-            {usingRealtime && !realtimeOk && (
-              <span
-                className="flex items-center gap-1 text-[10px] font-medium text-amber-600"
-                title="Reconectando…"
-              >
-                <Loader2 className="h-3 w-3 animate-spin" /> Reconectando
-              </span>
+            </div>
+            <div className="relative mt-2.5">
+              <Search className="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por nombre, teléfono…"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pr-3 pl-8 text-[13px] text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:outline-none"
+              />
+            </div>
+            <div className="mt-2 flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none]">
+              {(
+                [
+                  ["todas", "Todas"],
+                  ["sin_leer", "Sin leer"],
+                  ["ai", "IA"],
+                  ["human", "Humano"],
+                  ["assisted", "Asistido"],
+                  ["cerradas", "Cerradas"],
+                ] as [Filter, string][]
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setFilter(key)}
+                  className={cn(
+                    "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors",
+                    filter === key
+                      ? "bg-blue-600 text-white"
+                      : "bg-slate-100 text-slate-500 hover:bg-slate-200",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </header>
+
+          <div className="flex-1 overflow-y-auto">
+            {loadError ? (
+              <p role="alert" className="p-4 text-sm text-rose-700">
+                {loadError}
+                <button className="block underline" onClick={() => void fetchConversations()}>
+                  Reintentar
+                </button>
+              </p>
+            ) : null}
+            {loadingList ? (
+              <ListSkeleton />
+            ) : filtered.length === 0 && !loadError ? (
+              <EmptyState
+                icon={<MessageCircle className="h-6 w-6" />}
+                text="No hay conversaciones aquí."
+              />
+            ) : (
+              filtered.map((c) => (
+                <ConversationItem
+                  key={c.id}
+                  conv={c}
+                  active={c.id === activeId}
+                  onClick={() => void openConversation(c.id)}
+                />
+              ))
             )}
           </div>
-          <div className="relative mt-2.5">
-            <Search className="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nombre, teléfono…"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pr-3 pl-8 text-[13px] text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:outline-none"
-            />
-          </div>
-          <div className="mt-2 flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none]">
-            {(
-              [
-                ["todas", "Todas"],
-                ["sin_leer", "Sin leer"],
-                ["ai", "IA"],
-                ["human", "Humano"],
-                ["assisted", "Asistido"],
-                ["cerradas", "Cerradas"],
-              ] as [Filter, string][]
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setFilter(key)}
-                className={cn(
-                  "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors",
-                  filter === key
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-100 text-slate-500 hover:bg-slate-200",
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </header>
+        </section>
 
-        <div className="flex-1 overflow-y-auto">
-          {loadError ? (
-            <p role="alert" className="p-4 text-sm text-rose-700">
-              {loadError}
-              <button className="block underline" onClick={() => void fetchConversations()}>
-                Reintentar
-              </button>
-            </p>
-          ) : null}
-          {loadingList ? (
-            <ListSkeleton />
-          ) : filtered.length === 0 && !loadError ? (
+        {/* ===== Columna 2: Chat ===== */}
+        <section
+          className={cn(
+            "wa-chat flex min-h-0 min-w-0 flex-1 flex-col",
+            mobileView === "chat" ? "flex" : "hidden lg:flex",
+          )}
+        >
+          {!active ? (
             <EmptyState
-              icon={<MessageCircle className="h-6 w-6" />}
-              text="No hay conversaciones aquí."
+              icon={<MessageCircle className="h-8 w-8" />}
+              text="Selecciona una conversación para comenzar."
+              big
             />
           ) : (
-            filtered.map((c) => (
-              <ConversationItem
-                key={c.id}
-                conv={c}
-                active={c.id === activeId}
-                onClick={() => void openConversation(c.id)}
+            <>
+              <ChatHeader
+                conv={active}
+                windowOpen={windowOpen}
+                onBack={() => setMobileView("list")}
+                onOpenFicha={() => {
+                  setShowDetails((v) => !v);
+                  setMobileView("ficha");
+                }}
+                onSetMode={(mode) => void patchConversation({ mode })}
+                onClose={() =>
+                  void patchConversation({ status: active.status === "closed" ? "open" : "closed" })
+                }
+                onDelete={() => void deleteConversation()}
               />
-            ))
+
+              <div
+                ref={scrollRef}
+                aria-label="Mensajes de la conversación"
+                role="log"
+                tabIndex={0}
+                aria-live="off"
+                onScroll={(e) => {
+                  const el = e.currentTarget;
+                  const bottom = nearThreadBottom(el.scrollTop, el.scrollHeight, el.clientHeight);
+                  followBottom.current = bottom;
+                  setAtBottom(bottom);
+                }}
+                className="wa-messages min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-4 sm:px-5"
+              >
+                {hasOlder ? (
+                  <button
+                    className="wa-load-older"
+                    disabled={loadingOlder}
+                    onClick={() => void loadOlder()}
+                  >
+                    {loadingOlder ? "Cargando…" : "Cargar mensajes anteriores"}
+                  </button>
+                ) : null}
+                {loadingChat ? (
+                  <ChatSkeleton />
+                ) : messages.length === 0 ? (
+                  <EmptyState
+                    icon={<MessageCircle className="h-6 w-6" />}
+                    text="Sin mensajes todavía."
+                  />
+                ) : (
+                  messages.map((m) => <MessageBubble key={m.id} msg={m} />)
+                )}
+              </div>
+
+              {!atBottom ? (
+                <button
+                  className="wa-latest"
+                  onClick={() => {
+                    const el = scrollRef.current;
+                    if (el) el.scrollTop = el.scrollHeight;
+                    followBottom.current = true;
+                    setAtBottom(true);
+                  }}
+                >
+                  <ArrowDown size={14} />
+                  Volver al último mensaje
+                </button>
+              ) : null}
+              <div className="wa-follow-up">
+                <button onClick={() => setTemplatesOpen(true)}>
+                  <FileText size={14} />
+                  {windowOpen ? "Usar plantilla" : "Retomar contacto con plantilla"}
+                </button>
+                <span>
+                  {windowOpen
+                    ? "Respuesta libre disponible"
+                    : "El historial se conserva. El cliente debe responder para habilitar texto libre."}
+                </span>
+              </div>
+              <Composer
+                disabled={!windowOpen}
+                windowOpen={windowOpen}
+                value={input}
+                onChange={setInput}
+                onSend={() => void sendMessage()}
+                sending={sending}
+                inputRef={inputRef}
+              />
+            </>
           )}
-        </div>
-      </section>
+        </section>
 
-      {/* ===== Columna 2: Chat ===== */}
-      <section
-        className={cn(
-          "flex min-w-0 flex-1 flex-col",
-          mobileView === "chat" ? "flex" : "hidden lg:flex",
-        )}
-      >
-        {!active ? (
-          <EmptyState
-            icon={<MessageCircle className="h-8 w-8" />}
-            text="Selecciona una conversación para comenzar."
-            big
-          />
-        ) : (
-          <>
-            <ChatHeader
+        {/* ===== Columna 3: Ficha ===== */}
+        <section
+          className={cn(
+            "wa-details min-h-0 w-full flex-col border-l border-slate-200 lg:w-[280px] xl:w-[310px]",
+            mobileView === "ficha" ? "flex" : showDetails ? "hidden lg:flex" : "hidden",
+          )}
+        >
+          {active ? (
+            <FichaPanel
+              key={active.id}
               conv={active}
-              windowOpen={windowOpen}
-              onBack={() => setMobileView("list")}
-              onOpenFicha={() => setMobileView("ficha")}
-              onSetMode={(mode) => void patchConversation({ mode })}
-              onClose={() =>
-                void patchConversation({ status: active.status === "closed" ? "open" : "closed" })
-              }
-              onDelete={() => void deleteConversation()}
+              notes={notes}
+              onBack={() => setMobileView("chat")}
+              onPatch={(patch) => void patchConversation(patch)}
+              onAddNote={async (note) => {
+                const res = await fetch(`/api/admin/whatsapp/conversations/${active.id}/notes`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ note }),
+                });
+                const data = (await res.json().catch(() => null)) as { note?: Note } | null;
+                if (data?.note) setNotes((prev) => [data.note!, ...prev]);
+              }}
             />
-
-            <div
-              ref={scrollRef}
-              className="flex-1 space-y-2 overflow-y-auto bg-slate-50 px-3 py-4 sm:px-5"
-            >
-              {loadingChat ? (
-                <ChatSkeleton />
-              ) : messages.length === 0 ? (
-                <EmptyState
-                  icon={<MessageCircle className="h-6 w-6" />}
-                  text="Sin mensajes todavía."
-                />
-              ) : (
-                messages.map((m) => <MessageBubble key={m.id} msg={m} />)
-              )}
-            </div>
-
-            <Composer
-              disabled={!windowOpen}
-              windowOpen={windowOpen}
-              value={input}
-              onChange={setInput}
-              onSend={() => void sendMessage()}
-              sending={sending}
-              inputRef={inputRef}
-            />
-          </>
-        )}
-      </section>
-
-      {/* ===== Columna 3: Ficha ===== */}
-      <section
-        className={cn(
-          "w-full flex-col border-l border-slate-200 lg:flex lg:w-[280px] xl:w-[310px]",
-          mobileView === "ficha" ? "flex" : "hidden",
-        )}
-      >
-        {active ? (
-          <FichaPanel
-            key={active.id}
-            conv={active}
-            notes={notes}
-            onBack={() => setMobileView("chat")}
-            onPatch={(patch) => void patchConversation(patch)}
-            onAddNote={async (note) => {
-              const res = await fetch(`/api/admin/whatsapp/conversations/${active.id}/notes`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ note }),
-              });
-              const data = (await res.json().catch(() => null)) as { note?: Note } | null;
-              if (data?.note) setNotes((prev) => [data.note!, ...prev]);
-            }}
-          />
-        ) : (
-          <EmptyState icon={<Info className="h-6 w-6" />} text="Ficha del cliente" />
-        )}
-      </section>
+          ) : (
+            <EmptyState icon={<Info className="h-6 w-6" />} text="Ficha del cliente" />
+          )}
+        </section>
+      </div>
+      {templatesOpen && active ? (
+        <TemplatePicker
+          conversationId={active.id}
+          onClose={() => setTemplatesOpen(false)}
+          onSent={() => {
+            followBottom.current = true;
+            void fetchConversations();
+          }}
+        />
+      ) : null}
+      {alertsOpen ? <ContactAlertsPanel onClose={() => setAlertsOpen(false)} /> : null}
     </div>
   );
 }
@@ -690,8 +825,8 @@ function ConversationItem({
     <button
       onClick={onClick}
       className={cn(
-        "flex w-full items-start gap-3 border-b border-slate-100 px-3 py-3 text-left transition-colors",
-        active ? "bg-blue-50" : "hover:bg-slate-50",
+        "wa-conversation flex w-full items-start gap-3 border-b border-slate-100 px-3 py-3 text-left transition-colors",
+        active ? "wa-selected bg-blue-50" : "hover:bg-slate-50",
       )}
     >
       <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-[13px] font-bold text-white">
@@ -751,6 +886,7 @@ function ChatHeader({
       <div className="flex items-center gap-2">
         <button
           onClick={onBack}
+          aria-label="Volver a conversaciones"
           className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -765,17 +901,18 @@ function ChatHeader({
           <p className="text-[11px] text-slate-400">
             +{conv.phone} ·{" "}
             {windowOpen ? (
-              <span className="text-emerald-600">Ventana abierta</span>
+              <span className="text-emerald-600">Respuesta libre disponible</span>
             ) : (
-              <span className="text-amber-600">Ventana cerrada (24h)</span>
+              <span className="text-amber-600">Seguimiento con plantilla</span>
             )}
           </p>
         </div>
         <button
           onClick={onOpenFicha}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+          aria-label="Mostrar ficha del cliente"
         >
-          <Info className="h-4 w-4" />
+          <PanelRight className="h-4 w-4" />
         </button>
       </div>
 
@@ -814,7 +951,7 @@ function ChatHeader({
           ) : (
             <CircleCheck className="h-3.5 w-3.5" />
           )}
-          {conv.status === "closed" ? "Reabrir" : "Cerrar"}
+          {conv.status === "closed" ? "Reabrir atención" : "Marcar resuelta"}
         </button>
         <button
           onClick={onDelete}
@@ -837,11 +974,11 @@ function MessageBubble({ msg }: { msg: Message }) {
     <div className={cn("flex", isOut ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[80%] rounded-2xl px-3 py-2 text-[13.5px] leading-relaxed shadow-sm",
+          "wa-bubble max-w-[80%] rounded-2xl px-3 py-2 text-[13.5px] leading-relaxed shadow-sm",
           isOut
             ? msg.sender_type === "ai"
-              ? "rounded-br-sm bg-blue-500 text-white"
-              : "rounded-br-sm bg-emerald-600 text-white"
+              ? "wa-ai rounded-br-sm bg-blue-500 text-white"
+              : "wa-human rounded-br-sm bg-emerald-600 text-white"
             : "rounded-bl-sm border border-slate-200 bg-white text-slate-700",
         )}
       >
@@ -897,8 +1034,8 @@ function Composer({
       {!windowOpen && (
         <p className="mb-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-[11px] font-medium text-amber-700">
           <Clock className="h-3.5 w-3.5" />
-          Ventana de 24h cerrada. Solo se pueden enviar plantillas aprobadas hasta que el cliente
-          escriba.
+          Han pasado 24 horas desde el último mensaje del cliente. Usa «Retomar contacto con
+          plantilla».
         </p>
       )}
       <div className="flex items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-100">
@@ -907,7 +1044,7 @@ function Composer({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
+            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
               onSend();
             }
@@ -916,7 +1053,7 @@ function Composer({
           disabled={disabled}
           maxLength={4000}
           placeholder={
-            disabled ? "Mensaje libre no disponible (ventana cerrada)" : "Escribe un mensaje…"
+            disabled ? "Selecciona una plantilla para retomar el contacto" : "Escribe un mensaje…"
           }
           className="max-h-36 flex-1 resize-none overflow-y-auto bg-transparent text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:opacity-60"
         />

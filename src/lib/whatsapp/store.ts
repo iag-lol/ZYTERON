@@ -172,6 +172,8 @@ export async function insertOutboundMessage(input: {
   status?: string;
   sentByUserId?: string | null;
   messageType?: string;
+  requestId?:string;
+  requestHash?:string;
 }): Promise<WaMessage | null> {
   const { data, error } = await db()
     .from(MSG)
@@ -183,6 +185,7 @@ export async function insertOutboundMessage(input: {
       content: input.content,
       status: input.status ?? "sending",
       sent_by_user_id: input.sentByUserId ?? null,
+      ...(input.requestId?{client_request_id:input.requestId,request_hash:input.requestHash}:{}),
     })
     .select("*")
     .single();
@@ -196,7 +199,7 @@ export async function insertOutboundMessage(input: {
 export async function updateMessage(
   id: string,
   patch: Partial<
-    Pick<WaMessage, "status" | "meta_message_id" | "error_message" | "delivered_at" | "read_at">
+    Pick<WaMessage, "status" | "meta_message_id" | "error_message" | "delivered_at" | "read_at" | "content">
   >,
 ): Promise<void> {
   await db().from(MSG).update(patch).eq("id", id);
@@ -241,14 +244,12 @@ export async function touchConversation(input: {
   await supabase.from(CONV).update(patch).eq("id", input.conversationId);
 }
 
-export async function listRecentMessages(conversationId: string, limit = 30): Promise<WaMessage[]> {
-  const { data } = await db()
-    .from(MSG)
-    .select("*")
-    .eq("conversation_id", conversationId)
-    .order("created_at", { ascending: true })
-    .limit(limit);
-  return (data as WaMessage[]) ?? [];
+export async function listRecentMessages(conversationId: string, limit = 30, before?: {date:string;id:string}): Promise<WaMessage[]> {
+  let query=db().from(MSG).select("*").eq("conversation_id",conversationId);
+  if(before)query=query.or(`created_at.lt.${before.date},and(created_at.eq.${before.date},id.lt.${before.id})`);
+  const {data,error}=await query.order("created_at",{ascending:false}).order("id",{ascending:false}).limit(limit);
+  if(error)throw Error("No fue posible cargar los mensajes.");
+  return ((data as WaMessage[])??[]).reverse();
 }
 
 export function isWindowOpen(conv: Pick<WaConversation, "window_expires_at">): boolean {

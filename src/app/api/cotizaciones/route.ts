@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { serializeContactLeadDetails } from "@/lib/admin/contact-lead";
 import { sendLeadAlertEmail } from "@/lib/notifications/lead-alert";
-import { sendAdminWhatsappNotification } from "@/lib/notifications/admin-whatsapp";
 import { getPortalSession } from "@/lib/auth/portal-session";
 import {
   boundedJson,
@@ -164,18 +163,7 @@ export async function POST(req: Request) {
       } catch {
         /* La cotización y el lead ya están confirmados juntos. */
       }
-      try {
-        await sendAdminWhatsappNotification(
-          "Nueva solicitud de cotización " +
-            quoteCode +
-            " · " +
-            data.contactName +
-            "\nhttps://www.zyteron.cl/administracion/cotizaciones/" +
-            quoteId,
-        );
-      } catch {
-        /* No se repite la cotización por un aviso fallido. */
-      }
+
     }
     return NextResponse.json(saved.value, { headers: { "cache-control": "no-store" } });
   } catch (error) {

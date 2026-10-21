@@ -47,7 +47,9 @@ export async function sendMetaWhatsappMessage(to: string, body: string): Promise
       console.error("[whatsapp] error enviando:", msg);
       return { ok: false, error: msg };
     }
-    return { ok: true, id: data?.messages?.[0]?.id };
+    const id=data?.messages?.[0]?.id;
+    if(!id)return {ok:false,error:"Meta no confirmó el identificador del mensaje."};
+    return { ok: true, id };
   } catch (err) {
     console.error("[whatsapp] excepción enviando:", err);
     return { ok: false, error: "Excepción de red al enviar." };

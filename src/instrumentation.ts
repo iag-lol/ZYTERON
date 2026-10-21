@@ -1,5 +1,23 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs" && process.env.BILLING_WORKER_ENABLED === "true") {
+    const { runContactNotifications } = await import("./lib/notifications/contact-outbox");
+    let busy = false;
+    const tick = () => {
+      if (busy) return;
+      busy = true;
+      void runContactNotifications()
+        .catch(() => console.error("CONTACT_NOTIFICATIONS_UNAVAILABLE"))
+        .finally(() => {
+          busy = false;
+        });
+    };
+    const timer = setInterval(tick, 5000);
+    timer.unref();
+    const initial = setTimeout(tick, 2000);
+    initial.unref();
+  }
+
+  if (process.env.NEXT_RUNTIME === "nodejs" && process.env.BILLING_WORKER_ENABLED === "true") {
     const { runMonthlyBilling } = await import("./lib/payments/monthly-billing");
     let busy = false;
     let ready = false;

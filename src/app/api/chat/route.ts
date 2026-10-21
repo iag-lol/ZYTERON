@@ -3,7 +3,6 @@ import { z } from "zod";
 import { buildZyteronSystemPrompt } from "@/lib/ai/zyteron-knowledge";
 import { LEAD_CAPTURE_TOOL, executeLeadCapture } from "@/lib/ai/lead-capture";
 import { HANDOFF_SIGNAL } from "@/lib/ai/handoff-signal";
-import { notifyOwnerChatStarted } from "@/lib/notifications/chat-started-alert";
 import { siteConfig } from "@/config/site";
 import { randomUUID } from "node:crypto";
 import { beginChat, finishChat, chatCookieName, type ChatContext } from "@/lib/ai/chat-store";
@@ -113,8 +112,6 @@ export async function POST(req: Request) {
     return intakeFailure(error);
   }
 
-  if (context.history.filter((m) => m.role === "user").length === 1)
-    void notifyOwnerChatStarted(context.history[0]?.content || "");
   // 3) Sin API key configurada: fallback amable (no es un error para el usuario)
   const apiKey = readEnv("OPENAI_API_KEY");
   if (!apiKey) {

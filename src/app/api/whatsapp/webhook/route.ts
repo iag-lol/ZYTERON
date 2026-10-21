@@ -1,4 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import {
   upsertConversationByPhone,
   insertInboundMessage,
@@ -9,7 +11,6 @@ import {
 } from "@/lib/whatsapp/store";
 import { generateAiReply } from "@/lib/whatsapp/agent";
 import { sendMetaWhatsappMessage } from "@/lib/notifications/meta-whatsapp";
-import { notifyOwnerChatStarted } from "@/lib/notifications/chat-started-alert";
 import { logWebhook } from "@/lib/whatsapp/webhook-log";
 import { sendAdminPushNotification } from "@/lib/notifications/admin-web-push";
 
@@ -19,7 +20,10 @@ export const dynamic = "force-dynamic";
 function readEnv(name: string) {
   const value = process.env[name];
   if (typeof value !== "string") return "";
-  return value.trim().replace(/^['"]|['"]$/g, "").trim();
+  return value
+    .trim()
+    .replace(/^['"]|['"]$/g, "")
+    .trim();
 }
 
 /** Verificación del webhook por Meta. */
@@ -45,14 +49,31 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   let payload: unknown;
   try {
-    payload = await req.json();
+    const raw = await req.text();
+    if (Buffer.byteLength(raw) > 2 * 1024 * 1024)
+      return NextResponse.json({ error: "Payload demasiado grande." }, { status: 413 });
+    const secret = readEnv("META_APP_SECRET") || readEnv("META_WHATSAPP_APP_SECRET");
+    if (secret) {
+      const signature = req.headers.get("x-hub-signature-256") || "";
+      const expected = "sha256=" + createHmac("sha256", secret).update(raw).digest("hex");
+      if (
+        signature.length !== expected.length ||
+        !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+      )
+        return NextResponse.json({ error: "Firma inválida." }, { status: 401 });
+    }
+    payload = JSON.parse(raw);
   } catch {
     logWebhook("error", "POST con cuerpo no-JSON.");
     return NextResponse.json({ ok: true });
   }
   logWebhook("post_received", "Meta envió un evento al webhook.");
   // Procesamiento en segundo plano (Render mantiene el proceso vivo).
-  void processPayload(payload).catch((err) => logWebhook("error", String(err)));
+  after(async () => {
+    await processPayload(payload).catch(() =>
+      logWebhook("error", "No fue posible procesar el webhook."),
+    );
+  });
   return NextResponse.json({ ok: true });
 }
 
@@ -69,18 +90,39 @@ type IncomingMessage = {
   context?: { id?: string };
 };
 
-type StatusEvent = { id?: string; status?: string };
+type StatusEvent = { id?: string; status?: string; errors?: Array<{ code?: number }> };
 
-function describeMessage(m: IncomingMessage): { type: string; content: string; mediaId?: string; mimeType?: string; fileName?: string } {
+function describeMessage(m: IncomingMessage): {
+  type: string;
+  content: string;
+  mediaId?: string;
+  mimeType?: string;
+  fileName?: string;
+} {
   switch (m.type) {
     case "text":
       return { type: "text", content: m.text?.body ?? "" };
     case "image":
-      return { type: "image", content: m.image?.caption ?? "[imagen]", mediaId: m.image?.id, mimeType: m.image?.mime_type };
+      return {
+        type: "image",
+        content: m.image?.caption ?? "[imagen]",
+        mediaId: m.image?.id,
+        mimeType: m.image?.mime_type,
+      };
     case "audio":
-      return { type: "audio", content: "[audio]", mediaId: m.audio?.id, mimeType: m.audio?.mime_type };
+      return {
+        type: "audio",
+        content: "[audio]",
+        mediaId: m.audio?.id,
+        mimeType: m.audio?.mime_type,
+      };
     case "video":
-      return { type: "video", content: m.video?.caption ?? "[video]", mediaId: m.video?.id, mimeType: m.video?.mime_type };
+      return {
+        type: "video",
+        content: m.video?.caption ?? "[video]",
+        mediaId: m.video?.id,
+        mimeType: m.video?.mime_type,
+      };
     case "document":
       return {
         type: "document",
@@ -92,7 +134,9 @@ function describeMessage(m: IncomingMessage): { type: string; content: string; m
     case "location":
       return {
         type: "location",
-        content: m.location ? `Ubicación: ${m.location.latitude}, ${m.location.longitude}` : "[ubicación]",
+        content: m.location
+          ? `Ubicación: ${m.location.latitude}, ${m.location.longitude}`
+          : "[ubicación]",
       };
     default:
       return { type: m.type || "unknown", content: "[mensaje no soportado]" };
@@ -110,6 +154,8 @@ async function processPayload(payload: unknown) {
     for (const change of changes) {
       const value = (change as { value?: Record<string, unknown> })?.value;
       if (!value) continue;
+      const phoneId = (value.metadata as { phone_number_id?: string } | undefined)?.phone_number_id;
+      if (phoneId && phoneId !== readEnv("META_WHATSAPP_PHONE_ID")) continue;
 
       // 1) Estados de mensajes salientes (sent/delivered/read/failed)
       const statuses = value.statuses as StatusEvent[] | undefined;
@@ -117,6 +163,10 @@ async function processPayload(payload: unknown) {
         for (const st of statuses) {
           if (st.id && st.status) {
             await updateMessageStatusByMetaId(st.id, st.status).catch(() => {});
+            if (["delivered", "read", "failed"].includes(st.status))
+              await prisma.$executeRaw`UPDATE zyteron_contact_deliveries SET state=CASE WHEN ${st.status}='failed' THEN 'FAILED' ELSE 'DELIVERED' END,error_code=CASE WHEN ${st.status}='failed' THEN ${"META_" + String(st.errors?.[0]?.code || "DELIVERY_FAILED")} ELSE NULL END,updated_at=now() WHERE provider_id=${st.id} AND channel='WHATSAPP' AND (state<>'DELIVERED' OR ${st.status}<>'failed')`.catch(
+                () => undefined,
+              );
           }
         }
       }
@@ -134,7 +184,10 @@ async function processPayload(payload: unknown) {
 
         const conv = await upsertConversationByPhone({ phone: from, profileName });
         if (!conv) {
-          logWebhook("error", `No se pudo crear/leer la conversación de +${from}. ¿Corriste whatsapp_inbox.sql?`);
+          logWebhook(
+            "error",
+            `No se pudo crear/leer la conversación de +${from}. ¿Corriste whatsapp_inbox.sql?`,
+          );
           continue;
         }
 
@@ -156,7 +209,6 @@ async function processPayload(payload: unknown) {
         logWebhook("message_stored", `Mensaje de +${from}: ${desc.content.slice(0, 60)}`);
 
         // ¿Primera interacción? avisamos al dueño (una vez).
-        const isFirst = !conv.last_message_at;
 
         await touchConversation({
           conversationId: conv.id,
@@ -176,15 +228,14 @@ async function processPayload(payload: unknown) {
           eventId: `whatsapp:${storedMessage?.id || message.id || conv.id}`,
         }).catch((error) => console.error("[admin-push] aviso de WhatsApp fallido:", error));
 
-        if (isFirst) {
-          void notifyOwnerChatStarted(`WhatsApp de +${from}: ${desc.content}`).catch(() => {});
-        }
-
         // 3) IA según el modo de la conversación
         if (conv.mode === "human") continue; // solo humano
         if (desc.type !== "text") continue; // por ahora la IA solo responde texto
 
-        const reply = await generateAiReply({ ...conv, profile_name: profileName ?? conv.profile_name });
+        const reply = await generateAiReply({
+          ...conv,
+          profile_name: profileName ?? conv.profile_name,
+        });
         if (!reply) continue;
 
         if (conv.mode === "assisted") {
@@ -210,7 +261,7 @@ async function processPayload(payload: unknown) {
           await updateMessage(outbound.id, {
             status: sent.ok ? "sent" : "failed",
             meta_message_id: sent.id ?? null,
-            error_message: sent.ok ? null : sent.error ?? "Error al enviar",
+            error_message: sent.ok ? null : (sent.error ?? "Error al enviar"),
           });
         }
         if (sent.ok) {

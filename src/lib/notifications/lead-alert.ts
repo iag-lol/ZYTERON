@@ -32,18 +32,7 @@ type LeadAlertInput = {
   extras?: CartLine[];
 };
 
-type ResendResponse = {
-  id?: string;
-  message?: string;
-  name?: string;
-  statusCode?: number;
-  code?: string | number;
-  error?: { message?: string };
-};
-
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const FROM_WITH_NAME_REGEX = /^[^<>]+<[^<>@\s]+@[^<>@\s]+\.[^<>@\s]+>$/;
-
 function normalizeText(value?: string | null) {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -63,6 +52,8 @@ function formatDateTime(value: string) {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+    timeZone: "America/Santiago",
+    hour12: false,
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -75,40 +66,6 @@ function escapeHtml(value: string) {
     .replace(/>/g, "&gt;")
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
-}
-
-function normalizeFromAddress(rawValue: string | undefined, fallbackName: string) {
-  const fallback = `${fallbackName} <onboarding@resend.dev>`;
-  const value = String(rawValue || "").trim();
-  if (!value) return fallback;
-
-  if (EMAIL_REGEX.test(value)) {
-    return value;
-  }
-
-  if (FROM_WITH_NAME_REGEX.test(value)) {
-    return value.replace(/\s+/g, " ").trim();
-  }
-
-  const emailMatch = value.match(/[^\s<>,;:()]+@[^\s<>,;:()]+\.[^\s<>,;:()]+/);
-  if (!emailMatch) return fallback;
-  const email = emailMatch[0];
-  if (!EMAIL_REGEX.test(email)) return fallback;
-
-  const nameCandidate = value
-    .replace(email, "")
-    .replace(/[<>\"']/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (!nameCandidate) return email;
-  return `${nameCandidate} <${email}>`;
-}
-
-function extractResendErrorMessage(body: ResendResponse | null) {
-  const candidates = [body?.error?.message, body?.message, typeof body?.code === "string" ? body.code : null]
-    .map((value) => (typeof value === "string" ? value.trim() : ""))
-    .filter(Boolean);
-  return candidates[0] || "Resend rechazó el envío.";
 }
 
 function sourceLabel(source: LeadAlertInput["source"]) {
@@ -165,8 +122,10 @@ function renderLeadAlertHtml(input: LeadAlertInput) {
   const name = escapeHtml(normalizeText(input.name) || "Nuevo contacto");
   const email = normalizeText(input.email);
   const phone = normalizeText(input.phone);
-  const contactLine = [email, phone].filter(Boolean).map(escapeHtml).join(" &nbsp;·&nbsp; ") || "Sin contacto directo";
-  const adminUrl = `${siteConfig.url}/admin/contactos`;
+  const contactLine =
+    [email, phone].filter(Boolean).map(escapeHtml).join(" &nbsp;·&nbsp; ") ||
+    "Sin contacto directo";
+  const adminUrl = `${siteConfig.url}/administracion/commercial/leads`;
 
   const details: Array<[string, string]> = [
     ["Servicio de interés", escapeHtml(normalizeText(input.service) || "—")],
@@ -183,11 +142,15 @@ function renderLeadAlertHtml(input: LeadAlertInput) {
   for (let i = 0; i < details.length; i += 2) {
     const a = details[i]!;
     const b = details[i + 1];
-    detailRows.push(`<tr>${detailCell(a[0], a[1])}${b ? detailCell(b[0], b[1]) : '<td width="50%"></td>'}</tr>`);
+    detailRows.push(
+      `<tr>${detailCell(a[0], a[1])}${b ? detailCell(b[0], b[1]) : '<td width="50%"></td>'}</tr>`,
+    );
   }
 
   const totalsRows = renderRows(input)
-    .filter(([label]) => ["Subtotal", "Descuento", "IVA (19%)", "Total", "Valor plan"].includes(label))
+    .filter(([label]) =>
+      ["Subtotal", "Descuento", "IVA (19%)", "Total", "Valor plan"].includes(label),
+    )
     .map(
       ([label, value]) =>
         `<tr><td style="padding:4px 0;font-size:13px;color:#64748b;">${escapeHtml(label)}</td><td style="padding:4px 0;font-size:13px;font-weight:700;color:#0f172a;text-align:right;">${escapeHtml(value)}</td></tr>`,
@@ -196,18 +159,18 @@ function renderLeadAlertHtml(input: LeadAlertInput) {
 
   return `<!doctype html>
 <html lang="es">
-  <body style="margin:0;padding:0;background:#eef2f7;font-family:-apple-system,Segoe UI,Arial,sans-serif;color:#0f172a;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f7;padding:28px 12px;">
+  <body style="margin:0;padding:0;background:#f3f6ed;font-family:-apple-system,Segoe UI,Arial,sans-serif;color:#0f172a;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f6ed;padding:28px 12px;">
       <tr><td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 6px 24px rgba(15,23,42,.08);">
           <!-- Header -->
-          <tr><td style="background:linear-gradient(135deg,#1d4ed8,#2563eb);padding:26px 28px;">
+          <tr><td style="background:linear-gradient(135deg,#244e3d,#193b30);padding:26px 28px;">
             <table role="presentation" width="100%"><tr>
               <td style="color:#fff;font-size:13px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;opacity:.9;">Zyteron</td>
-              <td style="text-align:right;color:#dbeafe;font-size:11px;font-weight:600;">Nueva oportunidad</td>
+              <td style="text-align:right;color:#d8edba;font-size:11px;font-weight:600;">Nueva oportunidad</td>
             </tr></table>
             <div style="color:#fff;font-size:22px;font-weight:800;margin-top:12px;">Nueva solicitud de cliente</div>
-            <div style="color:#dbeafe;font-size:13px;margin-top:3px;">Vía ${escapeHtml(sourceLabel(input.source))}</div>
+            <div style="color:#d8edba;font-size:13px;margin-top:3px;">Vía ${escapeHtml(sourceLabel(input.source))}</div>
           </td></tr>
 
           <!-- Cliente hero -->
@@ -248,7 +211,7 @@ function renderLeadAlertHtml(input: LeadAlertInput) {
 
           <!-- CTA -->
           <tr><td style="padding:16px 22px 26px;">
-            <a href="${adminUrl}" style="display:block;text-align:center;background:#1d4ed8;color:#fff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 20px;border-radius:12px;">Ver contacto en el panel</a>
+            <a href="${adminUrl}" style="display:block;text-align:center;background:#244e3d;color:#fff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 20px;border-radius:12px;">Ver contacto en el panel</a>
             <div style="text-align:center;color:#94a3b8;font-size:11px;margin-top:12px;">Responde pronto para no perder la oportunidad. Atención automática con IA de ${escapeHtml(ZYTERON_COMPANY.brandName)}.</div>
           </td></tr>
         </table>
@@ -275,9 +238,11 @@ function renderLeadAlertText(input: LeadAlertInput) {
     `URL origen: ${normalizeText(input.submittedFrom) || "—"}`,
   ];
 
-  if (typeof input.planPrice === "number") lines.push(`Valor plan: ${formatCurrency(input.planPrice)}`);
+  if (typeof input.planPrice === "number")
+    lines.push(`Valor plan: ${formatCurrency(input.planPrice)}`);
   if (typeof input.subtotal === "number") lines.push(`Subtotal: ${formatCurrency(input.subtotal)}`);
-  if (typeof input.discountTotal === "number") lines.push(`Descuento: ${formatCurrency(input.discountTotal)}`);
+  if (typeof input.discountTotal === "number")
+    lines.push(`Descuento: ${formatCurrency(input.discountTotal)}`);
   if (typeof input.iva === "number") lines.push(`IVA (19%): ${formatCurrency(input.iva)}`);
   if (typeof input.total === "number") lines.push(`Total: ${formatCurrency(input.total)}`);
 
@@ -298,52 +263,21 @@ function renderLeadAlertText(input: LeadAlertInput) {
 }
 
 export async function sendLeadAlertEmail(input: LeadAlertInput) {
-  // Web Push es independiente del correo: si Resend no está configurado, el
-  // aviso del dispositivo debe seguir llegando.
-  await sendAdminPushNotification(leadPushPayload(input)).catch((error) => {
-    console.error("[admin-push] aviso de lead fallido:", error);
-  });
-
-  const resendApiKey = process.env.RESEND_API_KEY;
-  if (!resendApiKey) {
-    return { sent: false as const, reason: "missing_api_key" as const };
-  }
-
-  const toEmail = normalizeText(process.env.RESEND_LEAD_TO_EMAIL) || siteConfig.contact.email;
-  const from = normalizeFromAddress(process.env.RESEND_FROM_EMAIL, ZYTERON_COMPANY.brandName);
-  const replyTo = normalizeText(process.env.RESEND_REPLY_TO) || ZYTERON_COMPANY.salesEmail;
-  const bcc = normalizeText(process.env.RESEND_BCC_EMAIL);
-
-  const payload: Record<string, unknown> = {
-    from,
-    to: [toEmail],
-    subject: `Nuevo lead web · ${sourceLabel(input.source)} · ${input.name}`,
+  await sendAdminPushNotification(leadPushPayload(input)).catch(() => undefined);
+  const { queueContactEvent } = await import("./contact-outbox");
+  const { legacyViewId } = await import("@/lib/full-control/legacy-id");
+  const key = `lead:${legacyViewId("lead", input.leadId)}`;
+  await queueContactEvent(key, {
+    kind: "lead",
+    title: `Nuevo contacto · ${sourceLabel(input.source)}`,
+    name: input.name,
+    email: input.email,
+    phone: input.phone,
+    body: renderLeadAlertText(input),
+    href: "/administracion/commercial/leads",
     html: renderLeadAlertHtml(input),
-    text: renderLeadAlertText(input),
-    reply_to: EMAIL_REGEX.test(input.email) ? input.email : replyTo,
-  };
-
-  if (bcc) payload.bcc = [bcc];
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${resendApiKey}`,
-      "User-Agent": "zyteron-web/1.0",
-    },
-    body: JSON.stringify(payload),
-    cache: "no-store",
+    subject: `Nuevo contacto · ${sourceLabel(input.source)} · ${input.name}`,
+    replyTo: EMAIL_REGEX.test(input.email) ? input.email : undefined,
   });
-
-  const body = (await response.json().catch(() => null)) as ResendResponse | null;
-  if (!response.ok || !body?.id) {
-    const message = extractResendErrorMessage(body);
-    throw new Error(message);
-  }
-
-  return {
-    sent: true as const,
-    id: body.id,
-  };
+  return { sent: false as const, queued: true as const, reason: "queued" as const, id: key };
 }

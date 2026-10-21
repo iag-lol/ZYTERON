@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import {z} from "zod";
 import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
 import { getConversation, updateConversation, listRecentMessages, deleteConversation } from "@/lib/whatsapp/store";
 
@@ -12,8 +13,11 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
   const conversation = await getConversation(id);
   if (!conversation) return NextResponse.json({ error: "No encontrada." }, { status: 404 });
-  const messages = await listRecentMessages(id, 100);
-  return NextResponse.json({ conversation, messages });
+  const query=new URL(_req.url).searchParams;
+  const cursor=query.has("before")?z.object({date:z.iso.datetime({offset:true}),id:z.uuid()}).safeParse({date:query.get("before"),id:query.get("beforeId")}):null;
+  if(cursor&&!cursor.success)return NextResponse.json({error:"Cursor de mensajes inválido."},{status:400});
+  const messages = await listRecentMessages(id, 100, cursor?.success?cursor.data:undefined);
+  return NextResponse.json({ conversation, messages,hasMore:messages.length===100 },{headers:{"cache-control":"no-store"}});
 }
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
