@@ -419,6 +419,23 @@
   border-top: 1px solid #e8eeea;
 }
 
+:where(.zy-full-control) .leadCard > small {
+  display: block;
+}
+
+:where(.zy-full-control) .leadCard > a {
+  display: flex;
+  width: fit-content;
+  margin-top: 8px;
+  padding: 6px 7px;
+  border: 1px solid #cfe0d7;
+  border-radius: 6px;
+  color: var(--sales-green);
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
 :where(.zy-full-control) .leadCard button,
 :where(.zy-full-control) .followUpCard button,
 :where(.zy-full-control) .quoteGrid button {
