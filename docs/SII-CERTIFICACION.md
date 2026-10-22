@@ -34,7 +34,7 @@ Un intento sólo puede adquirirse una vez. Si falla antes del POST, puede revisa
 
 La compatibilidad con el esquema anterior completa `document_type` e `idempotency_key` en nuevas escrituras vinculadas a una factura de Finanzas. Sincroniza sus estados informativos y protege identidad, vínculo, folio y archivo firmado. No crea otra fila tributaria ni convierte obligaciones históricas en facturas. Los documentos sin vínculo a Finanzas conservan su flujo anterior.
 
-El campo `folio` se amplía a `bigint` para admitir los diez dígitos del formato SII. La instalación no reserva, consume, libera ni anula folios existentes.
+El campo `folio` se amplía a `bigint` para admitir los diez dígitos del formato SII. La vista `finance_portal_invoices`, dependiente de esa columna, se reconstruye dentro de la transacción con su definición vigente, propietario, permisos, filtro por cliente y opciones `security_invoker` y `security_barrier`. Los permisos, metadatos o dependencias no revisados detienen la operación; cualquier diferencia al restaurar revierte la transacción. La instalación no reserva, consume, libera ni anula folios existentes.
 
 ## Plan de instalación sujeto a aprobación
 
@@ -55,7 +55,7 @@ El respaldo del facturador vigente contiene 11 documentos emitidos y 32 recibido
 
 Los archivos privados requieren conservación por al menos seis años conforme al artículo 58 de la Ley de IVA. El respaldo local no acredita por sí solo una política automática, copia externa ni restauración probada.
 
-La revisión local registra 121 pruebas de runtime, 402 pruebas del frontend y una prueba de la ruta pública aprobadas. Las pruebas locales emplean datos sintéticos. Cubren acceso incorrecto, IDs y rutas inválidos, respuestas incompletas, reintentos, adquisición exclusiva, recepción incierta, recuperación, validación de recibos y compatibilidad con columnas y protecciones del esquema existente. PGlite ejecuta PostgreSQL embebido: sus llamadas concurrentes no sustituyen una prueba con dos conexiones independientes al servidor real.
+La revisión local registra 126 pruebas de runtime, 402 pruebas del frontend y una prueba de la ruta pública aprobadas. Las pruebas locales emplean datos sintéticos. Cubren acceso incorrecto, IDs y rutas inválidos, respuestas incompletas, reintentos, adquisición exclusiva, recepción incierta, recuperación, validación de recibos y compatibilidad con columnas y protecciones del esquema existente. PGlite ejecuta PostgreSQL embebido: sus llamadas concurrentes no sustituyen una prueba con dos conexiones independientes al servidor real.
 
 El build del backend y el control de tipos frontend están comprobados. La compilación Next.js con Webpack y su fase TypeScript terminan; la generación completa del sitio público se detiene en RSS por ausencia de configuración Supabase local. No se utilizaron credenciales productivas para resolver ese límite. La configuración aislada de dependencias tampoco permite usar Turbopack local como evidencia de build productivo.
 

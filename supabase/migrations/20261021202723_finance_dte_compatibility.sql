@@ -1,7 +1,54 @@
 -- Los registros de Finanzas conservan los campos obligatorios del esquema DTE anterior.
 -- La instalación no reescribe documentos; la adaptación actúa sobre escrituras posteriores.
 -- El formato SII admite folios de diez dígitos, superiores al límite de integer.
-alter table public.tax_documents alter column folio type bigint using folio::bigint;
+-- La vista conserva su consulta, propietario y ACL; DROP RESTRICT impide retirar dependencias ajenas.
+do $migration$
+declare
+  portal regclass:=to_regclass('public.finance_portal_invoices');
+  definition text; previous_acl jsonb; restored_acl jsonb; previous_columns jsonb;
+begin
+  if portal is not null then
+    lock table public.finance_portal_invoices in access exclusive mode;
+    if to_regclass('public.finance_portal_invoices') is distinct from portal then
+      raise exception 'DTE_PORTAL_VIEW_REVIEW_REQUIRED';
+    end if;
+    if not exists(select 1 from pg_class where oid=portal and relkind='v'
+        and pg_get_userbyid(relowner)='postgres'
+        and reloptions @> array['security_invoker=true','security_barrier=true']
+        and cardinality(reloptions)=2 and obj_description(oid,'pg_class') is null)
+      or exists(select 1 from pg_attribute where attrelid=portal and attnum>0 and not attisdropped
+        and (attacl is not null or col_description(attrelid,attnum) is not null))
+      then raise exception 'DTE_PORTAL_VIEW_REVIEW_REQUIRED'; end if;
+    select jsonb_agg(jsonb_build_array(x.grantor,x.grantee,x.privilege_type,x.is_grantable)
+      order by x.grantor,x.grantee,x.privilege_type,x.is_grantable)
+      into previous_acl from pg_class c cross join lateral aclexplode(c.relacl) x where c.oid=portal;
+    if previous_acl is null or exists(select 1 from pg_class c cross join lateral aclexplode(c.relacl) x
+        where c.oid=portal and (x.grantee not in('postgres'::regrole,'service_role'::regrole)
+          or x.grantor<>'postgres'::regrole or x.is_grantable))
+      then raise exception 'DTE_PORTAL_ACL_REVIEW_REQUIRED'; end if;
+    select jsonb_agg(jsonb_build_array(attname,case when attname='folio' then 'bigint' else format_type(atttypid,atttypmod) end)
+      order by attnum) into previous_columns from pg_attribute where attrelid=portal and attnum>0 and not attisdropped;
+    definition:=pg_get_viewdef(portal,true);
+    drop view public.finance_portal_invoices restrict;
+  end if;
+  alter table public.tax_documents alter column folio type bigint using folio::bigint;
+  if definition is not null then
+    execute 'create view public.finance_portal_invoices with (security_invoker=true,security_barrier=true) as '||definition;
+    alter view public.finance_portal_invoices owner to postgres;
+    revoke all on public.finance_portal_invoices from public,anon,authenticated,service_role;
+    grant all on public.finance_portal_invoices to service_role;
+    select jsonb_agg(jsonb_build_array(x.grantor,x.grantee,x.privilege_type,x.is_grantable)
+      order by x.grantor,x.grantee,x.privilege_type,x.is_grantable)
+      into restored_acl from pg_class c cross join lateral aclexplode(c.relacl) x
+      where c.oid='public.finance_portal_invoices'::regclass;
+    if restored_acl is distinct from previous_acl
+      or pg_get_viewdef('public.finance_portal_invoices'::regclass,true) is distinct from definition
+      or (select jsonb_agg(jsonb_build_array(attname,format_type(atttypid,atttypmod)) order by attnum)
+        from pg_attribute where attrelid='public.finance_portal_invoices'::regclass and attnum>0 and not attisdropped)
+        is distinct from previous_columns
+      then raise exception 'DTE_PORTAL_RESTORE_MISMATCH'; end if;
+  end if;
+end $migration$;
 create function public.finance_sync_dte_compatibility()
 returns trigger language plpgsql security invoker set search_path=public as $$
 begin
