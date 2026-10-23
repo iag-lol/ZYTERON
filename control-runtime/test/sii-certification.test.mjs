@@ -127,7 +127,9 @@ test("cinco boletas forman un único sobre y RCOF con totales del set, firmas y 
       "CERTIFICATION",
     );
     assert.equal((envelope.match(/<DTE version=/g) || []).length, 5);
-    assert(Math.max(...envelope.split(/\r?\n/).map((line) => Buffer.byteLength(line, "latin1"))) <= 4090);
+    assert(
+      Math.max(...envelope.split(/\r?\n/).map((line) => Buffer.byteLength(line, "latin1"))) <= 4090,
+    );
     assert(envelope.includes("<NroDTE>5</NroDTE>"));
     await validateCertificationXml(envelope, "EnvioBOLETA_v11.xsd");
     assert.equal(
@@ -147,30 +149,46 @@ test("cinco boletas forman un único sobre y RCOF con totales del set, firmas y 
     const fileName = "sii-cert-11111111-1111-4111-8111-111111111111.xml";
     await provider.validateCertificationArtifact(envelope, company.rut, fileName);
     await assert.rejects(
-      () => provider.validateCertificationArtifact(envelope.replace(/\n/g, ""), company.rut, fileName),
+      () =>
+        provider.validateCertificationArtifact(envelope.replace(/\n/g, ""), company.rut, fileName),
       /4090 bytes por línea/,
     );
     assert.equal(authentications, 0);
     const uploadEnvelope = await certificationBoletaUploadEnvelope(
-      envelope, company, "33333333-3", certificate, "CERTIFICATION",
+      envelope,
+      company,
+      "33333333-3",
+      certificate,
+      "CERTIFICATION",
     );
     assert(!uploadEnvelope.includes("RUTProvSW"));
-    assert(Math.max(...uploadEnvelope.split(/\r?\n/).map((line) => Buffer.byteLength(line, "latin1"))) <= 4090);
+    assert(
+      Math.max(...uploadEnvelope.split(/\r?\n/).map((line) => Buffer.byteLength(line, "latin1"))) <=
+        4090,
+    );
     assert(envelope.includes("RUTProvSW"));
     assert.deepEqual(
       uploadEnvelope.match(/<TED\b[\s\S]*?<\/TED>/g),
       envelope.match(/<TED\b[\s\S]*?<\/TED>/g),
     );
-    const bodies = (source) => [...source.matchAll(/<Documento\b[\s\S]*?<\/Documento>/g)]
-      .map((m) => m[0].replace(/<RUTProvSW>[^<]+<\/RUTProvSW>/, ""));
+    const bodies = (source) =>
+      [...source.matchAll(/<Documento\b[\s\S]*?<\/Documento>/g)].map((m) =>
+        m[0].replace(/<RUTProvSW>[^<]+<\/RUTProvSW>/, ""),
+      );
     assert.deepEqual(bodies(uploadEnvelope), bodies(envelope));
-    assert.equal(verifySiiXmlSignatures(uploadEnvelope, certificate.certificate.fingerprint256).length, 6);
+    assert.equal(
+      verifySiiXmlSignatures(uploadEnvelope, certificate.certificate.fingerprint256).length,
+      6,
+    );
     for (const [source, issuer, sender, environment] of [
       [envelope, company, "33333333-3", "PRODUCTION"],
       [envelope, { ...company, rut: "22222222-2" }, "33333333-3", "CERTIFICATION"],
       [envelope, company, "22222222-2", "CERTIFICATION"],
       [envelope.replace("Cambio de aceite", "Cambio"), company, "33333333-3", "CERTIFICATION"],
-    ]) await assert.rejects(() => certificationBoletaUploadEnvelope(source, issuer, sender, certificate, environment));
+    ])
+      await assert.rejects(() =>
+        certificationBoletaUploadEnvelope(source, issuer, sender, certificate, environment),
+      );
     const oldFetch = globalThis.fetch;
     let transmissions = 0;
     try {
@@ -180,16 +198,23 @@ test("cinco boletas forman un único sobre y RCOF con totales del set, firmas y 
         assert.equal(options.method, "POST");
         const uploaded = await options.body.get("archivo").text();
         assert.equal((uploaded.match(/<DTE version=/g) || []).length, 5);
-        return new Response("<RECEPCIONDTE><STATUS>0</STATUS><TRACKID>123456</TRACKID></RECEPCIONDTE>");
+        return new Response(
+          "<RECEPCIONDTE><STATUS>0</STATUS><TRACKID>123456</TRACKID></RECEPCIONDTE>",
+        );
       };
-      assert.deepEqual(await provider.sendCertificationArtifact(uploadEnvelope, company.rut, fileName), {
-        trackId: "123456", status: "0",
-      });
+      assert.deepEqual(
+        await provider.sendCertificationArtifact(uploadEnvelope, company.rut, fileName),
+        {
+          trackId: "123456",
+          status: "0",
+        },
+      );
       assert.equal(transmissions, 1);
-      await assert.rejects(
-        () => provider.sendCertificationArtifact(
+      await assert.rejects(() =>
+        provider.sendCertificationArtifact(
           envelope.replace(/<CodRef>SET<\/CodRef>/g, "<CodRef>OTRO</CodRef>"),
-          company.rut, fileName,
+          company.rut,
+          fileName,
         ),
       );
       assert.equal(transmissions, 1);
@@ -229,7 +254,9 @@ test("cinco boletas forman un único sobre y RCOF con totales del set, firmas y 
     ])
       assert(rcof.includes(fragment));
     await validateCertificationXml(rcof, "ConsumoFolio_v10.xsd");
-    assert(Math.max(...rcof.split(/\r?\n/).map((line) => Buffer.byteLength(line, "latin1"))) <= 4090);
+    assert(
+      Math.max(...rcof.split(/\r?\n/).map((line) => Buffer.byteLength(line, "latin1"))) <= 4090,
+    );
     verifySiiXmlSignatures(rcof, certificate.certificate.fingerprint256);
     const output = process.env.ZYTERON_BOLETA_QA_OUTPUT;
     if (output) {
@@ -599,6 +626,62 @@ test("cálculo de descuentos globales solo afectos, IVA y centavos extranjeros",
   }).input;
   assert.equal(certificationTotals(foreign).total, 48.4);
 });
+test("exportación conserva recargo fraccionario y descuento compatible con el XSD", async () => {
+  const { input, caf } = fixture(110, {
+    lines: [
+      { description: "Asesoría", quantity: 1, unitPrice: 44, surchargePct: 10, exempt: true },
+      { description: "Ciruelas", quantity: 537, unitPrice: 144, discountPct: 5, exempt: true },
+    ],
+  });
+  const built = certificationDocumentXml(input, caf, certificate);
+  assert.equal(built.totals.total, 73510.4);
+  assert(built.xml.includes("<RecargoPct>10</RecargoPct>"));
+  assert(!built.xml.includes("<RecargoMonto>"));
+  assert(built.xml.includes("<MontoItem>48.4</MontoItem>"));
+  assert(built.xml.includes("<DescuentoMonto>3866</DescuentoMonto>"));
+  assert(built.xml.includes("<MontoItem>73462</MontoItem>"));
+  const envelope = certificationEnvelope(
+    [built.xml],
+    company,
+    "33333333-3",
+    certificate,
+    "CERTIFICATION",
+  );
+  await validateCertificationXml(envelope, "EnvioDTE_v10.xsd");
+  assert.equal(verifySiiXmlSignatures(envelope, certificate.certificate.fingerprint256).length, 2);
+});
+test("exportación incluye pesos, tara, marcas e identificación de contenedor", async () => {
+  const { input, caf } = fixture(110);
+  Object.assign(input.export, {
+    tare: 25,
+    tareUnit: 10,
+    grossWeight: 276,
+    grossWeightUnit: 10,
+    netWeight: 251,
+    netWeightUnit: 10,
+    packageType: 75,
+    packageCount: 25,
+    packageMarks: "CERTIFICACION",
+    containerId: "CERT-CONTENEDOR-001",
+    containerSeal: "CERT-SELLO-001",
+    sealIssuer: "EMISOR DE PRUEBA",
+  });
+  const built = certificationDocumentXml(input, caf, certificate);
+  for (const tag of [
+    "Tara",
+    "PesoBruto",
+    "PesoNeto",
+    "Marcas",
+    "IdContainer",
+    "Sello",
+    "EmisorSello",
+  ])
+    assert(built.xml.includes(`<${tag}>`));
+  await validateCertificationXml(
+    certificationEnvelope([built.xml], company, "33333333-3", certificate, "CERTIFICATION"),
+    "EnvioDTE_v10.xsd",
+  );
+});
 test("liquidación conserva valores negativos y descuenta comisiones e IVA una vez", () => {
   const { input } = fixture(43, {
     lines: [
@@ -616,6 +699,8 @@ test("liquidación conserva valores negativos y descuenta comisiones e IVA una v
   assert.equal(t.net, 8000);
   assert.equal(t.tax, 1520);
   assert.equal(t.total, 8330);
+  const built = certificationDocumentXml(input, fixture(43).caf, certificate);
+  assert(built.xml.includes("<IVAProp>190</IVAProp><IVATerc>1330</IVATerc>"));
 });
 test("factura de compra retiene el IVA sin sumar la retención al cobro", () => {
   const { input } = fixture(46);
@@ -629,21 +714,44 @@ test("correcciones de texto y traslados sin valor omiten precio cero y cumplen X
     const overrides = {
       lines: [{ description: "CORRIGE GIRO", quantity: 1, unitPrice: 0 }],
       ...(type === 52
-        ? { receiver: { ...company }, dispatch: {
-            transfer: 5, responsibility: 1,
-            destinationAddress: company.address, destinationCommune: company.commune,
-          } }
-        : { references: [{ type: type === 61 ? 33 : 61, folio: "1", date: "2026-01-02",
-            code: type === 61 ? 2 : 1, reason: "CORRIGE GIRO" }] }),
+        ? {
+            receiver: { ...company },
+            dispatch: {
+              transfer: 5,
+              responsibility: 1,
+              destinationAddress: company.address,
+              destinationCommune: company.commune,
+            },
+          }
+        : {
+            references: [
+              {
+                type: type === 61 ? 33 : 61,
+                folio: "1",
+                date: "2026-01-02",
+                code: type === 61 ? 2 : 1,
+                reason: "CORRIGE GIRO",
+              },
+            ],
+          }),
     };
     const { input, caf } = fixture(type, overrides);
     const built = certificationDocumentXml(input, caf, certificate);
     assert.equal(built.totals.total, 0);
     assert(!built.xml.includes("<PrcItem>"));
     assert(built.xml.includes("<MontoItem>0</MontoItem>"));
-    const envelope = certificationEnvelope([built.xml], company, "33333333-3", certificate, "CERTIFICATION");
+    const envelope = certificationEnvelope(
+      [built.xml],
+      company,
+      "33333333-3",
+      certificate,
+      "CERTIFICATION",
+    );
     await validateCertificationXml(envelope, "EnvioDTE_v10.xsd");
-    assert.equal(verifySiiXmlSignatures(envelope, certificate.certificate.fingerprint256).length, 2);
+    assert.equal(
+      verifySiiXmlSignatures(envelope, certificate.certificate.fingerprint256).length,
+      2,
+    );
   }
 });
 test("producción, CAF ajeno, folio inválido y referencias ausentes bloqueados", () => {
@@ -747,6 +855,16 @@ test("libros de compra y venta: resumen por tipo, IVA común, no recuperable y r
     3800,
   );
   assert.match(purchase, /<TotMntIVANoRec>1900<\/TotMntIVANoRec>/);
+  assert.match(
+    purchase,
+    /<OtrosImp><CodImp>15<\/CodImp><TasaImp>19<\/TasaImp><MntImp>1900<\/MntImp><\/OtrosImp>/,
+  );
+  assert.match(
+    purchase,
+    /<TotOtrosImp><CodImp>15<\/CodImp><TotMntImp>1900<\/TotMntImp><\/TotOtrosImp>/,
+  );
+  assert(!purchase.includes("IVARetTotal"));
+  assert.match(purchase, /<TotMntTotal>11000<\/TotMntTotal>/);
   assert.equal(verifySiiXmlSignatures(purchase).length, 1);
 });
 test("libro de guías: anulación informativa, traslado interno y guía facturada", async () => {

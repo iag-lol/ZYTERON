@@ -577,8 +577,11 @@ function CaseEditor({
                 ["transportCode", "Vía de transporte"],
                 ["loadingPort", "Puerto de embarque"],
                 ["unloadingPort", "Puerto de desembarque"],
+                ["tare", "Tara"],
                 ["tareUnit", "Unidad de tara"],
+                ["grossWeight", "Peso bruto"],
                 ["grossWeightUnit", "Unidad peso bruto"],
+                ["netWeight", "Peso neto"],
                 ["netWeightUnit", "Unidad peso neto"],
                 ["packageType", "Tipo de bulto"],
                 ["packageCount", "Cantidad de bultos"],
@@ -594,6 +597,26 @@ function CaseEditor({
                   onChange({ ...draft, export: { ...draft.export!, [key]: value || undefined } })
                 }
               />
+            ))}
+            {(
+              [
+                ["packageMarks", "Marcas de los bultos"],
+                ["containerId", "Identificación del contenedor"],
+                ["containerSeal", "Sello del contenedor"],
+                ["sealIssuer", "Emisor del sello"],
+              ] as const
+            ).map(([key, label]) => (
+              <Field key={key} label={label}>
+                <input
+                  value={(draft.export?.[key] as string | undefined) ?? ""}
+                  onChange={(e) =>
+                    onChange({
+                      ...draft,
+                      export: { ...draft.export!, [key]: e.target.value || undefined },
+                    })
+                  }
+                />
+              </Field>
             ))}
             <Field label="Identificación del receptor extranjero">
               <input

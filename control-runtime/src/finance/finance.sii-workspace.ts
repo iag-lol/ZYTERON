@@ -104,11 +104,18 @@ const exportData = z.strictObject({
   transportCode: number.int().positive().optional(),
   loadingPort: number.int().positive().optional(),
   unloadingPort: number.int().positive().optional(),
+  tare: number.int().positive().max(9999999).optional(),
   tareUnit: number.int().positive().optional(),
+  grossWeight: number.positive().max(99999999.99).optional(),
   grossWeightUnit: number.int().positive().optional(),
+  netWeight: number.positive().max(99999999.99).optional(),
   netWeightUnit: number.int().positive().optional(),
   packageType: number.int().positive().optional(),
   packageCount: number.int().positive().optional(),
+  packageMarks: text(255).optional(),
+  containerId: text(25).optional(),
+  containerSeal: text(20).optional(),
+  sealIssuer: text(70).optional(),
   freight: number.positive().optional(),
   insurance: number.positive().optional(),
   receiverCountry: number.int().positive(),
@@ -569,7 +576,13 @@ export class SiiCertificationWorkspace {
           "CERTIFICATION",
         );
       const xml = boleta
-        ? await certificationBoletaUploadEnvelope(envelope, company, this.sii.senderRut(), certificate, "CERTIFICATION")
+        ? await certificationBoletaUploadEnvelope(
+            envelope,
+            company,
+            this.sii.senderRut(),
+            certificate,
+            "CERTIFICATION",
+          )
         : envelope;
       await validateCertificationXml(xml, boleta ? "EnvioBOLETA_v11.xsd" : "EnvioDTE_v10.xsd");
       verifySiiXmlSignatures(xml, certificate.certificate.fingerprint256);
@@ -1021,11 +1034,7 @@ export class SiiCertificationWorkspace {
       xml = file.bytes.toString("latin1");
     await validateCertificationXml(xml, schemas[artifact.kind]!);
     verifySiiXmlSignatures(xml, this.certificates.metadata(this.sii.secretRef()).fingerprintSha256);
-    await this.sii.validateCertificationArtifact(
-      xml,
-      detail.run.companyRut,
-      `sii-cert-${id}.xml`,
-    );
+    await this.sii.validateCertificationArtifact(xml, detail.run.companyRut, `sii-cert-${id}.xml`);
     await this.sii.authenticate("CERTIFICATION");
     const claimed = await this.repo.certificationRpc<boolean>(
       "finance_claim_sii_certification_submission",

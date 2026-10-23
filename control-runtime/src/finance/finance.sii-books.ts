@@ -80,16 +80,24 @@ function signedContainer(
   certificate: LoadedCertificate,
   schema: string,
 ) {
-  const content = el(tag, body.flatMap((part) => [part, "\n"]), { ID: id }),
+  const content = el(
+      tag,
+      body.flatMap((part) => [part, "\n"]),
+      { ID: id },
+    ),
     canonical = content.replace(`<${tag} `, `<${tag} xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" `);
   return (
     '<?xml version="1.0" encoding="ISO-8859-1"?>\n' +
-    el(root, [content, "\n", xmlSignature(canonical, `#${id}`, certificate, ` xmlns:xsi="${XSI_NS}"`)], {
-      xmlns: SII_NS,
-      "xmlns:xsi": XSI_NS,
-      version: "1.0",
-      "xsi:schemaLocation": `${SII_NS} ${schema}`,
-    })
+    el(
+      root,
+      [content, "\n", xmlSignature(canonical, `#${id}`, certificate, ` xmlns:xsi="${XSI_NS}"`)],
+      {
+        xmlns: SII_NS,
+        "xmlns:xsi": XSI_NS,
+        version: "1.0",
+        "xsi:schemaLocation": `${SII_NS} ${schema}`,
+      },
+    )
   );
 }
 const summaryKey = (row: CertificationBookEntry) => `${row.type}`;
@@ -190,10 +198,12 @@ export function certificationPurchaseSalesBook(
           ]
         : []),
       ...(retained
-        ? [
-            el("TotOpIVARetTotal", rows.filter((r) => r.retained).length),
-            el("TotIVARetTotal", retained),
-          ]
+        ? operation === "COMPRA"
+          ? [el("TotOtrosImp", [el("CodImp", 15), el("TotMntImp", retained)])]
+          : [
+              el("TotOpIVARetTotal", rows.filter((r) => r.retained).length),
+              el("TotIVARetTotal", retained),
+            ]
         : []),
       el(
         "TotMntTotal",
@@ -223,7 +233,11 @@ export function certificationPurchaseSalesBook(
           ]
         : []),
       opt("IVAUsoComun", r.commonVat),
-      ...(r.retained ? [el("IVARetTotal", r.retained)] : []),
+      ...(r.retained
+        ? operation === "COMPRA"
+          ? [el("OtrosImp", [el("CodImp", 15), el("TasaImp", 19), el("MntImp", r.retained)])]
+          : [el("IVARetTotal", r.retained)]
+        : []),
       el("MntTotal", r.net + r.exempt + r.vat - (r.retained ?? 0)),
     ]),
   );

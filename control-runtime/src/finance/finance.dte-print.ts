@@ -211,7 +211,7 @@ export function printedDteData(signed: Buffer, envelope: Buffer, expected: Print
           "IVA",
           "MntTotal",
           ...(type >= 110 ? ["TpoMoneda"] : []),
-          ...(type === 43 ? ["Comisiones"] : []),
+          ...(type === 43 ? ["Comisiones", "IVAProp", "IVATerc"] : []),
           ...([46, 56, 61].includes(type) ? ["ImptoReten"] : []),
         ].includes(local(node.name)),
     )
@@ -487,8 +487,15 @@ export async function renderPrintedDte(
       .join(" · "),
   ])
     if (value) y = paragraphs(value, 36, y, 523);
-  const paymentMethod=Number(textOf(data.identity,"MedioPago"));
-  if([39,41].includes(data.type)&&paymentMethod)y=paragraphs(`Medio de pago declarado: ${{1:"Efectivo",2:"Pago electrónico",3:"Transferencia electrónica",4:"Cheque",5:"Otro"}[paymentMethod]??"Revisar"}`,36,y,523,9);
+  const paymentMethod = Number(textOf(data.identity, "MedioPago"));
+  if ([39, 41].includes(data.type) && paymentMethod)
+    y = paragraphs(
+      `Medio de pago declarado: ${{ 1: "Efectivo", 2: "Pago electrónico", 3: "Transferencia electrónica", 4: "Cheque", 5: "Otro" }[paymentMethod] ?? "Revisar"}`,
+      36,
+      y,
+      523,
+      9,
+    );
   if (data.type === 52)
     y = paragraphs(
       `Tipo de traslado: ${textOf(data.identity, "IndTraslado")} · Despacho: ${textOf(data.identity, "TipoDespacho")}`,
@@ -499,9 +506,32 @@ export async function renderPrintedDte(
     );
   const customs = children(data.transport!, "Aduana")[0];
   if (customs) {
+    const country = (code: string) => ({ "224": "Argentina", "336": "China" })[code] || code;
+    const port = (code: string) =>
+      ({ "901": "Arica", "904": "Coquimbo", "262": "Buenos Aires", "411": "Shangai" })[code] ||
+      code;
+    const packages = children(customs, "TipoBultos")[0];
     for (const value of [
-      `Moneda: ${textOf(data.totals, "TpoMoneda")} · País receptor: ${textOf(customs, "CodPaisRecep")} · Destino: ${textOf(customs, "CodPaisDestin")}`,
-      `Embarque: ${textOf(customs, "CodPtoEmbarque") || "No aplica"} · Desembarque: ${textOf(customs, "CodPtoDesemb") || "No aplica"} · Bultos: ${textOf(customs, "TotBultos") || "No aplica"}`,
+      `Moneda: ${textOf(data.totals, "TpoMoneda")} · País receptor: ${country(textOf(customs, "CodPaisRecep"))} · Destino: ${country(textOf(customs, "CodPaisDestin"))}`,
+      `Embarque: ${port(textOf(customs, "CodPtoEmbarque")) || "No aplica"} · Desembarque: ${port(textOf(customs, "CodPtoDesemb")) || "No aplica"} · Bultos: ${textOf(customs, "TotBultos") || "No aplica"}`,
+      ...(textOf(customs, "CodClauVenta") || textOf(data.identity, "FmaPagExp")
+        ? [
+            `Cláusula: ${{ "1": "CIF", "5": "FOB" }[textOf(customs, "CodClauVenta")] || textOf(customs, "CodClauVenta")} · Total cláusula: ${textOf(customs, "TotClauVenta")} · Pago: ${{ "2": "COBRANZA", "11": "ACRED" }[textOf(data.identity, "FmaPagExp")] || textOf(data.identity, "FmaPagExp")}`,
+          ]
+        : []),
+      ...(textOf(customs, "PesoNeto")
+        ? [
+            `Tara: ${textOf(customs, "Tara")} · Peso bruto: ${textOf(customs, "PesoBruto")} · Peso neto: ${textOf(customs, "PesoNeto")}`,
+          ]
+        : []),
+      ...(packages
+        ? [
+            `Marcas: ${textOf(packages, "Marcas")} · Contenedor: ${textOf(packages, "IdContainer") || "No aplica"}`,
+            ...(textOf(packages, "Sello")
+              ? [`Sello: ${textOf(packages, "Sello")} · Emisor: ${textOf(packages, "EmisorSello")}`]
+              : []),
+          ]
+        : []),
     ])
       y = paragraphs(value, 36, y, 523, 8);
   }
@@ -526,9 +556,14 @@ export async function renderPrintedDte(
     const description =
       (detail.startsWith(name) ? detail : [name, detail].filter(Boolean).join(" - ")) +
       (textOf(item, "IndExe") === "1" ? " · Exento" : "");
+    const lineAdjustments = [
+      ...(Number(textOf(item, "DescuentoMonto"))
+        ? [`Descuento: ${displayMoney(textOf(item, "DescuentoMonto"))}`]
+        : []),
+      ...(Number(textOf(item, "RecargoPct")) ? [`Recargo: ${textOf(item, "RecargoPct")}%`] : []),
+    ];
     const rows = wrap(description, regular, 8.5, 296),
-      height =
-        Math.max(24, rows.length * 11 + 8) + (Number(textOf(item, "DescuentoMonto")) ? 11 : 0);
+      height = Math.max(24, rows.length * 11 + 8) + lineAdjustments.length * 11;
     if (y - height < 283)
       reject(
         "El detalle excede una hoja A4. Ajusta el documento antes de emitir; no se omiten líneas ni se genera un folio adicional.",
@@ -555,15 +590,9 @@ export async function renderPrintedDte(
       const size = Math.min(8, (82 / Math.max(1, regular.widthOfTextAtSize(value, 8))) * 8);
       text(value, right ? x - regular.widthOfTextAtSize(value, size) : x, y, size);
     }
-    if (Number(textOf(item, "DescuentoMonto")))
-      text(
-        `Descuento: ${currency(textOf(item, "DescuentoMonto"))}`,
-        44,
-        y - rows.length * 11,
-        7,
-        false,
-        muted,
-      );
+    lineAdjustments.forEach((adjustment, index) =>
+      text(adjustment, 44, y - (rows.length + index) * 11, 7, false, muted),
+    );
     y -= height;
     page.drawLine({
       start: { x: 36, y: y + 5 },

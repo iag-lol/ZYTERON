@@ -66,11 +66,18 @@ export interface CertificationExport {
   transportCode?: number;
   loadingPort?: number;
   unloadingPort?: number;
+  tare?: number;
   tareUnit?: number;
+  grossWeight?: number;
   grossWeightUnit?: number;
+  netWeight?: number;
   netWeightUnit?: number;
   packageType?: number;
   packageCount?: number;
+  packageMarks?: string;
+  containerId?: string;
+  containerSeal?: string;
+  sealIssuer?: string;
   freight?: number;
   insurance?: number;
   receiverCountry: number;
@@ -184,7 +191,8 @@ export function certificationTotals(input: CertificationDocument) {
     const gross =
       Number(divideRound(scaled(quantity) * scaled(price), 10n ** BigInt(12 - places))) /
       10 ** places;
-    const discount = percentage(gross, line.discountPct ?? 0, places),
+    // DescuentoMonto exige enteros en el XSD, incluso en exportaciones.
+    const discount = percentage(gross, line.discountPct ?? 0, 0),
       surcharge = percentage(gross, line.surchargePct ?? 0, places);
     const amount = line.liquidationAmount ?? round(gross - discount + surcharge, places);
     return { ...line, quantity, price, discount, surcharge, amount };
@@ -382,8 +390,11 @@ export function certificationDocumentXml(
         str("CodViaTransp", x.transportCode),
         str("CodPtoEmbarque", x.loadingPort),
         str("CodPtoDesemb", x.unloadingPort),
+        str("Tara", x.tare),
         str("CodUnidMedTara", x.tareUnit),
+        str("PesoBruto", x.grossWeight),
         str("CodUnidPesoBruto", x.grossWeightUnit),
+        str("PesoNeto", x.netWeight),
         str("CodUnidPesoNeto", x.netWeightUnit),
         str("TotBultos", x.packageCount),
         ...(x.packageType
@@ -391,6 +402,10 @@ export function certificationDocumentXml(
               el("TipoBultos", [
                 el("CodTpoBultos", x.packageType),
                 str("CantBultos", x.packageCount),
+                str("Marcas", x.packageMarks),
+                str("IdContainer", x.containerId),
+                str("Sello", x.containerSeal),
+                str("EmisorSello", x.sealIssuer),
               ]),
             ]
           : []),
@@ -427,6 +442,9 @@ export function certificationDocumentXml(
           ...(t.net !== 0 ? [el("MntNeto", t.net)] : []),
           ...(t.exempt !== 0 ? [el("MntExe", t.exempt)] : []),
           ...(t.net !== 0 ? [...(!b ? [el("TasaIVA", 19)] : []), el("IVA", t.tax)] : []),
+          ...(input.type === 43 && t.commissionTax >= 0
+            ? [el("IVAProp", t.commissionTax), el("IVATerc", t.tax - t.commissionTax)]
+            : []),
           ...(input.retention
             ? [
                 el("ImptoReten", [
@@ -452,7 +470,8 @@ export function certificationDocumentXml(
       str("DescuentoPct", l.discountPct),
       ...(l.discount ? [el("DescuentoMonto", l.discount)] : []),
       str("RecargoPct", l.surchargePct),
-      ...(l.surcharge ? [el("RecargoMonto", l.surcharge)] : []),
+      // RecargoMonto no admite fracciones; el porcentaje conserva el ajuste en MontoItem.
+      ...(l.surcharge && Number.isInteger(l.surcharge) ? [el("RecargoMonto", l.surcharge)] : []),
       el("MontoItem", l.amount),
     ]),
   );
@@ -629,16 +648,24 @@ export function certificationEnvelope(
     { version: "1.0" },
   );
   // El receptor clásico limita cada línea a 4090 bytes; los separadores preceden a la firma.
-  const content = el("SetDTE", [cover, "\n", ...documents.flatMap((document) => [document, "\n"])], { ID: "SetDoc" });
+  const content = el(
+    "SetDTE",
+    [cover, "\n", ...documents.flatMap((document) => [document, "\n"])],
+    { ID: "SetDoc" },
+  );
   const canonical = content.replace("<SetDTE ", `<SetDTE xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" `);
   return (
     '<?xml version="1.0" encoding="ISO-8859-1"?>\n' +
-    el(root, [content, "\n", xmlSignature(canonical, "#SetDoc", certificate, ` xmlns:xsi="${XSI_NS}"`)], {
-      xmlns: SII_NS,
-      "xmlns:xsi": XSI_NS,
-      version: boleta ? "1.0" : "1.0",
-      "xsi:schemaLocation": `${SII_NS} ${schema}`,
-    })
+    el(
+      root,
+      [content, "\n", xmlSignature(canonical, "#SetDoc", certificate, ` xmlns:xsi="${XSI_NS}"`)],
+      {
+        xmlns: SII_NS,
+        "xmlns:xsi": XSI_NS,
+        version: boleta ? "1.0" : "1.0",
+        "xsi:schemaLocation": `${SII_NS} ${schema}`,
+      },
+    )
   );
 }
 
@@ -669,25 +696,44 @@ export async function certificationBoletaUploadEnvelope(
   const cover = child(child(parseXml(xml), "SetDTE"), "Caratula");
   need(
     normalizeRut(textOf(cover, "RutEmisor")) === normalizeRut(company.rut) &&
-    normalizeRut(textOf(cover, "RutEnvia")) === normalizeRut(senderRut) &&
-    normalizeRut(textOf(cover, "RutReceptor")) === "60803000-K" &&
-    textOf(cover, "FchResol") === company.resolutionDate &&
-    Number(textOf(cover, "NroResol")) === company.resolutionNumber,
+      normalizeRut(textOf(cover, "RutEnvia")) === normalizeRut(senderRut) &&
+      normalizeRut(textOf(cover, "RutReceptor")) === "60803000-K" &&
+      textOf(cover, "FchResol") === company.resolutionDate &&
+      Number(textOf(cover, "NroResol")) === company.resolutionNumber,
     "La carátula no coincide con el proceso de certificación.",
   );
-  const source = [...xml.matchAll(/<DTE version="1\.0">(<Documento ID="F\d+T(?:39|41)">[\s\S]*?<\/Documento>)\s*<Signature\b[\s\S]*?<\/Signature><\/DTE>/g)];
-  need(source.length === children(child(parseXml(xml), "SetDTE"), "DTE").length && source.length > 0,
-    "El sobre debe conservar la estructura generada para certificación.");
+  const source = [
+    ...xml.matchAll(
+      /<DTE version="1\.0">(<Documento ID="F\d+T(?:39|41)">[\s\S]*?<\/Documento>)\s*<Signature\b[\s\S]*?<\/Signature><\/DTE>/g,
+    ),
+  ];
+  need(
+    source.length === children(child(parseXml(xml), "SetDTE"), "DTE").length && source.length > 0,
+    "El sobre debe conservar la estructura generada para certificación.",
+  );
   const documents = source.map((match) => {
     const original = match[1]!;
     const header = child(parseXml(original), "Encabezado");
     const provider = textOf(header, "RUTProvSW");
-    need(provider !== "" && normalizeRut(provider) === normalizeRut(company.rut), "Proveedor de software ajeno al emisor.");
+    need(
+      provider !== "" && normalizeRut(provider) === normalizeRut(company.rut),
+      "Proveedor de software ajeno al emisor.",
+    );
     const content = original.replace(/<RUTProvSW>[^<]+<\/RUTProvSW>/, "");
-    need(content !== original && !content.includes("<RUTProvSW>"), "Proveedor de software duplicado.");
+    need(
+      content !== original && !content.includes("<RUTProvSW>"),
+      "Proveedor de software duplicado.",
+    );
     const id = parseXml(content).attrs.ID!;
-    const canonical = content.replace("<Documento ", `<Documento xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" `);
-    return el("DTE", [content, "\n", xmlSignature(canonical, `#${id}`, certificate, ` xmlns:xsi="${XSI_NS}"`)], { version: "1.0" });
+    const canonical = content.replace(
+      "<Documento ",
+      `<Documento xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" `,
+    );
+    return el(
+      "DTE",
+      [content, "\n", xmlSignature(canonical, `#${id}`, certificate, ` xmlns:xsi="${XSI_NS}"`)],
+      { version: "1.0" },
+    );
   });
   const result = certificationEnvelope(documents, company, senderRut, certificate, environment);
   await validateCertificationXml(result, "EnvioBOLETA_v11.xsd");
