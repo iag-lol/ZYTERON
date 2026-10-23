@@ -185,6 +185,8 @@ async function handle(request: Request, { params }: { params: Promise<{ path?: s
   });
   const idem = request.headers.get("idempotency-key");
   if (idem && /^[A-Za-z0-9._:-]{8,128}$/.test(idem)) headers.set("idempotency-key", idem);
+  const preparingCertification =
+    request.method === "POST" && path === "/finance/certification/prepare";
   try {
     const result = await fetch(
       `http://127.0.0.1:${process.env.CONTROL_INTERNAL_PORT || "4010"}${target}`,
@@ -196,7 +198,10 @@ async function handle(request: Request, { params }: { params: Promise<{ path?: s
           : undefined,
         cache: "no-store",
         redirect: "error",
-        signal: AbortSignal.timeout(45_000),
+        // Preparing the official set renders and stores every signed XML and PDF.
+        signal: AbortSignal.timeout(
+          preparingCertification ? 180_000 : 45_000,
+        ),
       },
     );
     if (result.ok && request.method === "POST" && path === "/clients") {
@@ -241,7 +246,11 @@ async function handle(request: Request, { params }: { params: Promise<{ path?: s
     return new NextResponse(await result.arrayBuffer(), { status: result.status, headers: out });
   } catch {
     return NextResponse.json(
-      { message: "No fue posible conectar con el servicio administrativo. Vuelve a intentarlo." },
+      {
+        message: preparingCertification
+          ? "No se confirmó el resultado de la preparación. Consulta los procesos existentes antes de volver a reservar folios."
+          : "No fue posible conectar con el servicio administrativo. Vuelve a intentarlo.",
+      },
       { status: 503 },
     );
   }
