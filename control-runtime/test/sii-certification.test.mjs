@@ -1251,7 +1251,7 @@ async function workspaceFixture(options = {}) {
       authenticate: async () => "synthetic-token",
       sendCertificationArtifact: async () => {
         sent++;
-        if (options.failSend) throw Error("Synthetic timeout");
+        if (options.failSend) throw Error(options.failSendMessage ?? "Synthetic timeout");
         return { trackId: "987654", status: "0" };
       },
       getSubmissionStatus: async (...args) => {
@@ -1357,6 +1357,27 @@ test("workspace: recepción incierta bloquea el reenvío y no inventa Track ID",
     () => f.service.recoverReceipt(f.runId, f.id, admin),
     /No se encontró un recibo/,
   );
+});
+test("workspace: conserva códigos de transporte sin secretos ni retransmisiones", async () => {
+  for (const [message, expected] of [
+    ["SII HTTP/1.0 respondió 503; recepción no confirmada.", { httpStatus: 503 }],
+    ["SII HTTP/1.0 sin recepción confirmada (curl 28).", { curlExitCode: 28 }],
+    [
+      "SII certificación: recepción no confirmada (STATUS 7); requiere revisión sin reintento automático.",
+      { siiStatus: "7" },
+    ],
+    ["TOKEN=synthetic-secret <Documento>datos privados</Documento>", {}],
+  ]) {
+    const f = await workspaceFixture({ failSend: true, failSendMessage: message });
+    await assert.rejects(() => f.service.submit(f.runId, f.id, admin), /bloqueado/);
+    assert.equal(f.submission.status, "UNKNOWN");
+    assert.equal(f.submission.trackId, null);
+    assert.deepEqual(f.submission.response.diagnostic, { code: "UPLOAD_UNCONFIRMED", ...expected });
+    assert(!JSON.stringify(f.submission.response).includes("synthetic-secret"));
+    assert(!JSON.stringify(f.submission.response).includes("Documento"));
+    await assert.rejects(() => f.service.submit(f.runId, f.id, admin), /adquirido/);
+    assert.equal(f.sent(), 1);
+  }
 });
 test("workspace: un error de consulta conserva el Track ID y el último estado confirmado", async () => {
   const f = await workspaceFixture({ failQuery: true });

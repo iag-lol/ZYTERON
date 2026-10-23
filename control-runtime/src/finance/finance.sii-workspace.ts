@@ -1107,12 +1107,25 @@ export class SiiCertificationWorkspace {
         detail.run.companyRut,
         `sii-cert-${id}.xml`,
       );
-    } catch {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      const httpStatus = message.match(/SII HTTP\/1\.0 respondió (\d{3})\b/)?.[1];
+      const curlExitCode = message.match(/sin recepción confirmada \(curl (\d+)\)/)?.[1];
+      const siiStatus = message.match(/recepción no confirmada \(STATUS ([A-Z0-9?-]{1,10})\)/)?.[1];
+      const diagnostic = {
+        code: "UPLOAD_UNCONFIRMED",
+        ...(httpStatus ? { httpStatus: Number(httpStatus) } : {}),
+        ...(curlExitCode ? { curlExitCode: Number(curlExitCode) } : {}),
+        ...(siiStatus ? { siiStatus } : {}),
+      };
       await this.repo
         .certificationRpc("finance_complete_sii_certification_submission", {
           p_id: id,
           p_track: null,
-          p_response: { message: "Recepción incierta; revisar en SII antes de reenviar." },
+          p_response: {
+            message: "Recepción incierta; revisar en SII antes de reenviar.",
+            diagnostic,
+          },
           p_unknown: true,
         })
         .catch(() => {});
