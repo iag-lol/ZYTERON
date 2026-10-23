@@ -317,6 +317,14 @@ export function certificationDocumentXml(
     exp = input.type >= 110,
     t = certificationTotals(input),
     refs = input.references ?? [];
+  const textOnlyNote =
+    [56, 61].includes(input.type) &&
+    refs.some((r) => r.code === 1 || r.code === 2) &&
+    t.lines.length === 1 &&
+    t.lines.every((l) => l.price === 0 && l.amount === 0) &&
+    !input.adjustments?.length &&
+    !input.retention &&
+    !input.commissions?.length;
   need(refs.length <= 39, "Demasiadas referencias.");
   if ([56, 61, 111, 112].includes(input.type))
     need(
@@ -464,7 +472,8 @@ export function certificationDocumentXml(
       ...(input.type === 43 ? [el("TpoDocLiq", l.liquidatedType!)] : []),
       ...(l.exempt ? [el("IndExe", 1)] : []),
       el("NmbItem", l.description),
-      ...(l.quantity !== undefined ? [el("QtyItem", l.quantity)] : []),
+      // Una fe de erratas no representa una unidad de mercadería; QtyItem no admite cero.
+      ...(!textOnlyNote && l.quantity !== undefined ? [el("QtyItem", l.quantity)] : []),
       str("UnmdItem", l.unit),
       ...(l.liquidationAmount === undefined && l.price > 0 ? [el("PrcItem", l.price)] : []),
       str("DescuentoPct", l.discountPct),
@@ -563,11 +572,17 @@ export function certificationDocumentXml(
     ].flatMap((part) => [part, "\n"]),
     { ID: id },
   );
-  const canonical = b ? content.replace(
-    `<${root} `,
-    `<${root} xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" `,
-  ) : content;
-  const signature = xmlSignature(canonical, `#${id}`, certificate, b ? ` xmlns:xsi="${XSI_NS}"` : "", false, !b);
+  const canonical = b
+    ? content.replace(`<${root} `, `<${root} xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" `)
+    : content;
+  const signature = xmlSignature(
+    canonical,
+    `#${id}`,
+    certificate,
+    b ? ` xmlns:xsi="${XSI_NS}"` : "",
+    false,
+    !b,
+  );
   return { xml: el("DTE", [content, "\n", signature], { version: "1.0" }), totals: t };
 }
 

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { UnprocessableEntityException } from "@nestjs/common";
+import type { CertificationDocument } from "./finance.sii-certification.js";
 
 export interface OfficialCertificationCase {
   id: string;
@@ -52,6 +53,33 @@ const documentType = (name: string) => {
   };
   return types[value] ?? reject(`Documento del set no reconocido: ${value.slice(0, 100)}.`);
 };
+
+/** Valida condiciones del ejercicio antes de adquirir folios o persistir documentos. */
+export function validateOfficialCaseSemantics(
+  official: OfficialCertificationCase,
+  input: CertificationDocument,
+  target?: CertificationDocument,
+) {
+  if (input.type === 52 && /BODEGAS DE LA EMPRESA/.test(normalized(official.raw))) {
+    if (input.dispatch?.transfer !== 5 || input.dispatch.responsibility !== 3)
+      reject(
+        `El caso ${official.id} requiere traslado interno por cuenta del emisor a otras instalaciones.`,
+      );
+  }
+  if (input.type === 110 && input.export?.service === 4) {
+    if (!input.references?.some((r) => r.type === 813))
+      reject(`El caso ${official.id} requiere referencia al pasaporte del huésped.`);
+  }
+  if (target && [111, 112].includes(input.type)) {
+    for (const line of input.lines) {
+      const original = target.lines.find((l) => l.description === line.description);
+      if (original?.unit && line.unit !== original.unit)
+        reject(
+          `La unidad del ítem de ${official.id} debe coincidir con su documento de referencia.`,
+        );
+    }
+  }
+}
 
 /** Conserva las instrucciones íntegras; no transforma texto ambiguo en montos o referencias comerciales. */
 export function parseOfficialCertificationSet(bytes: Buffer): OfficialCertificationSet {

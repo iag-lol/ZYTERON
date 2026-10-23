@@ -25,7 +25,11 @@ import {
   validateCertificationXml,
   type CertificationDocument,
 } from "./finance.sii-certification.js";
-import { parseOfficialCertificationSet, previewCertificationFolios } from "./finance.sii-set.js";
+import {
+  parseOfficialCertificationSet,
+  previewCertificationFolios,
+  validateOfficialCaseSemantics,
+} from "./finance.sii-set.js";
 import { verifySiiXmlSignatures } from "./finance.sii-signatures.js";
 import {
   certificationGuideBook,
@@ -424,23 +428,55 @@ export class SiiCertificationWorkspace {
       throw new BadRequestException("Falta identidad autenticada para reservar folios.");
     const source = decodeUpload(form.setFile, "Set oficial", 512 * 1024),
       officialSet = parseOfficialCertificationSet(source.bytes);
-    if (form.sectionAttentions && (!form.previousRunId || new Set(form.sectionAttentions).size !== form.sectionAttentions.length ||
-      form.sectionAttentions.some(attention => !officialSet.sections.some(section => section.attention === attention && section.caseIds.length))))
-      throw new BadRequestException("La revisión parcial requiere secciones únicas del set oficial y un proceso anterior.");
-    const sections = form.sectionAttentions ? officialSet.sections.filter(section => form.sectionAttentions!.includes(section.attention)) : officialSet.sections;
-    const selectedIds = new Set(sections.flatMap(section => section.caseIds));
-    const selectedCases = officialSet.cases.filter(caseItem => selectedIds.has(caseItem.id));
-    const set = { ...officialSet, sections, cases: selectedCases,
-      requiredFolios: selectedCases.reduce<Record<string, number>>((counts, item) => { counts[item.type] = (counts[item.type] ?? 0) + 1; return counts; }, {}) };
+    if (
+      form.sectionAttentions &&
+      (!form.previousRunId ||
+        new Set(form.sectionAttentions).size !== form.sectionAttentions.length ||
+        form.sectionAttentions.some(
+          (attention) =>
+            !officialSet.sections.some(
+              (section) => section.attention === attention && section.caseIds.length,
+            ),
+        ))
+    )
+      throw new BadRequestException(
+        "La revisión parcial requiere secciones únicas del set oficial y un proceso anterior.",
+      );
+    const sections = form.sectionAttentions
+      ? officialSet.sections.filter((section) =>
+          form.sectionAttentions!.includes(section.attention),
+        )
+      : officialSet.sections;
+    const selectedIds = new Set(sections.flatMap((section) => section.caseIds));
+    const selectedCases = officialSet.cases.filter((caseItem) => selectedIds.has(caseItem.id));
+    const set = {
+      ...officialSet,
+      sections,
+      cases: selectedCases,
+      requiredFolios: selectedCases.reduce<Record<string, number>>((counts, item) => {
+        counts[item.type] = (counts[item.type] ?? 0) + 1;
+        return counts;
+      }, {}),
+    };
     const existing = form.previousRunId
       ? await this.repo.get<Row>("sii_certification_runs", form.runId)
-      : await this.repo.findOne<Row>("sii_certification_runs", { companyRut: company.rut, setSha256: set.sha256 });
+      : await this.repo.findOne<Row>("sii_certification_runs", {
+          companyRut: company.rut,
+          setSha256: set.sha256,
+        });
     if (form.previousRunId) {
       const previous = await this.repo.get<Row>("sii_certification_runs", form.previousRunId);
-      if (!previous || previous.companyRut !== company.rut || previous.setSha256 !== set.sha256 ||
-        form.previousRunId === form.runId || !form.revisionReason ||
-        (form.bookNotificationBase ?? 1) <= (previous.plan.request.bookNotificationBase ?? 1) + 2)
-        throw new ConflictException("La revisión requiere proceso anterior del mismo set, motivo y folios de notificación nuevos.");
+      if (
+        !previous ||
+        previous.companyRut !== company.rut ||
+        previous.setSha256 !== set.sha256 ||
+        form.previousRunId === form.runId ||
+        !form.revisionReason ||
+        (form.bookNotificationBase ?? 1) <= (previous.plan.request.bookNotificationBase ?? 1) + 2
+      )
+        throw new ConflictException(
+          "La revisión requiere proceso anterior del mismo set, motivo y folios de notificación nuevos.",
+        );
     }
     const requested = JSON.parse(JSON.stringify({ ...form, setFile: { sha256: set.sha256 } }));
     if (existing) {
@@ -575,6 +611,7 @@ export class SiiCertificationWorkspace {
           ...(additionalReferences ?? []),
         ],
       };
+      validateOfficialCaseSemantics(official, input, target?.input);
       const built = certificationDocumentXml(input, caffiles.get(a.id)!, certificate);
       documents.push({ input, ...built, folioId: f.id });
     }

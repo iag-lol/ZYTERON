@@ -28,6 +28,7 @@ import { verifySiiXmlSignatures } from "../dist/finance/finance.sii-signatures.j
 import {
   parseOfficialCertificationSet,
   previewCertificationFolios,
+  validateOfficialCaseSemantics,
 } from "../dist/finance/finance.sii-set.js";
 import { renderPrintedDte } from "../dist/finance/finance.dte-print.js";
 import { DteSchemaValidator, SiiDirectDteProvider } from "../dist/finance/finance.dte-providers.js";
@@ -546,7 +547,7 @@ for (const type of [33, 34, 39, 41, 43, 46, 52, 56, 61, 110, 111, 112])
     assert.deepEqual(verified.map((r) => r.id).sort(), [`F1T${type}`, "SetDoc"].sort());
     const signatureValue = built.xml.match(/<SignatureValue>([^<]+)<\/SignatureValue>/)[1];
     const info = built.xml.match(/<SignedInfo>([\s\S]+?)<\/SignedInfo>/)[1];
-    const canonical = `<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#"${[39,41].includes(type) ? ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' : ""}>${info}</SignedInfo>`;
+    const canonical = `<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#"${[39, 41].includes(type) ? ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' : ""}>${info}</SignedInfo>`;
     assert.equal(
       verify(
         "RSA-SHA1",
@@ -650,8 +651,23 @@ test("exportación conserva recargo fraccionario y descuento compatible con el X
   );
   await validateCertificationXml(envelope, "EnvioDTE_v10.xsd");
   assert.equal(verifySiiXmlSignatures(envelope, certificate.certificate.fingerprint256).length, 2);
-  const record = {documentTypeCode:110,folio:input.folio,environment:"CERTIFICATION",status:"SIGNED",emitterRut:input.company.rut,receiverRut:input.receiver.rut,issueDate:input.date,totalAmount:built.totals.total};
-  const pdf = await renderPrintedDte(Buffer.from(built.xml,"latin1"),Buffer.from(envelope,"latin1"),record,"OFICINA SINTÉTICA QA","TRIBUTARY");
+  const record = {
+    documentTypeCode: 110,
+    folio: input.folio,
+    environment: "CERTIFICATION",
+    status: "SIGNED",
+    emitterRut: input.company.rut,
+    receiverRut: input.receiver.rut,
+    issueDate: input.date,
+    totalAmount: built.totals.total,
+  };
+  const pdf = await renderPrintedDte(
+    Buffer.from(built.xml, "latin1"),
+    Buffer.from(envelope, "latin1"),
+    record,
+    "OFICINA SINTÉTICA QA",
+    "TRIBUTARY",
+  );
   assert((await PDFDocument.load(pdf)).getPageCount() > 0);
 });
 test("exportación incluye pesos, tara, marcas e identificación de contenedor", async () => {
@@ -774,6 +790,44 @@ test("producción, CAF ajeno, folio inválido y referencias ausentes bloqueados"
     certificationDocumentXml(input, { ...caf, companyRut: "22222222-2" }, certificate),
   );
   assert.throws(() => certificationEnvelope([], company, "33333333-3", certificate, "PRODUCTION"));
+});
+test("fe de erratas y su anulación no inventan cantidades; devolución conserva cantidades", async () => {
+  for (const type of [61, 56]) {
+    const f = fixture(type, {
+      lines: [{ description: "CORRIGE GIRO DEL RECEPTOR", quantity: 1, unitPrice: 0 }],
+      references: [
+        {
+          type: type === 61 ? 33 : 61,
+          folio: "1",
+          date: "2026-01-02",
+          code: type === 61 ? 2 : 1,
+          reason: "Corrección de texto",
+        },
+      ],
+    });
+    const built = certificationDocumentXml(f.input, f.caf, certificate);
+    const line = child(child(parseXml(built.xml), "Documento"), "Detalle");
+    assert.equal(textOf(line, "QtyItem"), "");
+    assert.equal(textOf(line, "PrcItem"), "");
+    assert.equal(textOf(line, "MontoItem"), "0");
+    assert.equal(built.totals.total, 0);
+    const envelope = certificationEnvelope(
+      [built.xml],
+      company,
+      "33333333-3",
+      certificate,
+      "CERTIFICATION",
+    );
+    await validateCertificationXml(envelope, "EnvioDTE_v10.xsd");
+    assert.equal(verifySiiXmlSignatures(envelope).length, 2);
+  }
+  const f = fixture(61, {
+    lines: [{ description: "Devolución QA", quantity: 3, unitPrice: 2000 }],
+    references: [{ type: 33, folio: "1", date: "2026-01-02", code: 3, reason: "Devolución" }],
+  });
+  const built = certificationDocumentXml(f.input, f.caf, certificate);
+  assert.match(built.xml, /<QtyItem>3<\/QtyItem>/);
+  assert.equal(built.totals.total, 7140);
 });
 test("traslado interno con receptor externo y mezcla de boletas/DTE rechazados", () => {
   const { input, caf } = fixture(52, {
@@ -1064,6 +1118,40 @@ test("set oficial: preserva texto, identifica referencias por caso y previsualiz
     /ausente o posterior/,
   );
 });
+test("prevalidación del set detecta despacho interno, unidad de devolución y pasaporte ausentes", () => {
+  const official = {
+    id: "1234567-1",
+    raw: "MOTIVO: TRASLADO DE MATERIALES ENTRE BODEGAS DE LA EMPRESA",
+  };
+  const guide = fixture(52, { dispatch: { transfer: 5, responsibility: 1 } }).input;
+  assert.throws(() => validateOfficialCaseSemantics(official, guide), /cuenta del emisor/);
+  validateOfficialCaseSemantics(official, {
+    ...guide,
+    dispatch: { ...guide.dispatch, responsibility: 3 },
+  });
+  const original = fixture(110, {
+    lines: [{ description: "PRODUCTO QA", quantity: 5, unitPrice: 10, unit: "U" }],
+  }).input;
+  const note = {
+    ...original,
+    type: 112,
+    lines: [{ description: "PRODUCTO QA", quantity: 2, unitPrice: 10 }],
+  };
+  assert.throws(() => validateOfficialCaseSemantics(official, note, original), /unidad/);
+  validateOfficialCaseSemantics(
+    official,
+    { ...note, lines: [{ ...note.lines[0], unit: "U" }] },
+    original,
+  );
+  const hotel = { ...original, export: { ...original.export, service: 4 }, references: [] };
+  assert.throws(() => validateOfficialCaseSemantics(official, hotel), /pasaporte/);
+  validateOfficialCaseSemantics(official, {
+    ...hotel,
+    references: [
+      { type: 813, folio: "QA-SIMULADO", date: "2026-01-02", reason: "Pasaporte simulado" },
+    ],
+  });
+});
 
 async function workspaceFixture(options = {}) {
   const { SiiCertificationWorkspace } = await import("../dist/finance/finance.sii-workspace.js"),
@@ -1329,45 +1417,83 @@ test("firma DTE aislada mantiene digest, referencia y certificado aun con sobre 
   const built = certificationDocumentXml(input, caf, certificate);
   assert.equal(verifySiiXmlSignatures(built.xml, certificate.certificate.fingerprint256).length, 1);
   for (const changed of [
-    built.xml.replace('<MntTotal>2380', '<MntTotal>2381'),
-    built.xml.replace('Ítem sintético', 'Otro sintético'),
+    built.xml.replace("<MntTotal>2380", "<MntTotal>2381"),
+    built.xml.replace("Ítem sintético", "Otro sintético"),
     built.xml.replace('URI="#F1T33"', 'URI="https://example.invalid/document.xml"'),
-    built.xml.replace('http://www.w3.org/2000/09/xmldsig#sha1', 'http://www.w3.org/2001/04/xmlenc#sha256'),
+    built.xml.replace(
+      "http://www.w3.org/2000/09/xmldsig#sha1",
+      "http://www.w3.org/2001/04/xmlenc#sha256",
+    ),
   ]) {
-    const outer = certificationEnvelope([changed], company, '33333333-3', certificate, 'CERTIFICATION');
+    const outer = certificationEnvelope(
+      [changed],
+      company,
+      "33333333-3",
+      certificate,
+      "CERTIFICATION",
+    );
     assert.throws(() => verifySiiXmlSignatures(outer, certificate.certificate.fingerprint256));
   }
 });
 
-test('revisión parcial no permite secciones inventadas, duplicadas ni proceso inicial incompleto', async () => {
-  const f=await workspaceFixture();
-  const source='SET BASICO - NUMERO DE ATENCION: 1234567\n\nCASO 1234567-1\n==============\nDOCUMENTO\tFACTURA ELECTRONICA\nITEM\tCANTIDAD\tPRECIO UNITARIO\nServicio QA\t1\t1000\n';
-  const form={runId:'66666666-6666-4666-8666-666666666666',date:'2026-10-23',reviewed:true,setFile:{fileName:'set-qa.txt',contentBase64:Buffer.from(source).toString('base64')},cases:[{caseId:'1234567-1',receiver:fixture().input.receiver,lines:[{description:'Servicio QA',quantity:1,unitPrice:1000,exempt:false}]}]};
-  for(const extra of [{sectionAttentions:['1234567']},{previousRunId:f.runId,sectionAttentions:['9999999']},{previousRunId:f.runId,sectionAttentions:['1234567','1234567']}])
-    await assert.rejects(()=>f.service.prepare({...form,...extra},admin),/secciones únicas del set oficial/);
-  assert.equal(f.sent(),0);
-  assert.equal(f.rows.sii_certification_runs.length,1);
+test("revisión parcial no permite secciones inventadas, duplicadas ni proceso inicial incompleto", async () => {
+  const f = await workspaceFixture();
+  const source =
+    "SET BASICO - NUMERO DE ATENCION: 1234567\n\nCASO 1234567-1\n==============\nDOCUMENTO\tFACTURA ELECTRONICA\nITEM\tCANTIDAD\tPRECIO UNITARIO\nServicio QA\t1\t1000\n";
+  const form = {
+    runId: "66666666-6666-4666-8666-666666666666",
+    date: "2026-10-23",
+    reviewed: true,
+    setFile: { fileName: "set-qa.txt", contentBase64: Buffer.from(source).toString("base64") },
+    cases: [
+      {
+        caseId: "1234567-1",
+        receiver: fixture().input.receiver,
+        lines: [{ description: "Servicio QA", quantity: 1, unitPrice: 1000, exempt: false }],
+      },
+    ],
+  };
+  for (const extra of [
+    { sectionAttentions: ["1234567"] },
+    { previousRunId: f.runId, sectionAttentions: ["9999999"] },
+    { previousRunId: f.runId, sectionAttentions: ["1234567", "1234567"] },
+  ])
+    await assert.rejects(
+      () => f.service.prepare({ ...form, ...extra }, admin),
+      /secciones únicas del set oficial/,
+    );
+  assert.equal(f.sent(), 0);
+  assert.equal(f.rows.sii_certification_runs.length, 1);
 });
 
-test('retención de factura de compra y notas vincula sólo partidas afectas al impuesto del encabezado', async () => {
+test("retención de factura de compra y notas vincula sólo partidas afectas al impuesto del encabezado", async () => {
   for (const type of [46, 56, 61]) {
     const f = fixture(type, {
       retention: { code: 15, rate: 19 },
       lines: [
-        { description: 'Servicio afecto QA', quantity: 2, unitPrice: 1000, exempt: false },
-        { description: 'Servicio exento QA', quantity: 1, unitPrice: 500, exempt: true },
+        { description: "Servicio afecto QA", quantity: 2, unitPrice: 1000, exempt: false },
+        { description: "Servicio exento QA", quantity: 1, unitPrice: 500, exempt: true },
       ],
-      ...([56,61].includes(type) ? { references: [{ type: 46, folio: '1', date: '2026-01-02', code: 3, reason: 'Ajuste QA' }] } : {}),
+      ...([56, 61].includes(type)
+        ? {
+            references: [
+              { type: 46, folio: "1", date: "2026-01-02", code: 3, reason: "Ajuste QA" },
+            ],
+          }
+        : {}),
     });
     const built = certificationDocumentXml(f.input, f.caf, certificate);
-    const doc = child(parseXml(built.xml), 'Documento');
-    const lines = doc.children.filter(node => node.name === 'Detalle');
-    assert.equal(textOf(lines[0], 'CodImpAdic'), '15');
-    assert.equal(textOf(lines[1], 'CodImpAdic'), '');
-    const totals = child(child(doc, 'Encabezado'), 'Totales');
-    assert.equal(textOf(child(totals, 'ImptoReten'), 'TipoImp'), '15');
-    assert.equal(textOf(child(totals, 'ImptoReten'), 'MontoImp'), '380');
-    assert.equal(textOf(totals, 'MntTotal'), '2500');
-    await validateCertificationXml(certificationEnvelope([built.xml], company, company.rut, certificate, 'CERTIFICATION'), 'EnvioDTE_v10.xsd');
+    const doc = child(parseXml(built.xml), "Documento");
+    const lines = doc.children.filter((node) => node.name === "Detalle");
+    assert.equal(textOf(lines[0], "CodImpAdic"), "15");
+    assert.equal(textOf(lines[1], "CodImpAdic"), "");
+    const totals = child(child(doc, "Encabezado"), "Totales");
+    assert.equal(textOf(child(totals, "ImptoReten"), "TipoImp"), "15");
+    assert.equal(textOf(child(totals, "ImptoReten"), "MontoImp"), "380");
+    assert.equal(textOf(totals, "MntTotal"), "2500");
+    await validateCertificationXml(
+      certificationEnvelope([built.xml], company, company.rut, certificate, "CERTIFICATION"),
+      "EnvioDTE_v10.xsd",
+    );
   }
 });
