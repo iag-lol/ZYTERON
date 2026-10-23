@@ -448,7 +448,7 @@ export function certificationDocumentXml(
       el("NmbItem", l.description),
       ...(l.quantity !== undefined ? [el("QtyItem", l.quantity)] : []),
       str("UnmdItem", l.unit),
-      ...(l.liquidationAmount === undefined ? [el("PrcItem", l.price)] : []),
+      ...(l.liquidationAmount === undefined && l.price > 0 ? [el("PrcItem", l.price)] : []),
       str("DescuentoPct", l.discountPct),
       ...(l.discount ? [el("DescuentoMonto", l.discount)] : []),
       str("RecargoPct", l.surchargePct),

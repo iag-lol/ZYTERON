@@ -624,6 +624,28 @@ test("factura de compra retiene el IVA sin sumar la retención al cobro", () => 
   assert.equal(t.retained, 380);
   assert.equal(t.total, 2000);
 });
+test("correcciones de texto y traslados sin valor omiten precio cero y cumplen XSD", async () => {
+  for (const type of [61, 56, 52]) {
+    const overrides = {
+      lines: [{ description: "CORRIGE GIRO", quantity: 1, unitPrice: 0 }],
+      ...(type === 52
+        ? { receiver: { ...company }, dispatch: {
+            transfer: 5, responsibility: 1,
+            destinationAddress: company.address, destinationCommune: company.commune,
+          } }
+        : { references: [{ type: type === 61 ? 33 : 61, folio: "1", date: "2026-01-02",
+            code: type === 61 ? 2 : 1, reason: "CORRIGE GIRO" }] }),
+    };
+    const { input, caf } = fixture(type, overrides);
+    const built = certificationDocumentXml(input, caf, certificate);
+    assert.equal(built.totals.total, 0);
+    assert(!built.xml.includes("<PrcItem>"));
+    assert(built.xml.includes("<MontoItem>0</MontoItem>"));
+    const envelope = certificationEnvelope([built.xml], company, "33333333-3", certificate, "CERTIFICATION");
+    await validateCertificationXml(envelope, "EnvioDTE_v10.xsd");
+    assert.equal(verifySiiXmlSignatures(envelope, certificate.certificate.fingerprint256).length, 2);
+  }
+});
 test("producción, CAF ajeno, folio inválido y referencias ausentes bloqueados", () => {
   const { input, caf } = fixture();
   for (const patch of [
