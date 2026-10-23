@@ -1,6 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { spawn, spawnSync } from "node:child_process";
-import type { Writable } from "node:stream";
+import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { ServiceUnavailableException, UnprocessableEntityException } from "@nestjs/common";
 import { formatRut, validRut } from "./finance.util.js";
 
@@ -25,6 +27,8 @@ export function siiUploadBody(xml: string, senderRut: string, companyRut: string
   const body = Buffer.concat(parts);
   return {
     body,
+    fields,
+    file: { bytes: Buffer.from(xml, "latin1"), name: fileName },
     headers: {
       "Content-Type": `multipart/form-data; boundary=${boundary}`,
       "Content-Length": String(body.length),
@@ -40,38 +44,45 @@ export function siiHttp10Available() {
   return spawnSync("curl", ["--version"], { timeout: 2000, stdio: "ignore" }).status === 0;
 }
 
-/** HTTP/1.0 del protocolo oficial. Token y XML viajan por pipes privados, nunca por argumentos ni archivos temporales. */
+/** curl calcula el multipart y su longitud desde un XML privado; el token sólo viaja por stdin. */
 export async function siiHttp10Upload(host: string, token: string, upload: ReturnType<typeof siiUploadBody>) {
   if (!["maullin.sii.cl", "palena.sii.cl"].includes(host) || !/^[A-Za-z0-9_-]{8,500}$/.test(token))
     throw new UnprocessableEntityException("Destino o autenticación SII inválidos.");
-  const args = ["--config", "-", "--silent", "--show-error", "--http1.0", "--proto", "=https",
-    "--connect-timeout", "15", "--max-time", "60", "--request", "POST", "--data-binary", "@/dev/fd/3",
-    "--write-out", "\n%{http_code}", "--url", `https://${host}/cgi_dte/UPL/DTEUpload`];
-  const config = Object.entries({ ...upload.headers, Cookie: `TOKEN=${token}` })
-    .map(([name, value]) => `header = ${JSON.stringify(`${name}: ${value}`)}`).join("\n") + "\n";
-  const raw = await new Promise<Buffer>((resolve, reject) => {
-    const child = spawn("curl", args, { stdio: ["pipe", "pipe", "pipe", "pipe"], timeout: 65000 });
-    const chunks: Buffer[] = [];
-    let bytes = 0, overflow = false;
-    child.stdout!.on("data", (data: Buffer) => {
-      bytes += data.length;
-      if (bytes > 1024 * 1024) { overflow = true; child.kill(); }
-      else chunks.push(data);
+  const directory = await mkdtemp(join(tmpdir(), "sii-upload-"));
+  try {
+    const file = join(directory, "document.xml");
+    await writeFile(file, upload.file.bytes, { mode: 0o600, flag: "wx" });
+    const args = ["--config", "-", "--silent", "--show-error", "--http1.0", "--proto", "=https",
+      "--connect-timeout", "15", "--max-time", "60", "--request", "POST",
+      ...Object.entries(upload.fields).flatMap(([name, value]) => ["--form", `${name}=${value}`]),
+      "--form", `archivo=@${file};type=text/xml;filename=${upload.file.name}`,
+      "--write-out", "\n%{http_code}", "--url", `https://${host}/cgi_dte/UPL/DTEUpload`];
+    const config = Object.entries({ ...upload.headers, Cookie: `TOKEN=${token}` })
+      .filter(([name]) => !["Content-Type", "Content-Length"].includes(name))
+      .map(([name, value]) => `header = ${JSON.stringify(`${name}: ${value}`)}`).join("\n") + "\n";
+    const raw = await new Promise<Buffer>((resolve, reject) => {
+      const child = spawn("curl", args, { stdio: ["pipe", "pipe", "pipe"], timeout: 65000 });
+      const chunks: Buffer[] = [];
+      let bytes = 0, overflow = false;
+      child.stdout!.on("data", (data: Buffer) => {
+        bytes += data.length;
+        if (bytes > 1024 * 1024) { overflow = true; child.kill(); }
+        else chunks.push(data);
+      });
+      child.stderr!.resume();
+      child.on("error", () => reject(new ServiceUnavailableException("Transporte HTTP/1.0 SII no disponible; recepción no confirmada.")));
+      child.on("close", code => {
+        if (overflow || code !== 0) reject(new ServiceUnavailableException(`SII HTTP/1.0 sin recepción confirmada (${overflow ? "respuesta excesiva" : `curl ${code ?? "interrumpido"}`}).`));
+        else resolve(Buffer.concat(chunks));
+      });
+      child.stdin!.on("error", () => {});
+      child.stdin!.end(config);
     });
-    child.stderr!.resume();
-    child.on("error", () => reject(new ServiceUnavailableException("Transporte HTTP/1.0 SII no disponible; recepción no confirmada.")));
-    child.on("close", code => {
-      if (overflow || code !== 0) reject(new ServiceUnavailableException(`SII HTTP/1.0 sin recepción confirmada (${overflow ? "respuesta excesiva" : `curl ${code ?? "interrumpido"}`}).`));
-      else resolve(Buffer.concat(chunks));
-    });
-    child.stdin!.on("error", () => {});
-    const payload = child.stdio[3] as Writable;
-    payload.on("error", () => {});
-    child.stdin!.end(config);
-    payload.end(upload.body);
-  });
-  const separator = raw.lastIndexOf(10), status = Number(raw.subarray(separator + 1).toString("ascii"));
-  if (separator < 0 || status < 200 || status >= 300)
-    throw new ServiceUnavailableException(`SII HTTP/1.0 respondió ${status || "sin estado"}; recepción no confirmada.`);
-  return raw.subarray(0, separator).toString("latin1");
+    const separator = raw.lastIndexOf(10), status = Number(raw.subarray(separator + 1).toString("ascii"));
+    if (separator < 0 || status < 200 || status >= 300)
+      throw new ServiceUnavailableException(`SII HTTP/1.0 respondió ${status || "sin estado"}; recepción no confirmada.`);
+    return raw.subarray(0, separator).toString("latin1");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 }

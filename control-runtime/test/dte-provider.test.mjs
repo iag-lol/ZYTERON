@@ -111,3 +111,50 @@ test('HTTP 1.0 sólo transmite al SII con token sin controles ni destinos arbitr
   await assert.rejects(()=>siiHttp10Upload('example.invalid','synthetic-token',body),/Destino o autenticación/);
   await assert.rejects(()=>siiHttp10Upload('maullin.sii.cl','invalid\r\nInjected: yes',body),/Destino o autenticación/);
 });
+
+test('carga curl usa XML privado, limpia el temporal y no repite un transporte fallido', async () => {
+  const { mkdtemp, writeFile, rm, access } = await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const { siiHttp10Upload, siiUploadBody } = await import('../dist/finance/finance.sii-upload.js');
+  const directory = await mkdtemp(join(tmpdir(), 'sii-transport-test-'));
+  const capture = join(directory, 'captured.json');
+  const oldPath = process.env.PATH;
+  const oldCapture = process.env.SII_TEST_CAPTURE;
+  const oldFailure = process.env.SII_TEST_FAILURE;
+  try {
+    await writeFile(join(directory, 'curl'), `#!/usr/bin/env node
+const fs=require('node:fs'),path=require('node:path');let config='';process.stdin.setEncoding('utf8');process.stdin.on('data',b=>config+=b);process.stdin.on('end',()=>{
+ const args=process.argv.slice(2),part=args.find(x=>x.startsWith('archivo=@')),file=part.slice(9).split(';')[0];
+ fs.writeFileSync(process.env.SII_TEST_CAPTURE,JSON.stringify({attempt:fs.existsSync(process.env.SII_TEST_CAPTURE)?JSON.parse(fs.readFileSync(process.env.SII_TEST_CAPTURE,'utf8')).attempt+1:1,args,config,file,xml:fs.readFileSync(file).toString('base64'),mode:fs.statSync(file).mode&511,directoryMode:fs.statSync(path.dirname(file)).mode&511}),{mode:384});
+ if(process.env.SII_TEST_FAILURE==='1')process.exit(28);process.stdout.write('<RECEPCIONDTE><STATUS>0</STATUS><TRACKID>123456</TRACKID></RECEPCIONDTE>\\n200');
+});\n`, { mode: 0o700 });
+    process.env.PATH = `${directory}:${oldPath}`;
+    process.env.SII_TEST_CAPTURE = capture;
+    delete process.env.SII_TEST_FAILURE;
+    const xml = '<?xml version="1.0" encoding="ISO-8859-1"?><DTE>áñ</DTE>';
+    const body = siiUploadBody(xml, '76086428-5', '76086428-5', 'envio.xml');
+    assert.match(await siiHttp10Upload('maullin.sii.cl', 'synthetic-token', body), /<TRACKID>123456/);
+    const sent = JSON.parse(await readFile(capture, 'utf8'));
+    assert.equal(Buffer.from(sent.xml, 'base64').toString('latin1'), xml);
+    assert.equal(sent.mode, 0o600);
+    assert.equal(sent.attempt, 1);
+    assert.equal(sent.directoryMode & 0o077, 0);
+    assert.ok(sent.args.includes('--http1.0'));
+    assert.ok(sent.args.includes('rutSender=76086428'));
+    assert.ok(!sent.args.some(value => value.includes('synthetic-token') || value.includes('<DTE>')));
+    assert.match(sent.config, /Cookie: TOKEN=synthetic-token/);
+    assert.doesNotMatch(sent.config, /Content-Length|Content-Type/);
+    await assert.rejects(() => access(sent.file));
+    process.env.SII_TEST_FAILURE = '1';
+    await assert.rejects(() => siiHttp10Upload('maullin.sii.cl', 'synthetic-token', body), /curl 28/);
+    const failed = JSON.parse(await readFile(capture, 'utf8'));
+    assert.equal(failed.attempt, 2);
+    await assert.rejects(() => access(failed.file));
+  } finally {
+    if(oldPath===undefined)delete process.env.PATH;else process.env.PATH=oldPath;
+    if(oldCapture===undefined)delete process.env.SII_TEST_CAPTURE;else process.env.SII_TEST_CAPTURE=oldCapture;
+    if(oldFailure===undefined)delete process.env.SII_TEST_FAILURE;else process.env.SII_TEST_FAILURE=oldFailure;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
