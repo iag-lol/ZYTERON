@@ -76,7 +76,10 @@ const privateHtmlRoutes = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   agentRules: false,
+  // Next.js y la API comparten los 512 MB del servicio en Render.
+  cacheMaxMemorySize: 8 * 1024 * 1024,
   experimental: {
+    preloadEntriesOnStart: false,
     optimizePackageImports: ["lucide-react"],
   },
   images: {

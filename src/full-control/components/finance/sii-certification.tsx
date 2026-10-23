@@ -744,21 +744,21 @@ export function SiiCertification() {
     >({});
   const [draftVersion, setDraftVersion] = useState(0),
     [exchangeId, setExchangeId] = useState(1);
-  const [clientOptions, setClientOptions] = useState<Array<{ id: string; name: string }>>([]);
+  const clients = useLoad(
+    () =>
+      financeApi.get<Array<{ id: string; name: string; complete: boolean }>>(
+        role,
+        "/client-options",
+      ),
+    [role],
+  );
+  const clientOptions = clients.data ?? [];
   const invalidateRequests = useCallback(() => {
     sequence.current++;
   }, []);
   useEffect(() => {
     alive.current = true;
-    let cancelled = false;
-    void financeApi
-      .get<Array<{ id: string; name: string }>>(role, "/client-options")
-      .then((value) => {
-        if (!cancelled) setClientOptions(value);
-      })
-      .catch(() => {});
     return () => {
-      cancelled = true;
       alive.current = false;
       invalidateRequests();
     };
@@ -992,7 +992,7 @@ export function SiiCertification() {
                   <Field label="Usar datos de un cliente">
                     <select
                       defaultValue=""
-                      disabled={action.busy}
+                      disabled={action.busy || clients.loading || Boolean(clients.error)}
                       key={selected.id}
                       onChange={(e) => {
                         const id = e.target.value;
@@ -1015,14 +1015,29 @@ export function SiiCertification() {
                         });
                       }}
                     >
-                      <option value="">Seleccionar cliente</option>
+                      <option value="">
+                        {clients.loading ? "Cargando clientes…" : "Seleccionar cliente"}
+                      </option>
                       {clientOptions.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.name}
+                          {c.complete ? "" : " · datos tributarios incompletos"}
                         </option>
                       ))}
                     </select>
                   </Field>
+                  {clients.error ? (
+                    <div role="alert">
+                      <p>No fue posible cargar los clientes: {clients.error}</p>
+                      <button
+                        className="fx-btn"
+                        disabled={clients.loading}
+                        onClick={() => void clients.reload()}
+                      >
+                        Reintentar clientes
+                      </button>
+                    </div>
+                  ) : null}
                   <button
                     className="fx-btn"
                     onClick={() => {

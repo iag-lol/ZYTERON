@@ -1,8 +1,12 @@
 # Certificación SII
 
-## Estado verificado al 21-10-2026
+## Estado verificado al 22-10-2026
 
-La versión publicada es `8e53aa0`. El servicio de Zyteron responde y conserva `CERTIFICATION`, proveedor `SII_DIRECT` y autorización de producción desactivada. La postulación y el catálogo de documentos no habilitan emisión real.
+La versión base comprobada en GitHub y Render es `12f308f`. Conserva `CERTIFICATION`, proveedor `SII_DIRECT` y autorización de producción desactivada. Las tres migraciones de emisión ordinaria se instalaron el 22-10-2026 junto con la corrección de la vista dependiente de folios, publicadas en `26df02b`. La postulación y el catálogo de documentos no habilitan emisión real.
+
+El 22-10-2026 a las 22:08 Render registró una caída por agotamiento del heap de JavaScript; el proceso reinició y el módulo de certificación volvió a responder. El ajuste de esta revisión limita la caché de Next.js a 8 MB, desactiva la precarga de todas las páginas y asigna 320 MB al heap del proceso que comparte Next.js y la API. El servicio conserva su límite de 512 MB. La comprobación de corta duración posterior a un despliegue no descarta crecimiento sostenido de memoria.
+
+La importación en la web reconoce los 32 casos oficiales y sus folios candidatos sin reservarlos. La consulta actual del maestro devuelve cinco clientes, todos con ficha tributaria incompleta. El selector muestra el fallo de carga y permite reintentar; una petición fallida no se presenta como una lista vacía. Completar el set requiere receptores reales distintos, sus datos fiscales y los antecedentes particulares de guías, exportaciones y liquidaciones.
 
 La certificación de boletas tiene V°B° del SII. El sobre `0263014070` registra cinco boletas aceptadas, sin rechazos ni reparos. El RCOF `0263014112` figura aceptado con reparos: código 250 por la eliminación de la obligación de RVD desde agosto de 2022. La revisión oficial del set es `SOK`, proceso `set5142242`. Los cinco folios tipo 39 permanecen utilizados; no se reutilizan para pruebas de integración.
 
@@ -12,7 +16,7 @@ El set general de DTE contiene 32 casos, con huella `7a4c7c5d7cc900a30eadf1a34d6
 
 La oficina verificada es PROVIDENCIA; está configurada en el servidor. Los Acteco registrados son 620200 y 620900.
 
-## Alcance del código pendiente de instalación
+## Alcance del código instalado
 
 - XML, firmas, sobre específico y PDF de boleta afecta 39 y exenta 41. Los sobres de boletas y facturas permanecen separados.
 - Borradores para clientes identificados por su RUT real, con medio de pago declarado editable antes de emitir. El medio declarado no registra pagos ni modifica saldos. Se incluye en el XML y la representación impresa. Su cambio invalida una aprobación pendiente.
@@ -36,7 +40,9 @@ La compatibilidad con el esquema anterior completa `document_type` e `idempotenc
 
 El campo `folio` se amplía a `bigint` para admitir los diez dígitos del formato SII. La vista `finance_portal_invoices`, dependiente de esa columna, se reconstruye dentro de la transacción con su definición vigente, propietario, permisos, filtro por cliente y opciones `security_invoker` y `security_barrier`. Los permisos, metadatos o dependencias no revisados detienen la operación; cualquier diferencia al restaurar revierte la transacción. La instalación no reserva, consume, libera ni anula folios existentes.
 
-## Plan de instalación sujeto a aprobación
+## Instalación aplicada y verificada
+
+La instalación del 22-10-2026 a las 08:24 tiene resultado `INSTALLED_VERIFIED`; la verificación posterior devuelve `ALREADY_INSTALLED_VERIFIED`, sin cambios. La corrección de la vista dependiente conserva su consulta, permisos y opciones de seguridad. Las huellas de folios y configuración permanecieron iguales; no hubo documentos ordinarios ni nuevos envíos. El procedimiento aplicado fue:
 
 1. Verificar el proyecto `bwybwrxrbzjkwpxhpkcr`, empresa 78398774-0, ambiente de certificación, autorización productiva desactivada y huella exacta de la función de reserva vigente. Si aparecen documentos ordinarios o cambia la base comprobada, detener la instalación para revisar el alcance.
 2. Aplicar en una sola transacción únicamente:
@@ -44,7 +50,7 @@ El campo `folio` se amplía a `bigint` para admitir los diez dígitos del format
    - `20261021201120_boleta_payment_metadata.sql`.
    - `20261021202723_finance_dte_compatibility.sql`.
 3. Comprobar fuentes de las funciones, RLS, privilegios, triggers y tipos. Comparar las huellas de configuración y de todos los folios antes y después; deben permanecer idénticas. Ante cualquier diferencia, revertir la transacción.
-4. Publicar y desplegar el commit revisado. Verificar el SHA efectivo y la salud del servicio, después revisar en navegador los controles nuevos sin crear documentos comerciales.
+4. Publicar y desplegar `26df02b`. Verificar el SHA efectivo y la salud del servicio, después revisar en navegador los controles nuevos sin crear documentos comerciales.
 5. Mantener desactivados producción, emisión real y consulta pública de documentos reales. La instalación no autoriza CAF adicionales, envíos de prueba nuevos ni la Declaración de Cumplimiento.
 
 El historial de migraciones del proyecto no acredita las aplicaciones manuales anteriores. No procede ejecutar un `db push` general ni marcar migraciones históricas como aplicadas sin conciliación del historial. El manifiesto de instalación registra las huellas de los tres SQL revisados.
