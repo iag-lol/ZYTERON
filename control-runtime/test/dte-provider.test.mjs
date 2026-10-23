@@ -65,3 +65,35 @@ test('la preparación global muestra folios y tipo 33 pendientes aunque no haya 
   assert.equal(ready.canIssue, false);
   for (const key of ['persistence', 'document_type', 'folios', 'certificate_registry']) assert.equal(ready.requirements.find(r => r.key === key).satisfied, false);
 });
+
+test('consulta todos los tipos del sobre y conserva los rechazos posteriores al primero', async () => {
+  const provider = new SiiDirectDteProvider({}, schema);
+  provider.authenticate = async () => 'synthetic-token';
+  provider.soap = async () => parseXml('<RESPUESTA><RESP_HDR><ESTADO>EPR</ESTADO></RESP_HDR><RESP_BODY><TIPO_DOCTO>33</TIPO_DOCTO><INFORMADOS>4</INFORMADOS><ACEPTADOS>4</ACEPTADOS></RESP_BODY><RESP_BODY><TIPO_DOCTO>56</TIPO_DOCTO><INFORMADOS>1</INFORMADOS><RECHAZADOS>1</RECHAZADOS></RESP_BODY><RESP_BODY><TIPO_DOCTO>61</TIPO_DOCTO><INFORMADOS>3</INFORMADOS><RECHAZADOS>3</RECHAZADOS></RESP_BODY></RESPUESTA>');
+  const result = await provider.getSubmissionStatus('123456', 'CERTIFICATION', '76086428-5');
+  assert.equal(result.status, 'REJECTED');
+  assert.equal(result.detail.accepted, 4);
+  assert.equal(result.detail.rejected, 4);
+  assert.equal(result.detail.informados, '8');
+  assert.deepEqual(result.detail.statistics.map(row => row.type), ['33', '56', '61']);
+  provider.soap = async () => parseXml('<RESPUESTA><RESP_HDR><ESTADO>EPR</ESTADO></RESP_HDR><RESP_BODY><ACEPTADOS>NaN</ACEPTADOS></RESP_BODY></RESPUESTA>');
+  await assert.rejects(() => provider.getSubmissionStatus('123456', 'CERTIFICATION', '76086428-5'), /Contadores SII inválidos/);
+});
+
+test('multipart SII conserva bytes firmados, longitud exacta, campos y cierre RFC 1867', async () => {
+  const { siiUploadBody } = await import('../dist/finance/finance.sii-upload.js');
+  const xml = '<?xml version="1.0" encoding="ISO-8859-1"?><DTE>áñ& amp;</DTE>';
+  const upload = siiUploadBody(xml, '76086428-5', '76086428-5', 'envio_1.xml');
+  assert.equal(upload.headers['Content-Length'], String(upload.body.length));
+  const boundary = upload.headers['Content-Type'].split('boundary=')[1];
+  const source = upload.body.toString('latin1');
+  assert.ok(source.startsWith(`--${boundary}\r\n`));
+  assert.ok(source.endsWith(`\r\n--${boundary}--\r\n`));
+  assert.equal(source.split(`--${boundary}`).length, 7);
+  assert.ok(source.includes('name="rutSender"\r\n\r\n76086428\r\n'));
+  assert.ok(source.includes('name="dvCompany"\r\n\r\n5\r\n'));
+  assert.ok(upload.body.includes(Buffer.from(xml, 'latin1')));
+  assert.ok(!upload.body.includes(Buffer.from('á', 'utf8')));
+  assert.throws(() => siiUploadBody(xml, '76086428-5', '76086428-5', 'x.xml\r\nInjected: yes'));
+  assert.throws(() => siiUploadBody('<DTE>😀</DTE>', '76086428-5', '76086428-5', 'x.xml'));
+});

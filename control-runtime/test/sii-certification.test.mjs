@@ -196,7 +196,8 @@ test("cinco boletas forman un único sobre y RCOF con totales del set, firmas y 
         transmissions++;
         assert.equal(url, "https://maullin.sii.cl/cgi_dte/UPL/DTEUpload");
         assert.equal(options.method, "POST");
-        const uploaded = await options.body.get("archivo").text();
+        const uploaded = options.body.toString("latin1");
+        assert.equal(options.headers["Content-Length"], String(options.body.length));
         assert.equal((uploaded.match(/<DTE version=/g) || []).length, 5);
         return new Response(
           "<RECEPCIONDTE><STATUS>0</STATUS><TRACKID>123456</TRACKID></RECEPCIONDTE>",
@@ -546,7 +547,7 @@ for (const type of [33, 34, 39, 41, 43, 46, 52, 56, 61, 110, 111, 112])
     assert.deepEqual(verified.map((r) => r.id).sort(), [`F1T${type}`, "SetDoc"].sort());
     const signatureValue = built.xml.match(/<SignatureValue>([^<]+)<\/SignatureValue>/)[1];
     const info = built.xml.match(/<SignedInfo>([\s\S]+?)<\/SignedInfo>/)[1];
-    const canonical = `<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${info}</SignedInfo>`;
+    const canonical = `<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#"${[39,41].includes(type) ? ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' : ""}>${info}</SignedInfo>`;
     assert.equal(
       verify(
         "RSA-SHA1",
@@ -1318,4 +1319,19 @@ test("workspace: borrador se consulta exclusivamente por empresa y usuario", asy
     () => f.service.draft("a".repeat(64), { ...admin, userId: null }),
     /identidad/,
   );
+});
+
+test("firma DTE aislada mantiene digest, referencia y certificado aun con sobre válido", () => {
+  const { input, caf } = fixture();
+  const built = certificationDocumentXml(input, caf, certificate);
+  assert.equal(verifySiiXmlSignatures(built.xml, certificate.certificate.fingerprint256).length, 1);
+  for (const changed of [
+    built.xml.replace('<MntTotal>2380', '<MntTotal>2381'),
+    built.xml.replace('Ítem sintético', 'Otro sintético'),
+    built.xml.replace('URI="#F1T33"', 'URI="https://example.invalid/document.xml"'),
+    built.xml.replace('http://www.w3.org/2000/09/xmldsig#sha1', 'http://www.w3.org/2001/04/xmlenc#sha256'),
+  ]) {
+    const outer = certificationEnvelope([changed], company, '33333333-3', certificate, 'CERTIFICATION');
+    assert.throws(() => verifySiiXmlSignatures(outer, certificate.certificate.fingerprint256));
+  }
 });

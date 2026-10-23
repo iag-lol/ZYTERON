@@ -1,3 +1,4 @@
+import { siiUploadBody } from "./finance.sii-upload.js";
 import { productionBoletaVerificationUrl } from "./finance.boleta-lookup.js";
 import { BoletaRestTransport } from "./finance.boleta-rest.js";
 import { directDteImplemented, directDteXmlImplemented } from "./finance.dte-catalog.js";
@@ -93,9 +94,9 @@ const timestamp=()=>new Date().toLocaleString("sv-SE",{timeZone:"America/Santiag
 const sha1=(value:string)=>createHash("sha1").update(value,"utf8").digest("base64");
 const canonicalXml=(xml:string)=>{parseXml(xml);const dom=new DOMParser({onError:()=>{throw new UnprocessableEntityException("XML de firma mal formado.");}}).parseFromString(xml,"text/xml");return new C14nCanonicalization().process(dom.documentElement! as unknown as Parameters<C14nCanonicalization["process"]>[0],{});};
 /** Firma XMLDSig RSA-SHA1 (estándar exigido por el SII) sobre el elemento con `ID`, con los namespaces en alcance declarados. */
-export function xmlSignature(canonicalTarget:string,referenceUri:string,certificate:LoadedCertificate,inScope:string,transformsEnveloped=false){
+export function xmlSignature(canonicalTarget:string,referenceUri:string,certificate:LoadedCertificate,inScope:string,transformsEnveloped=false,transformsCanonical=false){
   const digest=sha1(canonicalXml(canonicalTarget));
-  const signedInfoBody=`<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod><Reference URI="${referenceUri}">${transformsEnveloped?`<Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></Transform></Transforms>`:""}<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod><DigestValue>${digest}</DigestValue></Reference>`;
+  const signedInfoBody=`<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod><Reference URI="${referenceUri}">${transformsEnveloped||transformsCanonical?`<Transforms><Transform Algorithm="${transformsEnveloped?"http://www.w3.org/2000/09/xmldsig#enveloped-signature":"http://www.w3.org/TR/2001/REC-xml-c14n-20010315"}"></Transform></Transforms>`:""}<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod><DigestValue>${digest}</DigestValue></Reference>`;
   const canonicalSignedInfo=`<SignedInfo xmlns="${DSIG_NS}"${inScope}>${signedInfoBody}</SignedInfo>`;
   const value=createSign("RSA-SHA1").update(canonicalXml(canonicalSignedInfo),"utf8").sign(certificate.key,"base64");
   return`<Signature xmlns="${DSIG_NS}"><SignedInfo>${signedInfoBody}</SignedInfo><SignatureValue>${value}</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>${certificate.modulus}</Modulus><Exponent>${certificate.exponent}</Exponent></RSAKeyValue></KeyValue><X509Data><X509Certificate>${certificate.certificateBase64}</X509Certificate></X509Data></KeyInfo></Signature>`;
@@ -170,8 +171,8 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
     return el("Documento",boleta?parts.flatMap(part=>[part,"\n"]):parts,{ID:id});
   }
   async validate(xml:string,input:DteDocumentInput){const errors=structuralErrors(input);try{parseXml(xml);}catch(error){errors.push((error as Error).message);}return errors;}
-  /** Firma el Documento con los mismos namespaces que tendrá dentro de EnvioDTE (evita firmas inválidas al ensobrar). */
-  async sign(documentXml:string,input:DteDocumentInput){const certificate=this.certificates.load(this.secretRef());const inScope=` xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}"`;const canonical=documentXml.replace(/^<Documento /,`<Documento${inScope} `);const signature=xmlSignature(canonical,`#F${input.folio}T${input.documentTypeCode}`,certificate,` xmlns:xsi="${XSI_NS}"`);return`<DTE version="1.0">${documentXml}${signature}</DTE>`;}
+  /** El DTE se firma individualmente; las boletas conservan el contexto validado por su transporte. */
+  async sign(documentXml:string,input:DteDocumentInput){const certificate=this.certificates.load(this.secretRef());const boleta=[39,41].includes(input.documentTypeCode);const canonical=boleta?documentXml.replace(/^<Documento /,`<Documento xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" `):documentXml;const signature=xmlSignature(canonical,`#F${input.folio}T${input.documentTypeCode}`,certificate,boleta?` xmlns:xsi="${XSI_NS}"`:"",false,!boleta);return`<DTE version="1.0">${documentXml}${signature}</DTE>`;}
   /** Versión archivable del DTE firmado: declara los mismos namespaces usados al firmar. */
   standalone(signedDte:string){return`<?xml version="1.0" encoding="ISO-8859-1"?>\n${signedDte.replace(/^<DTE version="1.0">/,`<DTE xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" version="1.0">`)}`;}
   senderRut(){const rut=process.env.DTE_SENDER_RUT?.trim();if(!rut||!validRut(rut))throw new UnprocessableEntityException("Configura DTE_SENDER_RUT con el RUT válido del titular autorizado del certificado.");return formatRut(rut);}
@@ -255,9 +256,9 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
   }
   async sendCertificationArtifact(xml:string,companyRut:string,fileName:string){
     await this.validateCertificationArtifact(xml,companyRut,fileName);
-    const token=await this.authenticate("CERTIFICATION"),sender=normalizeRut(this.senderRut()).split("-"),company=normalizeRut(companyRut).split("-");
-    const form=new FormData();form.set("rutSender",sender[0]!);form.set("dvSender",sender[1]!);form.set("rutCompany",company[0]!);form.set("dvCompany",company[1]!);form.set("archivo",new Blob([Buffer.from(xml,"latin1")],{type:"text/xml"}),fileName);
-    const response=await fetch("https://maullin.sii.cl/cgi_dte/UPL/DTEUpload",{method:"POST",headers:{Cookie:`TOKEN=${token}`,"User-Agent":"Mozilla/4.0 (compatible; PROG 1.0; Windows NT 5.0; YComp 5.0.2.4)"},body:form,redirect:"error",signal:AbortSignal.timeout(60000)});
+    const token=await this.authenticate("CERTIFICATION");
+    const upload=siiUploadBody(xml,this.senderRut(),companyRut,fileName);
+    const response=await fetch("https://maullin.sii.cl/cgi_dte/UPL/DTEUpload",{method:"POST",headers:{...upload.headers,Cookie:`TOKEN=${token}`},body:upload.body,redirect:"error",signal:AbortSignal.timeout(60000)});
     if(!response.ok)throw new ServiceUnavailableException(`SII certificación respondió HTTP ${response.status}. Revisa el envío antes de reintentar.`);
     const result=parseXml(await response.text()),status=textOf(result,"STATUS"),trackId=textOf(result,"TRACKID");
     if(status!=="0"||!/^\d{1,30}$/.test(trackId))throw new UnprocessableEntityException(`SII certificación: recepción no confirmada (STATUS ${status||"?"}); requiere revisión sin reintento automático.`);
@@ -269,19 +270,21 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
     const envelopeXml=this.envelope([signed],input);const xsdErrors=await this.schema.validate(envelopeXml,boleta?"EnvioBOLETA_v11.xsd":"EnvioDTE_v10.xsd");if(xsdErrors.length)throw new UnprocessableEntityException(`El EnvioDTE no valida contra el XSD oficial: ${xsdErrors.join(" | ")}`);
     await renderPrintedDte(Buffer.from(this.standalone(signed),"latin1"),Buffer.from(envelopeXml,"latin1"),{documentTypeCode:input.documentTypeCode,folio:input.folio,environment:input.environment,status:"SIGNED",emitterRut:input.company.rut,receiverRut:input.receiver.rut,issueDate:input.issueDate,totalAmount:input.totals.total},process.env.DTE_SII_OFFICE,"TRIBUTARY",boleta&&input.environment==="PRODUCTION"?productionBoletaVerificationUrl(input.taxDocumentId,createHash("sha256").update(Buffer.from(this.standalone(signed),"latin1")).digest("hex")):undefined);
     if(boleta){const trackId=await new BoletaRestTransport(env=>this.authenticateBoleta(env)).send(envelopeXml,input.environment,input.company.rut,this.senderRut(),`envio_${input.folio}.xml`,beforeTransmit);return{trackId,envelopeXml};}
-    const token=await this.authenticate(input.environment);const sender=normalizeRut(this.senderRut()).split("-");const company=normalizeRut(input.company.rut).split("-");
-    const form=new FormData();form.set("rutSender",sender[0]!);form.set("dvSender",sender[1]!);form.set("rutCompany",company[0]!);form.set("dvCompany",company[1]!);form.set("archivo",new Blob([Buffer.from(envelopeXml,"latin1")],{type:"text/xml"}),`envio_${input.folio}.xml`);
+    const token=await this.authenticate(input.environment);
+    const upload=siiUploadBody(envelopeXml,this.senderRut(),input.company.rut,`envio_${input.folio}.xml`);
     if(beforeTransmit)await beforeTransmit(envelopeXml);
-    const response=await fetch(`https://${siiHost(input.environment)}/cgi_dte/UPL/DTEUpload`,{method:"POST",headers:{Cookie:`TOKEN=${token}`,"User-Agent":"Mozilla/4.0 (compatible; PROG 1.0; Windows NT 5.0; YComp 5.0.2.4)"},body:form,redirect:"error",signal:AbortSignal.timeout(60000)});
+    const response=await fetch(`https://${siiHost(input.environment)}/cgi_dte/UPL/DTEUpload`,{method:"POST",headers:{...upload.headers,Cookie:`TOKEN=${token}`},body:upload.body,redirect:"error",signal:AbortSignal.timeout(60000)});
     if(!response.ok)throw new ServiceUnavailableException(`El SII respondió HTTP ${response.status}; revisa el envío sin retransmitir.`);
     const result=parseXml(await response.text());const status=textOf(result,"STATUS");const trackId=textOf(result,"TRACKID");if(status!=="0"||!trackId)throw new UnprocessableEntityException(`El SII rechazó la recepción del envío (STATUS ${status||"?"}).`);return{trackId,envelopeXml};
   }
   async issue(input:DteDocumentInput):Promise<DteIssueResult>{const unsigned=await this.createDraft(input);const errors=await this.validate(unsigned,input);if(errors.length)throw new UnprocessableEntityException(errors.join(" "));const signed=await this.sign(unsigned,input);const{trackId,envelopeXml}=await this.send(signed,input);return{unsignedXml:unsigned,signedXml:signed,envelopeXml,trackId,submissionId:null,status:"SUBMITTED",message:`Envío recibido por el SII (Track ID ${trackId}); pendiente de validación.`,pdf:null};}
   async getSubmissionStatus(trackId:string,environment:string,companyRut:string):Promise<DteStatus>{
     const token=await this.authenticate(environment);const[rut,dv]=normalizeRut(companyRut).split("-");const response=await this.soap(environment,"QueryEstUp","getEstUp",{RutCompania:rut!,DvCompania:dv!,TrackId:trackId,Token:token});
-    const state=textOf(response,"RESP_HDR","ESTADO"),glosa=textOf(response,"RESP_HDR","GLOSA");const body=path(response,"RESP_BODY");const accepted=Number(textOf(body,"ACEPTADOS")||0),rejected=Number(textOf(body,"RECHAZADOS")||0),repairs=Number(textOf(body,"REPAROS")||0);
+    const state=textOf(response,"RESP_HDR","ESTADO"),glosa=textOf(response,"RESP_HDR","GLOSA");const bodies=descendants(response,"RESP_BODY");
+    const statistics=bodies.map(body=>{const count=(field:string)=>{const raw=textOf(body,field)||"0";if(!/^\d+$/.test(raw)||!Number.isSafeInteger(Number(raw)))throw new ServiceUnavailableException("Contadores SII inválidos. Se conserva el último estado registrado.");return Number(raw);};return{type:textOf(body,"TIPO_DOCTO"),informados:count("INFORMADOS"),accepted:count("ACEPTADOS"),rejected:count("RECHAZADOS"),repairs:count("REPAROS")};});
+    const accepted=statistics.reduce((sum,row)=>sum+row.accepted,0),rejected=statistics.reduce((sum,row)=>sum+row.rejected,0),repairs=statistics.reduce((sum,row)=>sum+row.repairs,0);
     if((/^\d+$/.test(state)&&Number(state)>0)||state.startsWith("-"))throw new ServiceUnavailableException(`No se pudo consultar el envío en el SII (${state}: ${glosa||"consulta no confirmada"}). Se conserva el último estado registrado.`);
-    const detail={state,glosa,accepted,rejected,repairs,informados:textOf(body,"INFORMADOS")};
+    const detail={state,glosa,accepted,rejected,repairs,informados:String(statistics.reduce((sum,row)=>sum+row.informados,0)),statistics};
     if(state==="EPR")return rejected>0?{status:"REJECTED",code:state,message:glosa||"Documento rechazado por el SII.",detail}:repairs>0?{status:"ACCEPTED_WITH_REPAIRS",code:state,message:glosa||"Aceptado con reparos.",detail}:accepted>0?{status:"ACCEPTED",code:state,message:glosa||"Aceptado por el SII.",detail}:{status:"RECEIVED_BY_SII",code:state,message:glosa||"Procesado sin detalle de aceptación.",detail};
     // El RCOF usa RPR para aceptación con reparos, incluso sin contadores de DTE.
     if(state==="RPR")return{status:rejected>0?"REJECTED":"ACCEPTED_WITH_REPAIRS",code:state,message:glosa||"Aceptado con reparos.",detail};

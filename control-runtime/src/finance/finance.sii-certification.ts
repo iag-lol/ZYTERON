@@ -562,11 +562,11 @@ export function certificationDocumentXml(
     ].flatMap((part) => [part, "\n"]),
     { ID: id },
   );
-  const canonical = content.replace(
+  const canonical = b ? content.replace(
     `<${root} `,
     `<${root} xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" `,
-  );
-  const signature = xmlSignature(canonical, `#${id}`, certificate, ` xmlns:xsi="${XSI_NS}"`);
+  ) : content;
+  const signature = xmlSignature(canonical, `#${id}`, certificate, b ? ` xmlns:xsi="${XSI_NS}"` : "", false, !b);
   return { xml: el("DTE", [content, "\n", signature], { version: "1.0" }), totals: t };
 }
 
