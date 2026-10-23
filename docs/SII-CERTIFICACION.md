@@ -2,7 +2,7 @@
 
 ## Estado verificado al 22-10-2026
 
-La versión base comprobada en GitHub y Render es `12f308f`. Conserva `CERTIFICATION`, proveedor `SII_DIRECT` y autorización de producción desactivada. Las tres migraciones de emisión ordinaria se instalaron el 22-10-2026 junto con la corrección de la vista dependiente de folios, publicadas en `26df02b`. La postulación y el catálogo de documentos no habilitan emisión real.
+La versión publicada en Render es `1fd8847`, despliegue `dep-dbdbc28ae00c73fj3tc0`, con resultado `Deploy succeeded | Live`. El despliegue comenzó el 22-10-2026 a las 22:19 y terminó en 3 minutos y 7 segundos. Conserva `CERTIFICATION`, proveedor `SII_DIRECT` y autorización de producción desactivada. Las tres migraciones de emisión ordinaria se instalaron el 22-10-2026 junto con la corrección de la vista dependiente de folios, publicadas en `26df02b`. La postulación y el catálogo de documentos no habilitan emisión real.
 
 El 22-10-2026 a las 22:08 Render registró una caída por agotamiento del heap de JavaScript; el proceso reinició y el módulo de certificación volvió a responder. El ajuste de esta revisión limita la caché de Next.js a 8 MB, desactiva la precarga de todas las páginas y asigna 320 MB al heap del proceso que comparte Next.js y la API. El servicio conserva su límite de 512 MB. La comprobación de corta duración posterior a un despliegue no descarta crecimiento sostenido de memoria.
 
@@ -61,9 +61,9 @@ El respaldo del facturador vigente contiene 11 documentos emitidos y 32 recibido
 
 Los archivos privados requieren conservación por al menos seis años conforme al artículo 58 de la Ley de IVA. El respaldo local no acredita por sí solo una política automática, copia externa ni restauración probada.
 
-La revisión local registra 126 pruebas de runtime, 402 pruebas del frontend y una prueba de la ruta pública aprobadas. Las pruebas locales emplean datos sintéticos. Cubren acceso incorrecto, IDs y rutas inválidos, respuestas incompletas, reintentos, adquisición exclusiva, recepción incierta, recuperación, validación de recibos y compatibilidad con columnas y protecciones del esquema existente. PGlite ejecuta PostgreSQL embebido: sus llamadas concurrentes no sustituyen una prueba con dos conexiones independientes al servidor real.
+La revisión local del 22-10-2026 registra 126 pruebas de runtime, 405 pruebas del frontend y una prueba de la ruta pública: 532 aprobadas. Las pruebas locales emplean datos sintéticos. Cubren acceso incorrecto, IDs y rutas inválidos, respuestas incompletas, reintentos, adquisición exclusiva, recepción incierta, recuperación, validación de recibos y compatibilidad con columnas y protecciones del esquema existente. PGlite ejecuta PostgreSQL embebido: sus llamadas concurrentes no sustituyen una prueba con dos conexiones independientes al servidor real.
 
-El build del backend y el control de tipos frontend están comprobados. La compilación Next.js con Webpack y su fase TypeScript terminan; la generación completa del sitio público se detiene en RSS por ausencia de configuración Supabase local. No se utilizaron credenciales productivas para resolver ese límite. La configuración aislada de dependencias tampoco permite usar Turbopack local como evidencia de build productivo.
+El build del backend, el control de tipos frontend y la compilación completa Next.js con Webpack están comprobados. La generación local de las 132 páginas utiliza un servidor Supabase sintético; no requiere credenciales productivas. El build efectivo de Render también terminó correctamente en el despliegue `1fd8847`.
 
 El lint dirigido conserva la deuda previa en controlador, repositorio y vista de Finanzas; la comparación con la base no muestra diagnósticos nuevos. El análisis de seguridad previo detecta cinco vistas con privilegios del propietario y 40 funciones con esquema de búsqueda mutable. Esos hallazgos requieren una revisión separada de definiciones y accesos; no se modifican permisos para ocultarlos.
 
