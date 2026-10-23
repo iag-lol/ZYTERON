@@ -1337,3 +1337,13 @@ test("firma DTE aislada mantiene digest, referencia y certificado aun con sobre 
     assert.throws(() => verifySiiXmlSignatures(outer, certificate.certificate.fingerprint256));
   }
 });
+
+test('revisión parcial no permite secciones inventadas, duplicadas ni proceso inicial incompleto', async () => {
+  const f=await workspaceFixture();
+  const source='SET BASICO - NUMERO DE ATENCION: 1234567\n\nCASO 1234567-1\n==============\nDOCUMENTO\tFACTURA ELECTRONICA\nITEM\tCANTIDAD\tPRECIO UNITARIO\nServicio QA\t1\t1000\n';
+  const form={runId:'66666666-6666-4666-8666-666666666666',date:'2026-10-23',reviewed:true,setFile:{fileName:'set-qa.txt',contentBase64:Buffer.from(source).toString('base64')},cases:[{caseId:'1234567-1',receiver:fixture().input.receiver,lines:[{description:'Servicio QA',quantity:1,unitPrice:1000,exempt:false}]}]};
+  for(const extra of [{sectionAttentions:['1234567']},{previousRunId:f.runId,sectionAttentions:['9999999']},{previousRunId:f.runId,sectionAttentions:['1234567','1234567']}])
+    await assert.rejects(()=>f.service.prepare({...form,...extra},admin),/secciones únicas del set oficial/);
+  assert.equal(f.sent(),0);
+  assert.equal(f.rows.sii_certification_runs.length,1);
+});

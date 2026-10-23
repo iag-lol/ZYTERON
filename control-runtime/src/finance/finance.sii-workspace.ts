@@ -177,6 +177,7 @@ export const certificationCaseForm = z.strictObject({
 export const certificationPlanForm = z.strictObject({
   runId: z.uuid(),
   previousRunId: z.uuid().optional(),
+  sectionAttentions: z.array(text(20)).min(1).max(20).optional(),
   revisionReason: text(300).optional(),
   bookNotificationBase: z.number().int().positive().max(999999997).optional(),
   setFile: z.unknown(),
@@ -422,7 +423,15 @@ export class SiiCertificationWorkspace {
     if (!actor.userId)
       throw new BadRequestException("Falta identidad autenticada para reservar folios.");
     const source = decodeUpload(form.setFile, "Set oficial", 512 * 1024),
-      set = parseOfficialCertificationSet(source.bytes);
+      officialSet = parseOfficialCertificationSet(source.bytes);
+    if (form.sectionAttentions && (!form.previousRunId || new Set(form.sectionAttentions).size !== form.sectionAttentions.length ||
+      form.sectionAttentions.some(attention => !officialSet.sections.some(section => section.attention === attention && section.caseIds.length))))
+      throw new BadRequestException("La revisión parcial requiere secciones únicas del set oficial y un proceso anterior.");
+    const sections = form.sectionAttentions ? officialSet.sections.filter(section => form.sectionAttentions!.includes(section.attention)) : officialSet.sections;
+    const selectedIds = new Set(sections.flatMap(section => section.caseIds));
+    const selectedCases = officialSet.cases.filter(caseItem => selectedIds.has(caseItem.id));
+    const set = { ...officialSet, sections, cases: selectedCases,
+      requiredFolios: selectedCases.reduce<Record<string, number>>((counts, item) => { counts[item.type] = (counts[item.type] ?? 0) + 1; return counts; }, {}) };
     const existing = form.previousRunId
       ? await this.repo.get<Row>("sii_certification_runs", form.runId)
       : await this.repo.findOne<Row>("sii_certification_runs", { companyRut: company.rut, setSha256: set.sha256 });
