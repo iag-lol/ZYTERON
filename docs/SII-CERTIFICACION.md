@@ -2,14 +2,14 @@
 
 ## Estado verificado al 23-10-2026
 
-La versión operativa en Render es `d1b431d`, despliegue `dep-dbdfoma9lscs73bkffi0`, con resultado `Deploy succeeded | Live`, iniciado el 23-10-2026 a las 03:19 y duración de 2 minutos y 46 segundos. Conserva `CERTIFICATION`, proveedor `SII_DIRECT` y autorización productiva desactivada.
+La versión operativa en Render es `cc93b2c`, despliegue `dep-dbdgpai9lscs73bngtk0`, con resultado `Deploy succeeded | Live`, iniciado el 23-10-2026 a las 04:28 y duración de 3 minutos y 36 segundos. Incluye los diagnósticos de transporte sin secretos y el bloqueo visual durante la carga CAF. Conserva `CERTIFICATION`, proveedor `SII_DIRECT` y autorización productiva desactivada.
 
-Los 32 documentos del set tienen aceptación técnica `EPR`, cero rechazos y cero reparos. La revisión de contenido del set es una validación distinta: los informes oficiales `SETMAIL` aprueban compra y liquidaciones (`SOK`) y rechazan los otros cinco sets (`SRH`). No hay certificación completa ni autorización productiva.
+Las revisiones anteriores reúnen 32 documentos con aceptación técnica `EPR`, cero rechazos y cero reparos. La revisión 5 del básico tiene recepción incierta `UNKNOWN`, sin Track ID confirmado. La revisión de contenido del set es una validación distinta: los informes oficiales `SETMAIL` aprueban compra y liquidaciones (`SOK`) y rechazan los otros cinco sets (`SRH`). No hay certificación completa ni autorización productiva.
 
 | Set | Track ID vigente | DTE aceptados | Revisión SETMAIL |
 | --- | --- | --- | --- |
-| Básico 5142224, revisión 2 | 0263156002 | 8 | SRH: casos 5 y 8, valores de primera línea |
-| Guías 5142227, revisión 4 | 0263160274 | 3 | Nueva revisión oficial pendiente; envío anterior SRH en caso 1 |
+| Básico 5142224, revisión 5 | Sin confirmar | Sin confirmar | UNKNOWN; revisión 2 anterior SRH en casos 5 y 8 |
+| Guías 5142227, revisión 4 | 0263160274 | 3 | EN REVISION; envío anterior SRH en caso 1 |
 | Exentas 5142229 | 0263156608 | 8 | SRH: casos 4 y 5, valores de primera línea |
 | Exportación 5142230 | 0263156616 | 3 | SRH: casos 2 y 3, datos de primera línea |
 | Exportación 5142231 | 0263156626 | 3 | SRH: caso 3, exige dos referencias |
@@ -44,11 +44,11 @@ La revisión 2 del set básico, proceso `bb590dbc-3e93-4277-928d-c86a9717f37d`, 
 
 El intento de compra `0263156640` fue aceptado con reparos HED-2-300 en sus tres documentos. La corrección `532c664` vincula cada partida afecta con `CodImpAdic=15`. La revisión 3, proceso `162d0ff5-4e46-4298-ac54-1a88875adf23`, utilizó tres folios nuevos: 46/2, 56/6 y 61/11; conserva cuatro PDF y su sobre. El Track ID `0263158256` obtuvo tres aceptados sin reparos y revisión `SOK`. Los tres folios del envío anterior aceptado con reparos permanecen utilizados.
 
-El libro de ventas de la revisión 2 fue recibido con Track ID `0263157954`, notificación 4. Se conserva el intento ordinario sin acuse como `UNKNOWN`; tras revisión del historial se registró una recepción manual del mismo XML y mismos folios. Compras `0263145450`, guías `0263145482` y ventas `0263157954` tienen código `LSO`, que sólo acredita esquema correcto. La opción oficial «Enviar Correo» para compras responde que el envío no ha concluido su validación. No existe resultado final del libro, ni corresponde tratar LSO como LOK o retransmitirlo por esa causa.
+El libro de ventas de la revisión 2 fue recibido con Track ID `0263157954`, notificación 4. Se conserva el intento ordinario sin acuse como `UNKNOWN`; tras revisión del historial se registró una recepción manual del mismo XML y mismos folios. Compras `0263145450`, guías `0263145482` y ventas `0263157954` tienen código `LSO`, que sólo acredita esquema correcto. La opción oficial «Enviar Correo» para compras y ventas responde que el envío no ha concluido su validación. No existe resultado final del libro, ni corresponde tratar LSO como LOK o retransmitirlo por esa causa.
 
-La revisión 4 de guías, proceso `04dba9d8-5836-4985-9223-b8731c491fa1`, utiliza tres folios tipo 52 ya autorizados: 4, 5 y 6. El traslado interno declara `IndTraslado=5` y `TipoDespacho=3`. Las cuatro firmas, tres totales y límite de línea se comprobaron independientemente; SHA-256 `b2762ca59b17f18222516f490f989247caee8f628a4bf2c5f988846cc020d83c`. El envío ordinario recibió Track ID `0263160274` y registra tres aceptados, cero rechazos y cero reparos. La nueva revisión SETMAIL todavía no se ha declarado: Safari quedó sin ventana accesible. El libro de guías nuevo permanece preparado y no se ha transmitido mientras el anterior sigue pendiente de validación.
+La revisión 4 de guías, proceso `04dba9d8-5836-4985-9223-b8731c491fa1`, utiliza tres folios tipo 52 ya autorizados: 4, 5 y 6. El traslado interno declara `IndTraslado=5` y `TipoDespacho=3`. Las cuatro firmas, tres totales y límite de línea se comprobaron independientemente; SHA-256 `b2762ca59b17f18222516f490f989247caee8f628a4bf2c5f988846cc020d83c`. El envío ordinario recibió Track ID `0263160274` y registra tres aceptados, cero rechazos y cero reparos. La nueva revisión se declaró el 23-10-2026 con Track ID 0263160274; el portal oficial registra «EN REVISION», sin nuevo SOK confirmado. El libro de guías nuevo permanece preparado y no se ha transmitido mientras el anterior sigue pendiente de validación.
 
-Se obtuvieron 24 folios nuevos en 19 CAF; se utilizaron 14 y quedan 10 sin utilizar. El SII bloqueó solicitudes posteriores al considerar disponibles folios ya otorgados. No corresponde seguir solicitando ni anular para eludir el control. Los CAF necesarios para los ocho documentos básicos están cargados cifrados. El máximo de 100 documentos del manual corresponde al envío de simulación y no a un límite general de 100 intentos de certificación.
+Antes del lote adicional se habían obtenido 24 folios en 19 CAF, con 14 utilizados y diez sin utilizar. El SII bloqueó temporalmente nuevas solicitudes por disponibilidad. Tras actualizar la consulta permitió un lote adicional de 16, autorizado expresamente y detallado a continuación. No se anulan folios para eludir el control. El máximo de 100 documentos del manual corresponde al envío de simulación y no a un límite general de 100 intentos de certificación.
 La certificación de boletas tiene V°B° del SII. El sobre `0263014070` registra cinco boletas aceptadas, sin rechazos ni reparos. El RCOF `0263014112` figura aceptado con reparos: código 250 por la eliminación de la obligación de RVD desde agosto de 2022. La revisión oficial del set es `SOK`, proceso `set5142242`. Los cinco folios tipo 39 permanecen utilizados; no se reutilizan para pruebas de integración.
 
 La Declaración de Cumplimiento continúa sin presentar. Exige acreditar procedimientos operativos, conservación, control de folios, generación, consulta e impresión. El transporte REST ordinario de boletas todavía requiere validación integral en certificación y habilitación expresa. No hay autorización ni CAF de producción registrados.
@@ -56,6 +56,16 @@ La Declaración de Cumplimiento continúa sin presentar. Exige acreditar procedi
 El set general de DTE contiene 32 casos, con huella `7a4c7c5d7cc900a30eadf1a34d6d44f6b033af3d2f41781e441ec1380fadfceb`. Sus 32 folios de certificación fueron reservados y utilizados en los envíos: tipos 33, 34, 43, 46, 52, 56, 61, 110, 111 y 112. Casos, libros, simulación, intercambio y muestras requieren sus propias presentaciones y resultados. El V°B° de boletas no acredita estas etapas ni autoriza facturas de software propio.
 
 La oficina verificada es PROVIDENCIA; está configurada en el servidor. Los Acteco registrados son 620200 y 620900.
+
+La revisión 5 del básico, proceso `49218267-4979-456a-b912-8f9fe3c93afc`, conserva 15 artefactos: ocho documentos en un sobre, doce PDF, libro de ventas con notificación 13 y el set fuente. Utiliza 33/9–12, 56/9 y 61/13–15. La verificación independiente aprobó nueve firmas y ocho totales; las notas de los casos 5 y 8 omiten `QtyItem` y mantienen `MontoItem=0`. SHA-256 del sobre: `ceb57a9592f707b057f44bf4cfdfb709db9be444fa74b5fd13a76373f980158d`.
+
+El envío `0db17037-f77f-481c-96d2-eb2543314ab1`, iniciado el 23-10-2026 a las 04:16, quedó `UNKNOWN`, sin Track ID confirmado. Los ocho folios permanecen `RESERVED`; no se retransmite ni se solicita otro lote. El código anterior sólo conservó el mensaje genérico y no permite determinar retrospectivamente la causa del transporte. La corrección de diagnóstico conserva únicamente códigos HTTP, salida curl o STATUS SII reconocidos, sin guardar tokens, XML ni mensajes arbitrarios. Esta mejora no acredita recepción ni aceptación del envío existente.
+
+El botón «Cargar CAF» se desactiva durante la operación y muestra «Cargando CAF…» hasta que termina la escritura y recarga. Evita que una segunda carga parezca disponible mientras la anterior sigue en curso.
+
+El lote adicional de 16 folios fue autorizado y descargado completo: 33/9–12, 56/9–10, 61/13–16, 110/5–8, 111/2 y 112/2. Los seis CAF están respaldados localmente con permisos privados y cargados cifrados en el sistema. Ocho folios están reservados para la revisión 5 y ocho siguen disponibles. Para exentas faltan recuperar los CAF previamente autorizados 34/4, 34/5, 34/6, 56/7, 56/8 y 61/12 mediante Reobtención; no requieren nuevas solicitudes. Los 14 casos restantes tienen correcciones y prevalidación local, pero no una nueva preparación ni envío. El lote candidato de 22 casos no se ejecutó como una sola revisión: se priorizó el básico de ocho casos.
+
+Safari quedó sin ventana accesible después de las descargas. La consulta de historial con token SOAP del servidor devolvió «DEBE ESTAR AUTENTICADO»; no sustituye la sesión web del firmante. La revisión del historial del envío incierto y la recuperación de CAF requieren restablecer la sesión oficial accesible. El libro de ventas nuevo permanece `PREPARED`, sin transmitir mientras los libros anteriores siguen pendientes.
 
 ## Alcance del código instalado
 
@@ -104,7 +114,7 @@ El respaldo del facturador vigente contiene 11 documentos emitidos y 32 recibido
 
 Los archivos privados requieren conservación por al menos seis años conforme al artículo 58 de la Ley de IVA. El respaldo local no acredita por sí solo una política automática, copia externa ni restauración probada.
 
-La revisión del 23-10-2026 registra 140 pruebas del backend aprobadas. Las comprobaciones previas del frontend y la ruta pública registran 405 y una pruebas aprobadas respectivamente. Las pruebas locales emplean datos sintéticos. Cubren acceso incorrecto, IDs y rutas inválidos, respuestas incompletas, reintentos, adquisición exclusiva, recepción incierta, recuperación, validación de recibos y compatibilidad con columnas y protecciones del esquema existente. PGlite ejecuta PostgreSQL embebido: sus llamadas concurrentes no sustituyen una prueba con dos conexiones independientes al servidor real.
+La revisión del 23-10-2026 registra 141 pruebas del backend aprobadas. Las comprobaciones previas del frontend y la ruta pública registran 405 y una pruebas aprobadas respectivamente. Las pruebas locales emplean datos sintéticos. Cubren acceso incorrecto, IDs y rutas inválidos, respuestas incompletas, reintentos, adquisición exclusiva, recepción incierta, recuperación, validación de recibos y compatibilidad con columnas y protecciones del esquema existente. PGlite ejecuta PostgreSQL embebido: sus llamadas concurrentes no sustituyen una prueba con dos conexiones independientes al servidor real.
 
 El build del backend, el control de tipos frontend y la compilación completa Next.js con Webpack están comprobados. La generación local de las 132 páginas utiliza un servidor Supabase sintético; no requiere credenciales productivas. El build efectivo de Render también terminó correctamente en el despliegue `ddee733`.
 
