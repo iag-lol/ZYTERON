@@ -31,6 +31,7 @@ import {
 } from "../dist/finance/finance.sii-set.js";
 import { renderPrintedDte } from "../dist/finance/finance.dte-print.js";
 import { DteSchemaValidator, SiiDirectDteProvider } from "../dist/finance/finance.dte-providers.js";
+import { parseXml, child, textOf } from "../dist/finance/finance.formats.js";
 import { PDFDocument } from "pdf-lib";
 import {
   boletaLookupToken,
@@ -1346,4 +1347,27 @@ test('revisión parcial no permite secciones inventadas, duplicadas ni proceso i
     await assert.rejects(()=>f.service.prepare({...form,...extra},admin),/secciones únicas del set oficial/);
   assert.equal(f.sent(),0);
   assert.equal(f.rows.sii_certification_runs.length,1);
+});
+
+test('retención de factura de compra y notas vincula sólo partidas afectas al impuesto del encabezado', async () => {
+  for (const type of [46, 56, 61]) {
+    const f = fixture(type, {
+      retention: { code: 15, rate: 19 },
+      lines: [
+        { description: 'Servicio afecto QA', quantity: 2, unitPrice: 1000, exempt: false },
+        { description: 'Servicio exento QA', quantity: 1, unitPrice: 500, exempt: true },
+      ],
+      ...([56,61].includes(type) ? { references: [{ type: 46, folio: '1', date: '2026-01-02', code: 3, reason: 'Ajuste QA' }] } : {}),
+    });
+    const built = certificationDocumentXml(f.input, f.caf, certificate);
+    const doc = child(parseXml(built.xml), 'Documento');
+    const lines = doc.children.filter(node => node.name === 'Detalle');
+    assert.equal(textOf(lines[0], 'CodImpAdic'), '15');
+    assert.equal(textOf(lines[1], 'CodImpAdic'), '');
+    const totals = child(child(doc, 'Encabezado'), 'Totales');
+    assert.equal(textOf(child(totals, 'ImptoReten'), 'TipoImp'), '15');
+    assert.equal(textOf(child(totals, 'ImptoReten'), 'MontoImp'), '380');
+    assert.equal(textOf(totals, 'MntTotal'), '2500');
+    await validateCertificationXml(certificationEnvelope([built.xml], company, company.rut, certificate, 'CERTIFICATION'), 'EnvioDTE_v10.xsd');
+  }
 });

@@ -472,6 +472,7 @@ export function certificationDocumentXml(
       str("RecargoPct", l.surchargePct),
       // RecargoMonto no admite fracciones; el porcentaje conserva el ajuste en MontoItem.
       ...(l.surcharge && Number.isInteger(l.surcharge) ? [el("RecargoMonto", l.surcharge)] : []),
+      ...(input.retention && !l.exempt ? [el("CodImpAdic", input.retention.code)] : []),
       el("MontoItem", l.amount),
     ]),
   );
