@@ -1124,11 +1124,14 @@ test("prevalidación del set detecta despacho interno, unidad de devolución y p
     raw: "MOTIVO: TRASLADO DE MATERIALES ENTRE BODEGAS DE LA EMPRESA",
   };
   const guide = fixture(52, { dispatch: { transfer: 5, responsibility: 1 } }).input;
-  assert.throws(() => validateOfficialCaseSemantics(official, guide), /cuenta del emisor/);
+  assert.throws(() => validateOfficialCaseSemantics(official, guide), /no indica responsable/);
   validateOfficialCaseSemantics(official, {
     ...guide,
-    dispatch: { ...guide.dispatch, responsibility: 3 },
+    dispatch: { ...guide.dispatch, responsibility: undefined },
   });
+  assert.throws(() => validateOfficialCaseSemantics(official, {
+    ...guide, dispatch: { ...guide.dispatch, responsibility: 3 },
+  }), /no indica responsable/);
   const original = fixture(110, {
     lines: [{ description: "PRODUCTO QA", quantity: 5, unitPrice: 10, unit: "U" }],
   }).input;
@@ -1151,6 +1154,20 @@ test("prevalidación del set detecta despacho interno, unidad de devolución y p
       { type: 813, folio: "QA-SIMULADO", date: "2026-01-02", reason: "Pasaporte simulado" },
     ],
   });
+});
+
+test("guía interna omite TipoDespacho no indicado y conserva esquema y firma válidos", async () => {
+  const f = fixture(52, {
+    receiver: { ...company },
+    dispatch: { transfer: 5, destinationAddress: "Bodega QA", destinationCommune: "Comuna QA" },
+    lines: [{ description: "ITEM 1", quantity: 77, unitPrice: 0 }],
+  });
+  const { xml } = certificationDocumentXml(f.input, f.caf, certificate);
+  assert(!xml.includes("<TipoDespacho>"));
+  assert(xml.includes("<IndTraslado>5</IndTraslado>"));
+  const envelope = certificationEnvelope([xml], company, "33333333-3", certificate, "CERTIFICATION");
+  await validateCertificationXml(envelope, "EnvioDTE_v10.xsd");
+  assert.equal(verifySiiXmlSignatures(envelope, certificate.certificate.fingerprint256).length, 2);
 });
 
 async function workspaceFixture(options = {}) {

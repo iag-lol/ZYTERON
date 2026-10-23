@@ -6,6 +6,17 @@ import { DteService } from '../dist/finance/finance.dte.js';
 import { parseXml } from '../dist/finance/finance.formats.js';
 
 const schema = new DteSchemaValidator();
+test('LOK confirma un libro aceptado sin exigir contadores de DTE; LSO sigue pendiente', async () => {
+  const provider = new SiiDirectDteProvider({}, schema);
+  provider.authenticate = async () => 'synthetic-token';
+  provider.soap = async () => parseXml('<RESPUESTA><RESP_HDR><ESTADO>LOK</ESTADO><GLOSA>Envio de Libro Aceptado - Cuadrado</GLOSA></RESP_HDR></RESPUESTA>');
+  const accepted = await provider.getSubmissionStatus('123456', 'CERTIFICATION', '76086428-5');
+  assert.equal(accepted.status, 'ACCEPTED');
+  assert.equal(accepted.code, 'LOK');
+  assert.equal(accepted.detail.accepted, 0);
+  provider.soap = async () => parseXml('<RESPUESTA><RESP_HDR><ESTADO>LSO</ESTADO><GLOSA>Schema de Envio de Libro Correcto</GLOSA></RESP_HDR></RESPUESTA>');
+  assert.equal((await provider.getSubmissionStatus('123456', 'CERTIFICATION', '76086428-5')).status, 'RECEIVED_BY_SII');
+});
 test('errores de consulta del SII no confirman recepción, aceptación ni rechazo tributario', async () => {
   const provider = new SiiDirectDteProvider({}, schema);
   provider.authenticate = async () => 'synthetic-token';

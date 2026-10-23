@@ -438,14 +438,18 @@ function CaseEditor({
             </Field>
             <Field label="Despacho por cuenta de">
               <select
-                value={draft.dispatch.responsibility}
+                value={draft.dispatch.responsibility ?? ""}
                 onChange={(e) =>
                   onChange({
                     ...draft,
-                    dispatch: { ...draft.dispatch!, responsibility: Number(e.target.value) },
+                    dispatch: {
+                      ...draft.dispatch!,
+                      responsibility: e.target.value === "" ? undefined : Number(e.target.value),
+                    },
                   })
                 }
               >
+                <option value="">No indicado en el set</option>
                 <option value={1}>Comprador</option>
                 <option value={2}>Emisor al local del comprador</option>
                 <option value={3}>Emisor a otras instalaciones</option>

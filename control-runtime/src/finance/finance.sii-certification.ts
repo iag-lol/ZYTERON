@@ -98,7 +98,7 @@ export interface CertificationDocument {
   retention?: { code: number; rate: number };
   dispatch?: {
     transfer: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-    responsibility: 1 | 2 | 3;
+    responsibility?: 1 | 2 | 3;
     destinationAddress: string;
     destinationCommune: string;
   };
@@ -333,6 +333,10 @@ export function certificationDocumentXml(
     );
   if (input.type === 52) {
     need(input.dispatch, "Falta motivo y responsable de traslado.");
+    need(
+      input.dispatch!.responsibility === undefined || [1, 2, 3].includes(input.dispatch!.responsibility),
+      "Responsable de despacho inválido.",
+    );
     if (input.dispatch!.transfer === 5)
       need(
         normalizeRut(input.receiver.rut) === normalizeRut(input.company.rut),
@@ -352,7 +356,10 @@ export function certificationDocumentXml(
     el("Folio", input.folio),
     el("FchEmis", input.date),
     ...(dispatch
-      ? [el("TipoDespacho", dispatch.responsibility), el("IndTraslado", dispatch.transfer)]
+      ? [
+          ...(dispatch.responsibility === undefined ? [] : [el("TipoDespacho", dispatch.responsibility)]),
+          el("IndTraslado", dispatch.transfer),
+        ]
       : []),
     ...(b
       ? [

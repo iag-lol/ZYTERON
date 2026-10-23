@@ -8,6 +8,13 @@ const source = (raw: string, type = 33, referenceCaseId: string | null = null): 
   referenceCaseId,
   section: "SET SINTÉTICO",
 });
+test("guías capturan sólo el responsable explícito del set", () => {
+  const internal = initialSiiCase(source("MOTIVO:\tTRASLADO DE MATERIALES ENTRE BODEGAS DE LA EMPRESA\nITEM\tCANTIDAD\nITEM 1\t77", 52));
+  assert.equal(internal.dispatch?.transfer, 5);
+  assert.equal(internal.dispatch?.responsibility, undefined);
+  assert.equal(initialSiiCase(source("MOTIVO:\tVENTA\nTRASLADO POR:\tEMISOR DEL DOCUMENTO AL LOCAL DEL CLIENTE", 52)).dispatch?.responsibility, 2);
+  assert.equal(initialSiiCase(source("MOTIVO:\tVENTA\nTRASLADO POR:\tCLIENTE", 52)).dispatch?.responsibility, 1);
+});
 test("boletas captura encabezado Item, precio con IVA, exento y unidad Kg de la instrucción",()=>{
   const result=initialSiiCase({...source('Item\tCantidad\tPrecio Unitario con IVA\nArroz\t5\t700\n\nOBSERVACION: "Se debe informar en el XML Unidad de medida en Kg."',39),id:"CASO-5"});
   assert.deepEqual(result.lines,[{description:"Arroz",quantity:5,unitPrice:700,unit:"Kg",exempt:false}]);

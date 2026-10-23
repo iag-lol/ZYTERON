@@ -93,7 +93,7 @@ const dispatch = z.strictObject({
     z.literal(8),
     z.literal(9),
   ]),
-  responsibility: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  responsibility: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
   destinationAddress: text(70),
   destinationCommune: text(20),
 });

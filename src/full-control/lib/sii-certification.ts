@@ -54,7 +54,7 @@ export interface SiiCaseDraft {
   retention?: { code: number; rate: number };
   dispatch?: {
     transfer: number;
-    responsibility: number;
+    responsibility?: number;
     destinationAddress: string;
     destinationCommune: string;
   };
@@ -223,7 +223,11 @@ export function initialSiiCase(source: SiiCaseSource, target?: SiiCaseDraft): Si
       ? {
           dispatch: {
             transfer: normalized.includes("ENTRE BODEGAS") ? 5 : 1,
-            responsibility: normalized.includes("LOCAL DEL CLIENTE") ? 2 : 1,
+            ...(/TRASLADO POR:\s*EMISOR DEL DOCUMENTO AL LOCAL DEL CLIENTE/.test(normalized)
+              ? { responsibility: 2 }
+              : /TRASLADO POR:\s*CLIENTE/.test(normalized)
+                ? { responsibility: 1 }
+                : {}),
             destinationAddress: "",
             destinationCommune: "",
           },

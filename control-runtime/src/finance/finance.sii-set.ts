@@ -60,11 +60,21 @@ export function validateOfficialCaseSemantics(
   input: CertificationDocument,
   target?: CertificationDocument,
 ) {
-  if (input.type === 52 && /BODEGAS DE LA EMPRESA/.test(normalized(official.raw))) {
-    if (input.dispatch?.transfer !== 5 || input.dispatch.responsibility !== 3)
-      reject(
-        `El caso ${official.id} requiere traslado interno por cuenta del emisor a otras instalaciones.`,
-      );
+  if (input.type === 52) {
+    const raw = normalized(official.raw);
+    if (/BODEGAS DE LA EMPRESA/.test(raw)) {
+      if (input.dispatch?.transfer !== 5)
+        reject(`El caso ${official.id} requiere traslado interno.`);
+      if (!/TRASLADO POR:/.test(raw) && input.dispatch?.responsibility !== undefined)
+        reject(`El caso ${official.id} no indica responsable de despacho; omite ese campo.`);
+    }
+    const responsibility = /TRASLADO POR:\s*EMISOR DEL DOCUMENTO AL LOCAL DEL CLIENTE/.test(raw)
+      ? 2
+      : /TRASLADO POR:\s*CLIENTE/.test(raw)
+        ? 1
+        : undefined;
+    if (responsibility !== undefined && input.dispatch?.responsibility !== responsibility)
+      reject(`El responsable de despacho de ${official.id} no coincide con el set oficial.`);
   }
   if (input.type === 110 && input.export?.service === 4) {
     if (!input.references?.some((r) => r.type === 813))
