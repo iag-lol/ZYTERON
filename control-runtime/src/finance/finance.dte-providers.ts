@@ -1,4 +1,4 @@
-import { siiUploadBody } from "./finance.sii-upload.js";
+import { siiUploadBody, siiHttp10Upload, siiHttp10Available } from "./finance.sii-upload.js";
 import { productionBoletaVerificationUrl } from "./finance.boleta-lookup.js";
 import { BoletaRestTransport } from "./finance.boleta-rest.js";
 import { directDteImplemented, directDteXmlImplemented } from "./finance.dte-catalog.js";
@@ -242,6 +242,7 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
   async connectionTest(environment:string){const started=Date.now(),seedResponse=await this.soap(environment,"CrSeed","getSeed",{}),state=textOf(seedResponse,"RESP_HDR","ESTADO"),seed=textOf(seedResponse,"RESP_BODY","SEMILLA");if(state!=="00"||!seed)throw new ServiceUnavailableException(`SII no entregó semilla (estado ${state||"?"}).`);let authenticated=false,certificate:string;try{const metadata=this.certificates.metadata(this.secretRef());certificate=Date.parse(metadata.expiresAt)>Date.now()?"VALID":"EXPIRED";}catch{certificate="NOT_CONFIGURED";}if(certificate==="VALID"){await this.authenticate(environment);authenticated=true;}return{provider:this.name,environment,host:siiHost(environment),seedService:"CONNECTED",certificate,authenticated,latencyMs:Date.now()-started,checkedAt:new Date().toISOString()};}
   /** Sólo archivos previamente validados y registrados por el proceso de certificación. */
   async validateCertificationArtifact(xml:string,companyRut:string,fileName:string){
+    if(!siiHttp10Available())throw new ServiceUnavailableException("El servidor requiere curl para el protocolo HTTP/1.0 del SII; no se inicia la transmisión.");
     if(xml.split(/\r\n|\r|\n/).some(line=>Buffer.byteLength(line,"latin1")>4090))throw new UnprocessableEntityException("El XML supera el límite de 4090 bytes por línea del UPLOAD SII; debe generarse y firmarse con separadores antes del envío.");
     const root=parseXml(xml),kind=local(root.name),schemas:Record<string,string>={EnvioDTE:"EnvioDTE_v10.xsd",EnvioBOLETA:"EnvioBOLETA_v11.xsd",LibroCompraVenta:"LibroCV_v10.xsd",LibroGuia:"LibroGuia_v10.xsd",ConsumoFolios:"ConsumoFolio_v10.xsd"};
     if(!schemas[kind])throw new UnprocessableEntityException("Archivo no admitido por certificación.");
@@ -255,13 +256,12 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
     const {verifySiiXmlSignatures}=await import("./finance.sii-signatures.js");verifySiiXmlSignatures(xml,this.certificates.metadata(this.secretRef()).fingerprintSha256);
     if(!validRut(companyRut)||!/^sii-cert-[a-f0-9-]{36}\.xml$/.test(fileName))throw new UnprocessableEntityException("Identidad de envío de certificación inválida.");
   }
+  async postLegacyUpload(host:string,token:string,upload:ReturnType<typeof siiUploadBody>){return siiHttp10Upload(host,token,upload);}
   async sendCertificationArtifact(xml:string,companyRut:string,fileName:string){
     await this.validateCertificationArtifact(xml,companyRut,fileName);
     const token=await this.authenticate("CERTIFICATION");
     const upload=siiUploadBody(xml,this.senderRut(),companyRut,fileName);
-    const response=await fetch("https://maullin.sii.cl/cgi_dte/UPL/DTEUpload",{method:"POST",headers:{...upload.headers,Cookie:`TOKEN=${token}`},body:upload.body,redirect:"error",signal:AbortSignal.timeout(60000)});
-    if(!response.ok)throw new ServiceUnavailableException(`SII certificación respondió HTTP ${response.status}. Revisa el envío antes de reintentar.`);
-    const result=parseXml(await response.text()),status=textOf(result,"STATUS"),trackId=textOf(result,"TRACKID");
+    const result=parseXml(await this.postLegacyUpload("maullin.sii.cl",token,upload)),status=textOf(result,"STATUS"),trackId=textOf(result,"TRACKID");
     if(status!=="0"||!/^\d{1,30}$/.test(trackId))throw new UnprocessableEntityException(`SII certificación: recepción no confirmada (STATUS ${status||"?"}); requiere revisión sin reintento automático.`);
     return {trackId,status};
   }
@@ -273,15 +273,19 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
     if(boleta){const trackId=await new BoletaRestTransport(env=>this.authenticateBoleta(env)).send(envelopeXml,input.environment,input.company.rut,this.senderRut(),`envio_${input.folio}.xml`,beforeTransmit);return{trackId,envelopeXml};}
     const token=await this.authenticate(input.environment);
     const upload=siiUploadBody(envelopeXml,this.senderRut(),input.company.rut,`envio_${input.folio}.xml`);
+    if(!siiHttp10Available())throw new ServiceUnavailableException("Transporte HTTP/1.0 SII no disponible; no se inicia la transmisión.");
     if(beforeTransmit)await beforeTransmit(envelopeXml);
-    const response=await fetch(`https://${siiHost(input.environment)}/cgi_dte/UPL/DTEUpload`,{method:"POST",headers:{...upload.headers,Cookie:`TOKEN=${token}`},body:upload.body,redirect:"error",signal:AbortSignal.timeout(60000)});
-    if(!response.ok)throw new ServiceUnavailableException(`El SII respondió HTTP ${response.status}; revisa el envío sin retransmitir.`);
-    const result=parseXml(await response.text());const status=textOf(result,"STATUS");const trackId=textOf(result,"TRACKID");if(status!=="0"||!trackId)throw new UnprocessableEntityException(`El SII rechazó la recepción del envío (STATUS ${status||"?"}).`);return{trackId,envelopeXml};
+    const result=parseXml(await this.postLegacyUpload(siiHost(input.environment),token,upload));const status=textOf(result,"STATUS");const trackId=textOf(result,"TRACKID");if(status!=="0"||!trackId)throw new UnprocessableEntityException(`El SII rechazó la recepción del envío (STATUS ${status||"?"}).`);return{trackId,envelopeXml};
   }
   async issue(input:DteDocumentInput):Promise<DteIssueResult>{const unsigned=await this.createDraft(input);const errors=await this.validate(unsigned,input);if(errors.length)throw new UnprocessableEntityException(errors.join(" "));const signed=await this.sign(unsigned,input);const{trackId,envelopeXml}=await this.send(signed,input);return{unsignedXml:unsigned,signedXml:signed,envelopeXml,trackId,submissionId:null,status:"SUBMITTED",message:`Envío recibido por el SII (Track ID ${trackId}); pendiente de validación.`,pdf:null};}
   async getSubmissionStatus(trackId:string,environment:string,companyRut:string):Promise<DteStatus>{
     const token=await this.authenticate(environment);const[rut,dv]=normalizeRut(companyRut).split("-");const response=await this.soap(environment,"QueryEstUp","getEstUp",{RutCompania:rut!,DvCompania:dv!,TrackId:trackId,Token:token});
-    const state=textOf(response,"RESP_HDR","ESTADO"),glosa=textOf(response,"RESP_HDR","GLOSA");const bodies=descendants(response,"RESP_BODY");
+    const state=textOf(response,"RESP_HDR","ESTADO"),glosa=textOf(response,"RESP_HDR","GLOSA");const bodies=descendants(response,"RESP_BODY").flatMap(body=>{
+      if(!child(body,"TIPO_DOCTO"))return[body];
+      const groups:XmlNode[]=[];
+      for(const node of body.children){if(local(node.name)==="TIPO_DOCTO")groups.push({name:body.name,attrs:{},children:[],text:""});if(groups.length)groups[groups.length-1]!.children.push(node);}
+      return groups;
+    });
     const statistics=bodies.map(body=>{const count=(field:string)=>{const raw=textOf(body,field)||"0";if(!/^\d+$/.test(raw)||!Number.isSafeInteger(Number(raw)))throw new ServiceUnavailableException("Contadores SII inválidos. Se conserva el último estado registrado.");return Number(raw);};return{type:textOf(body,"TIPO_DOCTO"),informados:count("INFORMADOS"),accepted:count("ACEPTADOS"),rejected:count("RECHAZADOS"),repairs:count("REPAROS")};});
     const accepted=statistics.reduce((sum,row)=>sum+row.accepted,0),rejected=statistics.reduce((sum,row)=>sum+row.rejected,0),repairs=statistics.reduce((sum,row)=>sum+row.repairs,0);
     if((/^\d+$/.test(state)&&Number(state)>0)||state.startsWith("-"))throw new ServiceUnavailableException(`No se pudo consultar el envío en el SII (${state}: ${glosa||"consulta no confirmada"}). Se conserva el último estado registrado.`);

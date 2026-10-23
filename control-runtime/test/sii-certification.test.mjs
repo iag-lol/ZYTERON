@@ -189,19 +189,17 @@ test("cinco boletas forman un único sobre y RCOF con totales del set, firmas y 
       await assert.rejects(() =>
         certificationBoletaUploadEnvelope(source, issuer, sender, certificate, environment),
       );
-    const oldFetch = globalThis.fetch;
+    const oldUpload = provider.postLegacyUpload;
     let transmissions = 0;
     try {
-      globalThis.fetch = async (url, options) => {
+      provider.postLegacyUpload = async (host, token, options) => {
         transmissions++;
-        assert.equal(url, "https://maullin.sii.cl/cgi_dte/UPL/DTEUpload");
-        assert.equal(options.method, "POST");
+        assert.equal(host, "maullin.sii.cl");
+        assert.equal(token, "synthetic-token");
         const uploaded = options.body.toString("latin1");
         assert.equal(options.headers["Content-Length"], String(options.body.length));
         assert.equal((uploaded.match(/<DTE version=/g) || []).length, 5);
-        return new Response(
-          "<RECEPCIONDTE><STATUS>0</STATUS><TRACKID>123456</TRACKID></RECEPCIONDTE>",
-        );
+        return "<RECEPCIONDTE><STATUS>0</STATUS><TRACKID>123456</TRACKID></RECEPCIONDTE>";
       };
       assert.deepEqual(
         await provider.sendCertificationArtifact(uploadEnvelope, company.rut, fileName),
@@ -220,7 +218,7 @@ test("cinco boletas forman un único sobre y RCOF con totales del set, firmas y 
       );
       assert.equal(transmissions, 1);
     } finally {
-      globalThis.fetch = oldFetch;
+      provider.postLegacyUpload = oldUpload;
     }
     const entries = docs.map((d) => ({
       type: 39,

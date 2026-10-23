@@ -376,3 +376,38 @@ test("lote con casos duplicados o almacenamiento fuera del proceso se revierte c
     }
   }
 });
+
+test('revisión explícita conserva originales, reserva folios nuevos y exige último proceso', async () => {
+  const db=await fixture();
+  try {
+    await prepare(db);
+    await db.exec("update tax_folios set status='USED'");
+    const before=(await db.query('select * from tax_folios order by id')).rows;
+    const payments=(await db.query('select * from synthetic_commercial_payments')).rows;
+    const sql=await readFile(new URL('../../supabase/migrations/20261023010000_sii_certification_revisions.sql',import.meta.url),'utf8');
+    await db.exec(sql);
+    assert.deepEqual((await db.query('select * from tax_folios order by id')).rows,before);
+    const next='66666666-6666-4666-8666-666666666666';
+    const newA='77777777-7777-4777-8777-777777777777',newB='88888888-8888-4888-8888-888888888888';
+    await db.query("insert into tax_folios(id,authorization_id,document_type_code,environment,folio,status) values($1,$2,33,'CERTIFICATION',2,'AVAILABLE'),($3,$2,61,'CERTIFICATION',2,'AVAILABLE')",[newA,authorization,newB]);
+    const revised={...plan,previousRunId:run,request:{synthetic:true,revisionReason:'Firma corregida; folios nuevos',bookNotificationBase:4},cases:plan.cases.map((c,i)=>({...c,folio:2,folioId:i?newB:newA}))};
+    const revisedArtifacts=artifacts.map(a=>({...a,storagePath:a.storagePath.replace(run,next)}));
+    await assert.rejects(()=>prepare(db,{...revised,previousRunId:undefined},revisedArtifacts,next),/último proceso/);
+    await db.exec('rollback');
+    await prepare(db,revised,revisedArtifacts,next);
+    await prepare(db,revised,revisedArtifacts,next);
+    const runs=(await db.query('select id,revision,previous_run_id from sii_certification_runs order by revision')).rows;
+    assert.deepEqual(runs,[{id:run,revision:1,previous_run_id:null},{id:next,revision:2,previous_run_id:run}]);
+    assert.deepEqual((await db.query("select * from tax_folios where id=any($1::uuid[]) order by id",[[folioA,folioB]])).rows,before);
+    assert.ok((await db.query("select status from tax_folios where id=any($1::uuid[])",[[newA,newB]])).rows.every(r=>r.status==='RESERVED'));
+    assert.equal((await db.query('select count(*)::int as n from sii_certification_cases')).rows[0].n,4);
+    const other='99999999-9999-4999-8999-999999999999';
+    await assert.rejects(()=>prepare(db,revised,revisedArtifacts.map(a=>({...a,storagePath:a.storagePath.replace(next,other)})),other),/último proceso/);
+    await db.exec('rollback');
+    assert.deepEqual((await db.query('select * from synthetic_commercial_payments')).rows,payments);
+    for(const role of ['anon','authenticated']) {
+      const allowed=(await db.query("select has_function_privilege($1,'public.finance_prepare_sii_certification(uuid,text,jsonb,jsonb,text)','execute') as allowed",[role])).rows[0].allowed;
+      assert.equal(allowed,false);
+    }
+  } finally {await db.close();}
+});

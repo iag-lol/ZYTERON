@@ -76,6 +76,12 @@ test('consulta todos los tipos del sobre y conserva los rechazos posteriores al 
   assert.equal(result.detail.rejected, 4);
   assert.equal(result.detail.informados, '8');
   assert.deepEqual(result.detail.statistics.map(row => row.type), ['33', '56', '61']);
+  provider.soap = async () => parseXml('<RESPUESTA><RESP_HDR><ESTADO>EPR</ESTADO></RESP_HDR><RESP_BODY><TIPO_DOCTO>33</TIPO_DOCTO><INFORMADOS>4</INFORMADOS><ACEPTADOS>3</ACEPTADOS><RECHAZADOS>1</RECHAZADOS><REPAROS>0</REPAROS><TIPO_DOCTO>56</TIPO_DOCTO><INFORMADOS>1</INFORMADOS><ACEPTADOS>1</ACEPTADOS><RECHAZADOS>0</RECHAZADOS><REPAROS>0</REPAROS><TIPO_DOCTO>61</TIPO_DOCTO><INFORMADOS>3</INFORMADOS><ACEPTADOS>3</ACEPTADOS><RECHAZADOS>0</RECHAZADOS><REPAROS>0</REPAROS></RESP_BODY></RESPUESTA>');
+  const flattened = await provider.getSubmissionStatus('123456', 'CERTIFICATION', '76086428-5');
+  assert.equal(flattened.detail.accepted,7);
+  assert.equal(flattened.detail.rejected,1);
+  assert.equal(flattened.detail.informados,'8');
+  assert.equal(flattened.detail.statistics.length,3);
   provider.soap = async () => parseXml('<RESPUESTA><RESP_HDR><ESTADO>EPR</ESTADO></RESP_HDR><RESP_BODY><ACEPTADOS>NaN</ACEPTADOS></RESP_BODY></RESPUESTA>');
   await assert.rejects(() => provider.getSubmissionStatus('123456', 'CERTIFICATION', '76086428-5'), /Contadores SII inválidos/);
 });
@@ -96,4 +102,12 @@ test('multipart SII conserva bytes firmados, longitud exacta, campos y cierre RF
   assert.ok(!upload.body.includes(Buffer.from('á', 'utf8')));
   assert.throws(() => siiUploadBody(xml, '76086428-5', '76086428-5', 'x.xml\r\nInjected: yes'));
   assert.throws(() => siiUploadBody('<DTE>😀</DTE>', '76086428-5', '76086428-5', 'x.xml'));
+});
+
+test('HTTP 1.0 sólo transmite al SII con token sin controles ni destinos arbitrarios', async () => {
+  const { siiHttp10Upload, siiHttp10Available, siiUploadBody } = await import('../dist/finance/finance.sii-upload.js');
+  const body=siiUploadBody('<DTE/>','76086428-5','76086428-5','envio.xml');
+  assert.equal(siiHttp10Available(),true);
+  await assert.rejects(()=>siiHttp10Upload('example.invalid','synthetic-token',body),/Destino o autenticación/);
+  await assert.rejects(()=>siiHttp10Upload('maullin.sii.cl','invalid\r\nInjected: yes',body),/Destino o autenticación/);
 });

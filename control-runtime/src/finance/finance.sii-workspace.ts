@@ -176,6 +176,9 @@ export const certificationCaseForm = z.strictObject({
 });
 export const certificationPlanForm = z.strictObject({
   runId: z.uuid(),
+  previousRunId: z.uuid().optional(),
+  revisionReason: text(300).optional(),
+  bookNotificationBase: z.number().int().positive().max(999999997).optional(),
   setFile: z.unknown(),
   date: z.iso.date(),
   cases: z.array(certificationCaseForm).min(1).max(500),
@@ -420,10 +423,16 @@ export class SiiCertificationWorkspace {
       throw new BadRequestException("Falta identidad autenticada para reservar folios.");
     const source = decodeUpload(form.setFile, "Set oficial", 512 * 1024),
       set = parseOfficialCertificationSet(source.bytes);
-    const existing = await this.repo.findOne<Row>("sii_certification_runs", {
-      companyRut: company.rut,
-      setSha256: set.sha256,
-    });
+    const existing = form.previousRunId
+      ? await this.repo.get<Row>("sii_certification_runs", form.runId)
+      : await this.repo.findOne<Row>("sii_certification_runs", { companyRut: company.rut, setSha256: set.sha256 });
+    if (form.previousRunId) {
+      const previous = await this.repo.get<Row>("sii_certification_runs", form.previousRunId);
+      if (!previous || previous.companyRut !== company.rut || previous.setSha256 !== set.sha256 ||
+        form.previousRunId === form.runId || !form.revisionReason ||
+        (form.bookNotificationBase ?? 1) <= (previous.plan.request.bookNotificationBase ?? 1) + 2)
+        throw new ConflictException("La revisión requiere proceso anterior del mismo set, motivo y folios de notificación nuevos.");
+    }
     const requested = JSON.parse(JSON.stringify({ ...form, setFile: { sha256: set.sha256 } }));
     if (existing) {
       if (existing.id !== form.runId || !isDeepStrictEqual(existing.plan.request, requested))
@@ -648,7 +657,7 @@ export class SiiCertificationWorkspace {
       company,
       senderRut: this.sii.senderRut(),
       period: form.date.slice(0, 7),
-      notificationFolio: 1,
+      notificationFolio: form.bookNotificationBase ?? 1,
     };
     const boletas = documents.filter((d) => [39, 41].includes(d.input.type));
     if (boletas.length) {
@@ -698,7 +707,7 @@ export class SiiCertificationWorkspace {
       if (!form.purchaseEntries?.length)
         throw new BadRequestException("Faltan los documentos del set de libro de compras.");
       const xml = certificationPurchaseSalesBook(
-        { ...bookContext, notificationFolio: 2 },
+        { ...bookContext, notificationFolio: (form.bookNotificationBase ?? 1) + 1 },
         "COMPRA",
         form.purchaseEntries as CertificationBookEntry[],
         certificate,
@@ -750,7 +759,7 @@ export class SiiCertificationWorkspace {
         };
       });
       const xml = certificationGuideBook(
-        { ...bookContext, notificationFolio: 3 },
+        { ...bookContext, notificationFolio: (form.bookNotificationBase ?? 1) + 2 },
         entries,
         certificate,
       );
@@ -789,6 +798,7 @@ export class SiiCertificationWorkspace {
     }
     const plan = {
       companyRut: company.rut,
+      ...(form.previousRunId ? { previousRunId: form.previousRunId } : {}),
       request: requested,
       cases: documents.map((d) => ({
         caseId: d.input.caseId,
