@@ -636,6 +636,7 @@ test("exportación conserva recargo fraccionario y descuento compatible con el X
   });
   const built = certificationDocumentXml(input, caf, certificate);
   assert.equal(built.totals.total, 73510.4);
+  assert(built.xml.includes("<MNT>73510.4</MNT>"));
   assert(built.xml.includes("<RecargoPct>10</RecargoPct>"));
   assert(!built.xml.includes("<RecargoMonto>"));
   assert(built.xml.includes("<MontoItem>48.4</MontoItem>"));
@@ -650,6 +651,9 @@ test("exportación conserva recargo fraccionario y descuento compatible con el X
   );
   await validateCertificationXml(envelope, "EnvioDTE_v10.xsd");
   assert.equal(verifySiiXmlSignatures(envelope, certificate.certificate.fingerprint256).length, 2);
+  const record = {documentTypeCode:110,folio:input.folio,environment:"CERTIFICATION",status:"SIGNED",emitterRut:input.company.rut,receiverRut:input.receiver.rut,issueDate:input.date,totalAmount:built.totals.total};
+  const pdf = await renderPrintedDte(Buffer.from(built.xml,"latin1"),Buffer.from(envelope,"latin1"),record,"OFICINA SINTÉTICA QA","TRIBUTARY");
+  assert((await PDFDocument.load(pdf)).getPageCount() > 0);
 });
 test("exportación incluye pesos, tara, marcas e identificación de contenedor", async () => {
   const { input, caf } = fixture(110);

@@ -162,7 +162,8 @@ export function printedDteData(signed: Buffer, envelope: Buffer, expected: Print
   if (
     amount(textOf(ddNode, "TD")) !== type ||
     amount(textOf(ddNode, "F")) !== folio ||
-    amount(textOf(ddNode, "MNT")) !== Math.round(total) ||
+    (!/^\d+(?:\.\d{1,4})?$/.test(textOf(ddNode, "MNT")) ||
+      Number(textOf(ddNode, "MNT")) !== (type >= 110 ? total : Math.round(total))) ||
     textOf(ddNode, "FE") !== date ||
     !sameRut(textOf(ddNode, "RE"), issuerRut) ||
     !sameRut(textOf(ddNode, "RR"), receiverRut)

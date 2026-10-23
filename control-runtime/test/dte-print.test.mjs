@@ -148,7 +148,7 @@ test("el caso de certificación conserva SET primero y la factura original en se
     caf: { ...fixture.input.caf, documentTypeCode: 61, cafXml: fixture.input.caf.cafXml.replace("<TD>33</TD>", "<TD>61</TD>") },
   });
   const xml = item.envelope.toString("latin1");
-  assert.match(xml, /<Referencia><NroLinRef>1<\/NroLinRef><TpoDocRef>SET<\/TpoDocRef>[\s\S]*?<RazonRef>CASO 1234-6<\/RazonRef><\/Referencia><Referencia><NroLinRef>2<\/NroLinRef><TpoDocRef>33<\/TpoDocRef><FolioRef>7<\/FolioRef>/);
+  assert.match(xml, /<Referencia><NroLinRef>1<\/NroLinRef><TpoDocRef>SET<\/TpoDocRef>[\s\S]*?<RazonRef>CASO 1234-6<\/RazonRef><\/Referencia>\s*<Referencia><NroLinRef>2<\/NroLinRef><TpoDocRef>33<\/TpoDocRef><FolioRef>7<\/FolioRef>/);
   assert.deepEqual(await new DteSchemaValidator().validate(xml), []);
 });
 
@@ -587,4 +587,15 @@ test("boleta productiva identifica al cliente e incorpora medio de pago sin acre
   await assert.rejects(boletaFixture(39,{environment:'PRODUCTION',boletaPaymentMethod:undefined}),/medio de pago/);
   await assert.rejects(boletaFixture(39,{environment:'PRODUCTION',receiver:{...fixture.input.receiver,rut:'66666666-6'}}),/RUT real/);
   await assert.rejects(boletaFixture(41,{boletaPaymentMethod:6}),/Medio de pago/);
+});
+
+test('factura de sesenta líneas conserva firma, XSD y límites del upload sin cortar el XML', async () => {
+  const lines=Array.from({length:60},(_,index)=>({lineNumber:index+1,description:'Servicio sintético '+index+' '+ 'a'.repeat(900),quantity:1,unitPrice:1000,discountAmount:0,netAmount:1000,isExempt:false}));
+  const item=await createFixture({lines,totals:{net:60000,exempt:0,taxRate:0.19,tax:11400,total:71400}});
+  assert.equal(verifySiiXmlSignatures(item.envelope.toString('latin1')).length,2);
+  assert.deepEqual(await new DteSchemaValidator().validate(item.envelope.toString('latin1')),[]);
+  assert.ok(Math.max(...item.envelope.toString('latin1').split(/\r?\n/).map(line=>Buffer.byteLength(line,'latin1'))) <= 4090);
+  const certificate=item.envelope.toString('latin1').match(/<X509Certificate>([^<]+)<\/X509Certificate>/)[1];
+  assert.ok(certificate.split('\n').every(line=>line.length <= 76));
+  assert.equal(printedDteData(item.signed,item.envelope,item.record).lines.length,60);
 });

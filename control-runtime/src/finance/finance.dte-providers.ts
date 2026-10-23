@@ -92,6 +92,7 @@ const clip=(value:unknown,max:number)=>String(value??"").replace(/\s+/g," ").tri
 const siiRut=(value:string)=>formatRut(value).replace(/^0+/,"");
 const timestamp=()=>new Date().toLocaleString("sv-SE",{timeZone:"America/Santiago"}).replace(" ","T");
 const sha1=(value:string)=>createHash("sha1").update(value,"utf8").digest("base64");
+const base64Lines=(value:string)=>value.match(/.{1,76}/g)?.join("\n")??"";
 const canonicalXml=(xml:string)=>{parseXml(xml);const dom=new DOMParser({onError:()=>{throw new UnprocessableEntityException("XML de firma mal formado.");}}).parseFromString(xml,"text/xml");return new C14nCanonicalization().process(dom.documentElement! as unknown as Parameters<C14nCanonicalization["process"]>[0],{});};
 /** Firma XMLDSig RSA-SHA1 (estándar exigido por el SII) sobre el elemento con `ID`, con los namespaces en alcance declarados. */
 export function xmlSignature(canonicalTarget:string,referenceUri:string,certificate:LoadedCertificate,inScope:string,transformsEnveloped=false,transformsCanonical=false){
@@ -99,7 +100,7 @@ export function xmlSignature(canonicalTarget:string,referenceUri:string,certific
   const signedInfoBody=`<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod><Reference URI="${referenceUri}">${transformsEnveloped||transformsCanonical?`<Transforms><Transform Algorithm="${transformsEnveloped?"http://www.w3.org/2000/09/xmldsig#enveloped-signature":"http://www.w3.org/TR/2001/REC-xml-c14n-20010315"}"></Transform></Transforms>`:""}<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod><DigestValue>${digest}</DigestValue></Reference>`;
   const canonicalSignedInfo=`<SignedInfo xmlns="${DSIG_NS}"${inScope}>${signedInfoBody}</SignedInfo>`;
   const value=createSign("RSA-SHA1").update(canonicalXml(canonicalSignedInfo),"utf8").sign(certificate.key,"base64");
-  return`<Signature xmlns="${DSIG_NS}"><SignedInfo>${signedInfoBody}</SignedInfo><SignatureValue>${value}</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>${certificate.modulus}</Modulus><Exponent>${certificate.exponent}</Exponent></RSAKeyValue></KeyValue><X509Data><X509Certificate>${certificate.certificateBase64}</X509Certificate></X509Data></KeyInfo></Signature>`;
+  return`<Signature xmlns="${DSIG_NS}"><SignedInfo>${signedInfoBody}</SignedInfo><SignatureValue>${base64Lines(value)}</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>${base64Lines(certificate.modulus)}</Modulus><Exponent>${certificate.exponent}</Exponent></RSAKeyValue></KeyValue><X509Data><X509Certificate>${base64Lines(certificate.certificateBase64)}</X509Certificate></X509Data></KeyInfo></Signature>`;
 }
 
 // =========================================================================================== Validación estructural y XSD oficial
@@ -168,7 +169,7 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
     const frmt=createSign("RSA-SHA1").update(dd,"latin1").sign(createPrivateKey(input.caf.privateKeyPem),"base64");
     const ted=el("TED",[dd,el("FRMT",frmt,{algoritmo:"SHA1withRSA"})],{version:"1.0"});
     const parts=[el("Encabezado",[el("IdDoc",idDoc),el("Emisor",emisor),el("Receptor",receptor),...(boleta?[el("RUTProvSW",siiRut(input.company.rut))]:[]),el("Totales",totales)]),...detalle,...referencia,ted,el("TmstFirma",stamp)];
-    return el("Documento",boleta?parts.flatMap(part=>[part,"\n"]):parts,{ID:id});
+    return el("Documento",parts.flatMap(part=>[part,"\n"]),{ID:id});
   }
   async validate(xml:string,input:DteDocumentInput){const errors=structuralErrors(input);try{parseXml(xml);}catch(error){errors.push((error as Error).message);}return errors;}
   /** El DTE se firma individualmente; las boletas conservan el contexto validado por su transporte. */
@@ -191,11 +192,11 @@ export class SiiDirectDteProvider extends TaxDocumentProvider {
     }
     const certificate=this.certificates.load(this.secretRef());const sender=this.senderRut();
     const caratula=el("Caratula",[el("RutEmisor",siiRut(input.company.rut)),el("RutEnvia",siiRut(sender)),el("RutReceptor","60803000-K"),el("FchResol",input.company.resolutionDate),el("NroResol",input.company.resolutionNumber),el("TmstFirmaEnv",timestamp()),...[...counts].map(([type,count])=>el("SubTotDTE",[el("TpoDTE",type),el("NroDTE",count)]))],{version:"1.0"});
-    const setBody=caratula+signedDtes.join("");const inScope=` xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}"`;const canonicalSet=`<SetDTE${inScope} ID="SetDoc">${setBody}</SetDTE>`;
+    const setBody="\n"+caratula+"\n"+signedDtes.join("\n")+"\n";const inScope=` xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}"`;const canonicalSet=`<SetDTE${inScope} ID="SetDoc">${setBody}</SetDTE>`;
     const signature=xmlSignature(canonicalSet,"#SetDoc",certificate,` xmlns:xsi="${XSI_NS}"`);
     const boleta=[39,41].includes(input.documentTypeCode),root=boleta?"EnvioBOLETA":"EnvioDTE",schema=boleta?"EnvioBOLETA_v11.xsd":"EnvioDTE_v10.xsd";
     if(boleta&&signedDtes.length>500)throw new UnprocessableEntityException("Un sobre de boletas admite como máximo 500 documentos.");
-    return`<?xml version="1.0" encoding="ISO-8859-1"?>\n<${root} xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" version="1.0" xsi:schemaLocation="${SII_NS} ${schema}"><SetDTE ID="SetDoc">${setBody}</SetDTE>${signature}</${root}>`;
+    return`<?xml version="1.0" encoding="ISO-8859-1"?>\n<${root} xmlns="${SII_NS}" xmlns:xsi="${XSI_NS}" version="1.0" xsi:schemaLocation="${SII_NS} ${schema}"><SetDTE ID="SetDoc">${setBody}</SetDTE>\n${signature}\n</${root}>`;
   }
   private async soap(environment:string,service:string,method:string,params:Record<string,string>){
     const body=siiSoapEnvelope(environment,service,method,params);

@@ -522,7 +522,7 @@ export function certificationDocumentXml(
     el("FE", input.date),
     el("RR", formatRut(input.receiver.rut)),
     el("RSR", input.receiver.legalName.slice(0, 40)),
-    el("MNT", round(t.total)),
+    el("MNT", exp ? t.total : round(t.total)),
     el("IT1", input.lines[0]!.description.slice(0, 40)),
     caf.cafXml,
     el("TSTED", now),
