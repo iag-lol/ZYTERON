@@ -1,0 +1,128 @@
+.root.root.root {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+  color: #244238;
+}
+.root.root.root .columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  min-width: 0;
+}
+.panel.panel.panel {
+  padding: 22px;
+  background: #fff;
+  border: 1px solid #dce5dc;
+  border-radius: 13px;
+  min-width: 0;
+}
+.panel.panel.panel > header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.panel.panel.panel h3 {
+  font-size: 15px;
+  margin: 0;
+  flex: 1;
+}
+.panel.panel.panel p {
+  white-space: pre-line;
+  font-size: 12px;
+  color: #6e7e70;
+  line-height: 1.8;
+}
+.panel.panel.panel small {
+  font-size: 10px;
+  color: #6e7e70;
+  line-height: 1.7;
+}
+.panel.panel.panel > header > span {
+  background: #eef3e7;
+  border-radius: 6px;
+  font-size: 11px;
+  padding: 4px 8px;
+}
+.row.row.row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 0;
+  border: 0;
+  border-top: 1px solid #e8ece4;
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: #244238;
+  cursor: pointer;
+  box-shadow: none;
+  min-width: 0;
+}
+.row.row.row > span {
+  display: grid;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+.row.row.row strong {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.row.row.row small {
+  font-size: 10px;
+  color: #73806f;
+}
+.row.row.row time {
+  font-size: 11px;
+  color: #687c5a;
+}
+.badge.badge.badge {
+  background: #f1f2f8;
+  color: #646883;
+  font-size: 9px;
+  border-radius: 5px;
+  padding: 5px 7px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.action.action.action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #cfdac9;
+  background: #eff4e7;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 11px;
+  color: #3d643a;
+  cursor: pointer;
+}
+.fields.fields.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 800px) {
+  .root.root.root .columns {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 440px) {
+  .row.row.row {
+    gap: 9px;
+    flex-wrap: wrap;
+  }
+  .fields.fields.fields {
+    grid-template-columns: 1fr;
+  }
+  .panel.panel.panel {
+    padding: 17px;
+  }
+}

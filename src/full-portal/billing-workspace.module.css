@@ -670,3 +670,46 @@
     flex-wrap: wrap;
   }
 }
+.root.root.root .calendarTotals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0 24px 22px;
+}
+.root.root.root .calendarTotals > div {
+  padding: 14px 16px;
+  border: 1px solid #e0e7da;
+  border-radius: 9px;
+  background: #f8faf5;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.root.root.root .calendarTotals span {
+  font-size: 10px;
+  color: #6e7e68;
+}
+.root.root.root .calendarTotals strong {
+  font-size: 22px;
+  letter-spacing: -0.7px;
+  overflow-wrap: anywhere;
+}
+.root.root.root .calendarTotals small {
+  font-size: 9px;
+  color: #7b8778;
+}
+@media (max-width: 600px) {
+  .root.root.root .calendarTotals {
+    gap: 6px;
+    padding: 0 16px 18px;
+  }
+  .root.root.root .calendarTotals > div {
+    padding: 10px 8px;
+  }
+  .root.root.root .calendarTotals strong {
+    font-size: 16px;
+  }
+  .root.root.root .calendarTotals span {
+    font-size: 9px;
+  }
+}

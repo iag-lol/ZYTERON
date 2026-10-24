@@ -27,7 +27,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       async (db) => {
         const item = await db.portalRequest.findUnique({
           where: { id },
-          select: { userId: true, title: true, status: true },
+          select: { userId: true, title: true, status: true, type: true },
         });
         if (!item) throw new Error("REQUEST_NOT_FOUND");
         await db.portalRequest.update({ where: { id }, data: { status: parsed.data.status } });
@@ -46,7 +46,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             userId: item.userId,
             title: "Tu solicitud tiene una actualización",
             body: parsed.data.reply || item.title + " · " + parsed.data.status,
-            link: "/clientes/panel/solicitudes",
+            link:
+              item.type === "MEETING" ? "/clientes/panel/agenda" : "/clientes/panel/solicitudes",
           },
         });
         await db.clientAuditLog.create({

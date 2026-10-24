@@ -1,0 +1,353 @@
+.root.root.root {
+  background: #fff;
+  border: 1px solid #dce5dc;
+  border-radius: 16px;
+  overflow: hidden;
+  color: #244238;
+  min-width: 0;
+}
+.root.root.root .heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px;
+  flex-wrap: wrap;
+}
+.root.root.root .heading h3 {
+  font-size: 25px;
+  line-height: 1.25;
+  letter-spacing: -0.7px;
+  margin: 9px 0;
+
+  color: #244238;
+}
+.root.root.root .heading p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #6c7c70;
+  margin: 0;
+}
+.root.root.root .eyebrow {
+  font-size: 10px;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #62775a;
+  font-weight: 700;
+}
+.root.root.root .controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.root.root.root .controls button,
+.root.root.root .controls select {
+  font: inherit;
+  font-size: 12px;
+  background: #fff;
+  border: 1px solid #dce5dc;
+  border-radius: 8px;
+  height: 36px;
+  color: #244238;
+  padding: 0 9px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  box-shadow: none;
+  min-width: 0;
+  margin: 0;
+}
+.root.root.root .controls button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.root.root.root .controls .todayButton {
+  background: #eff4e8;
+  font-weight: 600;
+}
+.root.root.root button:focus-visible,
+.root.root.root select:focus-visible {
+  outline: 3px solid #8ca965;
+  outline-offset: -3px;
+}
+.root.root.root .week,
+.root.root.root .grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.root.root.root .week {
+  background: #f6f8f2;
+  border-top: 1px solid #dce5dc;
+  border-bottom: 1px solid #dce5dc;
+}
+.root.root.root .week > span {
+  padding: 13px 8px;
+  text-align: center;
+  font-size: 11px;
+  color: #6a7c64;
+  font-weight: 500;
+}
+.root.root.root .week b {
+  font-weight: 500;
+}
+.root.root.root .day,
+.root.root.root .blank {
+  min-height: 130px;
+  min-width: 0;
+  border: 0;
+  border-right: 1px solid #e4e9e0;
+  border-bottom: 1px solid #e4e9e0;
+  border-radius: 0;
+  margin: 0;
+  padding: 10px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  text-align: left;
+  font: inherit;
+  color: #36513f;
+  width: 100%;
+  box-shadow: none;
+  gap: 8px;
+}
+.root.root.root .day {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.root.root.root .day:nth-child(7n),
+.root.root.root .blank:nth-child(7n) {
+  border-right: 0;
+}
+.root.root.root .blank {
+  background: #f8f9f6;
+}
+.root.root.root .day:hover {
+  background: #f4f7ef;
+}
+.root.root.root .day.selected {
+  box-shadow: inset 0 0 0 2px #476e3b;
+  background: #f1f6e9;
+}
+.root.root.root .dayNumber {
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 24px;
+}
+.root.root.root .dayNumber small {
+  font-size: 8px;
+  font-weight: 500;
+}
+.root.root.root .today .dayNumber {
+  color: #2c582e;
+  font-weight: 800;
+}
+.root.root.root .items {
+  display: grid;
+  gap: 5px;
+}
+.root.root.root .item {
+  padding: 6px 7px;
+  border-radius: 5px;
+  border-left: 3px solid;
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.root.root.root .itemLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px;
+  line-height: 1.4;
+}
+.root.root.root .item strong {
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: -0.3px;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+.root.root.root .pending {
+  background: #fff2e7;
+  border-color: #c18343;
+  color: #83522a;
+}
+.root.root.root .paid {
+  background: #edf4e8;
+  border-color: #6e965b;
+  color: #3e653e;
+}
+.root.root.root .forecast {
+  background: #f1f2f8;
+  border-color: #9195b3;
+  color: #616585;
+}
+.root.root.root .meeting {
+  background: #e9f2ef;
+  border-color: #588879;
+  color: #345b50;
+}
+.root.root.root .more {
+  font-size: 10px;
+  color: #667960;
+  padding: 1px 4px;
+}
+.root.root.root .hint {
+  padding: 14px 24px;
+  margin: 0;
+  font-size: 11px;
+  color: #7c8879;
+  line-height: 1.5;
+}
+.dayDetail.dayDetail.dayDetail {
+  border: 1px solid #dce5dc;
+  border-radius: 12px;
+  padding: 22px;
+  background: #fff;
+  color: #244238;
+  min-width: 0;
+}
+.dayDetail.dayDetail.dayDetail > header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+.dayDetail.dayDetail.dayDetail h4 {
+  margin: 0;
+  font-size: 16px;
+}
+.dayDetail.dayDetail.dayDetail p {
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-line;
+  color: #6d7d70;
+}
+.legend.legend.legend {
+  display: flex;
+  gap: 17px;
+  flex-wrap: wrap;
+  padding: 0 24px 18px;
+  font-size: 10px;
+  color: #6d7d70;
+}
+.legend.legend.legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.legend.legend.legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c18343;
+}
+.legend.legend.legend .paidDot {
+  background: #6e965b;
+}
+.legend.legend.legend .forecastDot {
+  background: #9195b3;
+}
+.legend.legend.legend .meetingDot {
+  background: #588879;
+}
+@media (max-width: 700px) {
+  .root.root.root .heading {
+    padding: 18px;
+    gap: 14px;
+  }
+  .root.root.root .heading h3 {
+    font-size: 22px;
+  }
+  .root.root.root .day,
+  .root.root.root .blank {
+    min-height: 105px;
+    padding: 6px;
+    gap: 5px;
+  }
+  .root.root.root .item {
+    padding: 4px;
+    border-left-width: 2px;
+  }
+  .root.root.root .item strong {
+    font-size: 10px;
+  }
+  .root.root.root .week > span {
+    font-size: 10px;
+    padding: 10px 3px;
+  }
+  .root.root.root .week > span > span {
+    display: none;
+  }
+  .root.root.root .itemLabel {
+    font-size: 8px;
+  }
+  .root.root.root .hint {
+    padding: 12px 18px;
+  }
+}
+@media (max-width: 440px) {
+  .root.root.root .day,
+  .root.root.root .blank {
+    padding: 4px;
+    min-height: 96px;
+  }
+  .root.root.root .item {
+    padding: 3px 2px;
+  }
+  .root.root.root .itemLabel {
+    display: none;
+  }
+  .root.root.root .item strong {
+    font-size: 9px;
+  }
+  .root.root.root .dayNumber {
+    font-size: 11px;
+    line-height: 20px;
+  }
+  .root.root.root .dayNumber small {
+    display: none;
+  }
+  .root.root.root .controls {
+    gap: 4px;
+  }
+  .root.root.root .controls button,
+  .root.root.root .controls select {
+    font-size: 11px;
+    padding: 0 7px;
+  }
+  .legend.legend.legend {
+    padding: 0 18px 16px;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 440px) {
+  .root.root.root .day,
+  .root.root.root .blank {
+    padding: 3px 2px;
+  }
+  .root.root.root .item {
+    padding: 4px 0;
+    border-left-width: 1px;
+  }
+  .root.root.root .item strong {
+    font-size: 8.5px;
+    letter-spacing: -0.45px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    overflow-wrap: normal;
+  }
+}

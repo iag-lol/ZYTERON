@@ -6,6 +6,7 @@ import Link from "next/link";
 import MonitoringPanel from "./monitoring-panel";
 import BillingHub, { FlowCheckoutPreview, InvoicePaymentOptions } from "./billing-hub";
 import HomeBilling from "./home-billing";
+import AgendaWorkspace, { MeetingRequest } from "./agenda-workspace";
 import { pendingBilling } from "@/lib/client-experience/pending-billing";
 import {
   ArrowUpRight,
@@ -265,8 +266,7 @@ export default function Portal({
     presentation(data);
   const router = useRouter();
   const REFERENCE_DATE = civil(data.asOf);
-  const [calendarDay, calendarMonth, calendarYear] = REFERENCE_DATE.split("-").map(Number);
-  const calendarEvents = events.filter((event) => event.date.slice(3) === REFERENCE_DATE.slice(3));
+  const [meetingDate, setMeetingDate] = useState<string | undefined>();
   const company = data.user.company || data.user.name;
   const accountInitials = initials(data.user.name);
   const pendingAccount = pendingBilling(data.invoices);
@@ -300,7 +300,7 @@ export default function Portal({
     sections.some((s) => s.id === initialSection) ? initialSection : "inicio",
   );
   useEffect(() => {
-    if (!["inicio", "pagos", "cuenta"].includes(section)) return;
+    if (!["inicio", "pagos", "cuenta", "agenda"].includes(section)) return;
     const refresh = () => {
       if (document.visibilityState === "visible") router.refresh();
     };
@@ -909,7 +909,13 @@ export default function Portal({
                     Compartir archivo
                   </button>
                 ) : section === "agenda" ? (
-                  <button className="button primary" onClick={() => setModal({ kind: "support" })}>
+                  <button
+                    className="button primary"
+                    onClick={() => {
+                      setMeetingDate(undefined);
+                      setModal({ kind: "meeting" });
+                    }}
+                  >
                     <CalendarDays size={17} />
                     Solicitar reunión
                   </button>
@@ -1411,73 +1417,14 @@ export default function Portal({
                 </>
               )}
               {section === "agenda" && (
-                <>
-                  <div className="agenda-layout">
-                    <section className="panel calendar-panel">
-                      <div className="calendar-header">
-                        <h2>
-                          {new Intl.DateTimeFormat("es-CL", {
-                            month: "long",
-                            year: "numeric",
-                            timeZone: "America/Santiago",
-                          }).format(new Date(data.asOf))}
-                        </h2>
-                        <Badge tone="neutral">Agenda publicada</Badge>
-                      </div>
-                      <div className="calendar-week">
-                        {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => (
-                          <span key={i}>{d}</span>
-                        ))}
-                      </div>
-                      <div className="calendar-grid">
-                        {Array.from(
-                          {
-                            length: (new Date(calendarYear, calendarMonth - 1, 1).getDay() + 6) % 7,
-                          },
-                          (_, i) => (
-                            <span key={`blank-${i}`} className="calendar-blank" />
-                          ),
-                        )}
-                        {Array.from(
-                          {
-                            length: new Date(calendarYear, calendarMonth, 0).getDate(),
-                          },
-                          (_, i) => i + 1,
-                        ).map((d) => (
-                          <button
-                            key={d}
-                            className={`${d === calendarDay ? "today" : ""} ${calendarEvents.some((e) => Number(e.day) === d) ? "has-event" : ""}`}
-                            aria-label={`${String(d).padStart(2, "0")}-${REFERENCE_DATE.slice(3)}${calendarEvents.some((e) => Number(e.day) === d) ? ", con compromiso publicado" : ""}`}
-                            onClick={() => {
-                              const e = calendarEvents.find((e) => Number(e.day) === d);
-                              if (e) setModal({ kind: "event", id: e.id });
-                              else
-                                notice(
-                                  `Sin compromisos publicados el ${String(d).padStart(2, "0")}-${REFERENCE_DATE.slice(3)}.`,
-                                );
-                            }}
-                          >
-                            {d}
-                            {calendarEvents.some((e) => Number(e.day) === d) && <i />}
-                          </button>
-                        ))}
-                      </div>
-                      <p className="source-note">
-                        Fecha de referencia: {REFERENCE_DATE} · America/Santiago
-                      </p>
-                    </section>
-                    <section className="agenda-card">
-                      <div className="section-heading">
-                        <h2>Próximos compromisos</h2>
-                      </div>
-                      {eventRows()}
-                    </section>
-                  </div>
-                  <div className="info-note">
-                    <CalendarDays size={17} />
-                    Una solicitud de reunión se confirmará después de verificar disponibilidad.
-                  </div>
-                </>
+                <AgendaWorkspace
+                  data={data}
+                  onRequest={(date) => {
+                    setMeetingDate(date);
+                    setModal({ kind: "meeting" });
+                  }}
+                  onEvent={(id) => setModal({ kind: "event", id })}
+                />
               )}
               {section === "notificaciones" && (
                 <>
@@ -1706,37 +1653,39 @@ export default function Portal({
       {modal && (
         <Modal
           title={
-            modal.kind === "flow"
-              ? "Revisar tu pago"
-              : modal.kind === "search"
-                ? "Buscar en tu espacio"
-                : modal.kind === "support"
-                  ? "Cuéntanos qué necesitas"
-                  : modal.kind === "project"
-                    ? "Tu proyecto"
-                    : modal.kind === "service"
-                      ? "Detalle del servicio"
-                      : modal.kind === "ticket"
-                        ? "Tu conversación"
-                        : modal.kind === "invoice"
-                          ? "Detalle del documento"
-                          : modal.kind === "document"
-                            ? "Documento compartido"
-                            : modal.kind === "menu"
-                              ? "Tu espacio Zyteron"
-                              : modal.kind === "organization"
-                                ? "Tu empresa"
-                                : modal.kind === "event"
-                                  ? "Compromiso publicado"
-                                  : modal.kind === "quote"
-                                    ? "Tu propuesta"
-                                    : modal.kind === "draft"
-                                      ? "Borrador de solicitud"
-                                      : modal.kind === "privacy"
-                                        ? "Privacidad de tu cuenta"
-                                        : modal.kind === "blocked"
-                                          ? "Integración pendiente"
-                                          : "Tu cuenta Zyteron"
+            modal.kind === "meeting"
+              ? "Solicitar reunión"
+              : modal.kind === "flow"
+                ? "Revisar tu pago"
+                : modal.kind === "search"
+                  ? "Buscar en tu espacio"
+                  : modal.kind === "support"
+                    ? "Cuéntanos qué necesitas"
+                    : modal.kind === "project"
+                      ? "Tu proyecto"
+                      : modal.kind === "service"
+                        ? "Detalle del servicio"
+                        : modal.kind === "ticket"
+                          ? "Tu conversación"
+                          : modal.kind === "invoice"
+                            ? "Detalle del documento"
+                            : modal.kind === "document"
+                              ? "Documento compartido"
+                              : modal.kind === "menu"
+                                ? "Tu espacio Zyteron"
+                                : modal.kind === "organization"
+                                  ? "Tu empresa"
+                                  : modal.kind === "event"
+                                    ? "Compromiso publicado"
+                                    : modal.kind === "quote"
+                                      ? "Tu propuesta"
+                                      : modal.kind === "draft"
+                                        ? "Borrador de solicitud"
+                                        : modal.kind === "privacy"
+                                          ? "Privacidad de tu cuenta"
+                                          : modal.kind === "blocked"
+                                            ? "Integración pendiente"
+                                            : "Tu cuenta Zyteron"
           }
           onClose={() => setModal(null)}
         >
@@ -1905,20 +1854,29 @@ export default function Portal({
               </div>
             </>
           )}
+          {modal.kind === "meeting" && (
+            <MeetingRequest
+              data={data}
+              initialDate={meetingDate}
+              onDone={() => {
+                setModal(null);
+                setToast("Solicitud de reunión enviada. Puedes seguir su estado en tu agenda.");
+                router.refresh();
+              }}
+            />
+          )}
           {modal.kind === "support" && (
             <form
               className="support-form"
               onSubmit={(e) => {
                 e.preventDefault();
                 void send(
-                  section === "agenda" || section === "empresa"
-                    ? "/api/portal/requests"
-                    : "/api/portal/tickets",
-                  section === "agenda" || section === "empresa"
+                  section === "empresa" ? "/api/portal/requests" : "/api/portal/tickets",
+                  section === "empresa"
                     ? {
                         title: supportDraft.title,
                         details: supportDraft.body,
-                        type: section === "agenda" ? "MEETING" : "PROFILE_UPDATE",
+                        type: "PROFILE_UPDATE",
                       }
                     : {
                         title: supportDraft.title,
@@ -1945,6 +1903,7 @@ export default function Portal({
                   value={supportDraft.service}
                   onChange={(e) => setSupportDraft((v) => ({ ...v, service: e.target.value }))}
                 >
+                  <option value="Asistencia general">Asistencia general</option>
                   {services.map((s) => (
                     <option key={s.id}>{s.name}</option>
                   ))}

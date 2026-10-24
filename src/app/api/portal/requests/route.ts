@@ -1,39 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { z } from "zod";
+import { portalRequestSchema, meetingRequestDetails } from "@/lib/portal/meeting-request";
 import { portalAuthOptions } from "@/lib/auth/portal-auth";
 import { getScopedPortalDatabase } from "@/lib/portal/scoped-db";
 import { boundedJson } from "@/lib/security/public-intake";
-
-const createRequestSchema = z.object({
-  type: z.enum([
-    "NUEVA_WEB",
-    "REDISENO",
-    "SOPORTE",
-    "INTEGRACION",
-    "CAMBIOS",
-    "COTIZACION",
-    "MEETING",
-    "PROFILE_UPDATE",
-  ]),
-  title: z.string().trim().min(4).max(140),
-  details: z.string().trim().min(10).max(5000),
-  attachmentUrl: z
-    .string()
-    .trim()
-    .url()
-    .refine((v) => {
-      try {
-        const u = new URL(v);
-        return u.protocol === "https:" && !u.username && !u.password;
-      } catch {
-        return false;
-      }
-    }, "Usa un enlace HTTPS válido.")
-    .optional()
-    .or(z.literal("")),
-  attachmentName: z.string().trim().max(140).optional().or(z.literal("")),
-});
 
 export async function POST(req: Request) {
   const session = await getServerSession(portalAuthOptions);
@@ -44,7 +14,7 @@ export async function POST(req: Request) {
   const prisma = getScopedPortalDatabase(session.user.id);
   try {
     const body = await boundedJson(req, 16384);
-    const parsed = createRequestSchema.safeParse(body);
+    const parsed = portalRequestSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         { error: parsed.error.issues[0]?.message || "Datos inválidos." },
@@ -52,13 +22,46 @@ export async function POST(req: Request) {
       );
     }
 
+    let details: string;
+    try {
+      details = meetingRequestDetails(parsed.data);
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "Revisa la fecha." },
+        { status: 400 },
+      );
+    }
     const item = await prisma.$transaction(async (db) => {
+      if (parsed.data.requestId) {
+        const existing = await db.portalRequest.findUnique({
+          where: { id: parsed.data.requestId },
+          select: {
+            id: true,
+            createdAt: true,
+            userId: true,
+            title: true,
+            details: true,
+            type: true,
+          },
+        });
+        if (existing) {
+          if (
+            existing.userId !== session.user.id ||
+            existing.title !== parsed.data.title ||
+            existing.details !== details ||
+            existing.type !== parsed.data.type
+          )
+            throw new Error("REQUEST_CONFLICT");
+          return existing;
+        }
+      }
       const item = await db.portalRequest.create({
         data: {
+          ...(parsed.data.requestId ? { id: parsed.data.requestId } : {}),
           userId: session.user.id,
           type: parsed.data.type,
           title: parsed.data.title,
-          details: parsed.data.details,
+          details,
           attachmentUrl: parsed.data.attachmentUrl || null,
           attachmentName: parsed.data.attachmentName || null,
           status: "PENDING",
@@ -82,7 +85,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, id: item.id, createdAt: item.createdAt.toISOString() });
   } catch (error) {
-    void error;
+    if (error instanceof Error && error.message === "REQUEST_CONFLICT")
+      return NextResponse.json(
+        { error: "La referencia de la solicitud ya se utilizó. Vuelve a abrir el formulario." },
+        { status: 409 },
+      );
     const message = "No se pudo crear la solicitud.";
     return NextResponse.json({ error: message }, { status: 500 });
   }

@@ -5,8 +5,6 @@ import {
   ArrowRight,
   CalendarDays,
   Check,
-  ChevronLeft,
-  ChevronRight,
   CreditCard,
   Download,
   FileText,
@@ -23,7 +21,10 @@ import { paymentBillingDocuments } from "@/lib/payments/billing-document-policy"
 import { InvoiceFiles } from "./invoice-files";
 import type { ClientRecurring } from "@/lib/payments/client-recurring-projection";
 import { recurringStateLabel } from "@/lib/payments/client-recurring-projection";
-import { paymentCivilDate, projectMonthlyPayments } from "@/lib/payments/payment-projection";
+import { paymentCivilDate } from "@/lib/payments/payment-projection";
+import { billingCalendar } from "@/lib/client-experience/billing-calendar";
+import { calendarReference, monthKey } from "@/lib/client-experience/month-calendar";
+import MonthCalendar, { CalendarDayDetail, calendarStyles as c } from "./month-calendar";
 import { money, civil } from "./production-model";
 import s from "./billing-workspace.module.css";
 
@@ -41,6 +42,43 @@ const tabs: [Tab, string][] = [
   ["payments", "Pagos recibidos"],
   ["calendar", "Calendario"],
 ];
+const calendarCaption = (kind: string) =>
+  kind === "paid"
+    ? "Pago confirmado"
+    : kind === "pending"
+      ? "Cobro pendiente"
+      : "Proyección mensual";
+function CalendarRows({
+  rows,
+  onOpen,
+}: {
+  rows: ReturnType<typeof billingCalendar>;
+  onOpen: (row: ReturnType<typeof billingCalendar>[number]) => void;
+}) {
+  return (
+    <div className={s.calendarList}>
+      {rows.map((r) => (
+        <article key={r.id}>
+          <span className={r.kind === "paid" ? s.paidIcon : s.icon}>
+            {r.kind === "paid" ? <Check size={18} /> : <CalendarDays size={18} />}
+          </span>
+          <div className={s.grow}>
+            <strong>{r.label}</strong>
+            <small>
+              {r.date ? civil(r.date) : "Sin vencimiento definido"} · {calendarCaption(r.kind)}
+            </small>
+          </div>
+          <strong>{money(r.amount, r.currency)}</strong>
+          {(r.invoiceId || r.paymentId || r.quoteId) && (
+            <button className={s.smallButton} onClick={() => onOpen(r)}>
+              {r.invoiceId ? "Ver cobro" : r.paymentId ? "Ver pago" : "Ver mensualidad"}
+            </button>
+          )}
+        </article>
+      ))}
+    </div>
+  );
+}
 export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("overview"),
@@ -48,6 +86,7 @@ export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props
     [billState, setBillState] = useState("Pendientes"),
     [year, setYear] = useState(Number(paymentCivilDate(data.asOf)?.slice(0, 4))),
     [month, setMonth] = useState(Number(paymentCivilDate(data.asOf)?.slice(5, 7))),
+    [selectedDate, setSelectedDate] = useState<string | null>(null),
     [plan, setPlan] = useState<ClientRecurring | null>(null),
     [billId, setBillId] = useState<string | null>(null),
     [payment, setPayment] = useState<PortalData["payments"][number] | null>(null),
@@ -248,44 +287,20 @@ export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props
       <div className={s.empty}>No hay pagos confirmados con esta búsqueda.</div>
     );
   }
-  const calendar = [
-    ...data.payments.map((p) => ({
-      id: `${p.source}:${p.id}`,
-      label: p.reference,
-      date: paymentCivilDate(p.date),
-      amount: p.amount,
-      currency: "CLP",
-      kind: "paid",
-      invoiceId: null as string | null,
-    })),
-    ...pending.map((i) => ({
-      id: i.id,
-      label: caption(i),
-      date: paymentCivilDate(i.due || i.issued),
-      amount: i.balance,
-      currency: i.currency,
-      kind: "pending",
-      invoiceId: i.id,
-    })),
-    ...plans
-      .filter((p) => p.currency === "CLP")
-      .flatMap((p) => projectMonthlyPayments(p, year))
-      .filter(
-        (p) =>
-          !data.invoices.some(
-            (i) => i.quoteId === p.quoteId && paymentCivilDate(i.due || i.issued) === p.date,
-          ),
-      )
-      .map((p) => ({
-        ...p,
-        id: `forecast:${p.quoteId}:${p.date}`,
-        currency: "CLP",
-        kind: "forecast",
-        invoiceId: null as string | null,
-      })),
-  ]
-    .filter((r) => r.date?.startsWith(`${year}-${String(month).padStart(2, "0")}`))
-    .sort((a, b) => a.date!.localeCompare(b.date!));
+  const allCalendar = billingCalendar(data, year);
+  const calendar = allCalendar.filter((r) => r.date?.startsWith(monthKey(year, month)));
+  const dayRows = calendar.filter((r) => r.date === selectedDate);
+  const undated = allCalendar.filter((r) => r.kind === "pending" && !r.date);
+  const openCalendarRow = (r: ReturnType<typeof billingCalendar>[number]) => {
+    if (r.invoiceId) openInvoice(r.invoiceId);
+    else if (r.paymentId) {
+      const p = data.payments.find((p) => p.id === r.paymentId && p.source === r.paymentSource);
+      if (p) setPayment(p);
+    } else if (r.quoteId) {
+      const p = plans.find((p) => p.quoteId === r.quoteId);
+      if (p) openPlan(p);
+    }
+  };
   return (
     <section className={s.root} aria-label="Centro de pagos del cliente">
       <div className={s.heading}>
@@ -434,73 +449,102 @@ export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props
           <Payments />
         </section>
       ) : (
-        <section className={s.panel}>
-          <header>
-            <div>
-              <h3>Calendario de pagos</h3>
-              <p>Los cobros emitidos y las proyecciones se distinguen de los pagos confirmados.</p>
+        <>
+          <MonthCalendar
+            title="Calendario de pagos"
+            description="Consulta cuánto corresponde pagar cada día y abre el cobro para revisar sus opciones."
+            year={year}
+            month={month}
+            today={calendarReference(data.asOf).date}
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            onMonth={(y, m) => {
+              setYear(y);
+              setMonth(m);
+              setSelectedDate(null);
+            }}
+            items={calendar.map((r) => ({
+              id: r.id,
+              date: r.date,
+              label: r.label,
+              detail: calendarCaption(r.kind),
+              tone: r.kind,
+              amount: money(r.amount, r.currency),
+            }))}
+          >
+            <div className={c.legend}>
+              <span>
+                <i />
+                Por pagar
+              </span>
+              <span>
+                <i className={c.paidDot} />
+                Pago confirmado
+              </span>
+              <span>
+                <i className={c.forecastDot} />
+                Proyección, aún sin emitir
+              </span>
             </div>
-            <div className={s.calendarControls}>
-              <button
-                aria-label="Año anterior"
-                disabled={year <= 2020}
-                onClick={() => setYear(year - 1)}
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <strong>{year}</strong>
-              <button
-                aria-label="Año siguiente"
-                disabled={year >= 2100}
-                onClick={() => setYear(year + 1)}
-              >
-                <ChevronRight size={16} />
-              </button>
-              <select
-                aria-label="Mes del calendario"
-                value={month}
-                onChange={(e) => setMonth(Number(e.target.value))}
-              >
-                {Array.from({ length: 12 }, (_, i) => (
-                  <option key={i} value={i + 1}>
-                    {new Intl.DateTimeFormat("es-CL", { month: "long", timeZone: "UTC" }).format(
-                      new Date(Date.UTC(year, i, 1)),
-                    )}
-                  </option>
-                ))}
-              </select>
+            <div className={s.calendarTotals}>
+              {(["pending", "paid", "forecast"] as const).map((kind) => {
+                const rows = calendar.filter((r) => r.kind === kind);
+                const currencies = [...new Set(rows.map((r) => r.currency))];
+                return (
+                  <div key={kind}>
+                    <span>{calendarCaption(kind)}</span>
+                    <strong>
+                      {currencies.length
+                        ? currencies
+                            .map((currency) =>
+                              money(
+                                rows
+                                  .filter((r) => r.currency === currency)
+                                  .reduce((n, r) => n + r.amount, 0),
+                                currency,
+                              ),
+                            )
+                            .join(" · ")
+                        : money(0)}
+                    </strong>
+                    <small>
+                      {rows.length} {rows.length === 1 ? "movimiento" : "movimientos"}
+                    </small>
+                  </div>
+                );
+              })}
             </div>
-          </header>
-          <div className={s.calendarList}>
-            {calendar.map((r) => (
-              <article key={r.id}>
-                <span className={r.kind === "paid" ? s.paidIcon : s.icon}>
-                  {r.kind === "paid" ? <Check size={18} /> : <CalendarDays size={18} />}
-                </span>
-                <div className={s.grow}>
-                  <strong>{r.label}</strong>
-                  <small>
-                    {civil(r.date)} ·{" "}
-                    {r.kind === "paid"
-                      ? "Pago confirmado"
-                      : r.kind === "pending"
-                        ? "Cobro pendiente"
-                        : "Proyección mensual"}
-                  </small>
+          </MonthCalendar>
+          {selectedDate && (
+            <CalendarDayDetail date={selectedDate} empty={!dayRows.length}>
+              <CalendarRows rows={dayRows} onOpen={openCalendarRow} />
+            </CalendarDayDetail>
+          )}
+          <section className={s.panel}>
+            <header>
+              <div>
+                <h3>Movimientos del mes</h3>
+                <p>Selecciona un cobro para consultar su saldo y las opciones de pago.</p>
+              </div>
+            </header>
+            {calendar.length ? (
+              <CalendarRows rows={calendar} onOpen={openCalendarRow} />
+            ) : (
+              <div className={s.empty}>No hay pagos ni proyecciones para este mes.</div>
+            )}
+          </section>
+          {undated.length > 0 && (
+            <section className={s.panel}>
+              <header>
+                <div>
+                  <h3>Cobros sin fecha de vencimiento</h3>
+                  <p>Estos saldos siguen pendientes. Su fecha se coordina con administración.</p>
                 </div>
-                <strong>{money(r.amount, r.currency)}</strong>
-                {r.invoiceId ? (
-                  <button className={s.smallButton} onClick={() => openInvoice(r.invoiceId!)}>
-                    Ver cobro
-                  </button>
-                ) : null}
-              </article>
-            ))}
-          </div>
-          {!calendar.length ? (
-            <div className={s.empty}>Sin movimientos ni proyecciones para este mes.</div>
-          ) : null}
-        </section>
+              </header>
+              <CalendarRows rows={undated} onOpen={openCalendarRow} />
+            </section>
+          )}
+        </>
       )}
       <p className={s.footnote}>
         <Info size={14} /> La asignación de una mensualidad y la autorización de una tarjeta no

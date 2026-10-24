@@ -1,4 +1,5 @@
 import type { PortalData } from "@/lib/client-experience/snapshot";
+import { agendaEventDate, agendaEventTime } from "@/lib/client-experience/month-calendar";
 import { invoicePaymentOption } from "@/lib/payments/invoice-payment-option";
 export const money = (amount: number, currency = "CLP") =>
   new Intl.NumberFormat("es-CL", {
@@ -125,19 +126,12 @@ export function presentation(data: PortalData) {
     })),
     events: data.events.map((e) => ({
       ...e,
-      day: new Intl.DateTimeFormat("es-CL", {
-        day: "2-digit",
-        timeZone: "America/Santiago",
-      }).format(new Date(e.date)),
-      month: new Intl.DateTimeFormat("es-CL", { month: "short", timeZone: "America/Santiago" })
-        .format(new Date(e.date))
+      day: agendaEventDate(e.date)?.slice(8) || "",
+      month: new Intl.DateTimeFormat("es-CL", { month: "short", timeZone: "UTC" })
+        .format(new Date(`${agendaEventDate(e.date)}T12:00:00Z`))
         .toUpperCase(),
-      date: civil(e.date),
-      time: new Intl.DateTimeFormat("es-CL", {
-        hour: "2-digit",
-        minute: "2-digit",
-        timeZone: "America/Santiago",
-      }).format(new Date(e.date)),
+      date: civil(agendaEventDate(e.date)),
+      time: agendaEventTime(e.date),
     })),
   };
 }
