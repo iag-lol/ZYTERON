@@ -1,5 +1,7 @@
 import { assertQuoteCollectionsOpen } from "./collection-visibility";
 import { assertSubscriptionActivationAllowed } from "./subscription-activation-policy";
+import { assertCheckoutAmount, assertReceivableCheckout } from "./invoice-payment-option";
+import { collectionArchive } from "@/lib/full-control/receivable-archive";
 import { onceProviderOperation } from "./provider-operation";
 import { queueReceipt } from "./payment-outbox";
 import { randomUUID } from "node:crypto";
@@ -423,6 +425,8 @@ export async function createQuoteFlowCheckout(input: {
   email: string;
   req: Request;
   legalAcceptance: PortalQuoteLegalAcceptance;
+  expectedAmount: number;
+  receivableId?: string;
 }) {
   assertPortalQuoteLegalAcceptance(input.legalAcceptance);
 
@@ -459,6 +463,61 @@ export async function createQuoteFlowCheckout(input: {
   }
   if (stage.paymentChannel !== "FLOW") {
     throw new Error("Esta etapa está configurada para transferencia bancaria.");
+  }
+
+  assertCheckoutAmount(input.expectedAmount, stage.amount);
+  const rows = await prisma.receivable.findMany({
+    where: {
+      clientId: input.userId,
+      ...(input.receivableId ? { id: input.receivableId } : { quoteId: quote.id }),
+    },
+    include: {
+      allocations: { where: { payment: { status: "CONFIRMED" } }, select: { amount: true } },
+    },
+  });
+  const receivables = rows.map((row) => {
+    const metadata =
+      row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata)
+        ? row.metadata
+        : {};
+    return {
+      clientId: row.clientId,
+      quoteId: row.quoteId || (typeof metadata.quoteId === "string" ? metadata.quoteId : null),
+      stageKey: row.quoteStageKey,
+      currency: row.currency,
+      balance: Math.max(0, row.totalAmount - row.allocations.reduce((sum, a) => sum + a.amount, 0)),
+      applied: row.allocations.reduce((sum, a) => sum + a.amount, 0),
+      status: row.status,
+      archived: collectionArchive(row.metadata)?.active === true,
+    };
+  });
+  if (input.receivableId) {
+    assertReceivableCheckout({
+      clientId: input.userId,
+      quoteId: quote.id,
+      stageKey: stage.key,
+      expectedAmount: input.expectedAmount,
+      receivable: receivables[0] || null,
+    });
+  } else if (receivables.length) {
+    const active = receivables.filter(
+      (row) => !row.archived && !["CANCELLED", "CANCELED", "VOID", "VOIDED"].includes(row.status),
+    );
+    if (active.some((row) => row.currency.trim() !== "CLP"))
+      throw new Error("La moneda del cobro requiere revisión.");
+    const scoped = active.filter((row) => row.stageKey === stage.key);
+    const general = active.filter((row) => !row.stageKey);
+    if (!active.length) throw new Error("El cobro fue retirado de la cuenta.");
+    if (scoped.length)
+      assertCheckoutAmount(
+        stage.amount,
+        scoped.reduce((sum, row) => sum + row.balance, 0),
+      );
+    else if (general.length) {
+      const balance = general.reduce((sum, row) => sum + row.balance, 0);
+      if (general.some((row) => row.applied > 0) || balance < stage.amount)
+        assertCheckoutAmount(stage.amount, balance);
+    }
   }
 
   const baseUrl = resolveBaseUrl(input.req);

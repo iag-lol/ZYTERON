@@ -1701,7 +1701,9 @@ export default function Portal({
                     <ShieldCheck size={21} />
                     <div>
                       <b>Credenciales protegidas</b>
-                      <p>Proyecto pagado, contraseña y código a tu correo para consultar accesos.</p>
+                      <p>
+                        Proyecto pagado, contraseña y código a tu correo para consultar accesos.
+                      </p>
                     </div>
                   </div>
                   <div className="security-setting">
@@ -1787,7 +1789,7 @@ export default function Portal({
           onClose={() => {
             if (!busy) {
               setModal(null);
-                        setError("");
+              setError("");
             }
           }}
         >
@@ -1991,7 +1993,13 @@ export default function Portal({
             data.credentials
               .filter((c) => c.id === modal.id)
               .map((c) => (
-                <CredentialAccessForm key={c.id} credentialId={c.id} name={c.name} project={c.project} access={c.access} />
+                <CredentialAccessForm
+                  key={c.id}
+                  credentialId={c.id}
+                  name={c.name}
+                  project={c.project}
+                  access={c.access}
+                />
               ))}
           {modal.kind === "checkout" && selectedQuote && (
             <form
@@ -2019,6 +2027,16 @@ export default function Portal({
                   {
                     acceptTerms: true,
                     acceptPrivacy: true,
+                    ...(!monthly
+                      ? {
+                          expectedAmount: selectedQuote.stages.find(
+                            (s) =>
+                              s.dueEnabled &&
+                              s.channel === "FLOW" &&
+                              ["READY", "REJECTED", "PROCESSING"].includes(s.status),
+                          )?.amount,
+                        }
+                      : {}),
                     ...(monthly ? { challengeId: challenge, code: f.code } : {}),
                   },
                   "POST",
@@ -2057,7 +2075,10 @@ export default function Portal({
                       selectedQuote.billingType === "SUBSCRIPTION"
                         ? selectedQuote.subscription?.amount || selectedQuote.total
                         : selectedQuote.stages.find(
-                            (s) => s.dueEnabled && s.channel === "FLOW" && s.status !== "PAID",
+                            (s) =>
+                              s.dueEnabled &&
+                              s.channel === "FLOW" &&
+                              ["READY", "REJECTED", "PROCESSING"].includes(s.status),
                           )?.amount || selectedQuote.total,
                     )}
                     <small>CLP</small>

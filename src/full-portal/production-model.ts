@@ -1,4 +1,5 @@
 import type { PortalData } from "@/lib/client-experience/snapshot";
+import { invoicePaymentOption } from "@/lib/payments/invoice-payment-option";
 export const money = (amount: number, currency = "CLP") =>
   new Intl.NumberFormat("es-CL", {
     style: "currency",
@@ -73,7 +74,11 @@ export function presentation(data: PortalData) {
       status: i.status,
       obligation: i.balance > 0 ? "Pendiente" : "Saldada",
       document: "Cuenta por cobrar",
-      payable: data.quotes.some((q) => q.id === i.quoteId && q.payable),
+      payable:
+        invoicePaymentOption(
+          i,
+          data.quotes.find((q) => q.id === i.quoteId),
+        ) === "FLOW",
     })),
     documents: data.documents.map((d) => ({
       id: d.id,

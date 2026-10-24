@@ -4,7 +4,7 @@ import { PortalCommunications } from "./communications";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import MonitoringPanel from "./monitoring-panel";
-import BillingHub, { FlowCheckoutPreview } from "./billing-hub";
+import BillingHub, { FlowCheckoutPreview, InvoicePaymentOptions } from "./billing-hub";
 import HomeBilling from "./home-billing";
 import { pendingBilling } from "@/lib/client-experience/pending-billing";
 import {
@@ -1035,10 +1035,14 @@ export default function Portal({
                       </div>
                       <button
                         className="button lime"
-                        disabled={!invoices.some((i) => i.payable)}
-                        onClick={() =>
-                          setModal({ kind: "flow", id: invoices.find((i) => i.payable)?.id })
-                        }
+                        disabled={!clpAccount?.count}
+                        onClick={() => {
+                          const pending = pendingAccount.pending.filter(
+                            (i) => i.currency === "CLP",
+                          );
+                          if (pending.length === 1) setModal({ kind: "flow", id: pending[0].id });
+                          else go("pagos");
+                        }}
                       >
                         Revisar opciones de pago <ArrowUpRight size={16} />
                       </button>
@@ -1735,13 +1739,26 @@ export default function Portal({
         >
           {modal.kind === "flow" &&
             (() => {
-              const i = invoices.find((i) => i.id === modal.id);
-              if (!i) return null;
+              const i = data.invoices.find((i) => i.id === modal.id);
+              if (!i)
+                return (
+                  <p role="status">
+                    Este cobro ya no está disponible. Cierra esta ventana y revisa tu cuenta
+                    actualizada.
+                  </p>
+                );
               return (
-                <FlowCheckoutPreview
-                  document={i.displayNumber + " · " + i.concept}
-                  amount={i.balance}
+                <InvoicePaymentOptions
+                  invoice={i}
                   quote={data.quotes.find((q) => q.id === i.quoteId)}
+                  onHelp={() => {
+                    setSupportDraft((draft) => ({
+                      ...draft,
+                      title: `Opciones de pago · ${data.quotes.find((q) => q.id === i.quoteId)?.number || i.id}`,
+                      body: `Consulta por el cobro ${i.concept}, con saldo pendiente de ${money(i.balance, i.currency)}.`,
+                    }));
+                    setModal({ kind: "support" });
+                  }}
                 />
               );
             })()}
@@ -2174,7 +2191,7 @@ export default function Portal({
                   <div className="modal-actions">
                     <button
                       className="button primary"
-                      disabled={!i.payable}
+                      disabled={!data.invoices.some((row) => row.id === i.id && row.balance > 0)}
                       onClick={() => setModal({ kind: "flow", id: i.id })}
                     >
                       Opciones de pago <CreditCard size={17} />

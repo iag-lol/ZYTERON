@@ -2,6 +2,9 @@
 import { useState } from "react";
 import type { PortalData } from "@/lib/client-experience/snapshot";
 import { money } from "./production-model";
+import { civil } from "./production-model";
+import { ZYTERON_COMPANY } from "@/lib/company";
+import { invoicePaymentOption } from "@/lib/payments/invoice-payment-option";
 import { Check, CreditCard, Info, LockKeyhole, Wallet } from "lucide-react";
 async function post(url: string, body: unknown) {
   const r = await fetch(url, {
@@ -17,10 +20,12 @@ export function FlowCheckoutPreview({
   document,
   amount,
   quote,
+  invoice,
 }: {
   document: string;
   amount: string;
   quote?: PortalData["quotes"][number];
+  invoice?: PortalData["invoices"][number];
 }) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -32,12 +37,13 @@ export function FlowCheckoutPreview({
       s.channel === "FLOW" &&
       ["READY", "REJECTED", "PROCESSING"].includes(s.status),
   );
+  const matchesInvoice = !invoice || invoicePaymentOption(invoice, quote) === "FLOW";
   return (
     <form
       className="flow-review support-form"
       onSubmit={async (e) => {
         e.preventDefault();
-        if (busy || !quote) return;
+        if (busy || !quote || !matchesInvoice || !payable) return;
         const form = e.currentTarget;
         setBusy(true);
         setError("");
@@ -54,6 +60,12 @@ export function FlowCheckoutPreview({
             {
               acceptTerms: true,
               acceptPrivacy: true,
+              ...(!monthly
+                ? {
+                    expectedAmount: payable.amount,
+                    ...(invoice ? { receivableId: invoice.id } : {}),
+                  }
+                : {}),
               ...(monthly ? { challengeId: challenge, code: new FormData(form).get("code") } : {}),
             },
           );
@@ -95,10 +107,21 @@ export function FlowCheckoutPreview({
           <b>{document}</b>
         </div>
         <strong>
-          {payable ? money(payable.amount) : amount}
+          {invoice
+            ? money(invoice.balance, invoice.currency)
+            : payable
+              ? money(payable.amount)
+              : amount}
           <small>CLP</small>
         </strong>
       </div>
+      {!invoice && !monthly && payable && payable.amount !== quote?.total && (
+        <p className="info-note">
+          <Info size={17} />
+          Se pagará la etapa {payable.label}. El total de la cotización es{" "}
+          {money(quote?.total || 0)}.
+        </p>
+      )}
       <ol className="checkout-steps">
         <li>
           <span>1</span>
@@ -143,7 +166,10 @@ export function FlowCheckoutPreview({
           {error}
         </div>
       )}
-      <button className="button primary" disabled={busy || !quote?.payable}>
+      <button
+        className="button primary"
+        disabled={busy || !quote?.payable || !matchesInvoice || !payable}
+      >
         <CreditCard size={17} />
         {busy
           ? "Preparando pago…"
@@ -155,6 +181,112 @@ export function FlowCheckoutPreview({
         No recibimos datos de tarjeta. Volver del pago no acredita una transacción.
       </p>
     </form>
+  );
+}
+
+export function InvoicePaymentOptions({
+  invoice,
+  quote,
+  onHelp,
+}: {
+  invoice: PortalData["invoices"][number];
+  quote?: PortalData["quotes"][number];
+  onHelp: () => void;
+}) {
+  const option = invoicePaymentOption(invoice, quote);
+  const label = [quote?.number, invoice.concept].filter(Boolean).join(" · ");
+  if (option === "FLOW")
+    return (
+      <FlowCheckoutPreview
+        document={label}
+        amount={money(invoice.balance, invoice.currency)}
+        quote={quote}
+        invoice={invoice}
+      />
+    );
+  return (
+    <div className="flow-review">
+      <h3>{option === "SETTLED" ? "Este cobro ya está saldado" : "Opciones para este cobro"}</h3>
+      <p>Los importes corresponden al documento seleccionado y sus abonos confirmados.</p>
+      <div className="checkout-document">
+        <span>
+          <Wallet size={23} />
+        </span>
+        <div>
+          <small>TU COBRO</small>
+          <b>{label}</b>
+        </div>
+        <strong>
+          {money(invoice.balance, invoice.currency)}
+          <small>Saldo pendiente · {invoice.currency}</small>
+        </strong>
+      </div>
+      <dl className="detail-list">
+        <div>
+          <dt>Total del cobro</dt>
+          <dd>{money(invoice.total, invoice.currency)}</dd>
+        </div>
+        <div>
+          <dt>Abonos aplicados</dt>
+          <dd>{money(Math.max(0, invoice.total - invoice.balance), invoice.currency)}</dd>
+        </div>
+        <div>
+          <dt>Vencimiento</dt>
+          <dd>{invoice.due ? civil(invoice.due) : "Sin vencimiento definido"}</dd>
+        </div>
+      </dl>
+      {option === "TRANSFER" ? (
+        <>
+          <h3>Datos para transferencia</h3>
+          <dl className="detail-list">
+            <div>
+              <dt>Destinatario</dt>
+              <dd>{ZYTERON_COMPANY.legalName}</dd>
+            </div>
+            <div>
+              <dt>RUT</dt>
+              <dd>{ZYTERON_COMPANY.rut}</dd>
+            </div>
+            <div>
+              <dt>Banco</dt>
+              <dd>{ZYTERON_COMPANY.transferBank}</dd>
+            </div>
+            <div>
+              <dt>Tipo de cuenta</dt>
+              <dd>{ZYTERON_COMPANY.transferAccountType}</dd>
+            </div>
+            <div>
+              <dt>Número de cuenta</dt>
+              <dd>{ZYTERON_COMPANY.transferAccountNumber}</dd>
+            </div>
+            <div>
+              <dt>Correo</dt>
+              <dd>{ZYTERON_COMPANY.transferAccountEmail}</dd>
+            </div>
+            <div>
+              <dt>Referencia</dt>
+              <dd>{quote?.number || invoice.id}</dd>
+            </div>
+          </dl>
+          <p className="info-note">
+            <Info size={17} />
+            Este cobro está configurado para transferencia. Su saldo se actualizará después de
+            confirmar el abono.
+          </p>
+        </>
+      ) : option === "REVIEW" ? (
+        <p className="info-note" role="status">
+          <Info size={17} />
+          El pago online aún no está habilitado para el saldo actual de este documento. Puedes
+          solicitar la revisión de este cobro.
+        </p>
+      ) : null}
+      {option !== "SETTLED" && (
+        <button className="button secondary" onClick={onHelp}>
+          Consultar este cobro
+        </button>
+      )}
+    </div>
   );
 }
 export { default } from "./billing-workspace";

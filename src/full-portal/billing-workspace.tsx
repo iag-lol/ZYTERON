@@ -739,7 +739,7 @@ export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props
                     Ver cotización de origen <ArrowRight size={14} />
                   </button>
                 ) : null}
-                {bill.balance > 0 && data.quotes.some((q) => q.id === bill.quoteId && q.payable) ? (
+                {bill.balance > 0 ? (
                   <button
                     className={s.primary}
                     onClick={() => {
@@ -749,16 +749,6 @@ export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props
                     }}
                   >
                     <CreditCard size={15} /> Revisar opciones de pago
-                  </button>
-                ) : bill.balance > 0 ? (
-                  <button
-                    className={s.secondary}
-                    onClick={() => {
-                      close();
-                      onHelp();
-                    }}
-                  >
-                    Consultar opciones de pago
                   </button>
                 ) : null}
               </div>

@@ -277,7 +277,12 @@ export function QuotePaymentActions({
     const response = await fetch(`/api/portal/payments/quotes/${quoteId}/flow/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(legalAcceptance),
+      body: JSON.stringify({
+        ...legalAcceptance,
+        expectedAmount: quotes
+          .find((quote) => quote.id === quoteId)
+          ?.payment?.stages?.find((stage) => stage.key === stageKey)?.amount,
+      }),
     });
     const payload = (await response.json().catch(() => ({}))) as {
       checkoutUrl?: string;
