@@ -26,7 +26,7 @@ export async function scopedCommercial(db: Prisma.TransactionClient) {
         issue_date: Date | null;
         due_date: Date | null;
       }>
-    >`SELECT id,invoice_number,description,currency,total_amount,balance_due,issue_date,due_date FROM invoices ORDER BY issue_date DESC NULLS LAST LIMIT 200`,
+    >`SELECT id,invoice_number,description,currency,total_amount,balance_due,issue_date,due_date FROM invoices ORDER BY issue_date DESC NULLS LAST`,
     db.$queryRaw<
       Array<{
         quote_id: string;

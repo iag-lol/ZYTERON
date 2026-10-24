@@ -1,3 +1,5 @@
+import { clientRecurringState } from "@/lib/payments/client-recurring";
+import { legacyViewId } from "@/lib/full-control/legacy-id";
 import { dueInstant } from "@/lib/payments/monthly-calendar";
 import { isSafePortalLink } from "@/lib/portal/safe-link";
 import { portalModulePermissions } from "@/lib/portal/module-permissions";
@@ -26,7 +28,7 @@ export async function connectedPortalSnapshot(userId: string) {
     ),
   );
   const extra = await clientDatabase(userId, async (db) => {
-    const [services, events, debts, payments, quotes, lifecycle, webThreads, webMessages] =
+    const [services, events, debts, payments, quotes, lifecycle, webThreads, webMessages, billing] =
       await Promise.all([
         db.$queryRaw<
           Array<{
@@ -56,13 +58,19 @@ export async function connectedPortalSnapshot(userId: string) {
             allocations: { where: { payment: { status: "CONFIRMED" } }, select: { amount: true } },
           },
           orderBy: { issuedAt: "desc" },
-          take: 200,
         }),
         db.payment.findMany({
           where: { clientId: userId, status: "CONFIRMED" },
-          select: { id: true, amount: true, receivedAt: true, provider: true, metadata: true },
+          select: {
+            id: true,
+            amount: true,
+            receivedAt: true,
+            provider: true,
+            metadata: true,
+            reference: true,
+            allocations: { select: { receivableId: true, amount: true } },
+          },
           orderBy: { receivedAt: "desc" },
-          take: 200,
         }),
         db.quote.findMany({
           where: {
@@ -72,7 +80,6 @@ export async function connectedPortalSnapshot(userId: string) {
             ],
           },
           orderBy: { createdAt: "desc" },
-          take: 100,
         }),
         db.$queryRaw<
           Array<{
@@ -95,6 +102,7 @@ export async function connectedPortalSnapshot(userId: string) {
             created_at: Date;
           }>
         >`SELECT id,thread_id,direction,actor_kind,body_text,created_at FROM sales_messages ORDER BY created_at DESC LIMIT 200`,
+        clientRecurringState(db, userId),
       ]);
     const permissions = await portalModulePermissions(db);
     if (!permissions.enabled) throw new Error("PORTAL_DISABLED");
@@ -110,6 +118,7 @@ export async function connectedPortalSnapshot(userId: string) {
       : [];
 
     return {
+      billing,
       services,
       events,
       debts,
@@ -125,7 +134,15 @@ export async function connectedPortalSnapshot(userId: string) {
     };
   });
   const nativeQuotes = extra.quotes
-    .filter((q) => nativeProposalVisible(q.status, parseQuoteMessage(q.message)))
+    .filter(
+      (q) =>
+        nativeProposalVisible(q.status, parseQuoteMessage(q.message)) &&
+        !extra.billing.archives.some(
+          (a) =>
+            a.state === "ARCHIVED" &&
+            (a.native_quote_id === q.id || a.quote_id === legacyViewId("quote", q.id)),
+        ),
+    )
     .map((q) => {
       const v = enrichQuoteRecord({ ...q, createdAt: q.createdAt.toISOString() }),
         p = normalizeQuoteMetaPayment(v.meta).payment,
@@ -146,6 +163,7 @@ export async function connectedPortalSnapshot(userId: string) {
         createdAt: q.createdAt.toISOString(),
         payable:
           extra.permissions.invoices &&
+          !extra.billing.archives.some((a) => a.quote_id === legacyViewId("quote", q.id)) &&
           quotePaymentVisibleInPortal(q.status, p) &&
           p?.enabled !== false &&
           q.total > 0 &&
@@ -184,7 +202,11 @@ export async function connectedPortalSnapshot(userId: string) {
   const quotes = [
     ...nativeQuotes,
     ...extra.commercial.quotes
-      .filter((q) => !extra.quotes.some((n) => n.id === q.id))
+      .filter(
+        (q) =>
+          !extra.quotes.some((n) => legacyViewId("quote", n.id) === q.id) &&
+          !extra.billing.archives.some((a) => a.quote_id === q.id && a.state === "ARCHIVED"),
+      )
       .map((q) => ({
         id: q.id,
         number: q.quote_number,
@@ -393,12 +415,20 @@ export async function connectedPortalSnapshot(userId: string) {
     ],
     monitors: extra.permissions.monitoring ? extra.publications.monitors : [],
     payments: [
-      ...(extra.permissions.invoices ? extra.publications.payments : []),
+      ...(extra.permissions.invoices ? extra.publications.payments : []).map((p) => ({
+        ...p,
+        source: "accounting" as const,
+        allocations: p.allocations,
+        reference: p.reference,
+      })),
       ...(extra.permissions.invoices ? extra.payments : []).map((p) => ({
         id: p.id,
         amount: p.amount,
         date: p.receivedAt.toISOString(),
         receipt: p.provider === "FLOW",
+        source: "commercial" as const,
+        allocations: p.allocations,
+        reference: p.reference || "Pago registrado",
         quoteId:
           p.metadata &&
           typeof p.metadata === "object" &&
@@ -408,6 +438,7 @@ export async function connectedPortalSnapshot(userId: string) {
             : null,
       })),
     ],
+    recurring: extra.permissions.invoices ? extra.billing.recurring : [],
     quotes,
     contracts: extra.permissions.documents ? extra.publications.contracts : [],
     webThreads: extra.webThreads,

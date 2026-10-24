@@ -1,4 +1,5 @@
 "use client";
+import { recurringStateLabel } from "@/lib/payments/client-recurring-projection";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -35,7 +36,6 @@ import {
   financeCivilDay,
   financeCsv,
   financeStatusLabel,
-  isLiveQuote,
   isOpenReceivable,
   matchesFinanceSearch,
   nextReceivables,
@@ -295,7 +295,7 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
     (q) => q.id === (selectedReceivable?.quoteViewId || selectedReceivable?.quoteId),
   );
   const openReceivables = nextReceivables(receivables, today);
-  const monthly = allQuotes.filter((q) => isLiveQuote(q) && q.billing?.frequency === "MONTHLY");
+  const monthly = account?.recurring ?? [];
   const selectedQuote = allQuotes.find((q) => q.id === quoteId),
     scheduledQuote = allQuotes.find((q) => q.id === schedule),
     billingQuote = allQuotes.find((q) => q.id === billingQuoteId);
@@ -689,7 +689,7 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
           </Panel>
           <Panel
             title="Mensualidades"
-            subtitle={`${monthly.length} propuestas mensuales vigentes`}
+            subtitle={`${monthly.length} mensualidades asignadas; cada una muestra su estado real`}
             action={
               <span className={s.iconSoft}>
                 <Repeat2 size={18} />
@@ -697,23 +697,22 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
             }
           >
             <div className={s.monthlyList}>
-              {monthly.slice(0, 3).map((q) => (
-                <button key={q.id} onClick={() => setQuoteId(q.id)}>
+              {monthly.map((q) => (
+                <button key={q.quoteViewId} onClick={() => setQuoteId(q.quoteViewId)}>
                   <span>
-                    <strong>{q.quoteNumber}</strong>
+                    <strong>{q.label}</strong>
                     <small>
-                      {q.billing?.paidThrough
-                        ? `Período confirmado hasta ${formatDate(q.billing.paidThrough)}`
-                        : financeStatusLabel(q.status)}
+                      {recurringStateLabel(q.state)}
+                      {q.nextDate
+                        ? ` · Próximo ${formatDate(q.nextDate)}`
+                        : " · Sin fecha activada"}
                     </small>
                   </span>
                   <span>
-                    <strong>
-                      {money(q.billing?.monthlyAmount ?? q.totalAmount, q.currency)}
-                      <small>/ mes</small>
-                    </strong>
-                    <ChevronRight size={15} />
+                    <strong>{money(q.amount, q.currency)}</strong>
+                    <small>/ mes</small>
                   </span>
+                  <ChevronRight size={15} />
                 </button>
               ))}
               {!monthly.length ? <Empty title="Sin propuestas mensuales" /> : null}

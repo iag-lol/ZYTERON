@@ -299,6 +299,21 @@ export default function Portal({
   const [section, setSection] = useState(
     sections.some((s) => s.id === initialSection) ? initialSection : "inicio",
   );
+  useEffect(() => {
+    if (!["pagos", "cuenta"].includes(section)) return;
+    const refresh = () => {
+      if (document.visibilityState === "visible") router.refresh();
+    };
+    refresh();
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    const timer = setInterval(refresh, 30000);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+      clearInterval(timer);
+    };
+  }, [section, router]);
   const [modal, setModal] = useState<ModalState>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("Todos");
@@ -976,7 +991,15 @@ export default function Portal({
                   </p>
                 </>
               )}
-              {(section === "cuenta" || section === "pagos") && (
+              {section === "pagos" && (
+                <BillingHub
+                  data={data}
+                  onHelp={() => setModal({ kind: "support" })}
+                  onQuote={(id) => setModal({ kind: "quote", id })}
+                  onPay={(id) => setModal({ kind: "flow", id })}
+                />
+              )}
+              {section === "cuenta" && (
                 <>
                   <div className="finance-overview">
                     <div className="balance-card">
@@ -1025,9 +1048,6 @@ export default function Portal({
                       </div>
                     </div>
                   </div>
-                  {section === "pagos" && (
-                    <BillingHub data={data} onHelp={() => setModal({ kind: "support" })} />
-                  )}
                   <section className="panel finance-panel">
                     <div className="section-heading">
                       <h2>

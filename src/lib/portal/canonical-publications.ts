@@ -70,8 +70,15 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
       }>
     >`SELECT m.id,e.name,e.url,m.status,m.last_checked_at,m.last_latency_ms,m.ssl_status,m.ssl_expires_at FROM monitors m JOIN project_endpoints e ON e.id=m.endpoint_id ORDER BY e.name LIMIT 100`,
     db.$queryRaw<
-      Array<{ id: string; gross_amount: number; received_at: Date; currency: string }>
-    >`SELECT id,gross_amount,received_at,currency FROM payments WHERE status='CONFIRMED' AND confirmed_at IS NOT NULL AND provider IN ('BANK_TRANSFER','CASH','OTHER') AND currency='CLP' ORDER BY received_at DESC LIMIT 200`,
+      Array<{
+        id: string;
+        gross_amount: number;
+        received_at: Date;
+        currency: string;
+        payment_reference: string | null;
+        allocations: { receivableId: string; amount: number }[];
+      }>
+    >`SELECT p.id,p.gross_amount,p.received_at,p.currency,p.payment_reference,COALESCE((SELECT jsonb_agg(jsonb_build_object('receivableId',a.invoice_id,'amount',a.amount)) FROM payment_allocations a WHERE a.payment_id=p.id AND a.reversed_at IS NULL),'[]'::jsonb) AS allocations FROM payments p WHERE p.status='CONFIRMED' AND p.confirmed_at IS NOT NULL AND p.provider IN ('BANK_TRANSFER','CASH','OTHER') AND p.currency='CLP' ORDER BY p.received_at DESC`,
   ]);
   const contracts = await db.$queryRaw<
     Array<{
@@ -163,6 +170,8 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
       date: p.received_at.toISOString(),
       receipt: false,
       quoteId: null,
+      reference: p.payment_reference || "Pago registrado",
+      allocations: p.allocations,
     })),
   };
 }

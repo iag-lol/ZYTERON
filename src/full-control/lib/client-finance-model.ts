@@ -1,3 +1,4 @@
+import type { ClientRecurring } from "@/lib/payments/client-recurring-projection";
 import type { SalesQuote, ClientFinanceSummary } from "@zyteron/contracts";
 import type { QuoteBilling } from "@/lib/full-control/quote-register";
 import type { SerializableClientFinanceSummary } from "@/components/admin/client-finance-panel";
@@ -9,6 +10,7 @@ export type ClientQuote = SalesQuote & {
 };
 export type ClientReceivable = SerializableClientFinanceSummary["receivables"][number];
 export type PortalFinance = {
+  recurring?: ClientRecurring[];
   userId: string | null;
   summary: SerializableClientFinanceSummary | null;
 };
@@ -30,6 +32,7 @@ export type PaymentRegisterRow = {
 
 const statusLabels: Record<string, string> = {
   DRAFT: "Borrador",
+  APPROVED: "Aprobada",
   READY_TO_SEND: "Lista para enviar",
   SENT: "Enviada",
   VIEWED: "Vista",

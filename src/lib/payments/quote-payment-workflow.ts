@@ -1,3 +1,4 @@
+import { assertQuoteCollectionsOpen } from "./collection-visibility";
 import { onceProviderOperation } from "./provider-operation";
 import { queueReceipt } from "./payment-outbox";
 import { randomUUID } from "node:crypto";
@@ -425,6 +426,8 @@ export async function createQuoteFlowCheckout(input: {
     throw new Error("La cotización no está vinculada a tu correo activo.");
   }
 
+  await assertQuoteCollectionsOpen(quote.id);
+
   if (!quote.userId) {
     const bound = await prisma.quote.updateMany({
       where: { id: quote.id, userId: null, email: { equals: input.email, mode: "insensitive" } },
@@ -522,6 +525,8 @@ export async function createQuoteFlowSubscriptionStart(input: {
   if (!quoteEmail || quoteEmail.toLowerCase() !== input.email.toLowerCase()) {
     throw new Error("La cotización no está vinculada a tu correo activo.");
   }
+
+  await assertQuoteCollectionsOpen(quote.id);
 
   if (!quote.userId) {
     const bound = await prisma.quote.updateMany({
@@ -1104,6 +1109,8 @@ export async function submitQuoteTransferProof(input: {
   if (!quoteEmail || quoteEmail.toLowerCase() !== input.email.toLowerCase()) {
     throw new Error("La cotización no está vinculada a tu correo activo.");
   }
+
+  await assertQuoteCollectionsOpen(quote.id);
 
   const stage = (quote.meta.payment?.stages || []).find((item) => item.key === input.stageKey);
   if (!stage || !stage.dueEnabled) {

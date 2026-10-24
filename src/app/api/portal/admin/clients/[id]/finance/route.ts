@@ -1,3 +1,4 @@
+import { clientRecurringState } from "@/lib/payments/client-recurring";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { commercialAdmin } from "@/lib/full-control/commercial-api-guard";
@@ -14,11 +15,17 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const [link] = await prisma.$queryRaw<
       Array<{ user_id: string }>
     >`SELECT user_id FROM zyteron_legacy_client_link WHERE client_id=${parsed.data}::uuid`;
-    const summary = link ? await getClientFinanceSummary(link.user_id) : null;
+    const [summary, billing] = link
+      ? await Promise.all([
+          getClientFinanceSummary(link.user_id),
+          clientRecurringState(prisma, link.user_id),
+        ])
+      : [null, null];
     return NextResponse.json(
       summary
         ? {
             userId: link.user_id,
+            recurring: billing?.recurring || [],
             summary: {
               ...summary,
               receivables: summary.receivables.map((r) => ({
@@ -27,7 +34,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
               })),
             },
           }
-        : { userId: null, summary: null },
+        : { userId: null, summary: null, recurring: [] },
       { headers: { "cache-control": "no-store" } },
     );
   } catch {

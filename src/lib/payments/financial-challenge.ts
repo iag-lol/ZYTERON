@@ -1,3 +1,4 @@
+import { assertQuoteCollectionsOpen } from "./collection-visibility";
 import "server-only";
 import { randomInt, randomUUID, createHmac, timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/prisma";
@@ -26,6 +27,7 @@ export async function sendFinancialCode(userId: string, quoteId: string, purpose
       },
     });
     if (!q) throw new Error("FINANCIAL_OWNER_REQUIRED");
+    if (purpose === "START_SUBSCRIPTION") await assertQuoteCollectionsOpen(quoteId, tx);
     if (!q.userId) await tx.quote.update({ where: { id: quoteId }, data: { userId } });
     const contextHash = digest(JSON.stringify([q.message, q.total, userId, purpose]));
     const recent = await tx.$queryRaw<
