@@ -40,6 +40,7 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
       Array<{
         id: string;
         name: string;
+        project_number: string;
         description: string | null;
         scope: string | null;
         status: string;
@@ -47,7 +48,7 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
         planned_start_date: Date | null;
         target_date: Date | null;
       }>
-    >`SELECT id,name,description,scope,status,progress,planned_start_date,target_date FROM projects ORDER BY created_at DESC LIMIT 100`,
+    >`SELECT id,name,project_number,description,scope,status,progress,planned_start_date,target_date FROM projects ORDER BY created_at DESC LIMIT 100`,
     db.$queryRaw<
       PublishedDocument[]
     >`SELECT d.id,d.title,d.description,v.filename,v.storage_path,d.created_at,t.code AS category FROM documents d JOIN document_versions v ON v.id=d.current_version_id LEFT JOIN document_types t ON t.id=d.type_id ORDER BY d.created_at DESC LIMIT 100`,
@@ -112,6 +113,7 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
     projects: projects.map((p) => ({
       id: p.id,
       title: p.name,
+      number: p.project_number,
       status: projectStatus(p.status),
       progress:
         p.progress !== null && Number.isFinite(Number(p.progress)) ? Number(p.progress) : null,

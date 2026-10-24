@@ -397,7 +397,7 @@ export default function Portal({
         <ProjectArt variant={p.color} />
         <div className="project-body">
           <div className="project-meta">
-            <span>{p.category}</span>
+            <span>{p.number || p.category}</span>
             <Badge tone={p.status === "DONE" ? "green" : "neutral"}>
               {p.status === "DONE" ? "Entregado" : "En curso"}
             </Badge>
@@ -406,6 +406,7 @@ export default function Portal({
             <h3>{p.short}</h3>
             <ArrowUpRight size={18} />
           </button>
+          {p.description && <p className="project-summary">{p.description}</p>}
           <p>{p.phase}</p>
           <div className="progress-label">
             <span>Avance publicado</span>
@@ -2016,9 +2017,15 @@ export default function Portal({
               return (
                 <>
                   <ProjectArt variant={p.color} />
-                  <p className="eyebrow">{p.category}</p>
+                  <p className="eyebrow">{p.number || p.category}</p>
                   <h3>{p.short}</h3>
                   <p>{p.description}</p>
+                  {p.scope && (
+                    <>
+                      <h4>Alcance acordado</h4>
+                      <p>{p.scope}</p>
+                    </>
+                  )}
                   <div className="progress-label">
                     <span>Avance publicado</span>
                     <b>{p.progress === null ? "Sin avance publicado" : `${p.progress ?? 0}%`}</b>

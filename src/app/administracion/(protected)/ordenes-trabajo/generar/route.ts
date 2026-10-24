@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getQuoteById, getWorkOrderByQuoteId } from "@/lib/admin/repository";
 import { prisma } from "@/lib/prisma";
-import { buildWorkOrderScopeFromQuote, isWebCheckoutQuote } from "@/lib/admin/work-orders";
+import { buildProjectTitleFromQuote, buildWorkOrderScopeFromQuote, isWebCheckoutQuote } from "@/lib/admin/work-orders";
 import { parseCheckoutMeta } from "@/lib/checkout/orders";
 import { parseQuoteMessage } from "@/lib/admin/quote";
 
@@ -155,8 +155,7 @@ export async function POST(request: Request) {
             clientId,
             quoteId: quote.id,
             processId: quoteRow?.processId || null,
-            title:
-              quote.company || quote.name ? `Proyecto · ${quote.company || quote.name}` : title,
+            title: buildProjectTitleFromQuote(quote),
             serviceArea: source === "WEB_ORDER" ? "Implementación web" : "Servicios digitales",
             status: "Planificado",
             priority: source === "WEB_ORDER" ? "Alta" : "Normal",

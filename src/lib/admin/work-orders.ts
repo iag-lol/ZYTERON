@@ -1,6 +1,15 @@
 import { parseQuoteMessage, type QuoteRecord } from "@/lib/admin/quote";
 import { parseCheckoutMeta } from "@/lib/checkout/orders";
 import type { EnrichedQuote, WorkOrder, WorkOrderStatus } from "@/lib/admin/repository";
+import { projectTitleFromServices } from "@/lib/operations/project-identity";
+
+export function buildProjectTitleFromQuote(quote: EnrichedQuote) {
+  const checkout = parseCheckoutMeta(quote.message);
+  const services = checkout
+    ? checkout.items.map((item) => item.name)
+    : parseQuoteMessage(quote.message).items.map((item) => item.description);
+  return projectTitleFromServices(services, quote.displayNumber);
+}
 
 export function isWebCheckoutQuote(raw?: Pick<QuoteRecord, "message"> | null) {
   return Boolean(parseCheckoutMeta(raw?.message));
@@ -11,7 +20,9 @@ export function isManualQuote(raw?: Pick<QuoteRecord, "message"> | null) {
 }
 
 export function normalizeWorkOrderStatus(status?: string | null): WorkOrderStatus {
-  const value = String(status || "").trim().toUpperCase();
+  const value = String(status || "")
+    .trim()
+    .toUpperCase();
   if (
     value === "ACTIVE" ||
     value === "IN_PROGRESS" ||
@@ -50,7 +61,10 @@ export function workOrderStatusStyles(status?: string | null) {
   return "border-amber-200 bg-amber-50 text-amber-700";
 }
 
-export function workOrderDisplayClient(workOrder: WorkOrder, quotesById: Map<string, EnrichedQuote>) {
+export function workOrderDisplayClient(
+  workOrder: WorkOrder,
+  quotesById: Map<string, EnrichedQuote>,
+) {
   const quote = workOrder.quoteId ? quotesById.get(workOrder.quoteId) : null;
   if (!quote) {
     return {

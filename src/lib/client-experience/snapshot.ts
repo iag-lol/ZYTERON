@@ -304,6 +304,7 @@ export async function connectedPortalSnapshot(userId: string) {
             .map((p) => ({
               id: p.id,
               title: p.title,
+              number: null,
               status: projectStatus(p.status),
               progress: null,
               category: p.serviceArea,

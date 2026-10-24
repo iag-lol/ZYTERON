@@ -1344,13 +1344,14 @@ export default function Workspace({
             >
               {selectUser(currentProject?.clientId || modal.userId, "clientId")}
               <label>
-                Proyecto
+                Nombre del proyecto o trabajo
                 <input
                   name="title"
                   minLength={4}
                   maxLength={160}
                   required
                   defaultValue={currentProject?.title}
+                  placeholder="Ej. Sitio web Fenice.cl o Diseño de Fleet Control"
                 />
               </label>
               <label>

@@ -8,6 +8,7 @@ import { boundedJson } from "@/lib/security/public-intake";
 import { buildQuoteMeta, parseQuoteMessage, serializeQuoteMessage } from "@/lib/admin/quote";
 import { normalizeQuoteMetaPayment } from "@/lib/payments/quote-payments";
 import { enableQueuedQuoteStage } from "@/lib/payments/quote-payment-workflow";
+import { isSpecificProjectName, projectNameMessage } from "@/lib/operations/project-identity";
 const id = z.string().min(1).max(100);
 const schemas = {
   project: z
@@ -51,7 +52,7 @@ const schemas = {
               detail: z.string().trim().max(2000).optional(),
               unit: z.string().trim().max(40).optional(),
               discountPct: z.number().min(0).max(100).optional(),
-              taxable:z.boolean().optional(),
+              taxable: z.boolean().optional(),
               qty: z.number().positive().max(10000),
               unitPrice: z.number().int().nonnegative().max(1000000000),
             })
@@ -97,9 +98,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ action:
           const v = schemas.project.parse(parsed.data);
           const u = await db.user.findFirst({
             where: { id: v.clientId, role: "CLIENT" },
-            select: { id: true },
+            select: { id: true, company: true, name: true },
           });
           if (!u) throw new Error("CLIENT_INVALID");
+          if (!isSpecificProjectName(v.title, [u.company, u.name]))
+            throw new Error("PROJECT_NAME_REQUIRED");
           if (
             v.id &&
             !(await db.project.findFirst({
@@ -255,9 +258,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ action:
     return NextResponse.json({ ok: true, ...result }, { headers: { "cache-control": "no-store" } });
   } catch (e) {
     const message =
-      e instanceof Error && e.message === "QUOTE_LOCKED"
-        ? "Esta cotización tiene cobros, pagos o cierre comercial. Sus importes no se pueden modificar aquí."
-        : "No se pudo guardar. Revisa los vínculos, importes y fechas.";
+      e instanceof Error && e.message.includes("PROJECT_NAME_REQUIRED")
+        ? projectNameMessage
+        : e instanceof Error && e.message === "QUOTE_LOCKED"
+          ? "Esta cotización tiene cobros, pagos o cierre comercial. Sus importes no se pueden modificar aquí."
+          : "No se pudo guardar. Revisa los vínculos, importes y fechas.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

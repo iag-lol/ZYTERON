@@ -46,6 +46,8 @@ export function presentation(data: PortalData) {
       id: p.id,
       name: p.title,
       short: p.title,
+      number: p.number,
+      scope: p.scope,
       category: p.category || "PROYECTO",
       description: p.description,
       progress: p.progress,
