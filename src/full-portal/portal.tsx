@@ -1,4 +1,5 @@
 "use client";
+import { ClientContracts } from "./client-contracts";
 import { PortalCommunications } from "./communications";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -300,7 +301,8 @@ export default function Portal({
     sections.some((s) => s.id === initialSection) ? initialSection : "inicio",
   );
   useEffect(() => {
-    if (!["inicio", "pagos", "cuenta", "agenda"].includes(section)) return;
+    if (!["inicio", "pagos", "cuenta", "agenda", "documentos", "contratos"].includes(section))
+      return;
     const refresh = () => {
       if (document.visibilityState === "visible") router.refresh();
     };
@@ -1110,7 +1112,25 @@ export default function Portal({
                       />
                     </label>
                   </div>
-                  <section className="panel document-panel">
+                  {(filter === "Todos" || filter === "Contrato") && (
+                    <ClientContracts contracts={data.contracts} query={query} />
+                  )}
+                  <section
+                    className="panel document-panel"
+                    hidden={
+                      !documents.some(
+                        (d) =>
+                          (filter === "Todos" || d.type === filter) &&
+                          d.name.toLocaleLowerCase("es").includes(query.toLocaleLowerCase("es")),
+                      ) &&
+                      (filter === "Todos" || filter === "Contrato") &&
+                      data.contracts.some((c) =>
+                        `${c.number} ${c.title}`
+                          .toLocaleLowerCase("es")
+                          .includes(query.toLocaleLowerCase("es")),
+                      )
+                    }
+                  >
                     {documentRows(
                       documents.filter(
                         (d) =>
@@ -1122,12 +1142,20 @@ export default function Portal({
                       (d) =>
                         (filter === "Todos" || d.type === filter) &&
                         d.name.toLocaleLowerCase("es").includes(query.toLocaleLowerCase("es")),
-                    ).length === 0 && (
-                      <Empty
-                        title="No encontramos ese documento"
-                        description="Prueba otro nombre o cambia el filtro."
-                      />
-                    )}
+                    ).length === 0 &&
+                      !(
+                        (filter === "Todos" || filter === "Contrato") &&
+                        data.contracts.some((c) =>
+                          `${c.number} ${c.title}`
+                            .toLocaleLowerCase("es")
+                            .includes(query.toLocaleLowerCase("es")),
+                        )
+                      ) && (
+                        <Empty
+                          title="No encontramos ese documento"
+                          description="Prueba otro nombre o cambia el filtro."
+                        />
+                      )}
                   </section>
                   <div className="info-note">
                     <LockKeyhole size={17} />
@@ -1232,28 +1260,10 @@ export default function Portal({
               )}
               {section === "contratos" && (
                 <>
-                  {data.contracts.length ? (
-                    <section className="panel portal-communications">
-                      <h2>Contratos publicados</h2>
-                      <div className="communication-history">
-                        {data.contracts.map((c) => (
-                          <article key={c.id}>
-                            <small>{c.number}</small>
-                            <h3>{c.title}</h3>
-                            <p>
-                              Estado: {c.status} · Firma: {c.signature} · Vigencia: {c.effective}
-                            </p>
-                            <p>
-                              {c.start ? civil(c.start.slice(0, 10) + "T12:00:00Z") : "Sin inicio"}{" "}
-                              — {c.end ? civil(c.end.slice(0, 10) + "T12:00:00Z") : "Indefinido"} ·{" "}
-                              {money(c.total, c.currency)}
-                            </p>
-                          </article>
-                        ))}
-                      </div>
-                    </section>
-                  ) : null}
                   {tabs(["Todos", "Cotizaciones", "Contratos"])}
+                  {(filter === "Todos" || filter === "Contratos") && (
+                    <ClientContracts contracts={data.contracts} />
+                  )}
                   <div className="agreements-grid">
                     {(filter === "Todos" || filter === "Cotizaciones") &&
                       data.quotes.map((q) => (
@@ -1321,9 +1331,20 @@ export default function Portal({
                             </button>
                           </article>
                         ))}
-                    {!data.quotes.length && !documents.some((d) => d.type === "Contrato") && (
+                    {((filter === "Cotizaciones" && !data.quotes.length) ||
+                      (filter === "Contratos" &&
+                        !data.contracts.length &&
+                        !documents.some((d) => d.type === "Contrato")) ||
+                      (filter === "Todos" &&
+                        !data.contracts.length &&
+                        !data.quotes.length &&
+                        !documents.some((d) => d.type === "Contrato"))) && (
                       <Empty
-                        title="Aún no hay propuestas publicadas"
+                        title={
+                          filter === "Contratos"
+                            ? "Aún no hay contratos compartidos"
+                            : "Aún no hay propuestas publicadas"
+                        }
                         description="Tus cotizaciones y contratos aparecerán aquí."
                       />
                     )}

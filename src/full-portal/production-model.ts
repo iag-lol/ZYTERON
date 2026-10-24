@@ -91,7 +91,9 @@ export function presentation(data: PortalData) {
         (
           {
             CONTRACT: "Contrato",
+            CONTRATO: "Contrato",
             REPORT: "Informe",
+            INFORME: "Informe",
             MANUAL: "Manual",
             DELIVERABLE: "Entregable",
           } as Record<string, string>

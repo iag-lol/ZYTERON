@@ -95,8 +95,10 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
       total: number;
       currency: string;
       billing_frequency: string | null;
+      frozen_at: Date | null;
+      version: number;
     }>
-  >`SELECT id,contract_number,name,status,signature_status,effective_status,start_date,end_date,total,currency,billing_frequency FROM public.client_contracts ORDER BY contract_number DESC LIMIT 100`;
+  >`SELECT id,contract_number,name,status,signature_status,effective_status,start_date,end_date,total,currency,billing_frequency,frozen_at,version FROM public.client_contracts ORDER BY contract_number DESC LIMIT 100`;
   return {
     contracts: contracts.map((c) => ({
       id: c.id,
@@ -110,6 +112,9 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
       total: Number(c.total),
       currency: c.currency.trim(),
       frequency: c.billing_frequency,
+      review: !c.frozen_at,
+      version: c.version,
+      documentUrl: `/api/portal/contracts/${c.id}/document`,
     })),
     projects: projects.map((p) => ({
       id: p.id,
@@ -129,7 +134,7 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
       title: d.title,
       description: d.description || "",
       category:
-        d.category === "REPORT" ? "INFORME" : d.category === "CONTRACT" ? "CONTRATO" : "Documento",
+        d.category === "REPORT" ? "REPORT" : d.category === "CONTRACT" ? "CONTRACT" : "Documento",
       fileName: d.filename,
       date: d.created_at.toISOString(),
     })),

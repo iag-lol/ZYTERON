@@ -1,3 +1,4 @@
+import { ContractPortalDocumentController } from "./contract-portal.controller.js";
 import { Module } from "@nestjs/common";
 import { ClientsModule } from "../clients/clients.module.js";
 import { DocumentsModule } from "../documents/documents.module.js";
@@ -8,7 +9,7 @@ import { ContractsService } from "./contracts.service.js";
 
 @Module({
   imports: [ClientsModule, DocumentsModule],
-  controllers: [ContractsController, ClientContractsController],
+  controllers: [ContractsController, ClientContractsController, ContractPortalDocumentController],
   providers: [ContractsRepository, ContractsService, ContractDocumentService],
   exports: [ContractsService],
 })
