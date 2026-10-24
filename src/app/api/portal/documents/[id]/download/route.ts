@@ -13,7 +13,6 @@ const SIGNED_URL_TTL_SECONDS = 90;
 type Context = { params: Promise<{ id: string }> };
 
 export async function GET(_request: Request, { params }: Context) {
-  const inline = new URL(_request.url).searchParams.get("inline") === "1";
   const session = await getServerSession(portalAuthOptions);
   const hasActivePortalSession = Boolean(
     session?.user?.id && session.user.accountStatus === "ACTIVE" && session.user.emailVerifiedAt,
@@ -44,7 +43,7 @@ export async function GET(_request: Request, { params }: Context) {
         const { supabase } = createSupabaseServerClient();
         const signed = await supabase.storage
           .from("enterprise-documents")
-          .createSignedUrl(published.storage_path, SIGNED_URL_TTL_SECONDS, inline ? undefined : {
+          .createSignedUrl(published.storage_path, SIGNED_URL_TTL_SECONDS, {
             download: published.filename,
           });
         if (signed.error || !signed.data.signedUrl)
@@ -67,7 +66,7 @@ export async function GET(_request: Request, { params }: Context) {
     const { supabase } = createSupabaseServerClient();
     const signed = await supabase.storage
       .from(CLIENT_FILES_BUCKET)
-      .createSignedUrl(document.storagePath, SIGNED_URL_TTL_SECONDS, inline ? undefined : { download: true });
+      .createSignedUrl(document.storagePath, SIGNED_URL_TTL_SECONDS, { download: true });
     if (signed.error || !signed.data.signedUrl) {
       return NextResponse.json({ error: "No se pudo autorizar la descarga." }, { status: 502 });
     }

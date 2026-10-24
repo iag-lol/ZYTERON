@@ -92,14 +92,14 @@ export function AdminBillingDocumentFiles({
           </div>
           <div className={s.actions}>
             <a
-              href={`/api/portal/documents/${encodeURIComponent(document.documentId)}/download?inline=1`}
+              href={`${url}&documentId=${encodeURIComponent(document.documentId)}&inline=1`}
               target="_blank"
               rel="noopener noreferrer"
             >
               <ExternalLink size={14} />
               Ver PDF
             </a>
-            <a href={`/api/portal/documents/${encodeURIComponent(document.documentId)}/download`}>
+            <a href={`${url}&documentId=${encodeURIComponent(document.documentId)}`}>
               <Download size={14} />
               Descargar
             </a>

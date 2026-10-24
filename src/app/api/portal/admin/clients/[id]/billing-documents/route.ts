@@ -35,6 +35,50 @@ export async function GET(req: Request, context: Context) {
         orderBy: { createdAt: "desc" },
       }),
     ]);
+    const documentId = new URL(req.url).searchParams.get("documentId");
+    if (documentId) {
+      const linked = files.some(
+        (file) =>
+          file.documentId === documentId &&
+          file.targetType === target.targetType &&
+          file.targetSource === target.targetSource &&
+          file.targetId === target.targetId,
+      );
+      const document = linked
+        ? await prisma.clientDocument.findFirst({
+            where: {
+              id: documentId,
+              userId,
+              mimeType: "application/pdf",
+              storagePath: { not: null },
+            },
+            select: { storagePath: true, fileName: true },
+          })
+        : null;
+      if (!document?.storagePath)
+        return NextResponse.json(
+          { error: "Factura no encontrada para este registro." },
+          { status: 404 },
+        );
+      const { supabase } = createSupabaseServerClient();
+      const inline = new URL(req.url).searchParams.get("inline") === "1";
+      const signed = await supabase.storage
+        .from("client-files")
+        .createSignedUrl(
+          document.storagePath,
+          90,
+          inline ? undefined : { download: document.fileName || "factura.pdf" },
+        );
+      if (signed.error || !signed.data?.signedUrl)
+        return NextResponse.json(
+          { error: "No se pudo autorizar el acceso al PDF." },
+          { status: 502 },
+        );
+      return NextResponse.redirect(signed.data.signedUrl, {
+        status: 307,
+        headers: { "Cache-Control": "private,no-store", "Referrer-Policy": "no-referrer" },
+      });
+    }
     return NextResponse.json(
       {
         userId,
