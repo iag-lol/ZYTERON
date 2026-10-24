@@ -2320,6 +2320,11 @@
 .zy-full-portal.zy-full-portal .preference input:checked:before {
   left: 18px;
 }
+.zy-full-portal.zy-full-portal dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+}
 .zy-full-portal.zy-full-portal .modal {
   position: fixed;
   inset: 0;
