@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { isSpecificProjectName, projectTitleFromServices } from "./project-identity";
+import {
+  isSpecificProjectName,
+  projectTitleFromServices,
+  projectDateOnly,
+} from "./project-identity";
+import { civil } from "../../full-portal/production-model";
 test("project names describe the work instead of repeating the client", () => {
   const names = ["SOCIEDAD DE TRANSPORTES Y DIESEL SpA", "Fenice"];
   for (const name of [
@@ -35,4 +40,14 @@ test("quote project titles use service descriptions and an exact reference", () 
   );
   assert.throws(() => projectTitleFromServices(["   "], "COT-1"));
   assert.ok(projectTitleFromServices(["a".repeat(600)], "COT-1").length <= 160);
+});
+
+test("project DATE values keep their calendar day in the client portal", () => {
+  for (const date of ["2026-09-30", "2026-07-18", "2026-06-12"]) {
+    assert.equal(
+      civil(projectDateOnly(new Date(`${date}T00:00:00Z`))),
+      date.split("-").reverse().join("-"),
+    );
+  }
+  assert.equal(projectDateOnly(null), null);
 });

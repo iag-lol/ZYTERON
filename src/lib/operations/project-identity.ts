@@ -29,3 +29,8 @@ export function projectTitleFromServices(services: readonly string[], reference:
   if (!names.length) throw new Error(projectNameMessage);
   return `${names.slice(0, 2).join(" / ").slice(0, 120)} · ${reference}`.slice(0, 160);
 }
+
+// Operational project dates are DATE columns, not instants in a time zone.
+export function projectDateOnly(value: Date | null) {
+  return value?.toISOString().slice(0, 10) || null;
+}

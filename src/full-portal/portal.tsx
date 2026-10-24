@@ -406,7 +406,9 @@ export default function Portal({
             <h3>{p.short}</h3>
             <ArrowUpRight size={18} />
           </button>
-          {p.description && <p className="project-summary">{p.description}</p>}
+          {p.description && p.description.trim() !== p.short.trim() && (
+            <p className="project-summary">{p.description}</p>
+          )}
           <p>{p.phase}</p>
           <div className="progress-label">
             <span>Avance publicado</span>

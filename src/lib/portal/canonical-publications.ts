@@ -2,6 +2,7 @@ import "server-only";
 import type { Prisma } from "@prisma/client";
 import { clientDatabase } from "./scoped-db";
 import { projectStatus } from "@/lib/client-experience/project-status";
+import { projectDateOnly } from "@/lib/operations/project-identity";
 type PublishedDocument = {
   id: string;
   title: string;
@@ -120,8 +121,8 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
       category: "Proyecto",
       description: p.description || "",
       scope: p.scope || "",
-      start: p.planned_start_date?.toISOString() || null,
-      end: p.target_date?.toISOString() || null,
+      start: projectDateOnly(p.planned_start_date),
+      end: projectDateOnly(p.target_date),
     })),
     documents: documents.map((d) => ({
       id: d.id,
