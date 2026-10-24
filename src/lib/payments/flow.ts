@@ -1,4 +1,4 @@
-import {assertBusinessPaymentEnvironment} from "./payment-environment";
+import { assertBusinessPaymentEnvironment } from "./payment-environment";
 import { normalizeProviderPayment, providerClpAmount } from "./provider-money";
 import { createHmac } from "node:crypto";
 
@@ -184,7 +184,9 @@ function toFormBody(params: Record<string, unknown>) {
 
 function flowError(status: number, body: unknown) {
   void body;
-  return new Error(`La pasarela no pudo completar la operación (HTTP ${status}).`);
+  return Object.assign(new Error(`La pasarela no pudo completar la operación (HTTP ${status}).`), {
+    httpStatus: status,
+  });
 }
 
 async function flowPost(path: string, payload: Record<string, unknown>) {
@@ -625,10 +627,10 @@ function validatedProviderUrl(value: unknown, base: string) {
   } catch {
     throw new Error("PAYMENT_DESTINATION_INVALID");
   }
-  const host = base.includes("sandbox") ? "sandbox.flow.cl" : "www.flow.cl";
+  const hosts = base.includes("sandbox") ? ["sandbox.flow.cl"] : ["www.flow.cl", "api.flow.cl"];
   if (
     u.protocol !== "https:" ||
-    u.hostname !== host ||
+    !hosts.includes(u.hostname) ||
     u.port ||
     u.username ||
     u.password ||
@@ -651,4 +653,62 @@ export async function verifyFlowMonthlyPlan(planId: string, amount: number, call
   )
     throw new Error("SUBSCRIPTION_PLAN_MISMATCH");
   return data;
+}
+
+/** La reserva persistente del cobro se valida antes de invocar este adaptador. */
+export async function createReceivableProviderOrder(input: {
+  intentId: string;
+  amount: number;
+  email: string;
+  subject: string;
+  commerceOrder: string;
+}) {
+  const { prisma } = await import("@/lib/prisma");
+  const rows = await prisma.$queryRaw<
+    Array<{ amount: number; commerce_order: string; state: string }>
+  >`SELECT amount,commerce_order,state FROM zyteron_receivable_flow WHERE id=${input.intentId}::uuid`;
+  const row = rows[0];
+  if (
+    !row ||
+    row.state !== "CREATING" ||
+    row.amount !== input.amount ||
+    row.commerce_order !== input.commerceOrder
+  )
+    throw new Error("PAYMENT_PERSISTED_TARGET_REQUIRED");
+  const body = await flowPost("/payment/create", {
+    commerceOrder: row.commerce_order,
+    subject: input.subject.slice(0, 200),
+    amount: row.amount,
+    currency: "CLP",
+    email: input.email,
+    paymentMethod: 9,
+    timeout: 3600,
+    urlConfirmation: "https://www.zyteron.cl/api/portal/payments/receivables/flow/confirmation",
+    urlReturn: "https://www.zyteron.cl/api/portal/payments/receivables/flow/return",
+  });
+  if (
+    typeof body.token !== "string" ||
+    !/^[A-Za-z0-9_-]{12,200}$/.test(body.token) ||
+    !Number.isSafeInteger(body.flowOrder)
+  )
+    throw new Error("PAYMENT_PROVIDER_REFERENCE_REQUIRED");
+  return {
+    token: body.token,
+    flowOrder: Number(body.flowOrder),
+    url: validatedProviderUrl(body.url, getFlowConfig().base),
+  };
+}
+export function receivableFlowAccount() {
+  const config = getFlowConfig();
+  requirePaymentActivation(config.base);
+  return createHmac("sha256", config.secret)
+    .update(config.base + "/" + config.apiKey)
+    .digest("hex");
+}
+
+export async function getReceivablePaymentByCommerce(commerceId: string) {
+  if (!/^ZYT-COBRO-[a-f0-9-]{36}$/i.test(commerceId)) throw new Error("PAYMENT_REFERENCE_INVALID");
+  return normalizeProviderPayment(
+    await flowGet("/payment/getStatusByCommerceId", { commerceId }),
+  ) as unknown as FlowStatusResult;
 }

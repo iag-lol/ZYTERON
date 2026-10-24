@@ -243,9 +243,17 @@ export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props
               <strong>{money(i.balance > 0 ? i.balance : i.total, i.currency)}</strong>
               <small>{i.balance > 0 ? "Saldo pendiente" : "Total pagado"}</small>
             </span>
-            <button className={s.smallButton} onClick={() => openInvoice(i.id)}>
-              Ver detalle <ArrowRight size={13} />
-            </button>
+            <div className={s.billActions}>
+              {i.balance > 0 && (
+                <button className={s.primary} onClick={() => onPay(i.id)}>
+                  <CreditCard size={14} />
+                  Pagar
+                </button>
+              )}
+              <button className={s.smallButton} onClick={() => openInvoice(i.id)}>
+                Ver detalle <ArrowRight size={13} />
+              </button>
+            </div>
           </div>
         ))}
       </div>

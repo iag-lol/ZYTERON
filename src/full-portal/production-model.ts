@@ -77,11 +77,12 @@ export function presentation(data: PortalData) {
       status: i.status,
       obligation: i.balance > 0 ? "Pendiente" : "Saldada",
       document: "Cuenta por cobrar",
-      payable:
+      payable: ["FLOW", "BOTH"].includes(
         invoicePaymentOption(
           i,
           data.quotes.find((q) => q.id === i.quoteId),
-        ) === "FLOW",
+        ),
+      ),
     })),
     documents: data.documents.map((d) => ({
       id: d.id,

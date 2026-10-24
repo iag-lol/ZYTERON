@@ -1,0 +1,177 @@
+.root.root.root {
+  display: grid;
+  gap: 22px;
+  color: #244238;
+  min-width: 0;
+}
+.root.root.root .summary {
+  padding: 23px;
+  background: #f3f6ed;
+  border: 1px solid #dce6d2;
+  border-radius: 12px;
+  display: grid;
+  gap: 8px;
+}
+.root.root.root .eyebrow {
+  font-size: 9px;
+  letter-spacing: 1.6px;
+  color: #69805d;
+  font-weight: 700;
+}
+.root.root.root h3 {
+  font-size: 19px;
+  line-height: 1.4;
+  letter-spacing: -0.4px;
+  margin: 3px 0 5px;
+}
+.root.root.root .summary > strong {
+  font-size: 34px;
+  letter-spacing: -1px;
+}
+.root.root.root .summary > small {
+  font-size: 11px;
+  color: #74836c;
+}
+.root.root.root .summary > div {
+  border-top: 1px solid #dae3d2;
+  padding-top: 13px;
+  margin-top: 7px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: #6e7c65;
+}
+.root.root.root .methods {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+}
+.root.root.root .methods > button {
+  padding: 16px;
+  border: 1px solid #dce4d6;
+  border-radius: 10px;
+  background: #fff;
+  color: #45603b;
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+.root.root.root .methods > button[aria-pressed="true"] {
+  background: #eef4e3;
+  border-color: #77965b;
+  box-shadow: inset 0 0 0 1px #77965b;
+}
+.root.root.root .methods > button > svg {
+  flex-shrink: 0;
+}
+.root.root.root .methods > button > span {
+  display: grid;
+  gap: 6px;
+  flex: 1;
+}
+.root.root.root .methods strong {
+  font-size: 12px;
+  line-height: 1.4;
+}
+.root.root.root .methods small {
+  font-size: 10px;
+  line-height: 1.5;
+  color: #7a876f;
+}
+.root.root.root .methodDetail {
+  display: grid;
+  gap: 15px;
+}
+.root.root.root p {
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 0;
+  color: #6c7e64;
+}
+.root.root.root .amount {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 0;
+  border-top: 1px solid #e2e8dc;
+  border-bottom: 1px solid #e2e8dc;
+  gap: 12px;
+  font-size: 12px;
+}
+.root.root.root .amount strong {
+  font-size: 23px;
+}
+.root.root.root .note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 10px;
+  color: #7d8b73;
+}
+.root.root.root .note > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.root.root.root dl {
+  margin: 0;
+}
+.root.root.root dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e8ecdf;
+  font-size: 12px;
+}
+.root.root.root dt {
+  color: #7b886f;
+}
+.root.root.root dd {
+  margin: 0;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.root.root.root dd > button {
+  border: 0;
+  background: #f1f5ea;
+  color: #5d7a4e;
+  border-radius: 5px;
+  padding: 5px;
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+}
+.root.root.root .error {
+  border: 1px solid #e5ccbc;
+  border-radius: 8px;
+  background: #fff4eb;
+  padding: 12px;
+  color: #996243;
+}
+.root.root.root button:focus-visible {
+  outline: 3px solid #8ea475;
+  outline-offset: 2px;
+}
+@media (max-width: 600px) {
+  .root.root.root .methods {
+    grid-template-columns: 1fr;
+  }
+  .root.root.root .summary {
+    padding: 18px;
+  }
+  .root.root.root .summary > strong {
+    font-size: 30px;
+  }
+  .root.root.root .methods > button {
+    padding: 14px;
+  }
+}

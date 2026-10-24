@@ -13,7 +13,22 @@ import { sha256, type Row } from './finance.util.js';
 export class FlowWorker implements OnModuleInit,OnModuleDestroy {
  private timer:ReturnType<typeof setInterval>|undefined;private inflight:Promise<unknown>|undefined;private stopping=false;
  constructor(private readonly ctx:FinanceContext,private readonly flow:FlowPaymentProvider,private readonly financial:FlowFinanceService,private readonly subscriptions:FlowSubscriptionService,private readonly siteMode:FlowSiteModeService,private readonly payments:PaymentService){}
- onModuleInit(){if(process.env.FLOW_WORKER_ENABLED==='true'){this.timer=setInterval(()=>{if(!this.inflight&&!this.stopping){this.inflight=this.runDue().catch(()=>undefined).finally(()=>{this.inflight=undefined;});}},15000);this.timer.unref();}}
+ onModuleInit(){
+  const all=process.env.FLOW_WORKER_ENABLED==='true';
+  if(all||process.env.BILLING_WORKER_ENABLED==='true'){
+   this.timer=setInterval(()=>{if(!this.inflight&&!this.stopping){this.inflight=(all?this.runDue():this.runPayments()).catch(()=>undefined).finally(()=>{this.inflight=undefined;});}},15000);this.timer.unref();
+  }
+ }
+ async runPayments(){
+  const pending=await this.ctx.repo.list<Row>('finance_flow_intents',{state:'PENDING'},{limit:3,order:'createdAt',ascending:true});
+  const confirmed=await this.ctx.repo.list<Row>('finance_flow_intents',{state:'CONFIRMED',ledgerProcessedAt:null},{limit:3,order:'createdAt',ascending:true});
+  if(!pending.length&&!confirmed.length)return {processed:0};
+  await this.financial.ready();let processed=0;
+  for(const row of pending){if(!row.tokenCiphertext)continue;const result=await this.financial.verify(openFlowToken(row.tokenCiphertext,row.id));if(result?.result.state==='CONFIRMED')await this.confirmed(row.id);processed++;}
+  for(const row of confirmed){await this.confirmed(row.id);processed++;}
+  return {processed};
+ }
+
  async onModuleDestroy(){this.stopping=true;if(this.timer)clearInterval(this.timer);await this.inflight;}
  async runDue(){await this.financial.ready();await this.ctx.repo.flowRpc('finance_flow_enqueue_reconciliation',{});let processed=0;while(!this.stopping&&processed<20){const j=await this.ctx.repo.flowRpc<Row|null>('finance_flow_claim_job',{});if(!j)break;let error:string|null=null;try{if(j.kind==='ALLOCATION_CONFIRMED')await this.payments.syncFlowAllocation(j.entity_id);else if(j.kind==='PAYMENT_CONFIRMED')await this.confirmed(j.entity_id);else if(j.kind==='VERIFY_FLOW_TOKEN'){const inbox=await this.ctx.must<Row>('finance_flow_callback_inbox',j.entity_id,'Callback');await this.financial.verify(openFlowToken(inbox.tokenCiphertext,inbox.id));}else if(j.kind==='SUBSCRIPTION_CANCEL_NOTICE')await this.cancelNotice(j.entity_id);else if(j.kind==='RECONCILE_SUBSCRIPTION')await this.subscriptions.reconcile(j.entity_id);else if(j.kind==='MAINTENANCE')await this.maintenance(j.entity_id);else throw new ConflictException('Trabajo no soportado.');}catch{error='FLOW_OPERATION_REQUIRES_RETRY_OR_REVIEW';}await this.ctx.repo.flowRpc('finance_flow_finish_job',{p_id:j.id,p_lease:j.lease_id,p_error:error});processed++;}return{processed};}
  private async confirmed(intentId:string){const r=await this.ctx.must<Row>('finance_flow_intents',intentId,'Intento');if(r.state!=='CONFIRMED'||!r.paymentId||!r.verifiedAt)throw new ConflictException('Pago no confirmado.');const payment=await this.ctx.must<Payment>('payments',r.paymentId,'Pago');if(payment.status!=='CONFIRMED'||payment.provider!=='FLOW'||payment.clientId!==r.clientId)throw new ConflictException('Pago en revisión.');

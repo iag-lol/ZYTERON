@@ -80,7 +80,7 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
         payment_reference: string | null;
         allocations: { receivableId: string; amount: number }[];
       }>
-    >`SELECT p.id,p.gross_amount,p.received_at,p.currency,p.payment_reference,COALESCE((SELECT jsonb_agg(jsonb_build_object('receivableId',a.invoice_id,'amount',a.amount)) FROM payment_allocations a WHERE a.payment_id=p.id AND a.reversed_at IS NULL),'[]'::jsonb) AS allocations FROM payments p WHERE p.status='CONFIRMED' AND p.confirmed_at IS NOT NULL AND p.provider IN ('BANK_TRANSFER','CASH','OTHER') AND p.currency='CLP' ORDER BY p.received_at DESC`,
+    >`SELECT p.id,p.gross_amount,p.received_at,p.currency,p.payment_reference,COALESCE((SELECT jsonb_agg(jsonb_build_object('receivableId',a.invoice_id,'amount',a.amount)) FROM payment_allocations a WHERE a.payment_id=p.id AND a.reversed_at IS NULL),'[]'::jsonb) AS allocations FROM payments p WHERE p.status='CONFIRMED' AND p.confirmed_at IS NOT NULL AND p.provider IN ('BANK_TRANSFER','CASH','OTHER','FLOW') AND p.currency='CLP' ORDER BY p.received_at DESC`,
   ]);
   const contracts = await db.$queryRaw<
     Array<{

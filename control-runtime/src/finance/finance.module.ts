@@ -1,3 +1,4 @@
+import { FlowPortalInvoiceController } from "./flow.portal-controller.js";
 import { FlowPaymentProvider } from './flow.provider.js';
 import { FlowFinanceService } from './flow.service.js';
 import { FlowSubscriptionService } from './flow.subscriptions.js';
@@ -32,7 +33,7 @@ import { PublicBoletaController } from "./finance.boleta-controller.js";
 /** Módulo 07 · Financial & Accounting Control Center. Consume Clientes, Servicios, Contratos, Ventas y Operaciones sin duplicarlos. */
 @Module({
   imports:[ClientsModule,ClientServicesModule,ContractsModule,CommercialModule,OperationsModule],
-  controllers:[PublicBoletaController,SiiCertificationController,FlowInternalController,FlowClientSubscriptionsController,FlowCapabilityController,FlowCallbackController,FlowSiteModeController,FinanceController,PaymentWebhookController,PublicPaymentController,PortalQuotePaymentsController],
+  controllers:[FlowPortalInvoiceController,PublicBoletaController,SiiCertificationController,FlowInternalController,FlowClientSubscriptionsController,FlowCapabilityController,FlowCallbackController,FlowSiteModeController,FinanceController,PaymentWebhookController,PublicPaymentController,PortalQuotePaymentsController],
   providers:[SiiCertificationWorkspace,FlowPaymentProvider,FlowFinanceService,FlowSubscriptionService,FlowWorker,FlowSiteModeService,FinanceRepository,FinanceSources,FinanceContext,FinanceSettingsService,LedgerService,AccountingRuleEngine,StatementsService,InvoiceService,BillingScheduleService,DteCertificateProvider,DteSchemaValidator,SiiDirectDteProvider,ExternalCertifiedDteProvider,DteService,ReceivedDocumentsService,RcvService,MercadoPagoPaymentProvider,{provide:PaymentProvider,useExisting:MercadoPagoPaymentProvider},PaymentService,OnlinePaymentService,CollectionsService,VendorService,ApprovalService,ExpenseService,PayableService,BankService,StatementImportService,ReconciliationService,CloseService,BudgetService,TaxService,CommissionFinanceService,AnalyticsService,ReportsService,CopilotService,QuotePaymentService,FinanceScheduler],
   exports:[AnalyticsService],
 })

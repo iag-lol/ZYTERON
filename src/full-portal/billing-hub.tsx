@@ -2,10 +2,19 @@
 import { useState } from "react";
 import type { PortalData } from "@/lib/client-experience/snapshot";
 import { money } from "./production-model";
-import { civil } from "./production-model";
 import { ZYTERON_COMPANY } from "@/lib/company";
 import { invoicePaymentOption } from "@/lib/payments/invoice-payment-option";
-import { Check, CreditCard, Info, LockKeyhole, Wallet } from "lucide-react";
+import {
+  Check,
+  CreditCard,
+  Info,
+  LockKeyhole,
+  Wallet,
+  ArrowRight,
+  Landmark,
+  Copy,
+} from "lucide-react";
+import paymentStyles from "./payment-options.module.css";
 async function post(url: string, body: unknown) {
   const r = await fetch(url, {
     method: "POST",
@@ -193,100 +202,186 @@ export function InvoicePaymentOptions({
   quote?: PortalData["quotes"][number];
   onHelp: () => void;
 }) {
+  const [method, setMethod] = useState<"card" | "transfer">("card");
+  const [busy, setBusy] = useState(false),
+    [error, setError] = useState(""),
+    [copied, setCopied] = useState("");
   const option = invoicePaymentOption(invoice, quote);
   const label = [quote?.number, invoice.concept].filter(Boolean).join(" · ");
-  if (option === "FLOW")
-    return (
-      <FlowCheckoutPreview
-        document={label}
-        amount={money(invoice.balance, invoice.currency)}
-        quote={quote}
-        invoice={invoice}
-      />
-    );
+  const transfer = [
+    ["Destinatario", ZYTERON_COMPANY.legalName],
+    ["RUT", ZYTERON_COMPANY.rut],
+    ["Banco", ZYTERON_COMPANY.transferBank],
+    ["Tipo de cuenta", ZYTERON_COMPANY.transferAccountType],
+    ["Número de cuenta", ZYTERON_COMPANY.transferAccountNumber],
+    ["Correo", ZYTERON_COMPANY.transferAccountEmail],
+    ["Referencia", quote?.number || invoice.id],
+  ];
   return (
-    <div className="flow-review">
-      <h3>{option === "SETTLED" ? "Este cobro ya está saldado" : "Opciones para este cobro"}</h3>
-      <p>Los importes corresponden al documento seleccionado y sus abonos confirmados.</p>
-      <div className="checkout-document">
-        <span>
-          <Wallet size={23} />
-        </span>
+    <div className={paymentStyles.root}>
+      <div className={paymentStyles.summary}>
+        <span className={paymentStyles.eyebrow}>TU COBRO</span>
+        <h3>{label}</h3>
+        <strong>{money(invoice.balance, invoice.currency)}</strong>
+        <small>
+          {option === "SETTLED"
+            ? "Este cobro ya está saldado"
+            : "Saldo pendiente · " + invoice.currency}
+        </small>
         <div>
-          <small>TU COBRO</small>
-          <b>{label}</b>
+          <span>Total: {money(invoice.total, invoice.currency)}</span>
+          <span>
+            Abonado: {money(Math.max(0, invoice.total - invoice.balance), invoice.currency)}
+          </span>
         </div>
-        <strong>
-          {money(invoice.balance, invoice.currency)}
-          <small>Saldo pendiente · {invoice.currency}</small>
-        </strong>
       </div>
-      <dl className="detail-list">
-        <div>
-          <dt>Total del cobro</dt>
-          <dd>{money(invoice.total, invoice.currency)}</dd>
-        </div>
-        <div>
-          <dt>Abonos aplicados</dt>
-          <dd>{money(Math.max(0, invoice.total - invoice.balance), invoice.currency)}</dd>
-        </div>
-        <div>
-          <dt>Vencimiento</dt>
-          <dd>{invoice.due ? civil(invoice.due) : "Sin vencimiento definido"}</dd>
-        </div>
-      </dl>
-      {option === "TRANSFER" ? (
-        <>
-          <h3>Datos para transferencia</h3>
-          <dl className="detail-list">
-            <div>
-              <dt>Destinatario</dt>
-              <dd>{ZYTERON_COMPANY.legalName}</dd>
-            </div>
-            <div>
-              <dt>RUT</dt>
-              <dd>{ZYTERON_COMPANY.rut}</dd>
-            </div>
-            <div>
-              <dt>Banco</dt>
-              <dd>{ZYTERON_COMPANY.transferBank}</dd>
-            </div>
-            <div>
-              <dt>Tipo de cuenta</dt>
-              <dd>{ZYTERON_COMPANY.transferAccountType}</dd>
-            </div>
-            <div>
-              <dt>Número de cuenta</dt>
-              <dd>{ZYTERON_COMPANY.transferAccountNumber}</dd>
-            </div>
-            <div>
-              <dt>Correo</dt>
-              <dd>{ZYTERON_COMPANY.transferAccountEmail}</dd>
-            </div>
-            <div>
-              <dt>Referencia</dt>
-              <dd>{quote?.number || invoice.id}</dd>
-            </div>
-          </dl>
-          <p className="info-note">
-            <Info size={17} />
-            Este cobro está configurado para transferencia. Su saldo se actualizará después de
-            confirmar el abono.
-          </p>
-        </>
-      ) : option === "REVIEW" ? (
-        <p className="info-note" role="status">
-          <Info size={17} />
-          El pago online aún no está habilitado para el saldo actual de este documento. Puedes
-          solicitar la revisión de este cobro.
-        </p>
-      ) : null}
       {option !== "SETTLED" && (
-        <button className="button secondary" onClick={onHelp}>
-          Consultar este cobro
-        </button>
+        <>
+          <div className={paymentStyles.methods} role="group" aria-label="Elige cómo pagar">
+            <button
+              type="button"
+              aria-pressed={method === "card"}
+              onClick={() => {
+                setMethod("card");
+                setError("");
+              }}
+            >
+              <CreditCard size={23} />
+              <span>
+                <strong>Tarjeta con Flow</strong>
+                <small>Crédito, débito y medios disponibles</small>
+              </span>
+              {method === "card" && <Check size={17} />}
+            </button>
+            <button
+              type="button"
+              aria-pressed={method === "transfer"}
+              onClick={() => {
+                setMethod("transfer");
+                setError("");
+              }}
+            >
+              <Landmark size={23} />
+              <span>
+                <strong>Transferencia bancaria</strong>
+                <small>Datos de la cuenta de Zyteron</small>
+              </span>
+              {method === "transfer" && <Check size={17} />}
+            </button>
+          </div>
+          {method === "card" ? (
+            <div className={paymentStyles.methodDetail}>
+              <span className={paymentStyles.eyebrow}>PAGO ÚNICO DEL SALDO</span>
+              <h3>Paga con tu tarjeta</h3>
+              <p>
+                Continúa a Flow para elegir tu medio de pago. El importe corresponde al saldo de
+                este cobro.
+              </p>
+              <div className={paymentStyles.amount}>
+                <span>Importe a pagar</span>
+                <strong>{money(invoice.balance, invoice.currency)}</strong>
+              </div>
+              {error && (
+                <p className={paymentStyles.error} role="alert">
+                  {error}
+                </p>
+              )}
+              <button
+                type="button"
+                className="button primary"
+                disabled={busy || invoice.currency !== "CLP"}
+                onClick={async () => {
+                  if (busy) return;
+                  setBusy(true);
+                  setError("");
+                  try {
+                    const value = await post(
+                      `/api/portal/payments/receivables/${invoice.id}/flow`,
+                      { source: invoice.source, expectedAmount: invoice.balance },
+                    );
+                    if (value.amount !== invoice.balance)
+                      throw new Error("El saldo cambió. Actualiza tu cuenta antes de continuar.");
+                    const target = new URL(value.checkoutUrl);
+                    if (
+                      target.protocol !== "https:" ||
+                      !["www.flow.cl", "api.flow.cl", "sandbox.flow.cl"].includes(
+                        target.hostname,
+                      ) ||
+                      target.username ||
+                      target.password ||
+                      target.port
+                    )
+                      throw new Error("No se recibió un enlace de pago autorizado.");
+                    window.location.assign(target.href);
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : "No pudimos preparar el pago.");
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                {busy ? "Preparando pago…" : "Pagar con Flow"}
+                <ArrowRight size={17} />
+              </button>
+              {invoice.currency !== "CLP" && (
+                <p>
+                  La pasarela procesa pesos chilenos. Coordina la conversión con administración o
+                  utiliza transferencia.
+                </p>
+              )}
+              <p className={paymentStyles.note}>
+                <LockKeyhole size={15} />
+                Los datos de tu tarjeta se ingresan directamente en Flow. Este pago no activa cargos
+                mensuales.
+              </p>
+            </div>
+          ) : (
+            <div className={paymentStyles.methodDetail}>
+              <span className={paymentStyles.eyebrow}>TRANSFERENCIA BANCARIA</span>
+              <h3>Transfiere el saldo pendiente</h3>
+              <div className={paymentStyles.amount}>
+                <span>Importe a transferir</span>
+                <strong>{money(invoice.balance, invoice.currency)}</strong>
+              </div>
+              <dl>
+                {transfer.map(([name, value]) => (
+                  <div key={name}>
+                    <dt>{name}</dt>
+                    <dd>
+                      {value}
+                      <button
+                        type="button"
+                        aria-label={`Copiar ${name.toLowerCase()}`}
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(value);
+                            setCopied(name);
+                          } catch {
+                            setCopied("");
+                          }
+                        }}
+                      >
+                        {copied === name ? <Check size={14} /> : <Copy size={14} />}
+                      </button>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              <p className={paymentStyles.note}>
+                <Info size={16} />
+                Incluye la referencia del cobro en la transferencia. El saldo se actualiza cuando
+                administración verifica y registra el abono.
+              </p>
+              <button className="button secondary" onClick={onHelp}>
+                Informar transferencia o consultar
+              </button>
+              {copied && <span role="status">{copied} copiado.</span>}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 }
+
 export { default } from "./billing-workspace";

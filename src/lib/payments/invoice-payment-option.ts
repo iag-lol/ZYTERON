@@ -1,5 +1,6 @@
 type Invoice = {
   id: string;
+  source?: "commercial" | "accounting";
   quoteId: string | null;
   balance: number;
   currency: string;
@@ -21,6 +22,8 @@ type Quote = {
 
 export function invoicePaymentOption(invoice: Invoice, quote?: Quote) {
   if (!(invoice.balance > 0)) return "SETTLED";
+  if (invoice.source && invoice.currency === "CLP" && Number.isSafeInteger(invoice.balance))
+    return "BOTH";
   if (!quote || quote.id !== invoice.quoteId || quote.currency !== invoice.currency)
     return "REVIEW";
   // Pagar un documento existente no autoriza una nueva suscripción mensual.

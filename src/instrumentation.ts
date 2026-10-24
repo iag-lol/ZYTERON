@@ -1,5 +1,19 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs" && process.env.BILLING_WORKER_ENABLED === "true") {
+    const { runReceivableFlow } = await import("./lib/payments/receivable-flow");
+    let busy = false;
+    const timer = setInterval(() => {
+      if (busy) return;
+      busy = true;
+      void runReceivableFlow()
+        .catch(() => console.error("RECEIVABLE_FLOW_WORKER_UNAVAILABLE"))
+        .finally(() => {
+          busy = false;
+        });
+    }, 15000);
+    timer.unref();
+  }
+  if (process.env.NEXT_RUNTIME === "nodejs" && process.env.BILLING_WORKER_ENABLED === "true") {
     const { runPendingQuoteArchives } = await import("./lib/payments/recurring-lifecycle");
     let busy = false;
     const tick = () => {
@@ -7,10 +21,14 @@ export async function register() {
       busy = true;
       void runPendingQuoteArchives()
         .catch(() => console.error("CLIENT_QUOTE_ARCHIVE_RETRY_UNAVAILABLE"))
-        .finally(() => { busy = false; });
+        .finally(() => {
+          busy = false;
+        });
     };
-    const timer = setInterval(tick, 15000); timer.unref();
-    const initial = setTimeout(tick, 3000); initial.unref();
+    const timer = setInterval(tick, 15000);
+    timer.unref();
+    const initial = setTimeout(tick, 3000);
+    initial.unref();
   }
   if (process.env.NEXT_RUNTIME === "nodejs" && process.env.BILLING_WORKER_ENABLED === "true") {
     const { runContactNotifications } = await import("./lib/notifications/contact-outbox");
