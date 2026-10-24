@@ -340,10 +340,10 @@ export async function mergeLegacyRead(path: string, params: URLSearchParams, bod
     const native = await quotes(s, ls);
     const canonical = await canonicalQuoteRegister();
     const seen = new Set(native.map((q) => q.id));
-    const archived = await prisma.$queryRaw<Array<{quote_id:string;archived_at:Date}>>`SELECT quote_id,archived_at FROM zyteron_archived_quotes`;
-    const byArchive = new Map(archived.map((q)=>[q.quote_id,q.archived_at.toISOString()]));
+    const archived = await prisma.$queryRaw<Array<{quote_id:string;archived_at:Date;state:string}>>`SELECT quote_id,archived_at,state FROM zyteron_archived_quotes`;
+    const byArchive = new Map(archived.map((q)=>[q.quote_id,q]));
     const all = recentQuotes([...native, ...canonical.filter((q) => !seen.has(q.id))])
-      .map((q)=>({...q,archivedAt:byArchive.get(q.id)||null}))
+      .map((q)=>({...q,archivedAt:byArchive.get(q.id)?.state==="ARCHIVED"?byArchive.get(q.id)!.archived_at.toISOString():null,archivePending:byArchive.get(q.id)?.state==="PENDING_CANCELLATION"}))
       .filter((q)=>params.get("includeArchived")==="true"||!q.archivedAt);
     const page = mergePage({ items: all }, [], params);
     return { ...page, items: await attachQuoteBilling(page.items as SalesQuote[]) };

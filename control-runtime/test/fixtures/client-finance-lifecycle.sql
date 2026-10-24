@@ -7,7 +7,7 @@ CREATE TABLE client_portal_settings(client_id uuid PRIMARY KEY,enabled boolean D
 CREATE TABLE opportunities(id uuid,lead_id uuid,client_id uuid,updated_at timestamptz);
 CREATE TABLE quotes(id uuid,lead_id uuid,client_id uuid,updated_at timestamptz);
 CREATE TABLE "Lead"(id text,"userId" text);
-CREATE TABLE "Quote"(id text,"userId" text,email text);
+CREATE TABLE "Quote"(id text PRIMARY KEY,"userId" text,email text);
 CREATE TABLE zyteron_lead_quote_drafts(lead_id text,quote_id text);
 CREATE TABLE "ClientAuditLog"(id text,"actorId" text,"targetUserId" text,action text,"entityType" text,"entityId" text,details jsonb,"createdAt" timestamptz);
 CREATE FUNCTION zyteron_web_lead_id(text) RETURNS uuid LANGUAGE sql AS $$SELECT $1::uuid$$;

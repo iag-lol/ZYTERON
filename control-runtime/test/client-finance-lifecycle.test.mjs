@@ -10,18 +10,23 @@ import { FinanceSources } from '../dist/finance/finance.sources.js';
 const ids=Array.from({length:7},(_,i)=>`10000000-0000-4000-8000-00000000000${i+1}`);
 const [lead,client,quote,plan,installment,paid,actorId]=ids;
 const migration=await readFile(new URL('../../supabase/migrations/20261024090000_client_finance_and_lead_enrollment.sql',import.meta.url),'utf8');
+const archiveMigration=await readFile(new URL('../../supabase/migrations/20261024101500_client_quote_archive_workflow.sql',import.meta.url),'utf8');
 const fixture=await readFile(new URL('./fixtures/client-finance-lifecycle.sql',import.meta.url),'utf8');
 const passwordHash='$2b$12$'+'a'.repeat(53);
 
 test('Supabase: conversión atómica, reintento sin cambiar contraseña, RUT y correo únicos, verificación pendiente y RLS',async()=>{
   const db=new PGlite();
   try{
-    await db.exec(fixture);await db.exec(migration);
+    await db.exec(fixture);await db.exec(migration);await db.exec(archiveMigration);
     await db.query('insert into leads(id,company_name,contact_name,email) values($1,$2,$3,$4)',[lead,'Empresa sintética','Contacto QA','qa@example.invalid']);
     const enroll=async(id,rut='11111111-1',email='qa@example.invalid',hash=passwordHash)=>db.query('select zyteron_enroll_lead($1,$2,$3,$4,$5,null) as result',[id,rut,'Empresa sintética',email,hash]);
     const first=(await enroll(lead)).rows[0].result;assert.equal(first.created,true);
     const before=(await db.query('select * from "User"')).rows;assert.equal(before.length,1);assert.equal(before[0].role,'CLIENT');assert.equal(before[0].accountStatus,'PENDING');assert.equal(before[0].emailVerifiedAt,null);assert.equal(before[0].passwordHash,passwordHash);
     const retry=(await enroll(lead,undefined,undefined,'$2b$12$'+'b'.repeat(53))).rows[0].result;assert.equal(retry.created,false);assert.equal(retry.clientId,first.clientId);assert.deepEqual((await db.query('select * from "User"')).rows,before);
+    await db.query("insert into zyteron_archived_quotes(quote_id,client_id,reason,state) values($1,$2,'Solicitud QA','PENDING_CANCELLATION')",[quote,first.clientId]);
+    assert.equal((await db.query('select state from zyteron_archived_quotes')).rows[0].state,'PENDING_CANCELLATION');
+    await db.query("update zyteron_archived_quotes set state='ARCHIVED' where quote_id=$1",[quote]);
+    await assert.rejects(db.query("update zyteron_archived_quotes set state='INVENTED' where quote_id=$1",[quote]));
     assert.equal((await db.query('select enabled from client_portal_settings')).rows[0].enabled,true);
     assert.equal((await db.query('select status from leads')).rows[0].status,'CONVERTED');
     await db.query('insert into leads(id,company_name,contact_name,email) values($1,$2,$3,$4)',[client,'Otra empresa','Otro QA','other@example.invalid']);
@@ -39,7 +44,7 @@ test('Supabase: conversión atómica, reintento sin cambiar contraseña, RUT y c
 test('Supabase: reprogramación conserva pagadas, rechaza estados cerrados y fechas obsoletas, y mantiene excepciones al editar el plan',async()=>{
   const db=new PGlite();
   try{
-    await db.exec(fixture);await db.exec(migration);
+    await db.exec(fixture);await db.exec(migration);await db.exec(archiveMigration);
     await db.query('insert into quote_payment_plans(id,frequency,start_date,payment_day,amount,currency,status,total_installments) values($1,$2,$3,15,1500,$4,$5,3)',[plan,'MONTHLY','2026-10-01','CLP','ACTIVE']);
     await db.query('insert into quote_payment_installments(id,plan_id,sequence,due_date,period_key,amount,currency,status) values($1,$2,1,$3,$4,1000,$5,$6),($7,$2,2,$8,$9,1000,$5,$10)',[paid,plan,'2026-10-15','2026-10','CLP','PAID',installment,'2026-11-15','2026-11','SCHEDULED']);
     const paidBefore=(await db.query('select * from quote_payment_installments where id=$1',[paid])).rows;

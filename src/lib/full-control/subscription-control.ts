@@ -6,8 +6,18 @@ import { parseQuoteMessage } from "@/lib/admin/quote";
 import { reconcileCancellation } from "@/lib/payments/recurring-lifecycle";
 
 async function binding(db: Prisma.TransactionClient, quoteId: string, clientId: string) {
-  const q = await nativeQuote(db, quoteId);
-  if (!q?.userId) return null;
+  const original = await nativeQuote(db, quoteId);
+  if (!original) return null;
+  const ownerId =
+    original.userId ||
+    (
+      await db.user.findFirst({
+        where: { email: { equals: original.email, mode: "insensitive" }, role: "CLIENT" },
+        select: { id: true },
+      })
+    )?.id;
+  if (!ownerId) return null;
+  const q = { ...original, userId: ownerId };
   const [link] = await db.$queryRaw<
     Array<{ client_id: string }>
   >`SELECT client_id FROM zyteron_legacy_client_link WHERE user_id=${q.userId}`;
@@ -38,6 +48,7 @@ export async function cancelAdminSubscription(
   clientId: string,
   reason: string,
   actorId: string | null,
+  archive = false,
 ) {
   const rawId = await prisma.$transaction(async (db) => {
     const b = await binding(db, quoteId, clientId),
@@ -45,6 +56,8 @@ export async function cancelAdminSubscription(
     if (!b || !s?.subscriptionId || !s.customerId || !s.planId)
       throw Error("SUBSCRIPTION_BINDING_REQUIRED");
     await db.$executeRaw`INSERT INTO zyteron_recurring_lifecycle(quote_id,client_id,subscription_id,state,requested_at) VALUES(${b.quote.id},${b.quote.userId},${s.subscriptionId},'CANCEL_REQUESTED',now()) ON CONFLICT(quote_id) DO UPDATE SET state=CASE WHEN zyteron_recurring_lifecycle.state='ACTIVE' THEN 'CANCEL_REQUESTED' ELSE zyteron_recurring_lifecycle.state END,requested_at=coalesce(zyteron_recurring_lifecycle.requested_at,now())`;
+    if (archive)
+      await db.$executeRaw`INSERT INTO zyteron_archived_quotes(quote_id,client_id,reason,actor_id,native_quote_id,state) VALUES(${quoteId}::uuid,${clientId}::uuid,${reason},${actorId},${b.quote.id},'PENDING_CANCELLATION') ON CONFLICT(quote_id) DO UPDATE SET reason=EXCLUDED.reason,actor_id=EXCLUDED.actor_id,native_quote_id=EXCLUDED.native_quote_id WHERE zyteron_archived_quotes.state='PENDING_CANCELLATION'`;
     await db.clientAuditLog.create({
       data: {
         actorId,

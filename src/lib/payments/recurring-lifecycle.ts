@@ -1,4 +1,5 @@
 import "server-only";
+import {finalizePendingQuoteArchive} from "@/lib/full-control/quote-archive";
 import { prisma } from "@/lib/prisma";
 import { enrichQuoteRecord } from "@/lib/admin/quote";
 import { normalizeQuoteMetaPayment } from "./quote-payments";
@@ -76,6 +77,7 @@ export async function reconcileCancellation(quoteId: string) {
   const paidThrough = ends.at(-1) || null,
     remoteEnd = remote.period_end ? providerPeriodEnd(remote.period_end) : null;
   await prisma.$executeRaw`UPDATE zyteron_recurring_lifecycle SET state=${remote.status === 4 ? "CANCELLED" : "CANCEL_SCHEDULED"},verified_at=now(),paid_through=${paidThrough}::timestamptz,cancel_effective_at=${paidThrough || remoteEnd}::timestamptz,updated_at=now() WHERE quote_id=${quoteId}`;
+  await finalizePendingQuoteArchive(quoteId);
 }
 export async function runRecurringCancellations() {
   const rows = await prisma.$queryRaw<

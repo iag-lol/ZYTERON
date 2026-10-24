@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { commercialApi } from "@control/lib/commercial-api";
 import type { SalesQuote } from "@zyteron/contracts";
@@ -36,7 +36,11 @@ import {
   useQueryParams,
 } from "./fx-ui";
 
-type ClientQuote = SalesQuote & { billing?: QuoteBilling; archivedAt?: string | null };
+type ClientQuote = SalesQuote & {
+  billing?: QuoteBilling;
+  archivedAt?: string | null;
+  archivePending?: boolean;
+};
 type PortalFinance = { userId: string | null; summary: SerializableClientFinanceSummary | null };
 
 /** La ficha consulta los cobros del portal y el libro Finance sin copiar registros entre ambos. */
@@ -80,6 +84,19 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
     await Promise.all([summary.reload(), quotes.reload(), portal.reload()]);
   };
   const action = useAction(refresh);
+  const hadPendingArchive = useRef(false);
+  useEffect(() => {
+    const pending = quotes.data?.some((q) => q.archivePending);
+    if (!pending) {
+      if (hadPendingArchive.current)
+        action.setNotice("Eliminación completada. Historial conservado.");
+      hadPendingArchive.current = false;
+      return;
+    }
+    hadPendingArchive.current = true;
+    const timer = setInterval(() => void quotes.reload(), 8000);
+    return () => clearInterval(timer);
+  }, [quotes.data, quotes.reload]);
   useQueryParams((p) => {
     if (p.get("recordPayment") === "1") setSection("payments");
   });
@@ -164,7 +181,11 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                       <small className="block">
                         {day(q.createdAt)} ·{" "}
                         {q.billing?.frequency === "MONTHLY" ? "Mensual" : "Pago único"}
-                        {q.archivedAt ? " · Eliminada del listado" : ""}
+                        {q.archivedAt
+                          ? " · Eliminada del listado"
+                          : q.archivePending
+                            ? " · Eliminación en proceso (Flow)"
+                            : ""}
                       </small>
                     </>
                   ),
@@ -193,8 +214,12 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                   label: "Acciones",
                   render: (q) => (
                     <div className="fx-row-actions">
-                      {q.archivedAt ? (
-                        <small>Historial conservado</small>
+                      {q.archivedAt || q.archivePending ? (
+                        <small>
+                          {q.archivePending
+                            ? "Cancelación de Flow en proceso. Se retirará al confirmarse."
+                            : "Historial conservado"}
+                        </small>
                       ) : (
                         <>
                           {q.billing &&
@@ -461,23 +486,32 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
               <ReasonDialog
                 open={Boolean(archive)}
                 title={`Eliminar ${archive?.quoteNumber ?? "cotización"} del listado`}
-                description="La programación se detendrá y las cuotas pendientes de Finance se anularán. Los pagos, documentos y saldos ya emitidos se conservan. Podrás consultar el registro activando Ver eliminadas del listado."
-                confirm="Eliminar del listado"
+                description="Esta acción detiene la renovación. Si usa Flow, solicita su cancelación al final del período pagado desde aquí y retira el registro al confirmarse. Las cuotas pendientes de Finance se anulan; los pagos y saldos ya emitidos se conservan."
+                confirm="Eliminar y detener renovación"
                 onCancel={() => setArchive(null)}
                 onConfirm={(reason) => {
                   const q = archive;
                   setArchive(null);
                   if (q)
-                    void action.run(async () => {
-                      const r = await fetch(`/api/portal/admin/quotes/${q.id}/archive`, {
-                        method: "POST",
-                        headers: { "content-type": "application/json" },
-                        body: JSON.stringify({ clientId, reason }),
+                    void action
+                      .run(async () => {
+                        const r = await fetch(`/api/portal/admin/quotes/${q.id}/archive`, {
+                          method: "POST",
+                          headers: { "content-type": "application/json" },
+                          body: JSON.stringify({ clientId, reason }),
+                        });
+                        const data = await r.json();
+                        if (!r.ok) throw Error(data.error);
+                        return data;
+                      })
+                      .then((result) => {
+                        if (result)
+                          action.setNotice(
+                            result.pending
+                              ? "Eliminación solicitada. Flow está confirmando la cancelación; el registro se retirará automáticamente al confirmarse."
+                              : "Cotización eliminada del listado. Historial conservado.",
+                          );
                       });
-                      const data = await r.json();
-                      if (!r.ok) throw Error(data.error);
-                      return data;
-                    }, "Cotización eliminada del listado. Historial conservado.");
                 }}
               />
             </div>,
