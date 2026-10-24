@@ -1,4 +1,5 @@
 import "server-only";
+import { legacyViewId } from "@/lib/full-control/legacy-id";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { sealToken, openToken, digest } from "./pilot-protocol";
@@ -20,6 +21,8 @@ export async function onceProviderOperation<T>(
     dedupe = account + "/" + quoteId + "/" + scope;
   const result = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM "Quote" WHERE id=${quoteId} FOR UPDATE`;
+    const archived=await tx.$queryRaw<Array<{quote_id:string}>>`SELECT quote_id FROM zyteron_archived_quotes WHERE quote_id=${legacyViewId("quote",quoteId)}::uuid`;
+    if(archived.length)throw new Error("QUOTE_ARCHIVED");
     const rows = await tx.$queryRaw<
       Array<{ id: string; state: string; result_cipher: string | null }>
     >`SELECT * FROM zyteron_provider_operation WHERE dedupe=${dedupe}`;

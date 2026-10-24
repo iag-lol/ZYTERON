@@ -1,3 +1,4 @@
+import { assertSubscriptionArchivable } from "@/lib/full-control/subscription-archive-policy";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -26,11 +27,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           await db.$queryRaw`SELECT id FROM "Quote" WHERE id=${nativeId} FOR UPDATE`;
           const q = await db.quote.findUniqueOrThrow({ where: { id: nativeId } });
           const meta = parseQuoteMessage(q.message);
-          if (
-            meta.payment?.subscription?.subscriptionId ||
-            meta.payment?.subscription?.registerToken
-          )
-            throw Error("FLOW_MANAGED");
+          if (meta.payment?.subscription?.subscriptionId) {
+            const [life] = await db.$queryRaw<
+              Array<{ state: string; verified_at: Date | null }>
+            >`SELECT state,verified_at FROM zyteron_recurring_lifecycle WHERE quote_id=${q.id}`;
+            assertSubscriptionArchivable(meta.payment.subscription, life, false);
+          } else if (meta.payment?.subscription?.registerToken) {
+            const operations = await db.$queryRaw<
+              Array<{ id: string }>
+            >`SELECT id FROM zyteron_provider_operation WHERE quote_id=${q.id} AND dedupe LIKE '%/monthly-subscription/%' LIMIT 1`;
+            assertSubscriptionArchivable(
+              meta.payment.subscription,
+              undefined,
+              operations.length > 0,
+            );
+          }
           const rows = await db.$queryRaw<
             Array<{ client_id: string }>
           >`SELECT client_id FROM zyteron_legacy_client_link WHERE user_id=${q.userId}`;

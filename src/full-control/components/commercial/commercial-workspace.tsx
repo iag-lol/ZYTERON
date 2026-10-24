@@ -1415,6 +1415,7 @@ function QuoteCenter({
                   <WebsiteQuoteBillingButton
                     quoteId={q.id}
                     quoteNumber={q.quoteNumber}
+                    clientId={q.clientId}
                     currency={q.currency}
                     billing={q.billing}
                     onChanged={onChanged}

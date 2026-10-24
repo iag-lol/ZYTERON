@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { SubscriptionControls } from "./subscription-controls";
 import { MonthlyPlanControls } from "./monthly-plan";
 import { CalendarDays, Save } from "lucide-react";
 import type { QuoteBilling } from "@/lib/full-control/quote-register";
@@ -24,11 +25,13 @@ type Collection = {
 export function WebsiteQuoteBillingButton({
   quoteId,
   quoteNumber,
+  clientId,
   billing,
   onChanged,
 }: {
   quoteId: string;
   quoteNumber: string;
+  clientId?: string | null;
   currency: string;
   billing: QuoteBilling;
   onChanged: () => Promise<void>;
@@ -148,6 +151,13 @@ export function WebsiteQuoteBillingButton({
                       cobros, prepara una nueva versión para cambiarla y conservar el historial.
                     </p>
                   )}
+                  {billing.frequency === "MONTHLY" && clientId ? (
+                    <SubscriptionControls
+                      quoteId={quoteId}
+                      clientId={clientId}
+                      onChanged={onChanged}
+                    />
+                  ) : null}
                   {billing.frequency === "MONTHLY" ? (
                     <MonthlyPlanControls quoteId={quoteId} onChanged={onChanged} />
                   ) : null}
