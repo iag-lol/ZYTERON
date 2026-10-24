@@ -187,7 +187,11 @@ export function certificationPurchaseSalesBook(
         total(rows, (r) => (r.commonVat || r.nonRecoverableVat ? 0 : r.vat)),
       ),
       ...[...non].map(([code, amount]) =>
-        el("TotIVANoRec", [el("CodIVANoRec", code), el("TotMntIVANoRec", amount)]),
+        el("TotIVANoRec", [
+          el("CodIVANoRec", code),
+          el("TotOpIVANoRec", rows.filter((r) => r.nonRecoverableVat?.code === code).length),
+          el("TotMntIVANoRec", amount),
+        ]),
       ),
       ...(common
         ? [

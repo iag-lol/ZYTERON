@@ -32,7 +32,7 @@ import {
 } from "../dist/finance/finance.sii-set.js";
 import { renderPrintedDte } from "../dist/finance/finance.dte-print.js";
 import { DteSchemaValidator, SiiDirectDteProvider } from "../dist/finance/finance.dte-providers.js";
-import { parseXml, child, textOf } from "../dist/finance/finance.formats.js";
+import { parseXml, child, children, textOf } from "../dist/finance/finance.formats.js";
 import { PDFDocument } from "pdf-lib";
 import {
   boletaLookupToken,
@@ -923,6 +923,34 @@ test("libros de compra y venta: resumen por tipo, IVA común, no recuperable y r
   );
   assert(!purchase.includes("IVARetTotal"));
   assert.match(purchase, /<TotMntTotal>11000<\/TotMntTotal>/);
+  assert.equal(verifySiiXmlSignatures(purchase).length, 1);
+});
+test("IVA no recuperable informa operaciones por tipo de documento y causal", async () => {
+  const purchase = certificationPurchaseSalesBook(
+    { ...bookContext, notificationFolio: 2 },
+    "COMPRA",
+    [
+      { ...bookEntry, exempt: 0, nonRecoverableVat: { code: 4, amount: 1900 } },
+      { ...bookEntry, folio: 2, net: 20000, exempt: 0, vat: 3800, nonRecoverableVat: { code: 4, amount: 3800 } },
+      { ...bookEntry, folio: 3, net: 30000, exempt: 0, vat: 5700, nonRecoverableVat: { code: 9, amount: 5700 } },
+      { ...bookEntry, type: 30, folio: 4, exempt: 0, nonRecoverableVat: { code: 4, amount: 1900 } },
+    ],
+    certificate,
+  );
+  await validateCertificationXml(purchase, "LibroCV_v10.xsd");
+  const summary = child(child(parseXml(purchase), "EnvioLibro"), "ResumenPeriodo");
+  assert.deepEqual(children(summary, "TotalesPeriodo").flatMap((row) =>
+    children(row, "TotIVANoRec").map((nonRecoverable) => ({
+      type: textOf(row, "TpoDoc"),
+      code: textOf(nonRecoverable, "CodIVANoRec"),
+      operations: textOf(nonRecoverable, "TotOpIVANoRec"),
+      amount: textOf(nonRecoverable, "TotMntIVANoRec"),
+    })),
+  ), [
+    { type: "33", code: "4", operations: "2", amount: "5700" },
+    { type: "33", code: "9", operations: "1", amount: "5700" },
+    { type: "30", code: "4", operations: "1", amount: "1900" },
+  ]);
   assert.equal(verifySiiXmlSignatures(purchase).length, 1);
 });
 test("libro de guías: anulación informativa, traslado interno y guía facturada", async () => {
