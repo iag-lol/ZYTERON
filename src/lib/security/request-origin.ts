@@ -13,6 +13,8 @@ const FLOW_EXTERNAL_ROUTES = new Set([
   "/api/portal/payments/quotes/flow/return",
   "/api/portal/payments/receivables/flow/confirmation",
   "/api/portal/payments/receivables/flow/return",
+  "/api/portal/payments/invoices/flow/confirmation",
+  "/api/portal/payments/invoices/flow/return",
   "/api/portal/payments/quotes/subscription/confirmation",
   "/api/portal/payments/quotes/subscription/return",
 ]);

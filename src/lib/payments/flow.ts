@@ -707,7 +707,8 @@ export function receivableFlowAccount() {
 }
 
 export async function getReceivablePaymentByCommerce(commerceId: string) {
-  if (!/^ZYT-COBRO-[a-f0-9-]{36}$/i.test(commerceId)) throw new Error("PAYMENT_REFERENCE_INVALID");
+  if (!/^ZYT-(?:COBRO|R)-[a-f0-9-]{36}$/i.test(commerceId))
+    throw new Error("PAYMENT_REFERENCE_INVALID");
   return normalizeProviderPayment(
     await flowGet("/payment/getStatusByCommerceId", { commerceId }),
   ) as unknown as FlowStatusResult;

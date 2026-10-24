@@ -3,7 +3,11 @@ import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { clientDatabase } from "@/lib/portal/scoped-db";
 import { collectionArchive } from "@/lib/full-control/receivable-archive";
-import { payableReceivable, receivablePaymentApplication } from "./receivable-flow-policy";
+import {
+  payableReceivable,
+  receivablePaymentApplication,
+  receivableCommerceOrder,
+} from "./receivable-flow-policy";
 import {
   createReceivableProviderOrder,
   getFlowPaymentStatus,
@@ -64,7 +68,7 @@ export async function createReceivableCheckout(input: {
     >`SELECT * FROM zyteron_receivable_flow WHERE receivable_id=${input.id} AND account_hash=${account} AND state IN ('CREATING','UNKNOWN','PENDING') FOR UPDATE`;
     if (existing[0]) return { intent: existing[0], created: false, description: bill!.description };
     const id = randomUUID(),
-      commerce = `ZYT-COBRO-${id}`;
+      commerce = receivableCommerceOrder(id);
     const rows = await db.$queryRaw<
       Intent[]
     >`INSERT INTO zyteron_receivable_flow(id,receivable_id,user_id,account_hash,amount,state,commerce_order) VALUES(${id}::uuid,${input.id},${input.userId},${account},${input.amount},'CREATING',${commerce}) RETURNING *`;

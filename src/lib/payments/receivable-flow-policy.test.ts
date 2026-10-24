@@ -1,6 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { payableReceivable, receivablePaymentApplication } from "./receivable-flow-policy";
+import {
+  payableReceivable,
+  receivablePaymentApplication,
+  receivableCommerceOrder,
+} from "./receivable-flow-policy";
 import { invoicePaymentOption } from "./invoice-payment-option";
 const row = {
   clientId: "client",
@@ -72,4 +76,15 @@ test("un pago confirmado salda el documento sin crear otra cuenta por cobrar", (
     credit: 1368100,
     balance: 1368100,
   });
+});
+
+test("la referencia comercial respeta el máximo de 45 caracteres de Flow y conserva su unicidad", () => {
+  const id = "11111111-1111-4111-8111-111111111111";
+  assert.equal(receivableCommerceOrder(id), `ZYT-R-${id}`);
+  assert.ok(receivableCommerceOrder(id).length <= 45);
+  assert.notEqual(
+    receivableCommerceOrder(id),
+    receivableCommerceOrder("22222222-2222-4222-8222-222222222222"),
+  );
+  assert.throws(() => receivableCommerceOrder("unsafe"));
 });

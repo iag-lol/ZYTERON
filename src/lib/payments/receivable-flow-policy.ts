@@ -31,3 +31,9 @@ export function receivablePaymentApplication(balance: number, amount: number, cl
   const allocated = closed ? 0 : Math.min(balance, amount);
   return { allocated, credit: amount - allocated, balance: balance - allocated };
 }
+
+export function receivableCommerceOrder(id: string) {
+  if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(id))
+    throw new Error("PAYMENT_REFERENCE_INVALID");
+  return `ZYT-R-${id}`;
+}

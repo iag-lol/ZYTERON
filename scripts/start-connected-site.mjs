@@ -22,6 +22,18 @@ process.env.MONITORING_WORKER_ENABLED ||= "true";
 process.env.MONITORING_MAX_CONCURRENCY ||= "2";
 process.env.MONITORING_PROCESS_ROLE = "api";
 process.env.FLOW_WORKER_ENABLED = "false";
+// Ambos registros de cobros utilizan la misma cuenta Flow configurada.
+process.env.FLOW_API_KEY ||= process.env.FLOW_KEY;
+process.env.FLOW_SECRET_KEY ||= process.env.FLOW_SECRET || process.env.FLOW_API_SECRET;
+process.env.FLOW_TOKEN_ENCRYPTION_KEY ||= process.env.PAYMENT_TOKEN_KEY;
+process.env.FLOW_ENVIRONMENT ||=
+  (process.env.FLOW_API_BASE || "").includes("sandbox") ||
+  ["true", "1", "yes"].includes((process.env.FLOW_USE_SANDBOX || "").toLowerCase())
+    ? "sandbox"
+    : "production";
+process.env.FLOW_CONFIRMATION_URL ||=
+  "https://www.zyteron.cl/api/portal/payments/invoices/flow/confirmation";
+process.env.FLOW_RETURN_URL ||= "https://www.zyteron.cl/api/portal/payments/invoices/flow/return";
 process.env.BILLING_WORKER_ENABLED ||= "true";
 for (const [name, value] of Object.entries({
   RATE_LIMIT_DEFAULT_PER_MINUTE: "300",

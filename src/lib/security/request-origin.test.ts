@@ -122,6 +122,8 @@ describe("receivable Flow routes", () => {
   it("only exempts provider callbacks from browser CSRF checks", () => {
     assert.equal(isFlowExternalRoute("/api/portal/payments/receivables/flow/confirmation"), true);
     assert.equal(isFlowExternalRoute("/api/portal/payments/receivables/flow/return"), true);
+    assert.equal(isFlowExternalRoute("/api/portal/payments/invoices/flow/confirmation"), true);
+    assert.equal(isFlowExternalRoute("/api/portal/payments/invoices/flow/return"), true);
     assert.equal(isFlowExternalRoute("/api/portal/payments/receivables/bill/flow"), false);
   });
 });
