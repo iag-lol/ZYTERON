@@ -189,6 +189,9 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
   const [record, setRecord] = useState<"commercial" | "accounting" | null>(null),
     [recordReceivable, setRecordReceivable] = useState("");
   const [recordRequested, setRecordRequested] = useState(false);
+  const [receivableArchive, setReceivableArchive] = useState<ClientReceivable | null>(null),
+    [restoreReceivable, setRestoreReceivable] = useState(false),
+    [stopRenewal, setStopRenewal] = useState(false);
   const summary = useLoad(
     () =>
       allowed
@@ -302,12 +305,14 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
           receivableCaption(r, allQuotes),
           financeStatusLabel(receivableState(r, today)),
         ) &&
-        (receivableFilter === "ALL" ||
-          (receivableFilter === "OPEN"
-            ? isOpenReceivable(r)
-            : receivableFilter === "PARTIAL"
-              ? isOpenReceivable(r) && r.appliedAmount > 0
-              : receivableState(r, today) === receivableFilter)),
+        (receivableFilter === "REMOVED"
+          ? r.archivedByAdmin
+          : receivableFilter === "ALL" ||
+            (receivableFilter === "OPEN"
+              ? isOpenReceivable(r)
+              : receivableFilter === "PARTIAL"
+                ? isOpenReceivable(r) && r.appliedAmount > 0
+                : receivableState(r, today) === receivableFilter)),
     )
     .sort((a, b) =>
       (financeCivilDay(a.dueAt) || "9999").localeCompare(financeCivilDay(b.dueAt) || "9999"),
@@ -646,6 +651,19 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                           Registrar pago <ArrowRight size={13} />
                         </button>
                       ) : null}
+                      {canManage ? (
+                        <button
+                          className={s.removeCollection}
+                          aria-label={`Eliminar cobro ${receivableCaption(r, allQuotes)} por ${money(r.balanceAmount)}`}
+                          onClick={() => {
+                            setReceivableArchive(r);
+                            setRestoreReceivable(false);
+                            setStopRenewal(false);
+                          }}
+                        >
+                          <Trash2 size={12} /> Eliminar cobro
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 ))}
@@ -847,6 +865,7 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                 <option value="PARTIAL">Con abonos</option>
                 <option value="PAID">Pagados</option>
                 <option value="CANCELLED">Anulados</option>
+                <option value="REMOVED">Eliminados</option>
                 <option value="ALL">Todos los cobros</option>
               </select>
             ) : null}
@@ -1069,7 +1088,30 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                                 onChanged={refresh}
                               />
                             ) : null}
+                            {canManage ? (
+                              <button
+                                className={s.dangerButton}
+                                onClick={() => {
+                                  setReceivableArchive(r);
+                                  setRestoreReceivable(false);
+                                  setStopRenewal(false);
+                                }}
+                              >
+                                <Trash2 size={12} /> Eliminar
+                              </button>
+                            ) : null}
                           </>
+                        ) : r.archivedByAdmin && canManage ? (
+                          <button
+                            className={s.rowAction}
+                            onClick={() => {
+                              setReceivableArchive(r);
+                              setRestoreReceivable(true);
+                              setStopRenewal(false);
+                            }}
+                          >
+                            Restaurar cobro
+                          </button>
                         ) : (
                           <Check size={15} />
                         )}
@@ -1470,6 +1512,72 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                   onChanged={() => void refresh()}
                 />
               ) : null}
+              <ReasonDialog
+                open={Boolean(receivableArchive)}
+                minReasonLength={5}
+                title={restoreReceivable ? "Restaurar cobro eliminado" : "Eliminar cobro pendiente"}
+                description={
+                  receivableArchive
+                    ? `${receivableCaption(receivableArchive, allQuotes)} · ${money(receivableArchive.balanceAmount)}. ${restoreReceivable ? "El cobro volverá a la cuenta del cliente. No reactiva una renovación detenida." : "Se retira de Próximos cobros y del saldo por cobrar. Los pagos y documentos asociados se conservan. Puedes recuperarlo desde Cuentas por cobrar → Eliminados."}`
+                    : ""
+                }
+                confirm={restoreReceivable ? "Restaurar cobro" : "Eliminar cobro"}
+                extra={
+                  !restoreReceivable && receivableArchive?.quoteId ? (
+                    <label className="fx-check">
+                      <input
+                        type="checkbox"
+                        checked={stopRenewal}
+                        onChange={(e) => setStopRenewal(e.target.checked)}
+                      />{" "}
+                      Detener también la renovación y retirar la cotización del listado
+                    </label>
+                  ) : undefined
+                }
+                onCancel={() => setReceivableArchive(null)}
+                onConfirm={(reason) => {
+                  const r = receivableArchive,
+                    restoring = restoreReceivable;
+                  setReceivableArchive(null);
+                  if (r)
+                    void action
+                      .run(async () => {
+                        const response = await fetch(
+                          `/api/portal/admin/clients/${clientId}/receivables/${encodeURIComponent(r.id)}/archive`,
+                          {
+                            method: "POST",
+                            headers: { "content-type": "application/json" },
+                            body: JSON.stringify({
+                              operation: restoring ? "restore" : "archive",
+                              reason,
+                              expectedBalance: r.balanceAmount,
+                              stopRenewal: !restoring && stopRenewal,
+                            }),
+                          },
+                        );
+                        const result = await response.json();
+                        if (!response.ok) throw Error(result.error);
+                        return result;
+                      })
+                      .then((result) => {
+                        if (result) {
+                          action.setNotice(
+                            restoring
+                              ? "Cobro restaurado."
+                              : result.renewal === "pending"
+                                ? "Cobro eliminado. La cancelación de la renovación está pendiente de confirmación de Flow."
+                                : result.renewal === "stopped"
+                                  ? "Cobro eliminado y renovación detenida."
+                                  : "Cobro eliminado de Próximos cobros. Disponible en Eliminados.",
+                          );
+                          if (result.renewal === "failed")
+                            action.setError(
+                              "El cobro se eliminó, pero no se confirmó la detención de la renovación. Revisa la cotización antes del próximo período.",
+                            );
+                        }
+                      });
+                }}
+              />
               <ReasonDialog
                 open={Boolean(voidPayment)}
                 title="Anular pago recibido"

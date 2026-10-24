@@ -26,6 +26,7 @@ type Receivable = {
   kind: string;
   quoteId: string | null;
   quoteViewId?: string | null;
+  archivedByAdmin?: boolean;
   taxDocumentId: string | null;
   totalAmount: number;
   appliedAmount: number;

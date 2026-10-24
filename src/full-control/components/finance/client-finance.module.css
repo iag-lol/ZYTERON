@@ -817,6 +817,29 @@ button.rowTitle:hover strong {
 .dangerButton:hover {
   background: #fff4ee;
 }
+.removeCollection {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #a36052;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 8px 0 0 12px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.removeCollection:hover {
+  color: #8e382d;
+  text-decoration: underline;
+}
+@media (max-width: 600px) {
+  .removeCollection {
+    display: flex;
+    margin: 9px 0 0 auto;
+    font-size: 9px;
+  }
+}
 .paymentHero {
   display: grid;
   gap: 12px;

@@ -1,5 +1,6 @@
 import { Prisma, type Payment, type PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { collectionArchive } from "@/lib/full-control/receivable-archive";
 
 const MAX_CLP_AMOUNT = 2_147_483_647;
 const CONFIRMED_PAYMENT_STATUS = "CONFIRMED";
@@ -383,9 +384,20 @@ async function ensureTargetReceivables(
       "Monto de la cuenta por cobrar",
     );
     const stageKey = normalizedText(input.quoteStageKey, 80);
+    const sourceKey = stageKey ? `quote-stage:${quote.id}:${stageKey}` : `quote:${quote.id}`;
+    const removed = await tx.receivable.findUnique({
+      where: { sourceKey },
+      select: { clientId: true, status: true, metadata: true },
+    });
+    if (
+      removed?.clientId === input.clientId &&
+      removed.status === "CANCELLED" &&
+      collectionArchive(removed.metadata)?.active
+    )
+      return [];
     const receivable = await tx.receivable.create({
       data: {
-        sourceKey: stageKey ? `quote-stage:${quote.id}:${stageKey}` : `quote:${quote.id}`,
+        sourceKey,
         clientId: input.clientId,
         processId: input.processId || quote.processId,
         quoteId: quote.id,
@@ -436,6 +448,18 @@ async function ensureTargetReceivables(
       );
     }
     assertClientOwnership(document.clientId, input.clientId, "El documento tributario");
+
+    // Un ingreso posterior a la eliminación se registra como crédito; no recrea el cobro ni pierde el pago.
+    const removed = await tx.receivable.findUnique({
+      where: { sourceKey: `tax-document:${document.id}` },
+      select: { clientId: true, status: true, metadata: true },
+    });
+    if (
+      removed?.clientId === input.clientId &&
+      removed.status === "CANCELLED" &&
+      collectionArchive(removed.metadata)?.active
+    )
+      return [];
 
     let existing = await tx.receivable.findMany({
       where: {
@@ -907,6 +931,7 @@ export type ClientFinanceReceivable = {
   kind: string;
   quoteId: string | null;
   taxDocumentId: string | null;
+  archivedByAdmin?: boolean;
   totalAmount: number;
   appliedAmount: number;
   balanceAmount: number;
@@ -1012,6 +1037,7 @@ export async function getClientFinanceSummary(clientId: string): Promise<ClientF
         kind: receivable.kind,
         quoteId: receivable.quoteId,
         taxDocumentId: receivable.taxDocumentId,
+        archivedByAdmin: collectionArchive(receivable.metadata)?.active === true,
         totalAmount: receivable.totalAmount,
         appliedAmount,
         balanceAmount: Math.max(0, receivable.totalAmount - appliedAmount),
