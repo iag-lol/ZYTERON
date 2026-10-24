@@ -179,6 +179,7 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
   const [accountView, setAccountView] = useState("commercial"),
     [updatedAt, setUpdatedAt] = useState("");
   const [quoteId, setQuoteId] = useState<string | null>(null),
+    [billingQuoteId, setBillingQuoteId] = useState<string | null>(null),
     [schedule, setSchedule] = useState<string | null>(null),
     [editing, setEditing] = useState<string | null>(null),
     [archive, setArchive] = useState<ClientQuote | null>(null);
@@ -284,7 +285,8 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
   const openReceivables = nextReceivables(receivables, today);
   const monthly = allQuotes.filter((q) => isLiveQuote(q) && q.billing?.frequency === "MONTHLY");
   const selectedQuote = allQuotes.find((q) => q.id === quoteId),
-    scheduledQuote = allQuotes.find((q) => q.id === schedule);
+    scheduledQuote = allQuotes.find((q) => q.id === schedule),
+    billingQuote = allQuotes.find((q) => q.id === billingQuoteId);
   const quoteRows = selectClientQuotes(allQuotes, {
     query,
     frequency,
@@ -1239,14 +1241,15 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                         (selectedQuote.billing.source === "WEBSITE" ||
                           (selectedQuote.billing.frequency === "MONTHLY" &&
                             selectedQuote.billing.basis !== "CALENDAR")) ? (
-                          <WebsiteQuoteBillingButton
-                            quoteId={selectedQuote.id}
-                            quoteNumber={selectedQuote.quoteNumber}
-                            clientId={clientId}
-                            currency={selectedQuote.currency}
-                            billing={selectedQuote.billing}
-                            onChanged={refresh}
-                          />
+                          <button
+                            className="fx-btn primary"
+                            onClick={() => {
+                              setBillingQuoteId(selectedQuote.id);
+                              setQuoteId(null);
+                            }}
+                          >
+                            <CalendarDays size={15} /> Abrir calendario y renovación
+                          </button>
                         ) : (
                           <button
                             className="fx-btn primary"
@@ -1321,6 +1324,20 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                   </div>
                 ) : null}
               </Drawer>
+              {billingQuote?.billing ? (
+                <WebsiteQuoteBillingButton
+                  key={billingQuote.id}
+                  quoteId={billingQuote.id}
+                  quoteNumber={billingQuote.quoteNumber}
+                  clientId={clientId}
+                  currency={billingQuote.currency}
+                  billing={billingQuote.billing}
+                  onChanged={refresh}
+                  initialOpen
+                  hideTrigger
+                  onClosed={() => setBillingQuoteId(null)}
+                />
+              ) : null}
               <Drawer
                 open={Boolean(schedule)}
                 wide

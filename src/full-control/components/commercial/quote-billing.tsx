@@ -28,6 +28,9 @@ export function WebsiteQuoteBillingButton({
   clientId,
   billing,
   onChanged,
+  initialOpen = false,
+  hideTrigger = false,
+  onClosed,
 }: {
   quoteId: string;
   quoteNumber: string;
@@ -35,8 +38,11 @@ export function WebsiteQuoteBillingButton({
   currency: string;
   billing: QuoteBilling;
   onChanged: () => Promise<void>;
+  initialOpen?: boolean;
+  hideTrigger?: boolean;
+  onClosed?: () => void;
 }) {
-  const [open, setOpen] = useState(false),
+  const [open, setOpen] = useState(initialOpen),
     [frequency, setFrequency] = useState(billing.frequency || "ONE_TIME"),
     [rows, setRows] = useState<Collection[] | null>(null);
   const [busy, setBusy] = useState(false),
@@ -77,6 +83,7 @@ export function WebsiteQuoteBillingButton({
       if (!r.ok) throw Error(data.error);
       await onChanged();
       setOpen(false);
+      onClosed?.();
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo guardar.");
     } finally {
@@ -85,10 +92,12 @@ export function WebsiteQuoteBillingButton({
   };
   return (
     <>
-      <button className="fx-btn small" type="button" onClick={() => setOpen(true)}>
-        <CalendarDays size={13} />
-        Cobros y modalidad
-      </button>
+      {!hideTrigger ? (
+        <button className="fx-btn small" type="button" onClick={() => setOpen(true)}>
+          <CalendarDays size={13} />
+          Cobros y modalidad
+        </button>
+      ) : null}
       {open
         ? createPortal(
             <div className="zy-full-control">
@@ -98,7 +107,10 @@ export function WebsiteQuoteBillingButton({
                 title={`Cobros · ${quoteNumber}`}
                 subtitle="Pagos confirmados y asignados a esta cotización."
                 onClose={() => {
-                  if (!busy) setOpen(false);
+                  if (!busy) {
+                    setOpen(false);
+                    onClosed?.();
+                  }
                 }}
               >
                 <div className="fx-stack">

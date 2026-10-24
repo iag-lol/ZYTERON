@@ -82,11 +82,25 @@ test("los cobros priorizan vencidos, próximos y sin fecha, excluyendo cuentas c
 
 test("cobros con el mismo número de cotización se distinguen por su identidad y modalidad", () => {
   const monthly = quote("mensual", { quoteNumber: "COT-2026-09804" });
-  const fixed = quote("fijo", { quoteNumber: "COT-2026-09804", billing: { frequency: "ONE_TIME" } as ClientQuote["billing"] });
-  const r = { ...debt("cuenta", null), description: "Factura", quoteId: "id-nativo", quoteViewId: "mensual" };
+  const fixed = quote("fijo", {
+    quoteNumber: "COT-2026-09804",
+    billing: { frequency: "ONE_TIME" } as ClientQuote["billing"],
+  });
+  const r = {
+    ...debt("cuenta", null),
+    description: "Factura",
+    quoteId: "id-nativo",
+    quoteViewId: "mensual",
+  };
   assert.equal(receivableCaption(r, [monthly, fixed]), "Factura · COT-2026-09804 · Mensual");
-  assert.equal(receivableCaption({ ...r, quoteViewId: "fijo" }, [monthly, fixed]), "Factura · COT-2026-09804 · Pago único");
-  assert.equal(receivableCaption({ ...r, quoteViewId: "sin-vinculo" }, [monthly, fixed]), "Factura");
+  assert.equal(
+    receivableCaption({ ...r, quoteViewId: "fijo" }, [monthly, fixed]),
+    "Factura · COT-2026-09804 · Pago único",
+  );
+  assert.equal(
+    receivableCaption({ ...r, quoteViewId: "sin-vinculo" }, [monthly, fixed]),
+    "Factura",
+  );
 });
 
 test("un pago conserva su día civil de Santiago al filtrar el rango de fechas", () => {
