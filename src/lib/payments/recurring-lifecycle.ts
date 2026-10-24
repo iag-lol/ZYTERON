@@ -82,12 +82,21 @@ export async function reconcileCancellation(quoteId: string) {
 export async function runRecurringCancellations() {
   const rows = await prisma.$queryRaw<
     Array<{ quote_id: string }>
-  >`SELECT quote_id FROM zyteron_recurring_lifecycle WHERE state IN ('CANCEL_REQUESTED','CANCEL_SCHEDULED','CANCELLED') ORDER BY updated_at LIMIT 10`;
+  >`SELECT l.quote_id FROM zyteron_recurring_lifecycle l WHERE l.state IN ('CANCEL_REQUESTED','CANCEL_SCHEDULED','CANCELLED') AND NOT EXISTS(SELECT 1 FROM zyteron_archived_quotes a WHERE a.native_quote_id=l.quote_id AND a.state='PENDING_CANCELLATION') ORDER BY l.updated_at LIMIT 10`;
   for (const r of rows) {
     try {
       await reconcileCancellation(r.quote_id);
     } catch {
       /* durable request remains pending for reconciliation */
     }
+  }
+}
+
+export async function runPendingQuoteArchives() {
+  const rows = await prisma.$queryRaw<Array<{ native_quote_id: string }>>`
+    SELECT native_quote_id FROM zyteron_archived_quotes WHERE state='PENDING_CANCELLATION' AND native_quote_id IS NOT NULL ORDER BY archived_at LIMIT 5`;
+  for (const row of rows) {
+    try { await reconcileCancellation(row.native_quote_id); }
+    catch { /* La intención persiste; una respuesta incierta no se declara completada. */ }
   }
 }

@@ -1,5 +1,18 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs" && process.env.BILLING_WORKER_ENABLED === "true") {
+    const { runPendingQuoteArchives } = await import("./lib/payments/recurring-lifecycle");
+    let busy = false;
+    const tick = () => {
+      if (busy) return;
+      busy = true;
+      void runPendingQuoteArchives()
+        .catch(() => console.error("CLIENT_QUOTE_ARCHIVE_RETRY_UNAVAILABLE"))
+        .finally(() => { busy = false; });
+    };
+    const timer = setInterval(tick, 15000); timer.unref();
+    const initial = setTimeout(tick, 3000); initial.unref();
+  }
+  if (process.env.NEXT_RUNTIME === "nodejs" && process.env.BILLING_WORKER_ENABLED === "true") {
     const { runContactNotifications } = await import("./lib/notifications/contact-outbox");
     let busy = false;
     const tick = () => {
