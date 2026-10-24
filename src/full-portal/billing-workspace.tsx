@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { PortalData } from "@/lib/client-experience/snapshot";
+import { pendingBilling } from "@/lib/client-experience/pending-billing";
 import type { ClientRecurring } from "@/lib/payments/client-recurring-projection";
 import { recurringStateLabel } from "@/lib/payments/client-recurring-projection";
 import { paymentCivilDate, projectMonthlyPayments } from "@/lib/payments/payment-projection";
@@ -27,6 +28,7 @@ import s from "./billing-workspace.module.css";
 type Tab = "overview" | "plans" | "bills" | "payments" | "calendar";
 type Props = {
   data: PortalData;
+  initialInvoiceId?: string | null;
   onHelp: () => void;
   onQuote: (id: string) => void;
   onPay: (id: string) => void;
@@ -38,7 +40,13 @@ const tabs: [Tab, string][] = [
   ["payments", "Pagos recibidos"],
   ["calendar", "Calendario"],
 ];
-export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props) {
+export default function BillingWorkspace({
+  data,
+  initialInvoiceId,
+  onHelp,
+  onQuote,
+  onPay,
+}: Props) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("overview"),
     [query, setQuery] = useState(""),
@@ -46,7 +54,7 @@ export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props
     [year, setYear] = useState(Number(paymentCivilDate(data.asOf)?.slice(0, 4))),
     [month, setMonth] = useState(Number(paymentCivilDate(data.asOf)?.slice(5, 7))),
     [plan, setPlan] = useState<ClientRecurring | null>(null),
-    [billId, setBillId] = useState<string | null>(null),
+    [billId, setBillId] = useState<string | null>(initialInvoiceId || null),
     [payment, setPayment] = useState<PortalData["payments"][number] | null>(null),
     [challenge, setChallenge] = useState(""),
     [cancelling, setCancelling] = useState(false),
@@ -60,10 +68,10 @@ export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props
     setPayment(null);
     setBillId(id);
   };
-  const pending = data.invoices.filter((i) => i.balance > 0),
-    clp = pending.filter((i) => i.currency === "CLP"),
-    balance = clp.reduce((n, i) => n + i.balance, 0),
-    overdue = clp.filter((i) => i.status === "Vencida").reduce((n, i) => n + i.balance, 0);
+  const { pending, totals } = pendingBilling(data.invoices),
+    clp = totals.find((group) => group.currency === "CLP"),
+    balance = clp?.balance || 0,
+    overdue = clp?.overdue || 0;
   const search = (value: string) =>
     value
       .normalize("NFD")

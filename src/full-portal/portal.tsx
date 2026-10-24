@@ -5,6 +5,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import MonitoringPanel from "./monitoring-panel";
 import BillingHub, { FlowCheckoutPreview } from "./billing-hub";
+import HomeBilling from "./home-billing";
+import { pendingBilling } from "@/lib/client-experience/pending-billing";
 import {
   ArrowUpRight,
   ArrowRight,
@@ -267,12 +269,11 @@ export default function Portal({
   const calendarEvents = events.filter((event) => event.date.slice(3) === REFERENCE_DATE.slice(3));
   const company = data.user.company || data.user.name;
   const accountInitials = initials(data.user.name);
-  const overdue = data.invoices
-    .filter((i) => i.currency === "CLP" && i.status === "Vencida")
-    .reduce((sum, i) => sum + i.balance, 0);
-  const balance = data.invoices
-    .filter((i) => i.currency === "CLP")
-    .reduce((sum, i) => sum + i.balance, 0);
+  const pendingAccount = pendingBilling(data.invoices);
+  const clpAccount = pendingAccount.totals.find((group) => group.currency === "CLP");
+  const overdue = clpAccount?.overdue || 0;
+  const balance = clpAccount?.balance || 0;
+  const [billingInvoiceId, setBillingInvoiceId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   async function send(url: string, body: unknown, method = "POST") {
     if (busy) return false;
@@ -300,7 +301,7 @@ export default function Portal({
     sections.some((s) => s.id === initialSection) ? initialSection : "inicio",
   );
   useEffect(() => {
-    if (!["pagos", "cuenta"].includes(section)) return;
+    if (!["inicio", "pagos", "cuenta"].includes(section)) return;
     const refresh = () => {
       if (document.visibilityState === "visible") router.refresh();
     };
@@ -357,6 +358,7 @@ export default function Portal({
     return () => clearTimeout(timer);
   }, [toast]);
   function go(id: string) {
+    setBillingInvoiceId(null);
     setSection(id);
     setFilter("Todos");
     setModal(null);
@@ -690,6 +692,14 @@ export default function Portal({
                   Nueva solicitud
                 </button>
               </div>
+              <HomeBilling
+                data={data}
+                onPayments={() => go("pagos")}
+                onInvoice={(id) => {
+                  go("pagos");
+                  setBillingInvoiceId(id);
+                }}
+              />
               <section className="welcome-banner">
                 <div>
                   <span className="banner-label">
@@ -741,11 +751,13 @@ export default function Portal({
                     tone: "purple",
                   },
                   {
-                    label: "Saldo vencido · CLP",
-                    value: money(overdue),
+                    label: "Saldo pendiente · CLP",
+                    value: money(balance),
                     icon: "wallet",
-                    foot: `${data.invoices.filter((i) => i.status === "Vencida").length} obligaciones vencidas`,
-                    section: "cuenta",
+                    foot: clpAccount
+                      ? `${clpAccount.count} ${clpAccount.count === 1 ? "cobro pendiente" : "cobros pendientes"}`
+                      : "Sin cobros pendientes en CLP",
+                    section: "pagos",
                     tone: "orange",
                   },
                   {
@@ -994,6 +1006,7 @@ export default function Portal({
               {section === "pagos" && (
                 <BillingHub
                   data={data}
+                  initialInvoiceId={billingInvoiceId}
                   onHelp={() => setModal({ kind: "support" })}
                   onQuote={(id) => setModal({ kind: "quote", id })}
                   onPay={(id) => setModal({ kind: "flow", id })}
