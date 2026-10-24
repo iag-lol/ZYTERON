@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { PortalData } from "@/lib/client-experience/snapshot";
-import { pendingBilling } from "@/lib/client-experience/pending-billing";
+import { billingInvoiceFromSearch, pendingBilling } from "@/lib/client-experience/pending-billing";
 import type { ClientRecurring } from "@/lib/payments/client-recurring-projection";
 import { recurringStateLabel } from "@/lib/payments/client-recurring-projection";
 import { paymentCivilDate, projectMonthlyPayments } from "@/lib/payments/payment-projection";
@@ -28,7 +28,6 @@ import s from "./billing-workspace.module.css";
 type Tab = "overview" | "plans" | "bills" | "payments" | "calendar";
 type Props = {
   data: PortalData;
-  initialInvoiceId?: string | null;
   onHelp: () => void;
   onQuote: (id: string) => void;
   onPay: (id: string) => void;
@@ -40,13 +39,7 @@ const tabs: [Tab, string][] = [
   ["payments", "Pagos recibidos"],
   ["calendar", "Calendario"],
 ];
-export default function BillingWorkspace({
-  data,
-  initialInvoiceId,
-  onHelp,
-  onQuote,
-  onPay,
-}: Props) {
+export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("overview"),
     [query, setQuery] = useState(""),
@@ -54,7 +47,7 @@ export default function BillingWorkspace({
     [year, setYear] = useState(Number(paymentCivilDate(data.asOf)?.slice(0, 4))),
     [month, setMonth] = useState(Number(paymentCivilDate(data.asOf)?.slice(5, 7))),
     [plan, setPlan] = useState<ClientRecurring | null>(null),
-    [billId, setBillId] = useState<string | null>(initialInvoiceId || null),
+    [billId, setBillId] = useState<string | null>(null),
     [payment, setPayment] = useState<PortalData["payments"][number] | null>(null),
     [challenge, setChallenge] = useState(""),
     [cancelling, setCancelling] = useState(false),
@@ -63,10 +56,22 @@ export default function BillingWorkspace({
   const dialog = useRef<HTMLDivElement>(null);
   const plans = data.recurring;
   const bill = data.invoices.find((i) => i.id === billId);
+  const billLink = (id: string | null) => {
+    const url = new URL(window.location.href);
+    if (id) url.searchParams.set("cobro", id);
+    else url.searchParams.delete("cobro");
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+  };
+  // El detalle conserva su enlace cuando la navegación se actualiza desde el servidor.
+  useEffect(() => {
+    const id = billingInvoiceFromSearch(window.location.search, data.invoices);
+    if (id) setBillId(id);
+  }, [data.invoices]);
   const openInvoice = (id: string) => {
     setPlan(null);
     setPayment(null);
     setBillId(id);
+    billLink(id);
   };
   const { pending, totals } = pendingBilling(data.invoices),
     clp = totals.find((group) => group.currency === "CLP"),
@@ -86,6 +91,7 @@ export default function BillingWorkspace({
   const caption = (i: PortalData["invoices"][number]) =>
     [data.quotes.find((q) => q.id === i.quoteId)?.number, i.concept].filter(Boolean).join(" · ");
   const close = () => {
+    billLink(null);
     setPlan(null);
     setPayment(null);
     setBillId(null);
@@ -695,6 +701,7 @@ export default function BillingWorkspace({
                       key={`${p.source}:${p.id}`}
                       className={s.related}
                       onClick={() => {
+                        billLink(null);
                         setBillId(null);
                         setPayment(p);
                       }}

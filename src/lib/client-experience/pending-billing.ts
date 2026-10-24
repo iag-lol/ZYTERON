@@ -1,5 +1,10 @@
 type PendingInvoice = { balance: number; currency: string; status: string; due: string | null };
 
+export function billingInvoiceFromSearch(search: string, invoices: readonly { id: string }[]) {
+  const id = new URLSearchParams(search).get("cobro");
+  return id && invoices.some((invoice) => invoice.id === id) ? id : null;
+}
+
 export function pendingBilling<T extends PendingInvoice>(invoices: readonly T[]) {
   const pending = invoices
     .filter((invoice) => invoice.balance > 0)

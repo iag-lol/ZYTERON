@@ -273,7 +273,6 @@ export default function Portal({
   const clpAccount = pendingAccount.totals.find((group) => group.currency === "CLP");
   const overdue = clpAccount?.overdue || 0;
   const balance = clpAccount?.balance || 0;
-  const [billingInvoiceId, setBillingInvoiceId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   async function send(url: string, body: unknown, method = "POST") {
     if (busy) return false;
@@ -358,7 +357,6 @@ export default function Portal({
     return () => clearTimeout(timer);
   }, [toast]);
   function go(id: string) {
-    setBillingInvoiceId(null);
     setSection(id);
     setFilter("Todos");
     setModal(null);
@@ -697,7 +695,11 @@ export default function Portal({
                 onPayments={() => go("pagos")}
                 onInvoice={(id) => {
                   go("pagos");
-                  setBillingInvoiceId(id);
+                  window.history.replaceState(
+                    window.history.state,
+                    "",
+                    `/clientes/panel/pagos?cobro=${encodeURIComponent(id)}`,
+                  );
                 }}
               />
               <section className="welcome-banner">
@@ -1006,7 +1008,6 @@ export default function Portal({
               {section === "pagos" && (
                 <BillingHub
                   data={data}
-                  initialInvoiceId={billingInvoiceId}
                   onHelp={() => setModal({ kind: "support" })}
                   onQuote={(id) => setModal({ kind: "quote", id })}
                   onPay={(id) => setModal({ kind: "flow", id })}

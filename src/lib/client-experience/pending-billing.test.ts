@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { pendingBilling } from "./pending-billing";
+import { billingInvoiceFromSearch, pendingBilling } from "./pending-billing";
 
 const invoice = {
   id: "partial",
@@ -10,6 +10,14 @@ const invoice = {
   status: "Pendiente",
   due: null,
 };
+
+test("direct bill links resolve only documents in the current client snapshot", () => {
+  assert.equal(billingInvoiceFromSearch("?cobro=partial", [invoice]), "partial");
+  assert.equal(billingInvoiceFromSearch("?cobro=other-client", [invoice]), null);
+  assert.equal(billingInvoiceFromSearch("?cobro=partial", []), null);
+  assert.equal(billingInvoiceFromSearch("?cobro=", [invoice]), null);
+  assert.equal(billingInvoiceFromSearch("", [invoice]), null);
+});
 
 test("a pending balance with no due date is visible and uses the remainder after payments", () => {
   const result = pendingBilling([invoice]);
