@@ -30,6 +30,7 @@ export function ClientContracts({
 }) {
   const [selected, setSelected] = useState<Contract | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
+  const [preview, setPreview] = useState<{ url?: string; error?: string } | null>(null);
   useEffect(() => {
     if (!selected) return;
     dialog.current?.showModal();
@@ -37,6 +38,31 @@ export function ClientContracts({
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previous;
+    };
+  }, [selected]);
+  useEffect(() => {
+    if (!selected) return;
+    const controller = new AbortController();
+    let objectUrl: string | undefined;
+    void fetch(`${selected.documentUrl}?inline=1`, {
+      cache: "no-store",
+      redirect: "error",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok || !response.headers.get("content-type")?.startsWith("application/pdf"))
+          throw new Error("No se pudo abrir el PDF. Puedes volver a intentarlo o descargarlo.");
+        const blob = await response.blob();
+        if (controller.signal.aborted) return;
+        objectUrl = URL.createObjectURL(blob);
+        setPreview({ url: objectUrl });
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) setPreview({ error: error.message });
+      });
+    return () => {
+      controller.abort();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [selected]);
   const visible = contracts.filter((c) =>
@@ -83,7 +109,13 @@ export function ClientContracts({
               </p>
             )}
             <div className={styles.actions}>
-              <button className="button primary" onClick={() => setSelected(c)}>
+              <button
+                className="button primary"
+                onClick={() => {
+                  setPreview(null);
+                  setSelected(c);
+                }}
+              >
                 Ver contrato <ArrowUpRight size={16} />
               </button>
               <a className="button secondary" href={c.documentUrl} download>
@@ -121,11 +153,17 @@ export function ClientContracts({
           {selected.review && (
             <p className={styles.viewerNotice}>Borrador para revisión · Sin firma registrada</p>
           )}
-          <iframe
-            title={`PDF del contrato ${selected.number}`}
-            src={`${selected.documentUrl}?inline=1`}
-            className={styles.pdf}
-          />
+          {preview?.url ? (
+            <iframe
+              title={`PDF del contrato ${selected.number}`}
+              src={preview.url}
+              className={styles.pdf}
+            />
+          ) : (
+            <div className={styles.loading} role={preview?.error ? "alert" : "status"}>
+              {preview?.error || "Preparando el contrato…"}
+            </div>
+          )}
           <footer className={styles.viewerFooter}>
             <span>Documento compartido exclusivamente con tu empresa.</span>
             <a className="button primary" href={selected.documentUrl} download>

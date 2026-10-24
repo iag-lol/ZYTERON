@@ -123,7 +123,7 @@ export class ContractPortalDocumentController {
       for (const page of pdf.getPages())
         page.drawText("BORRADOR PARA REVISION - SIN FIRMA", {
           x: 60,
-          y: 758,
+          y: 61,
           size: 7,
           font,
           color: rgb(0.5, 0.35, 0.15),

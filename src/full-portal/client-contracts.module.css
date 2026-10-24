@@ -167,3 +167,14 @@
     flex: 1;
   }
 }
+
+.loading {
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  min-height: 50dvh;
+  background: #eff2ed;
+  font-size: 14px;
+  color: #697758;
+  text-align: center;
+}
