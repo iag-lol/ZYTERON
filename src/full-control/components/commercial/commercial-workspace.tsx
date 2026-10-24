@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import { useAccess } from "@control/components/access-context";
+import { LeadClientActions } from "./lead-client-actions";
 import { QuoteEditor } from "./quote-editor";
 import { WebsiteQuoteBillingButton } from "./quote-billing";
 import { quoteClientKey, recentQuotes, type QuoteBilling } from "@/lib/full-control/quote-register";
@@ -349,6 +350,7 @@ export function CommercialWorkspace({
           {section === "leads" ? (
             <LeadInbox
               items={leads}
+              onChanged={() => refresh(true)}
               busy={Boolean(busyAction)}
               focusLeadId={focusLeadId}
               prepareQuote={async (id) => {
@@ -776,12 +778,14 @@ function Command({
 }
 function LeadInbox({
   items,
+  onChanged,
   roleAction,
   busy,
   focusLeadId,
   prepareQuote,
 }: {
   items: SalesLead[];
+  onChanged: () => Promise<void>;
   prepareQuote: (id: string) => Promise<void>;
   busy: boolean;
   focusLeadId: string;
@@ -871,6 +875,7 @@ function LeadInbox({
                       </Link>
                     ) : null}
                     <footer>
+                      <LeadClientActions lead={lead} onChanged={onChanged}/>
                       {["QUALIFIED", "CONVERTED"].includes(lead.status) ? (
                         <button disabled={busy} onClick={() => void prepareQuote(lead.id)}>
                           <FileText size={13} />
@@ -896,7 +901,7 @@ function LeadInbox({
                             void roleAction(lead.id, "convert", {});
                           }}
                         >
-                          Convertir
+                          Crear oportunidad
                         </button>
                       ) : null}
                     </footer>

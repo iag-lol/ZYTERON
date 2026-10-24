@@ -205,9 +205,7 @@ export function Client360({ id, initialTab = "summary" }: { id: string; initialT
         <button disabled title="El calendario transversal aún no está implementado">
           <CalendarClock size={15} /> Agendar seguimiento
         </button>
-        <button disabled title="Los pagos se registran exclusivamente desde Finance">
-          <CircleDollarSign size={15} /> Registrar pago
-        </button>
+        {hasFinancePermission(role,"payment.record") ? <Link href={`/clients/${id}/finance?recordPayment=1`}><CircleDollarSign size={15}/> Registrar pago</Link> : null}
         <button disabled title="Las facturas se emiten exclusivamente desde Finance">
           <MoreHorizontal size={15} /> Más acciones
         </button>

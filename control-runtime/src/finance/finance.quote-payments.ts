@@ -96,7 +96,7 @@ export class QuotePaymentService {
   async savePlan(quoteId:string,body:Row,actor:FinanceActor){
     this.ctx.require(actor,"quote_payment.manage");if(!actor.userId)throw new BadRequestException("El plan requiere un responsable identificado.");
     const quote=await this.quoteFor(quoteId,actor);const current=await this.repo.findOne<Row>("quote_payment_plans",{quoteId});
-    if(!current){const reason=this.eligibility(quote);if(reason)throw new ConflictException(reason);}
+    if(!current){const reason=this.eligibility(quote);if(reason)throw new ConflictException(reason);if(await this.repo.findOne("zyteron_monthly_plans",{quoteId}))throw new ConflictException("La cotización ya tiene calendario mensual del portal. Adminístralo desde Cobros y modalidad.");}
     if(current?.status==="CANCELLED")throw new ConflictException("El plan está anulado y no se reactiva.");
     const frequency=oneOf(body.frequency,["ONE_TIME","MONTHLY"] as const,"Frecuencia","MONTHLY");
     if(quote.billingType&&frequency!==(quote.billingType==="SUBSCRIPTION"?"MONTHLY":"ONE_TIME"))throw new ConflictException("La frecuencia debe respetar la modalidad de la cotización. Prepara una nueva versión para cambiarla.");
@@ -181,6 +181,16 @@ export class QuotePaymentService {
     const updated=await guarded(()=>this.repo.update<Row>("quote_payment_installments",item.id,{clientVisible:visible}));
     await this.repo.audit(actor,visible?"QUOTE_INVOICE_PUBLISHED":"QUOTE_INVOICE_HIDDEN","QUOTE_PAYMENT_INSTALLMENT",item.id,`Factura de la cuota ${item.sequence} de ${quote.quoteNumber} ${visible?"visible":"oculta"} en el portal cliente`);
     return this.mapInstallment(updated,plan);
+  }
+
+  async rescheduleInstallment(id:string,body:Row,actor:FinanceActor){
+    this.ctx.require(actor,"quote_payment.manage");if(!actor.userId)throw new BadRequestException("Se requiere un responsable identificado.");
+    const{item,plan}=await this.installmentFor(id,actor);
+    if(item.status!=="SCHEDULED"||plan.status==="CANCELLED")throw new ConflictException("Sólo puedes cambiar el vencimiento de cuotas pendientes de un plan vigente.");
+    const due=isoDate(body.dueDate,"Nuevo vencimiento"),expected=isoDate(body.expectedDueDate,"Vencimiento anterior"),reason=requiredText(body.reason,"Motivo",500);
+    if(reason.length<3||due<"2000-01-01"||due>addDays(todayCl(),3650))throw new BadRequestException("Fecha o motivo inválido.");
+    try{await this.repo.moveQuoteInstallment(id,expected,due,reason,actor.userId);}catch(error){if(String((error as Error).message).includes("QUOTE_PAYMENT_"))throw new ConflictException("La cuota cambió o ya está cerrada. Actualiza el calendario.");throw error;}
+    return this.mapInstallment(await this.ctx.must<Row>("quote_payment_installments",id,"Cuota"),plan);
   }
 
   async cancelInstallment(installmentId:string,body:Row,actor:FinanceActor){

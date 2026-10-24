@@ -1,3 +1,4 @@
+import { portalLoginEmail } from "@/lib/auth/portal-login-identity";
 import { compare } from "bcrypt";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -49,38 +50,27 @@ export async function POST(req: Request) {
       email?: string;
       password?: string;
     } | null;
-    const email = normalizeEmail(body?.email);
+    const identifier = normalizeEmail(body?.email);
+    const email = identifier ? await portalLoginEmail(identifier) : null;
     const password = String(body?.password || "");
-    if (!email || !password) {
-      return NextResponse.json({ error: "Ingresa correo y contraseña." }, { status: 400 });
+    if (!identifier || !password || password.length > 1024) {
+      return NextResponse.json({ error: "Ingresa correo o RUT y contraseña." }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
+    const user = email ? await prisma.user.findUnique({
       where: { email },
       select: {
         id: true,
+        email: true,
         passwordHash: true,
         emailVerifiedAt: true,
         accountStatus: true,
       },
-    });
+    }) : null;
 
     if (!user) {
       return NextResponse.json({ error: "Credenciales inválidas." }, { status: 401 });
     }
-    if (user.accountStatus !== "ACTIVE") {
-      return NextResponse.json(
-        { error: "Tu cuenta está desactivada. Contacta a soporte para habilitarla." },
-        { status: 403 },
-      );
-    }
-    if (!user.emailVerifiedAt) {
-      return NextResponse.json(
-        { error: "Debes verificar tu correo antes de ingresar." },
-        { status: 403 },
-      );
-    }
-
     if (!user.passwordHash || user.passwordHash.length < 20) {
       return NextResponse.json(
         {
@@ -102,6 +92,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Credenciales inválidas." }, { status: 401 });
     }
 
+    if (user.accountStatus === "DISABLED") return NextResponse.json({ error: "Tu cuenta está desactivada. Contacta a soporte." }, { status: 403 });
+    if (!user.emailVerifiedAt) return NextResponse.json({ error: "Verifica tu correo para habilitar el acceso.", verificationRequired: true, email: user.email }, { status: 403 });
+    if (user.accountStatus !== "ACTIVE") return NextResponse.json({ error: "Tu cuenta está pendiente de activación." }, { status: 403 });
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (isDbConnectionPrismaError(error)) {

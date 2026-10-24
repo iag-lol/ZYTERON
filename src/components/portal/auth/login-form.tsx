@@ -32,6 +32,10 @@ export function PortalLoginForm({
     });
     if (!pre.ok) {
       const payload = await pre.json().catch(() => ({}));
+      if (payload?.verificationRequired && payload.email) {
+        router.push(`/clientes/verificar?email=${encodeURIComponent(payload.email)}`);
+        return;
+      }
       setError(payload?.error || "No se pudo validar el acceso.");
       return;
     }
@@ -64,12 +68,12 @@ export function PortalLoginForm({
       }}
     >
       <div className="space-y-1.5">
-        <Label htmlFor="email">Correo electrónico</Label>
+        <Label htmlFor="email">Correo electrónico o RUT</Label>
         <Input
           id="email"
-          type="email"
-          autoComplete="email"
-          placeholder="correo@empresa.cl"
+          type="text"
+          autoComplete="username"
+          placeholder="correo@empresa.cl o 12345678-5"
           value={form.email}
           onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
           required

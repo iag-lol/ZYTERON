@@ -1,6 +1,8 @@
 "use client";
+import { ReceivableDueButton } from "@control/components/finance/receivable-due-button";
 
-import { useMemo, useState, useTransition, type FormEvent } from "react";
+import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
+import { formatDate, formatDateTime } from "@control/lib/date-time";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -96,12 +98,7 @@ function dateLabel(value?: string | null, includeTime = false) {
   if (!value) return "Sin fecha";
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return "Sin fecha";
-  return new Intl.DateTimeFormat("es-CL", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    ...(includeTime ? { hour: "2-digit", minute: "2-digit" } : {}),
-  }).format(parsed);
+  return includeTime ? formatDateTime(value) : formatDate(value);
 }
 
 function statusTone(status: string) {
@@ -125,13 +122,19 @@ function toSerializableSummary(value: unknown): SerializableClientFinanceSummary
 export function ClientFinancePanel({
   clientId,
   initialSummary,
+  onChanged,
+  businessClientId,
 }: {
   clientId: string;
   initialSummary: SerializableClientFinanceSummary;
+  onChanged?: () => Promise<void>;
+  businessClientId?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [paymentKey, setPaymentKey] = useState(() => crypto.randomUUID());
   const [summary, setSummary] = useState(initialSummary);
+  useEffect(() => setSummary(initialSummary), [initialSummary]);
   const [feedback, setFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(
     null,
   );
@@ -159,6 +162,7 @@ export function ClientFinancePanel({
     }
     const nextSummary = toSerializableSummary(payload?.summary);
     if (nextSummary) setSummary(nextSummary);
+    await onChanged?.();
     return payload;
   }
 
@@ -169,7 +173,7 @@ export function ClientFinancePanel({
       try {
         const response = await fetch(`/administracion/clientes/${clientId}/pagos`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "idempotency-key": paymentKey },
           body: JSON.stringify({
             amount: Number(form.amount),
             method: form.method,
@@ -190,6 +194,7 @@ export function ClientFinancePanel({
           reference: "",
           notes: "",
         }));
+        setPaymentKey(crypto.randomUUID());
         router.refresh();
       } catch (error) {
         setFeedback({
@@ -204,11 +209,14 @@ export function ClientFinancePanel({
     setFeedback(null);
     startTransition(async () => {
       try {
-        const response = await fetch(`/administracion/clientes/${clientId}/pagos/${paymentId}/anular`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reason: voidReason }),
-        });
+        const response = await fetch(
+          `/administracion/clientes/${clientId}/pagos/${paymentId}/anular`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reason: voidReason }),
+          },
+        );
         const payload = await readResponse(response);
         setFeedback({ tone: "success", message: payload.message || "Pago anulado correctamente." });
         setVoidingId(null);
@@ -449,6 +457,16 @@ export function ClientFinancePanel({
                     {RECEIVABLE_STATUS_LABELS[item.status]}
                   </span>
                 </div>
+                {businessClientId &&
+                onChanged &&
+                item.balanceAmount > 0 &&
+                item.status !== "CANCELLED" ? (
+                  <ReceivableDueButton
+                    clientId={businessClientId}
+                    item={item}
+                    onChanged={onChanged}
+                  />
+                ) : null}
                 <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                   <div>
                     <p className="text-slate-400">Total</p>

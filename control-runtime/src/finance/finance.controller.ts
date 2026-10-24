@@ -114,6 +114,7 @@ export class FinanceController {
   @Post("quote-payments/quotes/:quoteId/plan/:action") @HttpCode(200) quotePlanAction(@Param("quoteId") id:string,@Param("action") action:string,@Body() b:any,@Headers() h:H){return this.quotePayments.planAction(id,action,b??{},actor(h));}
   @Post("quote-payments/installments/:id/mark-paid") @HttpCode(200) markInstallmentPaid(@Param("id") id:string,@Body() b:any,@Headers() h:H){return this.quotePayments.markPaid(id,b,actor(h));}
   @Post("quote-payments/installments/:id/visibility") @HttpCode(200) installmentVisibility(@Param("id") id:string,@Body() b:any,@Headers() h:H){return this.quotePayments.setVisibility(id,b,actor(h));}
+  @Post("quote-payments/installments/:id/reschedule") @HttpCode(200) rescheduleInstallment(@Param("id") id:string,@Body() b:any,@Headers() h:H){return this.quotePayments.rescheduleInstallment(id,b,actor(h));}
   @Post("quote-payments/installments/:id/cancel") @HttpCode(200) cancelInstallment(@Param("id") id:string,@Body() b:any,@Headers() h:H){return this.quotePayments.cancelInstallment(id,b,actor(h));}
   @Get("quote-payments/installments/:id/invoice") async installmentInvoice(@Param("id") id:string,@Headers() h:H,@Res({passthrough:true}) res:any){return file(res,await this.quotePayments.invoice(id,actor(h)));}
 

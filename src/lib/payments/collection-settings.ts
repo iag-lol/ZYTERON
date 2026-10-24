@@ -18,6 +18,8 @@ export type CollectionSettings = {
   revision: number;
 };
 export async function quoteBillingContext(db: Prisma.TransactionClient, id: string) {
+  const archived = await db.$queryRaw<Array<{quote_id:string}>>`SELECT quote_id FROM zyteron_archived_quotes WHERE quote_id=${id}::uuid`;
+  const isArchived = archived.length>0;
   const native = await nativeQuote(db, id);
   if (native) {
     const m = parseQuoteMessage(native.message) as ReturnType<typeof parseQuoteMessage> & {
@@ -31,7 +33,7 @@ export async function quoteBillingContext(db: Prisma.TransactionClient, id: stri
       monthly: m.payment?.billingType === "SUBSCRIPTION",
       accepted: native.status === "WON" || m.controlState === "ACCEPTED",
       closed:
-        native.status === "LOST" ||
+        isArchived || native.status === "LOST" ||
         ["CANCELLED", "DECLINED", "EXPIRED"].includes(m.controlState || ""),
       flow: !!(m.payment?.subscription?.subscriptionId || m.payment?.subscription?.registerToken),
       finance: false,
@@ -61,7 +63,7 @@ export async function quoteBillingContext(db: Prisma.TransactionClient, id: stri
     label: q.quote_number,
     monthly: q.billing_type === "SUBSCRIPTION" && q.currency.trim() === "CLP",
     accepted: ["ACCEPTED", "CONVERTED"].includes(q.status),
-    closed: ["CANCELLED", "DECLINED", "EXPIRED"].includes(q.status),
+    closed: isArchived || ["CANCELLED", "DECLINED", "EXPIRED"].includes(q.status),
     flow: false,
     finance: !!plans.length,
   };

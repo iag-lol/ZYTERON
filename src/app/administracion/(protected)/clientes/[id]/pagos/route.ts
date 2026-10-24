@@ -1,3 +1,5 @@
+import { Temporal } from "@js-temporal/polyfill";
+import { commercialAdmin } from "@/lib/full-control/commercial-api-guard";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -95,6 +97,7 @@ function errorResponse(error: unknown) {
 }
 
 export async function GET(_request: Request, context: RouteContext) {
+  const auth=await commercialAdmin(_request);if(auth.error)return auth.error;
   try {
     const { id } = await context.params;
     const summary = await getClientFinanceSummary(id);
@@ -105,6 +108,7 @@ export async function GET(_request: Request, context: RouteContext) {
 }
 
 export async function POST(request: Request, context: RouteContext) {
+  const auth=await commercialAdmin(request);if(auth.error)return auth.error;
   try {
     const [{ id }, raw] = await Promise.all([context.params, readPayload(request)]);
     const input = paymentSchema.parse(raw);
@@ -118,7 +122,8 @@ export async function POST(request: Request, context: RouteContext) {
       amount: input.amount,
       method: input.method,
       source: "MANUAL",
-      receivedAt: input.receivedAt ? new Date(input.receivedAt) : undefined,
+      receivedAt: input.receivedAt ? (/^\d{4}-\d{2}-\d{2}$/.test(input.receivedAt) ? new Date(Temporal.PlainDate.from(input.receivedAt).toZonedDateTime({timeZone:"America/Santiago",plainTime:"12:00"}).epochMilliseconds) : new Date(input.receivedAt)) : undefined,
+      recordedById: auth.actorId ?? undefined,
       reference: input.reference,
       notes: input.notes,
       receivableId: input.receivableId,

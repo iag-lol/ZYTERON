@@ -1,3 +1,4 @@
+import { commercialAdmin } from "@/lib/full-control/commercial-api-guard";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
@@ -27,6 +28,7 @@ async function readPayload(request: Request) {
 }
 
 export async function POST(request: Request, context: RouteContext) {
+  const auth=await commercialAdmin(request);if(auth.error)return auth.error;
   try {
     const [{ id, paymentId }, raw] = await Promise.all([context.params, readPayload(request)]);
     const { reason } = voidSchema.parse(raw);

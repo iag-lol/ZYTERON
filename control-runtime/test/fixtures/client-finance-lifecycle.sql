@@ -1,0 +1,16 @@
+CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS; CREATE ROLE zyteron_portal_client;
+CREATE TABLE clients(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),legal_name text NOT NULL,trade_name text,rut text,general_email text,phone text,status text,source text,country text);
+CREATE TABLE leads(id uuid PRIMARY KEY,company_name text,contact_name text,email text,phone text,rut text,client_id uuid,status text DEFAULT 'NEW',archived_at timestamptz,updated_at timestamptz);
+CREATE TABLE "User"(id text PRIMARY KEY,email text UNIQUE,name text,company text,phone text,rut text,"passwordHash" text,role text,"accountStatus" text,"authProvider" text,"emailVerifiedAt" timestamptz,"createdAt" timestamptz,"updatedAt" timestamptz);
+CREATE TABLE zyteron_legacy_client_link(user_id text PRIMARY KEY REFERENCES "User"(id),client_id uuid UNIQUE REFERENCES clients(id));
+CREATE TABLE client_portal_settings(client_id uuid PRIMARY KEY,enabled boolean DEFAULT false,updated_at timestamptz);
+CREATE TABLE opportunities(id uuid,lead_id uuid,client_id uuid,updated_at timestamptz);
+CREATE TABLE quotes(id uuid,lead_id uuid,client_id uuid,updated_at timestamptz);
+CREATE TABLE "Lead"(id text,"userId" text);
+CREATE TABLE "Quote"(id text,"userId" text,email text);
+CREATE TABLE zyteron_lead_quote_drafts(lead_id text,quote_id text);
+CREATE TABLE "ClientAuditLog"(id text,"actorId" text,"targetUserId" text,action text,"entityType" text,"entityId" text,details jsonb,"createdAt" timestamptz);
+CREATE FUNCTION zyteron_web_lead_id(text) RETURNS uuid LANGUAGE sql AS $$SELECT $1::uuid$$;
+CREATE TABLE quote_payment_plans(id uuid PRIMARY KEY,frequency text,start_date date,payment_day integer,amount numeric,currency text,status text,cancel_reason text,total_installments integer);
+CREATE TABLE quote_payment_installments(id uuid PRIMARY KEY,plan_id uuid,sequence integer,due_date date,period_key text,amount numeric,currency text,status text,cancel_reason text);
+CREATE FUNCTION quote_payment_due_date(date,integer,integer) RETURNS date LANGUAGE sql AS $$SELECT (date_trunc('month',$1)+make_interval(months=>$3-1)+make_interval(days=>$2-1))::date$$;

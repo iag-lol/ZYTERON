@@ -1,3 +1,4 @@
+import { portalLoginEmail } from "./portal-login-identity";
 import { compare, hash } from "bcrypt";
 import { randomUUID } from "node:crypto";
 import type { NextAuthOptions } from "next-auth";
@@ -159,6 +160,7 @@ export const portalAuthOptions: NextAuthOptions = {
           const email = normalizeEmail(credentials?.email);
           const password = String(credentials?.password || "");
           if (!email || !password || email.length > 160 || password.length > 1024) return null;
+          let resolvedEmail: string | null = null;
           try {
             const byIp = await publicRateLimit(
               new Request("http://localhost/auth", {
@@ -167,8 +169,11 @@ export const portalAuthOptions: NextAuthOptions = {
               "portal-login",
               15,
             );
+            if (!byIp.allowed) return null;
+            resolvedEmail = await portalLoginEmail(email);
+            if (!resolvedEmail) return null;
             const byAccount = await publicRateLimit(
-              new Request("http://localhost/auth", { headers: { "x-real-ip": email } }),
+              new Request("http://localhost/auth", { headers: { "x-real-ip": resolvedEmail } }),
               "portal-login-account",
               10,
             );
@@ -177,8 +182,9 @@ export const portalAuthOptions: NextAuthOptions = {
             return null;
           }
 
+          if (!resolvedEmail) return null;
           const user = await prisma.user.findUnique({
-            where: { email },
+            where: { email: resolvedEmail },
             select: {
               id: true,
               email: true,

@@ -287,10 +287,18 @@ export class FinanceRepository {
     const pending=[...this.store("quote_payment_installments").values()].filter((i)=>i.planId===planId&&i.status==="SCHEDULED").sort((a,b)=>a.sequence-b.sequence);
     for(const item of pending){
       if(plan!.status==="CANCELLED"||(plan!.totalInstallments!==null&&plan!.totalInstallments!==undefined&&item.sequence>plan!.totalInstallments)){await this.update("quote_payment_installments",item.id,{status:"CANCELLED",cancelReason:plan!.status==="CANCELLED"?`Plan anulado: ${plan!.cancelReason}`:"Plan modificado: cuota fuera del nuevo plazo"});changed++;continue;}
-      const due=plan!.frequency==="ONE_TIME"?plan!.startDate:quoteDueDate(plan!.startDate,plan!.paymentDay,item.sequence);
+      const due=item.dueDateOverride??(plan!.frequency==="ONE_TIME"?plan!.startDate:quoteDueDate(plan!.startDate,plan!.paymentDay,item.sequence));
       if(due!==item.dueDate||r2(plan!.amount)!==r2(item.amount)||plan!.currency!==item.currency){await this.update("quote_payment_installments",item.id,{dueDate:due,periodKey:due.slice(0,7),amount:plan!.amount,currency:plan!.currency});changed++;}
     }
     return changed;
+  }
+
+  async moveQuoteInstallment(id:string,expected:string,due:string,reason:string,actorId:string):Promise<void>{
+    if(this.supabase){await this.rpc("quote_payment_move_due",{p_installment:id,p_expected:expected,p_due:due,p_reason:reason,p_actor:actorId});return;}
+    const item=this.store("quote_payment_installments").get(id),plan=item?this.store("quote_payment_plans").get(item.planId):null;
+    if(!item||item.status!=="SCHEDULED"||plan?.status==="CANCELLED"||item.dueDate!==expected)throw new ConflictException("La cuota cambió o ya está cerrada. Actualiza el calendario.");
+    await this.update("quote_payment_installments",id,{dueDate:due,dueDateOverride:due,periodKey:due.slice(0,7)});
+    await this.create("zyteron_quote_date_changes",{installmentId:id,previousDate:expected,dueDate:due,reason,actorId});
   }
 
   // ------------------------------------------------------------------------------------------ eventos, auditoría, notificaciones, idempotencia, archivos

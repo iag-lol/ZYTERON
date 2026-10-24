@@ -6,7 +6,7 @@ import { Ban, CalendarClock, CalendarDays, Download, Eye, EyeOff, FileCheck2, Pa
 import { hasFinancePermission, quoteInvoiceDocumentTypes, type QuotePaymentBoard, type QuotePaymentDetail, type QuotePaymentInstallment, type QuotePaymentQuote, type Role } from "@zyteron/contracts";
 import { useAccess } from "@control/components/access-context";
 import { financeApi, type UploadedFile } from "@control/lib/finance-api";
-import { day, label, money, todayIso, tone } from "@control/lib/finance-format";
+import { day, label, money, todayIso, tone, parseDay } from "@control/lib/finance-format";
 import { Amount, DateInput, Drawer, Empty, Feedback, Field, FileInput, KeyValue, LoadError, Loading, Pill, ReasonDialog, Register, Section, useAction, useLoad, useQueryParams } from "./fx-ui";
 import type { ViewProps } from "./finance-workspace";
 
@@ -22,7 +22,7 @@ type QuoteRow=QuotePaymentQuote&{planId:string|null;planStatus:string|null;frequ
 // =========================================================================================== panel por cotización
 export function QuotePaymentPanel({quoteId,onChanged}:{quoteId:string;onChanged?:()=>void}){
   const{role}=useAccess();const detail=useLoad(()=>financeApi.get<QuotePaymentDetail>(role,`/quote-payments/quotes/${quoteId}`),[role,quoteId]);
-  const action=useAction(async()=>{await detail.reload();onChanged?.();});const[editing,setEditing]=useState(false);const[paying,setPaying]=useState<QuotePaymentInstallment|null>(null);const[dialog,setDialog]=useState<null|"plan"|{installment:string}>(null);
+  const action=useAction(async()=>{await detail.reload();onChanged?.();});const[editing,setEditing]=useState(false);const[moving,setMoving]=useState<QuotePaymentInstallment|null>(null);const[paying,setPaying]=useState<QuotePaymentInstallment|null>(null);const[dialog,setDialog]=useState<null|"plan"|{installment:string}>(null);
   if(detail.error)return <LoadError error={detail.error} retry={()=>void detail.reload()}/>;if(!detail.data)return <Loading text="Cargando calendario de pagos…"/>;
   const d=detail.data,plan=d.plan,can=d.permissions;
   return <div className="fx-stack">
@@ -48,19 +48,20 @@ export function QuotePaymentPanel({quoteId,onChanged}:{quoteId:string;onChanged?
       {plan.status==="CANCELLED"?<p className="fx-hint">Plan anulado: {plan.cancelReason}</p>:null}
       <Section eyebrow="CALENDARIO" title="Cuotas" description={`La opción de pago se habilita ${plan.activationDaysBefore} día(s) antes de cada vencimiento y sigue activa hasta registrar el pago con su factura SII.`}>
         {d.installments.length?<div className="fx-qp-calendar" role="list">{d.installments.map((i)=><InstallmentCell key={i.id} item={i} canPay={can.markPaid} canManage={can.manage} busy={action.busy}
-          onPay={()=>setPaying(i)} onCancel={()=>setDialog({installment:i.id})}
+          onPay={()=>setPaying(i)} onReschedule={()=>setMoving(i)} onCancel={()=>setDialog({installment:i.id})}
           onInvoice={()=>void action.run(()=>financeApi.download(role,`/quote-payments/installments/${i.id}/invoice`))}
           onVisibility={()=>void action.run(()=>financeApi.post(role,`/quote-payments/installments/${i.id}/visibility`,{clientVisible:!i.clientVisible}),i.clientVisible?"La factura ya no se muestra en el portal cliente.":"Factura visible en el portal cliente.")}/>)}</div>
         :<Empty title="Sin cuotas generadas" text="El plan no está activo o aún no tiene cuotas en el horizonte."/>}
       </Section>
     </>}
+    {moving?<MoveDueDrawer item={moving} onClose={()=>setMoving(null)} onDone={()=>{setMoving(null);void detail.reload();onChanged?.();}}/>:null}
     {paying?<MarkPaidDrawer item={paying} currency={plan?.currency??"CLP"} onClose={()=>setPaying(null)} onDone={()=>{setPaying(null);action.setNotice("Pago registrado con su factura SII.");void detail.reload();onChanged?.();}}/>:null}
     <ReasonDialog open={dialog!==null} title={dialog==="plan"?"Anular plan de pagos":"Anular cuota"} description={dialog==="plan"?"Las cuotas pendientes se anulan con este motivo. Las pagadas se conservan. Un plan anulado no se reactiva.":"La cuota queda anulada con motivo (no se elimina)."} confirm="Anular"
       onCancel={()=>setDialog(null)} onConfirm={(reason)=>{const target=dialog;setDialog(null);if(target==="plan")void action.run(()=>financeApi.post(role,`/quote-payments/quotes/${quoteId}/plan/cancel`,{reason}),"Plan anulado.");else if(target)void action.run(()=>financeApi.post(role,`/quote-payments/installments/${target.installment}/cancel`,{reason}),"Cuota anulada.");}}/>
   </div>;
 }
 
-function InstallmentCell({item:i,canPay,canManage,busy,onPay,onCancel,onInvoice,onVisibility}:{item:QuotePaymentInstallment;canPay:boolean;canManage:boolean;busy:boolean;onPay:()=>void;onCancel:()=>void;onInvoice:()=>void;onVisibility:()=>void}){
+function InstallmentCell({item:i,canPay,canManage,busy,onPay,onReschedule,onCancel,onInvoice,onVisibility}:{item:QuotePaymentInstallment;canPay:boolean;canManage:boolean;busy:boolean;onPay:()=>void;onReschedule:()=>void;onCancel:()=>void;onInvoice:()=>void;onVisibility:()=>void}){
   return <article role="listitem" className={`fx-qp-cell tone-${tone(i.effectiveStatus)}`}>
     <header><small>Cuota {i.sequence}</small><strong>{periodName(i.periodKey)}</strong></header>
     <Amount value={i.amount} currency={i.currency} strong/>
@@ -75,6 +76,7 @@ function InstallmentCell({item:i,canPay,canManage,busy,onPay,onCancel,onInvoice,
     {i.status==="SCHEDULED"?<div className="fx-qp-paid">
       {i.canMarkPaid?(canPay?<button className="fx-btn small primary" disabled={busy} onClick={onPay}><Receipt size={12}/>Registrar pago</button>:<small>Pago habilitado: lo registra Finanzas o Ventas.</small>)
         :<small className="fx-qp-lock"><CalendarClock size={12}/>Se habilita el {day(i.paymentOpensOn)}</small>}
+      {canManage?<button className="fx-btn small ghost" disabled={busy} onClick={onReschedule}>Cambiar vencimiento</button>:null}
       {canManage?<button className="fx-qp-cancel" disabled={busy} onClick={onCancel}>Anular cuota</button>:null}
     </div>:null}
     {i.status==="CANCELLED"?<small className="fx-qp-reason">{i.cancelReason}</small>:null}
@@ -100,6 +102,11 @@ function PlanForm({detail:d,onSaved,onCancel}:{detail:QuotePaymentDetail;onSaved
     <Feedback error={action.error}/>
     <div className="fx-actions end">{onCancel?<button className="fx-btn ghost" onClick={onCancel}>Cancelar</button>:null}<button className="fx-btn primary" disabled={action.busy||!valid} onClick={async()=>{const next=await action.run(()=>financeApi.put<QuotePaymentDetail>(role,`/quote-payments/quotes/${d.quote.id}/plan`,{frequency:f.frequency,amount:Number(f.amount),currency:f.currency,startDate:f.startDate,paymentDay:Number(f.paymentDay),totalInstallments:monthly&&f.totalInstallments?Number(f.totalInstallments):monthly?null:1,activationDaysBefore:Number(f.activationDaysBefore),notes:f.notes||null}));if(next)onSaved(next);}}><Save size={14}/>{plan?"Guardar plan":"Crear calendario"}</button></div>
   </div>;
+}
+
+function MoveDueDrawer({item,onClose,onDone}:{item:QuotePaymentInstallment;onClose:()=>void;onDone:()=>void}){
+  const{role}=useAccess();const[due,setDue]=useState(item.dueDate),[dateValid,setDateValid]=useState(true),[reason,setReason]=useState("");const action=useAction();
+  return <Drawer open title={`Cambiar vencimiento · cuota ${item.sequence}`} subtitle={`Vencimiento actual: ${day(item.dueDate)}. Los pagos anteriores se conservan.`} onClose={()=>{if(!action.busy)onClose();}}><div className="fx-form"><Field label="Nuevo vencimiento"><div onInputCapture={(e)=>setDateValid(Boolean(parseDay((e.target as HTMLInputElement).value)))}><DateInput value={due} onChange={setDue} required/></div></Field><Field label="Motivo" span={3}><textarea rows={3} minLength={3} maxLength={500} value={reason} onChange={(e)=>setReason(e.target.value)}/></Field></div><Feedback error={action.error}/><div className="fx-actions end"><button className="fx-btn primary" disabled={action.busy||!dateValid||!due||due===item.dueDate||reason.trim().length<3} onClick={async()=>{const result=await action.run(()=>financeApi.post(role,`/quote-payments/installments/${item.id}/reschedule`,{dueDate:due,expectedDueDate:item.dueDate,reason}));if(result)onDone();}}>Guardar vencimiento</button></div></Drawer>;
 }
 
 function MarkPaidDrawer({item,currency,onClose,onDone}:{item:QuotePaymentInstallment;currency:string;onClose:()=>void;onDone:()=>void}){
