@@ -932,6 +932,7 @@ export type ClientFinanceReceivable = {
   quoteId: string | null;
   taxDocumentId: string | null;
   archivedByAdmin?: boolean;
+  paymentLinks?: Array<{ paymentId: string; amount: number }>;
   totalAmount: number;
   appliedAmount: number;
   balanceAmount: number;
@@ -999,18 +1000,16 @@ export async function getClientFinanceSummary(clientId: string): Promise<ClientF
       prisma.receivable.findMany({
         where: { clientId },
         orderBy: [{ dueAt: "asc" }, { issuedAt: "desc" }],
-        take: 300,
         include: {
           allocations: {
             where: { payment: { status: CONFIRMED_PAYMENT_STATUS } },
-            select: { amount: true },
+            select: { amount: true, paymentId: true },
           },
         },
       }),
       prisma.payment.findMany({
         where: { clientId },
         orderBy: [{ receivedAt: "desc" }, { createdAt: "desc" }],
-        take: 300,
         include: {
           allocations: { select: { amount: true } },
         },
@@ -1038,6 +1037,10 @@ export async function getClientFinanceSummary(clientId: string): Promise<ClientF
         quoteId: receivable.quoteId,
         taxDocumentId: receivable.taxDocumentId,
         archivedByAdmin: collectionArchive(receivable.metadata)?.active === true,
+        paymentLinks: receivable.allocations.map(({ paymentId, amount }) => ({
+          paymentId,
+          amount,
+        })),
         totalAmount: receivable.totalAmount,
         appliedAmount,
         balanceAmount: Math.max(0, receivable.totalAmount - appliedAmount),

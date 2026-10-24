@@ -42,6 +42,8 @@ import {
   paymentMethodLabel,
   receivableState,
   receivableCaption,
+  receivablesForQuote,
+  receivablesForPayment,
   selectClientPayments,
   selectClientQuotes,
   type ClientQuote,
@@ -188,6 +190,8 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
     [invoice, setInvoice] = useState<string | null>(null);
   const [record, setRecord] = useState<"commercial" | "accounting" | null>(null),
     [recordReceivable, setRecordReceivable] = useState("");
+  const [receivableDetailId, setReceivableDetailId] = useState<string | null>(null),
+    [dueReceivableId, setDueReceivableId] = useState<string | null>(null);
   const [recordRequested, setRecordRequested] = useState(false);
   const [receivableArchive, setReceivableArchive] = useState<ClientReceivable | null>(null),
     [restoreReceivable, setRestoreReceivable] = useState(false),
@@ -285,6 +289,11 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
         : null,
     [commercial, quotes.data],
   );
+  const selectedReceivable = receivables.find((r) => r.id === receivableDetailId);
+  const dueReceivable = receivables.find((r) => r.id === dueReceivableId);
+  const linkedQuote = allQuotes.find(
+    (q) => q.id === (selectedReceivable?.quoteViewId || selectedReceivable?.quoteId),
+  );
   const openReceivables = nextReceivables(receivables, today);
   const monthly = allQuotes.filter((q) => isLiveQuote(q) && q.billing?.frequency === "MONTHLY");
   const selectedQuote = allQuotes.find((q) => q.id === quoteId),
@@ -356,6 +365,7 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
     setQuery("");
   };
   const openRecord = (r?: ClientReceivable) => {
+    setReceivableDetailId(null);
     setRecordReceivable(r?.id || "");
     setRecord(commercial && account?.userId ? "commercial" : "accounting");
   };
@@ -636,9 +646,13 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                       <small>{r.dueAt ? formatDate(r.dueAt).slice(0, 5) : "S/F"}</small>
                     </span>
                     <div>
-                      <strong title={receivableCaption(r, allQuotes)}>
+                      <button
+                        className={s.collectionTitle}
+                        onClick={() => setReceivableDetailId(r.id)}
+                        title={receivableCaption(r, allQuotes)}
+                      >
                         {receivableCaption(r, allQuotes)}
-                      </strong>
+                      </button>
                       <span>
                         {r.dueAt ? `Vence ${formatDate(r.dueAt)}` : "Sin vencimiento definido"}
                         <Badge value={receivableState(r, today)} />
@@ -646,11 +660,9 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                     </div>
                     <div className={s.dueAmount}>
                       <strong>{money(r.balanceAmount)}</strong>
-                      {canRecord ? (
-                        <button className={s.textButton} onClick={() => openRecord(r)}>
-                          Registrar pago <ArrowRight size={13} />
-                        </button>
-                      ) : null}
+                      <button className={s.textButton} onClick={() => setReceivableDetailId(r.id)}>
+                        Gestionar cobro <ArrowRight size={13} />
+                      </button>
                       {canManage ? (
                         <button
                           className={s.removeCollection}
@@ -1033,10 +1045,10 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                     key: "d",
                     label: "Cobro",
                     render: (r) => (
-                      <div className={s.rowTitle}>
+                      <button className={s.rowTitle} onClick={() => setReceivableDetailId(r.id)}>
                         <strong>{receivableCaption(r, allQuotes)}</strong>
                         <small>Emitido {formatDate(r.issuedAt)}</small>
-                      </div>
+                      </button>
                     ),
                   },
                   {
@@ -1074,47 +1086,9 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                     align: "right",
                     render: (r) => (
                       <div className={s.rowActions}>
-                        {isOpenReceivable(r) ? (
-                          <>
-                            {canRecord ? (
-                              <button className={s.rowAction} onClick={() => openRecord(r)}>
-                                Registrar pago
-                              </button>
-                            ) : null}
-                            {canManage ? (
-                              <ReceivableDueButton
-                                clientId={clientId}
-                                item={r}
-                                onChanged={refresh}
-                              />
-                            ) : null}
-                            {canManage ? (
-                              <button
-                                className={s.dangerButton}
-                                onClick={() => {
-                                  setReceivableArchive(r);
-                                  setRestoreReceivable(false);
-                                  setStopRenewal(false);
-                                }}
-                              >
-                                <Trash2 size={12} /> Eliminar
-                              </button>
-                            ) : null}
-                          </>
-                        ) : r.archivedByAdmin && canManage ? (
-                          <button
-                            className={s.rowAction}
-                            onClick={() => {
-                              setReceivableArchive(r);
-                              setRestoreReceivable(true);
-                              setStopRenewal(false);
-                            }}
-                          >
-                            Restaurar cobro
-                          </button>
-                        ) : (
-                          <Check size={15} />
-                        )}
+                        <button className={s.rowAction} onClick={() => setReceivableDetailId(r.id)}>
+                          Gestionar <ChevronRight size={14} />
+                        </button>
                       </div>
                     ),
                   },
@@ -1237,6 +1211,178 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
         ? createPortal(
             <div className="zy-full-control">
               <Drawer
+                open={Boolean(selectedReceivable)}
+                title="Gestionar cobro"
+                subtitle={
+                  selectedReceivable ? receivableCaption(selectedReceivable, allQuotes) : ""
+                }
+                onClose={() => setReceivableDetailId(null)}
+              >
+                {selectedReceivable ? (
+                  <div className={s.detail}>
+                    <div className={s.detailStatus}>
+                      <Badge
+                        value={receivableState(selectedReceivable, today)}
+                        text={selectedReceivable.archivedByAdmin ? "Eliminado" : undefined}
+                      />
+                      <span className={s.recurringBadge}>Cuenta del cliente</span>
+                    </div>
+                    <KeyValue
+                      items={[
+                        ["Total del cobro", money(selectedReceivable.totalAmount)],
+                        ["Abonos confirmados", money(selectedReceivable.appliedAmount)],
+                        [
+                          selectedReceivable.archivedByAdmin
+                            ? "Saldo retirado del cobro"
+                            : "Saldo pendiente",
+                          money(selectedReceivable.balanceAmount),
+                        ],
+                        ["Emitido", formatDate(selectedReceivable.issuedAt)],
+                        [
+                          "Vencimiento",
+                          selectedReceivable.dueAt
+                            ? formatDate(selectedReceivable.dueAt)
+                            : "Sin vencimiento definido",
+                        ],
+                      ]}
+                    />
+                    {linkedQuote ? (
+                      <>
+                        <h4>Cotización de origen</h4>
+                        <div className={s.linkedList}>
+                          <button
+                            onClick={() => {
+                              setQuoteId(linkedQuote.id);
+                              setReceivableDetailId(null);
+                            }}
+                          >
+                            <span>
+                              <strong>{linkedQuote.quoteNumber}</strong>
+                              <small>
+                                {linkedQuote.billing?.frequency === "MONTHLY"
+                                  ? "Mensual"
+                                  : "Pago único"}{" "}
+                                · Calendario y renovación
+                              </small>
+                            </span>
+                            <ChevronRight size={16} />
+                          </button>
+                        </div>
+                      </>
+                    ) : null}
+                    <h4>Pagos aplicados a este cobro</h4>
+                    {selectedReceivable.paymentLinks?.length ? (
+                      <div className={s.linkedList}>
+                        {selectedReceivable.paymentLinks.map((link) => {
+                          const p = payments.find(
+                            (p) => p.source === "commercial" && p.id === link.paymentId,
+                          );
+                          return p ? (
+                            <button
+                              key={link.paymentId}
+                              onClick={() => {
+                                setPayment(p);
+                                setReceivableDetailId(null);
+                              }}
+                            >
+                              <span>
+                                <strong>{p.reference || "Pago recibido"}</strong>
+                                <small>
+                                  {formatDate(p.receivedAt)} · {paymentMethodLabel(p.method)}
+                                </small>
+                              </span>
+                              <span>
+                                <strong>{money(link.amount)}</strong>
+                                <small>Aplicado a este cobro</small>
+                              </span>
+                              <ChevronRight size={15} />
+                            </button>
+                          ) : (
+                            <p className={s.detailNote} key={link.paymentId}>
+                              Abono confirmado: {money(link.amount)}. Detalle del pago no
+                              disponible.
+                            </p>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className={s.detailNote}>No tiene abonos confirmados.</p>
+                    )}
+                    {isOpenReceivable(selectedReceivable) ? (
+                      <>
+                        <h4>Acciones del cobro</h4>
+                        <div className={s.detailActions}>
+                          {canRecord ? (
+                            <button
+                              className="fx-btn primary"
+                              onClick={() => openRecord(selectedReceivable)}
+                            >
+                              <Plus size={15} /> Registrar pago
+                            </button>
+                          ) : null}
+                          {canManage ? (
+                            <button
+                              className={s.secondary}
+                              onClick={() => {
+                                setDueReceivableId(selectedReceivable.id);
+                                setReceivableDetailId(null);
+                              }}
+                            >
+                              <CalendarDays size={15} /> Cambiar vencimiento
+                            </button>
+                          ) : null}
+                        </div>
+                        {canManage ? (
+                          <div className={s.dangerZone}>
+                            <div>
+                              <strong>Eliminar cobro</strong>
+                              <p>Lo retira de próximos cobros. Puedes restaurarlo después.</p>
+                            </div>
+                            <button
+                              className={s.dangerButton}
+                              onClick={() => {
+                                setReceivableArchive(selectedReceivable);
+                                setRestoreReceivable(false);
+                                setStopRenewal(false);
+                                setReceivableDetailId(null);
+                              }}
+                            >
+                              <Trash2 size={14} /> Eliminar cobro
+                            </button>
+                          </div>
+                        ) : null}
+                      </>
+                    ) : selectedReceivable.archivedByAdmin && canManage ? (
+                      <button
+                        className={s.secondary}
+                        onClick={() => {
+                          setReceivableArchive(selectedReceivable);
+                          setRestoreReceivable(true);
+                          setStopRenewal(false);
+                          setReceivableDetailId(null);
+                        }}
+                      >
+                        Restaurar cobro
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+              </Drawer>
+              {dueReceivable ? (
+                <ReceivableDueButton
+                  key={dueReceivable.id}
+                  clientId={clientId}
+                  item={{
+                    ...dueReceivable,
+                    description: receivableCaption(dueReceivable, allQuotes),
+                  }}
+                  initialOpen
+                  hideTrigger
+                  onChanged={refresh}
+                  onClosed={() => setDueReceivableId(null)}
+                />
+              ) : null}
+              <Drawer
                 open={Boolean(selectedQuote)}
                 title={selectedQuote?.quoteNumber || "Cotización"}
                 subtitle="Gestiona la propuesta, sus cobros y renovación."
@@ -1267,6 +1413,39 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                         ["Fecha", formatDate(selectedQuote.createdAt)],
                       ]}
                     />
+                    <h4>Cobros de esta cotización</h4>
+                    {receivablesForQuote(receivables, selectedQuote.id).length ? (
+                      <div className={s.linkedList}>
+                        {receivablesForQuote(receivables, selectedQuote.id).map((r) => (
+                          <button
+                            key={r.id}
+                            onClick={() => {
+                              setQuoteId(null);
+                              setReceivableDetailId(r.id);
+                            }}
+                          >
+                            <span>
+                              <strong>{receivableCaption(r, allQuotes)}</strong>
+                              <small>
+                                {r.archivedByAdmin
+                                  ? "Eliminado"
+                                  : financeStatusLabel(receivableState(r, today))}{" "}
+                                · {r.dueAt ? `Vence ${formatDate(r.dueAt)}` : "Sin vencimiento"}
+                              </small>
+                            </span>
+                            <span>
+                              <strong>{money(r.balanceAmount)}</strong>
+                              <small>Saldo del cobro</small>
+                            </span>
+                            <ChevronRight size={15} />
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className={s.detailNote}>
+                        No tiene cuentas emitidas. El calendario muestra los cobros programados.
+                      </p>
+                    )}
                     {selectedQuote.archivedAt || selectedQuote.archivePending ? (
                       <p className={s.detailNote}>
                         {selectedQuote.archivePending
@@ -1482,6 +1661,43 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                         ["Registro", "Cuenta comercial"],
                       ]}
                     />
+                    <h4>Cobros vinculados a este pago</h4>
+                    {receivablesForPayment(receivables, payment.id).length ? (
+                      <div className={s.linkedList}>
+                        {receivablesForPayment(receivables, payment.id).map((r) => (
+                          <button
+                            key={r.id}
+                            onClick={() => {
+                              setPayment(null);
+                              setReceivableDetailId(r.id);
+                            }}
+                          >
+                            <span>
+                              <strong>{receivableCaption(r, allQuotes)}</strong>
+                              <small>
+                                {r.archivedByAdmin
+                                  ? "Eliminado"
+                                  : financeStatusLabel(receivableState(r, today))}
+                              </small>
+                            </span>
+                            <strong>
+                              {money(
+                                r.paymentLinks
+                                  ?.filter((l) => l.paymentId === payment.id)
+                                  .reduce((sum, l) => sum + l.amount, 0),
+                              )}
+                            </strong>
+                            <ChevronRight size={15} />
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className={s.detailNote}>
+                        {payment.status === "VOIDED"
+                          ? "Las aplicaciones se revirtieron al anular el pago."
+                          : "Este pago no tiene aplicaciones vigentes a cobros."}
+                      </p>
+                    )}
                     {payment.voidReason ? (
                       <p className={s.detailNote}>Motivo de anulación: {payment.voidReason}</p>
                     ) : null}

@@ -7,6 +7,8 @@ import {
   nextReceivables,
   receivableState,
   receivableCaption,
+  receivablesForQuote,
+  receivablesForPayment,
   selectClientPayments,
   selectClientQuotes,
   type ClientQuote,
@@ -198,4 +200,41 @@ test("la exportación CSV escapa separadores, saltos de línea y fórmulas de Ex
   assert.ok(csv.includes('"\'=1+1";"100"'));
   assert.ok(csv.includes('"Texto; con ""comillas""\nnueva línea";"50"'));
   assert.ok(csv.includes('"\'  @SUM(A1)"'));
+});
+
+test("las relaciones usan la identidad de cotización y las aplicaciones reales de pagos", () => {
+  const rows = [
+    {
+      ...debt("mensual", null),
+      quoteId: "native-monthly",
+      quoteViewId: "monthly",
+      paymentLinks: [{ paymentId: "pay-one", amount: 40 }],
+    },
+    {
+      ...debt("unica", null),
+      quoteId: "fixed",
+      paymentLinks: [{ paymentId: "pay-two", amount: 40 }],
+    },
+    {
+      ...debt("eliminada", null, "CANCELLED"),
+      quoteId: "native-monthly",
+      quoteViewId: "monthly",
+      paymentLinks: [{ paymentId: "pay-one", amount: 20 }],
+    },
+  ];
+  assert.deepEqual(
+    receivablesForQuote(rows, "monthly").map((r) => r.id),
+    ["mensual", "eliminada"],
+  );
+  assert.deepEqual(
+    receivablesForQuote(rows, "fixed").map((r) => r.id),
+    ["unica"],
+  );
+  assert.deepEqual(receivablesForQuote(rows, "native-monthly"), []);
+  assert.deepEqual(
+    receivablesForPayment(rows, "pay-one").map((r) => r.id),
+    ["mensual", "eliminada"],
+  );
+  assert.deepEqual(receivablesForPayment(rows, "40"), []);
+  assert.deepEqual(receivablesForPayment([debt("sin-vinculo", null)], "pay-one"), []);
 });

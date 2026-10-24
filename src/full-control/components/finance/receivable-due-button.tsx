@@ -9,29 +9,37 @@ export function ReceivableDueButton({
   clientId,
   item,
   onChanged,
+  initialOpen = false,
+  hideTrigger = false,
+  onClosed,
 }: {
   clientId: string;
   item: { id: string; dueAt: string | null; description: string };
   onChanged: () => Promise<void>;
+  initialOpen?: boolean;
+  hideTrigger?: boolean;
+  onClosed?: () => void;
 }) {
-  const [open, setOpen] = useState(false),
+  const [open, setOpen] = useState(initialOpen),
     [date, setDate] = useState(item.dueAt ? paymentCivilDate(item.dueAt) || "" : ""),
     [valid, setValid] = useState(true),
     [reason, setReason] = useState("");
   const action = useAction();
   return (
     <>
-      <button
-        type="button"
-        className="fx-btn small ghost"
-        onClick={() => {
-          setReason("");
-          action.setError("");
-          setOpen(true);
-        }}
-      >
-        Cambiar vencimiento
-      </button>
+      {!hideTrigger ? (
+        <button
+          type="button"
+          className="fx-btn small ghost"
+          onClick={() => {
+            setReason("");
+            action.setError("");
+            setOpen(true);
+          }}
+        >
+          Cambiar vencimiento
+        </button>
+      ) : null}
       {open
         ? createPortal(
             <div className="zy-full-control">
@@ -40,7 +48,10 @@ export function ReceivableDueButton({
                 title="Cambiar vencimiento del cobro"
                 subtitle={item.description}
                 onClose={() => {
-                  if (!action.busy) setOpen(false);
+                  if (!action.busy) {
+                    setOpen(false);
+                    onClosed?.();
+                  }
                 }}
               >
                 <div className="fx-form">
@@ -90,6 +101,7 @@ export function ReceivableDueButton({
                     if (result) {
                       setOpen(false);
                       await onChanged();
+                      onClosed?.();
                     }
                   }}
                 >

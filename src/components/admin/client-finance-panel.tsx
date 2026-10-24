@@ -27,6 +27,7 @@ type Receivable = {
   quoteId: string | null;
   quoteViewId?: string | null;
   archivedByAdmin?: boolean;
+  paymentLinks?: Array<{ paymentId: string; amount: number }>;
   taxDocumentId: string | null;
   totalAmount: number;
   appliedAmount: number;

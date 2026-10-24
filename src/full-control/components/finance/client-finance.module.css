@@ -1074,3 +1074,60 @@ button.rowTitle:hover strong {
     padding: 13px 14px;
   }
 }
+
+.collectionTitle {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+}
+.collectionTitle:hover {
+  color: var(--fx-accent, #216947);
+  text-decoration: underline;
+}
+.linkedList {
+  display: grid;
+  gap: 8px;
+}
+.linkedList > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #dfe7e2;
+  border-radius: 10px;
+  background: #fafcfb;
+  color: #264437;
+  text-align: left;
+  cursor: pointer;
+}
+.linkedList > button:hover {
+  border-color: #9bb8a8;
+  background: #f0f6f2;
+}
+.linkedList > button > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.linkedList strong {
+  display: block;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.linkedList small {
+  display: block;
+  margin-top: 4px;
+  color: #718177;
+  font-size: 11px;
+}
+.linkedList > button > span:nth-child(2) {
+  text-align: right;
+}
+.linkedList svg {
+  flex-shrink: 0;
+}

@@ -82,6 +82,12 @@ export function receivableCaption(r: ClientReceivable, quotes: readonly ClientQu
   return `${r.description} · ${q.quoteNumber} · ${q.billing?.frequency === "MONTHLY" ? "Mensual" : "Pago único"}`;
 }
 
+export const receivablesForQuote = (rows: readonly ClientReceivable[], quoteId: string) =>
+  rows.filter((r) => (r.quoteViewId || r.quoteId) === quoteId);
+
+export const receivablesForPayment = (rows: readonly ClientReceivable[], paymentId: string) =>
+  rows.filter((r) => r.paymentLinks?.some((link) => link.paymentId === paymentId));
+
 /** Fechas civiles de Chile; un instante cercano a medianoche no pertenece necesariamente al mismo día UTC. */
 export function financeCivilDay(value: string | null | undefined) {
   if (!value) return "";
