@@ -41,6 +41,7 @@ import {
   nextReceivables,
   paymentMethodLabel,
   receivableState,
+  receivableCaption,
   selectClientPayments,
   selectClientQuotes,
   type ClientQuote,
@@ -267,6 +268,19 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
   const today = todayInChile();
   const allQuotes = quotes.data ?? [],
     receivables = commercial?.receivables ?? [];
+  const recordSummary = useMemo(
+    () =>
+      commercial
+        ? {
+            ...commercial,
+            receivables: commercial.receivables.map((r) => ({
+              ...r,
+              description: receivableCaption(r, quotes.data ?? []),
+            })),
+          }
+        : null,
+    [commercial, quotes.data],
+  );
   const openReceivables = nextReceivables(receivables, today);
   const monthly = allQuotes.filter((q) => isLiveQuote(q) && q.billing?.frequency === "MONTHLY");
   const selectedQuote = allQuotes.find((q) => q.id === quoteId),
@@ -281,7 +295,11 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
   const receivableRows = receivables
     .filter(
       (r) =>
-        matchesFinanceSearch(query, r.description, financeStatusLabel(receivableState(r, today))) &&
+        matchesFinanceSearch(
+          query,
+          receivableCaption(r, allQuotes),
+          financeStatusLabel(receivableState(r, today)),
+        ) &&
         (receivableFilter === "ALL" ||
           (receivableFilter === "OPEN"
             ? isOpenReceivable(r)
@@ -364,7 +382,7 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
         "cuentas-por-cobrar",
         ["Descripción", "Emisión", "Vencimiento", "Estado", "Moneda", "Total", "Abonado", "Saldo"],
         receivableRows.map((r) => [
-          r.description,
+          receivableCaption(r, allQuotes),
           formatDate(r.issuedAt),
           formatDate(r.dueAt),
           financeStatusLabel(receivableState(r, today)),
@@ -611,7 +629,9 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                       <small>{r.dueAt ? formatDate(r.dueAt).slice(0, 5) : "S/F"}</small>
                     </span>
                     <div>
-                      <strong>{r.description}</strong>
+                      <strong title={receivableCaption(r, allQuotes)}>
+                        {receivableCaption(r, allQuotes)}
+                      </strong>
                       <span>
                         {r.dueAt ? `Vence ${formatDate(r.dueAt)}` : "Sin vencimiento definido"}
                         <Badge value={receivableState(r, today)} />
@@ -993,7 +1013,7 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                     label: "Cobro",
                     render: (r) => (
                       <div className={s.rowTitle}>
-                        <strong>{r.description}</strong>
+                        <strong>{receivableCaption(r, allQuotes)}</strong>
                         <small>Emitido {formatDate(r.issuedAt)}</small>
                       </div>
                     ),
@@ -1338,7 +1358,7 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                       businessClientId={clientId}
                       mode="record"
                       initialReceivableId={recordReceivable}
-                      initialSummary={commercial}
+                      initialSummary={recordSummary || commercial}
                       onChanged={refresh}
                       onRecorded={() => {
                         setRecord(null);

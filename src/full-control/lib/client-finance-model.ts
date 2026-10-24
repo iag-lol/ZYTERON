@@ -76,6 +76,12 @@ export const isOpenReceivable = (r: ClientReceivable) =>
 export const isLiveQuote = (q: ClientQuote) =>
   !q.archivedAt && !q.archivePending && !["CANCELLED", "REJECTED", "EXPIRED"].includes(q.status);
 
+export function receivableCaption(r: ClientReceivable, quotes: readonly ClientQuote[]) {
+  const q = quotes.find((q) => q.id === (r.quoteViewId || r.quoteId));
+  if (!q || r.description.includes(q.quoteNumber)) return r.description;
+  return `${r.description} · ${q.quoteNumber} · ${q.billing?.frequency === "MONTHLY" ? "Mensual" : "Pago único"}`;
+}
+
 /** Fechas civiles de Chile; un instante cercano a medianoche no pertenece necesariamente al mismo día UTC. */
 export function financeCivilDay(value: string | null | undefined) {
   if (!value) return "";
