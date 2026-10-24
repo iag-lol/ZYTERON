@@ -2,7 +2,7 @@
 import { ReceivableDueButton } from "@control/components/finance/receivable-due-button";
 
 import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
-import { formatDate, formatDateTime } from "@control/lib/date-time";
+import { formatDate, formatDateTime, todayInChile } from "@control/lib/date-time";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -124,11 +124,17 @@ export function ClientFinancePanel({
   initialSummary,
   onChanged,
   businessClientId,
+  mode = "full",
+  initialReceivableId,
+  onRecorded,
 }: {
   clientId: string;
   initialSummary: SerializableClientFinanceSummary;
   onChanged?: () => Promise<void>;
   businessClientId?: string;
+  mode?: "full" | "record";
+  initialReceivableId?: string;
+  onRecorded?: () => void;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -141,10 +147,13 @@ export function ClientFinancePanel({
   const [voidingId, setVoidingId] = useState<string | null>(null);
   const [voidReason, setVoidReason] = useState("");
   const [form, setForm] = useState({
-    amount: "",
+    amount:
+      initialSummary.receivables
+        .find((r) => r.id === initialReceivableId)
+        ?.balanceAmount.toString() || "",
     method: "BANK_TRANSFER",
-    receivableId: "",
-    receivedAt: new Date().toISOString().slice(0, 10),
+    receivableId: initialReceivableId || "",
+    receivedAt: todayInChile(),
     reference: "",
     notes: "",
   });
@@ -195,7 +204,8 @@ export function ClientFinancePanel({
           notes: "",
         }));
         setPaymentKey(crypto.randomUUID());
-        router.refresh();
+        if (mode === "full") router.refresh();
+        onRecorded?.();
       } catch (error) {
         setFeedback({
           tone: "error",
@@ -286,39 +296,43 @@ export function ClientFinancePanel({
 
   return (
     <section className="space-y-5" id="finanzas">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-bold tracking-[0.18em] text-blue-600 uppercase">
-            Tesorería del cliente
-          </p>
-          <h2 className="mt-1 text-xl font-extrabold text-slate-950">
-            Cobros, abonos y conciliación
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Cada pago conserva trazabilidad y la diferencia pendiente se recalcula automáticamente.
-          </p>
-        </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
-          <CheckCircle2 className="h-3.5 w-3.5" /> Cartola normalizada
-        </span>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {financialCards.map((item) => (
-          <article
-            key={item.label}
-            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-          >
-            <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${item.tone}`}>
-              <item.icon className="h-4.5 w-4.5" />
+      {mode === "full" ? (
+        <>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold tracking-[0.18em] text-blue-600 uppercase">
+                Tesorería del cliente
+              </p>
+              <h2 className="mt-1 text-xl font-extrabold text-slate-950">
+                Cobros, abonos y conciliación
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Cada pago conserva trazabilidad y la diferencia pendiente se recalcula
+                automáticamente.
+              </p>
             </div>
-            <p className="mt-3 text-xl font-extrabold text-slate-950">{currency(item.value)}</p>
-            <p className="text-xs font-bold text-slate-700">{item.label}</p>
-            <p className="mt-0.5 text-[11px] text-slate-400">{item.helper}</p>
-          </article>
-        ))}
-      </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
+              <CheckCircle2 className="h-3.5 w-3.5" /> Cartola normalizada
+            </span>
+          </div>
 
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {financialCards.map((item) => (
+              <article
+                key={item.label}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${item.tone}`}>
+                  <item.icon className="h-4.5 w-4.5" />
+                </div>
+                <p className="mt-3 text-xl font-extrabold text-slate-950">{currency(item.value)}</p>
+                <p className="text-xs font-bold text-slate-700">{item.label}</p>
+                <p className="mt-0.5 text-[11px] text-slate-400">{item.helper}</p>
+              </article>
+            ))}
+          </div>
+        </>
+      ) : null}
       {feedback ? (
         <div
           className={`rounded-xl border px-4 py-3 text-sm font-semibold ${feedback.tone === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-rose-200 bg-rose-50 text-rose-700"}`}
@@ -327,7 +341,11 @@ export function ClientFinancePanel({
         </div>
       ) : null}
 
-      <div className="grid gap-5 2xl:grid-cols-[0.85fr_1.15fr]">
+      <div
+        className={
+          mode === "record" ? "clientPaymentRecord" : "grid gap-5 2xl:grid-cols-[0.85fr_1.15fr]"
+        }
+      >
         <form
           onSubmit={submitPayment}
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
@@ -432,172 +450,180 @@ export function ClientFinancePanel({
           </button>
         </form>
 
-        <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-extrabold text-slate-900">Cuentas por cobrar</h3>
-              <p className="mt-1 text-xs text-slate-500">Saldo por documento, cotización o hito.</p>
-            </div>
-            <CreditCard className="h-5 w-5 text-slate-300" />
-          </div>
-          <div className="mt-4 space-y-2">
-            {summary.receivables.map((item) => (
-              <div key={item.id} className="rounded-xl border border-slate-200 px-4 py-3">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-slate-900">{item.description}</p>
-                    <p className="mt-0.5 text-[11px] text-slate-400">
-                      Emitido {dateLabel(item.issuedAt)}
-                      {item.dueAt ? ` · vence ${dateLabel(item.dueAt)}` : ""}
-                    </p>
-                  </div>
-                  <span
-                    className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusTone(item.status)}`}
-                  >
-                    {RECEIVABLE_STATUS_LABELS[item.status]}
-                  </span>
-                </div>
-                {businessClientId &&
-                onChanged &&
-                item.balanceAmount > 0 &&
-                item.status !== "CANCELLED" ? (
-                  <ReceivableDueButton
-                    clientId={businessClientId}
-                    item={item}
-                    onChanged={onChanged}
-                  />
-                ) : null}
-                <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                  <div>
-                    <p className="text-slate-400">Total</p>
-                    <p className="font-bold text-slate-800">{currency(item.totalAmount)}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-400">Abonado</p>
-                    <p className="font-bold text-emerald-700">{currency(item.appliedAmount)}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-400">Pendiente</p>
-                    <p className="font-bold text-amber-700">{currency(item.balanceAmount)}</p>
-                  </div>
-                </div>
-                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className="h-full rounded-full bg-emerald-500"
-                    style={{
-                      width: `${item.totalAmount > 0 ? Math.min(100, Math.round((item.appliedAmount / item.totalAmount) * 100)) : 0}%`,
-                    }}
-                  />
-                </div>
+        {mode === "full" ? (
+          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-900">Cuentas por cobrar</h3>
+                <p className="mt-1 text-xs text-slate-500">
+                  Saldo por documento, cotización o hito.
+                </p>
               </div>
-            ))}
-            {summary.receivables.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-400">
-                Sin cuentas por cobrar registradas.
+              <CreditCard className="h-5 w-5 text-slate-300" />
+            </div>
+            <div className="mt-4 space-y-2">
+              {summary.receivables.map((item) => (
+                <div key={item.id} className="rounded-xl border border-slate-200 px-4 py-3">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-slate-900">
+                        {item.description}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-slate-400">
+                        Emitido {dateLabel(item.issuedAt)}
+                        {item.dueAt ? ` · vence ${dateLabel(item.dueAt)}` : ""}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusTone(item.status)}`}
+                    >
+                      {RECEIVABLE_STATUS_LABELS[item.status]}
+                    </span>
+                  </div>
+                  {businessClientId &&
+                  onChanged &&
+                  item.balanceAmount > 0 &&
+                  item.status !== "CANCELLED" ? (
+                    <ReceivableDueButton
+                      clientId={businessClientId}
+                      item={item}
+                      onChanged={onChanged}
+                    />
+                  ) : null}
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                    <div>
+                      <p className="text-slate-400">Total</p>
+                      <p className="font-bold text-slate-800">{currency(item.totalAmount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Abonado</p>
+                      <p className="font-bold text-emerald-700">{currency(item.appliedAmount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Pendiente</p>
+                      <p className="font-bold text-amber-700">{currency(item.balanceAmount)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-emerald-500"
+                      style={{
+                        width: `${item.totalAmount > 0 ? Math.min(100, Math.round((item.appliedAmount / item.totalAmount) * 100)) : 0}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+              {summary.receivables.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-400">
+                  Sin cuentas por cobrar registradas.
+                </div>
+              ) : null}
+            </div>
+          </article>
+        ) : null}
+      </div>
+
+      {mode === "full" ? (
+        <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <History className="h-4 w-4 text-slate-500" />
+            <h3 className="text-sm font-extrabold text-slate-900">Historial inmutable de pagos</h3>
+          </div>
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                  <th className="px-3 py-2">Fecha</th>
+                  <th className="px-3 py-2">Medio / referencia</th>
+                  <th className="px-3 py-2">Monto</th>
+                  <th className="px-3 py-2">Aplicado</th>
+                  <th className="px-3 py-2">Crédito</th>
+                  <th className="px-3 py-2">Estado</th>
+                  <th className="px-3 py-2 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {summary.payments.map((payment) => (
+                  <tr key={payment.id} className="align-top">
+                    <td className="px-3 py-3 text-xs whitespace-nowrap text-slate-500">
+                      {dateLabel(payment.receivedAt, true)}
+                    </td>
+                    <td className="px-3 py-3">
+                      <p className="font-semibold text-slate-800">
+                        {METHOD_LABELS[payment.method] || payment.method}
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        {payment.reference || payment.source}
+                      </p>
+                      {voidingId === payment.id ? (
+                        <div className="mt-2 flex min-w-64 gap-2">
+                          <input
+                            value={voidReason}
+                            onChange={(event) => setVoidReason(event.target.value)}
+                            className="h-9 min-w-0 flex-1 rounded-lg border border-rose-200 px-2 text-xs outline-none focus:ring-2 focus:ring-rose-100"
+                            placeholder="Motivo (mín. 5 caracteres)"
+                          />
+                          <button
+                            type="button"
+                            disabled={pending || voidReason.trim().length < 5}
+                            onClick={() => voidPayment(payment.id)}
+                            className="rounded-lg bg-rose-600 px-3 text-xs font-bold text-white disabled:opacity-40"
+                          >
+                            Confirmar
+                          </button>
+                        </div>
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-3 font-extrabold whitespace-nowrap text-slate-900">
+                      {currency(payment.amount)}
+                    </td>
+                    <td className="px-3 py-3 font-semibold whitespace-nowrap text-emerald-700">
+                      {currency(payment.allocatedAmount)}
+                    </td>
+                    <td className="px-3 py-3 font-semibold whitespace-nowrap text-violet-700">
+                      {currency(payment.creditAmount)}
+                    </td>
+                    <td className="px-3 py-3">
+                      <span
+                        className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusTone(payment.status)}`}
+                      >
+                        {PAYMENT_STATUS_LABELS[payment.status] || payment.status}
+                      </span>
+                      {payment.voidReason ? (
+                        <p className="mt-1 max-w-44 text-[10px] text-slate-400">
+                          {payment.voidReason}
+                        </p>
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      {payment.status === "CONFIRMED" ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVoidingId(voidingId === payment.id ? null : payment.id);
+                            setVoidReason("");
+                          }}
+                          className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700"
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" /> Anular
+                        </button>
+                      ) : (
+                        <span className="text-xs text-slate-300">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {summary.payments.length === 0 ? (
+              <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-400">
+                <ArrowDownRight className="h-4 w-4" /> Aún no hay pagos registrados.
               </div>
             ) : null}
           </div>
         </article>
-      </div>
-
-      <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex items-center gap-2">
-          <History className="h-4 w-4 text-slate-500" />
-          <h3 className="text-sm font-extrabold text-slate-900">Historial inmutable de pagos</h3>
-        </div>
-        <div className="mt-4 overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-100 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
-                <th className="px-3 py-2">Fecha</th>
-                <th className="px-3 py-2">Medio / referencia</th>
-                <th className="px-3 py-2">Monto</th>
-                <th className="px-3 py-2">Aplicado</th>
-                <th className="px-3 py-2">Crédito</th>
-                <th className="px-3 py-2">Estado</th>
-                <th className="px-3 py-2 text-right">Acción</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {summary.payments.map((payment) => (
-                <tr key={payment.id} className="align-top">
-                  <td className="px-3 py-3 text-xs whitespace-nowrap text-slate-500">
-                    {dateLabel(payment.receivedAt, true)}
-                  </td>
-                  <td className="px-3 py-3">
-                    <p className="font-semibold text-slate-800">
-                      {METHOD_LABELS[payment.method] || payment.method}
-                    </p>
-                    <p className="text-[11px] text-slate-400">
-                      {payment.reference || payment.source}
-                    </p>
-                    {voidingId === payment.id ? (
-                      <div className="mt-2 flex min-w-64 gap-2">
-                        <input
-                          value={voidReason}
-                          onChange={(event) => setVoidReason(event.target.value)}
-                          className="h-9 min-w-0 flex-1 rounded-lg border border-rose-200 px-2 text-xs outline-none focus:ring-2 focus:ring-rose-100"
-                          placeholder="Motivo (mín. 5 caracteres)"
-                        />
-                        <button
-                          type="button"
-                          disabled={pending || voidReason.trim().length < 5}
-                          onClick={() => voidPayment(payment.id)}
-                          className="rounded-lg bg-rose-600 px-3 text-xs font-bold text-white disabled:opacity-40"
-                        >
-                          Confirmar
-                        </button>
-                      </div>
-                    ) : null}
-                  </td>
-                  <td className="px-3 py-3 font-extrabold whitespace-nowrap text-slate-900">
-                    {currency(payment.amount)}
-                  </td>
-                  <td className="px-3 py-3 font-semibold whitespace-nowrap text-emerald-700">
-                    {currency(payment.allocatedAmount)}
-                  </td>
-                  <td className="px-3 py-3 font-semibold whitespace-nowrap text-violet-700">
-                    {currency(payment.creditAmount)}
-                  </td>
-                  <td className="px-3 py-3">
-                    <span
-                      className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusTone(payment.status)}`}
-                    >
-                      {PAYMENT_STATUS_LABELS[payment.status] || payment.status}
-                    </span>
-                    {payment.voidReason ? (
-                      <p className="mt-1 max-w-44 text-[10px] text-slate-400">
-                        {payment.voidReason}
-                      </p>
-                    ) : null}
-                  </td>
-                  <td className="px-3 py-3 text-right">
-                    {payment.status === "CONFIRMED" ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVoidingId(voidingId === payment.id ? null : payment.id);
-                          setVoidReason("");
-                        }}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700"
-                      >
-                        <RotateCcw className="h-3.5 w-3.5" /> Anular
-                      </button>
-                    ) : (
-                      <span className="text-xs text-slate-300">—</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {summary.payments.length === 0 ? (
-            <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-400">
-              <ArrowDownRight className="h-4 w-4" /> Aún no hay pagos registrados.
-            </div>
-          ) : null}
-        </div>
-      </article>
+      ) : null}
     </section>
   );
 }

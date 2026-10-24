@@ -149,7 +149,7 @@ export function Client360({ id, initialTab = "summary" }: { id: string; initialT
     );
 
   return (
-    <main className="client360">
+    <main className={`client360${tab === "finance" ? " client360Finance" : ""}`}>
       <Link className="clientBack" href="/clients">
         <ArrowLeft size={15} /> Volver a la cartera
       </Link>
