@@ -101,3 +101,27 @@ describe("request origin security", () => {
     );
   });
 });
+
+describe("receivable Flow routes", () => {
+  it("permits the configured public origin behind an internal HTTP proxy", () => {
+    const requestOrigin = "http://zyteron:10000",
+      allowedOrigins = [...configuredRequestOrigins({ NEXTAUTH_URL: "https://www.zyteron.cl" })];
+    assert.equal(
+      isAllowedMutationOrigin({ requestOrigin, origin: "https://www.zyteron.cl", allowedOrigins }),
+      true,
+    );
+    assert.equal(
+      isAllowedMutationOrigin({
+        requestOrigin,
+        origin: "https://attacker.invalid",
+        allowedOrigins,
+      }),
+      false,
+    );
+  });
+  it("only exempts provider callbacks from browser CSRF checks", () => {
+    assert.equal(isFlowExternalRoute("/api/portal/payments/receivables/flow/confirmation"), true);
+    assert.equal(isFlowExternalRoute("/api/portal/payments/receivables/flow/return"), true);
+    assert.equal(isFlowExternalRoute("/api/portal/payments/receivables/bill/flow"), false);
+  });
+});

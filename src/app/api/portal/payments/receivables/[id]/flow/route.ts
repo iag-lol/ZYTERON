@@ -1,3 +1,4 @@
+import { configuredRequestOrigins, isAllowedMutationOrigin } from "@/lib/security/request-origin";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
@@ -23,7 +24,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   )
     return NextResponse.json({ error: "No autenticado." }, { status: 401 });
   try {
-    if (req.headers.get("origin") !== new URL(req.url).origin)
+    if (
+      !isAllowedMutationOrigin({
+        requestOrigin: new URL(req.url).origin,
+        origin: req.headers.get("origin"),
+        referer: req.headers.get("referer"),
+        secFetchSite: req.headers.get("sec-fetch-site"),
+        allowedOrigins: [...configuredRequestOrigins(), "https://www.zyteron.cl"],
+      })
+    )
       return NextResponse.json({ error: "Origen no permitido." }, { status: 403 });
     if (!(await portalModuleEnabled(session.user.id, "invoices")))
       return NextResponse.json({ error: "Acceso no disponible." }, { status: 403 });
