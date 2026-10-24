@@ -50,8 +50,9 @@ export async function clientRecurringState(db: Prisma.TransactionClient, userId:
   const candidates: RecurringCandidate[] = native.flatMap((q) => {
     const v = enrichQuoteRecord({ ...q, createdAt: q.createdAt.toISOString() });
     const p = normalizeQuoteMetaPayment(v.meta).payment;
-    if (p?.billingType !== "SUBSCRIPTION" || p.enabled === false) return [];
+    if (!p) return [];
     const state = (v.meta as typeof v.meta & { controlState?: string }).controlState;
+    if (!recurringAssignmentVisible(q.status, state, p)) return [];
     const viewId = legacyViewId("quote", q.id),
       plan = plans.find((p) => p.quote_id === viewId);
     const life = lifecycle.find((l) => l.quote_id === q.id);
@@ -63,7 +64,7 @@ export async function clientRecurringState(db: Prisma.TransactionClient, userId:
         label: v.displayNumber,
         amount: plan?.amount || p.subscription?.amount || q.total,
         currency: "CLP",
-        approved: recurringAssignmentVisible(q.status, state),
+        approved: true,
         closed:
           q.status === "LOST" ||
           ["CANCELLED", "DECLINED", "REJECTED", "EXPIRED"].includes(state || ""),

@@ -40,7 +40,13 @@ export const recurringStateLabel = (state: string) =>
     FAILED: "Requiere revisión",
   })[state] || "Pendiente de configuración";
 
-export function recurringAssignmentVisible(status: string, controlState?: string) {
+export function recurringAssignmentVisible(
+  status: string,
+  controlState?: string,
+  payment: { billingType?: string; enabled?: boolean } = { billingType: "SUBSCRIPTION" },
+) {
+  // enabled controla el inicio de pagos online, no la existencia del acuerdo mensual.
+  if (payment.billingType !== "SUBSCRIPTION") return false;
   if (
     status === "LOST" ||
     ["CANCELLED", "DECLINED", "REJECTED", "EXPIRED"].includes(controlState || "")

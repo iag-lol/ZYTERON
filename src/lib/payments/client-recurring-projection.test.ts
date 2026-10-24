@@ -87,3 +87,21 @@ test("una pausa conserva el acuerdo y deja de proyectar nuevos cobros", () => {
   assert.equal(paused.state, "PAUSED");
   assert.deepEqual(projectMonthlyPayments(paused, 2026), []);
 });
+
+test("deshabilitar el pago online no oculta una mensualidad aprobada y no convierte pagos únicos en planes", () => {
+  assert.equal(
+    recurringAssignmentVisible("PENDING", "APPROVED", {
+      billingType: "SUBSCRIPTION",
+      enabled: false,
+    }),
+    true,
+  );
+  assert.equal(
+    recurringAssignmentVisible("PENDING", "DRAFT", { billingType: "SUBSCRIPTION", enabled: false }),
+    false,
+  );
+  assert.equal(
+    recurringAssignmentVisible("WON", "ACCEPTED", { billingType: "ONE_TIME", enabled: true }),
+    false,
+  );
+});
