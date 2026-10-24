@@ -19,6 +19,8 @@ import {
 import { useRouter } from "next/navigation";
 import type { PortalData } from "@/lib/client-experience/snapshot";
 import { billingInvoiceFromSearch, pendingBilling } from "@/lib/client-experience/pending-billing";
+import { paymentBillingDocuments } from "@/lib/payments/billing-document-policy";
+import { InvoiceFiles } from "./invoice-files";
 import type { ClientRecurring } from "@/lib/payments/client-recurring-projection";
 import { recurringStateLabel } from "@/lib/payments/client-recurring-projection";
 import { paymentCivilDate, projectMonthlyPayments } from "@/lib/payments/payment-projection";
@@ -693,6 +695,15 @@ export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props
                     <dd>{bill.due ? civil(bill.due) : "Sin vencimiento definido"}</dd>
                   </div>
                 </dl>
+                <InvoiceFiles
+                  files={(data.billingDocuments || []).filter(
+                    (file) =>
+                      file.targetType === "INVOICE" &&
+                      file.targetSource === bill.source &&
+                      file.targetId === bill.id,
+                  )}
+                  enabled={data.billingDocumentsEnabled}
+                />
                 <h4>Pagos aplicados</h4>
                 {data.payments
                   .filter((p) => p.allocations.some((a) => a.receivableId === bill.id))
@@ -770,7 +781,11 @@ export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props
                     </dd>
                   </div>
                 </dl>
-                <h4>Cobros vinculados</h4>
+                <InvoiceFiles
+                  files={paymentBillingDocuments(data.billingDocuments || [], payment)}
+                  enabled={data.billingDocumentsEnabled}
+                />
+                {payment.allocations.length > 0 && <h4>Cobros vinculados</h4>}
                 {payment.allocations.map((a) => {
                   const i = data.invoices.find((i) => i.id === a.receivableId);
                   return i ? (
@@ -798,8 +813,7 @@ export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props
                 })}
                 {!payment.allocations.length ? (
                   <p className={s.note}>
-                    El pago está confirmado en su registro de origen. No hay aplicaciones vinculadas
-                    disponibles en esta vista.
+                    Este pago está confirmado. Aún no tiene un cobro vinculado.
                   </p>
                 ) : null}
                 {payment.receipt ? (

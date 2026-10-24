@@ -70,6 +70,7 @@ import {
   useLoad,
   useQueryParams,
 } from "./fx-ui";
+import { AdminBillingDocumentFiles } from "@/components/admin/billing-document-files";
 import { InvoiceDetail, PaymentDetail, RecordPayment } from "./views-revenue";
 import { QuotePaymentPanel } from "./quote-payments";
 import { ReceivableDueButton } from "./receivable-due-button";
@@ -1245,6 +1246,7 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                         ],
                       ]}
                     />
+                    <AdminBillingDocumentFiles clientId={clientId} targetType="INVOICE" targetSource="commercial" targetId={selectedReceivable.id} canUpload={canManage} />
                     {linkedQuote ? (
                       <>
                         <h4>Cotización de origen</h4>
@@ -1660,6 +1662,7 @@ export function ClientFinancePanel({ clientId }: { clientId: string }) {
                         ["Registro", "Cuenta comercial"],
                       ]}
                     />
+                    <AdminBillingDocumentFiles clientId={clientId} targetType="PAYMENT" targetSource="commercial" targetId={payment.id} canUpload={canRecord} />
                     <h4>Cobros vinculados a este pago</h4>
                     {receivablesForPayment(receivables, payment.id).length ? (
                       <div className={s.linkedList}>

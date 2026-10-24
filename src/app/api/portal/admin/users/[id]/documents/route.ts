@@ -5,6 +5,9 @@ import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
 import { logPortalAdminAction } from "@/lib/portal/audit";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { billingTargetSchema, assertInvoicePdf } from "@/lib/payments/billing-document-policy";
+import { assertBillingTarget, linkBillingDocument } from "@/lib/payments/billing-documents";
+import { commercialAdmin } from "@/lib/full-control/commercial-api-guard";
 
 const CLIENT_FILES_BUCKET = "client-files";
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
@@ -34,6 +37,7 @@ const schema = z.object({
   quoteId: z.string().trim().optional().or(z.literal("")),
   taxDocumentId: z.string().trim().optional().or(z.literal("")),
   processId: z.string().trim().optional().or(z.literal("")),
+  billingTarget: billingTargetSchema.optional(),
 });
 
 type Context = { params: Promise<{ id: string }> };
@@ -109,6 +113,8 @@ async function ensurePrivateBucket() {
 export async function POST(req: Request, { params }: Context) {
   const auth = await requirePortalAdminApiSession();
   if ("error" in auth) return auth.error;
+  const origin = await commercialAdmin(req);
+  if (origin.error) return origin.error;
 
   let uploadedPath: string | null = null;
   try {
@@ -123,15 +129,25 @@ export async function POST(req: Request, { params }: Context) {
       file = candidate instanceof File ? candidate : null;
       raw = {
         title: formData.get("title"),
-        description: formData.get("description"),
+        description: formData.get("description") || undefined,
         category: formData.get("category"),
         fileName: file?.name || formData.get("fileName"),
         mimeType: file?.type || formData.get("mimeType"),
         fileSize: file?.size,
-        projectId: formData.get("projectId"),
-        quoteId: formData.get("quoteId"),
-        taxDocumentId: formData.get("taxDocumentId"),
-        processId: formData.get("processId"),
+        projectId: formData.get("projectId") || undefined,
+        quoteId: formData.get("quoteId") || undefined,
+        taxDocumentId: formData.get("taxDocumentId") || undefined,
+        processId: formData.get("processId") || undefined,
+        billingTarget:
+          formData.get("billingTargetType") ||
+          formData.get("billingTargetSource") ||
+          formData.get("billingTargetId")
+            ? {
+                targetType: formData.get("billingTargetType"),
+                targetSource: formData.get("billingTargetSource"),
+                targetId: formData.get("billingTargetId"),
+              }
+            : undefined,
       };
     } else {
       raw = (await req.json()) as Record<string, unknown>;
@@ -175,6 +191,12 @@ export async function POST(req: Request, { params }: Context) {
       processId: parsed.data.processId || undefined,
     };
     await assertLinksBelongToClient(clientId, links);
+    if (parsed.data.billingTarget) {
+      await assertBillingTarget(prisma, clientId, parsed.data.billingTarget);
+      if (!file)
+        return NextResponse.json({ error: "Adjunta el PDF de la factura." }, { status: 400 });
+      assertInvoicePdf(new Uint8Array(await file.arrayBuffer()), file.type);
+    }
 
     const documentId = randomUUID();
     let fileUrl = parsed.data.fileUrl || "";
@@ -194,26 +216,31 @@ export async function POST(req: Request, { params }: Context) {
     }
 
     const actorId = auth.legacy ? null : auth.session.user.id;
-    const doc = await prisma.clientDocument.create({
-      data: {
-        id: documentId,
-        userId: clientId,
-        title: parsed.data.title,
-        description: parsed.data.description || null,
-        category: parsed.data.category.toUpperCase(),
-        fileUrl,
-        storagePath,
-        fileName: parsed.data.fileName || file?.name || null,
-        mimeType: parsed.data.mimeType || file?.type || null,
-        fileSize: parsed.data.fileSize ?? file?.size,
-        uploadedById: actorId,
-        isPrivate: true,
-        projectId: links.projectId,
-        quoteId: links.quoteId,
-        taxDocumentId: links.taxDocumentId,
-        processId: links.processId,
-      },
-      select: { id: true },
+    const doc = await prisma.$transaction(async (db) => {
+      const saved = await db.clientDocument.create({
+        data: {
+          id: documentId,
+          userId: clientId,
+          title: parsed.data.title,
+          description: parsed.data.description || null,
+          category: parsed.data.category.toUpperCase(),
+          fileUrl,
+          storagePath,
+          fileName: parsed.data.fileName || file?.name || null,
+          mimeType: parsed.data.mimeType || file?.type || null,
+          fileSize: parsed.data.fileSize ?? file?.size,
+          uploadedById: actorId,
+          isPrivate: true,
+          projectId: links.projectId,
+          quoteId: links.quoteId,
+          taxDocumentId: links.taxDocumentId,
+          processId: links.processId,
+        },
+        select: { id: true },
+      });
+      if (parsed.data.billingTarget)
+        await linkBillingDocument(db, clientId, saved.id, parsed.data.billingTarget, actorId);
+      return saved;
     });
 
     await logPortalAdminAction({
@@ -227,6 +254,7 @@ export async function POST(req: Request, { params }: Context) {
         category: parsed.data.category,
         privateStorage: Boolean(storagePath),
         ...links,
+        ...(parsed.data.billingTarget ? { billingTarget: parsed.data.billingTarget } : {}),
       },
     });
 

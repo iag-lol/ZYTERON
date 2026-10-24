@@ -1,4 +1,5 @@
 import { clientRecurringState } from "@/lib/payments/client-recurring";
+import { clientBillingDocuments } from "@/lib/payments/billing-documents";
 import { legacyViewId } from "@/lib/full-control/legacy-id";
 import { dueInstant } from "@/lib/payments/monthly-calendar";
 import { isSafePortalLink } from "@/lib/portal/safe-link";
@@ -108,6 +109,8 @@ export async function connectedPortalSnapshot(userId: string) {
     if (!permissions.enabled) throw new Error("PORTAL_DISABLED");
     const publications = await scopedPublications(db);
     const commercial = await scopedCommercial(db);
+    const billingDocuments =
+      permissions.invoices && permissions.documents ? await clientBillingDocuments(db, userId) : [];
     const managedSchema = await db.$queryRaw<
       Array<{ available: boolean }>
     >`SELECT to_regclass('public.zyteron_native_project_link') IS NOT NULL AS available`;
@@ -131,6 +134,7 @@ export async function connectedPortalSnapshot(userId: string) {
       commercial,
       managedNativeProjects,
       permissions,
+      billingDocuments,
     };
   });
   const nativeQuotes = extra.quotes
@@ -243,6 +247,8 @@ export async function connectedPortalSnapshot(userId: string) {
   });
   const now = Date.now();
   return {
+    billingDocuments: extra.billingDocuments,
+    billingDocumentsEnabled: extra.permissions.invoices && extra.permissions.documents,
     user: {
       id: base.user.id,
       name: base.user.name || "Cliente",
@@ -375,6 +381,7 @@ export async function connectedPortalSnapshot(userId: string) {
     invoices: [
       ...(extra.permissions.invoices ? extra.commercial.invoices : []).map((d) => ({
         id: d.id,
+        source: "accounting" as const,
         quoteId: null,
         concept: d.description || d.invoice_number,
         currency: d.currency.trim(),
@@ -394,6 +401,7 @@ export async function connectedPortalSnapshot(userId: string) {
           balance = Math.max(0, d.totalAmount - paid);
         return {
           id: d.id,
+          source: "commercial" as const,
           quoteId:
             d.quoteId ||
             (d.metadata &&

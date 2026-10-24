@@ -391,6 +391,7 @@
   background: #173d2c55;
   display: flex;
   justify-content: flex-end;
+  align-items: flex-start;
   padding: 18px;
 }
 .root.root.root .drawer {
