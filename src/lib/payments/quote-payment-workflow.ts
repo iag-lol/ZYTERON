@@ -1,4 +1,5 @@
 import { assertQuoteCollectionsOpen } from "./collection-visibility";
+import { assertSubscriptionActivationAllowed } from "./subscription-activation-policy";
 import { onceProviderOperation } from "./provider-operation";
 import { queueReceipt } from "./payment-outbox";
 import { randomUUID } from "node:crypto";
@@ -63,6 +64,19 @@ const PRIVATE_PAYMENT_PROOF_BUCKET = "zyteron-payment-proofs-private";
 type QuoteWithPayment = ReturnType<typeof enrichQuoteRecord> & {
   meta: QuoteMeta;
 };
+
+async function assertSubscriptionCollectionsOpen(quote: QuoteWithPayment) {
+  await assertQuoteCollectionsOpen(quote.id);
+  const life = await prisma.$queryRaw<
+    Array<{ state: string }>
+  >`SELECT state FROM zyteron_recurring_lifecycle WHERE quote_id=${quote.id}`;
+  assertSubscriptionActivationAllowed({
+    quoteStatus: quote.status,
+    controlState: (quote.meta as QuoteMeta & { controlState?: string }).controlState,
+    paymentEnabled: quote.meta.payment?.enabled,
+    lifecycleState: life[0]?.state,
+  });
+}
 
 type PortalQuoteLegalAcceptance = {
   acceptTerms: true;
@@ -519,14 +533,13 @@ export async function createQuoteFlowSubscriptionStart(input: {
   if (quote.userId && quote.userId !== input.userId) {
     throw new Error("Esta cotización no pertenece a tu cuenta.");
   }
-  if (quote.meta.payment?.enabled === false) throw new Error("SUBSCRIPTION_NOT_ENABLED");
 
   const quoteEmail = String(quote.email || "").trim();
   if (!quoteEmail || quoteEmail.toLowerCase() !== input.email.toLowerCase()) {
     throw new Error("La cotización no está vinculada a tu correo activo.");
   }
 
-  await assertQuoteCollectionsOpen(quote.id);
+  await assertSubscriptionCollectionsOpen(quote);
 
   if (!quote.userId) {
     const bound = await prisma.quote.updateMany({
@@ -536,13 +549,6 @@ export async function createQuoteFlowSubscriptionStart(input: {
     if (bound.count !== 1) throw new Error("PAYMENT_CLIENT_BINDING_CONFLICT");
     quote.userId = input.userId;
   }
-  const life = await prisma.$queryRaw<
-    Array<{ state: string }>
-  >`SELECT state FROM zyteron_recurring_lifecycle WHERE quote_id=${quote.id}`;
-  if (life[0] && life[0].state !== "ACTIVE")
-    throw new Error(
-      "Esta suscripción ya tiene una cancelación. La reactivación requiere un nuevo acuerdo.",
-    );
   const payment = quote.meta.payment;
   const stage = getPayableQuoteStage(payment);
   if (!payment || payment.billingType !== "SUBSCRIPTION" || !stage) {
@@ -861,6 +867,9 @@ export async function activateQuoteFlowSubscriptionFromToken(input: {
   if (!quote.meta.payment || quote.meta.payment.billingType !== "SUBSCRIPTION" || !currentStage) {
     throw new Error("La cotización no está configurada para suscripción mensual.");
   }
+
+  // El registro de tarjeta puede terminar después de un cambio en administración.
+  await assertSubscriptionCollectionsOpen(quote);
 
   const baseUrl = resolveBaseUrl(input.req);
   if (
