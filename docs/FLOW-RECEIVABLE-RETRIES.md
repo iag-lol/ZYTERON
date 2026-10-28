@@ -13,7 +13,7 @@ El intento de Fenice revisado correspondía a un saldo de $1.368.100, creado el 
 La reserva conserva el bloqueo transaccional del documento y el índice único de intentos abiertos por cobro y cuenta de Flow. Antes de reservar se comprueban propietario, acceso mediante RLS, moneda, vigencia y saldo exigible.
 
 - Una orden pendiente con token, enlace e importe coincidente reutiliza el mismo checkout después de consultar a Flow.
-- Si el plazo local venció y Flow aún devuelve pendiente, el servidor abre mediante GET el checkout existente y vuelve a consultar el estado firmado. El contenido HTML no acredita pago ni permite liberar una orden. Esta comprobación no envía datos de tarjeta ni ejecuta un pago.
+- Si el plazo local venció y Flow aún devuelve pendiente, el servidor abre mediante GET el checkout existente y repite la consulta autenticada de estado. El contenido HTML no acredita pago ni permite liberar una orden. Esta comprobación no envía datos de tarjeta ni ejecuta un pago.
 - La comprobación del checkout admite sólo HTTPS de los hosts de Flow establecidos, un token con formato válido y sin credenciales, puertos, fragmentos ni parámetros ajenos. No sigue redirecciones y tiene un plazo máximo de cuatro segundos.
 - Sólo el rechazo o la anulación confirmados por el proveedor permiten volver a reservar dentro de la misma solicitud. Esa reserva comprueba otra vez la disponibilidad y el saldo antes de crear una orden.
 - Un pago confirmado actualiza el documento e impide otro pago del mismo saldo. El portal vuelve a solicitar los datos cuando recibe un conflicto de estado o importe.
