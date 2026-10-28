@@ -2,7 +2,9 @@ import Link from "next/link";
 import Portal from "./portal";
 import { requirePortalSession } from "@/lib/auth/portal-session";
 import { connectedPortalSnapshot } from "@/lib/client-experience/snapshot";
+import { clientMonitoringHistory } from "@/lib/portal/monitoring-history";
 import "./portal.css";
+import "./monitoring-panel.css";
 export async function FullPortalView({ section = "inicio" }: { section?: string }) {
   const session = await requirePortalSession();
   let data;
@@ -24,9 +26,13 @@ export async function FullPortalView({ section = "inicio" }: { section?: string 
       );
     throw error;
   }
+  const initialMonitoring =
+    section === "monitoreo"
+      ? await clientMonitoringHistory(session.user.id).catch(() => undefined)
+      : undefined;
   return (
     <div className="zy-full-portal">
-      <Portal data={data} initialSection={section} />
+      <Portal data={data} initialSection={section} initialMonitoring={initialMonitoring} />
     </div>
   );
 }

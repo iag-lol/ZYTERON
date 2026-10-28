@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { portalAuthOptions } from "@/lib/auth/portal-auth";
-import { connectedPortalSnapshot } from "@/lib/client-experience/snapshot";
+import { clientMonitoringHistory } from "@/lib/portal/monitoring-history";
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "private, no-store" };
 export async function GET() {
@@ -9,12 +9,17 @@ export async function GET() {
   if (!session?.user?.id)
     return NextResponse.json({ error: "No autenticado." }, { status: 401, headers });
   try {
-    const data = await connectedPortalSnapshot(session.user.id);
-    return NextResponse.json({ monitors: data.monitors }, { headers });
-  } catch {
+    const data = await clientMonitoringHistory(session.user.id);
+    return NextResponse.json({ ...data, monitors: data.sites }, { headers });
+  } catch (error) {
+    const disabled = error instanceof Error && error.message === "PORTAL_MONITORING_DISABLED";
     return NextResponse.json(
-      { error: "No se pudo consultar el monitoreo." },
-      { status: 503, headers },
+      {
+        error: disabled
+          ? "El monitoreo no está habilitado para tu cuenta."
+          : "No se pudo consultar el monitoreo.",
+      },
+      { status: disabled ? 403 : 503, headers },
     );
   }
 }

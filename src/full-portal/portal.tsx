@@ -5,6 +5,7 @@ import { PortalCommunications } from "./communications";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import MonitoringPanel from "./monitoring-panel";
+import type { ClientMonitoringHistory } from "@/lib/client-experience/monitoring-history";
 import BillingHub, { FlowCheckoutPreview, InvoicePaymentOptions } from "./billing-hub";
 import HomeBilling from "./home-billing";
 import AgendaWorkspace, { MeetingRequest } from "./agenda-workspace";
@@ -259,9 +260,11 @@ function ProjectArt({ variant = "forest" }: { variant?: string }) {
 export default function Portal({
   initialSection = "inicio",
   data,
+  initialMonitoring,
 }: {
   initialSection?: string;
   data: PortalData;
+  initialMonitoring?: ClientMonitoringHistory;
 }) {
   const { services, projects, invoices, documents, tickets, notifications, events } =
     presentation(data);
@@ -400,9 +403,7 @@ export default function Portal({
         <div className="project-body">
           <div className="project-meta">
             <span>{p.number || p.category}</span>
-            <Badge tone={p.status === "DONE" ? "green" : "neutral"}>
-              {p.phase}
-            </Badge>
+            <Badge tone={p.status === "DONE" ? "green" : "neutral"}>{p.phase}</Badge>
           </div>
           <button className="title-link" onClick={() => setModal({ kind: "project", id: p.id })}>
             <h3>{p.short}</h3>
@@ -1409,7 +1410,9 @@ export default function Portal({
                   </div>
                 </section>
               )}
-              {section === "monitoreo" && <MonitoringPanel initial={data.monitors} />}
+              {section === "monitoreo" && (
+                <MonitoringPanel initial={data.monitors} initialHistory={initialMonitoring} />
+              )}
               {section === "informes" && (
                 <>
                   <div className="report-feature">

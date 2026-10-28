@@ -70,7 +70,7 @@ export async function scopedPublications(db: Prisma.TransactionClient) {
         ssl_status: string;
         ssl_expires_at: Date | null;
       }>
-    >`SELECT m.id,e.name,e.url,m.status,m.last_checked_at,m.last_latency_ms,m.ssl_status,m.ssl_expires_at FROM monitors m JOIN project_endpoints e ON e.id=m.endpoint_id ORDER BY e.name LIMIT 100`,
+    >`SELECT m.id,e.name,e.url,m.status,m.last_checked_at,m.last_latency_ms,m.ssl_status,m.ssl_expires_at FROM monitors m JOIN project_endpoints e ON e.id=m.endpoint_id WHERE m.enabled AND e.active AND e.environment='PRODUCTION' AND e.endpoint_type IN ('WEB','CLIENT_PORTAL') ORDER BY e.name LIMIT 100`,
     db.$queryRaw<
       Array<{
         id: string;
