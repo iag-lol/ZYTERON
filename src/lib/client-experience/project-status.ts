@@ -1,3 +1,5 @@
+import { projectLabels } from "@/lib/operations/project-guide";
+
 /** Normalize existing website labels without treating unknown/planned work as in progress. */
 export function projectStatus(value: string | null | undefined) {
   const key = (value || "")
@@ -12,4 +14,16 @@ export function projectStatus(value: string | null | undefined) {
   if (["PLANNED", "PLANIFICADO"].includes(key)) return "PLANNED";
   if (["CANCELLED", "CANCELED", "CANCELADO"].includes(key)) return "CANCELLED";
   return value || "PENDING";
+}
+
+export function projectStatusLabel(value: string | null | undefined) {
+  const status = projectStatus(value);
+  const labels: Record<string, string> = {
+    ...projectLabels,
+    DONE: "Entregado",
+    IN_PROGRESS: "En curso",
+    PLANNED: "Planificado",
+    PENDING: "Pendiente de planificación",
+  };
+  return labels[status] || "Estado por confirmar";
 }

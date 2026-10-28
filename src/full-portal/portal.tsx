@@ -401,7 +401,7 @@ export default function Portal({
           <div className="project-meta">
             <span>{p.number || p.category}</span>
             <Badge tone={p.status === "DONE" ? "green" : "neutral"}>
-              {p.status === "DONE" ? "Entregado" : "En curso"}
+              {p.phase}
             </Badge>
           </div>
           <button className="title-link" onClick={() => setModal({ kind: "project", id: p.id })}>
@@ -2001,6 +2001,7 @@ export default function Portal({
                   <ProjectArt variant={p.color} />
                   <p className="eyebrow">{p.number || p.category}</p>
                   <h3>{p.short}</h3>
+                  <Badge tone={p.status === "DONE" ? "green" : "neutral"}>{p.phase}</Badge>
                   <p>{p.description}</p>
                   {p.scope && (
                     <>
@@ -2015,7 +2016,7 @@ export default function Portal({
                   <div className="progress-track">
                     <span
                       style={{
-                        width: `${p.progress === null ? "Sin avance publicado" : `${p.progress ?? 0}%`}`,
+                        width: `${p.progress ?? 0}%`,
                       }}
                     />
                   </div>

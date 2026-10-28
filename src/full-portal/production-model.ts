@@ -1,6 +1,7 @@
 import type { PortalData } from "@/lib/client-experience/snapshot";
 import { agendaEventDate, agendaEventTime } from "@/lib/client-experience/month-calendar";
 import { invoicePaymentOption } from "@/lib/payments/invoice-payment-option";
+import { projectStatus, projectStatusLabel } from "@/lib/client-experience/project-status";
 export const money = (amount: number, currency = "CLP") =>
   new Intl.NumberFormat("es-CL", {
     style: "currency",
@@ -52,8 +53,8 @@ export function presentation(data: PortalData) {
       category: p.category || "PROYECTO",
       description: p.description,
       progress: p.progress,
-      status: p.status,
-      phase: p.status === "DONE" ? "Entregado" : p.status === "IN_PROGRESS" ? "En curso" : p.status,
+      status: projectStatus(p.status),
+      phase: projectStatusLabel(p.status),
       date: civil(p.end),
       next: "Consulta los próximos pasos al equipo",
       initials: [] as string[],
