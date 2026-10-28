@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { KeyRound, LockKeyhole, Plus, ShieldCheck } from "lucide-react";
+import { CredentialDeliveryControl } from "./credential-delivery-control";
 type Access = { allowed: boolean; reason: string };
 type Row = {
   id: string;
@@ -62,10 +63,22 @@ export function ClientCredentials({ clientId }: { clientId: string }) {
     setData(b);
   }, [recipient]);
   useEffect(() => {
-    setData(null);
-    setForm(null);
-    void load().catch((e) => setError(e.message));
-  }, [load]);
+    if (!recipient) return;
+    const controller = new AbortController();
+    fetch(`/api/portal/admin/users/${recipient}/credentials`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (r) => {
+        const b = await r.json();
+        if (!r.ok) throw Error(b.error);
+        if (!controller.signal.aborted) setData(b);
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) setError(e.message);
+      });
+    return () => controller.abort();
+  }, [recipient]);
   return (
     <section className="clientSection credentialAdmin">
       <div className="clientSectionHeader">
@@ -93,7 +106,16 @@ export function ClientCredentials({ clientId }: { clientId: string }) {
       </div>
       <label>
         Cuenta destinataria
-        <select value={recipient} onChange={(e) => setRecipient(e.target.value)}>
+        <select
+          value={recipient}
+          onChange={(e) => {
+            setData(null);
+            setForm(null);
+            setError("");
+            setNotice("");
+            setRecipient(e.target.value);
+          }}
+        >
           {accounts.map((a) => (
             <option key={a.id} value={a.id}>
               {a.email}
@@ -103,10 +125,11 @@ export function ClientCredentials({ clientId }: { clientId: string }) {
       </label>
       <p className="credentialAdminNote">
         <ShieldCheck size={17} />
-        El cliente sólo puede consultar el acceso cuando el pago completo del proyecto está
-        confirmado y su cuenta no tiene saldos pendientes. La clave nunca se devuelve al
-        administrador.
+        La consulta requiere pago completo y cuenta sin saldos pendientes, salvo autorización de
+        entrega registrada por administración. La contraseña y los códigos siguen siendo
+        obligatorios. La clave nunca se devuelve al administrador.
       </p>
+      {recipient && <CredentialDeliveryControl key={recipient} userId={recipient} updated={load} />}
       {data?.credentials.map((c) => (
         <article className="credentialAdminRow" key={c.id}>
           <div>

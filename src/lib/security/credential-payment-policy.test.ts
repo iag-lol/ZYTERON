@@ -29,6 +29,39 @@ const decide = (
   canonicalPending = false,
 ) => decideCredentialPaymentAccess({ userId: "client", project: p, debts, canonicalPending });
 describe("credential commercial eligibility", () => {
+  it("allows an explicit delivery authorization only for the current owner and project", () => {
+    const authorization = { userId: "client", projectId: "project", revokedAt: null };
+    const input = { userId: "client", project, debts: [], canonicalPending: true };
+    assert.equal(
+      decideCredentialPaymentAccess({ ...input, deliveryAuthorization: authorization }).allowed,
+      true,
+    );
+    for (const invalid of [
+      { ...authorization, userId: "other" },
+      { ...authorization, projectId: "other" },
+      { ...authorization, revokedAt: new Date() },
+    ])
+      assert.equal(
+        decideCredentialPaymentAccess({ ...input, deliveryAuthorization: invalid }).allowed,
+        false,
+      );
+    assert.equal(
+      decideCredentialPaymentAccess({
+        ...input,
+        project: null,
+        deliveryAuthorization: authorization,
+      }).allowed,
+      false,
+    );
+    assert.equal(
+      decideCredentialPaymentAccess({
+        ...input,
+        project: { ...project, clientId: "other" },
+        deliveryAuthorization: authorization,
+      }).allowed,
+      false,
+    );
+  });
   it("requires a real project owned by the same client", () => {
     assert.equal(decide([debt], null).allowed, false);
     assert.equal(decide([debt], { ...project, clientId: "other" }).allowed, false);

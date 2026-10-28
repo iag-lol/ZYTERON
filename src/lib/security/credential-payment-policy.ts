@@ -21,11 +21,26 @@ export function decideCredentialPaymentAccess(input: {
   } | null;
   debts: CredentialDebt[];
   canonicalPending: boolean;
+  deliveryAuthorization?: {
+    userId: string;
+    projectId: string;
+    revokedAt: Date | null;
+  } | null;
 }): CredentialPaymentAccess {
   const deny = (reason: string) => ({ allowed: false, reason });
   const project = input.project;
   if (!project || project.clientId !== input.userId)
     return deny("Acceso pendiente de vinculación y revisión del proyecto.");
+  const authorization = input.deliveryAuthorization;
+  if (
+    authorization?.userId === input.userId &&
+    authorization.projectId === project.id &&
+    authorization.revokedAt === null
+  )
+    return {
+      allowed: true,
+      reason: "Entrega de accesos autorizada por Zyteron. Requiere verificación de identidad.",
+    };
   const balance = (d: CredentialDebt) =>
     Math.max(0, d.totalAmount - d.allocations.reduce((n, a) => n + a.amount, 0));
   if (
