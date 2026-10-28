@@ -15,11 +15,36 @@ function monthlyForecasts(plan: PortalData["recurring"][number], year: number, a
         amount: entry?.amount ?? row.amount,
         date: (entry?.date || row.date) as string | null,
         period: (entry?.date || row.date).slice(0, 7),
+        cycle: row.date.slice(0, 7),
         currency: plan.currency,
       },
     ];
   });
-  if (dated.length || !["ACTIVE", "ASSIGNED", "PENDING"].includes(plan.state)) return dated;
+  if (
+    ["ACTIVE", "ASSIGNED", "PENDING"].includes(plan.state) &&
+    Number.isFinite(plan.amount) &&
+    plan.amount > 0 &&
+    Number.isInteger(year) &&
+    year >= 2020 &&
+    year <= 2100
+  ) {
+    for (const entry of plan.calendarEntries || []) {
+      const date = entry.date && paymentCivilDate(entry.date);
+      if (date?.startsWith(`${year}-`) && !entry.period.startsWith(`${year}-`))
+        dated.push({
+          quoteId: plan.quoteId,
+          label: plan.label,
+          amount: entry.amount,
+          date,
+          period: date.slice(0, 7),
+          cycle: entry.period,
+          currency: plan.currency,
+        });
+    }
+  }
+  const selectedYear = dated.filter((row) => row.date?.startsWith(`${year}-`));
+  if (selectedYear.length || !["ACTIVE", "ASSIGNED", "PENDING"].includes(plan.state))
+    return selectedYear;
   const reference = paymentCivilDate(asOf);
   if (
     !reference ||
@@ -42,6 +67,7 @@ function monthlyForecasts(plan: PortalData["recurring"][number], year: number, a
       currency: plan.currency,
       date: null,
       period,
+      cycle: period,
     };
   }).filter((row) => row.period >= reference.slice(0, 7));
 }
@@ -91,7 +117,7 @@ export function billingCalendar(
       )
       .map((p) => ({
         ...p,
-        id: `forecast:${p.quoteId}:${p.period}`,
+        id: `forecast:${p.quoteId}:${p.cycle}`,
         kind: "forecast" as const,
         invoiceId: null as string | null,
         paymentId: null,

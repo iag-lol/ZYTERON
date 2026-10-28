@@ -61,3 +61,33 @@ test("February does not move the original billing day and finance installment ex
   );
   assert.equal(rows.find((r) => r.period === "2027-04")?.date, "2027-04-30");
 });
+
+test("an installment moved to another year appears once in its actual due month", () => {
+  const recurring = financeRecurringProjection({
+    ...plan,
+    start_date: "2026-12-01",
+    total_installments: 1,
+    installments: [{ sequence: 1, due: "2027-01-05", amount: 133242, status: "SCHEDULED" }],
+  });
+  const data = {
+    asOf: "2026-10-28",
+    recurring: [recurring],
+    invoices: [],
+    payments: [],
+    quotes: [],
+  };
+  assert.equal(billingCalendar(data, 2026).length, 0);
+  const rows = billingCalendar(data, 2027);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].date, "2027-01-05");
+  const indefinite = financeRecurringProjection({
+    ...plan,
+    start_date: "2026-12-01",
+    installments: [{ sequence: 1, due: "2027-01-05", amount: 133242, status: "SCHEDULED" }],
+  });
+  const january = billingCalendar({ ...data, recurring: [indefinite] }, 2027).filter(
+    (r) => r.period === "2027-01",
+  );
+  assert.equal(january.length, 2);
+  assert.equal(new Set(january.map((r) => r.id)).size, 2);
+});
