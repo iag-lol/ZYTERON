@@ -16,7 +16,7 @@ import {
 } from "./flow";
 import { digest, openToken, sealToken, parseObservation } from "./pilot-protocol";
 import { verifyPaymentObservation } from "./verified-payment";
-import { resolveReceivableCheckout } from "./receivable-checkout";
+import { resolveReceivableCheckout, refreshExpiredReceivableCheckout } from "./receivable-checkout";
 type Intent = {
   id: string;
   user_id: string;
@@ -79,8 +79,17 @@ export async function createReceivableCheckout(input: {
       }),
     checkout,
     reconcile: async (r) => {
-      if (r.token_cipher)
-        return (await reconcileReceivableToken(openToken(r.token_cipher, r.id, key()))).state;
+      if (r.token_cipher) {
+        const token = openToken(r.token_cipher, r.id, key()),
+          reconcile = async () => (await reconcileReceivableToken(token)).state;
+        const state = await reconcile();
+        return refreshExpiredReceivableCheckout({
+          state,
+          expiresAt: r.expires_at,
+          checkoutUrl: checkout(r),
+          reconcile,
+        });
+      }
       if (r.account_hash !== account) throw new Error("PAYMENT_ACCOUNT_MISMATCH");
       return (
         await applyReceivableStatus(r, await getReceivablePaymentByCommerce(r.commerce_order))

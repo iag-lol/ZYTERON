@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { resolveReceivableCheckout } from "./receivable-checkout";
+import { resolveReceivableCheckout, refreshExpiredReceivableCheckout } from "./receivable-checkout";
 import { PaymentTargetError } from "./invoice-payment-option";
 
 type Intent = {
@@ -19,6 +19,102 @@ const old: Intent = {
   checkout_url: "https://www.flow.cl/existing",
   expires_at: new Date("2020-01-01"),
 };
+test("an expired pending checkout is opened without submitting a payment and then verified again", async () => {
+  let probes = 0,
+    reconciliations = 0;
+  const state = await refreshExpiredReceivableCheckout({
+    state: 1,
+    expiresAt: old.expires_at,
+    checkoutUrl: "https://www.flow.cl/app/web/pay.php?token=valid_provider_token",
+    reconcile: async () => {
+      reconciliations++;
+      return 4;
+    },
+    probe: async (url, init) => {
+      probes++;
+      assert.equal(new URL(String(url)).hostname, "www.flow.cl");
+      assert.equal(init?.method, "GET");
+      assert.equal(init?.redirect, "error");
+      assert.equal(init?.body, undefined);
+      return new Response("Checkout expired");
+    },
+  });
+  assert.equal(state, 4);
+  assert.equal(probes, 1);
+  assert.equal(reconciliations, 1);
+});
+test("checkout content or a failed probe cannot replace the signed provider status", async () => {
+  for (const probe of [
+    async () => new Response("Paid! Cancelled! Expired!"),
+    async () => {
+      throw Error("NETWORK");
+    },
+  ]) {
+    assert.equal(
+      await refreshExpiredReceivableCheckout({
+        state: 1,
+        expiresAt: old.expires_at,
+        checkoutUrl: "https://www.flow.cl/app/web/pay.php?token=valid_provider_token",
+        reconcile: async () => 1,
+        probe,
+      }),
+      1,
+    );
+  }
+  await assert.rejects(
+    refreshExpiredReceivableCheckout({
+      state: 1,
+      expiresAt: old.expires_at,
+      checkoutUrl: "https://www.flow.cl/app/web/pay.php?token=valid_provider_token",
+      reconcile: async () => {
+        throw Error("PROVIDER_UNAVAILABLE");
+      },
+      probe: async () => new Response("Expired"),
+    }),
+    /PROVIDER_UNAVAILABLE/,
+  );
+});
+test("current and terminal orders do not open the checkout or reconcile twice", async () => {
+  for (const state of [1, 2, 3, 4]) {
+    const result = await refreshExpiredReceivableCheckout({
+      state,
+      expiresAt: state === 1 ? new Date("2099-01-01") : old.expires_at,
+      checkoutUrl: "https://www.flow.cl/app/web/pay.php?token=valid_provider_token",
+      reconcile: async () => {
+        assert.fail("unneeded reconciliation");
+      },
+      probe: async () => {
+        assert.fail("unneeded checkout probe");
+      },
+    });
+    assert.equal(result, state);
+  }
+});
+test("checkout refresh rejects foreign hosts, credentials, ports and injected parameters", async () => {
+  for (const checkoutUrl of [
+    "http://www.flow.cl/app/web/pay.php?token=valid_provider_token",
+    "https://www.flow.cl.evil.example/?token=valid_provider_token",
+    "https://user@www.flow.cl/?token=valid_provider_token",
+    "https://www.flow.cl:8443/?token=valid_provider_token",
+    "https://www.flow.cl/?token=valid_provider_token&next=evil",
+    "https://www.flow.cl/?token=short",
+    "https://www.flow.cl/?token=valid_provider_token#test",
+  ])
+    await assert.rejects(
+      refreshExpiredReceivableCheckout({
+        state: 1,
+        expiresAt: old.expires_at,
+        checkoutUrl,
+        reconcile: async () => {
+          assert.fail("invalid origin must not be queried");
+        },
+        probe: async () => {
+          assert.fail("invalid origin must not be queried");
+        },
+      }),
+      /PAYMENT_DESTINATION_INVALID/,
+    );
+});
 function scenario(state: number, intent = old) {
   let reconciled = false,
     creates = 0,
