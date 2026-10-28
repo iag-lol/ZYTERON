@@ -16,7 +16,7 @@ Los cuatro proyectos aparecen en el portal con avance 100%. Sitio web, SEO y dis
 | Fleet Control GPS: servidor, hosting, base de datos y ampliación | $280.514 | Factura N.º 15 del 20-10-2026 |
 | Total mensual | $413.756 | Dos acuerdos independientes |
 
-La propuesta GPS de $280.514 existía como READY_TO_SEND. Se concilió como acuerdo aceptado con la mensualidad confirmada por administración, la factura N.º 15 y PAG-2026-000002. La cotización anterior de $195.134 permanece archivada. No se creó otra mensualidad ni se alteraron pagos. Las dos asignaciones se comprobaron en la sesión real del cliente. La fecha recurrente está pendiente de confirmación; no se han activado cargos automáticos ni enviado avisos.
+La propuesta GPS de $280.514 existía como READY_TO_SEND. Se concilió como acuerdo aceptado con la mensualidad confirmada por administración, la factura N.º 15 y PAG-2026-000002. La cotización anterior de $195.134 permanece archivada. No se creó otra mensualidad ni se alteraron pagos. Las dos asignaciones se comprobaron en la sesión real del cliente. El día de vencimiento confirmado para ambas mensualidades es el 18. La configuración administrativa tiene primer vencimiento previsto el 18-11-2026 y repetición mensual indefinida. No se han activado cargos automáticos ni enviado avisos. El detalle de configuración, proyección y publicación está en [Calendario mensual del portal cliente](CLIENT-MONTHLY-PAYMENT-CALENDAR.md).
 
 ## Saldo final
 
@@ -58,5 +58,4 @@ TypeScript, ESLint de los archivos modificados y 26 pruebas dirigidas pasaron. L
 
 - Conformidad de Fenice sobre la validación final del GPS.
 - Pago del saldo de $1.368.100.
-- Confirmación del día de vencimiento de ambas mensualidades. Los servicios están activos y sus importes visibles; las asignaciones recurrentes continúan pendientes de activación, sin fecha inventada ni cargos automáticos.
 - Invitaciones o delegaciones externas sujetas a sus condiciones comerciales. El control del portal no las modifica.
