@@ -10,6 +10,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { credentialPaymentStates } from "@/lib/security/credential-payment-access";
 import { projectStatus } from "./project-status";
+import { commercialPaymentsForPortal } from "./payment-representation";
 import { getClientPortalSnapshot } from "@/lib/portal/data";
 import { clientDatabase } from "@/lib/portal/scoped-db";
 import { decideSiteAccess } from "@/lib/payments/site-access-policy";
@@ -65,6 +66,7 @@ export async function connectedPortalSnapshot(userId: string) {
           select: {
             id: true,
             amount: true,
+            currency: true,
             receivedAt: true,
             provider: true,
             metadata: true,
@@ -430,7 +432,10 @@ export async function connectedPortalSnapshot(userId: string) {
         allocations: p.allocations,
         reference: p.reference,
       })),
-      ...(extra.permissions.invoices ? extra.payments : []).map((p) => ({
+      ...(extra.permissions.invoices
+        ? commercialPaymentsForPortal(extra.payments, extra.publications.payments)
+        : []
+      ).map((p) => ({
         id: p.id,
         amount: p.amount,
         date: p.receivedAt.toISOString(),
