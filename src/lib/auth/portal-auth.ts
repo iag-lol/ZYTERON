@@ -7,6 +7,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { AccountStatus, AuthProvider, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { publicRateLimit } from "@/lib/security/public-intake";
+import { recordPortalLogin } from "@/lib/notifications/portal-login-outbox";
 
 function normalizeEmail(value?: string | null) {
   return String(value || "")
@@ -114,9 +115,7 @@ async function ensureGoogleUser(params: {
     return { status: "not_verified" as const };
   }
 
-  const patch: Record<string, unknown> = {
-    lastLoginAt: now,
-  };
+  const patch: Record<string, unknown> = {};
   if (params.googleId && !existing.googleId) patch.googleId = params.googleId;
   if (!existing.name && params.name) patch.name = params.name;
   await prisma.user.update({ where: { id: existing.id }, data: patch });
@@ -209,11 +208,6 @@ export const portalAuthOptions: NextAuthOptions = {
           }
           if (!ok) return null;
 
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { lastLoginAt: new Date() },
-          });
-
           return {
             id: user.id,
             email: user.email,
@@ -288,7 +282,7 @@ export const portalAuthOptions: NextAuthOptions = {
         return "/clientes/login?error=google_auth_failed";
       }
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       const email = normalizeEmail(user?.email || token.email);
       if (!email) {
         token.role = Role.CLIENT;
@@ -326,6 +320,9 @@ export const portalAuthOptions: NextAuthOptions = {
         // Stable across JWT renewal; a new sign-in receives a distinct identity.
         if (user || !token.credentialSessionId)
           token.credentialSessionId = user ? randomUUID() : String(token.jti || randomUUID());
+        if (user) {
+          await recordPortalLogin(dbUser.id, token.credentialSessionId, account?.provider || "credentials");
+        }
         token.sub = dbUser.id;
         token.role = dbUser.role;
         token.accountStatus = dbUser.accountStatus;

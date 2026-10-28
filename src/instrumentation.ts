@@ -1,4 +1,28 @@
 export async function register() {
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    const { runPortalLoginNotifications } = await import("./lib/notifications/portal-login-outbox");
+    let busy = false;
+    let ready = false;
+    const tick = () => {
+      if (busy) return;
+      busy = true;
+      void runPortalLoginNotifications()
+        .then(() => {
+          if (!ready) {
+            console.info("PORTAL_LOGIN_NOTIFICATIONS_READY");
+            ready = true;
+          }
+        })
+        .catch(() => console.error("PORTAL_LOGIN_NOTIFICATIONS_UNAVAILABLE"))
+        .finally(() => {
+          busy = false;
+        });
+    };
+    const timer = setInterval(tick, 5000);
+    timer.unref();
+    const initial = setTimeout(tick, 2000);
+    initial.unref();
+  }
   if (process.env.NEXT_RUNTIME === "nodejs" && process.env.BILLING_WORKER_ENABLED === "true") {
     const { runReceivableFlow } = await import("./lib/payments/receivable-flow");
     let busy = false;
