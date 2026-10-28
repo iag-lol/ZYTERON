@@ -20,7 +20,7 @@ function conversations(source?: InboxSource, id?: string) {
         ? Prisma.sql`${column}::text=${id}`
         : Prisma.sql`true`;
   return Prisma.sql`
-    SELECT t.id::text, 'web' AS source, coalesce(nullif(u."contactName",''),u.name,l.name) AS name,
+    SELECT t.id::text, 'web' AS source, coalesce(nullif(trim(u.name),''),nullif(trim(u."contactName"),''),l.name) AS name,
       coalesce(u.company,q.company) AS company, coalesce(u.email,l.email) AS email,
       coalesce(u.phone,l.phone) AS phone, t.subject, 'WEB_CHAT' AS channel, 'OPEN' AS status,
       'NORMAL' AS priority, coalesce(m.body_text,'') AS preview,

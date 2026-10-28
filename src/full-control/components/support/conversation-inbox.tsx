@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Markdown from "react-markdown";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -576,7 +577,13 @@ export function ConversationInbox({ initialId }: { initialId?: string }) {
                           {message.internal ? "Nota interna · " : ""}
                           {message.sender}
                         </div>
-                        <div className={styles.body}>{message.body}</div>
+                        <div className={styles.body}>
+                          {message.actor === "AI" ? (
+                            <Markdown skipHtml>{message.body}</Markdown>
+                          ) : (
+                            message.body
+                          )}
+                        </div>
                         <footer>
                           <time dateTime={message.createdAt}>{inboxDate(message.createdAt)}</time>
                           {message.actor === "TEAM" && !message.internal && (

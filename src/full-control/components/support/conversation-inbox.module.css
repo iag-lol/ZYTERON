@@ -55,7 +55,7 @@
 .shell {
   display: grid;
   grid-template-columns: 350px minmax(0, 1fr);
-  height: calc(100dvh - 180px);
+  height: calc(100dvh - 240px);
   min-height: 530px;
   border: 1px solid #d9e4de;
   border-radius: 15px;
@@ -439,6 +439,35 @@
   font-size: 14px;
   line-height: 1.65;
   color: #284a35;
+}
+.body p {
+  margin: 0 0 9px;
+}
+.body p:last-child {
+  margin-bottom: 0;
+}
+.body ul,
+.body ol {
+  margin: 8px 0;
+  padding-left: 21px;
+  white-space: normal;
+}
+.body li {
+  margin: 3px 0;
+}
+.body a {
+  color: #456c87;
+  text-decoration: underline;
+}
+.body pre {
+  overflow: auto;
+  white-space: pre;
+  padding: 8px;
+  background: #ffffff80;
+  border-radius: 5px;
+}
+.body code {
+  font-size: 12px;
 }
 .message footer {
   display: flex;

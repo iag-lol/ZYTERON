@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requirePortalAdminApiSession } from "@/lib/auth/portal-admin-api";
 import { inboxConversation, inboxDetail, markInboxRead } from "@/lib/inbox/store";
 import { boundedJson } from "@/lib/security/public-intake";
+import { configuredRequestOrigins, isAllowedMutationOrigin } from "@/lib/security/request-origin";
 const paramsSchema = z
   .object({
     source: z.enum(["web", "ticket", "native", "request"]),
@@ -48,7 +49,15 @@ export async function GET(req: Request, ctx: Context) {
 export async function POST(req: Request, ctx: Context) {
   const auth = await requirePortalAdminApiSession();
   if (auth.error) return auth.error;
-  if (req.headers.get("origin") !== new URL(req.url).origin)
+  if (
+    !isAllowedMutationOrigin({
+      requestOrigin: new URL(req.url).origin,
+      origin: req.headers.get("origin"),
+      referer: req.headers.get("referer"),
+      secFetchSite: req.headers.get("sec-fetch-site"),
+      allowedOrigins: configuredRequestOrigins(),
+    })
+  )
     return NextResponse.json({ error: "Origen inválido." }, { status: 403 });
   const p = paramsSchema.safeParse(await ctx.params);
   if (!p.success) return NextResponse.json({ error: "Consulta inválida." }, { status: 400 });
