@@ -354,7 +354,10 @@ test("PDF se deriva del mismo DTE y conserva fecha, folio, montos y timbre firma
     fixture.record,
     "OFICINA SINTÉTICA QA",
   );
-  assert.equal((await PDFDocument.load(pdf)).getPageCount(), 1);
+  const printed = await PDFDocument.load(pdf);
+  assert.equal(printed.getPageCount(), 1);
+  assert.ok(Math.abs(printed.getPage(0).getWidth() * 2.54 / 72 - 21.5) < 0.001);
+  assert.ok(printed.getPage(0).getHeight() * 2.54 / 72 <= 33);
   if (process.env.ZYTERON_DTE_PRINT_QA_OUTPUT) {
     const output = process.env.ZYTERON_DTE_PRINT_QA_OUTPUT;
     mkdirSync(output, { recursive: true });

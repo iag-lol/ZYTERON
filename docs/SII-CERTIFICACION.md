@@ -1,6 +1,26 @@
 # Certificación SII
 
-## Revisión vigente: 28-10-2026
+## Revisión vigente: 28-10-2026, 09:26
+
+La postulación de ZYTERON SPA avanzó a **DOCUMENTOS IMPRESOS**. Los siete sets y los tres libros figuran **REVISADO CONFORME**; la simulación y los tres archivos de intercambio fueron aprobados. La autorización productiva del software propio todavía no está acreditada. El ambiente permanece `CERTIFICATION`, con `dteProductionAuthorized=false`.
+
+| Etapa | Evidencia vigente |
+| --- | --- |
+| Set y libros | Diez resultados REVISADO CONFORME. Los informes `SETMAIL0005142225`, `SETMAIL0005142226` y `SETMAIL0005142228`, recibidos el 28-10-2026 a las 08:37, confirman SOK para ventas, compras y guías. Se declararon los libros ya aceptados; no se retransmitieron. |
+| Simulación | Track ID `0263519748`, recibido el 28-10-2026 a las 08:56:13: EPR, diez facturas aceptadas, cero rechazos y cero reparos. El avance oficial indica SET DE SIMULACION REVISADO CONFORME. |
+| Intercambio | Set `5155541`: Respuesta de Intercambio OK, Recibo de Mercaderias OK y Resultado Aprobación Comercial de Documento OK en el cargador oficial. El documento destinado a otro receptor se rechazó individualmente y no recibió acuse de mercaderías. |
+| Impresión | 66 PDF individuales: 32 documentos del set y diez de simulación, con sus copias cedibles aplicables. Cada PDF contiene una página, pesa menos de 48 KB y utiliza una hoja de 21,5 × 29,7 cm. Las 66 páginas fueron renderizadas y revisadas; márgenes, dimensiones PDF417 y texto seleccionable verificados. Pendiente de carga y aprobación oficial. |
+| Producción | Pendientes la aprobación de impresos, declaración de cumplimiento y habilitación del sistema. No se activa producción ni se emiten facturas reales antes de acreditar esos estados y configurar los CAF productivos. |
+
+La simulación utilizó exclusivamente los diez folios de certificación tipo 33 del 13 al 22, solicitados con autorización expresa. Son copias de prueba de datos históricos de Fenice y no generan nuevos cobros ni alteran las facturas comerciales. El intento inicial sin acuse permanece `UNKNOWN`; tras comprobar individualmente que el SII no había recibido los diez documentos, una revisión manual transmitió los mismos bytes y folios mediante Firefox. La recepción y aceptación verificadas quedaron persistidas en Zyteron.
+
+La corrección `63f3413` valida también la firma original aislada de DTE del SII con namespace propio, conservando las comprobaciones criptográficas y de identidad. El intercambio conserva el RUT real de cada documento y clasifica separadamente los receptores incorrectos. Pasaron 61 pruebas dirigidas, build del backend y build completo. La revisión de impresión añade nombres de documentos referenciados y tipos de traslado, tamaño de papel conforme al manual y margen inferior de las copias cedibles; sus 26 pruebas pasaron.
+
+Render fue comprobado en `bac76e9b2da30da98f8eebfa9c5d495bc69a2f00`, despliegue `dep-dbgt0pgm7kps73eogqg0`, estado Live. La corrección SII está subida a GitHub; su publicación posterior debe verificarse por commit. Evidencia privada: `output/sii-completion-20261028/`, con XML, hashes, acuses y manifiestos de revisión. Los documentos y pagos comerciales permanecieron sin cambios durante la simulación.
+
+Fuentes: [avance oficial](https://maullin.sii.cl/cvc_cgi/dte/pe_avance5), [intercambio](https://www4.sii.cl/pfeInternet/), [cargador de impresos](https://www4.sii.cl/pdfdteInternet/) y [manual de muestras impresas](https://www.sii.cl/factura_electronica/factura_mercado/manual_upload.pdf).
+
+## Antecedente del 28-10-2026, 07:21
 
 La consulta oficial en Firefox confirma que ZYTERON SPA, RUT 78398774-0, figura como contribuyente autorizado para los tipos 33, 34, 52, 56 y 61 desde el 19-04-2026. El registro informa Resolución N° 99 del 21-10-2014. Este registro del contribuyente y la certificación del software propio son antecedentes distintos: la postulación de este sistema continúa en **SET DE PRUEBAS** y no acredita su habilitación productiva.
 

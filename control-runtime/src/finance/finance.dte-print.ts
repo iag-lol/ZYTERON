@@ -387,7 +387,8 @@ export async function renderPrintedDte(
   pdf.setProducer("Zyteron - representación del XML archivado");
   const regular = await pdf.embedFont(StandardFonts.Helvetica),
     bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const page = pdf.addPage([595.28, 841.89]);
+  // El manual SII exige un ancho de hoja de 21,5 cm; A4 tiene solo 21 cm.
+  const page = pdf.addPage([(21.5 / 2.54) * 72, 841.89]);
   const ink = rgb(0.08, 0.15, 0.12),
     muted = rgb(0.34, 0.4, 0.37),
     green = rgb(0.02, 0.32, 0.23),
@@ -499,7 +500,7 @@ export async function renderPrintedDte(
     );
   if (data.type === 52)
     y = paragraphs(
-      `Tipo de traslado: ${textOf(data.identity, "IndTraslado")} · Despacho: ${textOf(data.identity, "TipoDespacho")}`,
+      `Tipo de traslado: ${{ "1": "Operación constituye venta", "2": "Ventas por efectuar", "3": "Consignaciones", "4": "Entrega gratuita", "5": "Traslados internos", "6": "Otros traslados no venta", "7": "Guía de devolución", "8": "Traslado para exportación (no venta)", "9": "Venta para exportación" }[textOf(data.identity, "IndTraslado")] || textOf(data.identity, "IndTraslado")} · Despacho: ${textOf(data.identity, "TipoDespacho")}`,
       36,
       y,
       523,
@@ -567,7 +568,7 @@ export async function renderPrintedDte(
       height = Math.max(24, rows.length * 11 + 8) + lineAdjustments.length * 11;
     if (y - height < 283)
       reject(
-        "El detalle excede una hoja A4. Ajusta el documento antes de emitir; no se omiten líneas ni se genera un folio adicional.",
+        "El detalle excede una hoja de impresión. Ajusta el documento antes de emitir; no se omiten líneas ni se genera un folio adicional.",
       );
     rows.forEach((line, index) => text(line, 44, y - index * 11, 8.5));
     for (const [value, x, right] of [
@@ -626,7 +627,7 @@ export async function renderPrintedDte(
       .map((reference) =>
         [39, 41].includes(data.type)
           ? `${textOf(reference, "CodRef")} · ${textOf(reference, "RazonRef")}`
-          : `Tipo ${textOf(reference, "TpoDocRef")} · Folio ${textOf(reference, "FolioRef")} · ${presentDate(textOf(reference, "FchRef"))} · ${textOf(reference, "RazonRef")}`,
+          : `${labels[Number(textOf(reference, "TpoDocRef"))] || `Tipo ${textOf(reference, "TpoDocRef")}`} · Folio ${textOf(reference, "FolioRef")} · ${presentDate(textOf(reference, "FchRef"))} · ${textOf(reference, "RazonRef")}`,
       )
       .join("; ");
     const rows = wrap(`REFERENCIAS: ${refs}`, regular, 7.5, 523);
@@ -734,9 +735,9 @@ export async function renderPrintedDte(
   if (copy === "TRANSFERABLE") {
     page.drawRectangle({
       x: 342,
-      y: 22,
+      y: 30,
       width: 217,
-      height: 79,
+      height: 71,
       borderWidth: 0.5,
       borderColor: muted,
     });
@@ -752,7 +753,7 @@ export async function renderPrintedDte(
       5.2,
     );
     const destination = data.type === 52 ? "CEDIBLE CON SU FACTURA" : "CEDIBLE";
-    text(destination, 559 - bold.widthOfTextAtSize(destination, 8), 8, 8, true);
+    text(destination, 559 - bold.widthOfTextAtSize(destination, 8), 18, 8, true);
   }
   text(banner, 36, 32, 7, true, muted);
   return Buffer.from(await pdf.save());
