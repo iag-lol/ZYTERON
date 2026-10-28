@@ -87,7 +87,7 @@ export function MonthlyPlanControls({
       apply(d);
       setNotice(
         status === "DRAFT"
-          ? "Configuración guardada en borrador. No genera cobros ni suspensiones."
+          ? "Fecha mensual guardada. El cliente verá los próximos períodos como previsión, sin generar cobros ni suspensiones."
           : status === "PAUSED"
             ? "Renovaciones y suspensión por este calendario pausadas. Los saldos emitidos se conservan."
             : "Calendario guardado y activo. Los cobros emitidos conservan sus fechas y montos.",
@@ -124,7 +124,7 @@ export function MonthlyPlanControls({
           <p>
             {data.plan
               ? `Estado: ${data.plan.status === "ACTIVE" ? "Activo" : "Pausado"} · Próximo período sin emitir: ${formatDate(data.plan.next_due)}`
-              : "Configuración en borrador. La activación requiere propuesta aceptada y cliente vinculado."}
+              : "La fecha guardada se comparte como previsión mensual en el portal. Activar la emisión de cobros requiere propuesta aceptada y cliente vinculado."}
           </p>
           {data.eligibility.managedBy !== "MANUAL" ? (
             <p role="status">
@@ -135,9 +135,7 @@ export function MonthlyPlanControls({
           ) : null}
           <div className="collectionFields">
             <label
-              onInputCapture={(e) =>
-                setDateValid(!!parseDay((e.target as HTMLInputElement).value))
-              }
+              onInputCapture={(e) => setDateValid(!!parseDay((e.target as HTMLInputElement).value))}
             >
               {data.plan ? "Próximo vencimiento sin emitir" : "Primer vencimiento"}
               <DateInput

@@ -1,8 +1,53 @@
 import type { PortalData } from "./snapshot";
 import { paymentCivilDate, projectMonthlyPayments } from "@/lib/payments/payment-projection";
 import { pendingBilling } from "./pending-billing";
+
+function monthlyForecasts(plan: PortalData["recurring"][number], year: number, asOf: string) {
+  const projected = ["ASSIGNED", "PENDING"].includes(plan.state)
+    ? { ...plan, state: "ACTIVE" }
+    : plan;
+  const dated = projectMonthlyPayments(projected, year).flatMap((row) => {
+    const entry = plan.calendarEntries?.find((item) => item.period === row.date.slice(0, 7));
+    if (entry && !entry.date) return [];
+    return [
+      {
+        ...row,
+        amount: entry?.amount ?? row.amount,
+        date: (entry?.date || row.date) as string | null,
+        period: (entry?.date || row.date).slice(0, 7),
+        currency: plan.currency,
+      },
+    ];
+  });
+  if (dated.length || !["ACTIVE", "ASSIGNED", "PENDING"].includes(plan.state)) return dated;
+  const reference = paymentCivilDate(asOf);
+  if (
+    !reference ||
+    !Number.isInteger(year) ||
+    year < 2020 ||
+    year > 2100 ||
+    !Number.isFinite(plan.amount) ||
+    plan.amount <= 0 ||
+    (plan.currency === "CLP" && !Number.isSafeInteger(plan.amount))
+  )
+    return [];
+  // A scheduled plan outside this year must not become an undated forecast.
+  if (paymentCivilDate(plan.nextDate || plan.activatedAt || "")) return [];
+  return Array.from({ length: 12 }, (_, index) => {
+    const period = `${year}-${String(index + 1).padStart(2, "0")}`;
+    return {
+      quoteId: plan.quoteId,
+      label: plan.label,
+      amount: plan.amount,
+      currency: plan.currency,
+      date: null,
+      period,
+    };
+  }).filter((row) => row.period >= reference.slice(0, 7));
+}
+
 export function billingCalendar(
-  data: Pick<PortalData, "payments" | "invoices" | "quotes" | "recurring">,
+  data: Pick<PortalData, "payments" | "invoices" | "quotes" | "recurring" | "asOf">,
   year: number,
 ) {
   const caption = (i: PortalData["invoices"][number]) =>
@@ -12,6 +57,7 @@ export function billingCalendar(
       id: `${p.source}:${p.id}`,
       label: p.reference,
       date: paymentCivilDate(p.date),
+      period: paymentCivilDate(p.date)?.slice(0, 7) || null,
       amount: p.amount,
       currency: "CLP",
       kind: "paid" as const,
@@ -24,6 +70,7 @@ export function billingCalendar(
       id: i.id,
       label: caption(i),
       date: i.due ? paymentCivilDate(i.due) : null,
+      period: i.due ? paymentCivilDate(i.due)?.slice(0, 7) || null : null,
       amount: i.balance,
       currency: i.currency,
       kind: "pending" as const,
@@ -33,20 +80,18 @@ export function billingCalendar(
       quoteId: i.quoteId,
     })),
     ...data.recurring
-      .filter((p) => p.currency === "CLP")
-      .flatMap((p) => projectMonthlyPayments(p, year))
+      .flatMap((p) => monthlyForecasts(p, year, data.asOf))
       .filter(
         (p) =>
           !data.invoices.some(
             (i) =>
               i.quoteId === p.quoteId &&
-              paymentCivilDate(i.due || i.issued)?.slice(0, 7) === p.date.slice(0, 7),
+              paymentCivilDate(i.due || i.issued)?.slice(0, 7) === p.period,
           ),
       )
       .map((p) => ({
         ...p,
-        id: `forecast:${p.quoteId}:${p.date}`,
-        currency: "CLP",
+        id: `forecast:${p.quoteId}:${p.period}`,
         kind: "forecast" as const,
         invoiceId: null as string | null,
         paymentId: null,

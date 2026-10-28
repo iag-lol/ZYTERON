@@ -65,7 +65,12 @@ function CalendarRows({
           <div className={s.grow}>
             <strong>{r.label}</strong>
             <small>
-              {r.date ? civil(r.date) : "Sin vencimiento definido"} · {calendarCaption(r.kind)}
+              {r.date
+                ? civil(r.date)
+                : r.kind === "forecast"
+                  ? "Fecha de pago por confirmar"
+                  : "Sin vencimiento definido"}{" "}
+              · {calendarCaption(r.kind)}
             </small>
           </div>
           <strong>{money(r.amount, r.currency)}</strong>
@@ -296,7 +301,8 @@ export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props
     );
   }
   const allCalendar = billingCalendar(data, year);
-  const calendar = allCalendar.filter((r) => r.date?.startsWith(monthKey(year, month)));
+  const calendar = allCalendar.filter((r) => r.period === monthKey(year, month));
+  const undatedPlans = calendar.filter((r) => r.kind === "forecast" && !r.date);
   const dayRows = calendar.filter((r) => r.date === selectedDate);
   const undated = allCalendar.filter((r) => r.kind === "pending" && !r.date);
   const openCalendarRow = (r: ReturnType<typeof billingCalendar>[number]) => {
@@ -460,7 +466,7 @@ export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props
         <>
           <MonthCalendar
             title="Calendario de pagos"
-            description="Consulta cuánto corresponde pagar cada día y abre el cobro para revisar sus opciones."
+            description="Revisa los cobros emitidos y las mensualidades previstas, incluso antes de recibir la factura."
             year={year}
             month={month}
             today={calendarReference(data.asOf).date}
@@ -522,6 +528,23 @@ export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props
                 );
               })}
             </div>
+            {undatedPlans.length > 0 && (
+              <section
+                className={s.panel}
+                aria-label="Mensualidades del mes con fecha por confirmar"
+              >
+                <header>
+                  <div>
+                    <h3>Mensualidades previstas este mes</h3>
+                    <p>
+                      Estos importes forman parte de tu previsión mensual. Su fecha de pago está por
+                      confirmar; todavía no son cobros emitidos.
+                    </p>
+                  </div>
+                </header>
+                <CalendarRows rows={undatedPlans} onOpen={openCalendarRow} />
+              </section>
+            )}
           </MonthCalendar>
           {selectedDate && (
             <CalendarDayDetail date={selectedDate} empty={!dayRows.length}>
@@ -538,7 +561,9 @@ export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props
             {calendar.length ? (
               <CalendarRows rows={calendar} onOpen={openCalendarRow} />
             ) : (
-              <div className={s.empty}>No hay pagos ni proyecciones para este mes.</div>
+              <div className={s.empty}>
+                No hay movimientos ni mensualidades previstas para este mes.
+              </div>
             )}
           </section>
           {undated.length > 0 && (
@@ -601,16 +626,19 @@ export default function BillingWorkspace({ data, onHelp, onQuote, onPay }: Props
                     <dd>
                       {plan.managedBy === "FLOW"
                         ? "Suscripción Flow"
-                        : plan.managedBy === "MANUAL"
-                          ? "Calendario administrado"
-                          : "Mensualidad asignada"}
+                        : plan.managedBy === "FINANCE"
+                          ? "Calendario de Finanzas"
+                          : plan.managedBy === "MANUAL"
+                            ? "Calendario administrado"
+                            : "Mensualidad asignada"}
                     </dd>
                   </div>
                 </dl>
                 {plan.state === "ASSIGNED" ? (
                   <p className={s.note}>
-                    La mensualidad está asignada a tu empresa. Su calendario aún no está activo; no
-                    se programan cargos automáticos hasta completar la activación.
+                    La mensualidad está asignada a tu empresa y aparece como previsión en el
+                    calendario. Los cobros se publican por separado; la previsión no realiza cargos
+                    automáticos.
                   </p>
                 ) : null}
                 <h4>Cobros de esta mensualidad</h4>

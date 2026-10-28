@@ -10,6 +10,8 @@ export type ClientRecurring = {
   activatedAt: string | null;
   paidThrough: string | null;
   anchorDate: string | null;
+  endsAt?: string | null;
+  calendarEntries?: { period: string; date: string | null; amount: number }[];
 };
 export type RecurringCandidate = ClientRecurring & { approved: boolean; closed: boolean };
 export function clientRecurringProjection(

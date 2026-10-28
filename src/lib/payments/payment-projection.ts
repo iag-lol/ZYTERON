@@ -19,6 +19,8 @@ export type RecurringProjection = {
   state: string;
   paidThrough: string | null;
   anchorDate?: string | null;
+  currency?: string;
+  endsAt?: string | null;
 };
 export function projectMonthlyPayments(subscription: RecurringProjection, year: number) {
   if (
@@ -27,7 +29,9 @@ export function projectMonthlyPayments(subscription: RecurringProjection, year: 
     year > 2100 ||
     !["ACTIVE", "CANCEL_REQUESTED"].includes(subscription.state) ||
     subscription.amount <= 0 ||
-    !Number.isSafeInteger(subscription.amount)
+    !Number.isFinite(subscription.amount) ||
+    ((!subscription.currency || subscription.currency === "CLP") &&
+      !Number.isSafeInteger(subscription.amount))
   )
     return [];
   const raw = subscription.nextDate || subscription.activatedAt;
@@ -64,6 +68,7 @@ export function projectMonthlyPayments(subscription: RecurringProjection, year: 
       day: Math.min(anchorDay, Temporal.PlainDate.from({ year, month, day: 1 }).daysInMonth),
     });
     if (Temporal.PlainDate.compare(date, anchor) < 0) continue;
+    if (subscription.endsAt && date.toString() > subscription.endsAt) continue;
     if (
       subscription.state === "CANCEL_REQUESTED" &&
       (!paidLimit || Temporal.PlainDate.compare(date, paidLimit) > 0)

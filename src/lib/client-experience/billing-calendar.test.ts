@@ -25,6 +25,7 @@ const plan = {
 };
 function data(invoices: unknown[] = [bill], recurring: unknown[] = [plan]) {
   return {
+    asOf: "2026-10-28T12:00:00Z",
     invoices,
     recurring,
     quotes: [{ id: "quote", number: "COT-2026-00001" }],
@@ -37,7 +38,7 @@ function data(invoices: unknown[] = [bill], recurring: unknown[] = [plan]) {
         date: "2026-10-20T12:00:00Z",
       },
     ],
-  } as Pick<PortalData, "payments" | "invoices" | "quotes" | "recurring">;
+  } as Pick<PortalData, "payments" | "invoices" | "quotes" | "recurring" | "asOf">;
 }
 test("monthly calendar connects issued balances, confirmed payments and forecasts without double counting a billing month", () => {
   const rows = billingCalendar(data(), 2026);
@@ -75,4 +76,106 @@ test("settled invoices and suspended plans do not create new charges; balances r
   );
   assert.equal(rows.find((r) => r.invoiceId === "uf")?.currency, "UF");
   assert.equal(rows.find((r) => r.invoiceId === "uf")?.amount, 2.5);
+});
+
+test("both assigned monthly agreements appear next month without inventing due dates or balances", () => {
+  const assigned = { ...plan, state: "ASSIGNED", nextDate: null, activatedAt: null };
+  const input = data(
+    [],
+    [
+      { ...assigned, quoteId: "web", amount: 133242 },
+      { ...assigned, quoteId: "gps", amount: 280514 },
+    ],
+  );
+  const rows = billingCalendar(input, 2026);
+  const november = rows.filter((r) => r.period === "2026-11");
+  assert.deepEqual(
+    november.map((r) => [r.quoteId, r.amount, r.date, r.kind]),
+    [
+      ["web", 133242, null, "forecast"],
+      ["gps", 280514, null, "forecast"],
+    ],
+  );
+  assert.equal(
+    november.reduce((sum, r) => sum + r.amount, 0),
+    413756,
+  );
+  assert.equal(
+    november.some((r) => r.invoiceId || r.paymentId),
+    false,
+  );
+  assert.equal(
+    rows.some((r) => r.kind === "forecast" && r.period! < "2026-10"),
+    false,
+  );
+  assert.equal(billingCalendar(input, 2027).filter((r) => r.kind === "forecast").length, 24);
+  assert.equal(billingCalendar(input, 2025).filter((r) => r.kind === "forecast").length, 0);
+});
+
+test("issuing or settling the monthly bill replaces its undated forecast only for that month", () => {
+  for (const balance of [280514, 100000, 0]) {
+    const rows = billingCalendar(
+      data(
+        [{ ...bill, balance }],
+        [{ ...plan, state: "ASSIGNED", nextDate: null, activatedAt: null }],
+      ),
+      2026,
+    );
+    assert.equal(rows.filter((r) => r.kind === "forecast" && r.period === "2026-10").length, 0);
+    assert.equal(rows.filter((r) => r.kind === "forecast" && r.period === "2026-11").length, 1);
+  }
+});
+
+test("active plans missing a valid date stay visible, while paused and cancelled plans do not forecast", () => {
+  for (const nextDate of [null, "invalid"]) {
+    const rows = billingCalendar(data([], [{ ...plan, nextDate, activatedAt: null }]), 2026);
+    assert.equal(rows.find((r) => r.kind === "forecast" && r.period === "2026-11")?.date, null);
+  }
+  for (const state of ["PAUSED", "SUSPENDED", "CANCELLED", "CANCEL_REQUESTED", "FAILED"]) {
+    assert.equal(
+      billingCalendar(data([], [{ ...plan, state, nextDate: null }]), 2026).filter(
+        (r) => r.kind === "forecast",
+      ).length,
+      0,
+    );
+  }
+  assert.equal(
+    billingCalendar(data([], [{ ...plan, nextDate: "2027-01-31" }]), 2026).filter(
+      (r) => r.kind === "forecast",
+    ).length,
+    0,
+  );
+});
+
+test("monthly forecasts preserve currency, including fractional UF amounts", () => {
+  for (const state of ["ASSIGNED", "ACTIVE"]) {
+    const rows = billingCalendar(data([], [{ ...plan, state, currency: "UF", amount: 2.5 }]), 2026);
+    const november = rows.find((r) => r.kind === "forecast" && r.period === "2026-11");
+    assert.equal(november?.currency, "UF");
+    assert.equal(november?.amount, 2.5);
+  }
+});
+
+test("saving an administrative due date publishes an assigned monthly calendar indefinitely", () => {
+  const input = data(
+    [],
+    [
+      {
+        ...plan,
+        state: "ASSIGNED",
+        nextDate: "2026-11-18",
+        anchorDate: "2024-01-18",
+        activatedAt: null,
+      },
+    ],
+  );
+  assert.equal(
+    billingCalendar(input, 2026).find((r) => r.period === "2026-11")?.date,
+    "2026-11-18",
+  );
+  assert.equal(billingCalendar(input, 2031).filter((r) => r.kind === "forecast").length, 12);
+  assert.equal(
+    billingCalendar(input, 2031).find((r) => r.period === "2031-12")?.date,
+    "2031-12-18",
+  );
 });

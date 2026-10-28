@@ -4,6 +4,11 @@ import { enrichQuoteRecord } from "@/lib/admin/quote";
 import { legacyViewId } from "@/lib/full-control/legacy-id";
 import { normalizeQuoteMetaPayment } from "./quote-payments";
 import {
+  financeRecurringProjection,
+  type FinanceRecurringPlan,
+} from "./finance-recurring-projection";
+import { collectionAnchor } from "./collection-calendar";
+import {
   clientRecurringProjection,
   recurringAssignmentVisible,
   type RecurringCandidate,
@@ -13,7 +18,7 @@ import {
 export async function clientRecurringState(db: Prisma.TransactionClient, userId: string) {
   const user = await db.user.findUnique({ where: { id: userId }, select: { email: true } });
   if (!user) return { recurring: [], archives: [] };
-  const [native, canonical, plans, archives, lifecycle] = await Promise.all([
+  const [native, canonical, plans, archives, lifecycle, settings, finance] = await Promise.all([
     db.quote.findMany({
       where: {
         OR: [{ userId }, { userId: null, email: { equals: user.email, mode: "insensitive" } }],
@@ -46,6 +51,15 @@ export async function clientRecurringState(db: Prisma.TransactionClient, userId:
     db.$queryRaw<
       Array<{ quote_id: string; state: string; paid_through: Date | null }>
     >`SELECT quote_id,state,paid_through FROM zyteron_recurring_lifecycle WHERE client_id=${userId}`,
+    db.$queryRaw<
+      Array<{ quote_id: string; first_date: string; charge_day: number }>
+    >`SELECT quote_id,first_date::text,charge_day FROM zyteron_quote_collection_settings`,
+    db.$queryRaw<
+      FinanceRecurringPlan[]
+    >`SELECT p.quote_id,q.quote_number AS label,p.amount,p.currency,p.start_date::text,p.payment_day,p.total_installments,p.status,
+      coalesce((SELECT jsonb_agg(jsonb_build_object('sequence',i.sequence,'due',i.due_date::text,'amount',i.amount,'status',i.status) ORDER BY i.sequence)
+      FROM quote_payment_installments i WHERE i.plan_id=p.id),'[]'::jsonb) AS installments
+      FROM quote_payment_plans p JOIN quotes q ON q.id=p.quote_id WHERE p.frequency='MONTHLY'`,
   ]);
   const candidates: RecurringCandidate[] = native.flatMap((q) => {
     const v = enrichQuoteRecord({ ...q, createdAt: q.createdAt.toISOString() });
@@ -56,6 +70,7 @@ export async function clientRecurringState(db: Prisma.TransactionClient, userId:
     const viewId = legacyViewId("quote", q.id),
       plan = plans.find((p) => p.quote_id === viewId);
     const life = lifecycle.find((l) => l.quote_id === q.id);
+    const schedule = settings.find((s) => s.quote_id === viewId);
     const flow = Boolean(p.subscription?.subscriptionId);
     return [
       {
@@ -71,16 +86,28 @@ export async function clientRecurringState(db: Prisma.TransactionClient, userId:
         state:
           plan?.status || (flow ? life?.state || p.subscription?.status || "PENDING" : "ASSIGNED"),
         managedBy: plan ? "MANUAL" : flow ? "FLOW" : "ASSIGNED",
-        nextDate: plan?.next_due || (flow ? p.subscription?.nextInvoiceDate || null : null),
+        nextDate:
+          plan?.next_due ||
+          (flow ? p.subscription?.nextInvoiceDate || null : schedule?.first_date || null),
         activatedAt: plan?.created_at.toISOString() || p.subscription?.activatedAt || null,
         paidThrough: life?.paid_through?.toISOString() || p.subscription?.paidThrough || null,
-        anchorDate: plan?.anchor_date || null,
+        anchorDate: plan?.anchor_date || (schedule ? collectionAnchor(schedule.charge_day) : null),
       },
     ];
   });
   for (const q of canonical) {
     if (native.some((n) => legacyViewId("quote", n.id) === q.id)) continue;
     const plan = plans.find((p) => p.quote_id === q.id);
+    const schedule = settings.find((s) => s.quote_id === q.id);
+    const financePlan = finance.find((p) => p.quote_id === q.id);
+    if (financePlan) {
+      candidates.push({
+        ...financeRecurringProjection(financePlan),
+        approved: true,
+        closed: false,
+      });
+      continue;
+    }
     candidates.push({
       quoteId: q.id,
       quoteViewId: q.id,
@@ -91,11 +118,15 @@ export async function clientRecurringState(db: Prisma.TransactionClient, userId:
       closed: false,
       state: plan?.status || "ASSIGNED",
       managedBy: plan ? "MANUAL" : "ASSIGNED",
-      nextDate: plan?.next_due || null,
+      nextDate: plan?.next_due || schedule?.first_date || null,
       activatedAt: plan?.created_at.toISOString() || null,
       paidThrough: null,
-      anchorDate: plan?.anchor_date || null,
+      anchorDate: plan?.anchor_date || (schedule ? collectionAnchor(schedule.charge_day) : null),
     });
+  }
+  for (const plan of finance) {
+    if (!candidates.some((p) => p.quoteViewId === plan.quote_id))
+      candidates.push({ ...financeRecurringProjection(plan), approved: true, closed: false });
   }
   return { recurring: clientRecurringProjection(candidates, archives), archives };
 }
