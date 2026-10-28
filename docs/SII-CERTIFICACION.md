@@ -1,6 +1,6 @@
 # Certificación SII
 
-## Revisión vigente: 28-10-2026, 10:17
+## Revisión vigente: 28-10-2026, 10:28
 
 La postulación de ZYTERON SPA avanzó a **DOCUMENTOS IMPRESOS**. Los siete sets y los tres libros figuran **REVISADO CONFORME**; la simulación y los tres archivos de intercambio fueron aprobados. La autorización productiva del software propio todavía no está acreditada. El ambiente permanece `CERTIFICATION`, con `dteProductionAuthorized=false`.
 
@@ -16,7 +16,9 @@ La simulación utilizó exclusivamente los diez folios de certificación tipo 33
 
 Para completar los tipos exigidos en impresos, se autorizaron expresamente ocho solicitudes de un folio de certificación cada una. El SII otorgó 34/7, 43/9, 46/3, 52/10, 61/18, 110/9, 111/3 y 112/3. Los ocho CAF están resguardados e importados cifrados; se reutiliza la disponibilidad previa 56/10, sin solicitar otro folio tipo 56. No se anularon folios ni se modificaron límites del SII.
 
-El proceso adicional `88652378-e6f7-461b-8e3b-2dcab34b2ac3` está **PREPARED**, con nueve folios reservados, un sobre XML, doce PDF y la fuente cifrada. Son ejemplos de certificación basados en los documentos ficticios del set, sin referencias SET y con las notas vinculadas a los nuevos ejemplos correspondientes. Esquema oficial, diez firmas XML y nueve timbres verificados; doce páginas renderizadas, con texto seleccionable, papel de 21,5 × 29,7 cm, márgenes y PDF417 conformes. El XML y los PDF archivados se recuperaron y compararon por SHA-256. Las facturas y pagos comerciales mantienen los mismos recuentos. **Este proceso adicional no se ha transmitido al SII**; falta acreditar su recepción y aceptación antes de cargar sus impresos. Evidencia privada: `additional-simulation/prepared.json`, `additional-simulation/pdf-qa.json`, `caf-additional.json` y `printed-upload/official-revision.json` dentro de `output/sii-completion-20261028/`.
+El proceso adicional `88652378-e6f7-461b-8e3b-2dcab34b2ac3` recibió Track ID **0263526572** el 28-10-2026 a las **10:22:44**. El informe oficial `DTEMAIL0263526572`, recibido a las 10:23, confirma **nueve documentos aceptados, cero rechazos y cero reparos**. La consulta SOAP devuelve EPR y contadores de cinco tipos; el informe oficial incluye los nueve y se conserva como evidencia adicional, sin reemplazar la respuesta original. El acuse y la aceptación están persistidos en Zyteron; los nueve folios permanecen utilizados.
+
+Los ejemplos conservan los datos ficticios del set, sin referencias SET y con las notas vinculadas a sus nuevos documentos. Esquema oficial, diez firmas XML y nueve timbres verificados; doce páginas renderizadas, con texto seleccionable, papel de 21,5 × 29,7 cm, márgenes y PDF417 conformes. El XML y los PDF archivados se recuperaron y compararon por SHA-256. Las facturas y pagos comerciales mantienen los mismos recuentos. Falta cargar estas doce copias en la revisión de impresos y presentar las 60 muestras. Evidencia privada: `additional-simulation/receipt.json`, `additional-simulation/official-acceptance.json`, `additional-simulation/DTEMAIL0263526572.xml`, `additional-simulation/pdf-qa.json` y `printed-upload/official-revision.json` dentro de `output/sii-completion-20261028/`.
 
 La corrección `63f3413` valida también la firma original aislada de DTE del SII con namespace propio, conservando las comprobaciones criptográficas y de identidad. El intercambio conserva el RUT real de cada documento y clasifica separadamente los receptores incorrectos. Pasaron 61 pruebas dirigidas, build del backend y build completo. La revisión de impresión añade nombres de documentos referenciados y tipos de traslado, tamaño de papel conforme al manual y margen inferior de las copias cedibles; sus 26 pruebas pasaron.
 
