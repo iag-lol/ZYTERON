@@ -1,5 +1,36 @@
 # Certificación SII
 
+## Revisión vigente: 28-10-2026
+
+La consulta oficial en Firefox confirma que ZYTERON SPA, RUT 78398774-0, figura como contribuyente autorizado para los tipos 33, 34, 52, 56 y 61 desde el 19-04-2026. El registro informa Resolución N° 99 del 21-10-2014. Este registro del contribuyente y la certificación del software propio son antecedentes distintos: la postulación de este sistema continúa en **SET DE PRUEBAS** y no acredita su habilitación productiva.
+
+Estado consultado en el portal oficial de avance:
+
+| Antecedente | Estado |
+| --- | --- |
+| Set básico | REVISADO CONFORME |
+| Set guía de despacho | EN REVISION |
+| Set factura exenta | REVISADO CONFORME |
+| Libro de ventas | ENVIO CON ERRORES O REPAROS |
+| Libro de compras | EN REVISION |
+| Libro de guías | ENVIO CON ERRORES O REPAROS |
+| Exportación 1 y 2 | REVISADO CONFORME |
+| Caso general factura de compra | REVISADO CONFORME |
+
+Los informes oficiales recibidos el 24-10-2026 a las 10:05 confirman **LOK — Envío de Libro Aceptado - Cuadrado** y **LTC — Libro Cerrado - Información Cuadrada** para ventas `0263247834`, compras corregido `0263260286` y guías R8 `0263261218`. La consulta de cada Track ID desde Zyteron actualizó los tres registros a **ACEPTADO / LOK**. No se retransmitieron libros ni DTE. Esta aceptación técnica no sustituye la revisión de contenido del avance, que conserva los estados indicados arriba.
+
+La configuración publicada muestra `SII_DIRECT`, ambiente `CERTIFICATION`, resolución de pruebas 0 del 21-10-2026 y **producción NO AUTORIZADA**. El tipo 33 está deshabilitado para emisión y sin folios disponibles en el ambiente actual. La prueba ejecutada desde Firefox el 28-10-2026 a las **07:21** devuelve **SERVICIO CONECTADO; FIRMA Y AUTENTICACIÓN VERIFICADAS**. El certificado registrado vence el 21-10-2029. Esta prueba no emite documentos ni acredita autorización productiva.
+
+La revisión técnica completó el build del backend y 59 pruebas dirigidas de proveedor y certificación, sin fallos ni omisiones, con datos sintéticos. La primera compilación local detectó dependencias del runtime ausentes; la instalación reproducible con el lockfile permitió completar la comprobación. No se modificó código funcional ni configuración de emisión.
+
+El commit activo comprobado al revisar el panel fue `8be9b53ba809d598ffc24816e63ce5514ddaf75d`, despliegue Render `dep-dbgs1h4s728c73c8h2eg`. GitHub `main` estaba en `3e17b2ac3e31962f50065a949be59191732cac28`; no hay diferencias de los módulos de Finanzas/SII entre esas revisiones.
+
+Permanecen pendientes el cierre del avance del set y los libros, simulación, intercambio, muestras de impresión, declaración de cumplimiento y habilitación de este sistema. La producción requiere evidencia correspondiente, configuración del ambiente y de la resolución, tipos habilitados y CAF productivos. La autorización pública del contribuyente no se utiliza por sí sola para activar esos controles.
+
+Evidencia local privada: `output/sii-review-20261028/official-status.json`, los tres informes `LBRMAIL*.txt` y `backend-checks.log`. Las consultas y actualizaciones de estado no emitieron facturas, no solicitaron ni consumieron folios y no presentaron declaraciones.
+
+Fuentes: [registro oficial del contribuyente](https://palena.sii.cl/cvc_cgi/dte/ee_empresa_rut?RUT_EMP=78398774&DV_EMP=0), [avance de la postulación](https://maullin.sii.cl/cvc_cgi/dte/pe_avance5) y [etapas oficiales de certificación](https://www.sii.cl/factura_electronica/factura_mercado/proceso_certificacion.htm).
+
 ## Estado verificado al 24-10-2026
 
 La versión operativa en Render es `f56f4f5`, despliegue `dep-dbe1hshsrm7s73db8o1g`, con resultado `Live`, iniciado el 23-10-2026 a las 23:33 y duración de 2 minutos y 27 segundos, instancia `vnml5`. El commit está publicado en `main` y la rama de corrección. Conserva `CERTIFICATION`, proveedor `SII_DIRECT` y autorización productiva desactivada.
