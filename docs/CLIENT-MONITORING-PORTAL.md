@@ -39,7 +39,7 @@ La migración 20261028073000_client_monitoring_history.sql se aplicó después d
 
 La prueba transaccional en PostgreSQL comprobó lectura propia, rechazo de otro cliente, bloqueo de escritura, ocultamiento al despublicar el monitor o desactivar el endpoint y respeto del interruptor del módulo. Todos sus cambios se revirtieron.
 
-Las pruebas dirigidas cubren semanas de Chile, cambio de hora, huecos, períodos futuros, mantenciones, ponderación, estado vencido, cobertura, incidencias y fallos del sitio correcto, junto con regresiones de presentación del portal. La lectura real con el rol de Fenice devuelve ambos sitios y 14 días por sitio. El render HTML con datos reales pasó sin advertencias.
+Pasaron 11 pruebas dirigidas, TypeScript y ESLint de los archivos modificados. Las pruebas cubren semanas de Chile, cambio de hora, huecos, períodos futuros, mantenciones, ponderación, estado vencido, cobertura, incidencias y fallos del sitio correcto, junto con regresiones de presentación del portal. La lectura real con el rol de Fenice devuelve ambos sitios y 14 días por sitio. El render HTML con datos reales pasó sin advertencias. Next.js completó la compilación local en modo compile; la generación completa y la revisión del despliegue continúan pendientes en Render.
 
 ## Publicación
 
