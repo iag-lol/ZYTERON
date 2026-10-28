@@ -83,9 +83,17 @@ export function verifySiiXmlSignatures(xml: string, expectedFingerprint?: string
         const isolated = candidates[0]!.replace(/^<DTE\b[^>]*>/, opening => opening
           .replace(` xmlns="${SII_NS}"`, "")
           .replace(` xmlns:xsi="${XSI_NS}"`, ""));
-        verifier = new SignedXml({ publicCert: cert.toString(), getCertFromKeyInfo: () => null });
-        verifier.loadSignature(new XMLSerializer().serializeToString(signature));
-        if (!verifier.checkSignature(isolated)) reject("Firma electrónica o digest inválido.");
+        // El intercambio SII también firma DTE con namespace propio, sin el xsi del sobre.
+        let valid = false;
+        for (const candidate of new Set([candidates[0]!, isolated])) {
+          verifier = new SignedXml({ publicCert: cert.toString(), getCertFromKeyInfo: () => null });
+          verifier.loadSignature(new XMLSerializer().serializeToString(signature));
+          if (verifier.checkSignature(candidate)) {
+            valid = true;
+            break;
+          }
+        }
+        if (!valid) reject("Firma electrónica o digest inválido.");
       }
     } catch {
       return reject("No se pudo verificar la firma electrónica y su digest.");

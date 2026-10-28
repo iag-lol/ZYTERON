@@ -398,26 +398,28 @@ export async function certificationExchangeReceipt(
       ),
       h = child(doc, "Encabezado");
     need(
-      doc &&
-        child(dte, "Signature") &&
-        normalizeRut(textOf(h, "Receptor", "RUTRecep")) === normalizeRut(receiverRut) &&
-        normalizeRut(textOf(h, "Emisor", "RUTEmisor")) === normalizeRut(issuer),
-      "Documento sin firma o con participantes incompatibles.",
+      doc && child(dte, "Signature"),
+      "Documento sin firma.",
     );
+    const documentIssuer = textOf(h, "Emisor", "RUTEmisor"),
+      documentReceiver = textOf(h, "Receptor", "RUTRecep"),
+      state = normalizeRut(documentIssuer) !== normalizeRut(issuer) ? 2
+        : normalizeRut(documentReceiver) !== normalizeRut(receiverRut) ? 3 : 0;
     return el("RecepcionDTE", [
       el("TipoDTE", textOf(h, "IdDoc", "TipoDTE")),
       el("Folio", textOf(h, "IdDoc", "Folio")),
       el("FchEmis", textOf(h, "IdDoc", "FchEmis")),
-      el("RUTEmisor", formatRut(issuer)),
-      el("RUTRecep", formatRut(receiverRut)),
+      el("RUTEmisor", formatRut(documentIssuer)),
+      el("RUTRecep", formatRut(documentReceiver)),
       el(
         "MntTotal",
         Number(textOf(h, "IdDoc", "TipoDTE")) >= 110
           ? textOf(h, "OtraMoneda", "MntTotOtrMnda")
           : textOf(h, "Totales", "MntTotal"),
       ),
-      el("EstadoRecepDTE", 0),
-      el("RecepDTEGlosa", "DTE Recibido OK"),
+      el("EstadoRecepDTE", state),
+      el("RecepDTEGlosa", state === 2 ? "DTE No Recibido - Error en RUT Emisor"
+        : state === 3 ? "DTE No Recibido - Error en RUT Receptor" : "DTE Recibido OK"),
     ]);
   });
   const body = [

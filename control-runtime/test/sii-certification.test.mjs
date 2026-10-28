@@ -31,7 +31,7 @@ import {
   validateOfficialCaseSemantics,
 } from "../dist/finance/finance.sii-set.js";
 import { renderPrintedDte } from "../dist/finance/finance.dte-print.js";
-import { DteSchemaValidator, SiiDirectDteProvider } from "../dist/finance/finance.dte-providers.js";
+import { DteSchemaValidator, SiiDirectDteProvider, xmlSignature, SII_NS } from "../dist/finance/finance.dte-providers.js";
 import { parseXml, child, children, textOf } from "../dist/finance/finance.formats.js";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -1054,6 +1054,24 @@ test("intercambio verifica firmas y receptor antes de generar acuse técnico", a
       ),
     /firma/i,
   );
+});
+test("intercambio conserva el namespace propio firmado del DTE sin heredar xsi del sobre", () => {
+  const { input, caf } = fixture(), built = certificationDocumentXml(input, caf, certificate);
+  const content = built.xml.match(/<Documento\b[\s\S]*?<\/Documento>/)[0];
+  const signature = xmlSignature(content.replace('<Documento ', `<Documento xmlns="${SII_NS}" `), '#F1T33', certificate, '', false, true);
+  const dte = `<DTE xmlns="${SII_NS}" version="1.0">${content}${signature}</DTE>`;
+  const envelope = certificationEnvelope([dte], company, "33333333-3", certificate, "CERTIFICATION");
+  assert.equal(verifySiiXmlSignatures(envelope, certificate.certificate.fingerprint256).length, 2);
+  assert.throws(() => verifySiiXmlSignatures(envelope.replace('Ítem sintético', 'Ítem alterado')), /firma/i);
+});
+test("intercambio informa el RUT receptor incorrecto por documento sin sustituirlo ni aceptar todo el lote", async () => {
+  const first = fixture(), second = fixture(33, {folio: 2, caseId: '1234567-2', receiver: {...first.input.receiver, rut: '44444444-4'}});
+  const envelope = certificationEnvelope([certificationDocumentXml(first.input, first.caf, certificate).xml, certificationDocumentXml(second.input, second.caf, certificate).xml], company, '33333333-3', certificate, 'CERTIFICATION', '22222222-2');
+  const response = await certificationExchangeReceipt('CERTIFICATION', envelope, 'envio-mixto.xml', '22222222-2', 2, certificate);
+  const received = children(child(child(parseXml(response), 'Resultado'), 'RecepcionEnvio'), 'RecepcionDTE');
+  assert.deepEqual(received.map(d => textOf(d, 'EstadoRecepDTE')), ['0', '3']);
+  assert.deepEqual(received.map(d => textOf(d, 'RUTRecep')), ['22222222-2', '44444444-4']);
+  assert.equal(verifySiiXmlSignatures(response, certificate.certificate.fingerprint256).length, 1);
 });
 test("consumo de folios separa emitidos, anulados y huecos sin cambiar los registros", async () => {
   const base = {
