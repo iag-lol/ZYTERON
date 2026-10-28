@@ -6,7 +6,7 @@ import { sendApprovedTemplate, listWhatsappTemplates } from "@/lib/whatsapp/temp
 import { sendMetaWhatsappMessage } from "./meta-whatsapp";
 import { templateFields } from "@/lib/whatsapp/template-format";
 import {
-  contactHtml,
+  contactEmailContent,
   contactText,
   contactTemplateSummary,
   parseNotificationRecipients,
@@ -17,6 +17,12 @@ const env = (name: string) =>
     .trim()
     .replace(/^['"]|['"]$/g, "")
     .trim();
+type ContactMailSnapshot = ReturnType<typeof contactEmailContent> & {
+  from: string;
+  to: string[];
+  reply_to?: string;
+};
+type StoredContactEvent = ContactEvent & { _emailSnapshots?: Record<string, ContactMailSnapshot> };
 export type ContactSettings = {
   email_recipients: string[] | null;
   whatsapp_recipients: string[] | null;
@@ -118,8 +124,8 @@ export async function runContactNotifications() {
         attempted = false;
       try {
         const [event] = await prisma.$queryRaw<
-          Array<{ payload: ContactEvent }>
-        >`SELECT payload FROM zyteron_contact_events WHERE event_key=${row.event_key}`;
+          Array<{ payload: StoredContactEvent; created_at: Date }>
+        >`SELECT payload,created_at FROM zyteron_contact_events WHERE event_key=${row.event_key}`;
         if (!event) throw Error("EVENT_NOT_FOUND");
         if (
           row.first_attempt_at &&
@@ -133,9 +139,28 @@ export async function runContactNotifications() {
           throw Error("WHATSAPP_SEND_UNCONFIRMED");
         }
         if (row.channel === "EMAIL") {
-          if (!env("RESEND_API_KEY") || !env("RESEND_FROM_EMAIL")) {
+          const cached = event.payload._emailSnapshots?.[row.id];
+          if (!env("RESEND_API_KEY") || !(cached?.from || env("RESEND_FROM_EMAIL"))) {
             state = "WAITING_CONFIGURATION";
             throw Error("EMAIL_CONFIGURATION_REQUIRED");
+          }
+          const content = contactEmailContent(
+            event.payload,
+            event.created_at,
+            Boolean(row.first_attempt_at),
+          );
+          const email: ContactMailSnapshot = cached || {
+            from: env("RESEND_FROM_EMAIL"),
+            to: [row.recipient],
+            ...content,
+            ...(event.payload.replyTo ? { reply_to: event.payload.replyTo } : {}),
+          };
+          if (!cached) {
+            // Freeze each delivery before sending; template changes must not alter an idempotent retry.
+            const saved = await prisma.$executeRaw`UPDATE zyteron_contact_events
+              SET payload=jsonb_set(payload,'{_emailSnapshots}',coalesce(payload->'_emailSnapshots','{}'::jsonb)||jsonb_build_object(${row.id}::text,${JSON.stringify(email)}::jsonb))
+              WHERE event_key=${row.event_key} AND EXISTS(SELECT 1 FROM zyteron_contact_deliveries d WHERE d.id=${row.id}::uuid AND d.lease=${lease}::uuid)`;
+            if (saved !== 1) throw Error("EMAIL_LEASE_LOST");
           }
           attempted = true;
           await prisma.$executeRaw`UPDATE zyteron_contact_deliveries SET first_attempt_at=coalesce(first_attempt_at,now()) WHERE id=${row.id}::uuid AND lease=${lease}::uuid`;
@@ -147,12 +172,12 @@ export async function runContactNotifications() {
               "Idempotency-Key": `zyteron-contact/${row.id}`,
             },
             body: JSON.stringify({
-              from: env("RESEND_FROM_EMAIL"),
-              to: [row.recipient],
-              subject: event.payload.subject || event.payload.title,
-              html: event.payload.html || contactHtml(event.payload),
-              text: contactText(event.payload),
-              ...(event.payload.replyTo ? { reply_to: event.payload.replyTo } : {}),
+              from: email.from,
+              to: email.to,
+              subject: email.subject,
+              html: email.html,
+              text: email.text,
+              ...(email.reply_to ? { reply_to: email.reply_to } : {}),
             }),
             redirect: "error",
             signal: AbortSignal.timeout(10000),
