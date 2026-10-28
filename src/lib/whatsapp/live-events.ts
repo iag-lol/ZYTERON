@@ -1,5 +1,5 @@
 "use client";
-type LiveEvent = "connection" | "conversation" | "message" | "refresh" | "contact";
+type LiveEvent = "connection" | "conversation" | "message" | "refresh" | "contact" | "inbox";
 type Listener = (event: LiveEvent, data: unknown) => void;
 const listeners = new Set<Listener>();
 let stream: EventSource | null = null;
@@ -13,6 +13,7 @@ export function subscribeContactLive(listener: Listener) {
       "message",
       "refresh",
       "contact",
+      "inbox",
     ] as LiveEvent[])
       stream.addEventListener(kind, (event) => {
         try {

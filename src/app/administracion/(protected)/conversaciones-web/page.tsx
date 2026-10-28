@@ -1,2 +1,4 @@
-import {redirect} from 'next/navigation';
-export default function Page(){redirect('/administracion/support/inbox');}
+import { ConversationInbox } from "@/full-control/components/support/conversation-inbox";
+export default function Page() {
+  return <ConversationInbox />;
+}

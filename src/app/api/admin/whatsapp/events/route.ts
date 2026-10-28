@@ -26,6 +26,22 @@ export async function GET(req: Request) {
         .channel(`admin-whatsapp-${randomUUID()}`)
         .on(
           "postgres_changes",
+          { event: "*", schema: "public", table: "sales_threads" },
+          (payload) => {
+            const row = payload.new as { id?: string; channel?: string };
+            if (row.channel === "WEB_CHAT" && row.id) emit("inbox", { source: "web", id: row.id });
+          },
+        )
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "sales_messages" },
+          (payload) => {
+            const row = payload.new as { thread_id?: string };
+            if (row.thread_id) emit("inbox", { source: "web", id: row.thread_id });
+          },
+        )
+        .on(
+          "postgres_changes",
           { event: "*", schema: "public", table: "whatsapp_conversations" },
           (payload) => {
             if (payload.new && Object.keys(payload.new).length) emit("conversation", payload.new);

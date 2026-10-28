@@ -31,16 +31,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         });
         if (!item) throw new Error("REQUEST_NOT_FOUND");
         await db.portalRequest.update({ where: { id }, data: { status: parsed.data.status } });
-        if (parsed.data.reply)
-          await db.clientCommunication.create({
-            data: {
-              userId: item.userId,
-              subject: "Respuesta a tu solicitud: " + item.title,
-              message: parsed.data.reply,
-              direction: "OUTBOUND",
-              channel: "PORTAL",
-            },
-          });
+        const communication = parsed.data.reply
+          ? await db.clientCommunication.create({
+              data: {
+                userId: item.userId,
+                subject: "Respuesta a tu solicitud: " + item.title,
+                message: parsed.data.reply,
+                direction: "OUTBOUND",
+                channel: "PORTAL",
+              },
+            })
+          : null;
         await db.clientNotification.create({
           data: {
             userId: item.userId,
@@ -57,6 +58,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             action: "ADMIN_REQUEST_UPDATED",
             entityType: "PortalRequest",
             entityId: id,
+            details: communication ? { communicationId: communication.id } : undefined,
           },
         });
         return { ok: true };

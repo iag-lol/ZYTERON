@@ -38,6 +38,7 @@ import { useAccess } from "@control/components/access-context";
 import { EntityReferenceSelect } from "@control/components/entity-reference-select";
 import { formatDateTime } from "@control/lib/date-time";
 import { supportApi } from "@control/lib/support-api";
+import { ConversationInbox } from "./conversation-inbox";
 import { subscribeToSupport } from "@control/lib/support-realtime";
 
 const labels: Record<string, string> = {
@@ -172,6 +173,10 @@ const viewMeta: Record<string, { title: string; eyebrow: string; description: st
 };
 
 export function SupportWorkspace({ segments }: { segments: string[] }) {
+  if (segments[0] === "inbox") return <ConversationInbox initialId={segments[1]} />;
+  return <SupportManagement segments={segments} />;
+}
+function SupportManagement({ segments }: { segments: string[] }) {
   const router = useRouter();
   const { role } = useAccess(),
     view = segments[0] || "command",
@@ -217,7 +222,8 @@ export function SupportWorkspace({ segments }: { segments: string[] }) {
     return subscribeToSupport(role, () => void load(), selected ?? undefined);
   }, [load, role, selected]);
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).has("clientId")) setCreateOpen(true);
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("clientId") || params.has("new")) setCreateOpen(true);
   }, []);
   useEffect(() => {
     if (!selected) {
