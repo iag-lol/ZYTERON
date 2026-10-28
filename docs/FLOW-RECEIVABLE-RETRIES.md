@@ -29,12 +29,20 @@ La [documentación oficial de Flow](https://developers.flow.cl/api) establece qu
 - Una segunda preparación devolvió exactamente el mismo enlace. No se creó otra orden activa por el reintento.
 - El documento, sus asignaciones y la cantidad de pagos permanecieron sin cambios durante la validación. No se completó ningún pago ni se introdujo dinero de prueba en la contabilidad real.
 
-La prueba real ejecutó la función del servidor con la configuración de producción. No equivale a una prueba del endpoint ya publicado ni a un pago recibido.
+La validación inicial ejecutó la función del servidor con la configuración de producción. Después de publicar se verificó también el endpoint real del portal, con dos solicitudes POST autenticadas para el mismo usuario activo, verificado y con su versión de sesión vigente. La identidad se obtuvo de la base de datos y la sesión técnica temporal se firmó en memoria con vencimiento de cinco minutos; no se cambió la contraseña ni se ampliaron permisos. El servidor volvió a validar la cuenta y el acceso al cobro.
+
+- Endpoint publicado: `/api/portal/payments/receivables/[id]/flow`, respuesta HTTP 200 en ambas solicitudes y `Cache-Control: private, no-store`.
+- El segundo POST reutilizó exactamente el checkout del primero; una sola orden activa para $1.368.100 y estado pendiente confirmado mediante la API autenticada de Flow.
+- Checkout oficial con HTTP 200 y medios de pago disponibles.
+- Solicitud anónima rechazada con HTTP 401.
+- Documento, asignaciones y cantidad de pagos sin cambios. Ningún pago completado.
+
+Esta verificación cubre el endpoint publicado y el checkout del proveedor. No acredita un pago recibido ni una sesión iniciada desde el formulario de acceso del cliente. La pestaña disponible del cliente se encontraba en la pantalla de ingreso; no se realizó una prueba manual del botón dentro de esa sesión.
 
 ## Publicación
 
 Corrección enviada a `iag-lol/ZYTERON:main`, commit `bac76e9`. Incluye el controlador de reintentos y la comprobación de checkout vencido. No requiere migración de base de datos.
 
-Último código activo comprobado en Render: `8be9b53ba809d598ffc24816e63ce5514ddaf75d`, despliegue `dep-dbgs1h4s728c73c8h2eg`, correspondiente a la bandeja comercial publicada.
+Código activo comprobado en Render: `bac76e9b2da30da98f8eebfa9c5d495bc69a2f00`, despliegue `dep-dbgt0pgm7kps73eogqg0`. Render confirmó `Deploy succeeded | Live` el 28-10-2026 a las 07:40. La página del servicio mostró este commit como el último desplegado y activo.
 
-La publicación de la corrección de Flow y la prueba del botón del portal permanecen pendientes. El acceso nativo a Chrome devuelve capturas en blanco y `noWindowsAvailable`; el acceso directo del navegador informa que el host no está disponible. El código subido y la preparación real del enlace no acreditan por sí solos una publicación en Render.
+Las variables `FLOW_API_KEY`, `FLOW_SECRET_KEY` y `PAYMENT_TOKEN_KEY` están presentes en el entorno publicado y `FLOW_LIVE_PAYMENTS_ENABLED` está habilitada. La comprobación real de Flow validó las credenciales; no se incluyeron claves ni tokens en este documento. La prueba del endpoint publicado completó la preparación y reutilización del enlace sin realizar el pago.
