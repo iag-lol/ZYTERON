@@ -36,6 +36,15 @@ Pasaron TypeScript, ESLint de los archivos modificados y 22 pruebas dirigidas. S
 
 Commit de código: 6bd38df6da8522ef77531589d8318c70669a57eb, repositorio iag-lol/ZYTERON. Servicio Render: srv-d7emn6dckfvc73ekrh70. Despliegue: dep-dbgp0nei0phs738kh99g. Render confirmó Deploy succeeded y Live el 28-10-2026 a las 03:08, hora de Santiago, con el proceso PORTAL_LOGIN_NOTIFICATIONS_READY. La compilación completa de backend y Next.js pasó en Render.
 
-La prueba real con una cuenta temporal comprobó contraseña incorrecta rechazada (401), autenticación correcta (200), sesión activa y tres renovaciones sin duplicar el aviso. La cola envió un solo correo, aceptado en el primer intento. Su recepción en contacto@zyteron.cl se comprobó mediante Outlook el 28-10-2026 a las 03:08. El mensaje permanece en la bandeja como prueba de recepción; la cuenta y el registro temporal de la cola se eliminaron.
+La prueba real con una cuenta temporal comprobó contraseña incorrecta rechazada (401), autenticación correcta (200), sesión activa y tres renovaciones sin duplicar el aviso. La cola envió un solo correo, aceptado en el primer intento. Su recepción en contacto@zyteron.cl se comprobó mediante Outlook el 28-10-2026 a las 03:08. El mensaje de prueba se conserva en el buzón como evidencia de recepción; la cuenta y el registro temporal de la cola se eliminaron.
 
 El diagnóstico administrativo respondió 200 con configuración activa; el acceso sin sesión respondió 401 y la sesión de cliente recibió 403. La separación de pruebas de servidor permite ejecutar también el comando de pruebas habitual del proyecto, sin modificar el comportamiento publicado.
+
+
+## Clasificación en Outlook: 28-10-2026
+
+El aviso real de Ruben Pierattini, SOCIEDAD DE TRANSPORTES Y DIESEL SpA, llegó a contacto@zyteron.cl el 28-10-2026 a las 03:44. Estaba en la carpeta Zyteron Intranet. La recepción en el buzón y la presencia en la bandeja de entrada son verificaciones distintas.
+
+La regla activa «Mover todos los mensajes de Zyteron a Zyteron Intranet» trasladaba los mensajes del remitente configurado en Resend y detenía el procesamiento de otras reglas. Se agregó y guardó una excepción de asunto: «Zyteron | Ingreso de cliente:». La regla conserva su clasificación de los demás mensajes del remitente. La regla no se ejecutó sobre mensajes históricos.
+
+El aviso real se recuperó en la bandeja de entrada, sin marcarlo como leído. Un nuevo correo de prueba con el mismo remitente y prefijo de asunto llegó directamente a la bandeja de entrada el 28-10-2026 a las 03:52, sin intervención para moverlo. La consulta se limitó expresamente a esa carpeta. El mensaje identifica su propósito como prueba técnica y no registra un ingreso ficticio de cliente. Esta corrección corresponde a la configuración del buzón; el código publicado conserva su versión Live.
