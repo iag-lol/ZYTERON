@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { PortalData } from "@/lib/client-experience/snapshot";
 import { money } from "./production-model";
 import { ZYTERON_COMPANY } from "@/lib/company";
@@ -22,7 +23,10 @@ async function post(url: string, body: unknown) {
     body: JSON.stringify(body),
   });
   const value = await r.json();
-  if (!r.ok) throw new Error(value.error || "No se pudo completar la operación.");
+  if (!r.ok)
+    throw Object.assign(new Error(value.error || "No se pudo completar la operación."), {
+      status: r.status,
+    });
   return value;
 }
 export function FlowCheckoutPreview({
@@ -202,6 +206,7 @@ export function InvoicePaymentOptions({
   quote?: PortalData["quotes"][number];
   onHelp: () => void;
 }) {
+  const router = useRouter();
   const [method, setMethod] = useState<"card" | "transfer">("card");
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -315,6 +320,8 @@ export function InvoicePaymentOptions({
                     window.location.assign(target.href);
                   } catch (e) {
                     setError(e instanceof Error ? e.message : "No pudimos preparar el pago.");
+                    if (e && typeof e === "object" && "status" in e && e.status === 409)
+                      router.refresh();
                   } finally {
                     setBusy(false);
                   }
