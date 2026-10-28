@@ -26,7 +26,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         if (!t.length) throw new Error("CHAT_NOT_FOUND");
         if (t[0].processing) throw new Error("CHAT_AI_BUSY");
         await db.$executeRaw`INSERT INTO sales_messages(id,thread_id,direction,from_name,body_text,body_preview,actor_kind,sent_at) VALUES(${randomUUID()}::uuid,${id}::uuid,'OUTBOUND','Equipo Zyteron',${body.data.message},${body.data.message.slice(0, 240)},'STAFF',now())`;
-        await db.$executeRaw`UPDATE sales_threads SET awaiting_reply=false,last_message_at=now(),message_count=(SELECT count(*) FROM sales_messages WHERE thread_id=${id}::uuid) WHERE id=${id}::uuid`;
+        await db.$executeRaw`UPDATE sales_threads SET reply_key=NULL,reply_lease=NULL,awaiting_reply=false,last_message_at=now(),message_count=(SELECT count(*) FROM sales_messages WHERE thread_id=${id}::uuid) WHERE id=${id}::uuid`;
         if (t[0].legacy_user_id) {
           await db.clientNotification.create({
             data: {
