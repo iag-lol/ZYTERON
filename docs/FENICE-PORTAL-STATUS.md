@@ -26,20 +26,37 @@ COT-2026-09804 registra $2.368.100 y una imputación confirmada de $1.000.000. E
 
 Las facturas N.º 9 a N.º 16 están publicadas en almacenamiento privado, vinculadas a los proyectos y, donde corresponde, a sus pagos. Las ocho descargas administrativas responden correctamente y sus hashes SHA-256 coinciden con los originales. La factura N.º 6 ya existía; se comprobó su descarga y se evitó duplicarla.
 
-La guía de entrega y portal contiene los servicios, saldo, uso de Fleet Control, tratamiento de lecturas GPS, documentos y condiciones de acceso. Sus tres páginas fueron renderizadas y revisadas visualmente. No contiene contraseñas ni claves de infraestructura.
+El portal contiene 14 documentos. La factura N.º 15 se descargó desde la sesión real del cliente y su SHA-256 coincide con el original.
+
+La guía de entrega y portal contiene los servicios, saldo, uso de Fleet Control, tratamiento de lecturas GPS, documentos y condiciones de acceso. Sus tres páginas fueron renderizadas y revisadas visualmente. No contiene contraseñas ni claves de infraestructura. Está publicada y visible en la sesión del cliente; su descarga autenticada devuelve el archivo original y el acceso sin sesión responde 401.
 
 ## Credenciales
 
 Administración confirmó que el bloqueo por pago debe continuar. No hay autorizaciones de entrega anticipada activas. Las cuatro credenciales históricas sin proyecto quedaron vinculadas al sitio web de Fenice, sin modificar secretos.
 
-El cambio de código incorpora en Administración > Cliente > Portal cliente > Credenciales un control por proyecto para autorizar consulta antes del pago y restablecer el bloqueo. Exige motivo, sesión administrativa válida, mismo origen y proyecto del destinatario. Registra la decisión en auditoría y detecta cambios concurrentes. La contraseña, los códigos, el cifrado y la validación de propietario permanecen obligatorios.
+El control publicado y verificado en Administración > Cliente > Portal cliente > Credenciales permite por proyecto autorizar consulta antes del pago y restablecer el bloqueo. Exige motivo, sesión administrativa válida, mismo origen y proyecto del destinatario. Registra la decisión en auditoría y detecta cambios concurrentes. La contraseña, los códigos, el cifrado y la validación de propietario permanecen obligatorios.
 
 La tabla de autorizaciones tiene RLS y no permite escritura del cliente. Las pruebas transaccionales comprobaron lectura propia, aislamiento de otro destinatario y rechazo de escritura; los datos de prueba fueron revertidos. La migración se aplicó sin otorgar autorizaciones.
 
 Los registros de Render y Supabase describen servicios administrados por Zyteron. Las invitaciones externas a GitHub y GoDaddy conservan su estado real; una autorización del portal no concede acceso a proveedores ni cuentas maestras.
 
+## Conciliación de equipos GPS
+
+Administración confirmó que el pago comercial agrupado de $1.798.819 corresponde a los mismos movimientos contables de $200.000 y $1.598.819. El historial muestra los dos movimientos con sus facturas y omite únicamente la representación comercial agregada. Conserva importes, imputaciones y saldo de la operación. La relación explícita quedó registrada en metadatos y auditoría.
+
+La exclusión requiere confirmación, mismo cliente, moneda CLP, movimientos confirmados únicos y suma exacta. Una coincidencia de importes sin relación explícita no elimina movimientos. La sesión real de Fenice muestra 13 pagos confirmados después de la publicación.
+
 ## Código y validación
 
-El repositorio publicado es iag-lol/ZYTERON. La versión Live comprobada antes del despliegue es 2020e4121e5be4c4d9b280a642c26f9d4ba30226, servicio srv-d7emn6dckfvc73ekrh70. El despliegue automático está deshabilitado.
+El repositorio publicado es iag-lol/ZYTERON. El commit de código be54620809ec1f5ba86ba00e82eb4fcc6a0b6f3c fue verificado en GitHub y Render. Servicio srv-d7emn6dckfvc73ekrh70, despliegue dep-dbgnarbbc2fs73b6fif0, estado Deploy succeeded y servicio Live el 28-10-2026 a las 01:12, hora de Santiago. El despliegue automático está deshabilitado.
 
-La corrección de presentación diferencia planificación, validación y entrega en las tarjetas y en el detalle. Las pruebas cubren estados, mensualidades, alcance y revocación de autorizaciones, cifrado y verificación de identidad. TypeScript pasa; la compilación local pasa, pero el prerender completo necesita la configuración Supabase disponible en Render. La publicación y verificación del nuevo control administrativo siguen pendientes.
+La corrección de presentación diferencia planificación, pruebas y entrega. La sesión real del cliente muestra los cuatro proyectos al 100%, GPS en Pruebas, los otros tres Entregado, ambas mensualidades y el historial conciliado. El formulario administrativo muestra bloqueo activo en sus tres proyectos, exige motivo y mantiene Confirmar cambio deshabilitado mientras falta ese requisito. No se activó ninguna excepción.
+
+TypeScript, ESLint de los archivos modificados y 26 pruebas dirigidas pasaron. Las pruebas cubren estados, mensualidades, documentos, conciliación explícita, alcance y revocación de autorizaciones, cifrado y verificación de identidad. La compilación completa de backend y Next.js pasó en Render. El control publicado respondió 200 a administración y rechazó sesión ausente (401), origen ajeno (403), proyecto ajeno (404), estado concurrente obsoleto (409) y motivo vacío (400). Las ocho entradas de credenciales conservan acceso bloqueado.
+
+## Pendientes externos
+
+- Conformidad de Fenice sobre la validación final del GPS.
+- Pago del saldo de $1.368.100.
+- Confirmación del día de vencimiento de ambas mensualidades. Los servicios están activos y sus importes visibles; las asignaciones recurrentes continúan pendientes de activación, sin fecha inventada ni cargos automáticos.
+- Invitaciones o delegaciones externas sujetas a sus condiciones comerciales. El control del portal no las modifica.
