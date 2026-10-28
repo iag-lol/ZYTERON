@@ -16,7 +16,7 @@ import {
 } from "./flow";
 import { digest, openToken, sealToken, parseObservation } from "./pilot-protocol";
 import { verifyPaymentObservation } from "./verified-payment";
-import { PaymentTargetError } from "./invoice-payment-option";
+import { resolveReceivableCheckout } from "./receivable-checkout";
 type Intent = {
   id: string;
   user_id: string;
@@ -56,70 +56,66 @@ export async function createReceivableCheckout(input: {
       input.amount,
     );
   });
-  const claim = await prisma.$transaction(async (db) => {
-    await db.$queryRaw`SELECT id FROM "Receivable" WHERE id=${input.id} AND "clientId"=${input.userId} FOR UPDATE`;
-    const bill = await db.receivable.findFirst({
-      where: { id: input.id, clientId: input.userId },
-      include,
-    });
-    payableReceivable(bill, input.userId, input.amount);
-    const existing = await db.$queryRaw<
-      Intent[]
-    >`SELECT * FROM zyteron_receivable_flow WHERE receivable_id=${input.id} AND account_hash=${account} AND state IN ('CREATING','UNKNOWN','PENDING') FOR UPDATE`;
-    if (existing[0]) return { intent: existing[0], created: false, description: bill!.description };
-    const id = randomUUID(),
-      commerce = receivableCommerceOrder(id);
-    const rows = await db.$queryRaw<
-      Intent[]
-    >`INSERT INTO zyteron_receivable_flow(id,receivable_id,user_id,account_hash,amount,state,commerce_order) VALUES(${id}::uuid,${input.id},${input.userId},${account},${input.amount},'CREATING',${commerce}) RETURNING *`;
-    return { intent: rows[0], created: true, description: bill!.description };
+  return resolveReceivableCheckout(input.amount, {
+    reserve: () =>
+      prisma.$transaction(async (db) => {
+        await db.$queryRaw`SELECT id FROM "Receivable" WHERE id=${input.id} AND "clientId"=${input.userId} FOR UPDATE`;
+        const bill = await db.receivable.findFirst({
+          where: { id: input.id, clientId: input.userId },
+          include,
+        });
+        payableReceivable(bill, input.userId, input.amount);
+        const existing = await db.$queryRaw<
+          Intent[]
+        >`SELECT * FROM zyteron_receivable_flow WHERE receivable_id=${input.id} AND account_hash=${account} AND state IN ('CREATING','UNKNOWN','PENDING') FOR UPDATE`;
+        if (existing[0])
+          return { intent: existing[0], created: false, description: bill!.description };
+        const id = randomUUID(),
+          commerce = receivableCommerceOrder(id);
+        const rows = await db.$queryRaw<
+          Intent[]
+        >`INSERT INTO zyteron_receivable_flow(id,receivable_id,user_id,account_hash,amount,state,commerce_order) VALUES(${id}::uuid,${input.id},${input.userId},${account},${input.amount},'CREATING',${commerce}) RETURNING *`;
+        return { intent: rows[0], created: true, description: bill!.description };
+      }),
+    checkout,
+    reconcile: async (r) => {
+      if (r.token_cipher)
+        return (await reconcileReceivableToken(openToken(r.token_cipher, r.id, key()))).state;
+      if (r.account_hash !== account) throw new Error("PAYMENT_ACCOUNT_MISMATCH");
+      return (
+        await applyReceivableStatus(r, await getReceivablePaymentByCommerce(r.commerce_order))
+      ).state;
+    },
+    create: async (claim) => {
+      const r = claim.intent;
+      try {
+        const remote = await createReceivableProviderOrder({
+          intentId: r.id,
+          amount: r.amount,
+          email: input.email,
+          subject: `Zyteron · ${claim.description}`,
+          commerceOrder: r.commerce_order,
+        });
+        const cipher = sealToken(remote.token, r.id, key());
+        await prisma.$executeRaw`UPDATE zyteron_receivable_flow SET state='PENDING',flow_order=${remote.flowOrder}::bigint,token_hash=${digest(remote.token)},token_cipher=${cipher},checkout_url=${remote.url},available_at=now()+interval '15 seconds' WHERE id=${r.id}::uuid AND state='CREATING'`;
+        return {
+          checkoutUrl: `${remote.url}?token=${encodeURIComponent(remote.token)}`,
+          amount: r.amount,
+        };
+      } catch (error) {
+        const rejected =
+          error &&
+          typeof error === "object" &&
+          "httpStatus" in error &&
+          typeof error.httpStatus === "number" &&
+          [400, 401, 403, 422].includes(error.httpStatus);
+        await prisma.$executeRaw`UPDATE zyteron_receivable_flow SET state=${rejected ? "REJECTED" : "UNKNOWN"},available_at=now()+interval '30 seconds' WHERE id=${r.id}::uuid AND state='CREATING'`;
+        throw new Error(
+          "No pudimos confirmar la creación del pago. Verificaremos este intento antes de permitir otro.",
+        );
+      }
+    },
   });
-  const r = claim.intent;
-  if (!claim.created) {
-    if (
-      r.state === "PENDING" &&
-      r.token_cipher &&
-      r.checkout_url &&
-      r.amount === input.amount &&
-      r.expires_at > new Date()
-    )
-      return { checkoutUrl: checkout(r), amount: r.amount };
-    if (r.state === "PENDING" && r.token_cipher) {
-      await reconcileReceivableToken(openToken(r.token_cipher, r.id, key()));
-      throw new PaymentTargetError(
-        "El intento anterior se está verificando. Actualiza el cobro para continuar.",
-      );
-    }
-    throw new PaymentTargetError(
-      "El intento anterior está en verificación. No se generará un cobro duplicado.",
-    );
-  }
-  try {
-    const remote = await createReceivableProviderOrder({
-      intentId: r.id,
-      amount: r.amount,
-      email: input.email,
-      subject: `Zyteron · ${claim.description}`,
-      commerceOrder: r.commerce_order,
-    });
-    const cipher = sealToken(remote.token, r.id, key());
-    await prisma.$executeRaw`UPDATE zyteron_receivable_flow SET state='PENDING',flow_order=${remote.flowOrder}::bigint,token_hash=${digest(remote.token)},token_cipher=${cipher},checkout_url=${remote.url},available_at=now()+interval '15 seconds' WHERE id=${r.id}::uuid AND state='CREATING'`;
-    return {
-      checkoutUrl: `${remote.url}?token=${encodeURIComponent(remote.token)}`,
-      amount: r.amount,
-    };
-  } catch (error) {
-    const rejected =
-      error &&
-      typeof error === "object" &&
-      "httpStatus" in error &&
-      typeof error.httpStatus === "number" &&
-      [400, 401, 403, 422].includes(error.httpStatus);
-    await prisma.$executeRaw`UPDATE zyteron_receivable_flow SET state=${rejected ? "REJECTED" : "UNKNOWN"},available_at=now()+interval '30 seconds' WHERE id=${r.id}::uuid AND state='CREATING'`;
-    throw new Error(
-      "No pudimos confirmar la creación del pago. Verificaremos este intento antes de permitir otro.",
-    );
-  }
 }
 function checkout(r: Intent) {
   return `${r.checkout_url}?token=${encodeURIComponent(openToken(r.token_cipher!, r.id, key()))}`;
