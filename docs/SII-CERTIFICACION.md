@@ -1,6 +1,18 @@
 # Certificación SII
 
-## Revisión vigente: 28-10-2026, 10:34
+## Revisión vigente: 28-10-2026, 22:20
+
+El SII aprobó la revisión de impresos **278578**, número **1**, con sus **60 muestras**. Firefox muestra **APROBADO** y el correo oficial de `certificacion_impresos_dte@sii.cl`, recibido el **28-10-2026 a las 14:57:09** en `contacto@zyteron.cl`, confirma la aprobación y enumera los 60 archivos.
+
+La consulta nueva de avance indica que ZYTERON SPA **finalizó la certificación de los requisitos necesarios para ser emisor de DTE**. Para obtener la autorización exige que el **representante legal efectúe la Declaración de Cumplimiento de Requisitos**. El formulario está accesible y advierte que declarar activa automáticamente la operación y las obligaciones indicadas por el SII. **No se presentó la declaración ni se activó la emisión real.** Antes de declarar deben acreditarse los procedimientos correspondientes, incluidos los respaldos y la recuperación pendientes de verificación integral.
+
+El registro público mantiene los tipos 33, 34, 52, 56 y 61 autorizados desde el 19-04-2026, con Resolución 99 del 21-10-2014. Ese antecedente previo del contribuyente no reemplaza el cierre del software propio. La autorización productiva final de este sistema no está acreditada; los CAF y la configuración productiva siguen sujetos a esa comprobación. La sesión web de Zyteron redirigió a inicio de sesión al consultar documentos tributarios; la configuración publicada no se volvió a verificar en esta consulta.
+
+Evidencia privada en `output/sii-completion-20261028/printed-upload/`: `approval-email.json`, `approval-status.json` y `official-revision.json`, dentro del repositorio publicado. No hubo nuevos envíos de documentos, solicitudes de folios ni modificaciones de facturas o pagos.
+
+Fuentes: [avance de la postulación](https://maullin.sii.cl/cvc_cgi/dte/pe_avance5), [muestras impresas](https://www4.sii.cl/pdfdteInternet/), [declaración de cumplimiento](https://maullin.sii.cl/cvc_cgi/dte/pe_avance7) y [registro del contribuyente](https://palena.sii.cl/cvc_cgi/dte/ee_empresa_rut?RUT_EMP=78398774&DV_EMP=0).
+
+## Antecedente del 28-10-2026, 10:34
 
 La postulación de ZYTERON SPA avanzó a **DOCUMENTOS IMPRESOS**. Los siete sets y los tres libros figuran **REVISADO CONFORME**; la simulación y los tres archivos de intercambio fueron aprobados. La autorización productiva del software propio todavía no está acreditada. El ambiente permanece `CERTIFICATION`, con `dteProductionAuthorized=false`.
 
