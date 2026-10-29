@@ -133,11 +133,11 @@ export async function createFiscalBackup({ env = process.env, force = false, loc
     const constraints = (await db.query(`select c.relname as table_name,con.conname,con.contype,pg_get_constraintdef(con.oid) as definition from pg_constraint con join pg_class c on c.oid=con.conrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relname=any($1) order by c.relname,con.conname`, [tables])).rows;
     await archive(json(constraints), 'metadata/constraints.json');
     const objects = (await db.query('select bucket_id,name,metadata from storage.objects where bucket_id=any($1) order by bucket_id,name', [sourceBuckets])).rows;
+    await db.query('COMMIT');
     await inPairs(objects, async object => {
       const bytes = await download(store, object.bucket_id, object.name);
       await archive(bytes, `files/${object.bucket_id}/${object.name}`); manifest.objects.push({ bucket: object.bucket_id, name: object.name, sha256: digest(bytes), size: bytes.length, metadata: object.metadata });
     });
-    await db.query('COMMIT');
     const payload = seal(json(manifest), key, `ZYTERON:FISCAL:MANIFEST:${id}`);
     const header = { version: 1, id, companyRut: company, keyId, signerFingerprint: signer.fingerprint, certificate: signer.pem, wrappedKey: publicEncrypt({ key: signer.cert.publicKey, oaepHash: 'sha256' }, key).toString('base64'), payload: payload.toString('base64') };
     const signedBytes = json(header), envelope = json({ ...header, signature: sign('sha256', signedBytes, signer.key).toString('base64') });
