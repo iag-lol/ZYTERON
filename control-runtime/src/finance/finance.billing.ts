@@ -41,7 +41,7 @@ export class InvoiceService {
   private async snapshot(clientId:string){const client=await this.ctx.sources.client(clientId);if(!client)throw new UnprocessableEntityException("Cliente no encontrado.");return{snapshot:{rut:client.billingRut||client.rut,legalName:client.billingLegalName||client.legalName,businessActivity:client.billingActivity||client.businessActivity,address:client.billingAddress||client.address,commune:client.commune,city:client.region,dteEmail:client.dteEmail||client.generalEmail},creditDays:client.creditDays,currency:client.currency};}
 
   async preview(body:Row,actor:FinanceActor){
-    this.ctx.require(actor,"invoice.create");
+    this.ctx.requireAny(actor,"invoice.create","invoice.edit");
     const clientId=requiredUuid(body.clientId,"Cliente");await this.ctx.assertClientAccess(actor,clientId);
     const code=Number(body.documentTypeCode??33);if(![33,34,39,41].includes(code))throw new BadRequestException("Tipo de documento inválido.");
     const issueDate=invoiceDate(body.issueDate),lines=await this.buildLines(body.lines,code);
