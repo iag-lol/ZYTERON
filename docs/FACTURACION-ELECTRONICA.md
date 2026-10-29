@@ -107,14 +107,14 @@ La aceptación final se verifica con el SII. No se marca una factura emitida por
 
 ## Formulario de facturas · revisión del 29-10-2026
 
-Publicado en Render y verificado el 29-10-2026. Commit activo: `a0aa8e2bfa69aa0a6694a9ffc13ab68f7e446945`, despliegue `dep-dbhcseg473hc739knksg` (Live). El formulario base se comprobó en Firefox con la versión `1041e6e`: selección de Fenice, descuento, cálculo del servidor y revisión previa sin guardar ni emitir. La revisión posterior incorpora edición de borradores. No modifica facturas históricas ni la plantilla PDF pendiente de aprobación.
+Publicado en Render y verificado el 29-10-2026 a las 01:50. Commit activo: `07b8c407419feacc431c7fac65129f66a923e00c`, despliegue `dep-dbhcvsuc6qcc73f2sqp0` (Live). El formulario base se comprobó en Firefox con la versión `1041e6e`: selección de Fenice, descuento, cálculo del servidor y revisión previa sin guardar ni emitir. La revisión posterior incorpora edición de borradores. No modifica facturas históricas ni la plantilla PDF pendiente de aprobación.
 
 - Secciones de documento y pago, receptor, productos o servicios y referencias comerciales, con resumen de neto, exento, IVA y total.
 - Receptor visible y editable por documento: razón social, giro, dirección, comuna, ciudad y correo. El RUT debe coincidir con el cliente seleccionado; se conserva el alcance de acceso. Los cambios no modifican la ficha maestra del cliente.
 - Fecha de emisión explícita, contado o crédito, tipo de venta y sugerencia de tipo de compra. El vencimiento al contado coincide con la emisión. El plazo acepta de 0 a 365 días.
 - Nombre de ítem, descripción adicional, unidad, cantidad, precio neto, descuento y exención. Las referencias comerciales admitidas son orden de compra (801), nota de pedido (802), contrato (803) y guía electrónica (52), hasta 10 referencias.
 - `POST /finance/invoices/preview` calcula con la tasa de IVA vigente a la fecha de emisión, comprueba acceso al cliente y devuelve campos faltantes. No escribe registros, reserva folios, firma ni envía al SII.
-- Los borradores en estado DRAFT o PENDING_APPROVAL pueden abrirse mediante «Editar borrador». El cliente y el tipo de documento se conservan; se pueden completar los datos del receptor, fechas, ítems, pago y referencias. Una edición invalida la aprobación pendiente.
+- Los borradores de facturas y boletas (33, 34, 39 y 41) en estado DRAFT o PENDING_APPROVAL pueden abrirse mediante «Editar borrador». Las notas de crédito y débito conservan su flujo específico. El cliente y el tipo de documento se conservan; se pueden completar los datos del receptor, fechas, ítems, pago y referencias. Una edición invalida la aprobación pendiente.
 - Los datos revisados se conservan en el borrador y en el XML. Preparar la emisión no sustituye la fecha elegida ni los datos del receptor por la ficha maestra. Los documentos emitidos conservan sus restricciones de inmutabilidad.
 - Migración aplicada en producción antes del despliegue: `20261029103000_invoice_composer_fields.sql` (metadatos del documento, nombre de ítem y unidad).
 - Esquemas oficiales originales actualizados al paquete del 19-02-2026. Fuente y SHA-256 individuales en `control-runtime/resources/sii/xsd/README.md`.
