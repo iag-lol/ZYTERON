@@ -1,6 +1,24 @@
 # Certificación SII
 
-## Revisión vigente: 28-10-2026, 22:20
+## Revisión vigente: 28-10-2026, 23:45
+
+La certificación del SII está finalizada y las 60 muestras impresas de la revisión **278578**, número **1**, están **APROBADAS**. La **Declaración de Cumplimiento de Requisitos no se ha presentado**. La autorización productiva del software propio no está acreditada y la emisión real permanece bloqueada.
+
+La configuración persistida conserva `SII_DIRECT`, `CERTIFICATION` y `dteProductionAuthorized=false`. Los tipos 33, 34, 56 y 61 están deshabilitados y sin certificación habilitada en el catálogo operativo. Hay **cero folios productivos**. La conexión de sólo comprobación a `palena.sii.cl` respondió con semilla conectada, certificado válido y autenticación correcta el **28-10-2026 a las 23:25**; el certificado vence el **21-10-2029**. Esta conexión no acredita autorización ni emite documentos.
+
+El respaldo fiscal cifrado y firmado quedó confirmado el **28-10-2026 a las 23:33**: **65 tablas, 957 registros y 400 archivos**. La recuperación terminó a las **23:34**, en 65 segundos, con los 957 registros comprobados en un PostgreSQL aislado, **136 referencias** verificadas y los **43 documentos históricos** recuperados. La copia cifrada externa está guardada fuera de Supabase; el destino automático continúa siendo un bucket privado del mismo proyecto. La prueba acredita recuperación del archivo fiscal, no una restauración completa de la plataforma. El objetivo de respaldo, la retención de siete años y la prueba aprobada están registrados en Seguridad.
+
+Los tres archivos XML originales del facturador anterior conservan sus bytes y hashes: once documentos emitidos y 32 recibidos. La comprobación de contexto permite verificar las firmas de los once emitidos y 24 recibidos. Las firmas de ocho documentos recibidos siguen sin verificación con el validador actual; no se califican como inválidas ni se modifican sus originales. Su conservación y recuperación por SHA-256 sí están verificadas.
+
+El proceso automático utiliza una conexión de sesión para conservar el bloqueo durante el respaldo. Una prueba real con dos conexiones verificó exclusión simultánea, continuidad de sesión y liberación del bloqueo; la comprobación del día devuelve `CURRENT`. Las tres pruebas de cifrado, rutas y recuperación sin conexión pasaron. Render confirmó **Live** para `146bbc0089d6c68f323445e90a6752eaf6f4b6d1`, despliegue `dep-dbhb43p42hec73buvbig`, el **28-10-2026 a las 23:43**; GitHub `main` coincide con ese commit. El build completo pasó. La comprobación local del worker devuelve `CURRENT`; su primera ejecución programada en esta versión publicada aún no se ha leído en los logs. La comprobación HTTP previa del dominio respondió 200.
+
+Los procedimientos de control de folios, intercambio, retención, recuperación y contingencias están documentados en [Operación y recuperación de facturación electrónica](SII-OPERACION-Y-RECUPERACION.md). Antes de activar producción se requiere presentar la declaración por el representante legal, comprobar la autorización efectiva, obtener CAF productivos y configurar resolución, ambiente y tipos correspondientes. La identificación con certificado del SII está pendiente de completarse: Firefox dejó de responder y Chrome mostró el certificado, pero su confirmación terminó en timeout; no se ha enviado la declaración ni solicitado folios productivos. Las facturas y pagos comerciales no se modificaron.
+
+Evidencia privada del repositorio publicado: `output/sii-completion-20261028/closing/`, incluidos `backup-result.json`, `recovery-result.json`, `production-preflight.json`, `recovery-records.json` y `session-check.json`. El manifiesto del respaldo tiene SHA-256 `b137bf5a097fe69b860592a2d3c2dd5b84edff22d6af8456ad296f3b2b2dfff6`.
+
+Fuentes: [avance del SII](https://maullin.sii.cl/cvc_cgi/dte/pe_avance6), [declaración de cumplimiento](https://maullin.sii.cl/cvc_cgi/dte/pe_avance7) y [conexiones de sesión de Supabase](https://supabase.com/docs/guides/database/connecting-to-postgres).
+
+## Antecedente del 28-10-2026, 22:20
 
 El SII aprobó la revisión de impresos **278578**, número **1**, con sus **60 muestras**. Firefox muestra **APROBADO** y el correo oficial de `certificacion_impresos_dte@sii.cl`, recibido el **28-10-2026 a las 14:57:09** en `contacto@zyteron.cl`, confirma la aprobación y enumera los 60 archivos.
 
