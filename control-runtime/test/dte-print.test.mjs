@@ -26,6 +26,13 @@ import { directDteImplemented } from "../dist/finance/finance.dte-catalog.js";
 let directory, provider, fixture;
 const previousSecret = process.env.ZYTERON_SYNTHETIC_CERTIFICATE;
 const previousSender = process.env.DTE_SENDER_RUT;
+test("campos del formulario se conservan en XML, timbre e impresión con el esquema vigente",async()=>{
+  const fixture=await createFixture({receiver:{rut:"22222222-2",legalName:"Receptor Sintético",businessActivity:"Pruebas",address:"Calle de prueba 200",commune:"Comuna de prueba",city:null,email:"facturas@example.com"},dueDate:null,dteOptions:{paymentForm:1,saleType:2,purchaseType:4,references:[{documentTypeCode:801,folio:"OC-101",date:"2026-01-01",reason:"Orden de compra"}]},lines:[{lineNumber:1,itemName:"Soporte mensual",description:"Servicio y atención durante enero",unit:"mes",quantity:1,unitPrice:110000,discountAmount:10000,netAmount:100000,isExempt:false}]});
+  const xml=fixture.signed.toString("latin1");
+  for(const tag of ["<FmaPago>1</FmaPago>","<CorreoRecep>facturas@example.com</CorreoRecep>","<TpoTranVenta>2</TpoTranVenta>","<TpoTranCompra>4</TpoTranCompra>","<NmbItem>Soporte mensual</NmbItem>","<DscItem>Servicio y atención durante enero</DscItem>","<UnmdItem>mes</UnmdItem>","<DescuentoMonto>10000</DescuentoMonto>","<IT1>Soporte mensual</IT1>","<TpoDocRef>801</TpoDocRef>","<FolioRef>OC-101</FolioRef>"])assert.ok(xml.includes(tag),tag);
+  assert.deepEqual(await new DteSchemaValidator().validate(xml),[]);
+  assert.equal((await renderPrintedDte(fixture.signed,fixture.envelope,fixture.record)).subarray(0,5).toString(),"%PDF-");
+});
 const createFixture = async (overrides = {}) => {
   const cafKey = generateKeyPairSync("rsa", { modulusLength: 1024 });
   const publicKey = createPublicKey(cafKey.privateKey).export({ format: "jwk" });

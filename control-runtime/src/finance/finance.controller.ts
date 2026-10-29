@@ -85,6 +85,7 @@ export class FinanceController {
 
   // ---------------------------------------------------------------- facturación
   @Get("invoices") listInvoices(@Query() q:Q,@Headers() h:H){return this.invoices.list(page(q),actor(h));}
+  @Post("invoices/preview") previewInvoice(@Body() b:any,@Headers() h:H){return this.invoices.preview(b,actor(h));}
   @Post("invoices") createInvoice(@Body() b:any,@Headers() h:H){return this.invoices.createDraft(b,actor(h));}
   @Post("invoices/from-sale/:id") fromSale(@Param("id") id:string,@Headers() h:H){return this.invoices.fromSale(id,actor(h));}
   @Post("invoices/from-contract/:id") fromContract(@Param("id") id:string,@Headers() h:H){return this.invoices.fromContract(id,actor(h));}

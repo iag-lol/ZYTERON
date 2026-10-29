@@ -1,16 +1,17 @@
 import { BadRequestException, ConflictException, Injectable, UnprocessableEntityException } from "@nestjs/common";
 import type { BillingSchedule, Invoice, InvoiceLine, PaymentAllocation, TaxDocument } from "@zyteron/contracts";
+import { fiscalText, invoiceDate, invoiceOptions, invoiceTerms, receiverSnapshot } from "./finance.invoice-input.js";
 import { FinanceContext } from "./finance.core.js";
 import { AccountingRuleEngine } from "./finance.ledger.js";
 import type { PageQuery } from "./finance.repository.js";
-import { addDays, addMonths, daysBetween, displayDate, type FinanceActor, guarded, isoDate, money, nowIso, oneOf, optionalText, optionalUuid, positiveAmount, r2, requiredText, requiredUuid, roundCurrency, type Row, sum, todayCl } from "./finance.util.js";
+import { addDays, addMonths, daysBetween, displayDate, type FinanceActor, guarded, isoDate, money, nowIso, oneOf, optionalText, optionalUuid, positiveAmount, r2, requiredText, requiredUuid, roundCurrency, type Row, sum, todayCl, validRut } from "./finance.util.js";
 
 const openStatuses=["ISSUED","PARTIALLY_PAID"];
 const preIssue=["DRAFT","PENDING_APPROVAL","READY_TO_ISSUE"];
 export const documentLabel=(invoice:Pick<Invoice,"documentTypeCode"|"invoiceNumber">,folio?:number|null)=>`${({33:"Factura",34:"Factura exenta",39:"Boleta",41:"Boleta exenta",61:"Nota de crédito",56:"Nota de débito"} as Record<number,string>)[invoice.documentTypeCode]??"Documento"} ${folio?`N° ${folio}`:invoice.invoiceNumber}`;
 export function withEffective(invoice:Invoice,today=todayCl()):Invoice{const overdue=openStatuses.includes(invoice.status)&&Boolean(invoice.dueDate)&&invoice.dueDate!<today&&invoice.balanceDue>0;return{...invoice,effectiveStatus:overdue?"OVERDUE":invoice.status,daysOverdue:overdue?daysBetween(invoice.dueDate!,today):0};}
 export function boletaPaymentMethod(value:unknown){if(!["string","number"].includes(typeof value)||! /^[1-5]$/.test(String(value)))throw new BadRequestException("Selecciona un medio de pago válido; esto no registra ni confirma dinero recibido.");return Number(value);}
-interface LineInput { description?:string; quantity?:number; unitPrice?:number; discountAmount?:number; isExempt?:boolean; clientServiceId?:string|null; catalogServiceId?:string|null; projectId?:string|null; costCenterId?:string|null; revenueAccountId?:string|null; }
+interface LineInput { itemName?:string; unit?:string; description?:string; quantity?:number; unitPrice?:number; discountAmount?:number; isExempt?:boolean; clientServiceId?:string|null; catalogServiceId?:string|null; projectId?:string|null; costCenterId?:string|null; revenueAccountId?:string|null; }
 
 @Injectable()
 export class InvoiceService {
@@ -28,8 +29,8 @@ export class InvoiceService {
   }
   private async buildLines(raw:unknown,documentTypeCode:number){
     if(!Array.isArray(raw)||!raw.length)throw new BadRequestException("El documento necesita al menos una línea.");if(raw.length>60)throw new BadRequestException("Máximo 60 líneas por documento (límite SII de detalle).");
-    return raw.map((line:LineInput,index)=>{const quantity=Number(line.quantity??1);const unitPrice=Number(line.unitPrice);if(!Number.isFinite(quantity)||!(quantity>0))throw new BadRequestException(`Línea ${index+1}: cantidad inválida.`);if(!Number.isFinite(unitPrice)||!(unitPrice>=0))throw new BadRequestException(`Línea ${index+1}: precio inválido.`);const discountAmount=r2(line.discountAmount??0);if(!Number.isFinite(discountAmount)||discountAmount<0)throw new BadRequestException(`Línea ${index+1}: descuento inválido.`);const net=roundCurrency(quantity*unitPrice-discountAmount);if(net<0)throw new BadRequestException(`Línea ${index+1}: el descuento supera el monto.`);
-      return{lineNumber:index+1,description:requiredText(line.description,`Descripción línea ${index+1}`,1000),quantity,unitPrice,discountAmount,netAmount:net,isExempt:[34,41].includes(documentTypeCode)?true:Boolean(line.isExempt),clientServiceId:optionalUuid(line.clientServiceId,"Servicio"),catalogServiceId:optionalUuid(line.catalogServiceId,"Servicio de catálogo"),projectId:optionalUuid(line.projectId,"Proyecto"),costCenterId:optionalUuid(line.costCenterId,"Centro de costo"),revenueAccountId:optionalUuid(line.revenueAccountId,"Cuenta de ingreso")};});
+    return raw.map((line:LineInput,index)=>{const quantity=Number(line.quantity??1);const unitPrice=Number(line.unitPrice);if(!Number.isFinite(quantity)||!(quantity>0))throw new BadRequestException(`Línea ${index+1}: cantidad inválida.`);if(!Number.isFinite(unitPrice)||!(unitPrice>=0))throw new BadRequestException(`Línea ${index+1}: precio inválido.`);const discountAmount=Number(line.discountAmount??0);if(!Number.isInteger(discountAmount)||discountAmount<0)throw new BadRequestException(`Línea ${index+1}: el descuento debe ser un monto en pesos enteros.`);const net=roundCurrency(quantity*unitPrice-discountAmount);if(net<0)throw new BadRequestException(`Línea ${index+1}: el descuento supera el monto.`);
+      return{lineNumber:index+1,...(line.itemName?{itemName:fiscalText(line.itemName,`Nombre línea ${index+1}`,80)}:{}),...(line.unit?{unit:fiscalText(line.unit,`Unidad línea ${index+1}`,4)}:{}),description:requiredText(line.description,`Descripción línea ${index+1}`,1000),quantity,unitPrice,discountAmount,netAmount:net,isExempt:[34,41].includes(documentTypeCode)?true:Boolean(line.isExempt),clientServiceId:optionalUuid(line.clientServiceId,"Servicio"),catalogServiceId:optionalUuid(line.catalogServiceId,"Servicio de catálogo"),projectId:optionalUuid(line.projectId,"Proyecto"),costCenterId:optionalUuid(line.costCenterId,"Centro de costo"),revenueAccountId:optionalUuid(line.revenueAccountId,"Cuenta de ingreso")};});
   }
   /** Totales con la tasa de IVA vigente versionada a la fecha indicada (nunca constante en código). */
   private async totals(lines:Array<{netAmount:number;isExempt:boolean}>,documentTypeCode:number,date:string){
@@ -39,14 +40,31 @@ export class InvoiceService {
   }
   private async snapshot(clientId:string){const client=await this.ctx.sources.client(clientId);if(!client)throw new UnprocessableEntityException("Cliente no encontrado.");return{snapshot:{rut:client.billingRut||client.rut,legalName:client.billingLegalName||client.legalName,businessActivity:client.billingActivity||client.businessActivity,address:client.billingAddress||client.address,commune:client.commune,city:client.region,dteEmail:client.dteEmail||client.generalEmail},creditDays:client.creditDays,currency:client.currency};}
 
+  async preview(body:Row,actor:FinanceActor){
+    this.ctx.require(actor,"invoice.create");
+    const clientId=requiredUuid(body.clientId,"Cliente");await this.ctx.assertClientAccess(actor,clientId);
+    const code=Number(body.documentTypeCode??33);if(![33,34,39,41].includes(code))throw new BadRequestException("Tipo de documento inválido.");
+    const issueDate=invoiceDate(body.issueDate),lines=await this.buildLines(body.lines,code);
+    const totals=await this.totals(lines,code,issueDate);
+    const original=await this.snapshot(clientId),snapshot=receiverSnapshot(original.snapshot,body.clientSnapshot),dteOptions=invoiceOptions(body.dteOptions);
+    const missing=[!snapshot.legalName&&"Razón social",!validRut(snapshot.rut)&&"RUT válido",...(![39,41].includes(code)?[!snapshot.businessActivity&&"Giro",!snapshot.address&&"Dirección",!snapshot.commune&&"Comuna"]:[])].filter(Boolean);
+    const dueDate=body.dueDate?isoDate(body.dueDate,"Vencimiento"):null;
+    invoiceTerms(body.paymentTermsDays,0);
+    if(dteOptions.paymentForm===1&&dueDate&&dueDate!==issueDate)throw new BadRequestException("En pago contado, el vencimiento debe coincidir con la emisión.");
+    if(dueDate&&dueDate<issueDate)throw new BadRequestException("El vencimiento no puede ser anterior a la emisión.");
+    return{...totals,issueDate,dueDate,clientSnapshot:snapshot,dteOptions,lines,missing,currency:body.currency??original.currency??"CLP"};
+  }
+
   async createDraft(body:Row,actor:FinanceActor,origin:{billingScheduleId?:string|null;referenceInvoiceId?:string|null;referenceCode?:number|null;referenceReason?:string|null;system?:boolean}={}){
     if(!origin.system)this.ctx.require(actor,"invoice.create");const clientId=requiredUuid(body.clientId,"Cliente");if(!origin.system)await this.ctx.assertClientAccess(actor,clientId);
     const documentTypeCode=Number(body.documentTypeCode??(Array.isArray(body.lines)&&body.lines.every((l:LineInput)=>l.isExempt)?34:33));if(![33,34,39,41,56,61].includes(documentTypeCode))throw new BadRequestException("Tipo de documento no habilitado para facturación (33, 34, 39, 41, 56, 61).");
     if([56,61].includes(documentTypeCode)&&!origin.referenceInvoiceId)throw new BadRequestException("Las notas se crean desde el documento que referencian.");
     const declaredMethod=[39,41].includes(documentTypeCode)?boletaPaymentMethod(body.boletaPaymentMethod):null;
-    const lines=await this.buildLines(body.lines,documentTypeCode);const totals=await this.totals(lines,documentTypeCode,todayCl());const{snapshot,creditDays,currency}=await this.snapshot(clientId);const settings=await this.repo.settings();
-    const paymentTermsDays=body.paymentTermsDays!==undefined&&body.paymentTermsDays!==null&&body.paymentTermsDays!==""?Math.max(0,Math.min(365,Number(body.paymentTermsDays))):(creditDays||settings.defaultPaymentTermsDays);
-    const invoice=await guarded(()=>this.repo.create<Invoice>("invoices",{documentTypeCode,...([39,41].includes(documentTypeCode)?{boletaPaymentMethod:declaredMethod}:{}),clientId,saleId:optionalUuid(body.saleId,"Venta"),contractId:optionalUuid(body.contractId,"Contrato"),projectId:optionalUuid(body.projectId,"Proyecto"),clientServiceId:optionalUuid(body.clientServiceId,"Servicio"),billingScheduleId:origin.billingScheduleId??null,referenceInvoiceId:origin.referenceInvoiceId??null,referenceCode:origin.referenceCode??null,referenceReason:origin.referenceReason??null,currency:body.currency??currency??"CLP",exchangeRate:1,...totals,amountPaid:0,amountCredited:0,status:"DRAFT",issueDate:null,dueDate:body.dueDate?isoDate(body.dueDate,"Vencimiento"):null,paymentTermsDays,paymentTerms:optionalText(body.paymentTerms,200),description:optionalText(body.description,500),notes:optionalText(body.notes,1000),clientSnapshot:snapshot,taxDocumentId:null,approvalRequired:false,approvedBy:null,approvedAt:null,issuedAt:null,cancelledAt:null,cancelReason:null,createdBy:actor.userId}));
+    const issueDate=invoiceDate(body.issueDate);const lines=await this.buildLines(body.lines,documentTypeCode);const totals=await this.totals(lines,documentTypeCode,issueDate);const original=await this.snapshot(clientId);const snapshot=receiverSnapshot(original.snapshot,body.clientSnapshot);const{creditDays,currency}=original;const dteOptions=invoiceOptions(body.dteOptions);const settings=await this.repo.settings();
+    if(dteOptions.paymentForm===1&&body.dueDate&&isoDate(body.dueDate,"Vencimiento")!==issueDate)throw new BadRequestException("En pago contado, el vencimiento debe coincidir con la emisión.");
+    if(body.dueDate&&isoDate(body.dueDate,"Vencimiento")<issueDate)throw new BadRequestException("El vencimiento no puede ser anterior a la emisión.");
+    const paymentTermsDays=dteOptions.paymentForm===1?0:invoiceTerms(body.paymentTermsDays,creditDays??settings.defaultPaymentTermsDays);
+    const invoice=await guarded(()=>this.repo.create<Invoice>("invoices",{documentTypeCode,...([39,41].includes(documentTypeCode)?{boletaPaymentMethod:declaredMethod}:{}),clientId,saleId:optionalUuid(body.saleId,"Venta"),contractId:optionalUuid(body.contractId,"Contrato"),projectId:optionalUuid(body.projectId,"Proyecto"),clientServiceId:optionalUuid(body.clientServiceId,"Servicio"),billingScheduleId:origin.billingScheduleId??null,referenceInvoiceId:origin.referenceInvoiceId??null,referenceCode:origin.referenceCode??null,referenceReason:origin.referenceReason??null,currency:body.currency??currency??"CLP",exchangeRate:1,...totals,amountPaid:0,amountCredited:0,status:"DRAFT",issueDate,dteOptions,dueDate:body.dueDate?isoDate(body.dueDate,"Vencimiento"):null,paymentTermsDays,paymentTerms:optionalText(body.paymentTerms,200),description:optionalText(body.description,500),notes:optionalText(body.notes,1000),clientSnapshot:snapshot,taxDocumentId:null,approvalRequired:false,approvedBy:null,approvedAt:null,issuedAt:null,cancelledAt:null,cancelReason:null,createdBy:actor.userId}));
     for(const line of lines)await guarded(()=>this.repo.create("invoice_lines",{...line,invoiceId:invoice.id}));
     await this.repo.audit(actor,"INVOICE_DRAFT_CREATED","INVOICE",invoice.id,`${documentLabel(invoice)} borrador por ${money(invoice.totalAmount,invoice.currency)}`,{origin:origin.billingScheduleId?"BILLING_SCHEDULE":origin.referenceInvoiceId?"REFERENCE":body.saleId?"SALE":"MANUAL"});
     await this.repo.notify({eventKey:`invoice-draft:${invoice.id}`,type:"INVOICE_DRAFT_CREATED",title:`${documentLabel(invoice)} en borrador`,body:`${snapshot.legalName} · ${money(invoice.totalAmount,invoice.currency)}`,entityType:"INVOICE",entityId:invoice.id,href:`/finance/invoices?invoice=${invoice.id}`,audienceRole:"FINANZAS"});
@@ -54,10 +72,15 @@ export class InvoiceService {
   }
   async updateDraft(id:string,body:Row,actor:FinanceActor){
     this.ctx.requireAny(actor,"invoice.edit","invoice.create");const invoice=await this.ctx.must<Invoice>("invoices",id,"Factura");await this.ctx.assertClientAccess(actor,invoice.clientId);if(!["DRAFT","PENDING_APPROVAL"].includes(invoice.status))throw new ConflictException("Sólo se editan borradores; un documento emitido se corrige con nota de crédito o débito.");
-    const patch:Row={};if(body.boletaPaymentMethod!==undefined){if(![39,41].includes(invoice.documentTypeCode))throw new BadRequestException("El medio declarado sólo aplica a boletas.");patch.boletaPaymentMethod=boletaPaymentMethod(body.boletaPaymentMethod);}
-    if(body.lines!==undefined){const lines=await this.buildLines(body.lines,invoice.documentTypeCode);Object.assign(patch,await this.totals(lines,invoice.documentTypeCode,todayCl()));await guarded(()=>this.repo.removeWhere("invoice_lines",{invoiceId:id}));for(const line of lines)await guarded(()=>this.repo.create("invoice_lines",{...line,invoiceId:id}));}
-    for(const key of ["description","notes","paymentTerms"])if(body[key]!==undefined)patch[key]=optionalText(body[key],1000);if(body.dueDate!==undefined)patch.dueDate=body.dueDate?isoDate(body.dueDate,"Vencimiento"):null;if(body.paymentTermsDays!==undefined)patch.paymentTermsDays=Math.max(0,Math.min(365,Number(body.paymentTermsDays)||0));
-    if(invoice.status==="PENDING_APPROVAL"&&(body.lines!==undefined||body.boletaPaymentMethod!==undefined)){patch.status="DRAFT";patch.approvalRequired=false;}
+    const patch:Row={};if(body.dteOptions!==undefined)patch.dteOptions=invoiceOptions(body.dteOptions);if(body.clientSnapshot!==undefined)patch.clientSnapshot=receiverSnapshot(invoice.clientSnapshot,body.clientSnapshot);if(body.issueDate!==undefined)patch.issueDate=invoiceDate(body.issueDate);if(body.boletaPaymentMethod!==undefined){if(![39,41].includes(invoice.documentTypeCode))throw new BadRequestException("El medio declarado sólo aplica a boletas.");patch.boletaPaymentMethod=boletaPaymentMethod(body.boletaPaymentMethod);}
+    const replacement=body.lines!==undefined?await this.buildLines(body.lines,invoice.documentTypeCode):null;
+    if(replacement)Object.assign(patch,await this.totals(replacement,invoice.documentTypeCode,patch.issueDate??invoice.issueDate??todayCl()));
+    if(body.lines===undefined&&body.issueDate!==undefined){const lines=await this.repo.list<InvoiceLine>("invoice_lines",{invoiceId:id});Object.assign(patch,await this.totals(lines,invoice.documentTypeCode,patch.issueDate));}
+    for(const key of ["description","notes","paymentTerms"])if(body[key]!==undefined)patch[key]=optionalText(body[key],1000);if(body.dueDate!==undefined)patch.dueDate=body.dueDate?isoDate(body.dueDate,"Vencimiento"):null;if(body.paymentTermsDays!==undefined)patch.paymentTermsDays=invoiceTerms(body.paymentTermsDays,invoice.paymentTermsDays??0);
+    if((patch.dteOptions??invoice.dteOptions)?.paymentForm===1){const date=patch.issueDate??invoice.issueDate??todayCl();if(body.dueDate&&patch.dueDate!==date)throw new BadRequestException("En pago contado, el vencimiento debe coincidir con la emisión.");patch.dueDate=date;patch.paymentTermsDays=0;}
+    if((patch.dueDate??invoice.dueDate)&&(patch.dueDate??invoice.dueDate)<(patch.issueDate??invoice.issueDate??todayCl()))throw new BadRequestException("El vencimiento no puede ser anterior a la emisión.");
+    if(invoice.status==="PENDING_APPROVAL"&&Object.keys(patch).length){patch.status="DRAFT";patch.approvalRequired=false;}
+    if(replacement){await guarded(()=>this.repo.removeWhere("invoice_lines",{invoiceId:id}));for(const line of replacement)await guarded(()=>this.repo.create("invoice_lines",{...line,invoiceId:id}));}
     await guarded(()=>this.repo.update("invoices",id,patch));await this.repo.audit(actor,"INVOICE_DRAFT_UPDATED","INVOICE",id,`${documentLabel(invoice)} actualizada`,{before:{totalAmount:invoice.totalAmount},patch:Object.keys(patch)});return this.get(id,actor);
   }
   async submit(id:string,actor:FinanceActor){
@@ -74,8 +97,10 @@ export class InvoiceService {
   /** Se invoca al fijar la fecha de emisión: recalcula IVA vigente a esa fecha y congela snapshot del receptor. */
   async prepareForIssue(id:string,issueDate:string){
     const invoice=await this.ctx.must<Invoice>("invoices",id,"Factura");if(invoice.status!=="READY_TO_ISSUE")throw new ConflictException(invoice.status==="PENDING_APPROVAL"?"La factura requiere aprobación antes de emitir.":`La factura está ${invoice.status}; debe estar lista para emitir.`);
-    const lines=await this.repo.list<InvoiceLine>("invoice_lines",{invoiceId:id});const totals=[56,61].includes(invoice.documentTypeCode)&&invoice.totalAmount===0?{}:await this.totals(lines,invoice.documentTypeCode,issueDate);const{snapshot}=await this.snapshot(invoice.clientId);
-    const dueDate=invoice.dueDate&&invoice.dueDate>=issueDate?invoice.dueDate:addDays(issueDate,invoice.paymentTermsDays??0);
+    issueDate=invoiceDate(invoice.issueDate??issueDate);
+    const lines=await this.repo.list<InvoiceLine>("invoice_lines",{invoiceId:id});const totals=[56,61].includes(invoice.documentTypeCode)&&invoice.totalAmount===0?{}:await this.totals(lines,invoice.documentTypeCode,issueDate);const snapshot=invoice.clientSnapshot;
+    if(invoice.dueDate&&invoice.dueDate<issueDate)throw new BadRequestException("El vencimiento no puede ser anterior a la emisión.");
+    const dueDate=invoice.dteOptions?.paymentForm===1?issueDate:invoice.dueDate??addDays(issueDate,invoice.paymentTermsDays??0);
     return this.repo.update<Invoice>("invoices",id,{...totals,clientSnapshot:snapshot,issueDate,dueDate});
   }
   /** Transición a ISSUED: sólo tras aceptación del SII (o registro de emisión externa con evidencia). */

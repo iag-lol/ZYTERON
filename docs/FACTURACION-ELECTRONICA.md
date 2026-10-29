@@ -105,7 +105,24 @@ node --test control-runtime/test/dte-provider.test.mjs control-runtime/test/dte-
 
 La aceptación final se verifica con el SII. No se marca una factura emitida por la sola creación de su XML o recepción inicial del envío.
 
-Referencias oficiales:
+## Formulario de facturas · revisión del 29-10-2026
+
+Implementación local pendiente de publicación y verificación en Render. No modifica las facturas históricas ni la plantilla PDF pendiente de aprobación.
+
+- Secciones de documento y pago, receptor, productos o servicios y referencias comerciales, con resumen de neto, exento, IVA y total.
+- Receptor visible y editable por documento: razón social, giro, dirección, comuna, ciudad y correo. El RUT debe coincidir con el cliente seleccionado; se conserva el alcance de acceso. Los cambios no modifican la ficha maestra del cliente.
+- Fecha de emisión explícita, contado o crédito, tipo de venta y sugerencia de tipo de compra. El vencimiento al contado coincide con la emisión. El plazo acepta de 0 a 365 días.
+- Nombre de ítem, descripción adicional, unidad, cantidad, precio neto, descuento y exención. Las referencias comerciales admitidas son orden de compra (801), nota de pedido (802), contrato (803) y guía electrónica (52), hasta 10 referencias.
+- `POST /finance/invoices/preview` calcula con la tasa de IVA vigente a la fecha de emisión, comprueba acceso al cliente y devuelve campos faltantes. No escribe registros, reserva folios, firma ni envía al SII.
+- Los datos revisados se conservan en el borrador y en el XML. Preparar la emisión no sustituye la fecha elegida ni los datos del receptor por la ficha maestra. Los documentos emitidos conservan sus restricciones de inmutabilidad.
+- Migración requerida antes del despliegue: `20261029103000_invoice_composer_fields.sql` (metadatos del documento, nombre de ítem y unidad).
+- Esquemas oficiales originales actualizados al paquete del 19-02-2026. Fuente y SHA-256 individuales en `control-runtime/resources/sii/xsd/README.md`.
+
+Vista local de diseño: `output/review/zyteron-formulario-factura-v02.html`, con datos ficticios y sin guardado ni emisión. Revisión visual realizada en Firefox, escritorio y viewport de 390 × 844. No acredita la operación de una factura real ante el SII.
+
+Fuentes: [Guía de emisión del SII](https://www.sii.cl/destacados/factura_electronica/guias_ayuda/emitir_factura_electronica.pdf), [clasificación de compra y venta](https://www.sii.cl/preguntas_frecuentes/factura_electronica/001_003_6990.htm), [esquemas XML oficiales](https://www.sii.cl/servicios_online/3532-formato_xml-3811.html).
+
+### Referencias de implementación anteriores
 
 - Postulación: https://www.sii.cl/factura_electronica/factura_mercado/proc_postulacion.htm
 - Etapas: https://www.sii.cl/preguntas_frecuentes/factura_electronica/001_003_2050.htm

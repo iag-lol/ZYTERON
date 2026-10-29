@@ -1,6 +1,6 @@
 // Contratos del Módulo 07 · Finanzas y Contabilidad.
 // Montos en la moneda del documento; la contabilidad registra en moneda base (CLP). Fechas contables como "AAAA-MM-DD".
-import type { Role } from "./index";
+import type { Role } from "./index.js";
 
 // Matriz RBAC financiera: espejo exacto de role_permissions de la migración (verificado por test). Fuente única para API y web.
 export const financePermissions = ["finance.dashboard.view","invoice.view","invoice.create","invoice.edit","invoice.approve","invoice.issue","dte.view","dte.issue","dte.credit_note","dte.debit_note","dte.manage","receivable.view","collection.manage","payment.view","payment.record","payment.refund","payment.allocate","payable.view","payable.approve","payable.pay","expense.view","expense.create","expense.approve","bank.view","bank.import","bank.reconcile","accounting.view","journal.create","journal.review","journal.post","journal.reverse","period.view","period.close","period.reopen","tax.view","tax.review","tax.manage","report.finance.view","report.finance.export","commission.finance.manage","finance.settings.manage","quote_payment.view","quote_payment.manage","quote_payment.mark_paid"] as const;
@@ -40,14 +40,15 @@ export interface TaxRule { id: string; code: string; taxType: string; name: stri
 export interface TaxDocumentType { code: number; name: string; category: string; sign: number; enabledForIssue: boolean; certified: boolean; notes: string | null; }
 
 export type InvoiceStatus = "DRAFT" | "PENDING_APPROVAL" | "READY_TO_ISSUE" | "ISSUING" | "ISSUED" | "PARTIALLY_PAID" | "PAID" | "CANCELLED" | "CREDITED" | "VOID";
-export interface InvoiceLine { id: string; invoiceId: string; lineNumber: number; description: string; quantity: number; unitPrice: number; discountAmount: number; netAmount: number; isExempt: boolean; clientServiceId: string | null; catalogServiceId: string | null; projectId: string | null; costCenterId: string | null; revenueAccountId: string | null; }
+export interface InvoiceLine { id: string; invoiceId: string; lineNumber: number; itemName?:string|null; unit?:string|null; description: string; quantity: number; unitPrice: number; discountAmount: number; netAmount: number; isExempt: boolean; clientServiceId: string | null; catalogServiceId: string | null; projectId: string | null; costCenterId: string | null; revenueAccountId: string | null; }
 export interface ClientBillingSnapshot { rut: string | null; legalName: string; businessActivity: string | null; address: string | null; commune: string | null; city: string | null; dteEmail: string | null; }
+export interface InvoiceDteOptions { paymentForm?:number; saleType?:number; purchaseType?:number; references?:Array<{documentTypeCode:number;folio:string;date:string;reason:string}>; }
 export interface Invoice {
   id: string; invoiceNumber: string; documentTypeCode: number; clientId: string; clientName?: string | null; saleId: string | null; contractId: string | null; projectId: string | null; clientServiceId: string | null;
   billingScheduleId: string | null; referenceInvoiceId: string | null; referenceCode: number | null; referenceReason: string | null; currency: string; exchangeRate: number;
   netAmount: number; exemptAmount: number; taxAmount: number; totalAmount: number; taxRate: number | null; taxRuleVersionId: string | null; amountPaid: number; amountCredited: number; balanceDue: number;
   status: InvoiceStatus; effectiveStatus: InvoiceStatus | "OVERDUE"; issueDate: string | null; dueDate: string | null; paymentTermsDays: number | null; paymentTerms: string | null; description: string | null; notes: string | null;
-  boletaPaymentMethod?: number | null; clientSnapshot: Partial<ClientBillingSnapshot>; taxDocumentId: string | null; approvalRequired: boolean; approvedBy: string | null; approvedAt: string | null; issuedAt: string | null;
+  boletaPaymentMethod?: number | null; dteOptions?:InvoiceDteOptions; clientSnapshot: Partial<ClientBillingSnapshot>; taxDocumentId: string | null; approvalRequired: boolean; approvedBy: string | null; approvedAt: string | null; issuedAt: string | null;
   cancelledAt: string | null; cancelReason: string | null; createdBy: string | null; createdAt: string; updatedAt: string; lines?: InvoiceLine[]; daysOverdue?: number;
 }
 export interface BillingSchedule { id: string; clientId: string; clientName?: string | null; clientServiceId: string | null; contractId: string | null; description: string; frequency: "MONTHLY" | "QUARTERLY" | "SEMIANNUAL" | "ANNUAL" | "CUSTOM_DAYS"; intervalDays: number | null; amount: number; currency: string; isExempt: boolean; nextBillingDate: string; endDate: string | null; active: boolean; paymentTermsDays: number | null; revenueAccountId: string | null; costCenterId: string | null; createdAt: string; }

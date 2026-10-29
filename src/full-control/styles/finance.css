@@ -296,3 +296,31 @@
 :where(.zy-full-control) .fx-client-tabs button.active{background:#edf4ff;border-color:#a4c3f1;color:#174382;font-weight:700}
 :where(.zy-full-control) .fx-client-finance .fx-row-actions{flex-wrap:wrap;max-width:360px}
 :where(.zy-full-control) .fx-client-finance .fx-row-actions>button{white-space:normal}
+.invoice-composer-drawer.wide{width:min(1240px,100%);max-width:1240px}
+.invoice-composer-drawer .fx-drawer-body{padding:0;background:#f6f8f6;display:block}
+.invoice-composer-drawer>header{padding:24px 28px}
+.invoice-compose-form{min-width:0}
+.invoice-compose{display:grid;grid-template-columns:minmax(0,1fr) 286px;gap:24px;padding:24px 28px;align-items:start}
+.invoice-compose-main{display:grid;gap:22px;min-width:0}
+.invoice-section{margin:0;padding:20px;border:1px solid #d7e3dc;border-radius:14px;background:#fff;min-width:0;display:grid;gap:16px}
+.invoice-section legend{float:left;width:100%;padding:0;font-size:16px;font-weight:650;display:flex;align-items:center;gap:10px;color:#153f32}
+.invoice-section legend b{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:8px;font-size:11px;background:#edf4ee;color:#567764}
+.invoice-section legend small{margin-left:auto;color:#718077;font-weight:400;font-size:11px}
+.invoice-grid{display:grid;gap:16px;min-width:0}.invoice-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.invoice-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.invoice-compose .fx-field{min-width:0;gap:7px}.invoice-compose .fx-field>span{font-size:12px;line-height:1.5}.invoice-compose input,.invoice-compose select,.invoice-compose textarea{width:100%;min-width:0;box-sizing:border-box;font-size:13px;line-height:1.5;padding:10px 11px;border-radius:8px}
+.invoice-compose textarea{resize:vertical}.invoice-compose input[readonly]{background:#f4f7f4;color:#566b5f}
+.invoice-client-search{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.4fr);gap:14px;min-width:0}
+.invoice-receiver-name{background:#f0f6f1;padding:15px;border-radius:9px;display:grid;gap:5px;overflow-wrap:anywhere}.invoice-receiver-name strong{font-size:14px;line-height:1.6}.invoice-receiver-name span{font-size:12px;color:#557461}
+.invoice-help{font-size:11px!important;line-height:1.65!important;color:#6b7f72;margin:0}
+.invoice-items{display:grid;gap:16px;min-width:0}.invoice-item{border:1px solid #dbe5df;border-radius:10px;padding:16px;display:grid;gap:14px;min-width:0}.invoice-item-heading{display:flex;align-items:center;justify-content:space-between;min-height:28px;color:#426653;font-size:12px}
+.invoice-item-numbers{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,.6fr) minmax(0,1.4fr) minmax(0,1.2fr);gap:12px;min-width:0}
+.invoice-item-bottom{display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid #e6ede8;padding-top:12px;font-size:12px}.invoice-item-bottom label{display:flex;align-items:center;gap:7px}.invoice-item-bottom input{width:16px;height:16px;padding:0}.invoice-item-bottom strong{margin-left:8px;font-variant-numeric:tabular-nums}
+.invoice-reference{border:1px solid #dbe5df;padding:14px;border-radius:9px;display:grid;gap:12px}
+.invoice-summary{position:sticky;top:0;min-width:0;background:#fff;border:1px solid #d3e0d7;border-radius:14px;padding:22px 19px;color:#244c3a}
+.invoice-summary-tag{display:inline-block;background:#eaf2ec;color:#486d54;border-radius:5px;letter-spacing:1.5px;font-size:9px;font-weight:700;padding:5px 7px}.invoice-summary h4{font-size:17px;margin:16px 0 8px}.invoice-summary>p{font-size:12px;line-height:1.65;overflow-wrap:anywhere;color:#607567}
+.invoice-summary dl{margin:22px 0 12px;display:grid;gap:14px}.invoice-summary dl>div{display:flex;justify-content:space-between;gap:12px;font-size:12px}.invoice-summary dt{color:#6b7d70}.invoice-summary dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}.invoice-summary dl>.invoice-total{border-top:1px solid #dfe8e2;padding-top:18px;margin-top:5px;display:grid;gap:6px}.invoice-total dt{color:#244c3a;font-weight:600}.invoice-total dd{font-size:28px;text-align:left;letter-spacing:-.8px}
+.invoice-summary-note{font-size:11px;line-height:1.7;border-top:1px solid #e1e9e3;margin-top:20px;padding-top:16px;color:#6b7f72}.invoice-error{color:#a42b24;font-size:12px;line-height:1.65;overflow-wrap:anywhere}.invoice-warning{background:#fff8e8;color:#795d24;border-radius:8px;padding:12px;margin-top:16px;font-size:11px;line-height:1.6}.invoice-warning p{margin:5px 0 0}
+.invoice-compose-actions{position:sticky;bottom:0;background:#fff;border-top:1px solid #d5e1d9;padding:18px 28px;display:flex;justify-content:space-between;align-items:center;gap:16px;z-index:1}.invoice-compose-actions>span{font-size:11px;color:#6c7f72}.invoice-compose-actions>div{display:flex;gap:10px}.invoice-review-banner{border-left:3px solid #9ecb60;padding:14px 16px;background:#edf5e9;font-size:13px;border-radius:0 8px 8px 0}.invoice-review-banner p{font-size:12px;line-height:1.6;margin:6px 0 0}.invoice-compose.is-review fieldset:disabled{opacity:1}.invoice-compose.is-review input:disabled,.invoice-compose.is-review select:disabled,.invoice-compose.is-review textarea:disabled{opacity:1;color:#254936;background:#f9fbf9;-webkit-text-fill-color:#254936}
+@media(max-width:1050px){.invoice-compose{grid-template-columns:minmax(0,1fr) 250px;gap:18px;padding:20px}.invoice-grid.three{grid-template-columns:repeat(2,minmax(0,1fr))}.invoice-client-search{grid-template-columns:minmax(0,1fr)}.invoice-section{padding:17px}.invoice-item-numbers{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.invoice-compose{grid-template-columns:minmax(0,1fr);padding:16px;gap:18px}.invoice-summary{position:static}.invoice-compose-actions{padding:14px 16px;flex-wrap:wrap}.invoice-compose-actions>span{display:none}.invoice-compose-actions>div{width:100%;justify-content:space-between}.invoice-composer-drawer>header{padding:20px 16px}.invoice-compose .fx-field>span{font-size:12px}.invoice-summary dl>.invoice-total{display:flex;align-items:center}.invoice-total dd{font-size:25px}}
+@media(max-width:430px){.invoice-grid.two,.invoice-grid.three{grid-template-columns:minmax(0,1fr)}.invoice-section{padding:14px}.invoice-item{padding:12px}.invoice-item-bottom{align-items:flex-start;flex-direction:column}.invoice-compose{padding:12px}}
