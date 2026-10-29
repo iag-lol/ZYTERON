@@ -57,6 +57,8 @@ export function safeDestination(root, relative) {
 async function database(env) {
   const target = new URL(env.DATABASE_URL);
   if (!/\.supabase\.(co|com)$/.test(target.hostname)) throw Error('FISCAL_BACKUP_DATABASE_HOST');
+  // El bloqueo debe conservar la misma sesión entre las transacciones del respaldo.
+  if (target.hostname.endsWith('.pooler.supabase.com') && target.port === '6543') target.port = '5432';
   for (const key of ['sslmode', 'sslcert', 'sslkey', 'sslrootcert']) target.searchParams.delete(key);
   const db = new pg.Client({ connectionString: target.href, connectionTimeoutMillis: 15000, ssl: { rejectUnauthorized: true, ca: env.DATABASE_SSL_CA || await readFile(new URL('../src/lib/database/supabase-ca.crt', import.meta.url), 'utf8') } });
   db.on('error', () => {});
@@ -84,7 +86,7 @@ export async function createFiscalBackup({ env = process.env, force = false, loc
   const id = new Date().toISOString().replaceAll(':', '-'), day = id.slice(0, 10);
   let locked = false;
   try {
-    locked = (await db.query("select pg_try_advisory_lock(hashtext('zyteron:fiscal-backup')) as locked")).rows[0].locked;
+    locked = (await db.query("select pg_try_advisory_lock(hashtext('zyteron:fiscal-backup:session')) as locked")).rows[0].locked;
     if (!locked) return { state: 'BUSY' };
     const { data: existingBucket, error: bucketError } = await store.getBucket(bucket);
     if (bucketError || !existingBucket || existingBucket.public) throw Error('FISCAL_BACKUP_PRIVATE_BUCKET_REQUIRED');
@@ -150,7 +152,7 @@ export async function createFiscalBackup({ env = process.env, force = false, loc
     return summary;
   } finally {
     await db.query('ROLLBACK').catch(() => {});
-    if (locked) await db.query("select pg_advisory_unlock(hashtext('zyteron:fiscal-backup'))").catch(() => {});
+    if (locked) await db.query("select pg_advisory_unlock(hashtext('zyteron:fiscal-backup:session'))").catch(() => {});
     await db.end(); key.fill(0);
   }
 }
