@@ -49,6 +49,9 @@ const { bootstrapControlApi } = await import(
   pathToFileURL(resolve("control-runtime/dist/main.js")).href
 );
 await bootstrapControlApi();
+process.env.FISCAL_BACKUP_ENABLED ||= "true";
+const { startFiscalBackupWorker } = await import("./fiscal-backup.mjs");
+startFiscalBackupWorker();
 process.argv = [
   process.execPath,
   resolve("node_modules/next/dist/bin/next"),
