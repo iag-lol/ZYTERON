@@ -1,12 +1,12 @@
 # Facturación electrónica de Zyteron
 
-Estado al 21-10-2026: emisión tributaria en producción pendiente de activación y certificación. Los borradores internos y comprobantes de pago no sustituyen una factura aceptada por el SII.
+Estado verificado al 29-10-2026: producción autorizada y habilitada para facturas electrónicas (33), exentas (34), notas de débito (56) y crédito (61). Declaración presentada; Resolución 80 del 22-08-2014 y 28 folios productivos cargados. Los borradores internos y comprobantes de pago no sustituyen una factura aceptada por el SII. La primera emisión real requiere los datos de una operación y su aprobación. [Estado y evidencia de autorización](SII-CERTIFICACION.md).
 
 ## Certificado digital
 
 El certificado debe pertenecer al firmante autorizado para operar por Zyteron SpA. La compra y validación de identidad se completan personalmente en el proveedor acreditado. No se comparte la clave por chat ni se carga el PFX en formularios generales.
 
-Certificado Acepta adquirido, activado y descargado. Validación local aprobada: llave RSA de 2048 bits coincidente, exportación cifrada comprobada y vigencia hasta el 21-10-2029 a las 01:31 (America/Santiago). Secreto cifrado instalado en el servicio existente de Zyteron en Render y metadatos registrados. La autenticación técnica con el SII en certificación fue verificada. La cadena de confianza completa no tiene una validación independiente registrada. La activación del certificado y la autenticación no acreditan autorización para emitir en producción.
+Certificado Acepta adquirido, activado y descargado. Validación local aprobada: llave RSA de 2048 bits coincidente, exportación cifrada comprobada y vigencia hasta el 21-10-2029 a las 01:31 (America/Santiago). Secreto cifrado instalado en el servicio existente de Zyteron en Render y metadatos registrados. La autenticación técnica con el SII en certificación y producción fue verificada; Firefox confirmó servicio conectado, firma y autenticación el 29-10-2026 a las 00:19. La cadena de confianza completa no tiene una validación independiente registrada. La activación del certificado y la autenticación no acreditan autorización para emitir en producción.
 
 El secreto de firma se configura exclusivamente en el servidor existente:
 
@@ -52,7 +52,7 @@ npm run test:dte-certificate
 2. Postular al sistema propio mediante el representante autorizado, con certificado vigente. Configurar SII directo en certificación. Registrar la fecha real de postulación y resolución 0 para ese ambiente.
 3. Obtener CAF del ambiente de certificación y cargarlo en el almacenamiento cifrado. Habilitar los tipos de documento del set asignado sin marcarlos como certificados.
 4. Ejecutar el set de pruebas asignado por el SII, simulación, intercambio, muestras y declaración exigidos. Conservar las respuestas y evidencia de cada aprobación.
-5. Completar y verificar la representación impresa con PDF417 y el intercambio electrónico ante el SII. La representación local descrita más abajo todavía no tiene aprobación tributaria; la validación XSD no acredita certificación.
+5. Completar y verificar la representación impresa con PDF417 y el intercambio electrónico ante el SII. La revisión 278578, número 1, aprobó las 60 muestras impresas. La validación XSD por sí sola no acredita certificación.
 6. Registrar la resolución y autorización reales, habilitar únicamente tipos certificados y cargar CAF de producción. Verificar la primera emisión autorizada mediante respuesta oficial del SII y entrega del XML/PDF al receptor.
 
 Los folios de prueba no son válidos en producción. La prueba de conexión consulta la semilla y, cuando existe certificado, intenta autenticación; no emite facturas ni acredita autorización tributaria.
@@ -61,38 +61,38 @@ Los folios de prueba no son válidos en producción. La prueba de conexión cons
 
 Postulación aceptada por el SII el 21-10-2026 para ZYTERON SPA, con software `ZYTERON CONTROL - DESARROLLO PROPIO`. Administrador DTE: representante legal titular del certificado. Correo administrativo: `eduardo.avila@zyteron.cl`; contacto SII e intercambio: `contacto@zyteron.cl`.
 
-Todas las opciones del formulario permanecen seleccionadas. El catálogo conserva los siguientes documentos, aunque su flujo específico esté pendiente:
+La postulación incluyó los tipos exigidos por el set del SII. El catálogo conserva también documentos cuyo flujo operativo específico está pendiente:
 
 | Código | Documento | Implementación local en SII directo |
 | --- | --- | --- |
-| 33 | Factura electrónica | Implementada; pendiente de certificación real |
-| 34 | Factura no afecta o exenta electrónica | Implementada; pendiente de certificación real |
+| 33 | Factura electrónica | Certificada y habilitada en producción |
+| 34 | Factura no afecta o exenta electrónica | Certificada y habilitada en producción |
 | 39 | Boleta electrónica | Pendiente |
 | 41 | Boleta no afecta o exenta electrónica | Pendiente |
 | 43 | Liquidación factura electrónica | Pendiente |
 | 46 | Factura de compra electrónica | Pendiente |
 | 52 | Guía de despacho electrónica | Pendiente |
-| 56 | Nota de débito electrónica | Implementada; pendiente de certificación real |
-| 61 | Nota de crédito electrónica | Implementada; pendiente de certificación real |
+| 56 | Nota de débito electrónica | Certificada y habilitada en producción |
+| 61 | Nota de crédito electrónica | Certificada y habilitada en producción |
 | 110 | Factura de exportación electrónica | Pendiente |
 | 111 | Nota de débito de exportación electrónica | Pendiente |
 | 112 | Nota de crédito de exportación electrónica | Pendiente |
 
 Implementación, certificación y habilitación son estados independientes. La consulta del catálogo no crea registros ni cambia la configuración persistente. Los códigos ausentes de la base aparecen con estado explícito y sin acciones de habilitación. Cualquier incorporación persistente requiere un cambio de datos revisado y autorizado.
 
-La postulación permite operar en certificación, pero no certifica documentos ni autoriza producción. El SII informa que la autorización final con sistema propio termina la condición de usuario activo del facturador gratuito. Se requiere respaldo de los documentos actuales antes de ese cambio. Los documentos ya emitidos conservan su folio y no deben volver a emitirse por aparecer un borrador interno.
+La declaración del 29-10-2026 completó la autorización del software propio. El SII advirtió el término del acceso al facturador gratuito Mipyme; esta consecuencia fue aceptada expresamente. Los once documentos históricos emitidos y 32 recibidos se conservaron y recuperaron antes de confirmar el cambio. Los documentos ya emitidos conservan su folio y no deben volver a emitirse por aparecer un borrador interno.
 
-El set oficial de pruebas y sus respuestas forman parte de la evidencia pendiente. El SII valida contra el último set obtenido: no se regenera automáticamente durante reintentos de descarga.
+El set oficial, los libros, la simulación, el intercambio y las muestras aprobadas forman parte de la evidencia de certificación. El SII valida contra el último set obtenido: no se regenera automáticamente durante reintentos de descarga.
 
 ## Representación impresa local
 
-Cambios locales pendientes de publicación. Para los tipos 33, 34, 56 y 61, el PDF se construye desde el XML firmado y el sobre de envío archivados. Se verifican la huella del archivo, la correspondencia de folio, emisor, receptor y totales, el rango CAF y la firma del timbre TED con su llave pública. La resolución se obtiene del sobre original; no se reemplaza con la configuración actual.
+Representación impresa publicada y muestras aprobadas por el SII. Para los tipos 33, 34, 56 y 61, el PDF se construye desde el XML firmado y el sobre de envío archivados. Se verifican la huella del archivo, la correspondencia de folio, emisor, receptor y totales, el rango CAF y la firma del timbre TED con su llave pública. La resolución se obtiene del sobre original; no se reemplaza con la configuración actual.
 
 El timbre PDF417 se genera localmente con `bwip-js`, sin enviar documentos a servicios de imágenes. Compacción binaria, corrección nivel 5, módulo de 0,5 puntos, filas de 3 módulos y zona libre de 18 puntos. Las muestras de certificación muestran `SIN VALIDEZ TRIBUTARIA`. Un documento rechazado o pendiente no se presenta como aceptado.
 
-Producción requiere `DTE_SII_OFFICE` con la oficina SII real del emisor, verificada previamente. Esta variable no está configurada ni se deduce del domicilio. No se genera un timbre ficticio cuando falta evidencia. Documentos con extensiones no soportadas o contenido que excede la página se rechazan expresamente.
+Producción requiere `DTE_SII_OFFICE` con la oficina SII real del emisor, verificada previamente. La variable está configurada en el servidor y el requisito de oficina pasa en la comprobación productiva; no se deduce del domicilio. No se genera un timbre ficticio cuando falta evidencia. Documentos con extensiones no soportadas o contenido que excede la página se rechazan expresamente.
 
-La verificación del timbre no reemplaza la validación completa de la firma XML, de la autoridad emisora del CAF ni la aprobación de muestras ante el SII. Intercambio, acuses, boletas, exportación y los demás flujos específicos requieren implementación y certificación propias.
+La verificación del timbre no reemplaza la validación completa de la firma XML, de la autoridad emisora del CAF ni la aprobación de muestras ante el SII. El intercambio y los recibos siguen los procedimientos de [operación y recuperación](SII-OPERACION-Y-RECUPERACION.md). Boletas, exportación y los demás flujos operativos no implementados permanecen deshabilitados.
 
 ## Validación local
 

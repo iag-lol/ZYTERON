@@ -1,6 +1,35 @@
 # Certificación SII
 
-## Revisión vigente: 28-10-2026, 23:45
+## Revisión vigente: 29-10-2026, 00:26
+
+**ZYTERON SPA, RUT 78398774-0, tiene autorización productiva y la emisión está habilitada en la web para los tipos 33, 34, 56 y 61.** La Declaración de Cumplimiento fue presentada el **29-10-2026 a las 00:11**, con confirmación expresa del representante y aceptación de la salida del facturador gratuito Mipyme. La respuesta final `pe_avance9` confirma que la empresa cumplió los requisitos de emisor bajo la Resolución 80 de 2014. La consulta productiva independiente muestra **Resolución 80 del 22-08-2014**, reemplazando el antecedente anterior de Resolución 99.
+
+El registro del SII autoriza a la empresa los códigos 33, 34, 43, 46, 52, 56, 61, 110, 111 y 112. El alcance operativo habilitado en Zyteron corresponde únicamente a los cuatro formatos implementados y comprobados: factura afecta, factura exenta, nota de débito y nota de crédito. Los otros tipos y las boletas permanecen deshabilitados en la aplicación.
+
+Las cuatro solicitudes de timbraje productivo fueron autorizadas expresamente y aprobadas por el SII el **29-10-2026 entre las 00:13 y 00:14**. Hay **28 folios disponibles**, sin folios reservados ni utilizados en esta activación:
+
+| Tipo | Documento | Rango | Disponibles |
+| --- | --- | --- | --- |
+| 33 | Factura electrónica | 17–26 | 10 |
+| 34 | Factura no afecta o exenta | 1–10 | 10 |
+| 56 | Nota de débito | 1–4 | 4 |
+| 61 | Nota de crédito | 1–4 | 4 |
+
+Los CAF están cifrados en `finance-secrets`, identificados como `PRODUCTION`. Se verificaron RUT, tipo, rango, SHA-256, correspondencia entre llave privada y pública del CAF y recuperación del contenido cifrado. Los originales se custodian fuera del repositorio y del proyecto Supabase, en una carpeta privada de la empresa.
+
+La configuración persistida registra `SII_DIRECT`, `PRODUCTION`, autorización productiva activa y resolución 80 del 22-08-2014. Los cuatro tipos están certificados y habilitados, con auditoría de las modificaciones. Los **15 requisitos** de preparación pasan para cada uno de ellos. La comprobación desde la web publicada, en Firefox el **29-10-2026 a las 00:19**, confirmó **SERVICIO CONECTADO** y **FIRMA Y AUTENTICACIÓN VERIFICADAS**; el panel muestra producción autorizada, resolución correcta y diez folios de factura disponibles.
+
+Se comprobó el acceso a **Finanzas → Facturación → Nueva factura**. El formulario de borrador abre y conserva la aprobación previa a la emisión; se cerró sin guardar datos. **No se emitió ninguna factura real ni se alteraron facturas o pagos comerciales.** La primera emisión requiere una operación real, revisión de sus datos y aprobación; su aceptación final se verificará mediante la respuesta correspondiente del SII.
+
+Render confirmó **Live** para `0ed8409ca32a639818f96c598cc35f51886f83eb`, despliegue `dep-dbhbn4hsrm7s73fcvdq0`, el **29-10-2026 a las 00:23:45**. El build completo y la comprobación TypeScript pasaron. Firefox, con una carga nueva de la versión publicada, muestra **Emisión productiva preparada**, **Facturación electrónica en producción** y ambiente **Producción** seleccionado para los CAF; el aviso fijo de certificación pendiente ya no aparece. Esta presentación utiliza la configuración persistida y conserva el ambiente de un archivo CAF que ya esté seleccionado. El worker de respaldo de la versión anterior `146bbc0` también registró `CURRENT` el **28-10-2026 a las 23:44**.
+
+El respaldo posterior a la activación quedó confirmado y su copia cifrada externa fue recuperada el **29-10-2026 a las 00:25**: **65 tablas, 1.000 registros y 404 archivos**, con **136 referencias**, los **43 documentos históricos** y los **cuatro CAF productivos** verificados. La comprobación tomó 138 segundos y se ejecutó con PostgreSQL aislado, sin modificar la base productiva. El manifiesto tiene SHA-256 `54178a38d12a2ce21b1258c88dd6789f1f389207784c81779e02988fa6a4e9ae`. Seguridad registra la nueva prueba **PASSED** y el destino de respaldo actualizado. El alcance comprobado es la recuperación del archivo fiscal, no la restauración completa de la plataforma.
+
+Evidencia privada: `output/sii-production-20261029/` del repositorio publicado, con `official-authorization.json`, `production-activation.json`, `deploy.json`, `backup-result.json`, `recovery-result.json`, `recovery-records.json` y los metadatos de los cuatro CAF. No se incluyen certificados, llaves, contraseñas ni CAF completos en Git. Procedimientos vigentes: [Operación y recuperación](SII-OPERACION-Y-RECUPERACION.md). Instrucciones: [Facturación electrónica](FACTURACION-ELECTRONICA.md).
+
+Fuentes: [declaración final del SII](https://maullin.sii.cl/cvc_cgi/dte/pe_avance9), [registro productivo](https://palena.sii.cl/cvc_cgi/dte/ee_empresa_rut?RUT_EMP=78398774&DV_EMP=0) y [timbraje electrónico](https://palena.sii.cl/cvc_cgi/dte/of_solicita_folios).
+
+## Antecedente del 28-10-2026, 23:45
 
 La certificación del SII está finalizada y las 60 muestras impresas de la revisión **278578**, número **1**, están **APROBADAS**. La **Declaración de Cumplimiento de Requisitos no se ha presentado**. La autorización productiva del software propio no está acreditada y la emisión real permanece bloqueada.
 
