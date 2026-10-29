@@ -107,7 +107,7 @@ La aceptación final se verifica con el SII. No se marca una factura emitida por
 
 ## Formulario de facturas · revisión del 29-10-2026
 
-Implementación local pendiente de publicación y verificación en Render. No modifica las facturas históricas ni la plantilla PDF pendiente de aprobación.
+Publicado en Render y verificado el 29-10-2026. Commit activo: `a0aa8e2bfa69aa0a6694a9ffc13ab68f7e446945`, despliegue `dep-dbhcseg473hc739knksg` (Live). El formulario base se comprobó en Firefox con la versión `1041e6e`: selección de Fenice, descuento, cálculo del servidor y revisión previa sin guardar ni emitir. La revisión posterior incorpora edición de borradores. No modifica facturas históricas ni la plantilla PDF pendiente de aprobación.
 
 - Secciones de documento y pago, receptor, productos o servicios y referencias comerciales, con resumen de neto, exento, IVA y total.
 - Receptor visible y editable por documento: razón social, giro, dirección, comuna, ciudad y correo. El RUT debe coincidir con el cliente seleccionado; se conserva el alcance de acceso. Los cambios no modifican la ficha maestra del cliente.
@@ -116,8 +116,10 @@ Implementación local pendiente de publicación y verificación en Render. No mo
 - `POST /finance/invoices/preview` calcula con la tasa de IVA vigente a la fecha de emisión, comprueba acceso al cliente y devuelve campos faltantes. No escribe registros, reserva folios, firma ni envía al SII.
 - Los borradores en estado DRAFT o PENDING_APPROVAL pueden abrirse mediante «Editar borrador». El cliente y el tipo de documento se conservan; se pueden completar los datos del receptor, fechas, ítems, pago y referencias. Una edición invalida la aprobación pendiente.
 - Los datos revisados se conservan en el borrador y en el XML. Preparar la emisión no sustituye la fecha elegida ni los datos del receptor por la ficha maestra. Los documentos emitidos conservan sus restricciones de inmutabilidad.
-- Migración requerida antes del despliegue: `20261029103000_invoice_composer_fields.sql` (metadatos del documento, nombre de ítem y unidad).
+- Migración aplicada en producción antes del despliegue: `20261029103000_invoice_composer_fields.sql` (metadatos del documento, nombre de ítem y unidad).
 - Esquemas oficiales originales actualizados al paquete del 19-02-2026. Fuente y SHA-256 individuales en `control-runtime/resources/sii/xsd/README.md`.
+
+Validación: 94 pruebas de facturación, permisos, edición, XML, timbre, impresión, folios y flujos existentes aprobadas; backend compilado y frontend verificado con TypeScript. Compilación completa local con fuentes ficticias de lectura y compilación real en Render aprobadas. La consulta contra datos productivos y la revisión del formulario no crearon registros ni consumieron folios. Permanecen 28 folios productivos disponibles. La ficha consultada de Fenice carece de giro y comuna; deben completarse con información tributaria verificada antes de emitir.
 
 Vista local de diseño: `output/review/zyteron-formulario-factura-v02.html`, con datos ficticios y sin guardado ni emisión. Revisión visual realizada en Firefox, escritorio y viewport de 390 × 844. No acredita la operación de una factura real ante el SII.
 
