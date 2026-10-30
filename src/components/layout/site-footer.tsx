@@ -40,6 +40,7 @@ const footerColumns = [
   {
     title: "Empresa",
     items: [
+      { label: "Denurvia: investigaciones internas", href: "/soluciones/denurvia" },
       { label: "Nosotros", href: "/quienes-somos" },
       { label: "Casos de éxito", href: "/casos-exito" },
       { label: "Demos de páginas web", href: "/demos" },
