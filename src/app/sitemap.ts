@@ -25,6 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Sin lastModified en rutas estáticas: emitir new Date() en cada build le
   // señala a Google cambios falsos y degrada la confianza en el sitemap.
   const staticRoutes = [
+    { path: "/soluciones/denurvia", priority: 0.7, changeFrequency: "monthly" as const },
     { path: "", priority: 1, changeFrequency: "weekly" as const },
     { path: "/servicios", priority: 0.9, changeFrequency: "monthly" as const },
     { path: "/planes", priority: 0.8, changeFrequency: "monthly" as const },
