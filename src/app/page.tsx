@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
-  Briefcase,
+  ArrowUpRight,
   Check,
   Globe,
   LayoutDashboard,
+  MapPin,
   MonitorSmartphone,
-  Search,
   Settings,
   ShieldCheck,
-  TrendingUp,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
@@ -34,6 +33,12 @@ import { Reveal } from "@/components/home/reveal";
 import { CountUp } from "@/components/home/count-up";
 import { ScrollProgress } from "@/components/home/scroll-progress";
 import { HomeFaqAccordion } from "@/components/home/home-faq";
+import { CoverageMarquee } from "@/components/home/coverage-marquee";
+import { ScrollScenes } from "@/components/home/scroll-scenes";
+import { HeroStage } from "@/components/home/hero-stage";
+import { DashboardMockup } from "@/components/home/dashboard-mockup";
+import { cssVars } from "@/components/home/css-vars";
+import "@/components/home/cinematic.css";
 
 export const revalidate = 3600;
 
@@ -469,6 +474,109 @@ const clientTypes = [
   },
 ];
 
+/** Titular del hero dividido en palabras para la entrada con máscara. */
+const headlineAccent = ["Páginas", "web", "profesionales"];
+const headlineRest = ["para", "empresas", "que", "necesitan", "vender"];
+
+/** Cinta de capacidades que se desplaza con el scroll (decorativa). */
+const tickerRows: { dir: "left" | "right"; items: string[] }[] = [
+  {
+    dir: "left",
+    items: ["Sitios corporativos", "Landing pages", "Tiendas online", "SEO técnico", "Paneles administrativos"],
+  },
+  {
+    dir: "right",
+    items: ["Sistemas a medida", "Intranets", "Automatización", "Integración de pagos", "Soporte TI"],
+  },
+];
+
+const manifestoWords =
+  `Más de ${siteConfig.business.experienceYears} años en tecnología nos enseñaron algo simple: una página web no es solo diseño, es una herramienta para vender. Por eso trabajamos con cotización formal, etapas documentadas, revisión en cada entrega y soporte después de publicar.`.split(
+    " ",
+  );
+const manifestoAccent = new Set(["herramienta", "vender."]);
+
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return <p className="cx-eyebrow">{children}</p>;
+}
+
+function TickerStar() {
+  return (
+    <svg className="cx-ticker-star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 0c.6 6.6 5.4 11.4 12 12-6.6.6-11.4 5.4-12 12-.6-6.6-5.4-11.4-12-12C6.6 11.4 11.4 6.6 12 0Z" />
+    </svg>
+  );
+}
+
+/** Ilustración breve por línea de servicio (decorativa). */
+function ServiceVisual({ index }: { index: number }) {
+  if (index === 0) {
+    return (
+      <div className="cx-visual aspect-[16/6] p-4 sm:p-5" aria-hidden="true">
+        <div className="h-full overflow-hidden rounded-xl border border-white bg-white shadow-lg shadow-blue-900/10">
+          <div className="flex gap-1 border-b border-slate-100 px-3 py-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+            <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+            <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+          </div>
+          <div className="grid h-full grid-cols-[1fr_1.1fr] gap-4 p-4">
+            <div className="space-y-2.5">
+              <span className="cx-skel block h-3 w-11/12 !bg-slate-800" />
+              <span className="cx-skel block h-3 w-3/5 !bg-slate-800" />
+              <span className="cx-skel block h-2 w-4/5" />
+              <span className="mt-3 inline-block h-6 w-20 rounded-md bg-blue-600" />
+            </div>
+            <div className="grid grid-cols-2 gap-1.5 pb-8">
+              <span className="rounded-md bg-gradient-to-br from-blue-200 to-sky-100" />
+              <span className="rounded-md bg-sky-100" />
+              <span className="rounded-md bg-indigo-100" />
+              <span className="rounded-md bg-blue-100" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (index === 1) {
+    return (
+      <div className="cx-visual grid aspect-[16/6] grid-cols-4 gap-2.5 p-4 sm:p-5" aria-hidden="true">
+        {["bg-blue-100", "bg-sky-100", "bg-indigo-100", "bg-blue-50"].map((tone, item) => (
+          <div key={tone} className="flex flex-col rounded-xl border border-white bg-white p-2 shadow-md shadow-blue-900/5">
+            <span className={`flex-1 rounded-lg ${tone}`} />
+            <span className="mt-2 flex items-center justify-between">
+              <span className="cx-skel h-1.5 w-1/2" />
+              <span className="text-[9px] font-bold text-blue-700">{item % 2 ? "Agregar" : "Comprar"}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="cx-visual grid aspect-[16/6] grid-cols-[0.9fr_1.1fr] gap-2.5 p-4 sm:p-5" aria-hidden="true">
+      <div className="grid grid-rows-3 gap-2">
+        {["bg-blue-600", "bg-sky-500", "bg-indigo-500"].map((tone) => (
+          <div key={tone} className="rounded-lg border border-white bg-white p-2 shadow-sm">
+            <span className={`block h-1.5 w-6 rounded-full ${tone}`} />
+            <span className="cx-skel mt-2 block h-2.5 w-3/4 !bg-slate-700" />
+          </div>
+        ))}
+      </div>
+      <div className="flex items-end gap-1.5 rounded-lg border border-white bg-white p-2.5 shadow-sm">
+        {[40, 62, 48, 80, 66, 92].map((height) => (
+          <span
+            key={height}
+            className="flex-1 rounded-sm bg-gradient-to-t from-blue-700 to-sky-400"
+            style={{ height: `${height}%` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default async function Home() {
   const [reviews, featuredCases] = await Promise.all([
     getApprovedReviewsSnapshot(),
@@ -476,8 +584,9 @@ export default async function Home() {
   ]);
 
   return (
-    <main className="overflow-hidden bg-white">
+    <main className="cx-root overflow-x-clip">
       <ScrollProgress />
+      <ScrollScenes />
       <JsonLd
         id="home-webpage-schema"
         data={buildWebPageJsonLd({
@@ -554,177 +663,116 @@ export default async function Home() {
         })}
       />
 
-      {/* ── Hero ── */}
-      <section className="relative overflow-hidden bg-hero-pattern">
-        {/*
-          IMAGEN DE FONDO DEL HERO
-          Sube tu imagen a: public/hero-bg.png  (queda accesible como /hero-bg.png)
-          Recomendado: 2400×1400 px aprox, liviana. Next la optimiza a WebP/AVIF y la
-          sirve en el tamaño justo, así carga rápido. Si el archivo no existe, se ve el
-          patrón de fondo actual sin romper nada.
-        */}
-        <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
-          <Image
-            src="/hero-bg.png"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            quality={70}
-            className="object-cover object-center"
-          />
-          {/* Overlay anclado a la izquierda: firme donde va el texto, transparente
-              donde va la foto (derecha). */}
-          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/78 to-white/25 lg:from-white lg:via-white/68 lg:to-transparent" />
-          {/* Refuerzo suave solo detrás del texto (columna izquierda). */}
-          <div className="absolute inset-y-0 left-0 z-0 hidden bg-gradient-to-r from-white/55 to-transparent lg:block lg:w-[46%]" />
+      {/* ── Hero: titular con máscara + escenario 3D que se endereza ── */}
+      <section data-scene="exit" className="cx-hero">
+        <div aria-hidden="true">
+          <div className="cx-hero-grid" />
+          <div className="cx-aurora cx-aurora-a" />
+          <div className="cx-aurora cx-aurora-b" />
+          <div className="cx-aurora cx-aurora-c" />
         </div>
-        <Container className="relative z-10 grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
-          <div className="space-y-6">
-            <div className="badge-blue">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
+
+        <Container className="relative pb-20 pt-14 sm:pt-20 lg:pb-28 lg:pt-24">
+          <div data-scene="exit" className="cx-hero-copy mx-auto max-w-4xl text-center">
+            <div className="cx-fade cx-pill" style={cssVars({ "--d": "0ms" })}>
+              <span className="cx-live-dot" />
               Santiago · Región Metropolitana · Todo Chile
             </div>
 
-            <h1 className="text-balance text-[2rem] font-extrabold leading-[1.12] tracking-tight text-slate-900 [text-shadow:0_1px_16px_rgba(255,255,255,0.75)] sm:text-5xl lg:text-[3.3rem]">
-              <span className="text-gradient-hero animate-gradient">Páginas web profesionales</span>{" "}
-              para empresas que necesitan vender
+            <h1 className="cx-h1 mt-7">
+              {headlineAccent.map((word, index) => (
+                <Fragment key={word}>
+                  <span className="cx-mask">
+                    <span className="cx-word cx-grad" style={cssVars({ "--i": index })}>
+                      {word}
+                    </span>
+                  </span>{" "}
+                </Fragment>
+              ))}
+              {headlineRest.map((word, index) => (
+                <Fragment key={word}>
+                  <span className="cx-mask">
+                    <span className="cx-word" style={cssVars({ "--i": index + headlineAccent.length })}>
+                      {word}
+                    </span>
+                  </span>
+                  {index < headlineRest.length - 1 ? " " : null}
+                </Fragment>
+              ))}
             </h1>
 
-            <p className="max-w-2xl text-base font-medium leading-relaxed text-slate-700 [text-shadow:0_1px_10px_rgba(255,255,255,0.7)] sm:text-lg">
-              Creamos sitios web rápidos, modernos y orientados a generar contactos para empresas y
-              pymes de Santiago, Región Metropolitana y todo Chile. Diseño profesional, base SEO técnica
-              y una estructura pensada para convertir visitas en cotizaciones.
+            <p className="cx-fade cx-lead mx-auto mt-7 max-w-2xl" style={cssVars({ "--d": "550ms" })}>
+              Creamos sitios web rápidos, modernos y orientados a generar contactos para empresas y pymes de
+              Santiago, Región Metropolitana y todo Chile. Diseño profesional, base SEO técnica y una estructura
+              pensada para convertir visitas en cotizaciones.
             </p>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                asChild
-                size="lg"
-                className="btn-primary-glow w-full gap-2 bg-blue-700 px-6 font-bold text-white hover:bg-blue-800 sm:w-auto"
-              >
-                <Link href="/cotizador">
-                  Cotizar página web <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="w-full border-slate-300 text-slate-800 hover:bg-slate-50 sm:w-auto"
-              >
-                <Link href="/planes">Ver planes</Link>
-              </Button>
+            <div
+              className="cx-fade mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
+              style={cssVars({ "--d": "700ms" })}
+            >
+              <Link href="/cotizador" className="cx-btn cx-btn-primary w-full sm:w-auto">
+                Cotizar página web <ArrowRight className="cx-arrow h-4 w-4" />
+              </Link>
+              <Link href="/planes" className="cx-btn cx-btn-ghost w-full sm:w-auto">
+                Ver planes
+              </Link>
               <Link
                 href={WHATSAPP_BASE}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#25d366]/35 bg-[#25d366]/10 px-5 py-2.5 text-sm font-bold text-[#18a34d] transition-colors hover:bg-[#25d366]/20 sm:w-auto"
+                className="cx-btn cx-btn-wa w-full sm:w-auto"
               >
                 <WhatsAppIcon className="h-5 w-5" />
                 Hablar por WhatsApp
               </Link>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-2">
+            <ul
+              className="cx-fade mx-auto mt-9 grid max-w-3xl gap-x-8 gap-y-2.5 text-left sm:grid-cols-2"
+              style={cssVars({ "--d": "850ms" })}
+            >
               {heroTrustSignals.map((signal) => (
-                <p key={signal} className="flex items-start gap-2 text-xs font-semibold text-slate-700 [text-shadow:0_1px_8px_rgba(255,255,255,0.75)]">
-                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
+                <li key={signal} className="flex items-start gap-2.5 text-sm font-medium text-slate-600">
+                  <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+                    <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                  </span>
                   {signal}
-                </p>
+                </li>
               ))}
-            </div>
+            </ul>
 
-            <nav aria-label="Secciones destacadas" className="flex flex-wrap gap-2 pt-1">
+            <nav
+              aria-label="Secciones destacadas"
+              className="cx-fade mt-7 flex flex-wrap justify-center gap-1"
+              style={cssVars({ "--d": "950ms" })}
+            >
               {heroAnchors.map((anchor) => (
-                <a
-                  key={anchor.href}
-                  href={anchor.href}
-                  className="rounded-full border border-blue-100 bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-blue-800 transition-colors hover:border-blue-300 hover:bg-blue-50"
-                >
+                <a key={anchor.href} href={anchor.href} className="cx-anchor">
                   {anchor.label}
                 </a>
               ))}
             </nav>
           </div>
 
-          {/* Mockup de navegador con chips flotantes */}
-          <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-            <div className="hero-blob -right-8 -top-10 h-44 w-44 bg-sky-300/50" aria-hidden="true" />
-            <div className="hero-blob -bottom-12 -left-10 h-56 w-56 bg-blue-400/30" aria-hidden="true" />
-
-            <div className="animate-float relative z-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-blue-900/15">
-              <div className="flex items-center gap-1.5 border-b border-slate-100 bg-slate-50 px-4 py-3">
-                <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                <span className="ml-3 flex-1 truncate rounded-md border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold tracking-wide text-slate-500">
-                  https://www.tu-empresa.cl
-                </span>
-              </div>
-
-              <div className="space-y-4 p-5 sm:p-6">
-                <span className="badge-blue">Tu nueva página web</span>
-                <div className="space-y-2">
-                  <div className="animate-shimmer h-4 w-11/12 rounded-full" />
-                  <div className="h-4 w-3/5 rounded-full bg-slate-200" />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className="inline-flex h-9 items-center rounded-lg bg-blue-700 px-4 text-[11px] font-bold text-white shadow-md shadow-blue-700/30">
-                    Cotizar ahora
-                  </span>
-                  <span className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-4 text-[11px] font-bold text-slate-600">
-                    WhatsApp
-                  </span>
-                </div>
-                <div className="bg-grid-light flex h-24 items-center justify-center rounded-xl border border-slate-200 sm:h-28">
-                  <MonitorSmartphone className="h-8 w-8 text-blue-300" />
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {["Rápida", "Responsiva", "SEO técnico"].map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-lg border border-blue-100 bg-blue-50 py-2 text-center text-[11px] font-bold text-blue-800"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="animate-float-delayed absolute -right-2 top-20 z-20 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-lg shadow-blue-900/10 sm:-right-4">
-              <span className="rounded-lg bg-blue-50 p-1.5 text-blue-700">
-                <Search className="h-4 w-4" />
-              </span>
-              <span>
-                <span className="block text-[11px] font-extrabold text-slate-900">Base SEO</span>
-                <span className="block text-[10px] text-slate-500">Rastreo e indexación</span>
-              </span>
-            </div>
-            <div className="animate-float-delayed absolute -bottom-4 left-0 z-20 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-lg shadow-blue-900/10 sm:-left-4">
-              <span className="rounded-lg bg-emerald-50 p-1.5 text-emerald-600">
-                <TrendingUp className="h-4 w-4" />
-              </span>
-              <span>
-                <span className="block text-[11px] font-extrabold text-slate-900">Más consultas</span>
-                <span className="block text-[10px] text-slate-500">Web enfocada en convertir</span>
-              </span>
-            </div>
-          </div>
+          <HeroStage />
         </Container>
       </section>
 
       {/* ── Cifras ── */}
-      <section className="border-y border-slate-200 bg-white py-10">
+      <section aria-label="Zyteron en cifras" className="cx-stats bg-white">
         <Container>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-8 text-center lg:grid-cols-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4">
             {heroStats.map((stat, index) => (
-              <Reveal key={stat.label} delay={index * 80}>
-                <p className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-                  <CountUp value={stat.value} suffix={stat.suffix} className="text-gradient-blue" />
+              <Reveal
+                key={stat.label}
+                delay={index * 90}
+                className="cx-stat px-4 py-10 text-center sm:px-6 sm:py-14"
+              >
+                <p className="cx-stat-value">
+                  <CountUp value={stat.value} suffix={stat.suffix} className="cx-grad" />
                 </p>
-                <p className="mx-auto mt-2 max-w-[220px] text-xs font-semibold leading-relaxed text-slate-500 sm:text-sm">
+                <p className="mx-auto mt-3 max-w-[210px] text-xs font-medium leading-relaxed text-slate-500 sm:text-sm">
                   {stat.label}
                 </p>
               </Reveal>
@@ -733,139 +781,298 @@ export default async function Home() {
         </Container>
       </section>
 
-      {/* ── Cobertura nacional ── */}
-      <section id="cobertura" className="section-alt scroll-mt-24 py-20">
-        <Container className="space-y-10">
-          <Reveal className="space-y-3 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Cobertura nacional</p>
-            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Diseño de páginas web para todo Chile
-            </h2>
-            <p className="mx-auto max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              De Arica a Punta Arenas: trabajamos 100% online con reuniones, avances por etapas y
-              comunicación directa, para que tu empresa tenga una web profesional sin importar la región
-              donde opere.
-            </p>
-          </Reveal>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {coverageSignals.map((signal, index) => (
-              <Reveal key={signal} delay={(index % 2) * 90} className="h-full">
-                <div className="card-premium flex h-full items-start gap-3 p-5">
-                  <span className="rounded-lg bg-blue-50 p-2 text-blue-700">
-                    <Globe className="h-4 w-4" />
-                  </span>
-                  <p className="text-sm leading-relaxed text-slate-700">{signal}</p>
-                </div>
-              </Reveal>
+      {/* ── Cinta de capacidades ligada al scroll ── */}
+      <div data-scene="view" className="cx-ticker space-y-3" aria-hidden="true">
+        {tickerRows.map((row) => (
+          <div key={row.dir} className="cx-ticker-row" data-dir={row.dir}>
+            {[...row.items, ...row.items].map((item, index) => (
+              <Fragment key={`${item}-${index}`}>
+                <span className={index % 2 ? "cx-ticker-outline" : "cx-ticker-solid"}>{item}</span>
+                <TickerStar />
+              </Fragment>
             ))}
           </div>
+        ))}
+      </div>
 
-          <Reveal className="text-center">
-            <Button asChild className="btn-primary-glow bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/cotizador">Cotizar mi página web ahora</Link>
-            </Button>
-          </Reveal>
-        </Container>
+      {/* ── Manifiesto fijado: las palabras se encienden al avanzar ── */}
+      <section data-scene="pin" className="cx-pin" aria-labelledby="manifiesto-title">
+        <div className="cx-pin-sticky">
+          <div className="cx-pin-glow" aria-hidden="true" />
+          <Container className="max-w-5xl">
+            <h2 id="manifiesto-title" className="cx-eyebrow">
+              Por qué elegir Zyteron
+            </h2>
+            <p className="cx-manifesto mt-8" style={cssVars({ "--n": manifestoWords.length })}>
+              {manifestoWords.map((word, index) => (
+                <Fragment key={`${word}-${index}`}>
+                  <span
+                    className={`cx-mword${manifestoAccent.has(word) ? " cx-mword-accent" : ""}`}
+                    style={cssVars({ "--i": index })}
+                  >
+                    {word}
+                  </span>
+                  {index < manifestoWords.length - 1 ? " " : null}
+                </Fragment>
+              ))}
+            </p>
+          </Container>
+        </div>
       </section>
 
-      {/* ── Servicios ── */}
-      <section id="servicios" className="scroll-mt-24 bg-white py-20">
-        <Container className="space-y-10">
-          <Reveal className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Servicios</p>
-            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Diseño web, sistemas y soporte organizados para decidir mejor
-            </h2>
-            <p className="mx-auto max-w-3xl text-sm text-slate-600 sm:text-base">
+      {/* ── Servicios: tarjetas que se apilan ── */}
+      <section
+        id="servicios"
+        data-scene="pin"
+        className="scroll-mt-24 bg-white pb-24 pt-8 lg:pb-36"
+        style={cssVars({ "--n": serviceGroups.length })}
+      >
+        <Container className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
+          <Reveal className="space-y-6 lg:sticky lg:top-40 lg:self-start">
+            <Eyebrow>Servicios</Eyebrow>
+            <h2 className="cx-h2 lg:text-[2.85rem]">Diseño web, sistemas y soporte organizados para decidir mejor</h2>
+            <p className="cx-lead">
               Separamos cada línea de trabajo para que puedas cotizar exactamente lo que tu negocio necesita.
             </p>
+            <Link href="/desarrollo-web" className="cx-btn cx-btn-primary">
+              Ver desarrollo web detallado <ArrowRight className="cx-arrow h-4 w-4" />
+            </Link>
           </Reveal>
 
-          <div className="grid gap-5 lg:grid-cols-3">
+          <div className="space-y-6 lg:space-y-[16vh]">
             {serviceGroups.map((group, index) => (
-              <Reveal key={group.title} delay={index * 100} className="h-full">
-                <article className="card-premium flex h-full flex-col p-6">
-                  <div className="mb-3 inline-flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                    {group.icon}
-                    {group.title}
+              <article key={group.title} className="cx-stack-card" style={cssVars({ "--i": index })}>
+                <div className="cx-stack-panel p-6 sm:p-8">
+                  <ServiceVisual index={index} />
+                  <div className="mt-7">
+                    <div className="flex items-center justify-between">
+                      <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-blue-900 text-white shadow-lg shadow-blue-700/30">
+                        {group.icon}
+                      </span>
+                      <span className="text-xs font-semibold tabular-nums tracking-widest text-slate-400">
+                        0{index + 1} / 0{serviceGroups.length}
+                      </span>
+                    </div>
+                    <h3 className="cx-h3 mt-6">{group.title}</h3>
+                    <p className="mt-3 text-[0.95rem] leading-relaxed text-slate-600">{group.description}</p>
+                    <ul className="mt-6 flex flex-wrap gap-2">
+                      {group.items.map((item) => (
+                        <li key={item} className="cx-tag">
+                          <Check className="h-3.5 w-3.5 text-blue-600" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link href={group.href} className="cx-link mt-7">
+                      Ver {group.title.toLowerCase()} <ArrowUpRight className="h-4 w-4" />
+                    </Link>
                   </div>
-                  <p className="mb-4 text-sm text-slate-600">{group.description}</p>
-                  <div className="flex-1 space-y-2">
-                    {group.items.map((item) => (
-                      <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
-                        <span>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <Button asChild variant="outline" className="mt-5 w-full border-slate-300 text-slate-800 hover:bg-slate-50">
-                    <Link href={group.href}>Ver {group.title.toLowerCase()}</Link>
-                  </Button>
-                </article>
-              </Reveal>
+                </div>
+              </article>
             ))}
           </div>
-
-          <Reveal className="text-center">
-            <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/desarrollo-web">Ver desarrollo web detallado</Link>
-            </Button>
-          </Reveal>
         </Container>
       </section>
 
-      {/* ── Soluciones según necesidad ── */}
-      <section className="section-alt py-20">
-        <Container className="space-y-10">
-          <Reveal className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Soluciones según necesidad</p>
-            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Qué necesitas resolver hoy
-            </h2>
+      {/* ── Soluciones según necesidad: galería horizontal fijada ── */}
+      <section
+        data-scene="pin"
+        data-hscroll
+        className="cx-hs bg-[#f4f8ff]"
+        aria-labelledby="necesidades-title"
+      >
+        <div data-hscroll-viewport className="cx-hs-viewport py-24">
+          <Container className="mb-10 flex flex-col gap-6 lg:mb-14 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl space-y-5">
+              <Eyebrow>Soluciones según necesidad</Eyebrow>
+              <h2 id="necesidades-title" className="cx-h2">
+                Qué necesitas resolver hoy
+              </h2>
+            </div>
+            <div className="hidden w-64 space-y-3 lg:block" aria-hidden="true">
+              <p className="text-right text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                Sigue bajando
+              </p>
+              <div className="cx-hs-progress">
+                <span />
+              </div>
+            </div>
+            <p className="text-sm font-medium text-slate-500 lg:hidden" aria-hidden="true">
+              Desliza para ver más →
+            </p>
+          </Container>
+
+          <ul data-hscroll-track className="cx-hs-track">
+            {solutionsByNeed.map((solution, index) => (
+              <li key={solution.title} className="cx-hs-card">
+                <article className="cx-need">
+                  <span className="cx-need-index" aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className="mt-8 text-xl font-bold tracking-tight text-slate-900">{solution.title}</h3>
+                  <p className="mt-3 flex-1 text-[0.95rem] leading-relaxed text-slate-600">{solution.description}</p>
+                  <Link href={solution.href} className="cx-link mt-6">
+                    {solution.cta} <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                </article>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ── Demos con parallax por columnas ── */}
+      <section className="bg-white py-24 lg:py-36">
+        <Container>
+          <Reveal className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+            <div className="max-w-2xl space-y-5">
+              <Eyebrow>Portafolio y demos</Eyebrow>
+              <h2 className="cx-h2">Demos funcionales para evaluar antes de contratar</h2>
+              <p className="cx-lead">
+                Demos funcionales creados por nuestro equipo para que evalúes calidad, estructura y estilo antes de
+                cotizar tu proyecto.
+              </p>
+            </div>
+            <Link href="/demos" className="cx-btn cx-btn-ghost shrink-0">
+              Ver todos los demos <ArrowRight className="cx-arrow h-4 w-4" />
+            </Link>
           </Reveal>
 
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {solutionsByNeed.map((solution, index) => (
-              <Reveal key={solution.title} delay={(index % 3) * 90} className="h-full">
-                <article className="card-premium flex h-full flex-col p-6">
-                  <h3 className="text-lg font-bold text-slate-900">{solution.title}</h3>
-                  <p className="mt-2 flex-1 text-sm text-slate-600">{solution.description}</p>
-                  <Button asChild variant="outline" className="mt-4 border-slate-300 text-slate-800 hover:bg-slate-50">
-                    <Link href={solution.href}>{solution.cta}</Link>
-                  </Button>
-                </article>
-              </Reveal>
+          <div className="mt-20 space-y-28 lg:space-y-40">
+            {demoCards.map((demo, index) => (
+              <article
+                key={demo.name}
+                data-scene="view"
+                className="cx-demo grid items-center gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20"
+              >
+                <Reveal className={index % 2 ? "lg:order-2" : undefined}>
+                  <span className="text-sm font-semibold tabular-nums tracking-widest text-blue-600">
+                    0{index + 1}
+                  </span>
+                  <h3 className="cx-h3 mt-4">{demo.name}</h3>
+                  <p className="mt-4 leading-relaxed text-slate-600">{demo.desc}</p>
+                  <p className="mt-4 border-l-2 border-blue-200 pl-4 text-sm text-slate-500">{demo.tech}</p>
+                  <div className="mt-8 flex flex-wrap gap-3">
+                    <Link href="/demos" className="cx-btn cx-btn-ghost">
+                      Ver demo
+                    </Link>
+                    <Link
+                      href={`/contacto?origen=demo&item=${encodeURIComponent(demo.name)}`}
+                      className="cx-btn cx-btn-primary"
+                    >
+                      Cotizar algo similar <ArrowRight className="cx-arrow h-4 w-4" />
+                    </Link>
+                  </div>
+                </Reveal>
+
+                <div className="grid grid-cols-2 gap-4 sm:gap-5">
+                  {[0, 1].map((column) => (
+                    <div
+                      key={column}
+                      className={`cx-collage-col space-y-4 sm:space-y-5 ${column ? "mt-14" : ""}`}
+                      style={cssVars({ "--shift": column ? "90px" : "-90px" })}
+                    >
+                      {demo.gallery
+                        .filter((_, imageIndex) => imageIndex % 2 === column)
+                        .map((src) => {
+                          const imageIndex = demo.gallery.indexOf(src);
+                          return (
+                            <div key={src} className="cx-shot aspect-[4/3]">
+                              <Image
+                                src={src}
+                                alt={`Captura ${imageIndex + 1} de ${demo.name} para pymes en Chile y evaluación de desarrollo web`}
+                                fill
+                                sizes="(max-width: 1024px) 48vw, 340px"
+                                quality={80}
+                                loading="lazy"
+                                placeholder="blur"
+                                blurDataURL={softBlueBlurDataUrl}
+                                className="object-cover object-top"
+                              />
+                            </div>
+                          );
+                        })}
+                    </div>
+                  ))}
+                </div>
+              </article>
             ))}
           </div>
         </Container>
+      </section>
+
+      {/* ── Cobertura: el encuadre se abre con el scroll ── */}
+      <section id="cobertura" className="scroll-mt-24 bg-white pb-24 lg:pb-32">
+        <div data-scene="enter" className="mx-auto max-w-[90rem] px-3 sm:px-6">
+          <div className="cx-cinema-frame aspect-[4/5] sm:aspect-[16/10] lg:aspect-[21/9]">
+            <Image
+              src="/hero-bg.png"
+              alt=""
+              fill
+              sizes="(max-width: 1440px) 100vw, 1440px"
+              quality={75}
+              className="cx-cinema-img object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-white via-white/10 to-transparent" />
+          </div>
+        </div>
+
+        <Container className="relative -mt-40 sm:-mt-48 lg:-mt-56">
+          <Reveal>
+            <div className="cx-glass grid gap-10 rounded-[2rem] p-7 sm:p-10 lg:grid-cols-[1fr_1fr] lg:gap-14 lg:p-14">
+              <div className="space-y-5">
+                <Eyebrow>Cobertura nacional</Eyebrow>
+                <h2 className="cx-h2">Diseño de páginas web para todo Chile</h2>
+                <p className="cx-lead">
+                  De Arica a Punta Arenas: trabajamos 100% online con reuniones, avances por etapas y comunicación
+                  directa, para que tu empresa tenga una web profesional sin importar la región donde opere.
+                </p>
+                <Link href="/cotizador" className="cx-btn cx-btn-primary">
+                  Cotizar mi página web ahora <ArrowRight className="cx-arrow h-4 w-4" />
+                </Link>
+              </div>
+              <ul className="divide-y divide-slate-200/80 self-center">
+                {coverageSignals.map((signal, index) => (
+                  <li key={signal} className="flex items-start gap-4 py-4 first:pt-0 last:pb-0">
+                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                      {index === 0 ? <MapPin className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
+                    </span>
+                    <p className="text-[0.95rem] leading-relaxed text-slate-700">{signal}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
+        </Container>
+
+        <div className="mt-14">
+          <CoverageMarquee />
+        </div>
       </section>
 
       {/* ── Tipo de cliente ── */}
-      <section className="bg-white py-20">
-        <Container className="space-y-10">
-          <Reveal className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Soluciones por tipo de negocio</p>
-            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Elige la página web o solución según tu empresa
-            </h2>
-            <p className="mx-auto max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Atendemos proyectos para pymes, emprendedores y empresas de distintas regiones de Chile, con foco
-              en soluciones claras, escalables y alineadas a la etapa real del negocio.
+      <section className="bg-[#f8fafc] py-24 lg:py-32">
+        <Container className="space-y-14">
+          <Reveal className="mx-auto max-w-3xl space-y-5 text-center">
+            <div className="flex justify-center">
+              <Eyebrow>Soluciones por tipo de negocio</Eyebrow>
+            </div>
+            <h2 className="cx-h2">Elige la página web o solución según tu empresa</h2>
+            <p className="cx-lead">
+              Atendemos proyectos para pymes, emprendedores y empresas de distintas regiones de Chile, con foco en
+              soluciones claras, escalables y alineadas a la etapa real del negocio.
             </p>
           </Reveal>
 
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {clientTypes.map((client, index) => (
               <Reveal key={client.title} delay={(index % 4) * 80} className="h-full">
-                <Link
-                  href={client.href}
-                  className="card-premium block h-full p-6 transition-colors hover:border-blue-200"
-                >
-                  <h3 className="text-lg font-extrabold text-slate-900">{client.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{client.description}</p>
-                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
-                    Ver solución <ArrowRight className="h-4 w-4" />
+                <Link href={client.href} className="cx-card group">
+                  <h3 className="text-lg font-bold leading-snug tracking-tight text-slate-900">{client.title}</h3>
+                  <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-600">{client.description}</p>
+                  <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700">
+                    Ver solución
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </span>
                 </Link>
               </Reveal>
@@ -874,201 +1081,163 @@ export default async function Home() {
         </Container>
       </section>
 
-      {/* ── Confianza ── */}
-      <section className="section-alt py-20">
-        <Container className="space-y-10">
-          <Reveal className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Confianza empresarial</p>
-            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Por qué confiar en Zyteron
-            </h2>
-          </Reveal>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {trustPoints.map((point, index) => (
-              <Reveal key={point} delay={(index % 2) * 90} className="h-full">
-                <div className="card-premium flex h-full items-start gap-3 p-4">
-                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" />
-                  <p className="text-sm text-slate-700">{point}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-
-          <Reveal className="flex flex-wrap justify-center gap-3">
-            <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-              <Link href="/quienes-somos">Ver quién está detrás de Zyteron</Link>
-            </Button>
-            <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/contacto">Hablar con un especialista</Link>
-            </Button>
-          </Reveal>
-        </Container>
-      </section>
-
-      {/* ── Demos ── */}
-      <section className="bg-white py-20">
-        <Container className="space-y-10">
-          <Reveal className="flex flex-col gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Portafolio y demos</p>
-              <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
-                Demos funcionales para evaluar antes de contratar
-              </h2>
-              <p className="mt-2 max-w-3xl text-sm text-slate-600 sm:text-base">
-                Demos funcionales creados por nuestro equipo para que evalúes calidad, estructura y estilo antes de cotizar tu proyecto.
-              </p>
-            </div>
-            <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-              <Link href="/demos">Ver todos los demos</Link>
-            </Button>
-          </Reveal>
-
-          <div className="grid gap-5 sm:grid-cols-2">
-            {demoCards.map((demo, index) => (
-              <Reveal key={demo.name} delay={index * 110} className="h-full">
-                <article className="card-premium h-full overflow-hidden">
-                  <div className="bg-grid-light border-b border-slate-200 p-5">
-                    <div className="grid aspect-[16/9] grid-cols-2 gap-1 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                      {demo.gallery.slice(0, 4).map((src, imageIndex) => (
-                        <div key={src} className="relative">
-                          <Image
-                            src={src}
-                            alt={`Captura ${imageIndex + 1} de ${demo.name} para pymes en Chile y evaluación de desarrollo web`}
-                            fill
-                            sizes="(max-width: 768px) 45vw, (max-width: 1280px) 260px, 300px"
-                            quality={80}
-                            loading="lazy"
-                            placeholder="blur"
-                            blurDataURL={softBlueBlurDataUrl}
-                            className="object-cover"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-3 p-5">
-                    <h3 className="text-base font-bold text-slate-900">{demo.name}</h3>
-                    <p className="text-sm text-slate-600">{demo.desc}</p>
-                    <p className="text-xs text-slate-500">{demo.tech}</p>
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      <Button asChild size="sm" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-                        <Link href="/demos">Ver demo</Link>
-                      </Button>
-                      <Button asChild size="sm" className="bg-blue-700 text-white hover:bg-blue-800">
-                        <Link href={`/contacto?origen=demo&item=${encodeURIComponent(demo.name)}`}>
-                          Cotizar algo similar
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </article>
-              </Reveal>
-            ))}
-          </div>
-        </Container>
-      </section>
-
       {/* ── Panel administrativo ── */}
-      <section className="bg-white py-20">
-        <Container className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-          <Reveal className="space-y-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Panel administrativo</p>
-            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Paneles administrativos para que controles tu negocio
-            </h2>
-            <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
+      <section className="bg-white py-24 lg:py-36">
+        <Container className="grid items-center gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+          <Reveal className="space-y-6">
+            <Eyebrow>Panel administrativo</Eyebrow>
+            <h2 className="cx-h2">Paneles administrativos para que controles tu negocio</h2>
+            <p className="cx-lead">
               Desarrollamos paneles y sistemas internos para que tu empresa gestione su información en tiempo real.
               La idea es simple: que actualices tu información cuando lo necesites, sin depender de terceros.
             </p>
-            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-slate-700">
+            <div className="flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-sm leading-relaxed text-slate-700">
+              <LayoutDashboard className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" />
               Dashboard con métricas, reportes y control operacional adaptado al tamaño de tu empresa.
+            </div>
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-slate-500">Capacidades frecuentes</h3>
+              <ul className="mt-4 flex flex-wrap gap-2">
+                {adminPanelFeatures.map((feature) => (
+                  <li key={feature} className="cx-tag">
+                    <Check className="h-3.5 w-3.5 text-blue-600" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <Link href="/contacto?tipo=sistema" className="cx-btn cx-btn-primary">
+              Cotizar un sistema <ArrowRight className="cx-arrow h-4 w-4" />
+            </Link>
+          </Reveal>
+
+          <DashboardMockup />
+        </Container>
+      </section>
+
+      {/* ── Confianza ── */}
+      <section className="bg-[#f8fafc] py-24 lg:py-32">
+        <Container className="grid gap-14 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:gap-16">
+          <Reveal className="space-y-6 lg:sticky lg:top-40 lg:self-start">
+            <Eyebrow>Confianza empresarial</Eyebrow>
+            <h2 className="cx-h2">Por qué confiar en Zyteron</h2>
+            <div className="flex flex-col items-start gap-3 sm:flex-row lg:flex-col">
+              <Link href="/quienes-somos" className="cx-btn cx-btn-ghost">
+                Ver quién está detrás de Zyteron
+              </Link>
+              <Link href="/contacto" className="cx-btn cx-btn-primary">
+                Hablar con un especialista <ArrowRight className="cx-arrow h-4 w-4" />
+              </Link>
             </div>
           </Reveal>
 
-          <Reveal delay={120}>
-            <div className="card-premium p-6">
-              <div className="mb-4 flex items-center gap-2">
-                <LayoutDashboard className="h-5 w-5 text-blue-700" />
-                <h3 className="text-lg font-bold text-slate-900">Capacidades frecuentes</h3>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {adminPanelFeatures.map((feature) => (
-                  <div key={feature} className="flex items-start gap-2 text-sm text-slate-700">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
-                    <span>{feature}</span>
-                  </div>
-                ))}
-              </div>
-              <Button asChild className="mt-5 w-full bg-blue-700 font-bold text-white hover:bg-blue-800">
-                <Link href="/contacto?tipo=sistema">Cotizar un sistema</Link>
-              </Button>
-            </div>
+          <ul className="grid gap-x-10 sm:grid-cols-2">
+            {trustPoints.map((point, index) => (
+              <Reveal
+                key={point}
+                as="li"
+                delay={(index % 2) * 90}
+                className="flex items-start gap-4 border-t border-slate-200 py-6"
+              >
+                <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+                <p className="text-[0.95rem] leading-relaxed text-slate-700">{point}</p>
+              </Reveal>
+            ))}
+          </ul>
+        </Container>
+      </section>
+
+      {/* ── Proceso: línea de tiempo que se llena ── */}
+      <section id="proceso" className="scroll-mt-24 bg-white py-24 lg:py-36">
+        <Container className="grid gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
+          <Reveal className="space-y-6 lg:sticky lg:top-40 lg:self-start">
+            <Eyebrow>Cómo trabajamos</Eyebrow>
+            <h2 className="cx-h2">Proceso claro de inicio a entrega</h2>
+            <p className="cx-lead">
+              {processSteps.length} etapas documentadas, desde el diagnóstico hasta el soporte post-entrega. Revisas
+              cada avance antes de pasar a la siguiente.
+            </p>
           </Reveal>
+
+          <div data-scene="line" className="cx-tl">
+            <div className="cx-tl-track" aria-hidden="true" />
+            <div className="cx-tl-fill" aria-hidden="true" />
+            <ol className="relative space-y-3">
+              {processSteps.map((step, index) => (
+                <li key={step} data-scene="enter" className="flex items-center gap-6 py-3">
+                  <span className="cx-tl-dot" data-n={String(index + 1).padStart(2, "0")} aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className="cx-tl-title text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+                    {step}
+                  </h3>
+                </li>
+              ))}
+            </ol>
+          </div>
         </Container>
       </section>
 
       {/* ── Planes ── */}
-      <section id="planes" className="section-alt scroll-mt-24 py-20">
-        <Container className="space-y-10">
-          <Reveal className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Planes y precios</p>
-            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Planes claros para distintos niveles de necesidad
-            </h2>
+      <section id="planes" className="scroll-mt-24 bg-[#f8fafc] py-24 lg:py-32">
+        <Container className="space-y-14">
+          <Reveal className="mx-auto max-w-3xl space-y-5 text-center">
+            <div className="flex justify-center">
+              <Eyebrow>Planes y precios</Eyebrow>
+            </div>
+            <h2 className="cx-h2">Planes claros para distintos niveles de necesidad</h2>
           </Reveal>
 
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {planCards.map((plan, index) => (
               <Reveal key={plan.name} delay={(index % 4) * 80} className="h-full">
-                <article className="card-premium flex h-full flex-col p-6">
-                  <h3 className="text-lg font-extrabold text-slate-900">{plan.name}</h3>
-                  <p className="mt-1 text-sm text-slate-600">{plan.target}</p>
-                  <p className="mt-3 text-xl font-extrabold text-blue-700">{plan.price}</p>
-                  <div className="my-4 h-px bg-slate-200" />
-                  <div className="flex-1 space-y-2">
+                <article className={`cx-plan${index === 1 ? " cx-plan-accent" : ""}`}>
+                  <h3 className="text-lg font-bold tracking-tight text-slate-900">{plan.name}</h3>
+                  <p className="mt-1.5 min-h-[2.5rem] text-sm leading-snug text-slate-500">{plan.target}</p>
+                  <p className="mt-5 text-xl font-bold tracking-tight text-blue-700">{plan.price}</p>
+                  <div className="my-6 h-px bg-slate-200" />
+                  <ul className="flex-1 space-y-3">
                     {plan.includes.map((item) => (
-                      <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
+                      <li key={item} className="flex items-start gap-2.5 text-sm text-slate-700">
                         <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
                         <span>{item}</span>
-                      </div>
+                      </li>
                     ))}
-                  </div>
-                  <Button asChild className="mt-5 bg-blue-700 text-white hover:bg-blue-800">
-                    <Link href="/planes">Ver planes</Link>
-                  </Button>
+                  </ul>
+                  <Link
+                    href="/planes"
+                    className={`cx-btn mt-8 w-full ${index === 1 ? "cx-btn-primary" : "cx-btn-ghost"}`}
+                  >
+                    Ver planes
+                  </Link>
                 </article>
               </Reveal>
             ))}
           </div>
 
           <Reveal>
-            <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-6 sm:p-8">
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div className="max-w-2xl space-y-2">
-                  <p className="text-xs font-bold uppercase tracking-widest text-blue-600">
-                    Desarrollo corporativo
-                  </p>
-                  <h3 className="text-balance text-xl font-extrabold text-slate-900 sm:text-2xl">
-                    Cuando tu empresa necesita una plataforma, no una web
-                  </h3>
-                  <p className="text-sm leading-relaxed text-slate-700">
-                    En Zyteron también desarrollamos intranets y plataformas de gestión para organizaciones con
-                    varias áreas, sucursales o sistemas que deben conversar entre sí. Partimos con un levantamiento
-                    funcional y construimos por etapas, para que veas resultados en cada entrega.
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-7 sm:p-10">
+              <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+                <div className="max-w-2xl space-y-4">
+                  <Eyebrow>Desarrollo corporativo</Eyebrow>
+                  <h3 className="cx-h3">Cuando tu empresa necesita una plataforma, no una web</h3>
+                  <p className="leading-relaxed text-slate-600">
+                    En Zyteron también desarrollamos intranets y plataformas de gestión para organizaciones con varias
+                    áreas, sucursales o sistemas que deben conversar entre sí. Partimos con un levantamiento funcional
+                    y construimos por etapas, para que veas resultados en cada entrega.
                   </p>
                 </div>
-                <Button asChild className="shrink-0 bg-blue-700 font-bold text-white hover:bg-blue-800">
-                  <Link href="/planes">Ver desarrollo corporativo</Link>
-                </Button>
+                <Link href="/planes" className="cx-btn cx-btn-primary shrink-0">
+                  Ver desarrollo corporativo <ArrowRight className="cx-arrow h-4 w-4" />
+                </Link>
               </div>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-slate-200 bg-slate-200 sm:grid-cols-2 xl:grid-cols-4">
                 {corporatePlans.map((plan) => (
-                  <div key={plan.id} className="rounded-xl border border-blue-100 bg-white p-4">
-                    <p className="text-sm font-extrabold text-slate-900">{plan.name}</p>
-                    <p className="mt-1 text-sm font-extrabold text-blue-700">{planPriceClp(plan.id)}</p>
-                    <p className="mt-2 text-xs leading-relaxed text-slate-600">{plan.detail}</p>
+                  <div key={plan.id} className="bg-white p-6 transition-colors hover:bg-blue-50/40">
+                    <p className="font-bold tracking-tight text-slate-900">{plan.name}</p>
+                    <p className="mt-2 text-sm font-bold text-blue-700">{planPriceClp(plan.id)}</p>
+                    <p className="mt-3 text-sm leading-relaxed text-slate-600">{plan.detail}</p>
                   </div>
                 ))}
               </div>
@@ -1081,63 +1250,39 @@ export default async function Home() {
         </Container>
       </section>
 
-      {/* ── Proceso ── */}
-      <section id="proceso" className="scroll-mt-24 bg-white py-20">
-        <Container className="space-y-10">
-          <Reveal className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Cómo trabajamos</p>
-            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Proceso claro de inicio a entrega
-            </h2>
-          </Reveal>
-
-          <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {processSteps.map((step, index) => (
-              <Reveal key={step} as="li" delay={(index % 3) * 90} className="h-full">
-                <article className="card-premium flex h-full items-center gap-4 p-5">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-700 text-sm font-extrabold text-white shadow-md shadow-blue-700/30">
-                    {index + 1}
-                  </span>
-                  <h3 className="text-base font-bold text-slate-900">{step}</h3>
-                </article>
-              </Reveal>
-            ))}
-          </ol>
-        </Container>
-      </section>
-
       <ClientReviewsSection reviews={reviews} />
 
       {featuredCases.length > 0 ? (
-        <section className="bg-white py-16">
-          <Container className="space-y-8">
-            <Reveal className="flex flex-col gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
-              <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Casos documentados</p>
-                <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
-                  Pruebas comerciales de soluciones aplicadas
-                </h2>
-                <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-                  Casos de empresas reales en sistemas, automatizaciones, ecommerce y SEO implementados para resolver problemas de operación y presencia digital.
+        <section className="bg-white py-24 lg:py-32">
+          <Container className="space-y-12">
+            <Reveal className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+              <div className="max-w-3xl space-y-5">
+                <Eyebrow>Casos documentados</Eyebrow>
+                <h2 className="cx-h2">Pruebas comerciales de soluciones aplicadas</h2>
+                <p className="cx-lead">
+                  Casos de empresas reales en sistemas, automatizaciones, ecommerce y SEO implementados para resolver
+                  problemas de operación y presencia digital.
                 </p>
               </div>
-              <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-                <Link href="/casos-exito">Ver todos los casos</Link>
-              </Button>
+              <Link href="/casos-exito" className="cx-btn cx-btn-ghost shrink-0">
+                Ver todos los casos <ArrowRight className="cx-arrow h-4 w-4" />
+              </Link>
             </Reveal>
 
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {featuredCases.map((caseItem, index) => (
                 <Reveal key={caseItem.slug} delay={(index % 4) * 80} className="h-full">
-                  <Link
-                    href={`/casos-exito/${caseItem.slug}`}
-                    className="card-premium block h-full p-5 transition-colors hover:border-blue-200"
-                  >
-                    <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">{caseItem.badgePrimary}</p>
-                    <h3 className="text-base font-extrabold leading-snug text-slate-900">{caseItem.heading}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{caseItem.summary}</p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
-                      Ver caso <ArrowRight className="h-4 w-4" />
+                  <Link href={`/casos-exito/${caseItem.slug}`} className="cx-card group">
+                    <p className="text-[0.7rem] font-bold uppercase tracking-[0.18em] text-blue-600">
+                      {caseItem.badgePrimary}
+                    </p>
+                    <h3 className="mt-3 text-base font-bold leading-snug tracking-tight text-slate-900">
+                      {caseItem.heading}
+                    </h3>
+                    <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-600">{caseItem.summary}</p>
+                    <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700">
+                      Ver caso
+                      <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                     </span>
                   </Link>
                 </Reveal>
@@ -1148,13 +1293,13 @@ export default async function Home() {
       ) : null}
 
       {/* ── FAQ ── */}
-      <section id="preguntas-frecuentes" className="section-alt scroll-mt-24 py-20">
-        <Container className="space-y-10">
-          <Reveal className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Preguntas frecuentes</p>
-            <h2 className="text-balance text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Respuestas para cotizar con claridad
-            </h2>
+      <section id="preguntas-frecuentes" className="scroll-mt-24 bg-[#f8fafc] py-24 lg:py-32">
+        <Container className="space-y-12">
+          <Reveal className="mx-auto max-w-3xl space-y-5 text-center">
+            <div className="flex justify-center">
+              <Eyebrow>Preguntas frecuentes</Eyebrow>
+            </div>
+            <h2 className="cx-h2">Respuestas para cotizar con claridad</h2>
           </Reveal>
 
           <Reveal>
@@ -1162,50 +1307,59 @@ export default async function Home() {
           </Reveal>
 
           <Reveal className="text-center">
-            <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-              <Link href="/faq">Ver todas las preguntas frecuentes</Link>
-            </Button>
+            <Link href="/faq" className="cx-btn cx-btn-ghost">
+              Ver todas las preguntas frecuentes
+            </Link>
           </Reveal>
         </Container>
       </section>
 
       {/* ── CTA final ── */}
-      <section className="relative overflow-hidden bg-white py-20">
+      <section className="bg-white py-24 lg:py-32">
         <Container>
           <Reveal>
-            <div className="section-blue relative z-10 rounded-3xl p-8 text-center text-white md:p-12">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15">
-                <Briefcase className="h-7 w-7 text-white" />
-              </div>
-              <h2 className="text-balance text-3xl font-extrabold">¿Listo para cotizar tu proyecto?</h2>
-              <p className="mx-auto mt-3 max-w-2xl text-sm text-blue-100 sm:text-base">
-                Si necesitas una web corporativa, una tienda online o un sistema interno, conversemos y preparamos
-                una propuesta concreta para tu negocio, estés en la región que estés.
-              </p>
+            <div className="cx-cta">
+              <div className="cx-cta-inner px-6 py-14 text-center sm:px-12 lg:py-20">
+                <Eyebrow>Hablemos de tu proyecto</Eyebrow>
+                <h2 className="cx-h2 mx-auto mt-6 max-w-3xl">
+                  ¿Listo para cotizar <span className="cx-grad">tu proyecto?</span>
+                </h2>
+                <p className="cx-lead mx-auto mt-6 max-w-2xl">
+                  Si necesitas una web corporativa, una tienda online o un sistema interno, conversemos y preparamos una
+                  propuesta concreta para tu negocio, estés en la región que estés.
+                </p>
 
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                <Button asChild size="lg" className="bg-white font-bold text-blue-800 hover:bg-blue-50">
-                  <Link href="/cotizador">Cotizar una web para mi empresa</Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
-                  <Link href="/demos">Ver demos</Link>
-                </Button>
-                <Link
-                  href={WHATSAPP_BASE}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/35 bg-white/10 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-white/20"
-                >
-                  <WhatsAppIcon className="h-5 w-5" />
-                  Hablar por WhatsApp
-                </Link>
-              </div>
+                <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap">
+                  <Link href="/cotizador" className="cx-btn cx-btn-primary w-full sm:w-auto">
+                    Cotizar una web para mi empresa <ArrowRight className="cx-arrow h-4 w-4" />
+                  </Link>
+                  <Link href="/demos" className="cx-btn cx-btn-ghost w-full sm:w-auto">
+                    Ver demos
+                  </Link>
+                  <Link
+                    href={WHATSAPP_BASE}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cx-btn cx-btn-wa w-full sm:w-auto"
+                  >
+                    <WhatsAppIcon className="h-5 w-5" />
+                    Hablar por WhatsApp
+                  </Link>
+                </div>
 
-              <div className="mt-4 grid gap-2 text-xs text-blue-100 sm:grid-cols-2 lg:grid-cols-4">
-                <p>Cotización formal y sin compromiso.</p>
-                <p>Atención a empresas, pymes y emprendedores.</p>
-                <p>Avanzamos por etapas y revisas cada entrega.</p>
-                <p>Te acompañamos después de la entrega.</p>
+                <ul className="mx-auto mt-10 grid max-w-4xl gap-3 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-4">
+                  {[
+                    "Cotización formal y sin compromiso.",
+                    "Atención a empresas, pymes y emprendedores.",
+                    "Avanzamos por etapas y revisas cada entrega.",
+                    "Te acompañamos después de la entrega.",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start justify-center gap-2">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </Reveal>

@@ -12,7 +12,7 @@ export const siteConfig = {
   domain: "zyteron.cl",
   url: "https://www.zyteron.cl",
   locale: "es-CL",
-  foundingDate: "2024",
+  foundingDate: "2019",
   // Propuesta de valor visible en el hero de la portada; se reutiliza como
   // slogan de la Organization en el schema. Mantener sincronizada con page.tsx.
   slogan: "Páginas web profesionales para empresas que necesitan vender",
