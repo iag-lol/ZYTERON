@@ -114,9 +114,7 @@ export const CLOSED_PLANS: ClosedPlan[] = [
       "Un administrador; gestión de productos y categorías. Selección de productos y envío del pedido a un número de WhatsApp.",
       ...common,
     ],
-    [
-      "Pago y entrega coordinados por el negocio. No incluye pasarela, stock automático, variantes, ERP ni transportistas.",
-    ],
+    ["No incluye pasarela, stock automático, variantes, ERP ni transportistas."],
     ["whatsappButton", "manageableCatalog", "miniAdminPanel"],
   ),
   plan(
@@ -352,3 +350,7 @@ export function calculateManualQuote(input: unknown) {
   };
 }
 export type ManualSnapshot = ReturnType<typeof calculateManualQuote>;
+
+export function exclusionText(value: string) {
+  return value.replace(/^No incluye\s*:?\s*/i, "");
+}

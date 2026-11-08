@@ -1,3 +1,4 @@
+import { exclusionText } from "@/lib/manual-quote/catalog";
 import type { ManualSnapshot } from "@/lib/manual-quote/catalog";
 import { ZYTERON_COMPANY } from "@/lib/company";
 
@@ -266,7 +267,7 @@ export function parseQuoteMessage(message?: string | null): QuoteMeta {
             description: manual.base.name,
             detail: [
               ...manual.base.includes,
-              ...manual.base.excludes.map((x) => "No incluye: " + x),
+              ...manual.base.excludes.map((x) => "No incluye: " + exclusionText(x)),
             ].join("\n"),
             qty: 1,
             unit: "proyecto",
@@ -277,7 +278,7 @@ export function parseQuoteMessage(message?: string | null): QuoteMeta {
           ...manual.addons.map((a) => ({
             id: a.id,
             description: a.name,
-            detail: a.scope + " No incluye: " + a.excludes,
+            detail: a.scope + " No incluye: " + exclusionText(a.excludes),
             qty: a.quantity,
             unit: "unidad",
             unitPrice: a.amount,

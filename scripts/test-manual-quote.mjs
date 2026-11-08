@@ -1,3 +1,4 @@
+import { mkdir, writeFile } from "node:fs/promises";
 import { test, mock } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -97,7 +98,8 @@ test("fallo y reintento del proveedor conserva una sola orden y el alcance acept
  const status=await (await get()).json();assert.equal(status.ready,true);assert.equal(status.locked,true);assert.equal(status.billing.rut,"12.345.678-5");
 });
 test("PDF conserva el alcance y exige acceso al borrador o a la orden propia",async()=>{
- const response=await document(new Request("http://localhost/api/manual-quote/document"));assert.equal(response.status,200);assert.equal(response.headers.get("content-type"),"application/pdf");assert.ok((await response.arrayBuffer()).byteLength>2000);
+ const response=await document(new Request("http://localhost/api/manual-quote/document"));assert.equal(response.status,200);assert.equal(response.headers.get("content-type"),"application/pdf");const pdf=Buffer.from(await response.arrayBuffer());assert.ok(pdf.byteLength>2000);
+ await mkdir("output/cotizador-manual-08-11-2026/pdf-local",{recursive:true});await writeFile("output/cotizador-manual-08-11-2026/pdf-local/alcance.pdf",pdf);
  cookie="bad";assert.equal((await document(new Request("http://localhost/api/manual-quote/document"))).status,401);
  assert.equal((await document(new Request(`http://localhost/api/manual-quote/document?order=${orderId}`))).status,200);
  session={user:{id:"other",email:"other@example.com",accountStatus:"ACTIVE",emailVerifiedAt:"2026-11-08"}};

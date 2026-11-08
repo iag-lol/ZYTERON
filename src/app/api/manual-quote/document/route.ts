@@ -1,3 +1,4 @@
+import { exclusionText } from "@/lib/manual-quote/catalog";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { getPortalSession } from "@/lib/auth/portal-session";
 import { prisma } from "@/lib/prisma";
@@ -43,29 +44,52 @@ export async function GET(req: Request) {
         .replace(/[–—]/g, "-")
         .replace(/→/g, ">")
         .replace(/[^\x20-\x7e\xa0-\xff\n]/g, "");
+    function nextPage() {
+      page = pdf.addPage([595, 842]);
+      page.drawText("ZYTERON | Alcance del proyecto", {
+        x: 52,
+        y: 802,
+        size: 9,
+        font: bold,
+        color: rgb(0.35, 0.4, 0.33),
+      });
+      y = 770;
+    }
     function draw(value: string, size = 10, strong = false) {
-      const f = strong ? bold : font;
+      const f = strong ? bold : font,
+        lines: string[] = [];
       for (const para of text(value).split("\n")) {
         const words = para.split(/\s+/);
         let line = "";
-        for (const word of words) {
+        for (let word of words) {
+          if (f.widthOfTextAtSize(word, size) > 490) {
+            if (line) {
+              lines.push(line);
+              line = "";
+            }
+            while (f.widthOfTextAtSize(word, size) > 490) {
+              let n = word.length - 1;
+              while (f.widthOfTextAtSize(word.slice(0, n), size) > 490) n--;
+              lines.push(word.slice(0, n));
+              word = word.slice(n);
+            }
+          }
           const next = line ? line + " " + word : word;
           if (f.widthOfTextAtSize(next, size) > 490 && line) {
-            render(line);
+            lines.push(line);
             line = word;
           } else line = next;
         }
-        render(line);
+        lines.push(line);
       }
-      y -= 7;
-      function render(line: string) {
-        if (y < 65) {
-          page = pdf.addPage([595, 842]);
-          y = 775;
-        }
+      const height = lines.length * size * 1.5 + 7;
+      if (height < 690 && y - height < (strong ? 95 : 65)) nextPage();
+      for (const line of lines) {
+        if (y < 65) nextPage();
         page.drawText(line, { x: 52, y, size, font: f, color: rgb(0.12, 0.22, 0.16) });
         y -= size * 1.5;
       }
+      y -= 7;
     }
     draw("ZYTERON", 24, true);
     draw("ALCANCE Y PRECIO DEL PROYECTO", 12, true);
@@ -82,12 +106,12 @@ export async function GET(req: Request) {
     draw(q.base.name, 17, true);
     draw(`Plan base: ${clp(q.base.amount)} netos`, 11, true);
     q.base.includes.forEach((s) => draw("- " + s));
-    draw("No incluye: " + q.base.excludes.join(" "));
+    draw("No incluye: " + exclusionText(q.base.excludes.join(" ")));
     for (const a of q.addons) {
       draw(`${a.name} x ${a.quantity}`, 13, true);
       draw(`Precio neto unitario: ${clp(a.amount)} | Total neto: ${clp(a.lineTotal)}`);
       draw(a.scope);
-      draw("No incluye: " + a.excludes);
+      draw("No incluye: " + exclusionText(a.excludes));
       draw(`Plazo adicional: ${a.days * a.quantity} días hábiles.`);
     }
     draw("RESUMEN ECONÓMICO", 14, true);

@@ -15,6 +15,7 @@ import {
 import { clp } from "@/config/pricing";
 import {
   CATALOG_VERSION,
+  exclusionText,
   CLOSED_PLANS,
   CLOSED_ADDONS,
   QUOTE_TERMS,
@@ -60,7 +61,7 @@ export function ScopeSummary({ quote }: { quote: ManualSnapshot }) {
           ))}
         </ul>
         <p>
-          <strong>No incluye:</strong> {quote.base.excludes.join(" ")}
+          <strong>No incluye:</strong> {exclusionText(quote.base.excludes.join(" "))}
         </p>
       </details>
       {quote.addons.map((a) => (
@@ -70,7 +71,7 @@ export function ScopeSummary({ quote }: { quote: ManualSnapshot }) {
           </summary>
           <p>{a.scope}</p>
           <p>
-            <strong>No incluye:</strong> {a.excludes}
+            <strong>No incluye:</strong> {exclusionText(a.excludes)}
           </p>
           <p>{a.days * a.quantity} días hábiles adicionales.</p>
         </details>
