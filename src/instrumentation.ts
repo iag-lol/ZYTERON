@@ -1,4 +1,25 @@
 export async function register() {
+  if (process.env.NEXT_RUNTIME === "nodejs" && process.env.RENDER_SERVICE_ID) {
+    const { assertFlowCheckoutReady } = await import("./lib/payments/flow");
+    let checkoutReady = false;
+    try {
+      assertFlowCheckoutReady();
+      checkoutReady = true;
+    } catch {
+      /* No secrets in readiness logs. */
+    }
+    console.info(
+      "MANUAL_QUOTE_READINESS",
+      JSON.stringify({
+        checkoutReady,
+        paymentWorker: process.env.PAYMENT_WORKER_ENABLED === "true",
+        emailConfigured: Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL),
+        whatsappConfigured: Boolean(
+          process.env.META_WHATSAPP_TOKEN && process.env.META_WHATSAPP_PHONE_ID,
+        ),
+      }),
+    );
+  }
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { runPortalLoginNotifications } = await import("./lib/notifications/portal-login-outbox");
     let busy = false;

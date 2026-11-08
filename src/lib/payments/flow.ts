@@ -156,6 +156,13 @@ function requirePaymentActivation(base: string) {
   }
 }
 
+export function assertFlowCheckoutReady() {
+  const { base } = getFlowConfig();
+  requirePaymentActivation(base);
+  if (!/^[a-f0-9]{64}$/i.test(process.env.PAYMENT_TOKEN_KEY || ""))
+    throw new Error("PAYMENT_TOKEN_KEY_REQUIRED");
+}
+
 function normalizeForSign(params: Record<string, unknown>) {
   const out: Record<string, string> = {};
   for (const [key, value] of Object.entries(params)) {

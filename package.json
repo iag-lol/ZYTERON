@@ -15,6 +15,7 @@
     "db:seed": "prisma db seed",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "test:dte-certificate": "node --test scripts/prepare-dte-certificate.test.mjs",
+    "test:manual-quote": "node --experimental-test-module-mocks --import tsx --test scripts/test-manual-quote.mjs",
     "test:reception": "node --experimental-test-module-mocks --import tsx --test scripts/test-public-reception.mjs",
     "test:qualification": "npm --prefix control-runtime run build && node --test control-runtime/test/lead-qualification-scope.test.mjs",
     "test:public-ui": "node scripts/qa-public-site.mjs",

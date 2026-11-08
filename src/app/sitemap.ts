@@ -30,6 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/servicios", priority: 0.9, changeFrequency: "monthly" as const },
     { path: "/planes", priority: 0.8, changeFrequency: "monthly" as const },
     { path: "/contacto", priority: 0.8, changeFrequency: "monthly" as const },
+    { path: "/cotizador/manual", priority: 0.9, changeFrequency: "monthly" as const },
     { path: "/cotizador", priority: 0.9, changeFrequency: "monthly" as const },
     { path: "/calculadora-precio-pagina-web", priority: 0.9, changeFrequency: "monthly" as const },
     { path: "/demos", priority: 0.5, changeFrequency: "monthly" as const },
@@ -38,9 +39,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/faq", priority: 0.6, changeFrequency: "monthly" as const },
     { path: "/quienes-somos", priority: 0.6, changeFrequency: "monthly" as const },
     { path: "/recursos", priority: 0.7, changeFrequency: "monthly" as const },
-    { path: "/recursos/checklist-seo-pymes-chile", priority: 0.8, changeFrequency: "monthly" as const },
-    { path: "/recursos/como-elegir-empresa-desarrollo-web-chile", priority: 0.8, changeFrequency: "monthly" as const },
-    { path: "/recursos/wordpress-vs-web-a-medida-chile", priority: 0.8, changeFrequency: "monthly" as const },
+    {
+      path: "/recursos/checklist-seo-pymes-chile",
+      priority: 0.8,
+      changeFrequency: "monthly" as const,
+    },
+    {
+      path: "/recursos/como-elegir-empresa-desarrollo-web-chile",
+      priority: 0.8,
+      changeFrequency: "monthly" as const,
+    },
+    {
+      path: "/recursos/wordpress-vs-web-a-medida-chile",
+      priority: 0.8,
+      changeFrequency: "monthly" as const,
+    },
     { path: "/becas-web-pyme", priority: 0.5, changeFrequency: "monthly" as const },
     { path: "/becas-web-pyme/bases", priority: 0.4, changeFrequency: "monthly" as const },
     { path: "/becas-web-pyme/privacidad", priority: 0.3, changeFrequency: "monthly" as const },
@@ -94,11 +107,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "diseno-web-santiago",
   ]);
 
-  const serviceRoutes = servicePages.filter((service) => !consolidatedServiceSlugs.has(service.slug)).map((service) => ({
-    url: `${base}/servicios/${service.slug}`,
-    changeFrequency: "monthly" as const,
-    priority: 0.9,
-  }));
+  const serviceRoutes = servicePages
+    .filter((service) => !consolidatedServiceSlugs.has(service.slug))
+    .map((service) => ({
+      url: `${base}/servicios/${service.slug}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.9,
+    }));
 
   // Solo artículos y casos publicados en Supabase.
   const [dbPosts, dbCases, scholarshipWinners] = await Promise.all([

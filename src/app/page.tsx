@@ -1,3 +1,4 @@
+import { HomeQuotePreview } from "@/components/manual-quote/home-preview";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, ShieldCheck } from "lucide-react";
@@ -177,14 +178,15 @@ export default async function Home() {
                 <Link href="/contacto?origen=inicio" className="design-button">
                   Conversemos sobre tu proyecto <ArrowUpRight size={18} />
                 </Link>
-                <Link href="#soluciones" className="text-link">
-                  Explorar soluciones <ArrowRight size={16} />
+                <Link href="#cotizar" className="text-link">
+                  Cotizar con precio definido <ArrowRight size={16} />
                 </Link>
               </div>
             </div>
           </div>
         </Container>
       </section>
+      <HomeQuotePreview />
       <section id="proyectos" className="work-section">
         <Container>
           <div className="section-heading">

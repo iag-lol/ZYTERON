@@ -1,3 +1,4 @@
+import type { ManualSnapshot } from "@/lib/manual-quote/catalog";
 import { ZYTERON_COMPANY } from "@/lib/company";
 
 export type QuoteLineItem = {
@@ -8,7 +9,7 @@ export type QuoteLineItem = {
   unit?: string;
   unitPrice: number;
   discountPct?: number;
-  taxable?:boolean;
+  taxable?: boolean;
 };
 
 export type QuotePaymentChannel = "FLOW" | "TRANSFER";
@@ -246,7 +247,50 @@ export function parseQuoteMessage(message?: string | null): QuoteMeta {
   }
 
   try {
-    const raw = JSON.parse(message) as RawQuoteMessage;
+    const raw = JSON.parse(message) as RawQuoteMessage & {
+      type?: string;
+      snapshot?: ManualSnapshot;
+      manualQuote?: { snapshot: ManualSnapshot };
+    };
+    const manual = raw.type === "MANUAL_QUOTE" ? raw.snapshot : raw.manualQuote?.snapshot;
+    if (manual?.base && Array.isArray(manual.addons)) {
+      return {
+        ...safeBase,
+        kind: "MANUAL_QUOTE",
+        source: "COTIZADOR_MANUAL",
+        projectTypeLabel: manual.base.name,
+        projectSummary: `Alcance cerrado. Plazo: ${manual.days.join(" a ")} días hábiles. Catálogo ${manual.version}.`,
+        items: [
+          {
+            id: manual.base.id,
+            description: manual.base.name,
+            detail: [
+              ...manual.base.includes,
+              ...manual.base.excludes.map((x) => "No incluye: " + x),
+            ].join("\n"),
+            qty: 1,
+            unit: "proyecto",
+            unitPrice: manual.base.amount,
+            discountPct: 0,
+            taxable: true,
+          },
+          ...manual.addons.map((a) => ({
+            id: a.id,
+            description: a.name,
+            detail: a.scope + " No incluye: " + a.excludes,
+            qty: a.quantity,
+            unit: "unidad",
+            unitPrice: a.amount,
+            discountPct: 0,
+            taxable: true,
+          })),
+        ],
+        subtotal: manual.net,
+        iva: manual.tax,
+        grandTotal: manual.total,
+        terms: Object.values(manual.terms).join("\n\n"),
+      };
+    }
 
     return {
       ...safeBase,
@@ -260,7 +304,7 @@ export function parseQuoteMessage(message?: string | null): QuoteMeta {
             unit: item.unit || "unidad",
             unitPrice: Number(item.unitPrice || 0),
             discountPct: Number(item.discountPct || 0),
-            taxable: item.taxable!==false,
+            taxable: item.taxable !== false,
           }))
         : [],
       subtotal: Number(raw.subtotal || 0),

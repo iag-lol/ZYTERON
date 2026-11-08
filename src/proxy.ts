@@ -24,6 +24,7 @@ export async function proxy(req: NextRequest) {
     pathname.startsWith("/api/control") ||
     pathname.startsWith("/api/portal") ||
     pathname.startsWith("/api/checkout") ||
+    pathname.startsWith("/api/manual-quote") ||
     ["/api/contacto", "/api/cotizaciones", "/api/cotizador", "/api/chat"].includes(pathname);
 
   if (
@@ -113,6 +114,7 @@ export const config = {
     "/api/control-core/:path*",
     "/api/portal/:path*",
     "/api/checkout/:path*",
+    "/api/manual-quote/:path*",
     "/api/contacto",
     "/api/cotizador",
     "/api/cotizaciones",
