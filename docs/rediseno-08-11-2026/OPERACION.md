@@ -1,29 +1,39 @@
 # Publicación, seguimiento y contenido
 
-## Condiciones de salida
+## Estado de publicación
 
-1. Servicio identificado: `ZYTERON`, workspace `My Workspace` (`tea-cvcnlb52ng1s7390ia4g`), servicio `srv-d7emn6dckfvc73ekrh70`. Panel: https://dashboard.render.com/web/srv-d7emn6dckfvc73ekrh70. Repositorio `iag-lol/ZYTERON`, rama `main`, despliegue automático desactivado. Versión publicada comprobada: `57574903c95dbf6595ae2084eb020e32a3413ffd`, despliegue `dep-dbo2ovm417fc73f4fskg` del 08-11-2026 a las 05:05 (Chile). Volver a verificar estos identificadores inmediatamente antes de publicar.
-2. Guardar respaldo de base de datos, configuración privada y artefacto anterior recuperable. El respaldo de código local no sustituye esos respaldos. El estado Git previo y la copia de archivos están en `/tmp/zyteron-rediseno-08112026/`; trasladar a almacenamiento duradero antes de depender de ellos.
-3. Usar preproducción con autenticación, `noindex` y datos controlados. La instancia local se vincula a loopback. No indexar variantes del diseño bajo nuevas rutas públicas.
-4. Configurar CMS, PostgreSQL y receptores de prueba. Validar solicitud web y solicitud sistemas: registro, visibilidad en administración, aviso real, confirmación, error de base, fallo de proveedor y reintento. Verificar además acceso de clientes, permisos y pagos existentes con cuentas de prueba; no ejecutar cobros reales.
-5. Configurar `NEXT_PUBLIC_GOOGLE_ANALYTICS_ID` con la propiedad verificada de Zyteron. Revisar en GTM que no haya una segunda emisión de `generate_lead` o conversión por el mismo formulario. Validar DebugView/Tag Assistant y excluir entornos y áreas privadas. No publicar etiquetas de envío automático de formularios que capturen texto o parámetros personales.
-6. Ejecutar pruebas y rastreo contra el inventario guardado. Corregir 5xx, canonical/noindex accidentales, pérdida de URL y fallos de formulario antes de salir.
-7. Publicar primero fricciones y medición; después el conjunto visual de plantillas representativas. Registrar commit, fecha y hora de cada salida. Verificar el despliegue que llega a estado operativo y su comportamiento público.
+Servicio `ZYTERON`, workspace `My Workspace` (`tea-cvcnlb52ng1s7390ia4g`), servicio `srv-d7emn6dckfvc73ekrh70`. [Panel de Render](https://dashboard.render.com/web/srv-d7emn6dckfvc73ekrh70). Repositorio `iag-lol/ZYTERON`, rama `main`, despliegue automático desactivado.
+
+El rediseño quedó operativo el 08-11-2026 a las 06:54 (Chile), commit `7468934`, despliegue `dep-dbo4c767bikc73fucheg`. La revisión `58249de` quedó operativa a las 07:00, despliegue `dep-dbo4fcu7bikc73fujs3g`; excluye el dominio de Render del registro interno de visitas. La publicación conserva dominio, 80 rutas del sitemap, esquema de datos, comandos de arranque y configuración de integraciones. No hubo sustitución de variables privadas ni migración de base.
+
+Las plantillas se comprobaron primero en localhost y después en producción: 84 destinos rastreados, 40 vistas con el CMS real y 16 controles de endpoints. Las pruebas locales de formularios interceptan envíos; las pruebas públicas rechazan entradas antes de persistir. Estos controles no equivalen a recibir una solicitud válida y su aviso en la bandeja comercial real.
+
+El archivo fuente de la versión anterior, el parche reversible y el HTML previo están en `output/redesign-08-11-2026/rollback/`, excluidos de Git. Se verificó la aplicación inversa del parche y la integridad de tres archivos del archivo fuente. El respaldo privado de datos/configuración y una restauración completa siguen sin ejecutarse: la clave SSH disponible fue rechazada. La reversión de código no sustituye esos respaldos.
+
+## Comprobaciones con acceso privado
+
+1. Usar preproducción autenticada, no indexable y con receptores de prueba; validar solicitud web y sistemas: registro, visibilidad comercial, aviso, confirmación, error de base, fallo de proveedor y reintento.
+2. Comprobar portal, calificación y tablero con cuentas autorizadas. Los accesos anónimos y la protección de origen ya se verificaron; no se ejecutaron cobros reales.
+3. Configurar `NEXT_PUBLIC_GOOGLE_ANALYTICS_ID` únicamente con una propiedad verificada de Zyteron. Validar DebugView/Tag Assistant, deduplicación en GTM, exclusión de entornos privados y ausencia de texto personal.
+4. Exportar el respaldo privado de datos/configuración y probar su restauración en un entorno separado. Mantener los archivos fuera de Git y con acceso restringido.
+5. Comprobar `SELECT to_regclass('public."WebVisit"');` en la base correcta de Supabase. Tras el respaldo, aplicar `supabase/web_visit_storage.sql` y verificar la lectura del backend y una visita controlada. El SQL está probado localmente, pero no aplicado. No hay respaldo ni recuperación de visitas que nunca se almacenaron.
+
+Para próximas publicaciones: confirmar commit y servicio, conservar una versión recuperable, ejecutar las pruebas pertinentes, desplegar manualmente desde `main`, esperar estado `live` y verificar HTTP, recepción y contenido. La aceptación visual local por plantillas no equivale a una prueba A/B ni a resultados comerciales.
 
 ## Reversión
 
 Restaurar el artefacto anterior de la capa afectada si falla la recepción, aparecen 5xx generalizados o se publican directivas SEO incorrectas. Mantener compatibilidad con los metadatos opcionales nuevos: no hay cambio de esquema requerido para este bloque. Conservar las solicitudes recibidas y los registros comerciales. La reversión de código no deshace correos, pagos, cambios externos ni datos.
 
-La integración usa la rama `codex/zyteron-redesign-20261108`, en `../zyteron-redesign`, basada en el commit publicado `5757490`. La carpeta original estaba desactualizada y no es una base apta para desplegar. Su punto de partida consta en `/tmp/zyteron-rediseno-08112026/git-head.txt`; los cambios previos sin commit están guardados en `tracked-before.patch` y `before/`. No usar `git reset --hard` ni restaurar indiscriminadamente el árbol actual. Los archivos existentes ajenos al rediseño deben conservarse.
+La integración usa la rama `codex/zyteron-redesign-20261108`, en `../zyteron-redesign`, basada en el commit publicado `5757490`. La carpeta original estaba desactualizada y no es una base apta para desplegar. Su punto de partida y parche previo están copiados en `output/redesign-08-11-2026/rollback/`; la copia adicional original permanece en `/tmp/zyteron-rediseno-08112026/`. No usar `git reset --hard` ni restaurar indiscriminadamente el árbol actual. Los archivos existentes ajenos al rediseño deben conservarse.
 
 ## Seguimiento después de la salida
 
-| Momento desde publicación | Control | Responsable funcional |
+| Fecha de control (Chile) | Control | Responsable funcional |
 | --- | --- | --- |
-| Salida | HTTP, canonical, sitemap, noindex, dos solicitudes controladas y avisos; versión y capturas | Desarrollo y comercial |
-| 24 y 72 horas | Recepción efectiva, errores, fallos de proveedor y contacto de pendientes | Operaciones comerciales |
-| 7, 14 y 28 días | Cohortes comparables, solicitudes/sesión elegible, abandono por paso, errores y primera respuesta; consultas y URL | Analítica y comercial |
-| 30, 60 y 90 días | Oportunidades, propuestas, ventas, valor, margen disponible y decisiones editoriales | Dirección comercial |
+| 08-11-2026 | HTTP, canonical, sitemap, noindex, versión y capturas comprobados; recepción válida y avisos con acceso privado pendientes | Desarrollo y comercial |
+| 09-11-2026 y 11-11-2026 | Recepción efectiva, errores, fallos de proveedor y contacto de pendientes | Operaciones comerciales |
+| 15-11-2026, 22-11-2026 y 06-12-2026 | Cohortes comparables, solicitudes/sesión elegible, abandono por paso, errores y primera respuesta; consultas y URL | Analítica y comercial |
+| 08-12-2026, 07-01-2027 y 06-02-2027 | Oportunidades, propuestas, ventas, valor, margen disponible y decisiones editoriales | Dirección comercial |
 
 Estas revisiones están definidas; no constituyen un monitoreo programado ni resultados ya obtenidos. Comparar 7 y 28 días completos con los mismos días de semana y, cuando haya datos válidos, el año anterior. Conservar anotaciones del 23-09-2026 y 02-11-2026. No revertir por una caída porcentual aislada con pocos clics.
 
@@ -46,8 +56,10 @@ Cuando la conexión exponga Zyteron: exportar hasta 16 meses disponibles de Sear
 
 Validar si el informe de impresiones de IA está disponible para esta propiedad. No atribuir a IA ventas sin seguimiento. Confirmar Google Business y modalidad de atención antes de enlazar una ficha; una búsqueda de la dirección no acredita verificación.
 
-## Preparación de la publicación
+## Recuperación del código
 
-La rama de integración conserva el comando de construcción del runtime y el arranque conectado de Render. La modificación no requiere una migración nueva. Las primeras verificaciones deben ejecutarse contra un clon de la configuración de producción con receptores de prueba y datos autorizados; los sustitutos de CMS vacíos sirven exclusivamente para compilar y revisar las plantillas estáticas.
+Versión previa al rediseño: `57574903c95dbf6595ae2084eb020e32a3413ffd`, despliegue `dep-dbo2ovm417fc73f4fskg`. El archivo `rollback/production-5757490.tar.gz` conserva su fuente. El SHA-256 y el resultado del ensayo de parche constan en `rollback/verification.json`.
 
-El despliegue de Render está conectado a `main` y es manual. Subir la rama de revisión no publica el sitio. No cambiar la rama del servicio ni usar «Deploy latest commit» hasta verificar la versión que se va a publicar, el respaldo y las condiciones de salida. El checkout original y sus cambios sin commit quedan conservados.
+En caso de incidente, seleccionar el artefacto anterior en Render si sigue retenido; comprobar que termina en `live` y repetir los controles públicos. Si el artefacto ya no está disponible, revertir el cambio de código mediante un commit normal sobre `main` y desplegar esa revisión. Evitar force push y cambios de esquema. Mantener las solicitudes y ventas recibidas después de la salida. La recuperación de configuración o datos se realiza mediante sus propios respaldos y no forma parte del ensayo de código efectuado.
+
+El checkout original del IDE contiene trabajo previo sin commit y está conservado. La copia de integración en `../zyteron-redesign` corresponde a la línea publicada. No desplegar la copia antigua ni sobrescribir indiscriminadamente sus cambios.

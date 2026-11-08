@@ -13,6 +13,10 @@ Consulta: 08-11-2026.
 - [Datos personales en Analytics](https://support.google.com/analytics/answer/6366371?hl=en): excluir identidad y texto libre de los eventos.
 - [Migraciones y cambios de URL](https://developers.google.com/search/docs/crawling-indexing/site-move-with-url-changes): inventario y equivalencia de destinos, sin cambios innecesarios de rutas.
 
+- [Despliegues de Render](https://render.com/docs/deploys): comprobar commit, estado terminal y tráfico real.
+- [Salud del servicio](https://render.com/docs/health-checks): arranque y endpoint de salud.
+- [Reversión de Render](https://render.com/docs/rollbacks): el artefacto anterior no revierte datos, mensajes ni cambios externos.
+
 ## Referencias comerciales
 
 | Referencia | Comprobación pública | Uso en la propuesta |
@@ -29,7 +33,7 @@ Las páginas competidoras son declaraciones de cada empresa, no evidencia indepe
 
 ## Evidencia propia
 
-Inventario público: `output/redesign-08-11-2026/evidence/inventory-before.json`. Los 80 destinos del sitemap respondieron correctamente en la línea base. Capturas HTML completas en `/tmp/zyteron-rediseno-08112026/live-before/`.
+Inventario público: `output/redesign-08-11-2026/evidence/inventory-before.json`. Los 80 destinos del sitemap respondieron correctamente en la línea base. HTML completo anterior conservado en `output/redesign-08-11-2026/rollback/live-before/`; inventario posterior y comparación en `output/redesign-08-11-2026/published/`.
 
 Datos de identidad confirmados comercialmente: fundación 2019; equipo de 25 personas; Antonio Bellet 193; reuniones coordinadas. El estado de verificación de Google Business permanece pendiente.
 

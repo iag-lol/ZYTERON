@@ -76,6 +76,13 @@ try {
           impact,
           nodes: nodes.map(({ target }) => target),
         }));
+        for (const image of await page.locator("main img").all())
+          await image.scrollIntoViewIfNeeded();
+        await page.waitForFunction(
+          () => [...document.querySelectorAll("main img")].every((image) => image.complete),
+          undefined,
+          { timeout: 30000 },
+        );
         result.brokenImages = await page
           .locator("main img")
           .evaluateAll((images) =>
