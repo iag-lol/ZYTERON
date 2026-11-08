@@ -3,16 +3,16 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Menu, X, ArrowUpRight } from "lucide-react";
+import { Menu, X, ArrowUpRight, ChevronDown } from "lucide-react";
 import { Container } from "./container";
+import { solutionFamilies } from "@/content/solutions";
 import { PortalAccessLink } from "./portal-access-link";
 
 const navigation = [
-  { href: "/desarrollo-web", label: "Desarrollo web" },
-  { href: "/sistemas-web", label: "Sistemas" },
   { href: "/casos-exito", label: "Proyectos" },
   { href: "/planes", label: "Precios" },
   { href: "/quienes-somos", label: "Empresa" },
+  { href: "/contacto", label: "Contacto" },
 ];
 
 export function SiteHeader() {
@@ -46,6 +46,42 @@ export function SiteHeader() {
             <span className="brand-name">zyteron</span>
           </Link>
           <nav aria-label="Navegación principal" className="hidden items-center gap-1 xl:flex">
+            <details
+              className="solutions-menu"
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.currentTarget.open = false;
+                  event.currentTarget.querySelector("summary")?.focus();
+                }
+              }}
+            >
+              <summary>
+                Soluciones <ChevronDown size={14} />
+              </summary>
+              <div className="solutions-menu-panel">
+                {solutionFamilies.map((family) => (
+                  <Link
+                    key={family.id}
+                    href={`/servicios#${family.id}`}
+                    onClick={(event) => {
+                      event.currentTarget.closest("details")?.removeAttribute("open");
+                    }}
+                  >
+                    {family.shortName}
+                    <ArrowUpRight size={14} />
+                  </Link>
+                ))}
+                <Link
+                  href="/servicios"
+                  onClick={(event) => {
+                    event.currentTarget.closest("details")?.removeAttribute("open");
+                  }}
+                >
+                  Ver todas las soluciones
+                  <ArrowUpRight size={14} />
+                </Link>
+              </div>
+            </details>
             {navigation.map((item) => (
               <Link
                 key={item.href}
@@ -84,15 +120,30 @@ export function SiteHeader() {
             aria-label="Navegación móvil"
             className="mt-4 grid max-h-[75dvh] gap-1 overflow-y-auto border-t border-slate-200 pt-3 xl:hidden"
           >
+            <Link
+              onClick={() => setOpen(false)}
+              href="/servicios"
+              className="px-3 py-3 font-semibold"
+            >
+              Soluciones
+            </Link>
+            <div className="mobile-solutions">
+              {solutionFamilies.map((family) => (
+                <Link
+                  key={family.id}
+                  href={`/servicios#${family.id}`}
+                  onClick={() => setOpen(false)}
+                >
+                  {family.shortName}
+                </Link>
+              ))}
+            </div>
             {[
               ...navigation,
-              { href: "/contacto", label: "Contacto" },
-              { href: "/tiendas-online", label: "Tiendas online" },
-              { href: "/automatizacion", label: "Automatización" },
-              { href: "/demos", label: "Demos" },
-              { href: "/blog", label: "Recursos y blog" },
+              { href: "/recursos", label: "Recursos" },
+              { href: "/blog", label: "Blog" },
               { href: "/faq", label: "Preguntas frecuentes" },
-              { href: "/servicios", label: "Todos los servicios" },
+              { href: "/soporte-ti", label: "Soporte TI" },
             ].map((item) => (
               <Link
                 onClick={() => setOpen(false)}

@@ -771,3 +771,204 @@
   border-radius: 4px;
   min-height: 40px;
 }
+
+/* Familias comerciales: listas de lectura y accesos por necesidad. */
+.public-site .solutions-menu {
+  position: relative;
+}
+.public-site .solutions-menu summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 12px;
+  font-size: 13px;
+  list-style: none;
+}
+.public-site .solutions-menu summary::-webkit-details-marker {
+  display: none;
+}
+.public-site .solutions-menu-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  width: 320px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 10px;
+  box-shadow: 0 14px 30px #17201f12;
+}
+.public-site .solutions-menu-panel a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 12px;
+  border-radius: 3px;
+}
+.public-site .solutions-menu-panel a:hover {
+  background: var(--paper);
+}
+.public-site .mobile-solutions {
+  display: grid;
+  border-left: 1px solid var(--line);
+  margin: 0 12px 12px;
+  padding-left: 10px;
+}
+.public-site .mobile-solutions a {
+  padding: 10px;
+}
+.public-site .solution-jump-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+  margin-top: 36px;
+  font-size: 13px;
+}
+.public-site .solution-jump-links a {
+  padding-block: 8px;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+.public-site .solution-families {
+  margin-top: 42px;
+}
+.public-site .solution-family {
+  display: grid;
+  grid-template-columns: 65px 1fr;
+  gap: 20px;
+  padding: 32px 0;
+  border-top: 1px solid var(--line);
+  scroll-margin-top: 110px;
+}
+.public-site .solution-number {
+  font-size: 13px;
+  color: #5c6961;
+  padding-top: 6px;
+}
+.public-site .solution-family h3 {
+  font-size: clamp(22px, 2vw, 28px);
+}
+.public-site .solution-family > div > p {
+  max-width: 790px;
+  margin-top: 14px;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #46504a;
+}
+.public-site .solution-family .solution-examples {
+  font-size: 13px;
+  color: #616b64;
+}
+.public-site .solution-family .text-link {
+  margin-top: 8px;
+  color: var(--blue);
+}
+.public-site .solution-capabilities {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 26px 36px;
+  margin-top: 30px;
+}
+.public-site .solution-capabilities h4 {
+  font-size: 15px;
+  font-weight: 600;
+}
+.public-site .solution-capabilities p {
+  font-size: 14px;
+  line-height: 1.9;
+  color: #46504a;
+  margin-top: 8px;
+}
+.public-site .solution-family .solution-scope {
+  font-size: 13px;
+  border-left: 2px solid #afbbb1;
+  padding-left: 18px;
+  margin-top: 26px;
+}
+.public-site .solution-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 30px;
+  margin-top: 15px;
+}
+.public-site .industry-solutions,
+.needs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 38px 60px;
+  margin-top: 40px;
+}
+.public-site .industry-solutions article,
+.needs-grid article {
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.public-site .industry-solutions h3,
+.needs-grid h3 {
+  font-size: 22px;
+}
+.public-site .industry-solutions p,
+.needs-grid p {
+  margin-top: 12px;
+  color: #46504a;
+  font-size: 14px;
+  line-height: 1.9;
+}
+.public-site .industry-solutions article > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin-top: 15px;
+}
+.public-site .industry-solutions a {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  padding-block: 10px;
+  color: var(--blue);
+}
+.public-site .project-evidence {
+  margin-top: 14px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: #5a665e;
+}
+.public-site .home-hero .hero-note {
+  max-width: 280px;
+}
+@media (max-width: 760px) {
+  .public-site .solution-family {
+    grid-template-columns: 28px 1fr;
+    gap: 12px;
+    padding-block: 28px;
+  }
+  .public-site .solution-family > div > p {
+    font-size: 14px;
+  }
+  .public-site .solution-capabilities,
+  .public-site .industry-solutions,
+  .public-site .needs-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .public-site .home-hero .hero-note {
+    display: block;
+    max-width: 100%;
+    margin-bottom: 18px;
+    font-size: 13px;
+  }
+  .public-site .hero-overline .eyebrow {
+    max-width: 310px;
+  }
+  .public-site .hero-actions .design-button {
+    width: 100%;
+    gap: 12px;
+    padding-inline: 14px;
+    font-size: 13px;
+  }
+}

@@ -8,11 +8,52 @@ export type SeoIntent = {
 
 export const seoIntentMap: SeoIntent[] = [
   {
-    path: "/",
-    primaryKeyword: "desarrollo de páginas web para empresas Santiago y Chile",
+    path: "/servicios",
+    primaryKeyword: "soluciones digitales para empresas",
     intent: "comercial",
     indexable: true,
-    notes: "Portada para la intención amplia con señal geográfica Santiago-primero; la marca queda como señal secundaria.",
+    notes: "Índice de las cinco familias; enlaza a servicios específicos.",
+  },
+  {
+    path: "/catalogos-digitales",
+    primaryKeyword: "catálogos digitales para empresas",
+    intent: "comercial",
+    indexable: true,
+    notes: "Presentación y consultas sin cobro online; se diferencia de ecommerce.",
+  },
+  {
+    path: "/sistemas-web/gestion-personas",
+    primaryKeyword: "software de gestión de personas y RRHH a medida",
+    intent: "comercial",
+    indexable: true,
+    notes: "Desarrollo evaluado por proyecto, sin certificaciones o integraciones implícitas.",
+  },
+  {
+    path: "/sistemas-web/control-flota",
+    primaryKeyword: "software de control de flota",
+    intent: "comercial",
+    indexable: true,
+  },
+  {
+    path: "/sistemas-web/intranet-corporativa",
+    primaryKeyword: "intranets y portales internos",
+    intent: "comercial",
+    indexable: true,
+  },
+  {
+    path: "/sistemas-web/gestion-documental",
+    primaryKeyword: "gestión documental a medida",
+    intent: "comercial",
+    indexable: true,
+  },
+
+  {
+    path: "/",
+    primaryKeyword: "desarrollo de software y soluciones digitales a medida Chile",
+    intent: "comercial",
+    indexable: true,
+    notes:
+      "Portada amplia de la empresa; los destinos de desarrollo web conservan su intención especializada.",
   },
   {
     path: "/paginas-web-santiago",
@@ -37,7 +78,8 @@ export const seoIntentMap: SeoIntent[] = [
     primaryKeyword: "paginas web para empresas Chile",
     intent: "comercial",
     indexable: true,
-    notes: "Incluye diseño web corporativo como variante secundaria, sin duplicar una nueva landing.",
+    notes:
+      "Incluye diseño web corporativo como variante secundaria, sin duplicar una nueva landing.",
   },
   {
     path: "/desarrollo-web-santiago",
@@ -83,7 +125,7 @@ export const seoIntentMap: SeoIntent[] = [
   },
   {
     path: "/casos-exito",
-    primaryKeyword: "proyectos de desarrollo web",
+    primaryKeyword: "proyectos de software y desarrollo digital",
     intent: "confianza",
     indexable: true,
   },
@@ -95,13 +137,13 @@ export const seoIntentMap: SeoIntent[] = [
   },
   {
     path: "/quienes-somos",
-    primaryKeyword: "empresa de desarrollo web Zyteron",
+    primaryKeyword: "empresa de software Zyteron",
     intent: "confianza",
     indexable: true,
   },
   {
     path: "/contacto",
-    primaryKeyword: "cotizar página web Chile",
+    primaryKeyword: "cotizar proyecto digital Chile",
     intent: "conversion",
     indexable: true,
   },

@@ -8,9 +8,9 @@ import { siteConfig } from "@/config/site";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Cotizar página web o sistema en Chile",
+  title: "Conversemos sobre tu proyecto digital en Chile",
   description:
-    "Solicita orientación y una cotización formal para desarrollo web, ecommerce, sistemas, automatización o soporte TI en Chile.",
+    "Solicita orientación para software, gestión de personas y flotas, ecommerce, catálogos, sitios web o integraciones. Define tu proyecto con Zyteron en Chile.",
   path: "/contacto",
 });
 
@@ -76,7 +76,7 @@ export default function ContactoPage() {
         id="contacto-page-schema"
         data={buildWebPageJsonLd({
           path: "/contacto",
-          title: "Cotizar página web o sistema en Chile",
+          title: "Conversemos sobre tu proyecto digital en Chile",
           description:
             "Página de contacto para solicitudes de cotización de empresas, pymes y emprendedores en Chile.",
           pageType: "ContactPage",
@@ -93,7 +93,7 @@ export default function ContactoPage() {
             Contacto comercial
           </div>
           <h1 className="text-4xl leading-tight font-extrabold text-slate-900 sm:text-5xl">
-            Cotiza tu página web, sistema digital o solución tecnológica
+            Cuéntanos qué necesitas desarrollar
           </h1>
           <p className="mx-auto max-w-3xl text-base text-slate-600 sm:text-lg">
             Cuéntanos qué necesita tu empresa. Revisaremos alcance, prioridades y requerimientos

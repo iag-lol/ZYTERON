@@ -1,451 +1,121 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, Globe, MessageCircle, MonitorSmartphone, Settings } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
-import { Button } from "@/components/ui/button";
-import { siteConfig } from "@/config/site";
+import { SolutionFamilies, IndustrySolutions } from "@/components/commercial/solution-families";
+import { solutionFamilies } from "@/content/solutions";
 import { buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
-import { seoServicePages } from "@/content/seo-service-pages";
-import { priorityServicePages } from "@/content/priority-service-pages";
-import { verticalPages } from "@/content/vertical-pages";
 
-const WHATSAPP_URL = `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20orientaci%C3%B3n%20sobre%20un%20servicio%20digital%20para%20mi%20empresa.`;
-
-export const metadata: Metadata = createPageMetadata({
-  title: "Servicios de desarrollo web para empresas en Santiago y Chile",
-  description:
-    "Servicios de Zyteron: páginas web para empresas y pymes, tiendas online, sistemas a medida, SEO y automatización para Santiago, Región Metropolitana y todo Chile.",
-  path: "/servicios",
-});
-
-const introParagraphs = [
-  "En Zyteron desarrollamos principalmente páginas web para empresas y pymes de Santiago, Región Metropolitana y todo Chile. Alrededor de ese servicio principal sumamos tiendas online, sistemas web, automatización, SEO y soporte TI cuando el proyecto lo necesita, siempre con el mismo enfoque práctico: resolver problemas reales del negocio.",
-  "Cada servicio se define según alcance, prioridad y etapa de la empresa. No todos los proyectos necesitan una solución compleja desde el inicio; algunas pymes requieren una página web clara para generar confianza, mientras otras necesitan un sistema web para controlar datos, documentación, ventas, inventario o tareas operativas.",
-  "El objetivo es ayudarte a elegir una alternativa profesional, escalable y coherente con lo que quieres lograr. Por eso trabajamos con diagnóstico inicial, propuesta clara, diseño responsive, estructura SEO base, rutas de contacto visibles y acompañamiento posterior según el tipo de proyecto.",
-];
-
-const serviceGroups = [
-  {
-    title: "Páginas web (servicio principal)",
-    description:
-      "Presencia digital profesional para captar clientes y fortalecer la confianza comercial.",
-    icon: <MonitorSmartphone className="h-5 w-5" />,
-    items: [
-      "Sitios web corporativos",
-      "Páginas web para pymes",
-      "Landing pages comerciales",
-      "Diseño responsive",
-      "Base SEO técnica",
-      "Formularios y WhatsApp",
-      "Optimización de velocidad",
-    ],
-  },
-  {
-    title: "Tiendas online y catálogos",
-    description: "Para negocios que además de mostrar necesitan vender por internet.",
-    icon: <Globe className="h-5 w-5" />,
-    items: [
-      "Catálogo administrable",
-      "Carrito y checkout",
-      "Pagos online",
-      "Fichas de producto con SEO",
-      "Venta asistida por WhatsApp",
-    ],
-  },
-  {
-    title: "Sistemas, automatización y soporte",
-    description: "Extensiones de la solución web para ordenar procesos y mantener continuidad.",
-    icon: <Settings className="h-5 w-5" />,
-    items: [
-      "Sistemas internos y paneles",
-      "Cotizadores con PDF",
-      "Automatización de WhatsApp",
-      "Integración de pagos",
-      "Soporte TI y mantención",
-    ],
-  },
-];
-
-const detailedServices = [
-  {
-    title: "Desarrollo web",
-    href: "/desarrollo-web",
-    description:
-      "Desarrollamos páginas web profesionales para empresas, pymes y emprendedores que necesitan una presencia digital clara, moderna y confiable. Este servicio ayuda a presentar productos, servicios, información corporativa y canales de contacto de forma ordenada, mejorando la imagen de marca y facilitando nuevas oportunidades comerciales.",
-  },
-  {
-    title: "Tiendas online",
-    href: "/tiendas-online",
-    description:
-      "Creamos tiendas online y catálogos digitales para negocios que quieren vender productos o recibir pedidos de forma más estructurada. Es una solución útil para pymes que hoy venden por redes sociales o WhatsApp y necesitan un canal propio con fichas de producto, categorías, contacto y una experiencia responsive.",
-  },
-  {
-    title: "Sistemas web a medida",
-    href: "/sistemas-web",
-    description:
-      "Desarrollamos sistemas web para empresas que necesitan ordenar procesos internos, controlar registros, gestionar usuarios, generar reportes o centralizar información. Aplica cuando una planilla, papel o flujo manual ya no entrega trazabilidad suficiente para operar con seguridad y tomar mejores decisiones.",
-  },
-  {
-    title: "Automatización de procesos",
-    href: "/automatizacion",
-    description:
-      "Automatizamos tareas repetitivas, formularios, notificaciones y flujos digitales para reducir carga operativa. Este servicio es útil si tu empresa pierde tiempo copiando datos, respondiendo lo mismo por WhatsApp, derivando solicitudes manualmente o revisando procesos sin seguimiento claro.",
-  },
-  {
-    title: "Soporte TI",
-    href: "/soporte-ti",
-    description:
-      "Entregamos soporte TI para empresas y pymes que necesitan asistencia tecnológica, configuración, mantención y orientación para mantener continuidad operativa. Ayudamos con requerimientos técnicos, correos, herramientas, equipos, sistemas y decisiones tecnológicas sin sobrecomplicar la operación.",
-  },
-  {
-    title: "SEO y optimización web",
-    href: "/servicios/seo-para-empresas-chile",
-    description:
-      "Optimizamos estructura, metadata, contenido, rendimiento y señales técnicas para mejorar la lectura del sitio por Google y usuarios reales. Es recomendable para empresas que ya tienen web, pero no logran posicionarse, explicar bien sus servicios o convertir visitas en contactos de calidad.",
-  },
-  {
-    title: "Mantención web",
-    href: "/servicios/mantencion-web-chile",
-    description:
-      "La mantención web permite cuidar estabilidad, seguridad, contenido, rendimiento y mejoras continuas después de publicar. Es útil para empresas que dependen de su sitio como canal comercial y necesitan soporte para cambios, ajustes técnicos o evolución gradual sin rehacer todo desde cero.",
-  },
-  {
-    title: "Landing pages",
-    href: "/servicios/landing-pages-para-empresas",
-    description:
-      "Diseñamos landing pages para campañas, servicios específicos o lanzamientos que requieren una ruta de conversión directa. Este tipo de página concentra el mensaje, reduce distracciones y guía al usuario hacia una acción concreta como cotizar, agendar o hablar por WhatsApp.",
-  },
-];
-
-const serviceSelector = [
-  "Si necesitas presencia digital y confianza comercial, lo más adecuado suele ser desarrollo web.",
-  "Si quieres vender productos o mostrar catálogo, conviene evaluar una tienda online.",
-  "Si necesitas ordenar procesos, registros, documentos o reportes, corresponde un sistema web.",
-  "Si pierdes tiempo en tareas repetitivas, formularios o seguimiento manual, puede servir una automatización.",
-  "Si necesitas ayuda tecnológica continua, configuración o mantención operativa, revisemos soporte TI.",
-];
-
-export const revalidate = 300;
-
-export default async function ServiciosPage() {
+const title = "Soluciones de Software y Desarrollo Digital para Empresas";
+const description =
+  "Software empresarial, gestión de personas y flotas, ecommerce, catálogos, sitios web e integraciones a medida para empresas y profesionales en Chile.";
+export const metadata: Metadata = createPageMetadata({ title, description, path: "/servicios" });
+export default function ServiciosPage() {
   return (
-    <main className="bg-white">
+    <main>
       <JsonLd
-        id="servicios-webpage-schema"
+        id="solutions-webpage"
         data={buildWebPageJsonLd({
           path: "/servicios",
-          title: "Servicios digitales para empresas y pymes",
-          description: "Portafolio de servicios de desarrollo web, sistemas y soporte TI en Chile.",
+          title,
+          description,
           breadcrumbs: [
             { name: "Inicio", path: "/" },
-            { name: "Servicios", path: "/servicios" },
+            { name: "Soluciones", path: "/servicios" },
           ],
         })}
       />
       <JsonLd
-        id="servicios-list-schema"
+        id="solutions-list"
         data={buildServicesListJsonLd({
           path: "/servicios",
-          title: "Servicios principales ZYTERON",
-          services: [
-            {
-              name: "Desarrollo web",
-              description: "Páginas web profesionales para empresas y pymes.",
-              path: "/desarrollo-web",
-            },
-            {
-              name: "Tiendas online",
-              description: "Tiendas online y catálogos digitales para venta en Chile.",
-              path: "/tiendas-online",
-            },
-            {
-              name: "Sistemas web a medida",
-              description: "Sistemas internos y paneles administrativos personalizados.",
-              path: "/sistemas-web",
-            },
-            {
-              name: "Automatización empresarial",
-              description: "Automatización de WhatsApp y tareas operativas de atención.",
-              path: "/automatizacion",
-            },
-            {
-              name: "Soporte TI",
-              description: "Soporte TI para empresas y pymes en Santiago y Chile.",
-              path: "/soporte-ti",
-            },
-            {
-              name: "SEO técnico",
-              description:
-                "Optimización técnica, estructura on-page y crecimiento orgánico para empresas.",
-              path: "/servicios/seo-para-empresas-chile",
-            },
-          ],
+          title,
+          services: solutionFamilies.map((f) => ({
+            name: f.name,
+            description: f.description,
+            path: `/servicios#${f.id}`,
+          })),
         })}
       />
-      <section className="bg-hero-pattern relative overflow-hidden border-b border-slate-200 py-20">
-        <Container className="space-y-5 text-center">
-          <div className="badge-blue mx-auto w-fit">
-            <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
-            Servicios principales
-          </div>
-          <h1 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">
-            Servicios claros para necesidades reales de negocio
+      <section className="bg-hero-pattern border-b border-slate-200 py-16 sm:py-20">
+        <Container>
+          <p className="eyebrow">Soluciones digitales a medida</p>
+          <h1 className="mt-5 max-w-4xl text-4xl sm:text-5xl">
+            Presentar, comercializar y gestionar tu negocio.
           </h1>
-          <p className="mx-auto max-w-3xl text-base text-slate-600 sm:text-lg">
-            Trabajamos con empresas, pymes y emprendedores en Chile. Cada servicio se cotiza según
-            alcance, funcionalidades y prioridad del proyecto.
+          <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
+            Desarrollamos proyectos completos y herramientas específicas para empresas y
+            profesionales. Partimos por tus objetivos, procesos y usuarios; conectamos las piezas
+            que tu operación necesita y definimos cómo pueden evolucionar.
           </p>
-        </Container>
-      </section>
-
-      <section className="bg-white py-14">
-        <Container className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-          <div className="space-y-3">
-            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
-              Soluciones digitales en Chile
-            </p>
-            <h2 className="text-3xl font-extrabold text-slate-900">
-              Desarrollo web, sistemas, ecommerce, automatización y soporte para empresas
-            </h2>
-          </div>
-          <div className="space-y-4">
-            {introParagraphs.map((paragraph) => (
-              <p key={paragraph} className="text-sm leading-relaxed text-slate-600 sm:text-base">
-                {paragraph}
-              </p>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      <section className="bg-white py-16">
-        <Container className="space-y-8">
-          <div className="space-y-2 text-center">
-            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
-              Soluciones para tu empresa
-            </p>
-            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Encuentra el servicio que resuelve tu necesidad
-            </h2>
-            <p className="mx-auto max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Si ya sabes qué necesita tu empresa, revisa el servicio específico y solicita una
-              propuesta con contexto.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {seoServicePages.map((service) => (
-              <Link
-                key={service.path}
-                href={service.path}
-                className="card-premium p-5 transition-colors hover:border-blue-200"
-              >
-                <p className="mb-2 text-xs font-bold tracking-widest text-blue-600 uppercase">
-                  Servicio específico
-                </p>
-                <h3 className="text-lg font-extrabold text-slate-900">{service.navLabel}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                  {service.metaDescription}
-                </p>
-                <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
-                  Ver servicio <ArrowRight className="h-4 w-4" />
-                </span>
+          <Link className="design-button mt-7" href="/contacto?origen=soluciones">
+            Conversemos sobre tu proyecto <ArrowUpRight size={18} />
+          </Link>
+          <nav className="solution-jump-links" aria-label="Familias de soluciones">
+            {solutionFamilies.map((f) => (
+              <Link key={f.id} href={`#${f.id}`}>
+                {f.shortName}
               </Link>
             ))}
-          </div>
-
-          <div className="space-y-4 pt-6">
-            <div className="space-y-1 text-center">
-              <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
-                Atención local y especializada
-              </p>
-              <h3 className="text-xl font-extrabold text-slate-900">
-                Santiago, Región Metropolitana y soluciones específicas
-              </h3>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {priorityServicePages.map((service) => (
-                <Link
-                  key={service.path}
-                  href={service.path}
-                  className="card-premium p-5 transition-colors hover:border-blue-200"
-                >
-                  <h4 className="text-base font-extrabold text-slate-900">{service.title}</h4>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                    {service.metaDescription}
-                  </p>
-                  <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
-                    Ver servicio <ArrowRight className="h-4 w-4" />
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4 pt-6">
-            <div className="space-y-1 text-center">
-              <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">Por rubro</p>
-              <h3 className="text-xl font-extrabold text-slate-900">
-                Páginas web según el sector de tu empresa
-              </h3>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {verticalPages.map((vertical) => (
-                <Link
-                  key={vertical.path}
-                  href={vertical.path}
-                  className="card-premium p-5 transition-colors hover:border-blue-200"
-                >
-                  <h4 className="text-base font-extrabold text-slate-900">{vertical.navLabel}</h4>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                    {vertical.heroTitle}
-                  </p>
-                  <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
-                    Ver servicio <ArrowRight className="h-4 w-4" />
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
+          </nav>
         </Container>
       </section>
-
-      <section className="section-alt py-16">
-        <Container className="grid gap-6 lg:grid-cols-3">
-          {serviceGroups.map((group) => (
-            <article key={group.title} className="card-premium p-6">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                {group.icon}
-                {group.title}
-              </div>
-              <p className="mb-4 text-sm text-slate-600">{group.description}</p>
-              <div className="space-y-2">
-                {group.items.map((item) => (
-                  <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </article>
-          ))}
-        </Container>
-      </section>
-
-      <section className="bg-white py-16">
-        <Container className="space-y-8">
-          <div className="space-y-2 text-center">
-            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
-              Detalle de servicios
-            </p>
-            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Qué resuelve cada servicio de Zyteron
-            </h2>
-            <p className="mx-auto max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Estas líneas de trabajo pueden contratarse por separado o combinarse en una solución
-              mayor según el problema que tu empresa necesita resolver.
-            </p>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2">
-            {detailedServices.map((service) => (
-              <Link
-                key={service.href}
-                href={service.href}
-                className="card-premium p-6 transition-colors hover:border-blue-200"
-              >
-                <h3 className="text-xl font-extrabold text-slate-900">{service.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">{service.description}</p>
-                <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
-                  Revisar servicio <ArrowRight className="h-4 w-4" />
-                </span>
-              </Link>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      <section className="section-alt py-16">
-        <Container className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-          <article className="card-premium p-6">
-            <h2 className="text-2xl font-extrabold text-slate-900">
-              ¿Qué servicio necesita tu empresa?
-            </h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              Si todavía no tienes claro qué cotizar, podemos ayudarte a identificar la solución más
-              conveniente según objetivo, presupuesto, urgencia y complejidad operativa.
-            </p>
-          </article>
-          <div className="grid gap-3 md:grid-cols-2">
-            {serviceSelector.map((item) => (
-              <div key={item} className="card-premium flex items-start gap-3 p-4">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" />
-                <p className="text-sm leading-relaxed text-slate-700">{item}</p>
-              </div>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      <section className="bg-white py-16">
-        <Container className="section-blue rounded-2xl p-8 text-center text-white">
-          <h2 className="text-2xl font-extrabold sm:text-3xl">
-            Conversemos sobre la solución que necesita tu empresa
-          </h2>
-          <p className="mx-auto mt-2 max-w-3xl text-sm text-blue-100 sm:text-base">
-            Cuéntanos qué problema quieres resolver y te orientamos con una alternativa clara,
-            profesional y escalable.
+      <section className="py-16">
+        <Container>
+          <h2 className="text-3xl sm:text-4xl">Cinco familias, un alcance definido para ti.</h2>
+          <p className="mt-4 max-w-3xl leading-7 text-slate-600">
+            Las capacidades se desarrollan y combinan según cada proyecto. La propuesta confirma qué
+            incluye la primera entrega, qué se deja para una siguiente etapa y qué depende de
+            servicios externos.
           </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" className="bg-white font-bold text-blue-800 hover:bg-blue-50">
-              <Link href="/cotizador">
-                Cotizar una solución <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
+          <SolutionFamilies detailed />
+        </Container>
+      </section>
+      <section id="rubros" className="border-y border-slate-200 bg-white py-16">
+        <Container>
+          <p className="eyebrow">Según tu actividad</p>
+          <h2 className="mt-3 text-3xl">Soluciones por rubro</h2>
+          <IndustrySolutions />
+        </Container>
+      </section>
+      <section className="py-16">
+        <Container className="grid gap-10 lg:grid-cols-2">
+          <div>
+            <h2 className="text-3xl">Una primera conversación basta para comenzar.</h2>
+            <p className="mt-5 leading-7 text-slate-600">
+              Cuéntanos qué quieres mejorar. Revisamos la necesidad y preparamos una propuesta con
+              entregables, calendario, inversión y condiciones de operación.
+            </p>
+            <Link
+              href="/contacto?tipo=orientacion&origen=soluciones"
+              className="design-button mt-6"
             >
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="h-4 w-4" /> Hablar por WhatsApp
-              </a>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
-            >
-              <Link href="/planes">Ver planes</Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
-            >
-              <Link href="/demos">Ver demos</Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
-            >
-              <Link href="/casos-exito">Ver casos</Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
-            >
-              <Link href="/contacto">Hablar con un especialista</Link>
-            </Button>
+              Necesito orientación <ArrowUpRight size={18} />
+            </Link>
           </div>
+          <nav
+            aria-label="Servicios y recursos complementarios"
+            className="grid content-start gap-4 text-sm"
+          >
+            {[
+              ["Precios y alcances", "/planes"],
+              ["Proyectos seleccionados", "/casos-exito"],
+              ["Webs para empresas en Santiago", "/paginas-web-santiago"],
+              ["Integraciones y desarrollo web en Santiago", "/desarrollo-web-santiago"],
+              ["Webs para pymes", "/paginas-web-para-pymes"],
+              ["SEO para empresas", "/servicios/seo-para-empresas-chile"],
+              ["Mantenimiento web", "/servicios/mantencion-web-chile"],
+              ["Soporte TI", "/soporte-ti"],
+              ["Recursos para preparar un proyecto", "/recursos"],
+              ["Preguntas frecuentes", "/faq"],
+            ].map(([label, href]) => (
+              <Link key={href} href={href} className="text-link">
+                {label}
+                <ArrowUpRight size={15} />
+              </Link>
+            ))}
+          </nav>
         </Container>
       </section>
     </main>

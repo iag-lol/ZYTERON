@@ -9,7 +9,8 @@ await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const results = [];
 try {
-  for (const width of [390, 1440]) {
+  const choices = { "tienda-online": /Tienda online/, catalogo: /Catálogo de productos/, "gestion-personas": /Gestión de personas o RRHH/, "control-flota": /Control de flota u operaciones/ };
+  for (const width of [390, 1440]) for (const projectType of (process.argv[4] || "tienda-online").split(",")) {
     const context = await browser.newContext({
       viewport: { width, height: 900 },
       reducedMotion: "reduce",
@@ -24,7 +25,7 @@ try {
     const page = await context.newPage();
     await page.goto(`${origin}/cotizador`, { waitUntil: "networkidle" });
     await page.getByRole("button", { name: "Comenzar cotización" }).click();
-    await page.getByRole("button", { name: /Tienda online/ }).click();
+    await page.getByRole("button", { name: choices[projectType] }).click();
     for (let step = 1; step <= 7; step++) {
       await page.getByText(`Paso ${step} de 7`, { exact: true }).last().waitFor();
       if (step === 2) {
@@ -50,6 +51,7 @@ try {
         .analyze();
       results.push({
         width,
+        projectType,
         step,
         violations: audit.violations.map((v) => ({
           id: v.id,
@@ -57,7 +59,7 @@ try {
           nodes: v.nodes.map((n) => n.target),
         })),
       });
-      await page.screenshot({ path: `${output}/${width}-paso-${step}.png` });
+      await page.screenshot({ path: `${output}/${width}-${projectType}-paso-${step}.png` });
       if (step < 7) await page.getByRole("button", { name: "Siguiente", exact: true }).click();
     }
     let fail = true;
@@ -89,6 +91,7 @@ try {
       .click();
     await page.getByText("QA-LOCAL", { exact: true }).waitFor();
     assert.equal(requests.length, 2);
+    assert.equal(requests[1].projectType, projectType);
     assert.equal(requests[0].clientSubmissionId, requests[1].clientSubmissionId);
     const events = await page.evaluate(() =>
       (window.dataLayer || []).map((v) => Array.from(v)).filter((v) => v[0] === "event"),

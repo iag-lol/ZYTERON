@@ -18,6 +18,7 @@ import {
   PROJECT_TYPES,
   resolveRequestContext,
   serviceLineFor,
+  solutionFamilyFor,
 } from "@/lib/commercial/request-context";
 import { finishSubmission, submissionIdFor } from "@/lib/commercial/submission-id";
 
@@ -60,6 +61,7 @@ function readMarketingSource() {
     "tipo",
     "plan",
     "origen",
+    "rubro",
     "item",
     "utm_source",
     "utm_medium",
@@ -78,6 +80,7 @@ function readMarketingSource() {
 export function ContactLeadForm() {
   const sending = useRef(false);
   const started = useRef(false);
+  const progressed = useRef(new Set<string>());
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
 
   const {
@@ -106,6 +109,7 @@ export function ContactLeadForm() {
 
   const projectType = useWatch({ control, name: "projectType" });
   const serviceLine = serviceLineFor(projectType);
+  const solutionFamily = solutionFamilyFor(projectType);
   const isSystems = serviceLine === "sistemas_automatizacion";
 
   useEffect(() => {
@@ -162,22 +166,26 @@ export function ContactLeadForm() {
           const eventParams = {
             page_path: window.location.pathname,
             service_line: serviceLineFor(values.projectType),
+            solution_family: solutionFamilyFor(values.projectType),
             lead_id: payload.leadId,
           };
           trackContactFormSubmit(eventParams);
           trackQuoteRequestConversion(eventParams);
           finishSubmission("contact");
           setSubmitState({ status: "success", reference: payload.reference });
-        } catch {
+        } catch (error) {
           trackAnalyticsEvent("form_error", {
             form_type: "contact",
             service_line: serviceLine,
+            solution_family: solutionFamily,
             error_type: "delivery",
           });
           setSubmitState({
             status: "error",
             message:
-              "No pudimos confirmar la recepción. Tus datos siguen aquí; revisa tu conexión y vuelve a intentar. También puedes contactarnos por WhatsApp.",
+              error instanceof Error && error.message.startsWith("Has enviado")
+                ? error.message
+                : "No pudimos confirmar la recepción. Tus datos siguen aquí; revisa tu conexión y vuelve a intentar. También puedes contactarnos por WhatsApp.",
           });
         } finally {
           sending.current = false;
@@ -187,6 +195,7 @@ export function ContactLeadForm() {
         trackAnalyticsEvent("form_error", {
           form_type: "contact",
           service_line: serviceLine,
+          solution_family: solutionFamily,
           error_type: "validation",
         });
       },
@@ -207,6 +216,7 @@ export function ContactLeadForm() {
           onClick={() => {
             reset();
             started.current = false;
+            progressed.current.clear();
             setSubmitState({ status: "idle" });
           }}
         >
@@ -221,7 +231,7 @@ export function ContactLeadForm() {
         <div className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5 text-blue-700" />
           <h2 className="text-lg font-bold text-slate-900">
-            {isSystems ? "Solicitar diagnóstico" : "Cuéntanos qué web o tienda necesitas"}
+            {isSystems ? "Conversemos sobre tu proceso" : "Cuéntanos qué necesitas"}
           </h2>
         </div>
         <p className="text-xs text-slate-500">
@@ -234,10 +244,35 @@ export function ContactLeadForm() {
         onSubmit={onSubmit}
         className="space-y-4"
         noValidate
+        onBlurCapture={(event) => {
+          const field: EventTarget = event.target;
+          if (
+            !(
+              field instanceof HTMLInputElement ||
+              field instanceof HTMLSelectElement ||
+              field instanceof HTMLTextAreaElement
+            )
+          )
+            return;
+          const name = field.name;
+          const step = name === "projectType" ? 1 : name === "message" ? 2 : 0;
+          if (!step || progressed.current.has(name) || !field.value.trim()) return;
+          progressed.current.add(name);
+          trackAnalyticsEvent("form_progress", {
+            form_type: "contact",
+            step,
+            service_line: serviceLine,
+            solution_family: solutionFamily,
+          });
+        }}
         onFocusCapture={() => {
           if (started.current) return;
           started.current = true;
-          trackAnalyticsEvent("form_start", { form_type: "contact", service_line: serviceLine });
+          trackAnalyticsEvent("form_start", {
+            form_type: "contact",
+            service_line: serviceLine,
+            solution_family: solutionFamily,
+          });
         }}
       >
         <input
@@ -350,7 +385,7 @@ export function ContactLeadForm() {
               htmlFor="projectType"
               className="text-xs font-bold tracking-wide text-slate-500 uppercase"
             >
-              Tipo de proyecto
+              ¿Qué necesitas?
             </Label>
             <select
               id="projectType"
@@ -382,7 +417,7 @@ export function ContactLeadForm() {
             </Label>
             <Input
               id="budget"
-              placeholder="Ej: $180.000 - $350.000"
+              placeholder="Si ya tienes un presupuesto, indícalo"
               className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
               aria-invalid={Boolean(errors.budget)}
               aria-describedby={errors.budget ? "budget-error" : undefined}
@@ -406,7 +441,11 @@ export function ContactLeadForm() {
           <Textarea
             id="message"
             rows={4}
-            placeholder="Ej: necesito una web para mostrar mis servicios y recibir consultas por WhatsApp."
+            placeholder={
+              isSystems
+                ? "Cuéntanos qué proceso necesitas ordenar y cómo lo resuelves hoy."
+                : "Qué quieres presentar, comercializar o mejorar. Una descripción breve es suficiente."
+            }
             className="resize-none border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
             aria-invalid={Boolean(errors.message)}
             aria-describedby={errors.message ? "message-error" : undefined}

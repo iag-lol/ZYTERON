@@ -3,9 +3,11 @@ import { publicPath } from "@/lib/commercial/request-context";
 type EventParams = Record<string, string | number | boolean | null | undefined>;
 const codes = new Set([
   "service_line",
+  "solution_family",
   "form_type",
   "error_type",
   "plan_id",
+  "project_id",
   "project_type",
   "metric_name",
   "rating",
@@ -20,7 +22,10 @@ const amounts = new Set(["step", "value", "estimate", "metric_value", "delta", "
 export function safeEventParams(params: EventParams = {}): EventParams {
   const safe: EventParams = {};
   for (const [key, value] of Object.entries(params)) {
-    if ((key === "page_path" || key === "destination_path") && typeof value === "string") {
+    if (
+      (key === "page_path" || key === "destination_path" || key === "entry_path") &&
+      typeof value === "string"
+    ) {
       const route = publicPath(value);
       if (route) safe[key] = route;
     } else if (codes.has(key) && typeof value === "string" && /^[a-z0-9_-]{1,80}$/.test(value))

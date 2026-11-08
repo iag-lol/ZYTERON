@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Check, Globe, Layers3, ShieldCheck } from "lucide-react";
+import { ArrowRight, ArrowUpRight, ShieldCheck } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ContactLeadForm } from "@/components/forms/contact-lead-form";
@@ -8,17 +8,18 @@ import { HomeFaqAccordion } from "@/components/home/home-faq";
 import { ClientReviewsSection } from "@/components/home/client-reviews-section";
 import { getApprovedReviewsSnapshot } from "@/lib/web-control";
 import { ProjectGallery } from "@/components/projects/project-gallery";
-import { PLAN_CATALOG, fromPrice, PLAN_PRICE_AMOUNTS } from "@/config/pricing";
+import { fromPrice, PLAN_PRICE_AMOUNTS } from "@/config/pricing";
 import { OFFER_CONDITIONS, planDeadline } from "@/config/commercial-offer";
 import { siteConfig } from "@/config/site";
-import { planContactHref } from "@/lib/commercial/request-context";
+import { SolutionFamilies, IndustrySolutions } from "@/components/commercial/solution-families";
+import { solutionFamilies } from "@/content/solutions";
 import { buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const revalidate = 3600;
 export const metadata: Metadata = createPageMetadata({
-  title: "Páginas Web Profesionales en Chile para Empresas y Pymes",
+  title: "Desarrollo de Software y Soluciones Digitales en Chile",
   description:
-    "Creamos páginas web profesionales para empresas y pymes de Santiago, Región Metropolitana y todo Chile: sitios rápidos, con base SEO técnica y enfocados en generar cotizaciones.",
+    "Software a medida, sistemas empresariales, ecommerce y páginas web profesionales en Chile. Soluciones para gestionar, presentar y hacer crecer tu negocio.",
   path: "/",
 });
 
@@ -46,7 +47,7 @@ const services = [
   {
     name: "Tiendas online",
     path: "/tiendas-online",
-    description: "Catálogo WhatsApp o ecommerce con carrito y pagos según alcance.",
+    description: "Ecommerce con carrito, pagos y gestión de pedidos según alcance.",
   },
   {
     name: "Sistemas web a medida",
@@ -65,6 +66,18 @@ const services = [
   },
 ];
 const faqs = [
+  {
+    q: "¿Desarrollan solo páginas web?",
+    a: "Desarrollamos software a medida, plataformas empresariales, herramientas para personas y operaciones, ecommerce, catálogos, sitios web e integraciones. Podemos abordar un proyecto completo o una necesidad específica, según los procesos, usuarios y objetivos de cada empresa o profesional.",
+  },
+  {
+    q: "¿Pueden crear herramientas de recursos humanos y control de operaciones?",
+    a: "Sí. Evaluamos gestión de personal, solicitudes, documentación, tareas, turnos, flotas y trabajo en terreno. Son desarrollos a medida: definimos los módulos y validamos las integraciones y requisitos antes de comprometer su implementación. Equipos e instalación se cotizan por separado cuando son necesarios.",
+  },
+  {
+    q: "¿Una web puede servir solo para presentar mi empresa o profesión?",
+    a: "Sí. Puede informar, mostrar trayectoria, servicios, productos o proyectos y transmitir confianza, sin incorporar compra online. Elegimos la estructura y las acciones según el objetivo del sitio.",
+  },
   {
     q: "¿Cuánto cuesta una página web profesional?",
     a: `Web Básica: ${fromPrice(PLAN_PRICE_AMOUNTS["web-basica"])}. Plan Pyme: ${fromPrice(PLAN_PRICE_AMOUNTS.pyme)}. Plan Empresa: ${fromPrice(PLAN_PRICE_AMOUNTS.empresa)}. Cada alternativa tiene un alcance diferente; la cotización confirma páginas, contenidos, revisiones e integraciones.`,
@@ -96,7 +109,7 @@ const steps = [
   [
     "01",
     "Definimos el objetivo",
-    "Qué necesitas captar, vender u ordenar; revisamos tu situación y la información disponible.",
+    "Qué necesitas presentar, comercializar o gestionar; revisamos procesos, usuarios y herramientas actuales.",
   ],
   [
     "02",
@@ -114,23 +127,17 @@ const steps = [
     "Entrega de accesos y documentación, soporte y continuidad según las condiciones acordadas.",
   ],
 ];
-const action =
-  "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition-colors";
 
 export default async function Home() {
   const reviews = await getApprovedReviewsSnapshot();
-  const plans = ["web-basica", "pyme", "catalogo", "ecommerce"].map(
-    (id) => PLAN_CATALOG.find((plan) => plan.id === id)!,
-  );
   return (
     <main className="home-page overflow-x-clip">
       <JsonLd
         id="home-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/",
-          title: "Páginas Web Profesionales en Chile | Zyteron",
-          description:
-            "Páginas web y ecommerce para captar clientes, sistemas y automatización para ordenar la operación.",
+          title: "Desarrollo de Software y Soluciones Digitales en Chile | Zyteron",
+          description: siteConfig.description,
           breadcrumbs: [{ name: "Inicio", path: "/" }],
         })}
       />
@@ -139,35 +146,39 @@ export default async function Home() {
         data={buildServicesListJsonLd({
           path: "/",
           title: "Servicios principales Zyteron",
-          services,
+          services: solutionFamilies.map((family) => ({
+            name: family.name,
+            description: family.description,
+            path: `/servicios#${family.id}`,
+          })),
         })}
       />
       <section className="home-hero">
         <Container>
           <div className="hero-overline">
-            <p className="eyebrow">Desarrollo digital para empresas</p>
+            <p className="eyebrow">Software y desarrollo digital para empresas y profesionales</p>
             <span>Santiago, Chile · Desde 2019</span>
           </div>
           <h1>
-            Páginas web profesionales <span>para empresas que necesitan vender</span>
+            Desarrollo de software <span>y soluciones digitales a medida</span>
           </h1>
           <div className="hero-bottom">
             <p className="hero-note">
-              Diseño, desarrollo y operación.
-              <br />
-              Un equipo para conectar las tres.
+              Desde presentar tu empresa hasta conectar y gestionar su operación.
             </p>
             <div className="hero-intro">
               <p>
-                Creamos webs y tiendas para captar clientes. Conectamos sistemas y automatizaciones
-                para que tu equipo pueda atenderlos con orden.
+                Creamos sistemas empresariales, plataformas de gestión, ecommerce y sitios web para
+                empresas y profesionales. Desarrollamos herramientas para gestionar personas,
+                recursos humanos, flotas, productos y operaciones, con integraciones y
+                automatizaciones adaptadas a cada proyecto.
               </p>
               <div className="hero-actions">
-                <Link href="/contacto?tipo=web&origen=inicio" className="design-button">
-                  Hablemos de tu proyecto <ArrowUpRight size={18} />
+                <Link href="/contacto?origen=inicio" className="design-button">
+                  Conversemos sobre tu proyecto <ArrowUpRight size={18} />
                 </Link>
-                <Link href="#proyectos" className="text-link">
-                  Explorar proyectos <ArrowRight size={16} />
+                <Link href="#soluciones" className="text-link">
+                  Explorar soluciones <ArrowRight size={16} />
                 </Link>
               </div>
             </div>
@@ -189,97 +200,73 @@ export default async function Home() {
         </Container>
       </section>
 
-      <section
-        id="servicios"
-        className="home-services border-y border-slate-200 bg-slate-50 py-16 sm:py-24"
-      >
+      <section id="soluciones" className="border-y border-slate-200 py-16 sm:py-24">
         <Container>
-          <p className="text-xs font-bold tracking-widest text-blue-700 uppercase">
-            02 / Servicios
-          </p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-            Captar clientes. Ordenar la operación.
+          <span id="servicios" />
+          <p className="eyebrow">02 / Familias de soluciones</p>
+          <h2 className="mt-3 max-w-3xl text-3xl sm:text-4xl">
+            Tecnología para lo que tu negocio necesita hacer.
           </h2>
-          <div className="mt-9 grid gap-6 lg:grid-cols-2">
-            <div className="rounded-2xl border border-blue-200 bg-white p-7 sm:p-9">
-              <Globe className="h-8 w-8 text-blue-700" />
-              <h3 className="mt-5 text-2xl font-bold text-slate-950">Páginas web y ecommerce</h3>
-              <p className="mt-3 leading-7 text-slate-600">
-                Presenta servicios, recibe consultas o vende productos. El alcance distingue
-                páginas, contenidos, catálogo, pagos y administración.
-              </p>
-              <div id="planes" className="mt-6 divide-y divide-slate-200">
-                {plans.map((plan) => (
-                  <Link
-                    key={plan.id}
-                    href={planContactHref(plan.id, "inicio")}
-                    className="flex flex-wrap items-center justify-between gap-2 py-4 text-sm"
-                  >
-                    <span className="font-bold text-slate-900">{plan.name}</span>
-                    <span className="font-semibold text-blue-700">{plan.price} →</span>
-                  </Link>
-                ))}
-              </div>
-              <Link
-                href="/planes"
-                className="mt-5 inline-flex text-sm font-bold text-blue-700 underline"
-              >
-                Comparar inclusiones, plazos y mantenimiento
-              </Link>
-            </div>
-            <div className="rounded-2xl bg-[#101e39] p-7 text-white sm:p-9">
-              <Layers3 className="h-8 w-8 text-blue-300" />
-              <h3 className="mt-5 text-2xl font-bold">Sistemas y automatización</h3>
-              <p className="mt-3 leading-7 text-slate-300">
-                Documentos, inventario, aprobaciones o integraciones: partimos por una tarea
-                concreta y definimos una primera etapa verificable.
-              </p>
-              <ul className="mt-6 space-y-4 text-sm text-slate-200">
-                {[
-                  "Usuarios, roles y permisos según el proceso.",
-                  "Datos, migración e integración con herramientas existentes.",
-                  "Módulos, validación, entrega y continuidad por etapas.",
-                ].map((item) => (
-                  <li key={item} className="flex gap-3">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-300" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-7 text-xl font-bold">{fromPrice(PLAN_PRICE_AMOUNTS.sistema)}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-300">
-                Referencia del Sistema Web Profesional: usuarios, registros, roles, panel y
-                reportes. El diagnóstico confirma módulos, límites e integraciones.
-              </p>
-              <Link
-                className={`${action} mt-7 bg-white text-blue-900 hover:bg-blue-50`}
-                href="/contacto?tipo=sistema&origen=inicio"
-              >
-                Solicitar diagnóstico <ArrowRight className="h-4 w-4" />
-              </Link>
-              <p className="mt-5 text-sm">
-                <Link href="/sistemas-web" className="text-blue-200 underline">
-                  Explorar sistemas
-                </Link>{" "}
-                ·{" "}
-                <Link href="/automatizacion" className="text-blue-200 underline">
-                  Ver automatización
+          <SolutionFamilies />
+        </Container>
+      </section>
+      <section className="py-16 sm:py-24" id="necesidades">
+        <Container>
+          <p className="eyebrow">03 / Un punto de partida</p>
+          <h2 className="mt-3 text-3xl sm:text-4xl">¿Qué necesitas resolver?</h2>
+          <div className="needs-grid">
+            {[
+              [
+                "Presentar mejor lo que haces",
+                "Una empresa, una profesión, un servicio o un proyecto: información clara y una presencia que dé confianza.",
+                "/desarrollo-web",
+                "Explorar sitios web",
+              ],
+              [
+                "Ordenar productos y pedidos",
+                "Un catálogo para mostrar o cotizar, una tienda para cobrar online o una conexión con tu inventario.",
+                "/servicios#comercio-digital",
+                "Explorar comercio digital",
+              ],
+              [
+                "Coordinar equipos y operaciones",
+                "Reunir datos, documentos y tareas para que cada persona conozca sus pendientes y pueda seguir su avance.",
+                "/servicios#personas-operaciones",
+                "Explorar gestión",
+              ],
+              [
+                "Conectar herramientas y ahorrar pasos",
+                "Evitar volver a digitar una solicitud, preparar documentos y avisar al equipo cuando cambia un estado.",
+                "/automatizacion",
+                "Explorar automatizaciones",
+              ],
+            ].map(([title, text, href, label]) => (
+              <article key={title}>
+                <h3>{title}</h3>
+                <p>{text}</p>
+                <Link className="text-link" href={href}>
+                  {label}
+                  <ArrowUpRight size={16} />
                 </Link>
-              </p>
-            </div>
+              </article>
+            ))}
           </div>
-          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 text-sm leading-7 text-slate-600">
-            <strong className="text-slate-900">Implementación y operación por separado. </strong>
-            {OFFER_CONDITIONS.recurring} Todos los importes de implementación son referenciales y
-            están expresados en CLP + IVA.
-          </div>
+        </Container>
+      </section>
+      <section className="border-y border-slate-200 bg-white py-16 sm:py-24" id="rubros">
+        <Container>
+          <p className="eyebrow">04 / Soluciones por rubro</p>
+          <h2 className="mt-3 text-3xl sm:text-4xl">
+            Distintas actividades. Necesidades concretas.
+          </h2>
+          <IndustrySolutions />
         </Container>
       </section>
 
       <section id="proceso" className="py-16 sm:py-24">
         <Container>
           <p className="text-xs font-bold tracking-widest text-blue-700 uppercase">
-            03 / Cómo trabajamos
+            05 / Cómo trabajamos
           </p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
             Sabes qué se construye y qué recibes.
@@ -305,6 +292,35 @@ export default async function Home() {
           </p>
         </Container>
       </section>
+      <section id="implementacion" className="border-y border-slate-200 bg-white py-16">
+        <Container className="grid gap-10 lg:grid-cols-2">
+          <div>
+            <p className="eyebrow">06 / Implementación y continuidad</p>
+            <h2 className="mt-3 text-3xl">El alcance y los costos, por escrito.</h2>
+            <p className="mt-5 leading-7 text-slate-600">
+              La propuesta distingue desarrollo e implementación de infraestructura, equipamiento,
+              mantenimiento, licencias, renovaciones y consumos externos. Define responsables,
+              plazos y entregables por etapa.
+            </p>
+            <Link id="planes" href="/planes" className="text-link mt-4">
+              Revisar precios y alcances <ArrowUpRight size={17} />
+            </Link>
+          </div>
+          <div className="space-y-5 text-sm leading-7 text-slate-600">
+            <p>
+              <strong className="text-slate-900">Sistemas empresariales. </strong>
+              {fromPrice(PLAN_PRICE_AMOUNTS.sistema)} como referencia del Sistema Web Profesional:
+              usuarios, registros, roles, panel y reportes. Módulos, datos, migración e
+              integraciones modifican el presupuesto.
+            </p>
+            <p>{OFFER_CONDITIONS.recurring}</p>
+            <p>{OFFER_CONDITIONS.delivery}</p>
+            <Link className="text-link" href="/sistemas-web/control-flota">
+              Ver alcance específico de Control de Flota <ArrowUpRight size={16} />
+            </Link>
+          </div>
+        </Container>
+      </section>
       {reviews.length > 0 && <ClientReviewsSection reviews={reviews} />}
       <section id="preguntas-frecuentes" className="bg-slate-50 py-16">
         <Container className="max-w-4xl">
@@ -318,7 +334,7 @@ export default async function Home() {
         <Container className="grid items-start gap-10 lg:grid-cols-[0.85fr_1.15fr]">
           <div>
             <p className="text-xs font-bold tracking-widest text-blue-700 uppercase">
-              04 / Conversemos
+              08 / Conversemos
             </p>
             <h2 className="mt-4 text-4xl font-bold tracking-tight text-slate-950">
               Cuéntanos qué necesita tu empresa.

@@ -49,7 +49,7 @@ try {
       assert.equal(await page.locator("main h1").count(), 1);
       if (route === "/contacto?tipo=sistema") {
         await page.waitForFunction(
-          () => document.querySelector("#projectType")?.value === "Sistema interno",
+          () => document.querySelector("#projectType")?.value === "Sistema empresarial",
         );
         assert.equal(
           await page.getByRole("button", { name: "Solicitar diagnóstico", exact: true }).count(),
@@ -99,7 +99,7 @@ try {
       waitUntil: "networkidle",
     });
     await page.waitForFunction(
-      () => document.querySelector("#projectType")?.value === "Sistema interno",
+      () => document.querySelector("#projectType")?.value === "Sistema empresarial",
     );
     assert.equal(await page.getByRole("button", { name: "Abrir asistente virtual" }).count(), 0);
     await page.locator("#name").fill("Prueba controlada");

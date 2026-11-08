@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { PLAN_PRICE_AMOUNTS, clp } from "@/config/pricing";
 import { siteConfig } from "@/config/site";
-import { buildQuoteMeta, parseQuoteMessage, serializeQuoteMessage, type QuoteMeta } from "@/lib/admin/quote";
+import {
+  buildQuoteMeta,
+  parseQuoteMessage,
+  serializeQuoteMessage,
+  type QuoteMeta,
+} from "@/lib/admin/quote";
 
 export const QUOTE_REQUEST_KIND = "WEB_QUOTE_REQUEST";
 
@@ -19,6 +24,9 @@ export const QUOTE_REQUEST_WHATSAPP_PUBLIC = siteConfig.social.whatsapp;
 export type ProjectTypeValue =
   | "web-basica"
   | "web-profesional"
+  | "catalogo"
+  | "gestion-personas"
+  | "control-flota"
   | "tienda-online"
   | "sistema-web"
   | "automatizacion"
@@ -114,9 +122,12 @@ type TwilioResponse = {
 
 export const PROJECT_TYPE_LABELS: Record<ProjectTypeValue, string> = {
   "web-basica": "Web básica de presentación",
-  "web-profesional": "Página web profesional",
-  "tienda-online": "Tienda online",
-  "sistema-web": "Sistema web interno",
+  "web-profesional": "Sitio empresarial o profesional",
+  catalogo: "Catálogo de productos",
+  "gestion-personas": "Gestión de personas o recursos humanos",
+  "control-flota": "Control de flota u operaciones",
+  "tienda-online": "Ecommerce con carrito y pagos",
+  "sistema-web": "Sistema empresarial",
   automatizacion: "Automatización",
   "soporte-ti": "Soporte TI",
   "no-seguro": "No estoy seguro",
@@ -190,6 +201,9 @@ export const quoteRequestSchema = z.object({
   projectType: z.enum([
     "web-basica",
     "web-profesional",
+    "catalogo",
+    "gestion-personas",
+    "control-flota",
     "tienda-online",
     "sistema-web",
     "automatizacion",
@@ -225,12 +239,11 @@ export const quoteRequestSchema = z.object({
     .trim()
     .min(8)
     .max(32)
-    .refine((value) => CHILE_WHATSAPP_REGEX.test(value), "Ingresa un WhatsApp válido para responderte."),
-  contactEmail: z
-    .string()
-    .trim()
-    .email("Revisa el correo, parece que tiene un error.")
-    .max(160),
+    .refine(
+      (value) => CHILE_WHATSAPP_REGEX.test(value),
+      "Ingresa un WhatsApp válido para responderte.",
+    ),
+  contactEmail: z.string().trim().email("Revisa el correo, parece que tiene un error.").max(160),
   contactCompany: z.string().trim().max(140).optional().or(z.literal("")),
   currentWebsite: z.string().trim().max(200).optional().or(z.literal("")),
   additionalMessage: z.string().trim().max(1200).optional().or(z.literal("")),
@@ -239,7 +252,10 @@ export const quoteRequestSchema = z.object({
 
 function cleanText(value?: string | null) {
   if (!value) return "";
-  return value.replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
+  return value
+    .replace(/[\u0000-\u001F\u007F]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function escapeHtml(value: string) {
@@ -305,7 +321,10 @@ export function isCorporateBudgetRange(value: BudgetRangeValue) {
   return budgetRangeToEstimate(value) >= CORPORATE_QUOTE_THRESHOLD;
 }
 
-export function computeRequestPriority(input: { urgency: UrgencyValue; budgetRange: BudgetRangeValue }): RequestPriority {
+export function computeRequestPriority(input: {
+  urgency: UrgencyValue;
+  budgetRange: BudgetRangeValue;
+}): RequestPriority {
   if (input.urgency === "alto") return "Alta";
   if (isCorporateBudgetRange(input.budgetRange)) return "Alta";
   if (input.budgetRange === "mas-700000" || input.budgetRange === "300000-700000") return "Alta";
@@ -321,12 +340,16 @@ export function mapStageToQuoteStatus(stage: QuoteRequestStage) {
   return "PENDING";
 }
 
-export function isQuoteRequestMeta(meta?: { kind?: string | null } | null): meta is QuoteRequestMeta {
+export function isQuoteRequestMeta(
+  meta?: { kind?: string | null } | null,
+): meta is QuoteRequestMeta {
   return meta?.kind === QUOTE_REQUEST_KIND;
 }
 
 export function requestStageLabel(value?: string | null) {
-  const key = String(value || "NUEVA").trim().toUpperCase() as QuoteRequestStage;
+  const key = String(value || "NUEVA")
+    .trim()
+    .toUpperCase() as QuoteRequestStage;
   return REQUEST_STAGE_LABELS[key] || REQUEST_STAGE_LABELS.NUEVA;
 }
 
@@ -348,7 +371,13 @@ export function buildQuoteRequestSummary(meta: QuoteRequestMeta) {
   return parts.join(" · ").slice(0, 220);
 }
 
-export function buildQuoteRequestMeta(input: z.infer<typeof quoteRequestSchema> & { quoteCode: string; submittedAt: string; submittedFrom?: string | null }) {
+export function buildQuoteRequestMeta(
+  input: z.infer<typeof quoteRequestSchema> & {
+    quoteCode: string;
+    submittedAt: string;
+    submittedFrom?: string | null;
+  },
+) {
   const projectAnswers = input.projectAnswers.map((answer) => ({
     key: cleanText(answer.key),
     label: cleanText(answer.label),
@@ -366,7 +395,8 @@ export function buildQuoteRequestMeta(input: z.infer<typeof quoteRequestSchema> 
     iva: 0,
     grandTotal: budgetRangeToEstimate(input.budgetRange),
     notes: cleanText(input.additionalMessage) || cleanText(input.projectComment) || undefined,
-    terms: "Solicitud comercial inicial recibida desde el cotizador web. El alcance final se define tras revisión comercial.",
+    terms:
+      "Solicitud comercial inicial recibida desde el cotizador web. El alcance final se define tras revisión comercial.",
   }) as QuoteRequestMeta;
 
   const meta: QuoteRequestMeta = {
@@ -414,7 +444,11 @@ export function buildQuoteRequestMeta(input: z.infer<typeof quoteRequestSchema> 
   return meta;
 }
 
-export function appendQuoteRequestError(meta: QuoteRequestMeta, channel: "email" | "whatsapp" | "admin", message: string) {
+export function appendQuoteRequestError(
+  meta: QuoteRequestMeta,
+  channel: "email" | "whatsapp" | "admin",
+  message: string,
+) {
   const errorLog = [...(meta.errorLog || [])];
   errorLog.push(`${new Date().toISOString()} [${channel}] ${cleanText(message)}`.slice(0, 600));
   return {
@@ -491,7 +525,12 @@ function buildDetailText(meta: QuoteRequestMeta) {
 }
 
 function extractResendError(body: ResendResponse | null) {
-  return cleanText(body?.error?.message) || cleanText(body?.message) || cleanText(String(body?.code || "")) || "Resend rechazo el envio.";
+  return (
+    cleanText(body?.error?.message) ||
+    cleanText(body?.message) ||
+    cleanText(String(body?.code || "")) ||
+    "Resend rechazo el envio."
+  );
 }
 
 function normalizeFromAddress(raw: string | undefined) {
@@ -601,7 +640,9 @@ export async function sendQuoteRequestEmail(meta: QuoteRequestMeta, quoteId: str
     "Detalle del proyecto:",
     ...buildDetailText(meta),
     meta.additionalMessage || meta.projectComment ? "" : "",
-    meta.additionalMessage || meta.projectComment ? `Mensaje adicional: ${meta.additionalMessage || meta.projectComment}` : "",
+    meta.additionalMessage || meta.projectComment
+      ? `Mensaje adicional: ${meta.additionalMessage || meta.projectComment}`
+      : "",
     "",
     `Abrir WhatsApp: ${whatsappUrl}`,
     `Responder correo: mailto:${meta.contactEmail || ""}`,
@@ -638,9 +679,12 @@ export async function sendQuoteRequestEmail(meta: QuoteRequestMeta, quoteId: str
 export async function sendQuoteRequestWhatsapp(meta: QuoteRequestMeta, quoteId: string) {
   const accountSid = cleanText(process.env.TWILIO_ACCOUNT_SID);
   const authToken = cleanText(process.env.TWILIO_AUTH_TOKEN);
-  const from = cleanText(process.env.TWILIO_WHATSAPP_FROM) || `whatsapp:${QUOTE_REQUEST_WHATSAPP_E164}`;
+  const from =
+    cleanText(process.env.TWILIO_WHATSAPP_FROM) || `whatsapp:${QUOTE_REQUEST_WHATSAPP_E164}`;
   const recipients = parseWhatsappRecipients(
-    cleanText(process.env.WHATSAPP_NOTIFY_TO) || cleanText(process.env.TWILIO_WHATSAPP_TO) || `whatsapp:${QUOTE_REQUEST_WHATSAPP_E164}`,
+    cleanText(process.env.WHATSAPP_NOTIFY_TO) ||
+      cleanText(process.env.TWILIO_WHATSAPP_TO) ||
+      `whatsapp:${QUOTE_REQUEST_WHATSAPP_E164}`,
   );
   const to = recipients[0] || "";
 

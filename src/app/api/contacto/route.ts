@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
-import { serviceLineFor, publicPath } from "@/lib/commercial/request-context";
+import { serviceLineFor, solutionFamilyFor, publicPath } from "@/lib/commercial/request-context";
 import { serializeContactLeadDetails } from "@/lib/admin/contact-lead";
 import { sendLeadAlertEmail } from "@/lib/notifications/lead-alert";
 import { registerWebLeadSafe } from "@/lib/sales-ai/web-leads";
@@ -71,6 +71,7 @@ export async function POST(req: Request) {
       brief: [
         data.message,
         `Línea de servicio: ${serviceLineFor(service)}`,
+        `Familia de solución: ${solutionFamilyFor(service)}`,
         data.marketingSource && `Origen comercial: ${data.marketingSource}`,
       ]
         .filter(Boolean)
@@ -113,7 +114,10 @@ export async function POST(req: Request) {
           message: data.message,
         });
       } catch {
-        console.error("public_intake_notification_enrichment_failed", { source: "CONTACTO_WEB", leadId });
+        console.error("public_intake_notification_enrichment_failed", {
+          source: "CONTACTO_WEB",
+          leadId,
+        });
       }
       registerWebLeadSafe({
         formOrigin: "Formulario de contacto",

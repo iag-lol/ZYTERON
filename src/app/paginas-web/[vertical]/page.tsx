@@ -79,7 +79,7 @@ export default async function VerticalRoutePage({ params }: VerticalPageProps) {
       />
       <JsonLd id={`vertical-faq-${page.slug}`} data={buildFaqJsonLd(page.faqs)} />
 
-      <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-16 sm:py-20">
+      <section className="bg-hero-pattern relative overflow-hidden border-b border-slate-200 py-16 sm:py-20">
         <Container className="space-y-5">
           <nav aria-label="Breadcrumb" className="text-xs font-semibold text-slate-500">
             <Link href="/" className="hover:text-blue-700">
@@ -93,7 +93,7 @@ export default async function VerticalRoutePage({ params }: VerticalPageProps) {
             <span className="text-slate-700">{page.navLabel}</span>
           </nav>
 
-          <h1 className="max-w-4xl text-balance text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+          <h1 className="max-w-4xl text-3xl leading-tight font-extrabold tracking-tight text-balance text-slate-900 sm:text-4xl lg:text-5xl">
             {page.heroTitle}
           </h1>
           <p className="max-w-3xl text-base leading-relaxed text-slate-600 sm:text-lg">
@@ -106,7 +106,7 @@ export default async function VerticalRoutePage({ params }: VerticalPageProps) {
               size="lg"
               className="btn-primary-glow gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800"
             >
-              <Link href="/cotizador">
+              <Link href={`/contacto?tipo=web&servicio=paginas-web/${page.slug}&origen=rubro`}>
                 Cotizar página web <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -135,7 +135,7 @@ export default async function VerticalRoutePage({ params }: VerticalPageProps) {
       <section className="cv-auto section-alt py-16">
         <Container className="grid gap-8 lg:grid-cols-2">
           <div className="space-y-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
               Lo que vemos en el rubro
             </p>
             <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
@@ -143,7 +143,10 @@ export default async function VerticalRoutePage({ params }: VerticalPageProps) {
             </h2>
             <ul className="space-y-3 pt-2">
               {page.painPoints.map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm leading-relaxed text-slate-700">
+                <li
+                  key={item}
+                  className="flex items-start gap-2.5 text-sm leading-relaxed text-slate-700"
+                >
                   <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                   {item}
                 </li>
@@ -152,10 +155,15 @@ export default async function VerticalRoutePage({ params }: VerticalPageProps) {
           </div>
 
           <div className="card-premium p-6">
-            <h2 className="text-xl font-extrabold text-slate-900">Qué construimos para este rubro</h2>
+            <h2 className="text-xl font-extrabold text-slate-900">
+              Qué construimos para este rubro
+            </h2>
             <ul className="mt-4 space-y-3">
               {page.capabilities.map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm leading-relaxed text-slate-700">
+                <li
+                  key={item}
+                  className="flex items-start gap-2.5 text-sm leading-relaxed text-slate-700"
+                >
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                   {item}
                 </li>
@@ -168,7 +176,7 @@ export default async function VerticalRoutePage({ params }: VerticalPageProps) {
       <section className="cv-auto border-t border-slate-200 bg-white py-16">
         <Container className="space-y-8">
           <div className="max-w-3xl space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
               Escenarios referenciales
             </p>
             <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
@@ -183,7 +191,9 @@ export default async function VerticalRoutePage({ params }: VerticalPageProps) {
             {page.scenarios.map((scenario) => (
               <article key={scenario.title} className="card-premium p-5">
                 <h3 className="text-sm font-extrabold text-slate-900">{scenario.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{scenario.description}</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  {scenario.description}
+                </p>
               </article>
             ))}
           </div>
@@ -193,7 +203,7 @@ export default async function VerticalRoutePage({ params }: VerticalPageProps) {
       <section className="cv-auto section-alt py-16">
         <Container className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
           <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Estructura</p>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">Estructura</p>
             <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
               Secciones que suele necesitar este tipo de sitio
             </h2>
@@ -221,7 +231,7 @@ export default async function VerticalRoutePage({ params }: VerticalPageProps) {
       <section className="cv-auto border-t border-slate-200 bg-white py-16">
         <Container className="space-y-8">
           <div className="max-w-3xl space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">FAQ</p>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">FAQ</p>
             <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
               Preguntas frecuentes de este rubro
             </h2>
@@ -245,7 +255,7 @@ export default async function VerticalRoutePage({ params }: VerticalPageProps) {
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-2">
             <Button asChild size="lg" className="bg-white font-bold text-blue-800 hover:bg-blue-50">
-              <Link href="/cotizador">
+              <Link href={`/contacto?tipo=web&servicio=paginas-web/${page.slug}&origen=rubro`}>
                 Cotizar página web <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -277,6 +287,38 @@ export default async function VerticalRoutePage({ params }: VerticalPageProps) {
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.heroTitle}</p>
                 </Link>
               ))}
+          </div>
+        </Container>
+      </section>
+      <section className="border-t border-slate-200 py-14">
+        <Container>
+          <h2 className="text-2xl">¿También necesitas gestionar la operación?</h2>
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600">
+            La web puede conectarse con herramientas de gestión. Según el proyecto, evaluamos
+            documentación, personal, solicitudes, tareas, inventario o despachos. Son desarrollos
+            adicionales; su alcance y disponibilidad se confirman en una propuesta.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-6">
+            <Link className="text-link" href="/sistemas-web">
+              Sistemas empresariales <ArrowRight size={16} />
+            </Link>
+            <Link
+              className="text-link"
+              href={
+                page.slug === "transporte-logistica"
+                  ? "/sistemas-web/control-flota"
+                  : "/sistemas-web/gestion-personas"
+              }
+            >
+              {page.slug === "transporte-logistica" ? "Control de flota" : "Gestión de personas"}{" "}
+              <ArrowRight size={16} />
+            </Link>
+            <Link
+              className="text-link"
+              href={`/contacto?tipo=sistema&rubro=${page.slug}&origen=rubro`}
+            >
+              Evaluar una solución <ArrowRight size={16} />
+            </Link>
           </div>
         </Container>
       </section>

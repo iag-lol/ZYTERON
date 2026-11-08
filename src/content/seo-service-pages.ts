@@ -112,6 +112,123 @@ const commonRelatedLinks: SeoServiceRelatedLink[] = [
 
 export const seoServicePages: SeoServicePage[] = [
   {
+    slug: "catalogos-digitales",
+    path: "/catalogos-digitales",
+    navLabel: "Catálogos digitales",
+    metaTitle: "Catálogos Digitales para Empresas en Chile | Zyteron",
+    metaDescription:
+      "Catálogos de productos con categorías, fichas y buscador. Presentación, consultas o pedidos por WhatsApp, con administración e integraciones según alcance.",
+    primaryKeyword: "catálogos digitales para empresas",
+    secondaryKeywords: [
+      "catálogo de productos",
+      "catálogo con WhatsApp",
+      "catálogo sin pago online",
+    ],
+    heroTitle: "Un catálogo digital para mostrar productos y facilitar consultas",
+    heroDescription:
+      "Organiza productos, servicios o propiedades en fichas fáciles de consultar. Puedes comenzar con una presentación informativa o incorporar solicitudes de cotización y pedidos por WhatsApp, sin convertir el catálogo en una tienda con pagos.",
+    problemTitle: "La información que tu cliente necesita, en un lugar",
+    problemDescription:
+      "Cuando fotos, fichas y disponibilidad están repartidas entre documentos y conversaciones, responder una consulta exige reconstruir la información. Un catálogo permite compartir enlaces y mantener una presentación consistente, con administración definida según el proyecto.",
+    benefits: [
+      "Categorías, fichas y búsqueda para localizar productos.",
+      "Enlaces que tu equipo puede compartir con cada cliente.",
+      "Consultas y cotizaciones con contexto de los productos seleccionados.",
+      "Administración de contenidos y carga inicial acordadas.",
+      "Una base que puede conectarse con pedidos o inventario si la integración es viable.",
+    ],
+    includes: [
+      "Definición de categorías, campos de ficha, variantes y filtros según alcance.",
+      "Presentación adaptable a celulares y fotografías optimizadas.",
+      "Administración de productos cuando se incluye en la propuesta.",
+      "Formularios o consulta por WhatsApp en la modalidad contratada.",
+      "Condiciones de disponibilidad, entrega y atención redactadas con el negocio.",
+      "Pruebas de búsqueda, navegación y consultas antes de publicar.",
+    ],
+    audience: [
+      "Proveedores B2B que cotizan antes de vender.",
+      "Negocios que coordinan pedidos por WhatsApp.",
+      "Empresas que necesitan mostrar productos sin cobro online.",
+      "Inmobiliarias que requieren fichas de propiedades y consultas según disponibilidad.",
+    ],
+    process: [
+      {
+        title: "Ordenamos la información",
+        description:
+          "Revisamos productos, datos, imágenes, categorías y quién mantiene el catálogo.",
+      },
+      {
+        title: "Definimos la modalidad",
+        description:
+          "Presentación, consultas por formulario o pedidos por WhatsApp, con límites y entregables escritos.",
+      },
+      {
+        title: "Diseñamos y desarrollamos",
+        description:
+          "Construimos fichas, buscador y administración según el alcance, y probamos la navegación móvil.",
+      },
+      {
+        title: "Cargamos y entregamos",
+        description:
+          "Validamos la carga inicial, los enlaces y el flujo de consulta, con orientación para administrarlo.",
+      },
+    ],
+    faqs: [
+      {
+        question: "¿Qué diferencia un catálogo de un ecommerce?",
+        answer:
+          "El catálogo presenta productos y puede recibir consultas o preparar pedidos para atención comercial. El ecommerce incorpora carrito, proceso de compra y cobro online. Son alcances diferentes: el catálogo no confirma por sí solo un pago ni una venta.",
+      },
+      {
+        question: "¿Puede funcionar solo como presentación?",
+        answer:
+          "Sí. Puede mostrar categorías, fichas y características sin precios públicos ni un botón de compra. Definimos el objetivo y los datos visibles para cada producto.",
+      },
+      {
+        question: "¿Los pedidos por WhatsApp descuentan stock?",
+        answer:
+          "No de forma automática. La disponibilidad y la reserva de stock requieren reglas y, si corresponde, una integración adicional. Una consulta enviada no equivale a un pedido confirmado.",
+      },
+      {
+        question: "¿Se conecta con inventario o un sistema existente?",
+        answer:
+          "Se evalúan API, accesos, campos y frecuencia de actualización. La propuesta establece la fuente de los datos, el tratamiento de errores y los costos de conexión y mantenimiento.",
+      },
+      {
+        question: "¿Puedo incorporar pagos más adelante?",
+        answer:
+          "Sí, previa evaluación del catálogo, la tecnología y las condiciones de operación. Carrito, pagos, pedidos y despacho se presupuestan como una ampliación; no están incluidos automáticamente en la presentación inicial.",
+      },
+    ],
+    relatedLinks: [
+      {
+        label: "Ecommerce con carrito y pagos",
+        href: "/tiendas-online",
+        description: "Para una compra que se realiza y paga en la web.",
+      },
+      {
+        label: "Webs de presentación",
+        href: "/desarrollo-web",
+        description: "Empresas, servicios, profesionales y proyectos.",
+      },
+      {
+        label: "Sistemas de inventario y gestión",
+        href: "/sistemas-web",
+        description: "Conectar la información comercial con la operación.",
+      },
+      {
+        label: "Planes y condiciones",
+        href: "/planes",
+        description: "Revisar referencias de implementación y continuidad.",
+      },
+    ],
+    serviceType: "Desarrollo de catálogos digitales",
+    primaryCta: "Cotizar un catálogo",
+    finalCtaTitle: "¿Qué necesita mostrar tu catálogo?",
+    finalCtaCopy:
+      "Cuéntanos qué productos tienes y cómo quieres atender las consultas. Definimos la modalidad y una primera carga realista.",
+  },
+  {
     slug: "desarrollo-web",
     path: "/desarrollo-web",
     navLabel: "Desarrollo web",
@@ -163,7 +280,7 @@ export const seoServicePages: SeoServicePage[] = [
       },
       {
         question: "¿Cuánto cuesta hacer una página web profesional?",
-        answer: `Hacer una página web profesional en Chile cuesta entre ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} y ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA según alcance: una web básica de presentación parte en ${clp(PLAN_PRICE_AMOUNTS["web-basica"])}, un sitio para pyme con varias secciones en ${clp(PLAN_PRICE_AMOUNTS.pyme)} y un sitio corporativo completo en ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA. El valor final depende de páginas, contenido e integraciones; entregamos cotización formal por escrito antes de iniciar.`,
+        answer: `Los planes tienen precios iniciales y alcances distintos: una web básica de presentación parte en ${clp(PLAN_PRICE_AMOUNTS["web-basica"])}, un sitio para pyme con varias secciones en ${clp(PLAN_PRICE_AMOUNTS.pyme)} y un sitio corporativo completo en ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA. El valor final depende de páginas, contenido e integraciones; entregamos cotización formal por escrito antes de iniciar.`,
       },
       {
         question: "¿El desarrollo incluye diseño web profesional adaptado a celular?",
@@ -238,7 +355,7 @@ export const seoServicePages: SeoServicePage[] = [
     heroTitle: "Páginas web profesionales para pymes chilenas",
     heroDescription:
       "Creamos sitios profesionales para pequeñas y medianas empresas que necesitan explicar sus servicios, construir visibilidad en búsquedas relevantes y transformar visitas en consultas por WhatsApp, formulario o correo.",
-    directAnswer: `Una página web para pyme en Chile cuesta entre ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} y ${clp(PLAN_PRICE_AMOUNTS.pyme)} CLP + IVA según secciones y funcionalidades. El Plan Pyme tiene un plazo referencial de ${planDeadline("pyme")}, sujeto a alcance y contenidos. Zyteron la diseña, desarrolla y deja posicionable en Google, con contacto por WhatsApp y formulario integrado, atendiendo desde Santiago a pymes de todo Chile.`,
+    directAnswer: `Web Básica parte desde ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} + IVA y el Plan Pyme desde ${clp(PLAN_PRICE_AMOUNTS.pyme)} + IVA, con alcances diferentes según secciones y funcionalidades. El Plan Pyme tiene un plazo referencial de ${planDeadline("pyme")}, sujeto a alcance y contenidos. Zyteron la diseña, desarrolla y deja posicionable en Google, con contacto por WhatsApp y formulario integrado, atendiendo desde Santiago a pymes de todo Chile.`,
     problemTitle: "Una pyme necesita una web que explique rápido y genere contacto",
     problemDescription:
       "Una web para pyme no debe ser compleja por obligación. Debe mostrar qué haces, por qué confiar, cómo contactarte y qué pasos seguir. Diseñamos estructuras simples de entender, pero sólidas para crecer.",
@@ -267,7 +384,7 @@ export const seoServicePages: SeoServicePage[] = [
     faqs: [
       {
         question: "¿Cuánto cuesta una página web para una pyme en Chile?",
-        answer: `Una página web para pyme cuesta entre ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} y ${clp(PLAN_PRICE_AMOUNTS.pyme)} + IVA: la web básica de presentación parte en ${clp(PLAN_PRICE_AMOUNTS["web-basica"])}, el plan emprendedor en ${clp(PLAN_PRICE_AMOUNTS.emprendedor)} y el plan pyme, con más secciones y funcionalidades, en ${clp(PLAN_PRICE_AMOUNTS.pyme)} + IVA. El valor final depende de secciones, contenido e integraciones, y lo confirmamos en una cotización formal antes de comenzar.`,
+        answer: `Las opciones para pymes tienen precios iniciales propios: la web básica de presentación parte en ${clp(PLAN_PRICE_AMOUNTS["web-basica"])}, el plan emprendedor en ${clp(PLAN_PRICE_AMOUNTS.emprendedor)} y el plan pyme, con más secciones y funcionalidades, en ${clp(PLAN_PRICE_AMOUNTS.pyme)} + IVA. El valor final depende de secciones, contenido e integraciones, y lo confirmamos en una cotización formal antes de comenzar.`,
       },
       {
         question: "¿Qué debe incluir una página web para pyme?",
@@ -473,7 +590,7 @@ export const seoServicePages: SeoServicePage[] = [
     heroTitle: "Tiendas online preparadas para vender en Chile",
     heroDescription:
       "Hacemos diseño y desarrollo de tiendas online para crear tu tienda virtual en Chile: catálogo online administrable, fichas de producto y flujos de compra o cotización para mostrar productos, recibir pedidos y vender con una experiencia profesional.",
-    directAnswer: `Una tienda online en Chile cuesta desde ${clp(PLAN_PRICE_AMOUNTS.catalogo)} CLP + IVA como catálogo con venta por WhatsApp, y desde ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} + IVA con carrito y pagos por Webpay, Flow o Mercado Pago; el ecommerce tiene un plazo referencial de ${planDeadline("ecommerce")}, y el catálogo se programa según carga inicial y alcance. Zyteron la desarrolla con catálogo administrable, base SEO y capacitación para operar, desde Santiago para todo Chile.`,
+    directAnswer: `Un ecommerce con carrito y pagos online parte desde ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} + IVA. El catálogo con pedidos por WhatsApp es un servicio distinto, desde ${clp(PLAN_PRICE_AMOUNTS.catalogo)} + IVA; el ecommerce tiene un plazo referencial de ${planDeadline("ecommerce")}, y el catálogo se programa según carga inicial y alcance. Zyteron la desarrolla con catálogo administrable, base SEO y capacitación para operar, desde Santiago para todo Chile.`,
     problemTitle: "Vender online requiere más que subir productos",
     problemDescription:
       "Una tienda efectiva necesita categorías claras, fichas útiles, confianza, contacto, rendimiento móvil y un flujo de compra coherente con la operación real del negocio.",
@@ -504,7 +621,7 @@ export const seoServicePages: SeoServicePage[] = [
       {
         question: "¿Qué tipos de tiendas online desarrollan?",
         answer:
-          "Desarrollamos desde catálogos online con venta asistida por WhatsApp hasta ecommerce completos con carrito, pagos online y gestión de stock. El formato se elige según cómo vende hoy tu negocio y cómo quiere operar los pedidos.",
+          "Desarrollamos ecommerce con carrito, pagos y gestión de pedidos según alcance. Si solo necesitas mostrar productos o coordinar consultas, puedes contratar un catálogo digital como servicio independiente.",
       },
       {
         question: "¿Incluye carga de productos?",
@@ -522,7 +639,7 @@ export const seoServicePages: SeoServicePage[] = [
       },
       {
         question: "¿Cuánto cuesta crear una tienda online en Chile?",
-        answer: `Las alternativas de tienda online tienen precios de partida distintos: un catálogo por WhatsApp parte en ${clp(PLAN_PRICE_AMOUNTS.catalogo)} y un ecommerce con carrito y pagos online (Webpay, Flow o Mercado Pago) en ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} + IVA. El valor final depende de la cantidad de productos, las pasarelas y la administración requerida; entregamos cotización formal antes de iniciar.`,
+        answer: `El ecommerce con carrito y pagos tiene su propio alcance. Como alternativa sin cobro online, un catálogo por WhatsApp parte desde ${clp(PLAN_PRICE_AMOUNTS.catalogo)} y un ecommerce con carrito y pagos online (Webpay, Flow o Mercado Pago) en ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} + IVA. El valor final depende de la cantidad de productos, las pasarelas y la administración requerida; entregamos cotización formal antes de iniciar.`,
       },
       {
         question: "¿Pueden agregar una tienda online a mi página web actual?",
@@ -536,6 +653,11 @@ export const seoServicePages: SeoServicePage[] = [
       },
     ],
     relatedLinks: [
+      {
+        label: "Catálogos sin cobro online",
+        href: "/catalogos-digitales",
+        description: "Presentación y consultas o pedidos por WhatsApp.",
+      },
       {
         label: "Páginas web para pymes",
         href: "/paginas-web-para-pymes",
@@ -596,6 +718,7 @@ export const seoServicePages: SeoServicePage[] = [
       "Formularios, registros, estados y filtros según alcance.",
       "Reportes, documentos o exportaciones si corresponde.",
       "Pruebas, capacitación y soporte inicial.",
+      "Gestión de clientes y proveedores, inventario, portales y aprobaciones cuando forman parte de la propuesta.",
     ],
     audience: [
       "Empresas que necesitan un sistema de gestión para clientes, pedidos, cotizaciones o proyectos.",
@@ -640,6 +763,11 @@ export const seoServicePages: SeoServicePage[] = [
       },
     ],
     relatedLinks: [
+      {
+        label: "Gestión de personas y RRHH",
+        href: "/sistemas-web/gestion-personas",
+        description: "Personal, solicitudes, documentación y tareas por equipo.",
+      },
       {
         label: "Automatización",
         href: "/automatizacion",
@@ -696,7 +824,7 @@ export const seoServicePages: SeoServicePage[] = [
     heroTitle: "Automatización de procesos para empresas que quieren operar con menos fricción",
     heroDescription:
       "Diseñamos la digitalización de procesos con flujos automatizados para reducir tareas administrativas repetitivas, ordenar solicitudes, conectar formularios automatizados, activar notificaciones y mejorar tiempos de respuesta.",
-    directAnswer: `Automatizar un proceso en Chile cuesta desde ${clp(SERVICE_PRICE_AMOUNTS.automationWhatsapp)} CLP + IVA en el caso de la automatización por WhatsApp, la más solicitada por pymes y empresas. Zyteron diagnostica el flujo actual, diseña las reglas y deja la automatización probada con escenarios reales, atendiendo desde Santiago a todo Chile.`,
+    directAnswer: `Automatizar un proceso en Chile cuesta desde ${clp(SERVICE_PRICE_AMOUNTS.automationWhatsapp)} CLP + IVA en el caso de la automatización por WhatsApp, una de las soluciones que se evalúan según el proceso. Zyteron diagnostica el flujo actual, diseña las reglas y deja la automatización probada con escenarios reales, atendiendo desde Santiago a todo Chile.`,
     problemTitle: "Automatizar no es complicar: es eliminar tareas que consumen tiempo",
     problemDescription:
       "Muchas empresas pierden horas en copiar datos, responder lo mismo, revisar solicitudes manualmente o enviar avisos repetitivos. La automatización permite crear procesos más claros y trazables.",
@@ -730,7 +858,7 @@ export const seoServicePages: SeoServicePage[] = [
       },
       {
         question: "¿Cuánto cuesta automatizar un proceso en mi empresa?",
-        answer: `La automatización por WhatsApp, la más solicitada, cuesta desde ${clp(SERVICE_PRICE_AMOUNTS.automationWhatsapp)} + IVA de implementación, más los costos de consumo del proveedor de mensajería. Otras automatizaciones —formularios, notificaciones, generación de PDF— se cotizan según el flujo; entregamos el valor exacto en una cotización formal después del diagnóstico.`,
+        answer: `La automatización por WhatsApp cuesta desde ${clp(SERVICE_PRICE_AMOUNTS.automationWhatsapp)} + IVA de implementación, más los costos de consumo del proveedor de mensajería. Otras automatizaciones —formularios, notificaciones, generación de PDF— se cotizan según el flujo; entregamos el valor exacto en una cotización formal después del diagnóstico.`,
       },
       {
         question: "¿Pueden integrar WhatsApp?",

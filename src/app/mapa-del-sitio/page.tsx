@@ -35,6 +35,7 @@ const siteSections = [
       ["Páginas web para empresas", "/paginas-web-para-empresas"],
       ["Páginas web para pymes", "/paginas-web-para-pymes"],
       ["Tiendas online", "/tiendas-online"],
+      ["Catálogos digitales", "/catalogos-digitales"],
       ["Landing pages para empresas", "/servicios/landing-pages-para-empresas"],
       ["Calculadora de precio web", "/calculadora-precio-pagina-web"],
       ["Cotizador web con PDF", "/cotizador-web-pdf"],

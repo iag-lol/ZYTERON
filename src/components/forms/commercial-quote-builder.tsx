@@ -27,6 +27,7 @@ import {
 import {
   ADDON_CATALOG,
   FLEET_PLANS,
+  FLEET_SOFTWARE_OFFER,
   ADDON_PRICE_AMOUNTS,
   AI_SERVICES,
   CORPORATE_SCOPE_NOTE,
@@ -47,7 +48,7 @@ import {
 } from "@/lib/analytics/google-ads";
 
 import { finishSubmission, submissionIdFor } from "@/lib/commercial/submission-id";
-import { serviceLineFor } from "@/lib/commercial/request-context";
+import { serviceLineFor, solutionFamilyFor } from "@/lib/commercial/request-context";
 
 type SubmitState =
   | { status: "idle" }
@@ -57,6 +58,9 @@ type SubmitState =
 export type ProjectTypeValue =
   | "web-basica"
   | "web-profesional"
+  | "catalogo"
+  | "gestion-personas"
+  | "control-flota"
   | "tienda-online"
   | "sistema-web"
   | "automatizacion"
@@ -153,6 +157,9 @@ const MAX_ANSWER_VALUE_LENGTH = 600;
 const ALLOWED_PROJECT_TYPES = new Set<ProjectTypeValue>([
   "web-basica",
   "web-profesional",
+  "catalogo",
+  "gestion-personas",
+  "control-flota",
   "tienda-online",
   "sistema-web",
   "automatizacion",
@@ -169,7 +176,7 @@ const PLAN_LABELS: Record<string, string> = {
   "plan-emprendedor": "Plan Emprendedor",
   "plan-pyme": "Plan Pyme",
   "plan-empresa": "Plan Empresa",
-  "catalogo-tienda-online": "Catálogo / Tienda Online",
+  "catalogo-tienda-online": "Catálogo de productos",
   "sistema-web-panel-administrativo": "Sistema Web / Panel Administrativo",
   "sistema-avanzado": "Sistema Avanzado / Desarrollo a medida",
   ...Object.fromEntries(PLAN_CATALOG.map((plan) => [plan.id, plan.name])),
@@ -215,6 +222,9 @@ function getServerSearch() {
 const PROJECT_BASE_AMOUNTS: Record<ProjectTypeValue, number> = {
   "web-basica": PLAN_PRICE_AMOUNTS["web-basica"],
   "web-profesional": PLAN_PRICE_AMOUNTS.pyme,
+  catalogo: PLAN_PRICE_AMOUNTS.catalogo,
+  "gestion-personas": 0,
+  "control-flota": FLEET_SOFTWARE_OFFER.amount,
   "tienda-online": PLAN_PRICE_AMOUNTS.ecommerce,
   "sistema-web": PLAN_PRICE_AMOUNTS.sistema,
   automatizacion: SERVICE_PRICE_AMOUNTS.automationWhatsapp,
@@ -224,6 +234,28 @@ const PROJECT_BASE_AMOUNTS: Record<ProjectTypeValue, number> = {
 
 const projectCards: ProjectCard[] = [
   {
+    value: "catalogo",
+    label: "Catálogo de productos",
+    description:
+      "Presentar productos o recibir consultas y pedidos por WhatsApp, sin cobro online.",
+    icon: ShoppingCart,
+    priceHint: "Alcance según modalidad",
+  },
+  {
+    value: "gestion-personas",
+    label: "Gestión de personas o RRHH",
+    description: "Personal, solicitudes, documentos, turnos y tareas según el proyecto.",
+    icon: BriefcaseBusiness,
+    priceHint: "Desarrollo a medida",
+  },
+  {
+    value: "control-flota",
+    label: "Control de flota u operaciones",
+    description: "Vehículos, conductores, despachos y trabajo en terreno.",
+    icon: LayoutDashboard,
+    priceHint: `Software ${FLEET_SOFTWARE_OFFER.price.toLowerCase()}`,
+  },
+  {
     value: "web-basica",
     label: "Web básica de presentación",
     description: "Una página simple para mostrar tu negocio y recibir contactos.",
@@ -232,7 +264,7 @@ const projectCards: ProjectCard[] = [
   },
   {
     value: "web-profesional",
-    label: "Página web profesional",
+    label: "Sitio empresarial o profesional",
     description: "Sitio más completo para empresas, servicios o pymes.",
     icon: PanelsTopLeft,
     priceHint: fromPrice(PROJECT_BASE_AMOUNTS["web-profesional"]),
@@ -240,13 +272,13 @@ const projectCards: ProjectCard[] = [
   {
     value: "tienda-online",
     label: "Tienda online",
-    description: "Catálogo, productos, carrito o ventas por WhatsApp.",
+    description: "Tienda con carrito, pagos online y gestión de pedidos según alcance.",
     icon: ShoppingCart,
     priceHint: fromPrice(PROJECT_BASE_AMOUNTS["tienda-online"]),
   },
   {
     value: "sistema-web",
-    label: "Sistema web interno",
+    label: "Sistema empresarial",
     description: "Paneles, registros, reportes, usuarios o control de procesos.",
     icon: LayoutDashboard,
     priceHint: fromPrice(PROJECT_BASE_AMOUNTS["sistema-web"]),
@@ -340,15 +372,66 @@ const urgencyOptions: Option[] = [
 
 const projectTypeLabels: Record<ProjectTypeValue, string> = {
   "web-basica": "Web básica de presentación",
-  "web-profesional": "Página web profesional",
-  "tienda-online": "Tienda online",
-  "sistema-web": "Sistema web interno",
+  "web-profesional": "Sitio empresarial o profesional",
+  catalogo: "Catálogo de productos",
+  "gestion-personas": "Gestión de personas o recursos humanos",
+  "control-flota": "Control de flota u operaciones",
+  "tienda-online": "Ecommerce con carrito y pagos",
+  "sistema-web": "Sistema empresarial",
   automatizacion: "Automatización",
   "soporte-ti": "Soporte TI",
   "no-seguro": "No estoy seguro",
 };
 
 const detailConfigs: Record<ProjectTypeValue, DetailField[]> = {
+  catalogo: [
+    {
+      key: "catalogMode",
+      label: "¿Cómo quieres usar el catálogo?",
+      type: "single",
+      options: [
+        { value: "presentacion", label: "Solo presentar productos" },
+        { value: "consultas", label: "Recibir consultas o cotizaciones" },
+        { value: "whatsapp", label: "Preparar pedidos por WhatsApp" },
+        { value: "integrado", label: "Conectarlo con inventario o pedidos" },
+      ],
+    },
+    {
+      key: "catalogProducts",
+      label: "¿Qué productos e información necesitas mostrar?",
+      type: "text",
+      placeholder: "Tipo de productos, cantidad aproximada y si ya tienes fotos o fichas.",
+    },
+  ],
+  "gestion-personas": [
+    {
+      key: "peopleProcess",
+      label: "¿Qué proceso del equipo necesitas ordenar?",
+      type: "text",
+      placeholder: "Por ejemplo: solicitudes, documentos, turnos o tareas.",
+    },
+    {
+      key: "peopleTools",
+      label: "¿Qué herramientas utilizan hoy?",
+      type: "text",
+      placeholder: "Planillas o sistemas que convendría conectar.",
+    },
+  ],
+  "control-flota": [
+    {
+      key: "fleetProcess",
+      label: "¿Qué necesitas controlar en tu operación?",
+      type: "text",
+      placeholder: "Vehículos, despachos, conductores, mantenimiento o trabajo en terreno.",
+    },
+    {
+      key: "fleetEquipment",
+      label: "¿Cuentas con GPS o herramientas que deban integrarse?",
+      type: "text",
+      placeholder:
+        "Indica lo que ya utilizas. Equipos, instalación y continuidad se cotizan por separado.",
+    },
+  ],
   "web-basica": [
     {
       key: "sections",
@@ -844,7 +927,9 @@ function computeEstimate(
     oneTimeTotal,
     selectedCount: items.length,
     hasEstimate: oneTimeTotal > 0,
-    requiresDiscovery: oneTimeTotal > CORPORATE_ESTIMATE_THRESHOLD,
+    requiresDiscovery:
+      ["catalogo", "gestion-personas", "control-flota"].includes(projectType) ||
+      oneTimeTotal > CORPORATE_ESTIMATE_THRESHOLD,
   };
 }
 
@@ -1137,7 +1222,16 @@ export function CommercialQuoteBuilder() {
 
 function CommercialQuoteBuilderFlow({ search }: { search: string }) {
   const searchParams = new URLSearchParams(search);
-  const initialProjectType = normalizeProjectType(searchParams.get("tipo"));
+  const contextType = searchParams.get("servicio") || "";
+  const contextualType =
+    contextType.includes("control-flota") || (searchParams.get("plan") || "").startsWith("flota-")
+      ? "control-flota"
+      : contextType.includes("gestion-personas")
+        ? "gestion-personas"
+        : contextType.includes("catalogo") || searchParams.get("plan") === "catalogo"
+          ? "catalogo"
+          : undefined;
+  const initialProjectType = contextualType || normalizeProjectType(searchParams.get("tipo"));
   const planParam = searchParams.get("plan")?.trim();
   const initialPlanLabel = planParam ? PLAN_LABELS[planParam] : undefined;
   // La calculadora puede llegar con una estimación previa o marcando el proyecto
@@ -1162,6 +1256,7 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
     trackAnalyticsEvent("quote_step_view", {
       step,
       service_line: serviceLineFor(form.projectType),
+      solution_family: solutionFamilyFor(form.projectType),
     });
     document.getElementById("quote-step-heading")?.focus({ preventScroll: true });
   }, [step, started, form.projectType]);
@@ -1392,6 +1487,7 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
         form_type: "quote",
         step,
         service_line: serviceLineFor(form.projectType),
+        solution_family: solutionFamilyFor(form.projectType),
         error_type: "validation",
       });
       return;
@@ -1399,6 +1495,7 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
     trackAnalyticsEvent("quote_step_complete", {
       step,
       service_line: serviceLineFor(form.projectType),
+      solution_family: solutionFamilyFor(form.projectType),
     });
     setStep((prev) => Math.min(TOTAL_STEPS, prev + 1));
   }
@@ -1472,6 +1569,7 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
         trackAnalyticsEvent("form_error", {
           form_type: "quote_request",
           service_line: serviceLineFor(form.projectType),
+          solution_family: solutionFamilyFor(form.projectType),
           error_type: response.status === 429 ? "rate_limit" : "delivery",
         });
         setSubmitState({
@@ -1489,6 +1587,7 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
         page_path: window.location.pathname,
         project_type: form.projectType,
         service_line: serviceLineFor(form.projectType),
+        solution_family: solutionFamilyFor(form.projectType),
         lead_id: result.leadId,
       };
       trackQuoteRequestSubmit(eventParams);
@@ -1503,6 +1602,7 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
       trackAnalyticsEvent("form_error", {
         form_type: "quote",
         service_line: serviceLineFor(form.projectType),
+        solution_family: solutionFamilyFor(form.projectType),
         error_type: "delivery",
       });
       setSubmitState({
@@ -1563,6 +1663,7 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                     trackAnalyticsEvent("form_start", {
                       form_type: "quote",
                       service_line: serviceLineFor(form.projectType),
+                      solution_family: solutionFamilyFor(form.projectType),
                     });
                   }}
                   className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700 sm:w-auto"
@@ -1579,7 +1680,7 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                   Hablar por WhatsApp
                 </a>
                 <Link
-                  href="/contacto?origen=cotizador"
+                  href={`/contacto?tipo=${form.projectType || initialProjectType || "orientacion"}&plan=${encodeURIComponent(planParam || "")}&origen=cotizador`}
                   className="text-sm font-semibold text-blue-700 underline"
                 >
                   Prefiero enviar una solicitud breve

@@ -23,3 +23,8 @@ test('deduplica etapas y ventas, separa monedas y no atribuye fuentes desconocid
  assert.equal(result.find(r => r.source === 'sin_atribucion_web').sales, 1);
  assert.equal(JSON.stringify(result).includes('lead_id'), false);
 });
+
+test('las nuevas solicitudes de personas y operaciones conservan la clasificación comercial', () => {
+ const result = summarizeMeasurement({ leads: [{ id:'people', created_at:'2026-11-02T12:00:00Z', notes:'contact_v1:'+JSON.stringify({service:'Gestión de personas o recursos humanos'}), lead_sources:{code:'CONTACTO_WEB'} }], qualifications:[], quotes:[], opportunities:[], sales:[] }, '2026-11-01T03:00:00Z','2026-11-08T03:00:00Z');
+ assert.equal(result.find(r=>r.source==='web_registrada').serviceLine,'sistemas_automatizacion');
+});

@@ -1,7 +1,7 @@
 import { siteConfig } from "@/config/site";
 
 const ogImageByPath: Record<string, string> = {
-  "/": "/og/home.png",
+  "/": "/og/soluciones-digitales.png",
   "/automatizacion": "/og/automatizacion.png",
   "/automatizacion-whatsapp-empresas": "/og/automatizacion.png",
   "/blog": "/og/blog.png",
@@ -17,7 +17,9 @@ const ogImageByPath: Record<string, string> = {
   "/paginas-web-para-pymes": "/og/desarrollo-web.png",
   "/paginas-web-santiago": "/og/desarrollo-web.png",
   "/planes": "/og/planes.png",
-  "/servicios": "/og/servicios.png",
+  "/servicios": "/og/soluciones-digitales.png",
+  "/catalogos-digitales": "/og/catalogos-digitales.png",
+  "/sistemas-web/gestion-personas": "/og/gestion-personas.png",
   "/sistemas-web": "/og/sistemas-web.png",
   "/soporte-ti": "/og/soporte-ti.png",
   "/soporte-ti-pymes-santiago": "/og/soporte-ti.png",

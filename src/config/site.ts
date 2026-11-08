@@ -15,9 +15,9 @@ export const siteConfig = {
   foundingDate: "2019",
   // Propuesta de valor visible en el hero de la portada; se reutiliza como
   // slogan de la Organization en el schema. Mantener sincronizada con page.tsx.
-  slogan: "Páginas web profesionales para empresas que necesitan vender",
+  slogan: "Desarrollo de software y soluciones digitales a medida",
   description:
-    "Desarrollamos páginas web, sistemas digitales, automatizaciones y soporte TI para empresas y pymes de Santiago, Región Metropolitana y todo Chile, con foco en claridad comercial y operación estable.",
+    "Software a medida, sistemas empresariales, gestión de personas y operaciones, ecommerce, catálogos y sitios web para empresas y profesionales en Chile.",
   address: {
     streetAddress: "Antonio Bellet 193",
     commune: "Providencia",
@@ -49,6 +49,10 @@ export const siteConfig = {
     // Dotación confirmada el 08-11-2026.
     teamSize: 25,
     serviceTypes: [
+      "Desarrollo de software a medida",
+      "Gestión de personas y operaciones",
+      "Control de flota",
+      "Catálogos digitales",
       "Desarrollo web",
       "Sistemas web",
       "Software a medida",
@@ -60,6 +64,10 @@ export const siteConfig = {
     // Términos exactos de las páginas de servicio publicadas; amplían
     // knowsAbout de la Organization con contenido visible del sitio.
     expertiseTopics: [
+      "sistemas de gestión empresarial",
+      "gestión de personas y recursos humanos",
+      "intranets y portales",
+      "catálogos digitales",
       "páginas web para pymes en Chile",
       "páginas web para empresas",
       "tiendas online con Webpay",

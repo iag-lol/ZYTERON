@@ -264,7 +264,7 @@ const nextConfig: NextConfig = {
         // Consolida las antiguas landings por comuna, pero NO las subpáginas
         // reales del cluster de sistemas, que tienen contenido propio.
         source:
-          "/sistemas-web/:ubicacion((?!intranet-corporativa$|gestion-documental$|control-flota$).*)",
+          "/sistemas-web/:ubicacion((?!intranet-corporativa$|gestion-documental$|control-flota$|gestion-personas$).*)",
         destination: "/sistemas-web",
         permanent: true,
       },
