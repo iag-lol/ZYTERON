@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "../styles/public-design.css";
 
 /* Ejected from shadcn@4.2.0 so the production CSS does not depend on the CLI package. */
 @theme inline {

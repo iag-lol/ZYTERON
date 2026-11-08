@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Check, CircleAlert, MessageCircle } from "lucide-react";
@@ -79,7 +80,7 @@ export default async function SystemRoutePage({ params }: SystemPageProps) {
       />
       <JsonLd id={`system-faq-${page.slug}`} data={buildFaqJsonLd(page.faqs)} />
 
-      <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-16 sm:py-20">
+      <section className="bg-hero-pattern relative overflow-hidden border-b border-slate-200 py-16 sm:py-20">
         <Container className="space-y-5">
           <nav aria-label="Breadcrumb" className="text-xs font-semibold text-slate-500">
             <Link href="/" className="hover:text-blue-700">
@@ -93,7 +94,7 @@ export default async function SystemRoutePage({ params }: SystemPageProps) {
             <span className="text-slate-700">{page.navLabel}</span>
           </nav>
 
-          <h1 className="max-w-4xl text-balance text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+          <h1 className="max-w-4xl text-3xl leading-tight font-extrabold tracking-tight text-balance text-slate-900 sm:text-4xl lg:text-5xl">
             {page.heroTitle}
           </h1>
           <p className="max-w-3xl text-base leading-relaxed text-slate-600 sm:text-lg">
@@ -124,10 +125,26 @@ export default async function SystemRoutePage({ params }: SystemPageProps) {
         </Container>
       </section>
 
+      {page.slug === "control-flota" && (
+        <Container className="product-preview">
+          <figure>
+            <Image
+              src="/projects/control-de-flota.jpg"
+              alt="Control de Flota, vista de demostración sin datos operativos de clientes"
+              width={1600}
+              height={1000}
+              sizes="(max-width: 760px) 95vw, 1200px"
+            />
+            <figcaption className="mt-3 text-xs text-slate-600">
+              Vista de demostración. La información mostrada es ficticia.
+            </figcaption>
+          </figure>
+        </Container>
+      )}
       <section className="cv-auto section-alt py-16">
         <Container className="space-y-8">
           <div className="max-w-3xl space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
               Cuándo se justifica
             </p>
             <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
@@ -151,7 +168,7 @@ export default async function SystemRoutePage({ params }: SystemPageProps) {
       <section className="cv-auto border-t border-slate-200 bg-white py-16">
         <Container className="space-y-8">
           <div className="max-w-3xl space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Módulos</p>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">Módulos</p>
             <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
               Qué incluye el sistema
             </h2>
@@ -177,7 +194,10 @@ export default async function SystemRoutePage({ params }: SystemPageProps) {
             <h2 className="text-xl font-extrabold text-slate-900">Qué cambia en tu operación</h2>
             <ul className="mt-4 space-y-3">
               {page.outcomes.map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm leading-relaxed text-slate-700">
+                <li
+                  key={item}
+                  className="flex items-start gap-2.5 text-sm leading-relaxed text-slate-700"
+                >
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                   {item}
                 </li>
@@ -204,7 +224,7 @@ export default async function SystemRoutePage({ params }: SystemPageProps) {
       <section className="cv-auto border-t border-slate-200 bg-white py-16">
         <Container className="space-y-8">
           <div className="max-w-3xl space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">FAQ</p>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">FAQ</p>
             <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
               Preguntas frecuentes
             </h2>

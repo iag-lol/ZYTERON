@@ -107,7 +107,7 @@ export function PriorityServicePageTemplate({ page }: Props) {
   const pricingItems = pricingBySlug[page.slug] ?? defaultPricing;
 
   return (
-    <main className="bg-white">
+    <main className="service-page bg-white">
       <JsonLd
         id={`${page.slug}-webpage-schema`}
         data={buildWebPageJsonLd({

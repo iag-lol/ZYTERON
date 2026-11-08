@@ -68,7 +68,7 @@ export function DbCaseArticle({ item }: { item: DbCaseStudy }) {
   const contactHref = `/contacto?servicio=${relatedService.href.slice(1)}&origen=caso-exito&item=${encodeURIComponent(item.slug)}`;
 
   return (
-    <main className="bg-white">
+    <main className="case-article bg-white">
       <section className="bg-hero-pattern relative overflow-hidden border-b border-slate-200 py-20">
         <Container className="space-y-5">
           <nav aria-label="Breadcrumb" className="text-xs font-semibold text-slate-500">
@@ -114,7 +114,7 @@ export function DbCaseArticle({ item }: { item: DbCaseStudy }) {
                   width={1200}
                   height={675}
                   className="h-auto w-full object-cover"
-                  priority
+                  preload
                 />
               </div>
             ) : null}
@@ -213,7 +213,7 @@ export function DbCaseArticle({ item }: { item: DbCaseStudy }) {
                 <div>
                   <dt className="text-slate-500">Evidencia disponible</dt>
                   <dd className="font-semibold text-slate-800">
-                    Descripción del alcance{item.imageUrl ? " y captura publicada" : ""}
+                    Descripción del alcance{item.imageUrl ? " y vista del proyecto" : ""}
                     {item.clientQuote ? ", con testimonio publicado" : ""}.
                   </dd>
                 </div>

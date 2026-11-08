@@ -27,7 +27,7 @@ export function AppShell({ children, header, footer }: AppShellProps) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="public-site flex min-h-screen flex-col">
       {header}
       <div className="flex-1">{children}</div>
       {footer}

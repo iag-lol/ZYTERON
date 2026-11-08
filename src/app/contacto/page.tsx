@@ -129,9 +129,9 @@ export default function ContactoPage() {
                       href={c.href}
                       target={c.external ? "_blank" : undefined}
                       rel={c.external ? "noopener noreferrer" : undefined}
-                      className={`flex items-center gap-4 rounded-xl border p-4 transition-all ${c.classes}`}
+                      className={`contact-channel flex items-center gap-4 rounded-xl border p-4 transition-all`}
                     >
-                      <div className={`shrink-0 rounded-lg p-2 ${c.iconClasses}`}>{c.icon}</div>
+                      <div className={`contact-channel-icon shrink-0 rounded-lg p-2`}>{c.icon}</div>
                       <div>
                         <p className="mb-0.5 text-xs text-slate-600">{c.label}</p>
                         <p className="text-sm font-bold text-slate-900">{c.value}</p>
@@ -139,8 +139,10 @@ export default function ContactoPage() {
                       </div>
                     </a>
                   ) : (
-                    <div className={`flex items-center gap-4 rounded-xl border p-4 ${c.classes}`}>
-                      <div className={`shrink-0 rounded-lg p-2 ${c.iconClasses}`}>{c.icon}</div>
+                    <div
+                      className={`contact-channel flex items-center gap-4 rounded-xl border p-4`}
+                    >
+                      <div className={`contact-channel-icon shrink-0 rounded-lg p-2`}>{c.icon}</div>
                       <div>
                         <p className="mb-0.5 text-xs text-slate-600">{c.label}</p>
                         <p className="text-sm font-bold text-slate-900">{c.value}</p>

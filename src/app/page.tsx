@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Check, Globe, Layers3, ShieldCheck } from "lucide-react";
 import { Container } from "@/components/layout/container";
@@ -8,7 +7,7 @@ import { ContactLeadForm } from "@/components/forms/contact-lead-form";
 import { HomeFaqAccordion } from "@/components/home/home-faq";
 import { ClientReviewsSection } from "@/components/home/client-reviews-section";
 import { getApprovedReviewsSnapshot } from "@/lib/web-control";
-import { getPublishedCaseStudies } from "@/lib/admin/blog-cases-repository";
+import { ProjectGallery } from "@/components/projects/project-gallery";
 import { PLAN_CATALOG, fromPrice, PLAN_PRICE_AMOUNTS } from "@/config/pricing";
 import { OFFER_CONDITIONS, planDeadline } from "@/config/commercial-offer";
 import { siteConfig } from "@/config/site";
@@ -119,19 +118,12 @@ const action =
   "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition-colors";
 
 export default async function Home() {
-  const [reviews, published] = await Promise.all([
-    getApprovedReviewsSnapshot(),
-    getPublishedCaseStudies(),
-  ]);
-  const priority = ["fenice-spa", "casos-exito-sistema-control-interno-negocios-eliana"];
-  const cases = priority
-    .map((slug) => published.find((item) => item.slug === slug))
-    .filter((item) => item !== undefined);
+  const reviews = await getApprovedReviewsSnapshot();
   const plans = ["web-basica", "pyme", "catalogo", "ecommerce"].map(
     (id) => PLAN_CATALOG.find((plan) => plan.id === id)!,
   );
   return (
-    <main className="overflow-x-clip bg-white">
+    <main className="home-page overflow-x-clip">
       <JsonLd
         id="home-webpage-schema"
         data={buildWebPageJsonLd({
@@ -150,156 +142,60 @@ export default async function Home() {
           services,
         })}
       />
-      <section className="relative border-b border-slate-200 bg-[#f4f7fb] py-12 sm:py-20 lg:py-24">
-        <Container className="grid items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
-          <div>
-            <p className="text-xs font-bold tracking-[0.18em] text-blue-700 uppercase">
-              Santiago · Región Metropolitana · Todo Chile
-            </p>
-            <h1 className="mt-5 text-[2.35rem] leading-[1.09] font-extrabold tracking-[-0.04em] text-balance text-slate-950 sm:text-5xl lg:text-[3.7rem]">
-              <span className="text-blue-700">Páginas web profesionales</span> para empresas que
-              necesitan vender
-            </h1>
-            <p className="mt-6 max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
-              Creamos webs y tiendas para captar clientes. Conectamos sistemas y automatizaciones
-              para que tu equipo pueda atenderlos con orden.
-            </p>
-            <div className="mt-8 flex flex-col items-stretch gap-3 sm:items-start">
-              <Link
-                className={`${action} bg-blue-700 text-white hover:bg-blue-800`}
-                href="/contacto?tipo=web&origen=inicio"
-              >
-                Cotizar una web o tienda <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                className={`${action} border border-slate-300 bg-white text-slate-900 hover:border-blue-500`}
-                href="/contacto?tipo=sistema&origen=inicio"
-              >
-                Evaluar un sistema o automatización <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-slate-600">
-              <span className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-blue-700" />
-                Cotización formal
-              </span>
-              <span className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-blue-700" />
-                Alcance por escrito
-              </span>
-              <span className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-blue-700" />
-                Entrega por etapas
-              </span>
-            </div>
+      <section className="home-hero">
+        <Container>
+          <div className="hero-overline">
+            <p className="eyebrow">Desarrollo digital para empresas</p>
+            <span>Santiago, Chile · Desde 2019</span>
           </div>
-          <div className="relative min-w-0">
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
-              <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 text-xs text-slate-600">
-                <span className="font-bold text-slate-900">Del producto a la consulta</span>
-                <span>Demostración</span>
-              </div>
-              <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                <Image
-                  src="/demos/tienda-ropa/tienda-ropa-01.png"
-                  alt="Captura de la demostración de tienda de ropa: catálogo y productos"
-                  fill
-                  sizes="(max-width: 1024px) 90vw, 480px"
-                  preload
-                  quality={75}
-                  className="object-cover object-top"
-                />
-              </div>
-              <div className="p-5">
-                <p className="text-sm leading-6 text-slate-600">
-                  Explora el catálogo, revisa un producto y prepara una compra de ejemplo. Los pagos
-                  y pedidos de la demo no representan ventas reales.
-                </p>
-                <Link
-                  href="/demos"
-                  className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-blue-700"
-                >
-                  Explorar demostraciones <ArrowUpRight className="h-4 w-4" />
+          <h1>
+            Páginas web profesionales <span>para empresas que necesitan vender</span>
+          </h1>
+          <div className="hero-bottom">
+            <p className="hero-note">
+              Diseño, desarrollo y operación.
+              <br />
+              Un equipo para conectar las tres.
+            </p>
+            <div className="hero-intro">
+              <p>
+                Creamos webs y tiendas para captar clientes. Conectamos sistemas y automatizaciones
+                para que tu equipo pueda atenderlos con orden.
+              </p>
+              <div className="hero-actions">
+                <Link href="/contacto?tipo=web&origen=inicio" className="design-button">
+                  Hablemos de tu proyecto <ArrowUpRight size={18} />
+                </Link>
+                <Link href="#proyectos" className="text-link">
+                  Explorar proyectos <ArrowRight size={16} />
                 </Link>
               </div>
             </div>
           </div>
         </Container>
       </section>
-
-      <section id="proyectos" className="py-16 sm:py-24">
+      <section id="proyectos" className="work-section">
         <Container>
-          <div className="flex flex-wrap items-end justify-between gap-5">
+          <div className="section-heading">
             <div>
-              <p className="text-xs font-bold tracking-widest text-blue-700 uppercase">
-                Trabajo publicado
-              </p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-                Dos necesidades. Soluciones concretas.
-              </h2>
+              <p className="eyebrow">01 / Proyectos seleccionados</p>
+              <h2>Trabajo que puedes ver.</h2>
             </div>
-            <Link href="/casos-exito" className="text-sm font-bold text-blue-700">
-              Ver todos los proyectos →
+            <Link href="/casos-exito" className="text-link">
+              Todos los proyectos <ArrowUpRight size={17} />
             </Link>
           </div>
-          <div className="mt-9 grid gap-6 md:grid-cols-2">
-            {cases.map((item) => (
-              <article
-                key={item.slug}
-                className="overflow-hidden rounded-2xl border border-slate-200"
-              >
-                {item.imageUrl && (
-                  <div className="relative aspect-[16/9] bg-slate-100">
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.imageAlt || `Proyecto ${item.companyName}`}
-                      fill
-                      sizes="(max-width: 768px) 90vw, 600px"
-                      className="object-cover object-top"
-                    />
-                  </div>
-                )}
-                <div className="p-6 sm:p-8">
-                  <p className="text-xs font-semibold tracking-wider text-blue-700 uppercase">
-                    {item.industry}
-                  </p>
-                  <h3 className="mt-2 text-2xl font-bold text-slate-950">{item.companyName}</h3>
-                  <dl className="mt-5 space-y-4 text-sm leading-7 text-slate-600">
-                    <div>
-                      <dt className="font-bold text-slate-900">El problema</dt>
-                      <dd>{item.problem.split(/(?<=[.!?])\s/)[0]}</dd>
-                    </div>
-                    <div>
-                      <dt className="font-bold text-slate-900">La solución</dt>
-                      <dd>{item.solution.split(/(?<=[.!?])\s/)[0]}</dd>
-                    </div>
-                  </dl>
-                  <Link
-                    href={`/casos-exito/${item.slug}`}
-                    className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-blue-700"
-                  >
-                    Ver alcance y resultado documentado <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
-          {!cases.length && (
-            <p className="mt-6 text-slate-600">
-              Consulta los proyectos documentados en{" "}
-              <Link className="text-blue-700 underline" href="/casos-exito">
-                casos de éxito
-              </Link>
-              .
-            </p>
-          )}
+          <ProjectGallery />
         </Container>
       </section>
 
-      <section id="servicios" className="border-y border-slate-200 bg-slate-50 py-16 sm:py-24">
+      <section
+        id="servicios"
+        className="home-services border-y border-slate-200 bg-slate-50 py-16 sm:py-24"
+      >
         <Container>
           <p className="text-xs font-bold tracking-widest text-blue-700 uppercase">
-            Elige tu recorrido
+            02 / Servicios
           </p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
             Captar clientes. Ordenar la operación.
@@ -383,7 +279,7 @@ export default async function Home() {
       <section id="proceso" className="py-16 sm:py-24">
         <Container>
           <p className="text-xs font-bold tracking-widest text-blue-700 uppercase">
-            Una entrega clara
+            03 / Cómo trabajamos
           </p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
             Sabes qué se construye y qué recibes.
@@ -422,7 +318,7 @@ export default async function Home() {
         <Container className="grid items-start gap-10 lg:grid-cols-[0.85fr_1.15fr]">
           <div>
             <p className="text-xs font-bold tracking-widest text-blue-700 uppercase">
-              Tu siguiente paso
+              04 / Conversemos
             </p>
             <h2 className="mt-4 text-4xl font-bold tracking-tight text-slate-950">
               Cuéntanos qué necesita tu empresa.

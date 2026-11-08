@@ -1,3 +1,4 @@
+import { presentPublicCase } from "@/lib/content/public-case-presentation";
 import { revisePublicArticle } from "@/lib/content/public-content-revisions";
 // Sólo debe importarse desde el servidor: usa el cliente service-role de Supabase
 // vía los helpers de @/lib/admin/repository (mismo patrón que el resto del admin).
@@ -230,7 +231,7 @@ export async function getPublishedCaseStudies(): Promise<DbCaseStudy[]> {
     filters: { status: "published" },
     throwOnError: true,
   });
-  return sortCaseStudies(rows);
+  return sortCaseStudies(rows).map(presentPublicCase);
 }
 
 export async function getAllCaseStudies(): Promise<DbCaseStudy[]> {
@@ -256,7 +257,7 @@ export async function getCaseStudyBySlug(slug: string): Promise<DbCaseStudy | nu
     limit: 1,
     throwOnError: true,
   });
-  return rows[0] ?? null;
+  return rows[0] ? presentPublicCase(rows[0]) : null;
 }
 
 export async function getCaseStudyById(id: string): Promise<DbCaseStudy | null> {

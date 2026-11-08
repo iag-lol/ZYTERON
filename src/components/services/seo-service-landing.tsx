@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ServiceDecision } from "@/components/commercial/service-decision";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, MessageCircle, SearchCheck } from "lucide-react";
@@ -462,7 +463,7 @@ export async function SeoServiceLanding({ page }: Props) {
   )}`;
 
   return (
-    <main className="bg-white">
+    <main className="service-page bg-white">
       <JsonLd
         id={`${page.slug}-webpage-schema`}
         data={buildWebPageJsonLd({
@@ -559,7 +560,33 @@ export async function SeoServiceLanding({ page }: Props) {
               </div>
             </div>
 
-            <aside className="card-premium p-6">
+            <aside className="service-summary card-premium p-6">
+              {["desarrollo-web", "sistemas-web", "tiendas-online"].includes(page.slug) && (
+                <figure className="service-project-preview">
+                  <Image
+                    src={
+                      page.slug === "sistemas-web"
+                        ? "/projects/control-de-flota.jpg"
+                        : page.slug === "tiendas-online"
+                          ? "/demos/tienda-ropa/tienda-ropa-01.png"
+                          : "/projects/fenice.jpg"
+                    }
+                    alt={
+                      page.slug === "desarrollo-web"
+                        ? "Web corporativa de Fenice"
+                        : "Interfaz de demostración con información de ejemplo"
+                    }
+                    width={1600}
+                    height={1000}
+                    sizes="(max-width: 1024px) 90vw, 480px"
+                  />
+                  <figcaption>
+                    {page.slug === "desarrollo-web"
+                      ? "Proyecto publicado · Fenice"
+                      : "Vista de demostración"}
+                  </figcaption>
+                </figure>
+              )}
               <p className="mb-3 flex items-center gap-2 text-sm font-extrabold text-slate-900">
                 <SearchCheck className="h-5 w-5 text-blue-700" />
                 Qué priorizamos en este servicio
