@@ -3,7 +3,7 @@ import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { createPageMetadata } from "@/lib/seo";
 
-const origin = "https://denurvia.zyteron.cl";
+const origin = "https://denurvia.cl";
 const path = "/soluciones/denurvia";
 const description = "Denurvia es el software de Zyteron SpA diseñado para organizar investigaciones internas y laborales en empresas de Chile. Conoce su alcance y explora la demostración.";
 
@@ -30,7 +30,7 @@ export default function DenurviaPage() {
           <p className="mt-6 max-w-3xl text-lg leading-relaxed text-slate-300">Software diseñado para organizar investigaciones internas y laborales en empresas de Chile. Conecta expedientes, responsables, entrevistas y documentación para Recursos Humanos, cumplimiento y equipos investigadores.</p>
           <div className="mt-8 flex flex-wrap gap-4">
             <a href={origin} className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-500">Conocer Denurvia</a>
-            <a href="https://demo.denurvia.zyteron.cl/" className="rounded-xl border border-slate-500 px-6 py-3 font-semibold text-white hover:bg-slate-800">Explorar demo con datos ficticios</a>
+            <a href="https://demo.denurvia.cl/" className="rounded-xl border border-slate-500 px-6 py-3 font-semibold text-white hover:bg-slate-800">Explorar demo con datos ficticios</a>
           </div>
         </Container>
       </section>
