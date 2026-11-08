@@ -33,6 +33,7 @@ export function WebVisitTracker() {
   const trackedRef = useRef<string>("");
 
   useEffect(() => {
+    if (!/^(www\.)?zyteron\.cl$/.test(window.location.hostname)) return;
     const trackedPath = normalizeWebVisitPath(pathname);
     if (!trackedPath || isExcludedWebVisitPath(trackedPath)) return;
     if (trackedRef.current === trackedPath) return;
