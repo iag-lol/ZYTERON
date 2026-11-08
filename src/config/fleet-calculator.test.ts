@@ -109,7 +109,7 @@ describe("flotas · estructura del cobro", () => {
   });
 
   it("los precios de desarrollo son los nuevos", () => {
-    assert.equal(FLEET_PRICE_AMOUNTS["flota-pequena"], 3_990_000);
+    assert.equal(FLEET_PRICE_AMOUNTS["flota-pequena"], 1_999_990);
     assert.equal(FLEET_PRICE_AMOUNTS["flota-mediana"], 5_990_000);
     assert.equal(FLEET_PRICE_AMOUNTS["flota-grande"], 7_990_000);
   });
