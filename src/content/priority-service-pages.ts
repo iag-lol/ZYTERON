@@ -51,7 +51,7 @@ export const priorityServicePages: PriorityServicePage[] = [
     heroTitle: "Páginas web en Santiago que generan oportunidades comerciales",
     heroDescription:
       "Diseñamos y creamos páginas web para empresas y pymes de Santiago y la Región Metropolitana. Trabajamos desde Providencia, con reuniones presenciales cuando el proyecto lo requiere, y atendemos clientes en todo Chile en modalidad remota.",
-    directAnswer: `Una página web en Santiago cuesta entre ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} y ${clp(PLAN_PRICE_AMOUNTS.empresa)} CLP + IVA según alcance, y está lista en 1 a 6 semanas. Zyteron la diseña y desarrolla desde su oficina en Antonio Bellet 193, Providencia, con reuniones presenciales en Santiago y atención remota para toda la Región Metropolitana y Chile.`,
+    directAnswer: `Web Básica parte desde ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} + IVA y el Plan Empresa desde ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA, con alcances diferentes. El calendario se define según páginas, contenidos e integraciones. Zyteron la diseña y desarrolla desde su oficina en Antonio Bellet 193, Providencia, con reuniones presenciales en Santiago y atención remota para toda la Región Metropolitana y Chile.`,
     context: [
       "Si tu empresa está en Santiago, tus clientes te buscan en Google antes de llamarte. Una página web bien construida responde esas búsquedas: explica qué haces, muestra trabajos reales y deja claro cómo cotizar. Eso es lo que construimos: sitios que funcionan como un canal comercial, no como un folleto.",
       "Atendemos empresas de Providencia, Las Condes, Ñuñoa, Santiago Centro, Maipú, Huechuraba, Quilicura y el resto de la Región Metropolitana. Nuestra oficina está en Antonio Bellet 193, Providencia, y coordinamos reuniones presenciales para levantamiento de requerimientos cuando el proyecto lo amerita.",
@@ -93,7 +93,7 @@ export const priorityServicePages: PriorityServicePage[] = [
       },
       {
         question: "¿Cuánto cuesta una página web en Santiago?",
-        answer: `Una página web en Santiago cuesta entre ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} y ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA: una web básica parte en ${clp(PLAN_PRICE_AMOUNTS["web-basica"])}, un sitio pyme con varias secciones en ${clp(PLAN_PRICE_AMOUNTS.pyme)} y un sitio corporativo en ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA. Si necesitas tienda online, el rango va de ${clp(PLAN_PRICE_AMOUNTS.catalogo)} a ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} + IVA. Entregamos cotización formal sin costo después de una conversación inicial.`,
+        answer: `Las alternativas web en Santiago tienen precios iniciales distintos: una web básica parte en ${clp(PLAN_PRICE_AMOUNTS["web-basica"])}, un sitio pyme con varias secciones en ${clp(PLAN_PRICE_AMOUNTS.pyme)} y un sitio corporativo en ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA. Un catálogo por WhatsApp parte desde ${clp(PLAN_PRICE_AMOUNTS.catalogo)} + IVA; un ecommerce con carrito y pagos, desde ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} + IVA. Son servicios con alcances diferentes. Entregamos cotización formal sin costo después de una conversación inicial.`,
       },
       {
         question: "¿Atienden empresas fuera de Santiago?",
@@ -200,7 +200,10 @@ export const priorityServicePages: PriorityServicePage[] = [
       { label: "Sistemas web a medida", href: "/sistemas-web" },
       { label: "Mantención y evolución web", href: "/servicios/mantencion-web-chile" },
       { label: "SEO técnico para empresas", href: "/servicios/seo-para-empresas-chile" },
-      { label: "WordPress vs. desarrollo a medida", href: "/recursos/wordpress-vs-web-a-medida-chile" },
+      {
+        label: "WordPress vs. desarrollo a medida",
+        href: "/recursos/wordpress-vs-web-a-medida-chile",
+      },
       { label: "Cotiza tu desarrollo a medida", href: "/cotizador" },
       { label: "Casos de éxito", href: "/casos-exito" },
     ],

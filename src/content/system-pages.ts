@@ -38,6 +38,100 @@ export type SystemPage = {
 
 export const systemPages: SystemPage[] = [
   {
+    slug: "gestion-personas",
+    path: "/sistemas-web/gestion-personas",
+    navLabel: "Gestión de personas y RRHH",
+    metaTitle: "Software de Gestión de Personas y RRHH a Medida en Chile | Zyteron",
+    metaDescription:
+      "Desarrollo a medida para gestionar personal, solicitudes, documentos, turnos y tareas. Módulos y permisos definidos según los procesos de tu empresa en Chile.",
+    primaryKeyword: "software de gestión de personas a medida",
+    heroTitle: "Gestión de personas y recursos humanos, adaptada a tu operación",
+    heroDescription:
+      "Desarrollamos herramientas para reunir información del personal, ordenar solicitudes y coordinar el trabajo. El proyecto se define con quienes administran y usan los procesos: desde un módulo de documentación hasta una plataforma conectada con otras áreas.",
+    signals: [
+      "La información del personal se repite en varias planillas y cuesta mantenerla actualizada.",
+      "Las solicitudes de permisos, documentos o cambios de turno llegan por canales distintos.",
+      "No está claro quién debe aprobar una solicitud ni en qué estado se encuentra.",
+      "Coordinar actividades por sucursal o equipo requiere consolidar información a mano.",
+    ],
+    modules: [
+      {
+        title: "Fichas y documentación del personal",
+        description:
+          "Registros, documentos y fechas relevantes, con campos definidos por la empresa y acceso según responsabilidad. La migración y los datos sensibles se revisan antes de cargar información.",
+      },
+      {
+        title: "Solicitudes y aprobaciones",
+        description:
+          "Un canal para solicitudes del personal, con responsables, estados e historial. Las reglas, los avisos y los plazos de atención se definen para cada proceso.",
+      },
+      {
+        title: "Turnos, asistencia y actividades",
+        description:
+          "Planificación de turnos y registros operativos según el alcance. Si se necesita un registro de asistencia con exigencias específicas, se evalúan sus requisitos y el proveedor antes de comprometer una solución.",
+      },
+      {
+        title: "Tareas y equipos",
+        description:
+          "Asignación de actividades por persona, equipo o sucursal, con prioridades, evidencias y seguimiento del avance desde dispositivos compatibles.",
+      },
+      {
+        title: "Portal para colaboradores",
+        description:
+          "Acceso a solicitudes, documentos y avisos propios, separado de la administración y de las vistas de jefaturas.",
+      },
+      {
+        title: "Reportes e integraciones",
+        description:
+          "Indicadores y exportaciones para revisar pendientes y actividad. Conexiones con herramientas existentes sujetas a API, permisos, licencias y disponibilidad de los datos.",
+      },
+    ],
+    outcomes: [
+      "Consultar información del equipo sin reconstruirla en cada solicitud.",
+      "Identificar responsables y pendientes de cada proceso.",
+      "Reducir la digitación repetida cuando existe una integración viable.",
+      "Separar la información personal de las vistas que necesita cada área.",
+      "Incorporar nuevas funciones por etapas después de validar su uso.",
+    ],
+    phases: [
+      "Revisión de procesos, usuarios, datos y herramientas existentes.",
+      "Definición de la primera etapa, permisos y criterios de aceptación.",
+      "Desarrollo y pruebas con datos de ejemplo y responsables del proceso.",
+      "Migración acordada, capacitación y piloto con un equipo.",
+      "Puesta en marcha, seguimiento y ampliaciones según la propuesta.",
+    ],
+    faqs: [
+      {
+        question: "¿Es un producto listo para activar?",
+        answer:
+          "Esta oferta corresponde a desarrollo de software a medida. La propuesta define módulos, entregables, integraciones y calendario. No se presenta como una plataforma estándar con todas las funciones disponibles de inmediato.",
+      },
+      {
+        question: "¿Incluye remuneraciones o asistencia certificada?",
+        answer:
+          "No se incluyen de forma automática. Si el proyecto requiere remuneraciones, firma, dispositivos de marcación o un sistema de asistencia con requisitos específicos, se evalúa una solución o integración acreditada para ese alcance. No se atribuyen certificaciones a un desarrollo sin evidencia.",
+      },
+      {
+        question: "¿Cómo se define la inversión?",
+        answer:
+          "Depende de procesos, módulos, perfiles, volumen y sensibilidad de los datos, migración e integraciones. Se prepara una cotización por etapas; infraestructura, licencias, equipos, conectividad y mantenimiento se presentan por separado cuando corresponden.",
+      },
+      {
+        question: "¿Puede conectarse con el software que ya usamos?",
+        answer:
+          "Se revisa la documentación del proveedor, sus permisos de acceso y los datos que permite intercambiar. La propuesta confirma la factibilidad, los costos externos y quién mantiene la conexión.",
+      },
+      {
+        question: "¿Cómo se protege la información del personal?",
+        answer:
+          "El diseño considera permisos por rol y por registro, autenticación y trazabilidad según el alcance. Antes de implementar se acuerdan datos necesarios, acceso, conservación, respaldos y pruebas de los límites entre perfiles.",
+      },
+    ],
+    finalCtaTitle: "Comencemos por el proceso que tu equipo necesita ordenar",
+    finalCtaCopy:
+      "Cuéntanos qué administras hoy y dónde se pierde más tiempo. No necesitas preparar una especificación técnica para la primera conversación.",
+  },
+  {
     slug: "intranet-corporativa",
     path: "/sistemas-web/intranet-corporativa",
     navLabel: "Intranet corporativa",
@@ -109,7 +203,7 @@ export const systemPages: SystemPage[] = [
       {
         question: "¿Cuántos usuarios soporta?",
         answer:
-          "La arquitectura no impone un límite práctico para el tamaño de una empresa mediana. Lo que sí influye en el costo es la cantidad de perfiles distintos y de reglas de permisos, no la cantidad de personas.",
+          "La capacidad se dimensiona según usuarios simultáneos, datos, archivos e integraciones. La propuesta define los límites, perfiles y reglas de permisos, y las pruebas necesarias antes de ampliar el uso.",
       },
       {
         question: "¿Se puede usar desde el celular?",
@@ -171,12 +265,13 @@ export const systemPages: SystemPage[] = [
       },
       {
         title: "Auditoría",
-        description: "Registro inmutable de cada acceso, descarga, modificación y eliminación.",
+        description:
+          "Registro de accesos, descargas y cambios, con políticas de conservación y protección definidas en el alcance.",
       },
     ],
     outcomes: [
-      "Encontrar cualquier documento en segundos en vez de revisar carpetas.",
-      "Cero sorpresas por documentación vencida, gracias a las alertas anticipadas.",
+      "Buscar documentos mediante filtros definidos para tu operación.",
+      "Avisos anticipados para revisar documentos próximos a vencer.",
       "Trazabilidad lista para auditoría sin trabajo manual de reconstrucción.",
       "Certeza de que quien abre un documento está viendo la versión vigente.",
       "Control efectivo sobre quién accede a documentación sensible.",

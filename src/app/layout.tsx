@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   publisher: siteConfig.legalName,
   category: "technology",
   title: {
-    default: "Zyteron | Desarrollo web y sistemas para empresas en Santiago y Chile",
+    default: "Desarrollo de Software y Soluciones Digitales en Chile | Zyteron",
     template: "%s | Zyteron",
   },
   description: siteConfig.description,
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: siteConfig.locale.replace("-", "_"),
     url: siteConfig.url,
-    title: "Zyteron | Desarrollo web y sistemas para empresas en Santiago y Chile",
+    title: "Desarrollo de Software y Soluciones Digitales en Chile | Zyteron",
     description: siteConfig.description,
     siteName: siteConfig.name,
     images: [
@@ -60,18 +60,18 @@ export const metadata: Metadata = {
         url: buildPrimaryOgImageUrl(),
         width: 1200,
         height: 630,
-        alt: "Zyteron - Desarrollo web, sistemas y soporte TI para empresas",
+        alt: "Zyteron - Software y soluciones digitales a medida",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Zyteron | Desarrollo web y sistemas para empresas en Santiago y Chile",
+    title: "Desarrollo de Software y Soluciones Digitales en Chile | Zyteron",
     description: siteConfig.description,
     images: [
       {
         url: buildPrimaryOgImageUrl(),
-        alt: "Zyteron - Desarrollo web, sistemas y soporte TI para empresas",
+        alt: "Zyteron - Software y soluciones digitales a medida",
       },
     ],
   },

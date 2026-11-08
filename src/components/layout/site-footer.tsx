@@ -3,7 +3,7 @@ import { Container } from "./container";
 import { ArrowUpRight } from "lucide-react";
 import { siteConfig } from "@/config/site";
 
-const WHATSAPP_URL = `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20cotizar%20una%20p%C3%A1gina%20web%20para%20mi%20empresa.`;
+const WHATSAPP_URL = `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20conversar%20sobre%20un%20proyecto%20digital.`;
 
 const COPYRIGHT_YEAR = 2026;
 
@@ -19,13 +19,17 @@ const footerColumns = [
       { label: "Tiendas online", href: "/tiendas-online" },
       { label: "Landing pages", href: "/servicios/landing-pages-para-empresas" },
       { label: "Calculadora de precio", href: "/calculadora-precio-pagina-web" },
-      { label: "Cotizar página web", href: "/cotizador" },
+      { label: "Preparar una cotización", href: "/cotizador" },
     ],
   },
   {
-    title: "Servicios",
+    title: "Soluciones",
     items: [
       { label: "Sistemas web a medida", href: "/sistemas-web" },
+      { label: "Personas y RRHH", href: "/sistemas-web/gestion-personas" },
+      { label: "Control de flota", href: "/sistemas-web/control-flota" },
+      { label: "Intranets y portales", href: "/sistemas-web/intranet-corporativa" },
+      { label: "Catálogos digitales", href: "/catalogos-digitales" },
       { label: "SEO para empresas", href: "/servicios/seo-para-empresas-chile" },
       { label: "Mantención de sitios web", href: "/servicios/mantencion-web-chile" },
       { label: "Automatización", href: "/automatizacion" },
@@ -71,9 +75,9 @@ export function SiteFooter() {
               zyteron
             </Link>
             <p>
-              Webs, sistemas y tecnología
+              Software y soluciones digitales
               <br />
-              para empresas en movimiento.
+              para empresas y profesionales.
             </p>
             <a href={`mailto:${siteConfig.contact.email}`}>{siteConfig.contact.email}</a>
             <a href={`tel:${siteConfig.contact.phone}`}>{siteConfig.contact.phoneDisplay}</a>

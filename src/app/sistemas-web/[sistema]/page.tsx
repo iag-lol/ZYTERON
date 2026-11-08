@@ -102,13 +102,17 @@ export default async function SystemRoutePage({ params }: SystemPageProps) {
             {page.heroDescription}
           </p>
 
+          <p className="max-w-3xl text-sm leading-7 text-slate-600">
+            Desarrollo a medida. Los módulos, integraciones y condiciones de puesta en marcha se
+            confirman en la propuesta.
+          </p>
           <div className="flex flex-wrap gap-3 pt-2">
             <Button
               asChild
               size="lg"
               className="btn-primary-glow gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800"
             >
-              <Link href="/cotizador">
+              <Link href={`/contacto?servicio=${page.slug}&origen=sistemas-web`}>
                 Solicitar diagnóstico <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -260,7 +264,7 @@ export default async function SystemRoutePage({ params }: SystemPageProps) {
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-2">
             <Button asChild size="lg" className="bg-white font-bold text-blue-800 hover:bg-blue-50">
-              <Link href="/cotizador">
+              <Link href={`/contacto?servicio=${page.slug}&origen=sistemas-web`}>
                 Solicitar diagnóstico <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>

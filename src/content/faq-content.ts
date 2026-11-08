@@ -1,4 +1,9 @@
-import { PLAN_PRICE_AMOUNTS, MAINTENANCE_PRICE_AMOUNTS } from "@/config/pricing";
+import { OFFER_CONDITIONS, planDeadline } from "@/config/commercial-offer";
+import {
+  PLAN_PRICE_AMOUNTS,
+  MAINTENANCE_PRICE_AMOUNTS,
+  FLEET_SOFTWARE_OFFER,
+} from "@/config/pricing";
 
 /** Formatea un monto CLP con separador de miles chileno: 79990 → "$79.990". */
 const clp = (amount: number) => `$${amount.toLocaleString("es-CL")}`;
@@ -13,6 +18,40 @@ export type FaqCategory = {
 
 export const faqCategories: FaqCategory[] = [
   {
+    title: "Elegir una solución",
+    items: [
+      {
+        question: "¿Qué desarrolla Zyteron?",
+        answer:
+          "Software y sistemas empresariales; gestión de personas, flotas y operaciones; ecommerce y catálogos digitales; sitios corporativos, institucionales y profesionales; automatización e integraciones. Cada proyecto puede combinar estas familias según procesos, usuarios y objetivos.",
+      },
+      {
+        question: "¿Puedo contratar una web que solo presente mi empresa o profesión?",
+        answer:
+          "Sí. La web puede informar, mostrar trayectoria, servicios, productos o proyectos y facilitar consultas, sin una compra online. El objetivo se define antes del diseño.",
+      },
+      {
+        question: "¿Qué diferencia un catálogo de un ecommerce?",
+        answer:
+          "Un catálogo presenta productos y puede preparar consultas o pedidos para WhatsApp. Un ecommerce incorpora carrito y cobro online. Un pedido por WhatsApp requiere confirmación comercial y no descuenta stock salvo que exista una integración acordada.",
+      },
+      {
+        question: "¿Desarrollan sistemas para personas y recursos humanos?",
+        answer:
+          "Sí, como proyectos a medida para personal, documentos, solicitudes, turnos y tareas según alcance. Se evalúan integraciones y requisitos antes de comprometerlos; no se incluyen automáticamente remuneraciones, equipos ni certificaciones.",
+      },
+      {
+        question: "¿Qué incluye el precio de Control de Flota?",
+        answer: `${FLEET_SOFTWARE_OFFER.price} corresponde al desarrollo del software. ${FLEET_SOFTWARE_OFFER.implementation} ${FLEET_SOFTWARE_OFFER.operation}`,
+      },
+      {
+        question: "¿Cómo comenzar si todavía no sé qué solución necesito?",
+        answer:
+          "Puedes solicitar orientación y contar qué quieres presentar, comercializar o gestionar. No necesitas una especificación técnica para la primera conversación. El alcance, las etapas y los costos se definen en la propuesta.",
+      },
+    ],
+  },
+  {
     title: "Cotización, precios y tiempos",
     items: [
       {
@@ -21,8 +60,7 @@ export const faqCategories: FaqCategory[] = [
       },
       {
         question: "¿Cuánto demora desarrollar una web?",
-        answer:
-          "Una landing simple puede tomar 1 a 2 semanas. Un sitio corporativo completo suele tomar entre 3 y 6 semanas según contenido, revisiones e integraciones.",
+        answer: `Web Básica: ${planDeadline("web-basica")}; Plan Pyme: ${planDeadline("pyme")}; Plan Empresa: ${planDeadline("empresa")}. ${OFFER_CONDITIONS.delivery}`,
       },
       {
         question: "¿Qué necesito para comenzar?",

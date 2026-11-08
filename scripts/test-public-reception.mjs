@@ -123,6 +123,22 @@ test("fallo del aviso no elimina la consulta ni duplica el registro al reintenta
  } finally { notificationFails = false; }
 });
 
+test("catálogo, personas y flota conservan su clasificación al guardar la solicitud", async () => {
+ for (const [index, projectType] of ["catalogo", "gestion-personas", "control-flota"].entries()) {
+   const payload = { ...quoteData, projectType, clientSubmissionId: `positioning-20261108-${index}` };
+   const before = inbox.length;
+   const response = await quote(request("api/cotizaciones", payload));
+   assert.equal(response.status, 200);
+   const receipt = await response.json();
+   const saved = (await db.query("SELECT body FROM records WHERE kind='quote' AND id=$1", [receipt.quoteId])).rows[0].body;
+   assert.ok(JSON.stringify(saved).includes(projectType));
+   assert.equal(inbox.length, before + 1);
+   const retry = await quote(request("api/cotizaciones", payload));
+   assert.deepEqual(await retry.json(), receipt);
+   assert.equal(inbox.length, before + 1);
+ }
+});
+
 test("entrada inválida, cuerpo excesivo y honeypot no confirman registros", async () => {
  const before = await count("lead");
  assert.equal((await contact(request("api/contacto", { ...contactData, email: "invalid" }))).status, 400);

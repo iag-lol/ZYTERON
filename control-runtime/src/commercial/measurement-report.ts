@@ -15,7 +15,11 @@ export function reportingWindow(days: 7 | 28, now = Temporal.Now.instant()) {
   };
 }
 function serviceLine(text: string) {
-  if (/sistema|automatiza|intranet|documental|flota|panel/i.test(text))
+  if (
+    /sistema|automatiza|intranet|documental|flota|panel|recursos humanos|gesti[oó]n de personas|operaciones/i.test(
+      text,
+    )
+  )
     return "sistemas_automatizacion";
   if (/soporte|mantenci[oó]n/i.test(text)) return "soporte";
   if (/web|tienda|ecommerce|cat[aá]logo|landing|seo/i.test(text)) return "web_ecommerce";

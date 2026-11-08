@@ -5,7 +5,8 @@ import { ArrowUpRight } from "lucide-react";
 export const selectedProjects = [
   {
     name: "Fenice",
-    category: "Web corporativa / Energía y logística",
+    category: "Sitios web / Energía y logística",
+    evidence: "Trabajo para cliente · Sitio público",
     description: "Una presencia digital para una operación que no se detiene.",
     image: "/projects/fenice.jpg",
     alt: "Página de inicio actual de Fenice SPA",
@@ -16,7 +17,8 @@ export const selectedProjects = [
   },
   {
     name: "Denurvia",
-    category: "Producto digital / Gestión de procesos",
+    category: "Software empresarial / Gestión de procesos",
+    evidence: "Producto propio · Sitio público",
     description: "Una plataforma para gestionar investigaciones internas con orden y trazabilidad.",
     image: "/projects/denurvia.jpg",
     alt: "Sitio público de Denurvia, plataforma de gestión de investigaciones internas",
@@ -27,7 +29,8 @@ export const selectedProjects = [
   },
   {
     name: "Control de Flota",
-    category: "Sistema web / Logística",
+    category: "Personas y operaciones / Logística",
+    evidence: "Demostración · Datos de ejemplo",
     description: "Vehículos, despachos y operación en una misma vista.",
     image: "/projects/control-de-flota.jpg",
     alt: "Control de Flota: interfaz de demostración sin datos operativos de clientes",
@@ -37,7 +40,8 @@ export const selectedProjects = [
   },
   {
     name: "Centro de Caja",
-    category: "Sistema web / Comercio",
+    category: "Software empresarial / Comercio",
+    evidence: "Trabajo para cliente · Vista ilustrativa",
     description: "Punto de venta, inventario y control de caja para la gestión diaria.",
     image: "/projects/centro-de-caja.svg",
     alt: "Vista ilustrativa de Centro de Caja con productos y valores de ejemplo",
@@ -55,6 +59,7 @@ export function ProjectGallery() {
           <Link
             href={project.href}
             className="project-visual"
+            data-project-id={project.tone}
             aria-label={`Conocer el proyecto ${project.name}`}
           >
             <div className="project-screen">
@@ -80,11 +85,12 @@ export function ProjectGallery() {
                 <span>0{index + 1}</span> {project.category}
               </p>
               <h3>
-                <Link href={project.href}>
+                <Link href={project.href} data-project-id={project.tone}>
                   {project.name} <ArrowUpRight size={24} />
                 </Link>
               </h3>
               <p className="project-description">{project.description}</p>
+              <p className="project-evidence">{project.evidence}</p>
             </div>
             {project.external && (
               <a

@@ -86,9 +86,8 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
     offer: {
       name: "Desarrollo web profesional",
       lowPrice: PLAN_PRICE_AMOUNTS["web-basica"],
-      highPrice: PLAN_PRICE_AMOUNTS.empresa,
       description:
-        "Rango referencial según cantidad de páginas, contenido, integraciones y soporte.",
+        "Valor inicial de Web Básica de presentación. Otros planes tienen alcances y valores iniciales propios; la propuesta confirma contenidos, integraciones y soporte.",
     },
   },
   "paginas-web-para-pymes": {
@@ -144,9 +143,8 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
     offer: {
       name: "Página web para pyme",
       lowPrice: PLAN_PRICE_AMOUNTS["web-basica"],
-      highPrice: PLAN_PRICE_AMOUNTS.pyme,
       description:
-        "Rango referencial para una web de presentación o un sitio pyme comercial; el alcance final se cotiza por escrito.",
+        "Valor inicial de Web Básica de presentación. El Plan Pyme tiene un alcance diferente; el presupuesto se confirma por escrito.",
     },
   },
   "paginas-web-para-empresas": {
@@ -257,11 +255,10 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
       ],
     ],
     offer: {
-      name: "Tienda online o catálogo digital",
-      lowPrice: PLAN_PRICE_AMOUNTS.catalogo,
-      highPrice: PLAN_PRICE_AMOUNTS.ecommerce,
+      name: "Ecommerce Profesional con carrito y pagos",
+      lowPrice: PLAN_PRICE_AMOUNTS.ecommerce,
       description:
-        "Rango referencial según catálogo, pagos, carga inicial y administración requerida.",
+        "Valor inicial del Ecommerce Profesional. Productos, pagos, carga inicial e integraciones se confirman en la propuesta. El catálogo digital se cotiza como un alcance diferente.",
     },
   },
   "sistemas-web": {
@@ -318,8 +315,8 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
     offer: {
       name: "Sistema web a medida",
       lowPrice: PLAN_PRICE_AMOUNTS.sistema,
-      highPrice: PLAN_PRICE_AMOUNTS.avanzado,
-      description: "Rango referencial para primera etapa con diagnóstico técnico incluido.",
+      description:
+        "Valor inicial del Sistema Web Profesional: usuarios, registros, roles, panel y reportes. Módulos, datos e integraciones se definen en la propuesta.",
     },
   },
   automatizacion: {
@@ -375,7 +372,8 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
     offer: {
       name: "Automatización de procesos",
       lowPrice: SERVICE_PRICE_AMOUNTS.automationWhatsapp,
-      description: "Rango referencial según canales, reglas, integraciones y pruebas requeridas.",
+      description:
+        "Valor inicial de la automatización por WhatsApp. Otros flujos se cotizan según canales, reglas, integraciones y pruebas.",
     },
   },
   "soporte-ti": {
@@ -432,7 +430,7 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
       name: "Soporte TI para pymes",
       lowPrice: SERVICE_PRICE_AMOUNTS.supportTi,
       description:
-        "Rango referencial mensual o por requerimiento según carga, criticidad y cobertura.",
+        "Referencia por requerimiento de soporte TI. Los servicios mensuales tienen condiciones propias según carga, criticidad y cobertura.",
     },
   },
 };
@@ -620,7 +618,7 @@ export async function SeoServiceLanding({ page }: Props) {
               ) : null}
               <div className="mt-4 grid gap-2">
                 <Link
-                  href="/cotizador"
+                  href={`/cotizador?tipo=${page.slug === "sistemas-web" ? "sistema-web" : page.slug === "tiendas-online" ? "tienda-online" : page.slug === "catalogos-digitales" ? "catalogo" : page.slug === "automatizacion" ? "automatizacion" : page.slug === "soporte-ti" ? "soporte-ti" : "web-profesional"}&servicio=${page.slug}&origen=servicio`}
                   className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-blue-200 hover:bg-white"
                 >
                   Ir al cotizador

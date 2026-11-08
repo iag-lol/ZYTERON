@@ -188,7 +188,7 @@ export function getOrganizationSchema() {
           "@type": "ImageObject",
           url: `${siteConfig.url}/logo.svg`,
         },
-        image: buildAbsoluteUrl("/og/home.png"),
+        image: buildAbsoluteUrl("/og/soluciones-digitales.png"),
         description: siteConfig.description,
         email: siteConfig.contact.email,
         telephone: siteConfig.contact.phone,
@@ -209,10 +209,7 @@ export function getOrganizationSchema() {
           "@type": "Country",
           name: siteConfig.business.areaServed,
         },
-        knowsAbout: [
-          ...siteConfig.business.serviceTypes,
-          ...siteConfig.business.expertiseTopics,
-        ],
+        knowsAbout: [...siteConfig.business.serviceTypes, ...siteConfig.business.expertiseTopics],
         contactPoint: [buildContactPoint()],
       },
       {
@@ -267,7 +264,7 @@ export function getLocalBusinessSchema({
     legalName: siteConfig.legalName,
     description,
     url: pageUrl,
-    image: buildAbsoluteUrl("/og/home.png"),
+    image: buildAbsoluteUrl("/og/soluciones-digitales.png"),
     telephone: siteConfig.contact.phone,
     email: siteConfig.contact.email,
     priceRange: siteConfig.business.priceRange,
@@ -436,7 +433,6 @@ export function getBlogPostingSchema({
     },
   };
 }
-
 
 export function getWebPageSchema({
   path,

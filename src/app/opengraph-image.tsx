@@ -6,8 +6,8 @@ export const contentType = "image/png";
 
 export default function OpenGraphImage() {
   return generateZyteronOgImage({
-    title: "Webs, sistemas y soporte TI para empresas",
-    subtitle: "Desarrollo digital para pymes y empresas en Chile",
+    title: "Software y soluciones digitales a medida",
+    subtitle: "Sistemas, personas, operaciones, ecommerce y sitios web en Chile",
     tag: "ZYTERON",
   });
 }

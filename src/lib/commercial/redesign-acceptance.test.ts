@@ -18,7 +18,7 @@ import type { DbBlogPost } from "../admin/blog-cases-repository";
 test("contacto conserva sistema, automatización, plan y estimación", () => {
   assert.equal(
     resolveRequestContext(new URLSearchParams("tipo=sistema")).projectType,
-    "Sistema interno",
+    "Sistema empresarial",
   );
   assert.equal(
     resolveRequestContext(new URLSearchParams("servicio=automatizacion-whatsapp-empresas"))
@@ -27,10 +27,10 @@ test("contacto conserva sistema, automatización, plan y estimación", () => {
   );
   assert.equal(
     resolveRequestContext(new URLSearchParams("servicio=gestion-documental")).projectType,
-    "Sistema interno",
+    "Sistema empresarial",
   );
   const store = resolveRequestContext(new URLSearchParams("plan=catalogo&estimado=349990"));
-  assert.equal(store.projectType, "Catálogo WhatsApp");
+  assert.equal(store.projectType, "Catálogo de productos");
   assert.equal(store.planId, "catalogo");
   assert.equal(store.estimate, 349990);
   assert.equal(resolveRequestContext(new URLSearchParams("estimado=Infinity")).estimate, undefined);
@@ -48,8 +48,12 @@ test("cada precio tiene una oferta, plazo e impuestos coherentes", () => {
     assert.ok(plan.deadline && plan.recurring && plan.features.length);
   }
   assert.equal(planOffer("ecommerce").deadline, "5 a 8 semanas");
-  assert.ok(buildZyteronSystemPrompt().includes(`Tienda online: ${planOffer("ecommerce").deadline}`));
-  assert.ok(buildZyteronSystemPrompt().includes(`Página web para pyme: ${planOffer("pyme").deadline}`));
+  assert.ok(
+    buildZyteronSystemPrompt().includes(`Tienda online: ${planOffer("ecommerce").deadline}`),
+  );
+  assert.ok(
+    buildZyteronSystemPrompt().includes(`Página web para pyme: ${planOffer("pyme").deadline}`),
+  );
   assert.notEqual(planOffer("catalogo").amount, planOffer("ecommerce").amount);
 });
 

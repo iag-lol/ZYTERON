@@ -53,7 +53,7 @@ const services = [
   },
   {
     title: "Tiendas online y e-commerce",
-    desc: "Catálogos con carrito de compra, integración de medios de pago y conexión a WhatsApp como canal directo de ventas.",
+    desc: "Ecommerce con carrito y pagos. Como servicio diferente, catálogos de presentación o consultas por WhatsApp, según alcance.",
     icon: <ShoppingCart className="h-6 w-6" />,
   },
   {
@@ -68,12 +68,12 @@ const services = [
   },
   {
     title: "Soporte TI y acompañamiento",
-    desc: "Mantenimiento web, configuración de correos corporativos y acompañamiento técnico continuo para que nunca estés solo.",
+    desc: "Mantenimiento web, configuración de correos corporativos y acompañamiento técnico continuo según las condiciones contratadas.",
     icon: <LifeBuoy className="h-6 w-6" />,
   },
   {
-    title: "Marketing digital básico",
-    desc: "Optimización SEO, configuración de Google Business y estructuración de contenido pensado en conversión comercial.",
+    title: "Gestión de personas y operaciones",
+    desc: "Herramientas a medida para personal, solicitudes, documentos, tareas y flotas, con módulos e integraciones definidos en la propuesta.",
     icon: <TrendingUp className="h-6 w-6" />,
   },
 ];
@@ -144,12 +144,13 @@ export default function QuienesSomosPage() {
           </div>
 
           <h1 className="mx-auto max-w-4xl text-4xl leading-tight font-extrabold text-slate-900 sm:text-5xl">
-            Zyteron SpA — Empresa de desarrollo web y sistemas digitales en Santiago, Chile
+            Zyteron SpA — Empresa de software y soluciones digitales en Chile
           </h1>
 
           <p className="mx-auto max-w-3xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            Creamos páginas web, herramientas, tiendas y sistemas pensados para que tu negocio tenga
-            una presencia formal, capte clientes y automatice sus procesos de venta.
+            Desarrollamos software, plataformas de gestión, ecommerce, catálogos y sitios web para
+            presentar negocios, comercializar productos y servicios, gestionar información y
+            controlar operaciones.
           </p>
 
           <div className="mt-8 flex flex-wrap justify-center gap-4">
@@ -180,8 +181,8 @@ export default function QuienesSomosPage() {
         <Container>
           <p className="mx-auto max-w-4xl rounded-3xl border border-slate-200 bg-slate-50 p-8 text-base leading-relaxed text-slate-700">
             <strong>{siteConfig.legalName}</strong> (RUT {siteConfig.taxId}) es una empresa chilena
-            de desarrollo web fundada en {siteConfig.foundingDate}, con oficina en{" "}
-            {siteConfig.address.streetAddress}, {siteConfig.address.commune},{" "}
+            de desarrollo de software y soluciones digitales fundada en {siteConfig.foundingDate},
+            con oficina en {siteConfig.address.streetAddress}, {siteConfig.address.commune},{" "}
             {siteConfig.address.city}. Desarrolla páginas web, tiendas online, sistemas a medida,
             automatización y soporte TI para empresas y pymes de todo Chile, con un equipo que suma
             más de {siteConfig.business.experienceYears} años de experiencia en tecnología.
@@ -208,13 +209,12 @@ export default function QuienesSomosPage() {
                 Nacimos para ayudar a emprendedores, profesionales independientes y pymes a
                 profesionalizar su presencia en internet y ordenar sus procesos operativos.
                 Entendemos que una página web o un sistema interno no es un gasto, sino una
-                herramienta comercial que debe generar confianza, facilitar ventas y simplificar el
-                trabajo diario.
+                herramienta que puede informar, transmitir confianza, facilitar consultas o
+                simplificar el trabajo diario.
               </p>
               <p>
-                Por eso, nuestro enfoque es 100% real y práctico: hablamos claro, cotizamos con
-                alcance definido y acompañamos técnica y formalmente cada proyecto desde la idea
-                inicial hasta su puesta en marcha.
+                Por eso hablamos claro, cotizamos con alcance definido y acompañamos técnica y
+                formalmente cada proyecto desde la idea inicial hasta su puesta en marcha.
               </p>
             </div>
           </div>

@@ -6,7 +6,7 @@ import { planContactHref, serviceLineFor } from "@/lib/commercial/request-contex
 
 export function ServiceDecision({ path }: { path: string }) {
   const systems = serviceLineFor(path) === "sistemas_automatizacion";
-  const store = path.includes("tienda");
+  const store = path.includes("tienda") || path.includes("catalogo");
   const ids: PlanId[] = systems
     ? ["sistema", "avanzado"]
     : store
@@ -30,7 +30,7 @@ export function ServiceDecision({ path }: { path: string }) {
             ? "Empieza por el proceso que necesita orden"
             : store
               ? "Elige cómo vas a recibir y cobrar pedidos"
-              : "Una web acorde a tu objetivo comercial"}
+              : "Una web acorde a tu objetivo"}
         </h2>
         <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600">
           {systems

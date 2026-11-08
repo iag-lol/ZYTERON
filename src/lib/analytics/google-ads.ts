@@ -1,6 +1,7 @@
 import { isExcludedWebVisitPath } from "@/lib/analytics/visit-privacy";
 import { safeEventParams } from "@/lib/analytics/event-privacy";
 
+import { publicPath, solutionFamilyFor } from "@/lib/commercial/request-context";
 import { analyticsConfig } from "@/config/analytics";
 
 type GoogleAdsEventParams = Record<string, string | number | boolean | null | undefined>;
@@ -20,7 +21,23 @@ export function trackAnalyticsEvent(eventName: string, eventParams?: GoogleAdsEv
       /^G-[A-Z0-9]+$/.test(analyticsConfig.googleAnalyticsId) && eventName !== "conversion"
         ? { send_to: analyticsConfig.googleAnalyticsId }
         : {};
-    window.gtag("event", eventName, { ...safeEventParams(eventParams), ...destination });
+    let entryPath = publicPath(window.location.pathname);
+    try {
+      const stored = sessionStorage.getItem("zyteron:entry-path");
+      const saved = stored ? publicPath(stored) : "";
+      if (saved) entryPath = saved;
+      else sessionStorage.setItem("zyteron:entry-path", entryPath);
+    } catch {
+      /* La atribución no impide el envío del formulario. */
+    }
+    window.gtag("event", eventName, {
+      ...safeEventParams({
+        entry_path: entryPath,
+        solution_family: solutionFamilyFor(window.location.pathname),
+        ...eventParams,
+      }),
+      ...destination,
+    });
   } catch {
     // La medicion nunca debe interrumpir el flujo principal del formulario.
   }

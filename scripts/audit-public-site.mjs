@@ -30,7 +30,8 @@ const sitemapPaths = [...sitemap.html.matchAll(/<loc>(.*?)<\/loc>/g)].map(
 );
 const paths = [
   ...new Set([
-    ...(baseline?.pages?.map((p) => p.path) || sitemapPaths),
+    ...(baseline?.pages?.map((p) => p.path) || []),
+    ...sitemapPaths,
     "/contacto?tipo=sistema",
     "/contacto?servicio=tiendas-online",
     "/portal-clientes",

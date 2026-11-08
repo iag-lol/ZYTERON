@@ -5,7 +5,7 @@ import { analyticsConfig } from "@/config/analytics";
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { serviceLineFor } from "@/lib/commercial/request-context";
+import { serviceLineFor, solutionFamilyFor } from "@/lib/commercial/request-context";
 import { trackAnalyticsEvent } from "@/lib/analytics/google-ads";
 
 function classifyTrackedHref(href: string) {
@@ -30,17 +30,36 @@ export function ConversionEventTracker() {
   useEffect(() => {
     if (isExcludedWebVisitPath(pathname)) return;
     const serviceLine = serviceLineFor(pathname);
+    const solutionFamily = solutionFamilyFor(pathname);
     if (analyticsConfig.googleAnalyticsId)
-      trackAnalyticsEvent("page_view", { page_path: pathname, service_line: serviceLine });
+      trackAnalyticsEvent("page_view", {
+        page_path: pathname,
+        service_line: serviceLine,
+        solution_family: solutionFamily,
+      });
     if (
       serviceLine !== "sin_definir" &&
-      /^\/(desarrollo-web|paginas-web|tiendas-online|sistemas-web|automatizacion|soporte-ti|servicios)([/-]|$)/.test(
+      /^\/(desarrollo-web|paginas-web|tiendas-online|catalogos-digitales|sistemas-web|automatizacion|soporte-ti|servicios)([/-]|$)/.test(
         pathname,
       )
     )
-      trackAnalyticsEvent("service_view", { page_path: pathname, service_line: serviceLine });
+      trackAnalyticsEvent("service_view", {
+        page_path: pathname,
+        service_line: serviceLine,
+        solution_family: solutionFamily,
+      });
+    if (pathname.startsWith("/casos-exito/") || pathname === "/soluciones/denurvia")
+      trackAnalyticsEvent("project_view", {
+        page_path: pathname,
+        service_line: serviceLine,
+        solution_family: solutionFamily,
+      });
     if (pathname.startsWith("/demos/"))
-      trackAnalyticsEvent("demo_open", { page_path: pathname, service_line: serviceLine });
+      trackAnalyticsEvent("demo_open", {
+        page_path: pathname,
+        service_line: serviceLine,
+        solution_family: solutionFamily,
+      });
   }, [pathname]);
   useEffect(() => {
     function handleDocumentClick(event: MouseEvent) {
@@ -48,10 +67,29 @@ export function ConversionEventTracker() {
       if (!(target instanceof HTMLAnchorElement)) return;
 
       const eventName = classifyTrackedHref(target.href);
+      if (target.dataset.solutionFamily)
+        trackAnalyticsEvent("solution_explore", {
+          page_path: window.location.pathname,
+          solution_family: target.dataset.solutionFamily.replaceAll("-", "_"),
+        });
+      if (target.dataset.projectId)
+        trackAnalyticsEvent("project_open", {
+          page_path: window.location.pathname,
+          destination_path: target.pathname,
+          project_id: target.dataset.projectId,
+          solution_family: solutionFamilyFor(target.pathname),
+        });
       if (!eventName) return;
 
       trackAnalyticsEvent(eventName, {
         page_path: window.location.pathname,
+        solution_family: solutionFamilyFor(
+          target.origin === window.location.origin
+            ? new URL(target.href).searchParams.get("servicio") ||
+                new URL(target.href).searchParams.get("tipo") ||
+                window.location.pathname
+            : window.location.pathname,
+        ),
         destination_path: target.origin === window.location.origin ? target.pathname : undefined,
         service_line: serviceLineFor(
           window.location.pathname +
