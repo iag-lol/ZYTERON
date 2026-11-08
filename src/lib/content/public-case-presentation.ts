@@ -12,7 +12,10 @@ export function presentPublicCase(item: DbCaseStudy): DbCaseStudy {
     };
   if (item.slug !== CASH_CASE_SLUG) return item;
   const publicText = (text: string | null) =>
-    text?.replace(/Negocios?\s+Eliana(?:\s+Maipú)?|Eliana/gi, "Centro de Caja") ?? null;
+    text
+      ?.replace(/Eliana administraba dos negocios/gi, "La gestión de dos negocios se realizaba")
+      .replace(/dos negocios administrados por (?:Negocios?\s+)?Eliana/gi, "dos negocios")
+      .replace(/Negocios?\s+Eliana(?:\s+Maipú)?|Eliana/gi, "Centro de Caja") ?? null;
   return {
     ...item,
     companyName: "Centro de Caja",

@@ -18,7 +18,8 @@ Las rutas, canonical, datos estructurados y estructura de títulos se conservan.
 ## Validación local
 
 - Compilación de producción y comprobación de TypeScript.
-- ESLint y comprobación de espacios del diff.
+- ESLint sin errores ni advertencias en los archivos TypeScript modificados; comprobación de espacios del diff.
+- El lint global registra 34 errores y 8 advertencias preexistentes en archivos ajenos al cambio visual. El resultado no equivale a una validación limpia del repositorio completo.
 - 528 pruebas existentes y 2 pruebas de presentación pública: identidad, imágenes y conservación del registro administrativo.
 - 32 combinaciones de página y ancho de pantalla, con controles de accesibilidad, errores de JavaScript y desbordamiento horizontal.
 - 20 vistas adicionales de proyectos, productos, servicios, empresa, preguntas frecuentes y privacidad.
@@ -33,3 +34,13 @@ Las pruebas locales de formularios usan respuestas simuladas; no crean consultas
 Capturas, fixtures públicos y resultados locales: `output/visual-redesign-08-11-2026/`, excluido del repositorio. Las únicas imágenes destinadas a publicación están en `public/projects/`.
 
 El servicio de publicación es ZYTERON, en Render, conectado a la rama `main` de `iag-lol/ZYTERON`, con despliegue manual. La revisión publicada anterior al cambio visual es `58249dee2b15c8eceb03cd0edb9baf1f1c31c749`.
+
+## Comprobación publicada
+
+El despliegue visual `7a8465c602e02cce2c3a2e737d9f958cccd44720` quedó activo en Render el 08-11-2026 a las 07:48, hora de Santiago.
+
+- 84 rutas verificadas: sin incidencias de respuesta HTTP, canonical, títulos únicos ni JSON-LD.
+- Los metadatos se mantienen respecto de la publicación anterior, salvo la identidad pública de Centro de Caja. El nombre anterior no aparece en el texto visible de las páginas revisadas.
+- Vistas de producción de portada, proyectos, Denurvia y Control de Flota comprobadas en 1440 y 390 píxeles, con imágenes cargadas y sin incidencias de accesibilidad ni desbordamientos.
+- Cuatro comprobaciones de privacidad: URLs de medición saneadas y accesos privados excluidos de analítica pública.
+- Ajuste editorial de la ficha de Centro de Caja para describir la gestión de las tiendas sin atribuir funciones de una persona al nombre del sistema.

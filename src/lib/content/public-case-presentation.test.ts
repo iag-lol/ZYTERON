@@ -7,17 +7,22 @@ test("la ficha pública elimina la identidad anterior y su imagen sin alterar el
   const original = {
     slug: "casos-exito-sistema-control-interno-negocios-eliana",
     companyName: "Negocios Eliana",
-    problem: "Eliana administraba dos tiendas.",
+    problem: "Eliana administraba dos negocios sin una plataforma centralizada.",
     solution: "Un sistema para Negocio Eliana.",
     results: "Control de inventario.",
     clientQuote: null,
     metaTitle: "Negocios Eliana",
-    metaDescription: "Sistema para Eliana",
+    metaDescription: "Control de dos negocios administrados por Eliana.",
     imageUrl: "https://example.com/private-name.jpg",
   } as DbCaseStudy;
   const presented = presentPublicCase(original);
   assert.equal(presented.slug, original.slug);
   assert.equal(presented.companyName, "Centro de Caja");
+  assert.equal(
+    presented.problem,
+    "La gestión de dos negocios se realizaba sin una plataforma centralizada.",
+  );
+  assert.equal(presented.metaDescription, "Control de dos negocios.");
   assert.equal(presented.imageUrl, "/projects/centro-de-caja.svg");
   const publicFields = Object.fromEntries(
     Object.entries(presented).filter(([key]) => key !== "slug"),
