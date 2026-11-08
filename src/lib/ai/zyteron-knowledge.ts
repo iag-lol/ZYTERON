@@ -2,6 +2,7 @@ import { planDeadline } from "@/config/commercial-offer";
 import { siteConfig } from "@/config/site";
 import {
   ADDONS,
+  FLEET_SOFTWARE_OFFER,
   AI_CONSUMPTION_NOTE,
   AI_SERVICES,
   MAINTENANCE,
@@ -54,25 +55,29 @@ export const ZYTERON_PLANS: ZyteronPlan[] = [
     id: "catalogo",
     name: "Catálogo por WhatsApp",
     ideal: "Negocios que quieren mostrar productos y recibir pedidos por WhatsApp.",
-    includes: "Catálogo con fichas de productos, categorías, botón de compra y contacto directo por WhatsApp.",
+    includes:
+      "Catálogo con fichas de productos, categorías, botón de compra y contacto directo por WhatsApp.",
   },
   {
     id: "ecommerce",
     name: "Ecommerce con carrito y pagos",
     ideal: "Quienes quieren vender online con carrito y pagos en línea.",
-    includes: "Tienda con carrito, gestión de productos e integración de pagos (Flow, Webpay o Mercado Pago).",
+    includes:
+      "Tienda con carrito, gestión de productos e integración de pagos (Flow, Webpay o Mercado Pago).",
   },
   {
     id: "sistema",
     name: "Sistema web administrativo",
     ideal: "Empresas que necesitan administrar información, clientes o procesos.",
-    includes: "Panel administrativo, login de usuarios, reportes y módulos según operación (no incluye módulos ilimitados).",
+    includes:
+      "Panel administrativo, login de usuarios, reportes y módulos según operación (no incluye módulos ilimitados).",
   },
   {
     id: "avanzado",
     name: "Sistema avanzado a medida",
     ideal: "Proyectos complejos con reglas de negocio propias.",
-    includes: "Software a medida, integraciones API, automatizaciones y arquitectura escalable, definido por alcance.",
+    includes:
+      "Software a medida, integraciones API, automatizaciones y arquitectura escalable, definido por alcance.",
   },
 ];
 
@@ -167,13 +172,19 @@ ${legalName} desarrolla principalmente **páginas web profesionales para empresa
 
 Nuestra oficina está en ${siteConfig.address.display}: atendemos presencialmente a empresas de Santiago y la Región Metropolitana (con reunión coordinada) y de forma remota a clientes de todo Chile. Horario: ${business.hoursDisplay}.
 
-Zyteron NO vende computadores, notebooks, hardware ni equipamiento tecnológico. Si alguien pregunta por eso, explícale con amabilidad que nos dedicamos al desarrollo de páginas web y soluciones digitales, y reconduce la conversación hacia su presencia web.
+Zyteron no funciona como tienda de computadores o notebooks. En proyectos de Control de Flota, el equipamiento GPS y la instalación se evalúan como parte de una propuesta específica.
 
 ## SERVICIOS
 ${renderServices()}
 
 ## PLANES Y PRECIOS REFERENCIALES (todos "desde" y SIN IVA)
 ${renderPlans()}
+
+## CONTROL DE FLOTA
+Desarrollo del software: ${FLEET_SOFTWARE_OFFER.price}. ${FLEET_SOFTWARE_OFFER.scope}
+${FLEET_SOFTWARE_OFFER.implementation}
+${FLEET_SOFTWARE_OFFER.operation}
+Este valor corresponde al software, no a una solución completa con GPS e instalación. No uses el precio del sistema web genérico para cotizar Control de Flota. No publiques valores unitarios de GPS, instalación o infraestructura ni calcules totales automáticos; orienta a una propuesta formal en /contacto?tipo=sistema&servicio=control-flota.
 
 ## INTELIGENCIA ARTIFICIAL Y ATENCIÓN AUTOMATIZADA
 ${renderAiServices()}

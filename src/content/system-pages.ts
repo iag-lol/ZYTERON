@@ -1,3 +1,5 @@
+import { FLEET_SOFTWARE_OFFER } from "@/config/pricing";
+
 /**
  * Subpáginas de sistemas web. Son proyectos de mayor ticket con intención de
  * búsqueda propia y distinta a /sistemas-web, que actúa como hub del cluster.
@@ -81,8 +83,7 @@ export const systemPages: SystemPage[] = [
       },
       {
         title: "Registro de actividad",
-        description:
-          "Trazabilidad de accesos, descargas y aprobaciones para auditoría interna.",
+        description: "Trazabilidad de accesos, descargas y aprobaciones para auditoría interna.",
       },
     ],
     outcomes: [
@@ -156,8 +157,7 @@ export const systemPages: SystemPage[] = [
       },
       {
         title: "Control de vencimientos",
-        description:
-          "Alertas automáticas antes de que caduque un certificado, contrato o permiso.",
+        description: "Alertas automáticas antes de que caduque un certificado, contrato o permiso.",
       },
       {
         title: "Permisos granulares",
@@ -171,8 +171,7 @@ export const systemPages: SystemPage[] = [
       },
       {
         title: "Auditoría",
-        description:
-          "Registro inmutable de cada acceso, descarga, modificación y eliminación.",
+        description: "Registro inmutable de cada acceso, descarga, modificación y eliminación.",
       },
     ],
     outcomes: [
@@ -256,8 +255,7 @@ export const systemPages: SystemPage[] = [
       },
       {
         title: "Conductores",
-        description:
-          "Asignación de vehículo, vencimiento de licencias e historial por conductor.",
+        description: "Asignación de vehículo, vencimiento de licencias e historial por conductor.",
       },
       {
         title: "Reportes de costo",
@@ -280,6 +278,14 @@ export const systemPages: SystemPage[] = [
       "Capacitación del equipo de operaciones y ajustes en marcha.",
     ],
     faqs: [
+      {
+        question: "¿Cuál es la inversión para desarrollar la plataforma?",
+        answer: `El desarrollo del software parte ${FLEET_SOFTWARE_OFFER.price.toLowerCase()}. ${FLEET_SOFTWARE_OFFER.scope} ${FLEET_SOFTWARE_OFFER.implementation}`,
+      },
+      {
+        question: "¿Cómo se cotizan la operación y el soporte?",
+        answer: FLEET_SOFTWARE_OFFER.operation,
+      },
       {
         question: "¿Se integra con GPS o rastreo satelital?",
         answer:

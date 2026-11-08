@@ -231,7 +231,7 @@ export default async function Home() {
               <Layers3 className="h-8 w-8 text-blue-300" />
               <h3 className="mt-5 text-2xl font-bold">Sistemas y automatización</h3>
               <p className="mt-3 leading-7 text-slate-300">
-                Documentos, inventario, flota, aprobaciones o integraciones: partimos por una tarea
+                Documentos, inventario, aprobaciones o integraciones: partimos por una tarea
                 concreta y definimos una primera etapa verificable.
               </p>
               <ul className="mt-6 space-y-4 text-sm text-slate-200">

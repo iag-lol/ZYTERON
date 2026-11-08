@@ -24,15 +24,6 @@ import {
   AI_SERVICES,
   CORPORATE_SCOPE_NOTE,
   FLEET_CUSTOM_NOTE,
-  FLEET_HARDWARE_AMOUNTS,
-  FLEET_INFRA_SCOPE_NOTE,
-  FLEET_INSTALLATION_NOTE,
-  FLEET_MAINTENANCE_EXCLUSIONS,
-  FLEET_MAINTENANCE_INCLUDES,
-  FLEET_PLATFORM_MAINTENANCE,
-  FLEET_PRICE_AMOUNTS,
-  FLEET_TIERS,
-  FLEET_SCOPE_FACTORS,
   MAINTENANCE_CATALOG,
   MAINTENANCE_EXCLUSIONS,
   PLAN_CATALOG,
@@ -976,10 +967,7 @@ export default function PlanesPage() {
         </Container>
       </section>
 
-      {/* 6b. Plataformas de gestión de flota --------------------------------
-          Categoría propia: es el único producto que además del desarrollo lleva
-          equipamiento físico y un costo mensual por vehículo, así que no puede
-          mezclarse con la escalera de páginas web ni con los planes corporativos. */}
+      {/* Desarrollo de flota, implementación y servicios de continuidad. */}
       <section id="flotas" className="scroll-mt-24 bg-white py-16" aria-labelledby="bloque-flotas">
         <Container className="space-y-8">
           <div className="space-y-3">
@@ -1000,184 +988,6 @@ export default function PlanesPage() {
           </div>
 
           <FleetPlans />
-
-          <div className="grid gap-5 lg:grid-cols-2">
-            <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
-              <h3 className="text-lg font-extrabold text-slate-900">
-                Mantención de plataforma personalizada · {clp(FLEET_PLATFORM_MAINTENANCE)} + IVA /
-                mes
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Valor fijo por cliente, independiente de la cantidad de vehículos. Mantiene
-                operativo el software y las funciones contratadas:
-              </p>
-              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-                {FLEET_MAINTENANCE_INCLUDES.map((item) => (
-                  <li key={item} className="flex gap-2 text-sm leading-6 text-slate-600">
-                    <Check
-                      className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-600"
-                      aria-hidden="true"
-                    />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </article>
-
-            <article className="rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-7">
-              <h3 className="text-lg font-extrabold text-slate-900">Qué no cubre la mantención</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Todo lo que amplía la plataforma es desarrollo nuevo y se cotiza aparte:
-              </p>
-              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-                {FLEET_MAINTENANCE_EXCLUSIONS.map((item) => (
-                  <li key={item} className="flex gap-2 text-sm leading-6 text-slate-600">
-                    <span
-                      className="mt-2 h-1 w-1 shrink-0 rounded-full bg-slate-400"
-                      aria-hidden="true"
-                    />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs leading-5 text-slate-600">
-                {FLEET_INFRA_SCOPE_NOTE}
-              </p>
-            </article>
-          </div>
-
-          <article className="rounded-3xl border border-blue-200 bg-white p-6 shadow-sm sm:p-8">
-            <h3 className="text-lg font-extrabold text-slate-900 sm:text-xl">
-              Cada plataforma es diferente
-            </h3>
-            <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-600">
-              Los valores corresponden a precios iniciales referenciales. Cada plataforma se
-              desarrolla según los procesos y necesidades de la empresa, así que el valor final
-              puede variar dependiendo de:
-            </p>
-            <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {FLEET_SCOPE_FACTORS.map((factor) => (
-                <li key={factor} className="flex gap-2 text-sm leading-6 text-slate-600">
-                  <Check
-                    className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-600"
-                    aria-hidden="true"
-                  />
-                  <span>{factor}</span>
-                </li>
-              ))}
-            </ul>
-          </article>
-
-          <article className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-            <h3 className="text-lg font-extrabold text-slate-900">Resumen de los tres proyectos</h3>
-            <div
-              tabIndex={0}
-              role="region"
-              aria-label="Tabla comparativa; desplaza para ver todas las columnas"
-              className="mt-4 overflow-x-auto"
-            >
-              <table className="w-full min-w-[720px] border-collapse text-left text-sm">
-                <caption className="sr-only">
-                  Resumen de precios de desarrollo, equipamiento y operación mensual por tamaño de
-                  flota
-                </caption>
-                <thead>
-                  <tr className="border-b border-slate-200">
-                    <th scope="col" className="p-3 font-bold text-slate-900">
-                      Proyecto
-                    </th>
-                    <th scope="col" className="p-3 font-bold text-slate-900">
-                      Vehículos
-                    </th>
-                    <th scope="col" className="p-3 font-bold text-slate-900">
-                      Desarrollo desde
-                    </th>
-                    <th scope="col" className="p-3 font-bold text-slate-900">
-                      GPS
-                    </th>
-                    <th scope="col" className="p-3 font-bold text-slate-900">
-                      Instalación
-                    </th>
-                    <th scope="col" className="p-3 font-bold text-slate-900">
-                      Mensual por vehículo
-                    </th>
-                    <th scope="col" className="p-3 font-bold text-slate-900">
-                      Mantención
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {FLEET_TIERS.map((tier) => (
-                    <tr key={tier.id} className="border-b border-slate-100 last:border-b-0">
-                      <th scope="row" className="p-3 text-left font-semibold text-slate-800">
-                        {tier.label}
-                      </th>
-                      <td className="p-3 text-slate-600">
-                        {tier.max === null ? `${tier.min}+` : `${tier.min}–${tier.max}`}
-                      </td>
-                      <td className="p-3 text-slate-600">{clp(FLEET_PRICE_AMOUNTS[tier.id])}</td>
-                      <td className="p-3 text-slate-600">{clp(FLEET_HARDWARE_AMOUNTS.gps)}</td>
-                      <td className="p-3 text-slate-600">
-                        {clp(FLEET_HARDWARE_AMOUNTS.installation)}
-                      </td>
-                      <td className="p-3 text-slate-600">{clp(tier.perVehicle)}</td>
-                      <td className="p-3 text-slate-600">{clp(FLEET_PLATFORM_MAINTENANCE)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="mt-3 text-xs text-slate-600">
-              Todos los valores son netos: se debe adicionar IVA.
-            </p>
-          </article>
-
-          <article className="rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
-            <h3 className="text-lg font-extrabold text-slate-900 sm:text-xl">Equipamiento GPS</h3>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                <h4 className="text-sm font-extrabold text-slate-900">
-                  GPS configurado e integrado
-                </h4>
-                <p className="mt-1 text-xl font-extrabold text-slate-900">
-                  {clp(FLEET_HARDWARE_AMOUNTS.gps)} + IVA
-                  <span className="ml-1 text-xs font-semibold text-slate-500">por unidad</span>
-                </p>
-                <ul className="mt-3 space-y-1.5">
-                  {[
-                    "Equipo GPS",
-                    "Configuración",
-                    "Registro",
-                    "Parametrización",
-                    "Conexión al servidor GPS",
-                    "Integración con la plataforma del cliente",
-                  ].map((item) => (
-                    <li key={item} className="flex gap-2 text-xs leading-5 text-slate-600">
-                      <Check
-                        className="mt-0.5 h-3 w-3 shrink-0 text-emerald-600"
-                        aria-hidden="true"
-                      />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                <h4 className="text-sm font-extrabold text-slate-900">Instalación profesional</h4>
-                <p className="mt-1 text-xl font-extrabold text-slate-900">
-                  {clp(FLEET_HARDWARE_AMOUNTS.installation)} + IVA
-                  <span className="ml-1 text-xs font-semibold text-slate-500">por vehículo</span>
-                </p>
-                <p className="mt-3 text-xs leading-5 text-slate-600">
-                  Para vehículos y camiones con instalación estándar.
-                </p>
-                <p className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
-                  {FLEET_INSTALLATION_NOTE}
-                </p>
-              </div>
-            </div>
-          </article>
         </Container>
       </section>
 

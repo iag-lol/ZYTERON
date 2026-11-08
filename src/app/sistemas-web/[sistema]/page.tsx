@@ -1,3 +1,4 @@
+import { FleetSoftwareOffer } from "@/components/planes/fleet-plans";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -141,6 +142,17 @@ export default async function SystemRoutePage({ params }: SystemPageProps) {
           </figure>
         </Container>
       )}
+      {page.slug === "control-flota" && (
+        <section className="py-12">
+          <Container>
+            <h2 className="mb-6 text-3xl font-semibold text-slate-900">
+              Una propuesta clara para cada etapa
+            </h2>
+            <FleetSoftwareOffer />
+          </Container>
+        </section>
+      )}
+
       <section className="cv-auto section-alt py-16">
         <Container className="space-y-8">
           <div className="max-w-3xl space-y-2">

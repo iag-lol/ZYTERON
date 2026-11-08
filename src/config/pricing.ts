@@ -823,14 +823,25 @@ export const MAINTENANCE: PricedItem[] = MAINTENANCE_CATALOG.map((item) => ({
  */
 
 export const FLEET_PRICE_AMOUNTS = {
-  "flota-pequena": 3_990_000,
+  "flota-pequena": 1_999_990,
   "flota-mediana": 5_990_000,
   "flota-grande": 7_990_000,
 } as const;
 
+export const FLEET_SOFTWARE_OFFER = {
+  amount: FLEET_PRICE_AMOUNTS["flota-pequena"],
+  price: fromPrice(FLEET_PRICE_AMOUNTS["flota-pequena"]),
+  scope:
+    "Valor inicial de referencia para el desarrollo del software. Los módulos, integraciones y entregables se definen en una propuesta a medida.",
+  implementation:
+    "Los equipos GPS, su integración y la instalación se cotizan por separado según los requerimientos del proyecto.",
+  operation:
+    "La conectividad, infraestructura, mantención y soporte se presentan como servicios de continuidad, con sus condiciones y valores en la propuesta comercial.",
+} as const;
+
 export type FleetPlanId = keyof typeof FLEET_PRICE_AMOUNTS;
 
-/** Equipamiento por vehículo. Son precios cerrados por unidad, no "desde". */
+/** Referencias internas de simulación; el equipamiento requiere cotización específica. */
 export const FLEET_HARDWARE_AMOUNTS = {
   /** Equipo GPS configurado, registrado, parametrizado e integrado. */
   gps: 94_990,
@@ -1181,7 +1192,7 @@ export function fleetQuote(vehicles: number) {
   };
 }
 
-/** Ejemplos publicados. Se calculan, no se escriben a mano. */
+/** Ejemplos de simulación interna; no constituyen una oferta de equipamiento. */
 export const FLEET_EXAMPLES = [10, 25, 50].map((vehicles) => fleetQuote(vehicles));
 
 /** Lo que la mantención NO cubre. Evita discusiones después de firmar. */

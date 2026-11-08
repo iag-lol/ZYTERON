@@ -36,6 +36,7 @@ const aliases: Record<string, (typeof PROJECT_TYPES)[number]> = {
   "cotizador-web-pdf": "Sistema interno",
   "gestion-documental": "Sistema interno",
   "control-de-flota": "Sistema interno",
+  "control-flota": "Sistema interno",
   "intranet-corporativa": "Sistema interno",
   automatizacion: "Automatización de procesos",
   "automatizacion-whatsapp-empresas": "Automatización de procesos",
