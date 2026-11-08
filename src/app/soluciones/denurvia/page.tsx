@@ -146,8 +146,8 @@ export default function DenurviaPage() {
           </ul>
           <p className="mt-8 text-sm text-slate-500">
             Responsable del producto: Zyteron SpA. Atención remota en Chile. Contacto comercial:{" "}
-            <a className="underline" href="mailto:contacto@zyteron.cl">
-              contacto@zyteron.cl
+            <a className="underline" href="mailto:contacto@denurvia.cl">
+              contacto@denurvia.cl
             </a>
             .
           </p>
