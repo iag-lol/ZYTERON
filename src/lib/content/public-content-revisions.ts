@@ -30,7 +30,7 @@ Consulta [planes e inclusiones](/planes), prueba una [demostración](/demos) o p
 4. Define una primera entrega y cómo comprobarla: una solicitud registrada, un pedido preparado o un documento aprobado con trazabilidad.
 5. Separa necesidades actuales de ampliaciones y acuerda soporte, accesos y continuidad por escrito.
 
-En [Fenice](/casos-exito/fenice-spa), el alcance publicado se concentra en presentar servicios y facilitar consultas. En [Negocios Eliana](/casos-exito/casos-exito-sistema-control-interno-negocios-eliana), se centraliza la operación de dos tiendas. Son necesidades distintas y se evalúan con criterios distintos.
+En [Fenice](/casos-exito/fenice-spa), el alcance publicado se concentra en presentar servicios y facilitar consultas. En [Centro de Caja](/casos-exito/casos-exito-sistema-control-interno-negocios-eliana), se centraliza la operación de dos tiendas. Son necesidades distintas y se evalúan con criterios distintos.
 
 Para comparar inversión y operación, revisa la [guía de diferencias y costes](/blog/diferencia-pagina-web-tienda-online-sistema-web). Si ya identificaste un proceso, [solicita un diagnóstico](/contacto?tipo=sistema&origen=guia-diagnostico).`,
   },

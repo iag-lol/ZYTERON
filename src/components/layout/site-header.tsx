@@ -8,8 +8,8 @@ import { Container } from "./container";
 import { PortalAccessLink } from "./portal-access-link";
 
 const navigation = [
-  { href: "/desarrollo-web", label: "Web y ecommerce" },
-  { href: "/sistemas-web", label: "Sistemas y automatización" },
+  { href: "/desarrollo-web", label: "Desarrollo web" },
+  { href: "/sistemas-web", label: "Sistemas" },
   { href: "/casos-exito", label: "Proyectos" },
   { href: "/planes", label: "Precios" },
   { href: "/quienes-somos", label: "Empresa" },
@@ -33,19 +33,17 @@ export function SiteHeader() {
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-md">
+    <header className="site-header sticky top-0 z-30">
       <Container className="py-4">
         <div className="flex items-center justify-between gap-4">
           <Link
             href="/"
             aria-label="Zyteron, inicio"
-            className="flex shrink-0 items-center gap-2.5"
+            className="brand flex shrink-0 items-center gap-2.5"
             onClick={() => setOpen(false)}
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-700 text-xl font-black text-white">
-              Z
-            </span>
-            <span className="text-sm font-extrabold tracking-[0.12em] text-slate-950">ZYTERON</span>
+            <span className="brand-symbol">Z</span>
+            <span className="brand-name">zyteron</span>
           </Link>
           <nav aria-label="Navegación principal" className="hidden items-center gap-1 xl:flex">
             {navigation.map((item) => (
@@ -63,11 +61,8 @@ export function SiteHeader() {
             <div className="hidden sm:block">
               <PortalAccessLink size="sm" label="Portal clientes" />
             </div>
-            <Link
-              href="/contacto"
-              className="hidden min-h-11 items-center gap-1.5 rounded-xl bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800 sm:flex"
-            >
-              Contacto <ArrowUpRight className="h-4 w-4" />
+            <Link href="/contacto" className="design-button hidden sm:inline-flex">
+              Conversemos <ArrowUpRight className="h-4 w-4" />
             </Link>
             <button
               ref={toggleRef}

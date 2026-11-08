@@ -1,3 +1,4 @@
+import { ProjectGallery } from "@/components/projects/project-gallery";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BarChart3, CheckCircle2, ShieldCheck } from "lucide-react";
@@ -107,6 +108,12 @@ export default async function CasosExitoPage() {
         </Container>
       </section>
 
+      <section className="work-section">
+        <Container>
+          <ProjectGallery />
+        </Container>
+      </section>
+
       <section className="section-alt py-12">
         <Container className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {businessSignals.map((signal) => (
@@ -140,7 +147,7 @@ export default async function CasosExitoPage() {
               </p>
             </div>
           ) : (
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="case-list">
               {items.map((item) => (
                 <article key={item.slug} className="card-premium flex flex-col p-6">
                   <div className="mb-3 flex flex-wrap gap-2">

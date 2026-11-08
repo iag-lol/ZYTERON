@@ -98,7 +98,7 @@ export function ServiceDecision({ path }: { path: string }) {
             className="font-bold text-blue-700 underline"
           >
             {systems
-              ? "Ver cómo Negocios Eliana centralizó dos tiendas"
+              ? "Ver cómo Centro de Caja centralizó dos tiendas"
               : store
                 ? "Explorar una demostración de tienda"
                 : "Ver el sitio corporativo de Fenice"}

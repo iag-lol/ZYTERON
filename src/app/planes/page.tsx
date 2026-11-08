@@ -507,7 +507,7 @@ function AddonRows({ items }: { items: Addon[] }) {
 
 export default function PlanesPage() {
   return (
-    <main className="bg-white">
+    <main className="pricing-page bg-white">
       <JsonLd
         id="planes-webpage-schema"
         data={buildWebPageJsonLd({
