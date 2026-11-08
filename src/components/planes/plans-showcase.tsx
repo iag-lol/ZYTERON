@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowRight, Check, ChevronDown, MessageCircle, Sparkles } from "lucide-react";
-import { QuickQuoteModal } from "@/components/planes/quick-quote-modal";
+import { Check, ChevronDown, MessageCircle, Sparkles } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 /**
@@ -37,13 +37,6 @@ export function PlansShowcase({
   rest: ShowcasePlan[];
 }) {
   const [showAll, setShowAll] = useState(false);
-  const [quotePlan, setQuotePlan] = useState<string | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-
-  function openQuote(planName: string) {
-    setQuotePlan(planName);
-    setModalOpen(true);
-  }
 
   return (
     <>
@@ -57,23 +50,29 @@ export function PlansShowcase({
               className={cn(
                 "relative flex h-full flex-col rounded-3xl border bg-white p-6 transition-shadow sm:p-7",
                 highlighted
-                  ? "border-blue-300 shadow-xl shadow-blue-100/70 ring-1 ring-blue-100 lg:-mt-4 lg:pb-9 lg:pt-9"
+                  ? "border-blue-300 shadow-xl ring-1 shadow-blue-100/70 ring-blue-100 lg:-mt-4 lg:pt-9 lg:pb-9"
                   : "border-slate-200 shadow-sm hover:shadow-md",
               )}
             >
               {highlighted && (
-                <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-blue-600 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-blue-600/25">
-                  <Sparkles className="h-3 w-3" /> Más elegido
+                <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-blue-600 px-3.5 py-1.5 text-[11px] font-bold tracking-wider whitespace-nowrap text-white uppercase shadow-lg shadow-blue-600/25">
+                  <Sparkles className="h-3 w-3" /> Plan destacado
                 </span>
               )}
 
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">{plan.tag}</p>
-              <h3 className="mt-2 text-[22px] font-extrabold tracking-tight text-slate-900">{plan.name}</h3>
+              <p className="text-[11px] font-bold tracking-[0.14em] text-blue-600 uppercase">
+                {plan.tag}
+              </p>
+              <h3 className="mt-2 text-[22px] font-extrabold tracking-tight text-slate-900">
+                {plan.name}
+              </h3>
               <p className="mt-2 text-[13.5px] leading-6 text-slate-500">{plan.description}</p>
 
               <div className="mt-5 border-y border-slate-100 py-4">
-                <p className="text-[26px] font-extrabold tracking-tight text-slate-900">{plan.price}</p>
-                <p className="mt-0.5 text-[12px] text-slate-400">
+                <p className="text-[26px] font-extrabold tracking-tight text-slate-900">
+                  {plan.price}
+                </p>
+                <p className="mt-0.5 text-[12px] text-slate-600">
                   {plan.priceNote ? `${plan.priceNote} · ` : ""}Valor referencial
                 </p>
               </div>
@@ -93,8 +92,8 @@ export function PlansShowcase({
 
               <div className="mt-6 flex-1" />
 
-              <button
-                onClick={() => openQuote(plan.name)}
+              <Link
+                href={plan.quoteHref}
                 className={cn(
                   "inline-flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-[14px] font-bold transition-colors",
                   highlighted
@@ -103,12 +102,6 @@ export function PlansShowcase({
                 )}
               >
                 <MessageCircle className="h-4 w-4" /> {plan.cta ?? "Cotizar este plan"}
-              </button>
-              <Link
-                href={plan.quoteHref}
-                className="mt-2 inline-flex items-center justify-center gap-1 text-[12.5px] font-semibold text-slate-400 transition-colors hover:text-blue-700"
-              >
-                Ver detalle completo <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </article>
           );
@@ -130,7 +123,7 @@ export function PlansShowcase({
           <ChevronDown className={cn("h-4 w-4 transition-transform", showAll && "rotate-180")} />
         </button>
         {!showAll && (
-          <p className="mx-auto mt-3 max-w-md text-[12.5px] leading-5 text-slate-400">
+          <p className="mx-auto mt-3 max-w-md text-[12.5px] leading-5 text-slate-600">
             Catálogos, sistemas administrativos y desarrollos a medida.
           </p>
         )}
@@ -143,9 +136,15 @@ export function PlansShowcase({
               key={plan.id}
               className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
             >
-              <p className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-slate-400">{plan.tag}</p>
-              <h3 className="mt-1.5 text-[17px] font-extrabold tracking-tight text-slate-900">{plan.name}</h3>
-              <p className="mt-1.5 line-clamp-2 text-[12.5px] leading-5 text-slate-500">{plan.description}</p>
+              <p className="text-[10.5px] font-bold tracking-[0.14em] text-slate-600 uppercase">
+                {plan.tag}
+              </p>
+              <h3 className="mt-1.5 text-[17px] font-extrabold tracking-tight text-slate-900">
+                {plan.name}
+              </h3>
+              <p className="mt-1.5 line-clamp-2 text-[12.5px] leading-5 text-slate-500">
+                {plan.description}
+              </p>
               <p className="mt-3 text-[18px] font-extrabold text-slate-900">{plan.price}</p>
 
               <ul className="mt-3 space-y-1.5">
@@ -159,25 +158,17 @@ export function PlansShowcase({
 
               <div className="flex-1" />
               <div className="mt-4 flex gap-2">
-                <button
-                  onClick={() => openQuote(plan.name)}
+                <Link
+                  href={plan.quoteHref}
                   className="flex-1 rounded-lg bg-slate-900 py-2.5 text-[12.5px] font-bold text-white transition-colors hover:bg-slate-800"
                 >
                   Cotizar
-                </button>
-                <Link
-                  href={plan.quoteHref}
-                  className="rounded-lg border border-slate-200 px-3 py-2.5 text-[12.5px] font-bold text-slate-600 transition-colors hover:bg-slate-50"
-                >
-                  Detalle
                 </Link>
               </div>
             </article>
           ))}
         </div>
       )}
-
-      <QuickQuoteModal open={modalOpen} planName={quotePlan} onClose={() => setModalOpen(false)} />
     </>
   );
 }

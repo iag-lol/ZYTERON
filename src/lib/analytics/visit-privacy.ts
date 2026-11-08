@@ -7,6 +7,9 @@ const EXCLUDED_WEB_VISIT_PATH_PREFIXES = [
   "/portal-comercial",
   "/checkout",
   "/pagos",
+  "/auth",
+  "/login",
+  "/boletas/consulta",
 ] as const;
 
 /**

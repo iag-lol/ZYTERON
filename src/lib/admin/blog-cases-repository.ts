@@ -1,3 +1,4 @@
+import { revisePublicArticle } from "@/lib/content/public-content-revisions";
 // Sólo debe importarse desde el servidor: usa el cliente service-role de Supabase
 // vía los helpers de @/lib/admin/repository (mismo patrón que el resto del admin).
 import {
@@ -94,12 +95,13 @@ export function estimateReadMinutes(content: string): number {
 
 /** Lista pública: sólo artículos publicados, recientes primero. */
 export async function getPublishedBlogPosts(): Promise<DbBlogPost[]> {
-  return safeSelect<DbBlogPost>(BLOG_TABLE, BLOG_COLUMNS, {
+  const posts = await safeSelect<DbBlogPost>(BLOG_TABLE, BLOG_COLUMNS, {
     filters: { status: "published" },
     orderBy: "publishedAt",
     ascending: false,
     throwOnError: true,
   });
+  return posts.map(revisePublicArticle);
 }
 
 /** Lista admin: todos (borradores y publicados). */
@@ -116,7 +118,7 @@ export async function getBlogPostBySlug(slug: string): Promise<DbBlogPost | null
     limit: 1,
     throwOnError: true,
   });
-  return rows[0] ?? null;
+  return rows[0] ? revisePublicArticle(rows[0]) : null;
 }
 
 export async function getBlogPostById(id: string): Promise<DbBlogPost | null> {

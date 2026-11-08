@@ -1,3 +1,4 @@
+import { ServiceDecision } from "@/components/commercial/service-decision";
 import { Fragment } from "react";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, MessageCircle } from "lucide-react";
@@ -23,14 +24,9 @@ import {
 import { siteConfig } from "@/config/site";
 import type { PriorityServicePage } from "@/content/priority-service-pages";
 import { getBreadcrumbs } from "@/lib/schema";
-import {
-  buildFaqJsonLd,
-  buildServiceJsonLd,
-  buildWebPageJsonLd,
-} from "@/lib/seo";
+import { buildFaqJsonLd, buildServiceJsonLd, buildWebPageJsonLd } from "@/lib/seo";
 
-const WHATSAPP_URL =
-  `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.`;
+const WHATSAPP_URL = `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20cotizar%20una%20soluci%C3%B3n%20para%20mi%20empresa.`;
 
 function formatClp(value: number) {
   return `$${new Intl.NumberFormat("es-CL").format(value)}`;
@@ -74,7 +70,10 @@ const pricingBySlug: Record<string, PricedItem[]> = {
     })),
   ],
   "cotizador-web-pdf": [
-    { name: "Generador de PDF (módulo)", price: `Desde ${formatClp(ADDON_PRICE_AMOUNTS.pdfGenerator)} + IVA` },
+    {
+      name: "Generador de PDF (módulo)",
+      price: `Desde ${formatClp(ADDON_PRICE_AMOUNTS.pdfGenerator)} + IVA`,
+    },
     { name: "Sistema web administrativo", price: PLAN_PRICES.sistema },
     ...AI_SERVICES.slice(2, 3).map((service) => ({
       name: service.name,
@@ -83,7 +82,10 @@ const pricingBySlug: Record<string, PricedItem[]> = {
     })),
   ],
   "soporte-ti-pymes-santiago": [
-    { name: "Soporte TI para pymes", price: `Desde ${formatClp(SERVICE_PRICE_AMOUNTS.supportTi)} + IVA` },
+    {
+      name: "Soporte TI para pymes",
+      price: `Desde ${formatClp(SERVICE_PRICE_AMOUNTS.supportTi)} + IVA`,
+    },
     ...MAINTENANCE.slice(0, 2),
   ],
 };
@@ -101,10 +103,7 @@ type Props = {
 export function PriorityServicePageTemplate({ page }: Props) {
   // Mismo recorrido que el BreadcrumbList JSON-LD emitido más abajo:
   // Inicio / Servicios / página actual.
-  const breadcrumbItems = [
-    ...getBreadcrumbs("/servicios"),
-    { name: page.title, path: page.path },
-  ];
+  const breadcrumbItems = [...getBreadcrumbs("/servicios"), { name: page.title, path: page.path }];
   const pricingItems = pricingBySlug[page.slug] ?? defaultPricing;
 
   return (
@@ -141,7 +140,7 @@ export function PriorityServicePageTemplate({ page }: Props) {
         )}
       />
 
-      <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-18 sm:py-20">
+      <section className="bg-hero-pattern relative overflow-hidden border-b border-slate-200 py-18 sm:py-20">
         <Container className="space-y-5">
           <Breadcrumb aria-label="Breadcrumb">
             <BreadcrumbList className="gap-1.5 text-xs font-semibold text-slate-500">
@@ -151,7 +150,9 @@ export function PriorityServicePageTemplate({ page }: Props) {
                   <Fragment key={item.path}>
                     <BreadcrumbItem>
                       {isLast ? (
-                        <BreadcrumbPage className="font-semibold text-slate-700">{item.name}</BreadcrumbPage>
+                        <BreadcrumbPage className="font-semibold text-slate-700">
+                          {item.name}
+                        </BreadcrumbPage>
                       ) : (
                         <BreadcrumbLink asChild className="hover:text-blue-700">
                           <Link href={item.path}>{item.name}</Link>
@@ -168,13 +169,15 @@ export function PriorityServicePageTemplate({ page }: Props) {
             <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
             Servicio especializado
           </div>
-          <h1 className="max-w-5xl text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
+          <h1 className="max-w-5xl text-4xl leading-tight font-extrabold text-slate-900 sm:text-5xl">
             {page.heroTitle}
           </h1>
           {page.directAnswer ? (
             <div className="max-w-4xl rounded-2xl border border-blue-100 bg-blue-50 p-5">
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Respuesta directa</p>
-              <p className="mt-2 text-sm font-medium leading-relaxed text-slate-800 sm:text-base">
+              <p className="text-xs font-bold tracking-widest text-blue-700 uppercase">
+                Respuesta directa
+              </p>
+              <p className="mt-2 text-sm leading-relaxed font-medium text-slate-800 sm:text-base">
                 {page.directAnswer}
               </p>
             </div>
@@ -183,15 +186,29 @@ export function PriorityServicePageTemplate({ page }: Props) {
             {page.heroDescription}
           </p>
           <div className="flex flex-wrap gap-3">
-            <Button asChild size="lg" className="bg-blue-700 font-bold text-white hover:bg-blue-800">
+            <Button
+              asChild
+              size="lg"
+              className="bg-blue-700 font-bold text-white hover:bg-blue-800"
+            >
               <Link href="/cotizador">
                 {page.primaryCta} <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-slate-300 text-slate-800 hover:bg-slate-50"
+            >
               <Link href="/servicios">Ver servicios relacionados</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-slate-300 text-slate-800 hover:bg-slate-50"
+            >
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                 Hablar por WhatsApp
               </a>
@@ -199,6 +216,7 @@ export function PriorityServicePageTemplate({ page }: Props) {
           </div>
         </Container>
       </section>
+      <ServiceDecision path={page.path} />
 
       <section className="bg-white py-14">
         <Container className="space-y-4">
@@ -278,13 +296,22 @@ export function PriorityServicePageTemplate({ page }: Props) {
                   {link.label}
                 </Link>
               ))}
-              <Link href="/planes" className="block rounded-lg border border-slate-200 bg-slate-50 p-3 text-slate-700 hover:bg-slate-100">
+              <Link
+                href="/planes"
+                className="block rounded-lg border border-slate-200 bg-slate-50 p-3 text-slate-700 hover:bg-slate-100"
+              >
                 Ver planes y valores referenciales
               </Link>
-              <Link href="/faq" className="block rounded-lg border border-slate-200 bg-slate-50 p-3 text-slate-700 hover:bg-slate-100">
+              <Link
+                href="/faq"
+                className="block rounded-lg border border-slate-200 bg-slate-50 p-3 text-slate-700 hover:bg-slate-100"
+              >
                 Resolver dudas frecuentes antes de cotizar
               </Link>
-              <Link href={`/contacto?servicio=${page.slug}`} className="block rounded-lg border border-slate-200 bg-slate-50 p-3 text-slate-700 hover:bg-slate-100">
+              <Link
+                href={`/contacto?servicio=${page.slug}`}
+                className="block rounded-lg border border-slate-200 bg-slate-50 p-3 text-slate-700 hover:bg-slate-100"
+              >
                 Solicitar contacto comercial
               </Link>
             </div>
@@ -295,28 +322,41 @@ export function PriorityServicePageTemplate({ page }: Props) {
       <section className="bg-white pb-16">
         <Container className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
           <article className="card-premium p-6">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Inversión referencial</p>
-            <h2 className="mt-1 text-2xl font-extrabold text-slate-900">Precios desde, publicados y sin sorpresas</h2>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+              Inversión referencial
+            </p>
+            <h2 className="mt-1 text-2xl font-extrabold text-slate-900">
+              Precios desde, publicados y sin sorpresas
+            </h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              Publicamos valores base para que compares con información real antes de conversar con nosotros. Cada proyecto se confirma con una cotización formal según alcance.
+              Publicamos valores base para que compares con información real antes de conversar con
+              nosotros. Cada proyecto se confirma con una cotización formal según alcance.
             </p>
             <div className="mt-5 grid gap-3">
               {pricingItems.map((item) => (
-                <div key={item.name} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                <div
+                  key={item.name}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
+                >
                   <div className="flex flex-wrap items-end justify-between gap-2">
                     <h3 className="text-base font-extrabold text-slate-900">{item.name}</h3>
                     <p className="text-base font-extrabold text-blue-700">{item.price}</p>
                   </div>
-                  {item.note ? <p className="mt-1 text-xs leading-relaxed text-slate-500">{item.note}</p> : null}
+                  {item.note ? (
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">{item.note}</p>
+                  ) : null}
                 </div>
               ))}
             </div>
           </article>
 
           <aside className="card-premium p-6">
-            <h3 className="text-lg font-extrabold text-slate-900">¿Quieres un valor para tu caso?</h3>
+            <h3 className="text-lg font-extrabold text-slate-900">
+              ¿Quieres un valor para tu caso?
+            </h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              En el cotizador seleccionas lo que necesitas y recibes un estimado inmediato. También puedes revisar el detalle completo de planes, adicionales y mantención.
+              En el cotizador seleccionas lo que necesitas y recibes un estimado inmediato. También
+              puedes revisar el detalle completo de planes, adicionales y mantención.
             </p>
             <div className="mt-4 grid gap-2">
               <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
@@ -324,12 +364,17 @@ export function PriorityServicePageTemplate({ page }: Props) {
                   Cotizar mi proyecto <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+              <Button
+                asChild
+                variant="outline"
+                className="border-slate-300 text-slate-800 hover:bg-slate-50"
+              >
                 <Link href="/planes">Ver todos los planes y precios</Link>
               </Button>
             </div>
             <p className="mt-4 text-xs leading-relaxed text-slate-500">
-              Valores referenciales expresados desde el precio indicado, sin IVA incluido. El precio final depende del alcance real del proyecto.
+              Valores referenciales expresados desde el precio indicado, sin IVA incluido. El precio
+              final depende del alcance real del proyecto.
             </p>
           </aside>
         </Container>
@@ -350,16 +395,22 @@ export function PriorityServicePageTemplate({ page }: Props) {
       </section>
 
       <section className="bg-white py-16">
-        <Container className="rounded-2xl section-blue p-8 text-center text-white md:p-10">
+        <Container className="section-blue rounded-2xl p-8 text-center text-white md:p-10">
           <h2 className="text-2xl font-extrabold sm:text-3xl">{page.finalCtaTitle}</h2>
-          <p className="mx-auto mt-3 max-w-3xl text-sm text-blue-100 sm:text-base">{page.finalCtaCopy}</p>
+          <p className="mx-auto mt-3 max-w-3xl text-sm text-blue-100 sm:text-base">
+            {page.finalCtaCopy}
+          </p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Button asChild className="bg-white font-bold text-blue-800 hover:bg-blue-50">
               <Link href="/cotizador">
                 Solicitar cotización <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
+            <Button
+              asChild
+              variant="outline"
+              className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
+            >
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-4 w-4" /> Hablar por WhatsApp
               </a>

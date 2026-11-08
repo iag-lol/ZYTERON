@@ -10,8 +10,7 @@ import { seoServicePages } from "@/content/seo-service-pages";
 import { priorityServicePages } from "@/content/priority-service-pages";
 import { verticalPages } from "@/content/vertical-pages";
 
-const WHATSAPP_URL =
-  `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20orientaci%C3%B3n%20sobre%20un%20servicio%20digital%20para%20mi%20empresa.`;
+const WHATSAPP_URL = `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20orientaci%C3%B3n%20sobre%20un%20servicio%20digital%20para%20mi%20empresa.`;
 
 export const metadata: Metadata = createPageMetadata({
   title: "Servicios de desarrollo web para empresas en Santiago y Chile",
@@ -29,7 +28,8 @@ const introParagraphs = [
 const serviceGroups = [
   {
     title: "Páginas web (servicio principal)",
-    description: "Presencia digital profesional para captar clientes y fortalecer la confianza comercial.",
+    description:
+      "Presencia digital profesional para captar clientes y fortalecer la confianza comercial.",
     icon: <MonitorSmartphone className="h-5 w-5" />,
     items: [
       "Sitios web corporativos",
@@ -176,22 +176,25 @@ export default async function ServiciosPage() {
             },
             {
               name: "SEO técnico",
-              description: "Optimización técnica, estructura on-page y crecimiento orgánico para empresas.",
+              description:
+                "Optimización técnica, estructura on-page y crecimiento orgánico para empresas.",
               path: "/servicios/seo-para-empresas-chile",
             },
           ],
         })}
       />
-      <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-20">
+      <section className="bg-hero-pattern relative overflow-hidden border-b border-slate-200 py-20">
         <Container className="space-y-5 text-center">
           <div className="badge-blue mx-auto w-fit">
             <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
             Servicios principales
           </div>
-          <h1 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">Servicios claros para necesidades reales de negocio</h1>
+          <h1 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">
+            Servicios claros para necesidades reales de negocio
+          </h1>
           <p className="mx-auto max-w-3xl text-base text-slate-600 sm:text-lg">
-            Trabajamos con empresas, pymes y emprendedores en Chile. Cada servicio se cotiza según alcance,
-            funcionalidades y prioridad del proyecto.
+            Trabajamos con empresas, pymes y emprendedores en Chile. Cada servicio se cotiza según
+            alcance, funcionalidades y prioridad del proyecto.
           </p>
         </Container>
       </section>
@@ -199,7 +202,9 @@ export default async function ServiciosPage() {
       <section className="bg-white py-14">
         <Container className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
           <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Soluciones digitales en Chile</p>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+              Soluciones digitales en Chile
+            </p>
             <h2 className="text-3xl font-extrabold text-slate-900">
               Desarrollo web, sistemas, ecommerce, automatización y soporte para empresas
             </h2>
@@ -217,21 +222,32 @@ export default async function ServiciosPage() {
       <section className="bg-white py-16">
         <Container className="space-y-8">
           <div className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Servicios SEO</p>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+              Soluciones para tu empresa
+            </p>
             <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              Páginas específicas por necesidad de búsqueda
+              Encuentra el servicio que resuelve tu necesidad
             </h2>
             <p className="mx-auto max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Si ya sabes qué necesita tu empresa, revisa el servicio específico y solicita una propuesta con contexto.
+              Si ya sabes qué necesita tu empresa, revisa el servicio específico y solicita una
+              propuesta con contexto.
             </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {seoServicePages.map((service) => (
-              <Link key={service.path} href={service.path} className="card-premium p-5 transition-colors hover:border-blue-200">
-                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">Servicio específico</p>
+              <Link
+                key={service.path}
+                href={service.path}
+                className="card-premium p-5 transition-colors hover:border-blue-200"
+              >
+                <p className="mb-2 text-xs font-bold tracking-widest text-blue-600 uppercase">
+                  Servicio específico
+                </p>
                 <h3 className="text-lg font-extrabold text-slate-900">{service.navLabel}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{service.metaDescription}</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  {service.metaDescription}
+                </p>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
                   Ver servicio <ArrowRight className="h-4 w-4" />
                 </span>
@@ -241,16 +257,24 @@ export default async function ServiciosPage() {
 
           <div className="space-y-4 pt-6">
             <div className="space-y-1 text-center">
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Atención local y especializada</p>
+              <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+                Atención local y especializada
+              </p>
               <h3 className="text-xl font-extrabold text-slate-900">
                 Santiago, Región Metropolitana y soluciones específicas
               </h3>
             </div>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {priorityServicePages.map((service) => (
-                <Link key={service.path} href={service.path} className="card-premium p-5 transition-colors hover:border-blue-200">
+                <Link
+                  key={service.path}
+                  href={service.path}
+                  className="card-premium p-5 transition-colors hover:border-blue-200"
+                >
                   <h4 className="text-base font-extrabold text-slate-900">{service.title}</h4>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{service.metaDescription}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    {service.metaDescription}
+                  </p>
                   <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
                     Ver servicio <ArrowRight className="h-4 w-4" />
                   </span>
@@ -261,7 +285,7 @@ export default async function ServiciosPage() {
 
           <div className="space-y-4 pt-6">
             <div className="space-y-1 text-center">
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Por rubro</p>
+              <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">Por rubro</p>
               <h3 className="text-xl font-extrabold text-slate-900">
                 Páginas web según el sector de tu empresa
               </h3>
@@ -274,7 +298,9 @@ export default async function ServiciosPage() {
                   className="card-premium p-5 transition-colors hover:border-blue-200"
                 >
                   <h4 className="text-base font-extrabold text-slate-900">{vertical.navLabel}</h4>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{vertical.heroTitle}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    {vertical.heroTitle}
+                  </p>
                   <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
                     Ver servicio <ArrowRight className="h-4 w-4" />
                   </span>
@@ -310,18 +336,25 @@ export default async function ServiciosPage() {
       <section className="bg-white py-16">
         <Container className="space-y-8">
           <div className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Detalle de servicios</p>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+              Detalle de servicios
+            </p>
             <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
               Qué resuelve cada servicio de Zyteron
             </h2>
             <p className="mx-auto max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Estas líneas de trabajo pueden contratarse por separado o combinarse en una solución mayor según el problema que tu empresa necesita resolver.
+              Estas líneas de trabajo pueden contratarse por separado o combinarse en una solución
+              mayor según el problema que tu empresa necesita resolver.
             </p>
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
             {detailedServices.map((service) => (
-              <Link key={service.href} href={service.href} className="card-premium p-6 transition-colors hover:border-blue-200">
+              <Link
+                key={service.href}
+                href={service.href}
+                className="card-premium p-6 transition-colors hover:border-blue-200"
+              >
                 <h3 className="text-xl font-extrabold text-slate-900">{service.title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">{service.description}</p>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
@@ -336,9 +369,12 @@ export default async function ServiciosPage() {
       <section className="section-alt py-16">
         <Container className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
           <article className="card-premium p-6">
-            <h2 className="text-2xl font-extrabold text-slate-900">¿Qué servicio necesita tu empresa?</h2>
+            <h2 className="text-2xl font-extrabold text-slate-900">
+              ¿Qué servicio necesita tu empresa?
+            </h2>
             <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              Si todavía no tienes claro qué cotizar, podemos ayudarte a identificar la solución más conveniente según objetivo, presupuesto, urgencia y complejidad operativa.
+              Si todavía no tienes claro qué cotizar, podemos ayudarte a identificar la solución más
+              conveniente según objetivo, presupuesto, urgencia y complejidad operativa.
             </p>
           </article>
           <div className="grid gap-3 md:grid-cols-2">
@@ -353,10 +389,13 @@ export default async function ServiciosPage() {
       </section>
 
       <section className="bg-white py-16">
-        <Container className="rounded-2xl section-blue p-8 text-center text-white">
-          <h2 className="text-2xl font-extrabold sm:text-3xl">Conversemos sobre la solución que necesita tu empresa</h2>
+        <Container className="section-blue rounded-2xl p-8 text-center text-white">
+          <h2 className="text-2xl font-extrabold sm:text-3xl">
+            Conversemos sobre la solución que necesita tu empresa
+          </h2>
           <p className="mx-auto mt-2 max-w-3xl text-sm text-blue-100 sm:text-base">
-            Cuéntanos qué problema quieres resolver y te orientamos con una alternativa clara, profesional y escalable.
+            Cuéntanos qué problema quieres resolver y te orientamos con una alternativa clara,
+            profesional y escalable.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" className="bg-white font-bold text-blue-800 hover:bg-blue-50">
@@ -364,21 +403,46 @@ export default async function ServiciosPage() {
                 Cotizar una solución <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
+            >
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-4 w-4" /> Hablar por WhatsApp
               </a>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
+            >
               <Link href="/planes">Ver planes</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
+            >
               <Link href="/demos">Ver demos</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
+            >
               <Link href="/casos-exito">Ver casos</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
+            >
               <Link href="/contacto">Hablar con un especialista</Link>
             </Button>
           </div>

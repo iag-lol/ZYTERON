@@ -142,6 +142,7 @@ export async function POST(req: Request) {
         ok: true,
         reference: quoteCode,
         quoteId,
+        leadId,
         whatsappUrl: QUOTE_REQUEST_WHATSAPP_PUBLIC,
       };
     });
@@ -161,7 +162,7 @@ export async function POST(req: Request) {
           total: estimate,
         });
       } catch {
-        /* La cotización y el lead ya están confirmados juntos. */
+        console.error("public_intake_notification_enrichment_failed", { source: "COTIZADOR_WEB", leadId });
       }
 
     }

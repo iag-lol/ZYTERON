@@ -1,3 +1,4 @@
+import { formatStableDateEsCl } from "@/lib/stable-date";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BarChart3, CheckCircle2, Quote, Target } from "lucide-react";
@@ -34,6 +35,9 @@ const caseServiceOptions = [
 ] as const;
 
 function getCaseService(item: DbCaseStudy) {
+  if (item.slug === "fenice-spa") return caseServiceOptions[4];
+  if (item.slug === "casos-exito-sistema-control-interno-negocios-eliana")
+    return caseServiceOptions[0];
   const context = [item.companyName, item.industry, item.problem, item.solution, item.results]
     .filter(Boolean)
     .join(" ")
@@ -41,11 +45,13 @@ function getCaseService(item: DbCaseStudy) {
 
   // Sin señales claras, el caso se asocia al servicio principal: páginas web.
   const fallback =
-    caseServiceOptions.find((service) => service.href === "/paginas-web-para-empresas") ?? caseServiceOptions[0];
+    caseServiceOptions.find((service) => service.href === "/paginas-web-para-empresas") ??
+    caseServiceOptions[0];
 
   return (
-    caseServiceOptions.find((service) => service.signals.some((signal) => context.includes(signal))) ??
-    fallback
+    caseServiceOptions.find((service) =>
+      service.signals.some((signal) => context.includes(signal)),
+    ) ?? fallback
   );
 }
 
@@ -54,13 +60,16 @@ function getCaseService(item: DbCaseStudy) {
  * Mantiene el lenguaje visual de los casos curados.
  */
 export function DbCaseArticle({ item }: { item: DbCaseStudy }) {
-  const problemSummary = item.problem.trim().replace(/\s+/g, " ").split(/(?<=[.!?])\s/)[0];
-  const contactHref = `/contacto?origen=caso-exito&item=${encodeURIComponent(item.slug)}`;
+  const problemSummary = item.problem
+    .trim()
+    .replace(/\s+/g, " ")
+    .split(/(?<=[.!?])\s/)[0];
   const relatedService = getCaseService(item);
+  const contactHref = `/contacto?servicio=${relatedService.href.slice(1)}&origen=caso-exito&item=${encodeURIComponent(item.slug)}`;
 
   return (
     <main className="bg-white">
-      <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-20">
+      <section className="bg-hero-pattern relative overflow-hidden border-b border-slate-200 py-20">
         <Container className="space-y-5">
           <nav aria-label="Breadcrumb" className="text-xs font-semibold text-slate-500">
             <Link href="/" className="hover:text-blue-700">
@@ -85,10 +94,12 @@ export function DbCaseArticle({ item }: { item: DbCaseStudy }) {
               </span>
             ) : null}
           </div>
-          <h1 className="max-w-4xl text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
+          <h1 className="max-w-4xl text-4xl leading-tight font-extrabold text-slate-900 sm:text-5xl">
             {item.companyName}
           </h1>
-          {problemSummary ? <p className="max-w-3xl text-lg text-slate-600">{problemSummary}</p> : null}
+          {problemSummary ? (
+            <p className="max-w-3xl text-lg text-slate-600">{problemSummary}</p>
+          ) : null}
         </Container>
       </section>
 
@@ -112,14 +123,18 @@ export function DbCaseArticle({ item }: { item: DbCaseStudy }) {
               <h2 className="mb-3 flex items-center gap-2 text-2xl font-extrabold text-slate-900">
                 <Target className="h-5 w-5 text-blue-700" /> El problema
               </h2>
-              <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{item.problem}</p>
+              <p className="text-sm leading-relaxed whitespace-pre-line text-slate-700">
+                {item.problem}
+              </p>
             </section>
 
             <section className="card-premium p-6">
               <h2 className="mb-3 flex items-center gap-2 text-2xl font-extrabold text-slate-900">
                 <CheckCircle2 className="h-5 w-5 text-emerald-700" /> La solución
               </h2>
-              <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{item.solution}</p>
+              <p className="text-sm leading-relaxed whitespace-pre-line text-slate-700">
+                {item.solution}
+              </p>
             </section>
 
             {item.results ? (
@@ -127,19 +142,27 @@ export function DbCaseArticle({ item }: { item: DbCaseStudy }) {
                 <h2 className="mb-3 flex items-center gap-2 text-2xl font-extrabold text-slate-900">
                   <BarChart3 className="h-5 w-5 text-blue-700" /> Resultados
                 </h2>
-                <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{item.results}</p>
+                <p className="text-sm leading-relaxed whitespace-pre-line text-slate-700">
+                  {item.results}
+                </p>
+                <p className="mt-4 border-t border-slate-200 pt-4 text-xs leading-6 text-slate-500">
+                  Resultado funcional descrito en la ficha del proyecto. No se publica una
+                  comparación cuantitativa de ventas, tráfico o tiempo ahorrado.
+                </p>
               </section>
             ) : null}
 
             {item.clientQuote ? (
               <blockquote className="rounded-2xl border-l-4 border-blue-300 bg-slate-50 p-6">
                 <Quote className="h-6 w-6 text-blue-400" />
-                <p className="mt-2 text-base italic leading-relaxed text-slate-700">{item.clientQuote}</p>
+                <p className="mt-2 text-base leading-relaxed text-slate-700 italic">
+                  {item.clientQuote}
+                </p>
                 <p className="mt-3 text-sm font-bold text-slate-900">— {item.companyName}</p>
               </blockquote>
             ) : null}
 
-            <section className="rounded-2xl section-blue p-6 text-white">
+            <section className="section-blue rounded-2xl p-6 text-white">
               <h2 className="text-2xl font-extrabold">¿Tienes un desafío parecido?</h2>
               <p className="mt-2 text-sm text-blue-100">
                 Conversemos sobre cómo resolverlo con una solución digital a la medida.
@@ -179,6 +202,21 @@ export function DbCaseArticle({ item }: { item: DbCaseStudy }) {
             <div className="card-premium p-5">
               <h2 className="mb-3 text-lg font-extrabold text-slate-900">Ficha del proyecto</h2>
               <dl className="space-y-2 text-sm">
+                {item.publishedAt && (
+                  <div>
+                    <dt className="text-slate-500">Ficha publicada</dt>
+                    <dd className="font-semibold text-slate-800">
+                      {formatStableDateEsCl(item.publishedAt)}
+                    </dd>
+                  </div>
+                )}
+                <div>
+                  <dt className="text-slate-500">Evidencia disponible</dt>
+                  <dd className="font-semibold text-slate-800">
+                    Descripción del alcance{item.imageUrl ? " y captura publicada" : ""}
+                    {item.clientQuote ? ", con testimonio publicado" : ""}.
+                  </dd>
+                </div>
                 {item.industry ? (
                   <div className="flex justify-between gap-2">
                     <dt className="text-slate-500">Rubro</dt>
@@ -188,7 +226,9 @@ export function DbCaseArticle({ item }: { item: DbCaseStudy }) {
                 {item.projectDuration ? (
                   <div className="flex justify-between gap-2">
                     <dt className="text-slate-500">Duración</dt>
-                    <dd className="text-right font-semibold text-slate-800">{item.projectDuration}</dd>
+                    <dd className="text-right font-semibold text-slate-800">
+                      {item.projectDuration}
+                    </dd>
                   </div>
                 ) : null}
               </dl>
@@ -199,7 +239,10 @@ export function DbCaseArticle({ item }: { item: DbCaseStudy }) {
               <p className="mb-4 text-sm text-slate-600">
                 Cuéntanos tu proceso actual y te proponemos una solución concreta.
               </p>
-              <Button asChild className="w-full gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800">
+              <Button
+                asChild
+                className="w-full gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800"
+              >
                 <Link href={contactHref}>
                   Cotizar un proyecto similar <ArrowRight className="h-4 w-4" />
                 </Link>

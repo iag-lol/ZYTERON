@@ -5,6 +5,7 @@ import { optionalUuid, required } from "./commercial.validation.js";
 
 @Injectable()
 export class LeadsService {
+  private readonly qualifications = new Map<string, Promise<SalesLead>>();
   constructor(private readonly repository: CommercialRepository) {}
   list(query: any) {
     return this.repository.listLeads(query);
@@ -43,6 +44,8 @@ export class LeadsService {
   async update(id: string, body: Partial<SalesLead>, actorId: string | null) {
     if (body.status && !leadStatuses.includes(body.status))
       throw new BadRequestException("Estado de lead inválido.");
+    if (body.status === "QUALIFIED")
+      throw new BadRequestException("Completa los criterios de calificación antes de confirmar.");
     const item = await this.repository.updateLead(id, body);
     await this.repository.publish("LEAD", id, "LEAD_UPDATED", actorId, {
       fields: Object.keys(body),
@@ -60,13 +63,61 @@ export class LeadsService {
     await this.repository.publish("LEAD", id, "LEAD_ASSIGNED", actorId, { assignedTo });
     return item;
   }
-  async qualify(id: string, actorId: string | null) {
-    const item = await this.get(id);
-    if (["DISQUALIFIED", "CONVERTED"].includes(item.status))
-      throw new BadRequestException("Este lead ya está cerrado.");
-    const updated = await this.repository.updateLead(id, { status: "QUALIFIED" });
-    await this.repository.publish("LEAD", id, "LEAD_QUALIFIED", actorId);
-    return updated;
+  async qualify(
+    id: string,
+    actorId: string | null,
+    criteria?: {
+      serviceFit?: boolean;
+      needConfirmed?: boolean;
+      viable?: boolean;
+      nextStep?: string;
+      serviceLine?: string;
+    },
+  ) {
+    const pending = this.qualifications.get(id);
+    if (pending) return pending;
+    const run = (async () => {
+      const item = await this.get(id);
+      if (["DISQUALIFIED", "CONVERTED"].includes(item.status))
+        throw new BadRequestException("Este lead ya está cerrado.");
+      if (item.status === "QUALIFIED") return item;
+      const nextStep = typeof criteria?.nextStep === "string" ? criteria.nextStep.trim() : "";
+      if (
+        criteria?.serviceFit !== true ||
+        criteria.needConfirmed !== true ||
+        criteria.viable !== true ||
+        nextStep.length < 5 ||
+        nextStep.length > 500 ||
+        !["web_ecommerce", "sistemas_automatizacion", "soporte"].includes(
+          criteria.serviceLine || "",
+        )
+      )
+        throw new BadRequestException(
+          "Confirma ajuste al servicio, necesidad, viabilidad, línea de servicio y siguiente paso acordado.",
+        );
+      const updated = await this.repository.updateLead(id, {
+        status: "QUALIFIED",
+        notes: [
+          item.notes,
+          `Calificación: ajuste, necesidad y viabilidad confirmados. Línea: ${criteria.serviceLine}. Siguiente paso acordado: ${nextStep}`,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      });
+      await this.repository.publish("LEAD", id, "LEAD_QUALIFIED", actorId, {
+        measurementEvent: "qualify_lead",
+        lead_id: id,
+        service_line: criteria.serviceLine,
+        criteria: { serviceFit: true, needConfirmed: true, viable: true, nextStepAgreed: true },
+      });
+      return updated;
+    })();
+    this.qualifications.set(id, run);
+    try {
+      return await run;
+    } finally {
+      this.qualifications.delete(id);
+    }
   }
   async disqualify(id: string, reason: string, actorId: string | null) {
     required(reason, "El motivo");

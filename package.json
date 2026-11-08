@@ -14,7 +14,12 @@
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
-    "test:dte-certificate": "node --test scripts/prepare-dte-certificate.test.mjs"
+    "test:dte-certificate": "node --test scripts/prepare-dte-certificate.test.mjs",
+    "test:reception": "node --experimental-test-module-mocks --import tsx --test scripts/test-public-reception.mjs",
+    "test:qualification": "npm --prefix control-runtime run build && node --test control-runtime/test/lead-qualification-scope.test.mjs",
+    "test:public-ui": "node scripts/qa-public-site.mjs",
+    "test:quote-ui": "node scripts/qa-quote-journey.mjs",
+    "test:commercial-measurement": "npm --prefix control-runtime run build && node --test control-runtime/test/lead-qualification-scope.test.mjs control-runtime/test/commercial-measurement.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -47,6 +52,9 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@electric-sql/pglite": "^0.5.10",
+    "@playwright/test": "^1.65.0",
     "@tailwindcss/postcss": "^4",
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^20",

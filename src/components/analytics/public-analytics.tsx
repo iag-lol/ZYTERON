@@ -1,34 +1,19 @@
 "use client";
-import Script from "next/script";
 import { usePathname } from "next/navigation";
-import { analyticsConfig } from "@/config/analytics";
+import { isExcludedWebVisitPath } from "@/lib/analytics/visit-privacy";
 import { GoogleAdsTag } from "./google-ads-tag";
 import { WebVisitTracker } from "./web-visit-tracker";
 import { ConversionEventTracker } from "./conversion-event-tracker";
+import { PublicWebVitals } from "./public-web-vitals";
 export function PublicAnalytics() {
   const pathname = usePathname();
-  if (
-    !pathname ||
-    [
-      "/administracion",
-      "/admin",
-      "/clientes",
-      "/portal-clientes",
-      "/portal-comercial",
-      "/checkout",
-      "/pagos",
-    ].some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"))
-  )
-    return null;
+  if (isExcludedWebVisitPath(pathname)) return null;
   return (
     <>
       <GoogleAdsTag />
-      <Script
-        id="gtm-base"
-        strategy="afterInteractive"
-      >{`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${analyticsConfig.googleTagManagerId}');`}</Script>
       <WebVisitTracker />
       <ConversionEventTracker />
+      <PublicWebVitals />
     </>
   );
 }

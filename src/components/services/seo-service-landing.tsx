@@ -1,3 +1,4 @@
+import { ServiceDecision } from "@/components/commercial/service-decision";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, MessageCircle, SearchCheck } from "lucide-react";
 import { Container } from "@/components/layout/container";
@@ -11,11 +12,7 @@ import {
   getFeaturedCaseItems,
   type CaseListItem,
 } from "@/lib/content/cases-merge";
-import {
-  buildFaqJsonLd,
-  buildServiceJsonLd,
-  buildWebPageJsonLd,
-} from "@/lib/seo";
+import { buildFaqJsonLd, buildServiceJsonLd, buildWebPageJsonLd } from "@/lib/seo";
 
 const WHATSAPP_PHONE = siteConfig.contact.phone.replace(/\D/g, "");
 
@@ -60,16 +57,37 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
       "web-cotizaciones-personalizadas-pdf",
     ],
     comparisonRows: [
-      ["Control del mensaje", "Arquitectura, contenido y CTA alineados a tu negocio", "Diseño genérico con textos adaptados superficialmente", "La propuesta queda dispersa entre redes, PDFs y mensajes manuales"],
-      ["SEO técnico", "Base indexable con metadata, schema, sitemap y performance", "Puede quedar limitado a instalación visual sin estrategia", "No existe activo orgánico propio para captar búsquedas"],
-      ["Escalabilidad", "Preparada para blog, servicios, sistemas o automatizaciones", "Cambios futuros dependen del proveedor y plantilla", "Cada mejora parte desde cero o se resuelve manualmente"],
-      ["Conversión", "Rutas claras a cotización, WhatsApp y formularios medibles", "CTA básicos sin medición completa", "Clientes potenciales no encuentran una vía clara de contacto"],
+      [
+        "Control del mensaje",
+        "Arquitectura, contenido y CTA alineados a tu negocio",
+        "Diseño genérico con textos adaptados superficialmente",
+        "La propuesta queda dispersa entre redes, PDFs y mensajes manuales",
+      ],
+      [
+        "SEO técnico",
+        "Base indexable con metadata, schema, sitemap y performance",
+        "Puede quedar limitado a instalación visual sin estrategia",
+        "No existe activo orgánico propio para captar búsquedas",
+      ],
+      [
+        "Escalabilidad",
+        "Preparada para blog, servicios, sistemas o automatizaciones",
+        "Cambios futuros dependen del proveedor y plantilla",
+        "Cada mejora parte desde cero o se resuelve manualmente",
+      ],
+      [
+        "Conversión",
+        "Rutas claras a cotización, WhatsApp y formularios medibles",
+        "CTA básicos sin medición completa",
+        "Clientes potenciales no encuentran una vía clara de contacto",
+      ],
     ],
     offer: {
       name: "Desarrollo web profesional",
       lowPrice: PLAN_PRICE_AMOUNTS["web-basica"],
       highPrice: PLAN_PRICE_AMOUNTS.empresa,
-      description: "Rango referencial según cantidad de páginas, contenido, integraciones y soporte.",
+      description:
+        "Rango referencial según cantidad de páginas, contenido, integraciones y soporte.",
     },
   },
   "paginas-web-para-pymes": {
@@ -97,16 +115,37 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
       "web-cotizaciones-personalizadas-pdf",
     ],
     comparisonRows: [
-      ["Descubrimiento", "Página preparada para búsquedas por servicio, necesidad y ubicación real", "Plantilla publicada con textos genéricos", "Dependencia de marca, redes sociales y recomendaciones"],
-      ["Confianza", "Servicios, proceso, respaldo y contacto dentro de un activo propio", "Diseño correcto pero con poca evidencia del negocio", "Información dispersa entre perfiles y mensajes"],
-      ["Conversión", "WhatsApp, formulario, llamada y cotizador con rutas medibles", "Botones de contacto sin contexto suficiente", "Consultas manuales difíciles de atribuir"],
-      ["Crecimiento", "Base escalable a contenidos, catálogo, campañas o automatización", "Cambios limitados por la plantilla o proveedor", "Cada canal nuevo aumenta la carga operativa"],
+      [
+        "Descubrimiento",
+        "Página preparada para búsquedas por servicio, necesidad y ubicación real",
+        "Plantilla publicada con textos genéricos",
+        "Dependencia de marca, redes sociales y recomendaciones",
+      ],
+      [
+        "Confianza",
+        "Servicios, proceso, respaldo y contacto dentro de un activo propio",
+        "Diseño correcto pero con poca evidencia del negocio",
+        "Información dispersa entre perfiles y mensajes",
+      ],
+      [
+        "Conversión",
+        "WhatsApp, formulario, llamada y cotizador con rutas medibles",
+        "Botones de contacto sin contexto suficiente",
+        "Consultas manuales difíciles de atribuir",
+      ],
+      [
+        "Crecimiento",
+        "Base escalable a contenidos, catálogo, campañas o automatización",
+        "Cambios limitados por la plantilla o proveedor",
+        "Cada canal nuevo aumenta la carga operativa",
+      ],
     ],
     offer: {
       name: "Página web para pyme",
       lowPrice: PLAN_PRICE_AMOUNTS["web-basica"],
       highPrice: PLAN_PRICE_AMOUNTS.pyme,
-      description: "Rango referencial para una web de presentación o un sitio pyme comercial; el alcance final se cotiza por escrito.",
+      description:
+        "Rango referencial para una web de presentación o un sitio pyme comercial; el alcance final se cotiza por escrito.",
     },
   },
   "paginas-web-para-empresas": {
@@ -134,15 +173,36 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
       "app-checklist-revision-buses",
     ],
     comparisonRows: [
-      ["Arquitectura", "Páginas ordenadas por servicios, audiencias y objetivos comerciales", "Secciones adaptadas sobre una plantilla general", "Oferta compleja explicada en documentos o reuniones"],
-      ["Credibilidad", "Identidad, proceso, respaldo y contacto corporativo coherentes", "Imagen visual sin suficiente contexto de negocio", "Validación lenta y dependencia de referencias"],
-      ["SEO", "Contenido único, enlazado interno y base técnica preparada para crecer", "Optimización limitada a etiquetas generales", "La empresa solo aparece cuando ya conocen su nombre"],
-      ["Medición", "Eventos por formulario, WhatsApp, llamada y cotización", "Analítica básica sin atribución comercial", "No se identifica qué contenido genera oportunidades"],
+      [
+        "Arquitectura",
+        "Páginas ordenadas por servicios, audiencias y objetivos comerciales",
+        "Secciones adaptadas sobre una plantilla general",
+        "Oferta compleja explicada en documentos o reuniones",
+      ],
+      [
+        "Credibilidad",
+        "Identidad, proceso, respaldo y contacto corporativo coherentes",
+        "Imagen visual sin suficiente contexto de negocio",
+        "Validación lenta y dependencia de referencias",
+      ],
+      [
+        "SEO",
+        "Contenido único, enlazado interno y base técnica preparada para crecer",
+        "Optimización limitada a etiquetas generales",
+        "La empresa solo aparece cuando ya conocen su nombre",
+      ],
+      [
+        "Medición",
+        "Eventos por formulario, WhatsApp, llamada y cotización",
+        "Analítica básica sin atribución comercial",
+        "No se identifica qué contenido genera oportunidades",
+      ],
     ],
     offer: {
       name: "Página web corporativa para empresa",
       lowPrice: PLAN_PRICE_AMOUNTS.empresa,
-      description: "Valor inicial referencial para una web corporativa; páginas, contenido e integraciones se definen en la propuesta formal.",
+      description:
+        "Valor inicial referencial para una web corporativa; páginas, contenido e integraciones se definen en la propuesta formal.",
     },
   },
   "tiendas-online": {
@@ -170,16 +230,37 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
       "web-cotizaciones-personalizadas-pdf",
     ],
     comparisonRows: [
-      ["Catálogo", "Categorías y fichas pensadas para tu operación", "Plantilla adaptada con límites de personalización", "Productos dispersos en redes o documentos"],
-      ["Venta asistida", "WhatsApp, formularios y pedidos conectados al flujo real", "Botones básicos sin trazabilidad", "Consultas manuales repetidas y poco ordenadas"],
-      ["Crecimiento", "Escala a pagos, stock, reportes o panel por etapas", "Dependencia del proveedor o plataforma elegida", "Cada nuevo producto aumenta el desorden operativo"],
-      ["Confianza", "Experiencia propia, responsive y preparada para campañas", "Diseño similar a muchas tiendas genéricas", "Baja percepción profesional frente a compradores nuevos"],
+      [
+        "Catálogo",
+        "Categorías y fichas pensadas para tu operación",
+        "Plantilla adaptada con límites de personalización",
+        "Productos dispersos en redes o documentos",
+      ],
+      [
+        "Venta asistida",
+        "WhatsApp, formularios y pedidos conectados al flujo real",
+        "Botones básicos sin trazabilidad",
+        "Consultas manuales repetidas y poco ordenadas",
+      ],
+      [
+        "Crecimiento",
+        "Escala a pagos, stock, reportes o panel por etapas",
+        "Dependencia del proveedor o plataforma elegida",
+        "Cada nuevo producto aumenta el desorden operativo",
+      ],
+      [
+        "Confianza",
+        "Experiencia propia, responsive y preparada para campañas",
+        "Diseño similar a muchas tiendas genéricas",
+        "Baja percepción profesional frente a compradores nuevos",
+      ],
     ],
     offer: {
       name: "Tienda online o catálogo digital",
       lowPrice: PLAN_PRICE_AMOUNTS.catalogo,
       highPrice: PLAN_PRICE_AMOUNTS.ecommerce,
-      description: "Rango referencial según catálogo, pagos, carga inicial y administración requerida.",
+      description:
+        "Rango referencial según catálogo, pagos, carga inicial y administración requerida.",
     },
   },
   "sistemas-web": {
@@ -208,10 +289,30 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
       "control-ventas-inventario-efectivo",
     ],
     comparisonRows: [
-      ["Trazabilidad", "Registros, estados y responsables consultables", "Herramienta genérica que no refleja todo el proceso", "Información dispersa, difícil de auditar o reconstruir"],
-      ["Adopción", "Módulos diseñados según la operación real", "El equipo debe adaptarse a reglas externas", "Cada persona resuelve con su propio método"],
-      ["Reportes", "Datos preparados para KPIs, exportaciones o PDF", "Reportes limitados al producto contratado", "Indicadores manuales, tardíos o incompletos"],
-      ["Evolución", "Crecimiento por módulos y prioridades", "Cambios dependen del roadmap de otro proveedor", "La operación escala aumentando carga administrativa"],
+      [
+        "Trazabilidad",
+        "Registros, estados y responsables consultables",
+        "Herramienta genérica que no refleja todo el proceso",
+        "Información dispersa, difícil de auditar o reconstruir",
+      ],
+      [
+        "Adopción",
+        "Módulos diseñados según la operación real",
+        "El equipo debe adaptarse a reglas externas",
+        "Cada persona resuelve con su propio método",
+      ],
+      [
+        "Reportes",
+        "Datos preparados para KPIs, exportaciones o PDF",
+        "Reportes limitados al producto contratado",
+        "Indicadores manuales, tardíos o incompletos",
+      ],
+      [
+        "Evolución",
+        "Crecimiento por módulos y prioridades",
+        "Cambios dependen del roadmap de otro proveedor",
+        "La operación escala aumentando carga administrativa",
+      ],
     ],
     offer: {
       name: "Sistema web a medida",
@@ -245,10 +346,30 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
       "app-checklist-revision-buses",
     ],
     comparisonRows: [
-      ["Tiempo operativo", "Flujos repetitivos documentados y medibles", "Automatizaciones aisladas sin contexto del proceso", "Horas perdidas en copiar, responder y revisar manualmente"],
-      ["Calidad de datos", "Campos, validaciones y estados definidos", "Datos capturados según límites de la herramienta", "Información incompleta o repartida entre canales"],
-      ["Seguimiento", "Alertas y responsables visibles", "Notificaciones genéricas", "Casos olvidados o sin trazabilidad"],
-      ["Escalabilidad", "Puede conectarse con sistemas, PDF o reportes", "Dependencia de licencias o conectores externos", "El crecimiento aumenta la carga del equipo"],
+      [
+        "Tiempo operativo",
+        "Flujos repetitivos documentados y medibles",
+        "Automatizaciones aisladas sin contexto del proceso",
+        "Horas perdidas en copiar, responder y revisar manualmente",
+      ],
+      [
+        "Calidad de datos",
+        "Campos, validaciones y estados definidos",
+        "Datos capturados según límites de la herramienta",
+        "Información incompleta o repartida entre canales",
+      ],
+      [
+        "Seguimiento",
+        "Alertas y responsables visibles",
+        "Notificaciones genéricas",
+        "Casos olvidados o sin trazabilidad",
+      ],
+      [
+        "Escalabilidad",
+        "Puede conectarse con sistemas, PDF o reportes",
+        "Dependencia de licencias o conectores externos",
+        "El crecimiento aumenta la carga del equipo",
+      ],
     ],
     offer: {
       name: "Automatización de procesos",
@@ -281,15 +402,36 @@ const deepContentBySlug: Record<string, DeepServiceContent> = {
       "web-empresa-combustible-seo",
     ],
     comparisonRows: [
-      ["Continuidad", "Diagnóstico y priorización según impacto del negocio", "Mesa de ayuda genérica con poco contexto", "Incidentes se resuelven tarde o quedan sin dueño"],
-      ["Prevención", "Recomendaciones para evitar recurrencias", "Corrección puntual sin mejora de fondo", "Los mismos problemas vuelven a repetirse"],
-      ["Contexto", "Conexión entre web, correos, sistemas y operación", "Visión limitada al ticket individual", "Decisiones tecnológicas tomadas sin evaluación"],
-      ["Escalabilidad", "Puede evolucionar a mantención, sistemas o automatización", "Dependencia de múltiples proveedores desconectados", "Cada crecimiento aumenta riesgo técnico"],
+      [
+        "Continuidad",
+        "Diagnóstico y priorización según impacto del negocio",
+        "Mesa de ayuda genérica con poco contexto",
+        "Incidentes se resuelven tarde o quedan sin dueño",
+      ],
+      [
+        "Prevención",
+        "Recomendaciones para evitar recurrencias",
+        "Corrección puntual sin mejora de fondo",
+        "Los mismos problemas vuelven a repetirse",
+      ],
+      [
+        "Contexto",
+        "Conexión entre web, correos, sistemas y operación",
+        "Visión limitada al ticket individual",
+        "Decisiones tecnológicas tomadas sin evaluación",
+      ],
+      [
+        "Escalabilidad",
+        "Puede evolucionar a mantención, sistemas o automatización",
+        "Dependencia de múltiples proveedores desconectados",
+        "Cada crecimiento aumenta riesgo técnico",
+      ],
     ],
     offer: {
       name: "Soporte TI para pymes",
       lowPrice: SERVICE_PRICE_AMOUNTS.supportTi,
-      description: "Rango referencial mensual o por requerimiento según carga, criticidad y cobertura.",
+      description:
+        "Rango referencial mensual o por requerimiento según carga, criticidad y cobertura.",
     },
   },
 };
@@ -346,7 +488,7 @@ export async function SeoServiceLanding({ page }: Props) {
       />
       <JsonLd id={`${page.slug}-faq-schema`} data={buildFaqJsonLd(page.faqs)} />
 
-      <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-18 sm:py-20">
+      <section className="bg-hero-pattern relative overflow-hidden border-b border-slate-200 py-18 sm:py-20">
         <Container className="space-y-6">
           <nav aria-label="Breadcrumb" className="text-xs font-semibold text-slate-500">
             <Link href="/" className="hover:text-blue-700">
@@ -367,13 +509,15 @@ export async function SeoServiceLanding({ page }: Props) {
 
           <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
             <div className="space-y-5">
-              <h1 className="max-w-5xl text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl">
+              <h1 className="max-w-5xl text-4xl leading-tight font-extrabold tracking-tight text-slate-900 sm:text-5xl">
                 {page.heroTitle}
               </h1>
               {page.directAnswer ? (
                 <div className="max-w-4xl rounded-2xl border border-blue-100 bg-blue-50 p-5">
-                  <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Respuesta directa</p>
-                  <p className="mt-2 text-sm font-medium leading-relaxed text-slate-800 sm:text-base">
+                  <p className="text-xs font-bold tracking-widest text-blue-700 uppercase">
+                    Respuesta directa
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed font-medium text-slate-800 sm:text-base">
                     {page.directAnswer}
                   </p>
                 </div>
@@ -382,15 +526,32 @@ export async function SeoServiceLanding({ page }: Props) {
                 {page.heroDescription}
               </p>
               <div className="flex flex-wrap gap-3">
-                <Button asChild size="lg" className="bg-blue-700 font-bold text-white hover:bg-blue-800">
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-blue-700 font-bold text-white hover:bg-blue-800"
+                >
                   <Link href={`/contacto?servicio=${page.slug}`}>
-                    {page.primaryCta} <ArrowRight className="h-4 w-4" />
+                    {["sistemas-web", "automatizacion"].includes(page.slug)
+                      ? "Solicitar diagnóstico"
+                      : page.primaryCta}{" "}
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-slate-300 text-slate-800 hover:bg-slate-50"
+                >
                   <Link href="/planes">Ver planes</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-slate-300 text-slate-800 hover:bg-slate-50"
+                >
                   <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                     <MessageCircle className="h-4 w-4" /> Hablar por WhatsApp
                   </a>
@@ -412,17 +573,22 @@ export async function SeoServiceLanding({ page }: Props) {
                 ))}
               </div>
               <p className="mt-4 text-sm leading-relaxed text-slate-600">
-                Atendemos proyectos para pymes, emprendedores y empresas de Santiago, Región Metropolitana y distintas regiones de Chile.
+                Atendemos proyectos para pymes, emprendedores y empresas de Santiago, Región
+                Metropolitana y distintas regiones de Chile.
               </p>
               {deepContent ? (
                 <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
-                  <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Inversión referencial</p>
+                  <p className="text-xs font-bold tracking-widest text-blue-700 uppercase">
+                    Inversión referencial
+                  </p>
                   <p className="mt-1 text-lg font-extrabold text-slate-900">
                     {deepContent.offer.highPrice
                       ? `${formatClp(deepContent.offer.lowPrice)}–${formatClp(deepContent.offer.highPrice)} + IVA`
                       : `Desde ${formatClp(deepContent.offer.lowPrice)} + IVA`}
                   </p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-600">{deepContent.offer.description}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                    {deepContent.offer.description}
+                  </p>
                 </div>
               ) : null}
               <div className="mt-4 grid gap-2">
@@ -449,6 +615,7 @@ export async function SeoServiceLanding({ page }: Props) {
           </div>
         </Container>
       </section>
+      <ServiceDecision path={page.path} />
 
       <section className="bg-white py-16">
         <Container className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
@@ -497,12 +664,20 @@ export async function SeoServiceLanding({ page }: Props) {
           </article>
 
           <article className="card-premium p-6">
-            <h2 className="mb-4 text-xl font-extrabold text-slate-900">Enlaces internos útiles</h2>
+            <h2 className="mb-4 text-xl font-extrabold text-slate-900">
+              Opciones para tu proyecto
+            </h2>
             <div className="space-y-2">
               {page.relatedLinks.slice(0, 5).map((link) => (
-                <Link key={`${link.href}-${link.label}`} href={link.href} className="block rounded-xl border border-slate-200 bg-slate-50 p-3 transition-colors hover:border-blue-200 hover:bg-white">
+                <Link
+                  key={`${link.href}-${link.label}`}
+                  href={link.href}
+                  className="block rounded-xl border border-slate-200 bg-slate-50 p-3 transition-colors hover:border-blue-200 hover:bg-white"
+                >
                   <span className="text-sm font-bold text-slate-900">{link.label}</span>
-                  <span className="mt-1 block text-xs leading-relaxed text-slate-500">{link.description}</span>
+                  <span className="mt-1 block text-xs leading-relaxed text-slate-500">
+                    {link.description}
+                  </span>
                 </Link>
               ))}
             </div>
@@ -513,14 +688,18 @@ export async function SeoServiceLanding({ page }: Props) {
       <section className="bg-white py-16">
         <Container className="space-y-8">
           <div className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Metodología</p>
-            <h2 className="text-3xl font-extrabold text-slate-900">Proceso de trabajo claro y por etapas</h2>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">Metodología</p>
+            <h2 className="text-3xl font-extrabold text-slate-900">
+              Proceso de trabajo claro y por etapas
+            </h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             {page.process.map((step, index) => (
               <article key={step.title} className="card-premium border-t-4 border-t-blue-200 p-5">
-                <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Paso {index + 1}</p>
+                <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+                  Paso {index + 1}
+                </p>
                 <h3 className="mt-1 text-base font-extrabold text-slate-900">{step.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">{step.description}</p>
               </article>
@@ -534,14 +713,19 @@ export async function SeoServiceLanding({ page }: Props) {
           <section className="section-alt py-16">
             <Container className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
               <div className="space-y-3">
-                <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Contexto local</p>
+                <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+                  Contexto local
+                </p>
                 <h2 className="text-3xl font-extrabold text-slate-900">
                   El valor de {serviceLabel} para tu negocio en Chile
                 </h2>
               </div>
               <div className="space-y-4">
                 {deepContent.whyParagraphs.map((paragraph) => (
-                  <p key={paragraph} className="text-sm leading-relaxed text-slate-700 sm:text-base">
+                  <p
+                    key={paragraph}
+                    className="text-sm leading-relaxed text-slate-700 sm:text-base"
+                  >
                     {paragraph}
                   </p>
                 ))}
@@ -552,10 +736,15 @@ export async function SeoServiceLanding({ page }: Props) {
           <section className="bg-white py-16">
             <Container className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
               <article className="card-premium p-6">
-                <h2 className="text-2xl font-extrabold text-slate-900">¿Qué tecnologías y metodologías usamos?</h2>
+                <h2 className="text-2xl font-extrabold text-slate-900">
+                  ¿Qué tecnologías y metodologías usamos?
+                </h2>
                 <div className="mt-4 space-y-3">
                   {deepContent.technologyParagraphs.map((paragraph) => (
-                    <p key={paragraph} className="text-sm leading-relaxed text-slate-600 sm:text-base">
+                    <p
+                      key={paragraph}
+                      className="text-sm leading-relaxed text-slate-600 sm:text-base"
+                    >
                       {paragraph}
                     </p>
                   ))}
@@ -565,7 +754,10 @@ export async function SeoServiceLanding({ page }: Props) {
                 <h3 className="text-lg font-extrabold text-slate-900">Criterios de ejecución</h3>
                 <div className="mt-4 space-y-2">
                   {deepContent.methodologyBullets.map((item) => (
-                    <div key={item} className="flex items-start gap-2 text-sm leading-relaxed text-slate-700">
+                    <div
+                      key={item}
+                      className="flex items-start gap-2 text-sm leading-relaxed text-slate-700"
+                    >
                       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" />
                       <span>{item}</span>
                     </div>
@@ -578,14 +770,23 @@ export async function SeoServiceLanding({ page }: Props) {
           <section className="section-alt py-16">
             <Container className="space-y-6">
               <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Comparativa</p>
-                <h2 className="text-3xl font-extrabold text-slate-900">Comparativa para decidir con claridad</h2>
+                <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+                  Comparativa
+                </p>
+                <h2 className="text-3xl font-extrabold text-slate-900">
+                  Comparativa para decidir con claridad
+                </h2>
                 <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-                  Esta tabla resume diferencias prácticas entre construir una solución propia con Zyteron,
-                  contratar outsourcing genérico o seguir operando sin este servicio.
+                  Esta tabla resume diferencias prácticas entre construir una solución propia con
+                  Zyteron, contratar outsourcing genérico o seguir operando sin este servicio.
                 </p>
               </div>
-              <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+              <div
+                tabIndex={0}
+                role="region"
+                aria-label="Tabla comparativa; desplaza para ver todas las columnas"
+                className="overflow-x-auto rounded-2xl border border-slate-200 bg-white"
+              >
                 <table className="w-full min-w-[860px] text-left text-sm">
                   <thead className="bg-slate-100 text-slate-700">
                     <tr>
@@ -596,30 +797,34 @@ export async function SeoServiceLanding({ page }: Props) {
                     </tr>
                   </thead>
                   <tbody>
-                    {deepContent.comparisonRows.map(([criterion, ownOption, outsourced, missing]) => (
-                      <tr key={criterion} className="border-t border-slate-200">
-                        <td className="px-4 py-3 font-bold text-slate-900">{criterion}</td>
-                        <td className="px-4 py-3 text-slate-700">{ownOption}</td>
-                        <td className="px-4 py-3 text-slate-700">{outsourced}</td>
-                        <td className="px-4 py-3 text-slate-700">{missing}</td>
-                      </tr>
-                    ))}
+                    {deepContent.comparisonRows.map(
+                      ([criterion, ownOption, outsourced, missing]) => (
+                        <tr key={criterion} className="border-t border-slate-200">
+                          <td className="px-4 py-3 font-bold text-slate-900">{criterion}</td>
+                          <td className="px-4 py-3 text-slate-700">{ownOption}</td>
+                          <td className="px-4 py-3 text-slate-700">{outsourced}</td>
+                          <td className="px-4 py-3 text-slate-700">{missing}</td>
+                        </tr>
+                      ),
+                    )}
                   </tbody>
                 </table>
               </div>
             </Container>
           </section>
-
         </>
       ) : null}
 
       <section className="bg-white py-16">
         <Container className="space-y-8">
           <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Aplicaciones reales</p>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+              Aplicaciones reales
+            </p>
             <h2 className="text-3xl font-extrabold text-slate-900">Casos de uso reales</h2>
             <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Documentamos casos de empresas reales para mostrar problemas frecuentes y cómo se resolvieron.
+              Documentamos casos de empresas reales para mostrar problemas frecuentes y cómo se
+              resolvieron.
             </p>
           </div>
           {relatedCaseStudies.length > 0 ? (
@@ -631,34 +836,53 @@ export async function SeoServiceLanding({ page }: Props) {
                     href={`/casos-exito/${caseStudy.slug}`}
                     className="card-premium p-5 transition-colors hover:border-blue-200"
                   >
-                    <p className="mb-2 text-xs font-bold uppercase tracking-widest text-blue-600">{caseStudy.badgePrimary}</p>
-                    <h3 className="text-base font-extrabold leading-snug text-slate-900">{caseStudy.heading}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{caseStudy.summary}</p>
+                    <p className="mb-2 text-xs font-bold tracking-widest text-blue-600 uppercase">
+                      {caseStudy.badgePrimary}
+                    </p>
+                    <h3 className="text-base leading-snug font-extrabold text-slate-900">
+                      {caseStudy.heading}
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                      {caseStudy.summary}
+                    </p>
                     <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
                       Ver caso completo <ArrowRight className="h-4 w-4" />
                     </span>
                   </Link>
                 ))}
               </div>
-              <Link href="/casos-exito" className="inline-flex items-center gap-1 text-sm font-bold text-blue-700 hover:text-blue-800">
+              <Link
+                href="/casos-exito"
+                className="inline-flex items-center gap-1 text-sm font-bold text-blue-700 hover:text-blue-800"
+              >
                 Ver todos los casos de éxito <ArrowRight className="h-4 w-4" />
               </Link>
             </>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
-              <Link href="/casos-exito" className="card-premium block p-5 transition-colors hover:border-blue-200">
-                <h3 className="text-base font-extrabold text-slate-900">Casos de éxito de clientes</h3>
+              <Link
+                href="/casos-exito"
+                className="card-premium block p-5 transition-colors hover:border-blue-200"
+              >
+                <h3 className="text-base font-extrabold text-slate-900">
+                  Casos de éxito de clientes
+                </h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                  Revisa proyectos reales que hemos desarrollado para empresas y pymes en Chile, con el problema, la solución y los resultados.
+                  Revisa proyectos reales que hemos desarrollado para empresas y pymes en Chile, con
+                  el problema, la solución y los resultados.
                 </p>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
                   Ver casos de éxito <ArrowRight className="h-4 w-4" />
                 </span>
               </Link>
-              <Link href="/demos" className="card-premium block p-5 transition-colors hover:border-blue-200">
+              <Link
+                href="/demos"
+                className="card-premium block p-5 transition-colors hover:border-blue-200"
+              >
                 <h3 className="text-base font-extrabold text-slate-900">Demos navegables</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                  Abre y navega ejemplos funcionales de páginas web y tiendas online para imaginar cómo puede quedar la tuya.
+                  Abre y navega ejemplos funcionales de páginas web y tiendas online para imaginar
+                  cómo puede quedar la tuya.
                 </p>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
                   Ver demos <ArrowRight className="h-4 w-4" />
@@ -672,8 +896,10 @@ export async function SeoServiceLanding({ page }: Props) {
       <section className="section-alt py-16">
         <Container className="space-y-8">
           <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">FAQ</p>
-            <h2 className="text-3xl font-extrabold text-slate-900">Preguntas frecuentes sobre {serviceLabel}</h2>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">FAQ</p>
+            <h2 className="text-3xl font-extrabold text-slate-900">
+              Preguntas frecuentes sobre {serviceLabel}
+            </h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {page.faqs.map((faq) => (
@@ -688,7 +914,7 @@ export async function SeoServiceLanding({ page }: Props) {
 
       <section className="bg-white py-16">
         <Container className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-2xl section-blue p-8 text-white md:p-10">
+          <div className="section-blue rounded-2xl p-8 text-white md:p-10">
             <h2 className="text-2xl font-extrabold sm:text-3xl">{page.finalCtaTitle}</h2>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-blue-100 sm:text-base">
               {page.finalCtaCopy}
@@ -699,7 +925,11 @@ export async function SeoServiceLanding({ page }: Props) {
                   Solicitar asesoría <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
+              <Button
+                asChild
+                variant="outline"
+                className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
+              >
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                   Hablar por WhatsApp
                 </a>
@@ -711,9 +941,15 @@ export async function SeoServiceLanding({ page }: Props) {
             <h2 className="text-xl font-extrabold text-slate-900">Más recursos para decidir</h2>
             <div className="mt-4 space-y-2">
               {page.relatedLinks.slice(5).map((link) => (
-                <Link key={`${link.href}-${link.label}`} href={link.href} className="block rounded-xl border border-slate-200 bg-slate-50 p-3 transition-colors hover:border-blue-200 hover:bg-white">
+                <Link
+                  key={`${link.href}-${link.label}`}
+                  href={link.href}
+                  className="block rounded-xl border border-slate-200 bg-slate-50 p-3 transition-colors hover:border-blue-200 hover:bg-white"
+                >
                   <span className="text-sm font-bold text-slate-900">{link.label}</span>
-                  <span className="mt-1 block text-xs leading-relaxed text-slate-500">{link.description}</span>
+                  <span className="mt-1 block text-xs leading-relaxed text-slate-500">
+                    {link.description}
+                  </span>
                 </Link>
               ))}
             </div>

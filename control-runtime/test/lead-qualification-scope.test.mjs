@@ -31,7 +31,7 @@ test('calificar envía un único filtro por ID y conserva los otros leads y sus 
   try {
     process.env.SUPABASE_URL=`http://127.0.0.1:${server.address().port}`;process.env.SUPABASE_SERVICE_ROLE_KEY='synthetic-only-key';
     const service=new LeadsService(new CommercialRepository());
-    const result=await service.qualify(ids[0],ids[3]);
+    const result=await service.qualify(ids[0],ids[3],{serviceFit:true,needConfirmed:true,viable:true,serviceLine:"web_ecommerce",nextStep:"Reunión de alcance acordada"});
     assert.equal(result.id,ids[0]);assert.equal(result.status,'QUALIFIED');
     assert.equal(writes.length,1);assert.equal(writes[0].filter,'eq.'+ids[0]);
     assert.deepEqual([...rows.values()].slice(1),before.slice(1));
@@ -51,4 +51,21 @@ test('un lead inexistente o cerrado no actualiza registros ni publica una califi
     await assert.rejects(service.qualify(ids[0],ids[3]));
   }
   assert.equal(writes,0);
+});
+
+
+test('calificación exige los cuatro criterios y un reintento no duplica el evento', async () => {
+  let row = { id: ids[0], status: 'NEW', notes: 'Contexto anterior' }, writes = 0, events = [];
+  const service = new LeadsService({ async getLead() { return row; }, async updateLead(id, patch) { writes++; row = { ...row, ...patch }; return row; }, async publish(...args) { events.push(args); } });
+  await assert.rejects(service.qualify(ids[0], ids[3]));
+  await assert.rejects(service.qualify(ids[0], ids[3], { serviceFit: true, needConfirmed: true, viable: true, serviceLine: 'web_ecommerce', nextStep: '' }));
+  assert.equal(writes, 0);
+  const criteria = { serviceFit: true, needConfirmed: true, viable: true, serviceLine: 'web_ecommerce', nextStep: 'Reunión de alcance acordada' };
+  await Promise.all([service.qualify(ids[0], ids[3], criteria), service.qualify(ids[0], ids[3], criteria)]);
+  await service.qualify(ids[0], ids[3], criteria);
+  assert.equal(writes, 1); assert.equal(events.length, 1);
+  assert.match(row.notes, /^Contexto anterior/);
+  assert.equal(events[0][4].measurementEvent, 'qualify_lead');
+  assert.equal(JSON.stringify(events[0][4]).includes('Reunión'), false);
+  await assert.rejects(service.update(ids[0], { status: 'QUALIFIED' }, ids[3]));
 });

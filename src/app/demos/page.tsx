@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
+import { CatalogTaskDemo } from "@/components/demos/catalog-task-demo";
 import { DemosGrid } from "@/components/demos/demos-grid";
 import { PLAN_PRICE_AMOUNTS } from "@/config/pricing";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
@@ -97,7 +98,8 @@ export default function DemosPage() {
         data={buildWebPageJsonLd({
           path: "/demos",
           title: "Ejemplos y demos de páginas web",
-          description: "Ejemplos navegables de páginas web desarrolladas por Zyteron para evaluar un proyecto antes de cotizar.",
+          description:
+            "Ejemplos navegables de páginas web desarrolladas por Zyteron para evaluar un proyecto antes de cotizar.",
           breadcrumbs: [
             { name: "Inicio", path: "/" },
             { name: "Demos", path: "/demos" },
@@ -105,35 +107,46 @@ export default function DemosPage() {
         })}
       />
 
-      <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-20">
+      <section className="bg-hero-pattern relative overflow-hidden border-b border-slate-200 py-20">
         <Container className="space-y-5 text-center">
           <div className="badge-blue mx-auto w-fit">
             <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
             Portafolio de referencia
           </div>
           <h1 className="text-4xl font-extrabold text-slate-900 sm:text-5xl">
-            Ejemplos de páginas web que hemos desarrollado
+            Demostraciones de páginas web y tiendas online
           </h1>
           <p className="mx-auto max-w-3xl text-base text-slate-600 sm:text-lg">
-            Cada tarjeta es un demo funcional que puedes abrir y navegar. Sirven para imaginar cómo
-            puede quedar la página web de tu empresa antes de cotizar.
+            Son demostraciones de referencia, con datos de ejemplo; no representan proyectos de
+            clientes ni ventas reales. Puedes abrirlas y navegar para ver cómo puede quedar la
+            página web de tu empresa antes de cotizar.
           </p>
         </Container>
       </section>
 
       <section className="section-alt py-16">
         <Container>
-          <DemosGrid demos={demoCards} />
+          <CatalogTaskDemo />
+          <div className="mt-10">
+            <DemosGrid demos={demoCards} />
+          </div>
         </Container>
       </section>
 
       <section className="bg-white py-16">
-        <Container className="rounded-2xl section-blue p-8 text-center text-white">
-          <h2 className="text-2xl font-extrabold sm:text-3xl">¿Quieres una versión adaptada a tu negocio?</h2>
+        <Container className="section-blue rounded-2xl p-8 text-center text-white">
+          <h2 className="text-2xl font-extrabold sm:text-3xl">
+            ¿Quieres una versión adaptada a tu negocio?
+          </h2>
           <p className="mx-auto mt-2 max-w-2xl text-sm text-blue-100 sm:text-base">
-            Revisamos tus requerimientos y te proponemos una implementación por etapas, con cotización formal.
+            Revisamos tus requerimientos y te proponemos una implementación por etapas, con
+            cotización formal.
           </p>
-          <Button asChild size="lg" className="mt-5 bg-white font-bold text-blue-800 hover:bg-blue-50">
+          <Button
+            asChild
+            size="lg"
+            className="mt-5 bg-white font-bold text-blue-800 hover:bg-blue-50"
+          >
             <Link href="/cotizador">
               Cotizar mi página web <ArrowRight className="h-4 w-4" />
             </Link>

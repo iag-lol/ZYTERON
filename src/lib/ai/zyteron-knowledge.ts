@@ -1,3 +1,4 @@
+import { planDeadline } from "@/config/commercial-offer";
 import { siteConfig } from "@/config/site";
 import {
   ADDONS,
@@ -190,11 +191,12 @@ ${PRICING_NOTE}
 ## PLAZOS REFERENCIALES DE ENTREGA
 Son rangos habituales, no compromisos. El plazo real depende de la rapidez con que se
 aprueben contenidos y revisiones, y se confirma en la cotización:
-- Web básica de una página: 1 a 2 semanas.
-- Página web para pyme: 2 a 4 semanas.
-- Página web corporativa: 4 a 6 semanas.
-- Tienda online: 4 a 8 semanas.
-- Sistema web a medida: 8 a 16 semanas, por etapas.
+- Web básica de una página: ${planDeadline("web-basica")}.
+- Página web para pyme: ${planDeadline("pyme")}.
+- Página web corporativa: ${planDeadline("empresa")}.
+- Catálogo por WhatsApp: ${planDeadline("catalogo")}.
+- Tienda online: ${planDeadline("ecommerce")}.
+- Sistema web a medida: ${planDeadline("sistema")}.
 
 ## CÓMO ORIENTAR ENTRE WEB, TIENDA O SISTEMA
 Si el cliente no sabe qué necesita, ayúdalo con este criterio:

@@ -10,7 +10,7 @@ import { buildAbsoluteUrl, buildWebPageJsonLd, createPageMetadata } from "@/lib/
 export const metadata: Metadata = createPageMetadata({
   title: "Casos de éxito en sistemas web y desarrollo digital",
   description:
-    "Casos anónimos de Zyteron: sistemas web, control de flota, asistencia, inventario, tickets, cotizaciones PDF, tiendas online y SEO para empresas en Chile.",
+    "Proyectos documentados de Zyteron: sistemas web, control de flota, asistencia, inventario, tickets, cotizaciones PDF, tiendas online y SEO para empresas en Chile.",
   path: "/casos-exito",
 });
 
@@ -38,7 +38,7 @@ function buildCaseStudiesItemListJsonLd(items: CaseListItem[]) {
 }
 
 const businessSignals = [
-  "Casos anonimizados para proteger información comercial y operativa de clientes.",
+  "Proyectos identificados y casos anonimizados según los permisos de publicación.",
   "Proyectos orientados a procesos reales: registros, KPIs, SLA, control, reportes y trazabilidad.",
   "Soluciones aplicadas en web corporativa, sistemas internos, ecommerce, flota, inventario y operación en terreno.",
   "No se publican métricas confidenciales ni nombres de clientes sin autorización.",
@@ -53,7 +53,7 @@ export default async function CasosExitoPage() {
         id="casos-exito-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/casos-exito",
-          title: "Casos de éxito anónimos de Zyteron",
+          title: "Casos de éxito de Zyteron",
           description:
             "Casos documentados de sistemas web, automatización, tiendas online, SEO y soluciones digitales para empresas en Chile.",
           breadcrumbs: [
@@ -64,7 +64,7 @@ export default async function CasosExitoPage() {
       />
       <JsonLd id="casos-exito-itemlist-schema" data={buildCaseStudiesItemListJsonLd(items)} />
 
-      <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-20">
+      <section className="bg-hero-pattern relative overflow-hidden border-b border-slate-200 py-20">
         <Container className="space-y-5 text-center">
           <nav aria-label="Breadcrumb" className="text-xs font-semibold text-slate-500">
             <Link href="/" className="hover:text-blue-700">
@@ -77,20 +77,30 @@ export default async function CasosExitoPage() {
             <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
             Proyectos documentados
           </div>
-          <h1 className="mx-auto max-w-5xl text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
-            Casos de éxito anónimos en desarrollo web, sistemas digitales y automatización para empresas
+          <h1 className="mx-auto max-w-5xl text-4xl leading-tight font-extrabold text-slate-900 sm:text-5xl">
+            Casos de éxito en desarrollo web, sistemas digitales y automatización para empresas
           </h1>
           <p className="mx-auto max-w-3xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            Estos casos muestran problemas reales resueltos con tecnología: procesos en papel, falta de control,
-            inventario desordenado, documentación de flota, tickets georreferenciados, cotizaciones PDF, ecommerce y SEO.
+            Estos casos muestran problemas reales resueltos con tecnología: procesos en papel, falta
+            de control, inventario desordenado, documentación de flota, tickets georreferenciados,
+            cotizaciones PDF, ecommerce y SEO.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" className="bg-blue-700 font-bold text-white hover:bg-blue-800">
+            <Button
+              asChild
+              size="lg"
+              className="bg-blue-700 font-bold text-white hover:bg-blue-800"
+            >
               <Link href="/contacto?origen=casos-exito">
                 Cotizar un proyecto similar <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-slate-300 text-slate-800 hover:bg-slate-50"
+            >
               <Link href="/servicios">Ver servicios</Link>
             </Button>
           </div>
@@ -111,13 +121,15 @@ export default async function CasosExitoPage() {
       <section className="bg-white py-16">
         <Container className="space-y-8">
           <div className="space-y-2 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Evidencia comercial</p>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+              Evidencia comercial
+            </p>
             <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
               Problemas reales transformados en sistemas, datos y control
             </h2>
             <p className="mx-auto max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Cada caso documenta el problema, los objetivos, la solución y la implementación. Cuando existe autorización,
-              también publicamos resultados o métricas observadas.
+              Cada caso documenta el problema, los objetivos, la solución y la implementación.
+              Cuando existe autorización, también publicamos resultados o métricas observadas.
             </p>
           </div>
 
@@ -141,19 +153,30 @@ export default async function CasosExitoPage() {
                       </span>
                     ) : null}
                   </div>
-                  <h3 className="text-lg font-extrabold leading-snug text-slate-900">{item.heading}</h3>
-                  <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{item.summary}</p>
+                  <h3 className="text-lg leading-snug font-extrabold text-slate-900">
+                    {item.heading}
+                  </h3>
+                  <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">
+                    {item.summary}
+                  </p>
                   {item.highlights.length > 0 ? (
                     <div className="mt-4 space-y-2">
                       {item.highlights.map((highlight) => (
-                        <div key={highlight} className="flex items-start gap-2 text-sm text-slate-700">
+                        <div
+                          key={highlight}
+                          className="flex items-start gap-2 text-sm text-slate-700"
+                        >
                           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
                           <span>{highlight}</span>
                         </div>
                       ))}
                     </div>
                   ) : null}
-                  <Button asChild variant="outline" className="mt-5 border-slate-300 text-slate-800 hover:bg-slate-50">
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="mt-5 border-slate-300 text-slate-800 hover:bg-slate-50"
+                  >
                     <Link href={`/casos-exito/${item.slug}`}>
                       Ver caso documentado <ArrowRight className="h-4 w-4" />
                     </Link>
@@ -168,12 +191,16 @@ export default async function CasosExitoPage() {
       <section className="section-alt py-16">
         <Container className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div className="space-y-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">KPIs y control</p>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+              KPIs y control
+            </p>
             <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
               La diferencia no está solo en programar, está en ordenar datos para decidir mejor
             </h2>
             <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
-              Varios proyectos parten como formularios o páginas internas, pero el valor aparece cuando esos registros se convierten en historial, indicadores, pendientes, alertas, reportes y trazabilidad.
+              Varios proyectos parten como formularios o páginas internas, pero el valor aparece
+              cuando esos registros se convierten en historial, indicadores, pendientes, alertas,
+              reportes y trazabilidad.
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -195,16 +222,24 @@ export default async function CasosExitoPage() {
       </section>
 
       <section className="bg-white py-16">
-        <Container className="rounded-2xl section-blue p-8 text-center text-white md:p-12">
-          <h2 className="text-2xl font-extrabold sm:text-3xl">¿Tienes un proceso parecido que hoy se hace en papel, Excel o WhatsApp?</h2>
+        <Container className="section-blue rounded-2xl p-8 text-center text-white md:p-12">
+          <h2 className="text-2xl font-extrabold sm:text-3xl">
+            ¿Tienes un proceso parecido que hoy se hace en papel, Excel o WhatsApp?
+          </h2>
           <p className="mx-auto mt-3 max-w-3xl text-sm leading-relaxed text-blue-100 sm:text-base">
-            Podemos ayudarte a convertirlo en una aplicación, sistema web o flujo digital con registros claros, control y datos para tomar mejores decisiones.
+            Podemos ayudarte a convertirlo en una aplicación, sistema web o flujo digital con
+            registros claros, control y datos para tomar mejores decisiones.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" className="bg-white font-bold text-blue-800 hover:bg-blue-50">
               <Link href="/contacto">Solicitar evaluación</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
+            >
               <Link href="/sistemas-web">Ver sistemas web</Link>
             </Button>
           </div>

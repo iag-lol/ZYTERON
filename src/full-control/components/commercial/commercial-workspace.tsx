@@ -1,6 +1,8 @@
 "use client";
 import Link from "@control/components/routed-link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { MeasurementPanel } from "./measurement-panel";
+import { LeadQualification } from "./lead-qualification";
 import type {
   Client,
   ClientContact,
@@ -346,7 +348,7 @@ export function CommercialWorkspace({
         <div className="salesLoading">Actualizando operación comercial…</div>
       ) : (
         <>
-          {section === "command" ? <Command summary={summary} events={events} /> : null}
+          {section === "command" ? <><Command summary={summary} events={events} />{["GERENTE_GENERAL", "JEFE_VENTAS", "COMERCIAL"].includes(role) && <MeasurementPanel role={role} />}</> : null}
           {section === "leads" ? (
             <LeadInbox
               items={leads}
@@ -792,6 +794,7 @@ function LeadInbox({
   roleAction: (id: string, action: string, body?: unknown) => Promise<unknown>;
 }) {
   const boardRef = useRef<HTMLElement>(null);
+  const [qualifying, setQualifying] = useState<string | null>(null);
   const labels: Record<SalesLead["status"], string> = {
     NEW: "Nuevos",
     ASSIGNED: "Asignados",
@@ -888,7 +891,7 @@ function LeadInbox({
                         <button
                           disabled={busy}
                           onClick={() => {
-                            void roleAction(lead.id, "qualify");
+                            setQualifying(lead.id);
                           }}
                         >
                           Calificar
@@ -905,6 +908,10 @@ function LeadInbox({
                         </button>
                       ) : null}
                     </footer>
+                    {qualifying === lead.id && <LeadQualification busy={busy} onCancel={() => setQualifying(null)} onConfirm={async (criteria) => {
+                      const result = await roleAction(lead.id, "qualify", criteria);
+                      if (result) setQualifying(null);
+                    }} />}
                   </div>
                 ))
               ) : (
