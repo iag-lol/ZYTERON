@@ -31,6 +31,7 @@ export type CheckoutItem = {
 export type CheckoutMeta = {
   type: "PRODUCT_CHECKOUT";
   version: 1;
+  manualQuote?: import("@/lib/manual-quote/server").ManualDraft;
   customer: CheckoutCustomerData;
   items: CheckoutItem[];
   subtotal: number; // bruto sin descuento
@@ -112,6 +113,7 @@ export function parseCheckoutMeta(raw?: string | null): CheckoutMeta | null {
     return {
       type: "PRODUCT_CHECKOUT",
       version: 1,
+      ...(parsed.manualQuote ? { manualQuote: parsed.manualQuote } : {}),
       customer: parsed.customer as CheckoutCustomerData,
       items: parsed.items as CheckoutItem[],
       subtotal: Math.max(0, Math.round(rawSubtotal)),

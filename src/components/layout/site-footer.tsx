@@ -19,7 +19,8 @@ const footerColumns = [
       { label: "Tiendas online", href: "/tiendas-online" },
       { label: "Landing pages", href: "/servicios/landing-pages-para-empresas" },
       { label: "Calculadora de precio", href: "/calculadora-precio-pagina-web" },
-      { label: "Preparar una cotización", href: "/cotizador" },
+      { label: "Cotizar y comprar online", href: "/cotizador/manual" },
+      { label: "Cotización a medida", href: "/cotizador" },
     ],
   },
   {

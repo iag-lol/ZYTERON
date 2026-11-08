@@ -11,6 +11,7 @@ import { PortalAccessLink } from "./portal-access-link";
 const navigation = [
   { href: "/casos-exito", label: "Proyectos" },
   { href: "/planes", label: "Precios" },
+  { href: "/cotizador/manual", label: "Cotizar online" },
   { href: "/quienes-somos", label: "Empresa" },
   { href: "/contacto", label: "Contacto" },
 ];
