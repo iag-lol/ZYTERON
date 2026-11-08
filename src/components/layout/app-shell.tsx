@@ -27,11 +27,13 @@ export function AppShell({ children, header, footer }: AppShellProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex min-h-screen flex-col">
       {header}
       <div className="flex-1">{children}</div>
       {footer}
-      <AiChatWidget />
+      {!["/contacto", "/cotizador", "/becas-web-pyme"].some(
+        (route) => pathname === route || pathname.startsWith(route + "/"),
+      ) && <AiChatWidget />}
     </div>
   );
 }

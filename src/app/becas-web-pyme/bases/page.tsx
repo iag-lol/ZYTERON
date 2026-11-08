@@ -1,3 +1,8 @@
+import {
+  campaignPublicStatus,
+  displayChileDate,
+  displayChileTime,
+} from "@/lib/becas/campaign-status";
 import type { Metadata } from "next";
 import { Container } from "@/components/layout/container";
 import { siteConfig } from "@/config/site";
@@ -27,7 +32,7 @@ export default async function BasesPage({
 
   try {
     const supabase = getBecasSupabaseClient();
-    
+
     if (query?.edicion) {
       const { data } = await supabase
         .from("scholarship_campaigns")
@@ -40,7 +45,15 @@ export default async function BasesPage({
       const { data } = await supabase
         .from("scholarship_campaigns")
         .select("*")
-        .in("status", ["active", "paused", "closed", "reviewing", "winner_pending_acceptance", "winner_published", "scheduled"])
+        .in("status", [
+          "active",
+          "paused",
+          "closed",
+          "reviewing",
+          "winner_pending_acceptance",
+          "winner_published",
+          "scheduled",
+        ])
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -77,13 +90,14 @@ export default async function BasesPage({
             <h1 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl">
               Bases Oficiales: Becas Web Pyme Zyteron
             </h1>
-            <p className="text-base text-slate-600 leading-relaxed max-w-xl mx-auto">
-              Las Bases Web Pyme no tienen una convocatoria activa en este momento. Revisa próximamente nuestras redes y esta página para conocer futuras ediciones.
+            <p className="mx-auto max-w-xl text-base leading-relaxed text-slate-600">
+              Las Bases Web Pyme no tienen una convocatoria activa en este momento. Revisa
+              próximamente nuestras redes y esta página para conocer futuras ediciones.
             </p>
             <div className="mt-8">
               <a
                 href="/becas-web-pyme"
-                className="inline-block rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition"
+                className="inline-block rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
               >
                 Volver al Inicio de Becas
               </a>
@@ -95,8 +109,11 @@ export default async function BasesPage({
   }
 
   // REEMPLAZO DE VARIABLES DINÁMICAS EN PLANTILLA
-  const rawTerms = termsVersion?.content_markdown || campaign.terms_content || "Las bases oficiales están siendo cargadas por el equipo de administración.";
-  
+  const rawTerms =
+    termsVersion?.content_markdown ||
+    campaign.terms_content ||
+    "Las bases oficiales están siendo cargadas por el equipo de administración.";
+
   const replaceVars = (text: string) => {
     return text
       .replace(/{{CAMPAIGN_NAME}}/g, campaign.title || "Edición 2026")
@@ -105,34 +122,89 @@ export default async function BasesPage({
       .replace(/{{ORGANIZER_ADDRESS}}/g, campaign.organizer_address || siteConfig.address.display)
       .replace(/{{CONTACT_EMAIL}}/g, campaign.organizer_contact_email || siteConfig.contact.email)
       .replace(/{{PRIVACY_EMAIL}}/g, campaign.privacy_contact_email || "privacidad@zyteron.cl")
-      .replace(/{{START_DATE}}/g, campaign.starts_at ? new Date(campaign.starts_at).toLocaleDateString('es-CL') : "Por definir")
-      .replace(/{{START_TIME}}/g, campaign.starts_at ? new Date(campaign.starts_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : "00:00")
-      .replace(/{{END_DATE}}/g, campaign.ends_at ? new Date(campaign.ends_at).toLocaleDateString('es-CL') : "Por definir")
-      .replace(/{{END_TIME}}/g, campaign.ends_at ? new Date(campaign.ends_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : "23:59")
+      .replace(
+        /{{START_DATE}}/g,
+        campaign.starts_at ? displayChileDate(campaign.starts_at) : "Por definir",
+      )
+      .replace(
+        /{{START_TIME}}/g,
+        campaign.starts_at ? displayChileTime(campaign.starts_at) : "00:00",
+      )
+      .replace(
+        /{{END_DATE}}/g,
+        campaign.ends_at ? displayChileDate(campaign.ends_at) : "Por definir",
+      )
+      .replace(/{{END_TIME}}/g, campaign.ends_at ? displayChileTime(campaign.ends_at) : "23:59")
       .replace(/{{APPLICATION_URL}}/g, "https://zyteron.cl/becas-web-pyme")
-      .replace(/{{OFFICIAL_INSTAGRAM_HANDLE}}/g, campaign.official_instagram_handle ? `@${campaign.official_instagram_handle}` : "@zyteron.spa")
+      .replace(
+        /{{OFFICIAL_INSTAGRAM_HANDLE}}/g,
+        campaign.official_instagram_handle
+          ? `@${campaign.official_instagram_handle}`
+          : "@zyteron.spa",
+      )
       .replace(/{{BENEFITS_QUANTITY}}/g, (campaign.benefits_quantity || 1).toString())
       .replace(/{{BENEFIT_TITLE}}/g, campaign.benefit_title || "Página Web Profesional")
-      .replace(/{{BENEFIT_VALUE_CLP}}/g, campaign.benefit_value_clp ? campaign.benefit_value_clp.toLocaleString('es-CL') : "0")
-      .replace(/{{INCLUDED_ITEMS}}/g, Array.isArray(campaign.included_items) ? campaign.included_items.map((item: string) => `- ${item}`).join("\n") : (campaign.included_items || "- Diseño web completo\n- Hosting y Dominio por 1 año"))
-      .replace(/{{EXCLUDED_ITEMS}}/g, Array.isArray(campaign.excluded_items) ? campaign.excluded_items.map((item: string) => `- ${item}`).join("\n") : (campaign.excluded_items || "- Publicidad pagada\n- Funcionalidades avanzadas no acordadas"))
-      .replace(/{{SELECTION_DATE}}/g, campaign.selection_starts_at ? new Date(campaign.selection_starts_at).toLocaleDateString('es-CL') : "Por definir")
-      .replace(/{{ANNOUNCEMENT_DATE}}/g, campaign.announcement_at ? new Date(campaign.announcement_at).toLocaleDateString('es-CL') : "Por definir")
-      .replace(/{{RESULTS_PUBLICATION_CHANNELS}}/g, campaign.public_results_url || "Sitio web oficial de Zyteron e Instagram")
+      .replace(
+        /{{BENEFIT_VALUE_CLP}}/g,
+        campaign.benefit_value_clp ? campaign.benefit_value_clp.toLocaleString("es-CL") : "0",
+      )
+      .replace(
+        /{{INCLUDED_ITEMS}}/g,
+        Array.isArray(campaign.included_items)
+          ? campaign.included_items.map((item: string) => `- ${item}`).join("\n")
+          : campaign.included_items || "- Diseño web completo\n- Hosting y Dominio por 1 año",
+      )
+      .replace(
+        /{{EXCLUDED_ITEMS}}/g,
+        Array.isArray(campaign.excluded_items)
+          ? campaign.excluded_items.map((item: string) => `- ${item}`).join("\n")
+          : campaign.excluded_items ||
+              "- Publicidad pagada\n- Funcionalidades avanzadas no acordadas",
+      )
+      .replace(
+        /{{SELECTION_DATE}}/g,
+        campaign.selection_starts_at
+          ? displayChileDate(campaign.selection_starts_at)
+          : "Por definir",
+      )
+      .replace(
+        /{{ANNOUNCEMENT_DATE}}/g,
+        campaign.announcement_at ? displayChileDate(campaign.announcement_at) : "Por definir",
+      )
+      .replace(
+        /{{RESULTS_PUBLICATION_CHANNELS}}/g,
+        campaign.public_results_url || "Sitio web oficial de Zyteron e Instagram",
+      )
       .replace(/{{WINNER_RESPONSE_DAYS}}/g, (campaign.winner_response_days || 5).toString())
-      .replace(/{{TERMS_VERSION}}/g, termsVersion?.version_number || campaign.terms_version || "v1.0")
-      .replace(/{{PUBLISHED_AT}}/g, termsVersion?.published_at ? new Date(termsVersion.published_at).toLocaleDateString('es-CL') : (campaign.legal_documents_published_at ? new Date(campaign.legal_documents_published_at).toLocaleDateString('es-CL') : new Date().toLocaleDateString('es-CL')))
-      .replace(/{{LAST_UPDATED_AT}}/g, termsVersion?.updated_at ? new Date(termsVersion.updated_at).toLocaleDateString('es-CL', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : new Date(campaign.updated_at).toLocaleDateString('es-CL', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }));
+      .replace(
+        /{{TERMS_VERSION}}/g,
+        termsVersion?.version_number || campaign.terms_version || "v1.0",
+      )
+      .replace(
+        /{{PUBLISHED_AT}}/g,
+        termsVersion?.published_at
+          ? displayChileDate(termsVersion.published_at)
+          : campaign.legal_documents_published_at
+            ? displayChileDate(campaign.legal_documents_published_at)
+            : new Date().toLocaleDateString("es-CL"),
+      )
+      .replace(
+        /{{LAST_UPDATED_AT}}/g,
+        termsVersion?.updated_at
+          ? `${displayChileDate(termsVersion.updated_at)} ${displayChileTime(termsVersion.updated_at)}`
+          : `${displayChileDate(campaign.updated_at)} ${displayChileTime(campaign.updated_at)}`,
+      );
   };
 
   const renderedTerms = replaceVars(rawTerms);
   const versionNum = termsVersion?.version_number || campaign.terms_version || "v1.0";
-  const updatedStr = termsVersion?.updated_at 
-    ? new Date(termsVersion.updated_at).toLocaleDateString('es-CL', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) 
-    : new Date(campaign.updated_at).toLocaleDateString('es-CL', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const updatedStr = termsVersion?.updated_at
+    ? `${displayChileDate(termsVersion.updated_at)} ${displayChileTime(termsVersion.updated_at)}`
+    : `${displayChileDate(campaign.updated_at)} ${displayChileTime(campaign.updated_at)}`;
 
   const statusMap: Record<string, string> = {
     active: "Postulaciones abiertas",
+    unconfirmed: "Fechas de convocatoria pendientes de confirmación",
     reviewing: "En revisión",
     winner_pending_acceptance: "En revisión",
     winner_published: "Resultado publicado",
@@ -152,10 +224,11 @@ export default async function BasesPage({
                 Bases Oficiales: Becas Web Pyme Zyteron
               </h1>
               <p className="mt-2 text-sm font-semibold text-blue-600 print:text-slate-800">
-                En Zyteron apoyamos a emprendedores, Pymes y empresas chilenas a fortalecer su presencia digital.
+                En Zyteron apoyamos a emprendedores, Pymes y empresas chilenas a fortalecer su
+                presencia digital.
               </p>
             </div>
-            <div className="hidden print:block text-right">
+            <div className="hidden text-right print:block">
               <span className="text-xl font-black text-slate-900">ZYTERON</span>
               <span className="block text-xs text-slate-500">Documento Oficial</span>
             </div>
@@ -168,7 +241,7 @@ export default async function BasesPage({
             <div>
               <span className="font-bold text-slate-900">Estado:</span>{" "}
               <span className="font-semibold text-blue-700">
-                {statusMap[campaign.status] || campaign.status}
+                {statusMap[campaignPublicStatus(campaign)] || campaignPublicStatus(campaign)}
               </span>
             </div>
             <div>
@@ -179,19 +252,32 @@ export default async function BasesPage({
             </div>
             <div className="sm:col-span-2">
               <span className="font-bold text-slate-900">Vigencia:</span> Desde{" "}
-              {campaign.starts_at ? new Date(campaign.starts_at).toLocaleDateString('es-CL') : 'Por definir'} hasta{" "}
-              {campaign.ends_at ? new Date(campaign.ends_at).toLocaleDateString('es-CL') : 'Por definir'}
+              {campaign.starts_at ? displayChileDate(campaign.starts_at) : "Por definir"} hasta{" "}
+              {campaign.ends_at ? displayChileDate(campaign.ends_at) : "Por definir"}
             </div>
             <div className="sm:col-span-3">
-              <span className="font-bold text-slate-900">Zona horaria:</span> Chile continental, {campaign.campaign_timezone || 'America/Santiago'}
+              <span className="font-bold text-slate-900">Zona horaria:</span> Chile continental,{" "}
+              {campaign.campaign_timezone || "America/Santiago"}
             </div>
           </div>
 
           <PrintButton termsVersion={versionNum} campaignSlug={campaign.slug} />
         </div>
 
+        {campaignPublicStatus(campaign) !== "active" && (
+          <aside className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
+            Estado de la convocatoria:{" "}
+            {statusMap[campaignPublicStatus(campaign)] || campaignPublicStatus(campaign)}. Las bases
+            siguientes corresponden a la versión original de esta edición; sus condiciones y
+            vigencia se conservan.{" "}
+            <a href="/becas-web-pyme" className="font-semibold underline">
+              Consultar resultados y próximas convocatorias
+            </a>
+            .
+          </aside>
+        )}
         {/* CONTENIDO DE LAS BASES */}
-        <div className="prose prose-slate max-w-none rounded-2xl border border-slate-200 bg-white p-8 shadow-sm lg:prose-lg print:border-none print:p-0 print:shadow-none print:prose-sm">
+        <div className="prose prose-slate lg:prose-lg print:prose-sm max-w-none rounded-2xl border border-slate-200 bg-white p-8 shadow-sm print:border-none print:p-0 print:shadow-none">
           <ReactMarkdown
             components={{
               h1: ({ children }) => <h2>{children}</h2>,
@@ -202,15 +288,23 @@ export default async function BasesPage({
         </div>
 
         {/* PIE DE PÁGINA / FIRMA EN IMPRESIÓN */}
-        <div className="mt-12 rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-600 shadow-sm print:border-none print:mt-8 print:p-0 print:text-left">
+        <div className="mt-12 rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-600 shadow-sm print:mt-8 print:border-none print:p-0 print:text-left">
           <div className="print:flex print:items-center print:justify-between print:border-t print:pt-6">
             <div>
-              <p className="font-bold text-slate-900">{campaign.organizer_legal_name || "Zyteron SpA"}</p>
-              <p className="text-xs text-slate-500">RUT: {campaign.organizer_rut || "No informado"}</p>
-              <p className="text-xs text-slate-500">Contacto Legal: {campaign.organizer_contact_email || siteConfig.contact.email}</p>
+              <p className="font-bold text-slate-900">
+                {campaign.organizer_legal_name || "Zyteron SpA"}
+              </p>
+              <p className="text-xs text-slate-500">
+                RUT: {campaign.organizer_rut || "No informado"}
+              </p>
+              <p className="text-xs text-slate-500">
+                Contacto Legal: {campaign.organizer_contact_email || siteConfig.contact.email}
+              </p>
             </div>
-            <div className="hidden print:block text-right text-xs text-slate-400">
-              <p>Impreso el {new Date().toLocaleDateString('es-CL')} - Versión {versionNum}</p>
+            <div className="hidden text-right text-xs text-slate-400 print:block">
+              <p>
+                Impreso el {new Date().toLocaleDateString("es-CL")} - Versión {versionNum}
+              </p>
               <p>Verificación: https://zyteron.cl/becas-web-pyme/bases</p>
             </div>
           </div>

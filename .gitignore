@@ -57,3 +57,6 @@ graphify-out/
 *.pfx
 *.p12
 *.key
+
+# Capturas y mediciones locales del rediseño
+/output/redesign-08-11-2026/

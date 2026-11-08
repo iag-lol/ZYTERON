@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -40,7 +40,14 @@ import {
   type AddonId,
 } from "@/config/pricing";
 import { siteConfig } from "@/config/site";
-import { trackQuoteRequestConversion, trackQuoteRequestSubmit } from "@/lib/analytics/google-ads";
+import {
+  trackAnalyticsEvent,
+  trackQuoteRequestConversion,
+  trackQuoteRequestSubmit,
+} from "@/lib/analytics/google-ads";
+
+import { finishSubmission, submissionIdFor } from "@/lib/commercial/submission-id";
+import { serviceLineFor } from "@/lib/commercial/request-context";
 
 type SubmitState =
   | { status: "idle" }
@@ -128,7 +135,6 @@ type FormState = {
   honeypot: string;
 };
 
-const TOTAL_STEPS = 7;
 const DIRECT_WHATSAPP_URL = siteConfig.social.whatsapp;
 const CHILE_WHATSAPP_REGEX = /^(?:\+?56)?(?:\s?9)?(?:[\s-]?\d){8}$/;
 
@@ -558,11 +564,13 @@ const detailConfigs: Record<ProjectTypeValue, DetailField[]> = {
       key: "goal",
       label: "Cuéntanos brevemente qué quieres lograr",
       type: "text",
-      placeholder: "Ej: vender más, mostrar mis servicios, ordenar solicitudes o recibir contactos.",
+      placeholder:
+        "Ej: vender más, mostrar mis servicios, ordenar solicitudes o recibir contactos.",
     },
     {
       key: "mainObjective",
-      label: "¿Tu objetivo principal es vender, mostrar información, ordenar procesos o recibir contactos?",
+      label:
+        "¿Tu objetivo principal es vender, mostrar información, ordenar procesos o recibir contactos?",
       type: "single",
       options: [
         { value: "Vender", label: "Vender" },
@@ -669,12 +677,7 @@ const SCOPE_GROUPS: ScopeGroup[] = [
     key: "integrations",
     label: "Integraciones",
     description: "Con qué sistemas debe conversar.",
-    items: [
-      scopeAddon("crm"),
-      scopeAddon("erp"),
-      scopeAddon("workspace"),
-      scopeAddon("payments"),
-    ],
+    items: [scopeAddon("crm"), scopeAddon("erp"), scopeAddon("workspace"), scopeAddon("payments")],
   },
   {
     key: "api",
@@ -759,19 +762,15 @@ function buildInitialFormState(initialProjectType?: ProjectTypeValue): FormState
   };
 }
 
-function createSubmissionId() {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  return `req-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
 function optionLabel(options: Option[], value?: string) {
   if (!value) return "";
   return options.find((option) => option.value === value)?.label || value;
 }
 
-function buildProjectAnswers(projectType: ProjectTypeValue | "", detailValues: Record<string, string | string[]>) {
+function buildProjectAnswers(
+  projectType: ProjectTypeValue | "",
+  detailValues: Record<string, string | string[]>,
+) {
   if (!projectType) return [];
   const fields = detailConfigs[projectType] || [];
 
@@ -785,7 +784,9 @@ function buildProjectAnswers(projectType: ProjectTypeValue | "", detailValues: R
 
       if (field.type === "multi") {
         const value = Array.isArray(rawValue) ? rawValue : [];
-        return value.length ? { key: field.key, label: field.label, value: value.join(", ") } : null;
+        return value.length
+          ? { key: field.key, label: field.label, value: value.join(", ") }
+          : null;
       }
 
       const value = typeof rawValue === "string" ? optionLabel(field.options, rawValue) : "";
@@ -805,7 +806,9 @@ function selectedScopeGroups(scopeValues: Record<string, string[]>) {
 
 function selectedScopeItems(scopeValues: Record<string, string[]>) {
   return Object.entries(scopeValues).flatMap(([, values]) =>
-    values.map((value) => SCOPE_ITEM_BY_VALUE.get(value)).filter((item): item is ScopeItem => Boolean(item)),
+    values
+      .map((value) => SCOPE_ITEM_BY_VALUE.get(value))
+      .filter((item): item is ScopeItem => Boolean(item)),
   );
 }
 
@@ -813,7 +816,10 @@ function buildScopeAnswers(scopeValues: Record<string, string[]>): QuoteAnswer[]
   return selectedScopeGroups(scopeValues).map(({ group, items }) => ({
     key: `alcance-${group.key}`,
     label: group.label,
-    value: items.map((item) => item.label).join(", ").slice(0, MAX_ANSWER_VALUE_LENGTH),
+    value: items
+      .map((item) => item.label)
+      .join(", ")
+      .slice(0, MAX_ANSWER_VALUE_LENGTH),
   }));
 }
 
@@ -821,7 +827,10 @@ function buildScopeAnswers(scopeValues: Record<string, string[]>): QuoteAnswer[]
  * Estimación referencial: base del tipo de proyecto más las necesidades marcadas.
  * Sobre el tope corporativo deja de entregarse una cifra automática.
  */
-function computeEstimate(projectType: ProjectTypeValue | "", scopeValues: Record<string, string[]>) {
+function computeEstimate(
+  projectType: ProjectTypeValue | "",
+  scopeValues: Record<string, string[]>,
+) {
   const base = projectType ? PROJECT_BASE_AMOUNTS[projectType] : 0;
   const items = selectedScopeItems(scopeValues);
   const setupTotal = items.reduce((sum, item) => sum + item.amount, 0);
@@ -889,7 +898,15 @@ function choiceLabel(value: string, options: Option[]) {
   return optionLabel(options, value) || "No indicado";
 }
 
-function StepHeader({ step, title, description }: { step: number; title: string; description: string }) {
+function StepHeader({
+  step,
+  title,
+  description,
+}: {
+  step: number;
+  title: string;
+  description: string;
+}) {
   return (
     <div className="space-y-3">
       <div className="badge-blue w-fit">
@@ -897,8 +914,16 @@ function StepHeader({ step, title, description }: { step: number; title: string;
         Paso {step} de {TOTAL_STEPS}
       </div>
       <div>
-        <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">{title}</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{description}</p>
+        <h2
+          id="quote-step-heading"
+          tabIndex={-1}
+          className="text-2xl font-extrabold text-slate-900 sm:text-3xl"
+        >
+          {title}
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+          {description}
+        </p>
       </div>
     </div>
   );
@@ -919,12 +944,18 @@ function ChoiceGroup({
 }) {
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-3">
+      <div
+        role="group"
+        aria-labelledby={`quote-label-${name}`}
+        aria-describedby={error ? `quote-${name}-error` : undefined}
+        className="flex flex-wrap gap-3"
+      >
         {options.map((option) => {
           const active = value === option.value;
           return (
             <button
               key={`${name}-${option.value}`}
+              aria-pressed={active}
               type="button"
               onClick={() => onChange(option.value)}
               className={`min-h-12 rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition-all ${
@@ -938,7 +969,11 @@ function ChoiceGroup({
           );
         })}
       </div>
-      {error ? <p className="text-sm font-medium text-rose-600">{error}</p> : null}
+      {error ? (
+        <p id={`quote-${name}-error`} role="alert" className="text-sm font-medium text-rose-700">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -958,12 +993,18 @@ function MultiChoiceGroup({
 }) {
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-3">
+      <div
+        role="group"
+        aria-labelledby={`quote-label-${name}`}
+        aria-describedby={error ? `quote-${name}-error` : undefined}
+        className="flex flex-wrap gap-3"
+      >
         {options.map((option) => {
           const active = values.includes(option.value);
           return (
             <button
               key={`${name}-${option.value}`}
+              aria-pressed={active}
               type="button"
               onClick={() => onToggle(option.value)}
               className={`min-h-12 rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition-all ${
@@ -977,7 +1018,11 @@ function MultiChoiceGroup({
           );
         })}
       </div>
-      {error ? <p className="text-sm font-medium text-rose-600">{error}</p> : null}
+      {error ? (
+        <p id={`quote-${name}-error`} role="alert" className="text-sm font-medium text-rose-700">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -991,6 +1036,8 @@ const stepMeta = [
   { label: "Contacto", shortLabel: "Contacto", icon: MessageCircle },
   { label: "Resumen", shortLabel: "Resumen", icon: CheckCircle2 },
 ] as const;
+
+const TOTAL_STEPS = stepMeta.length;
 
 function StepIndicator({ step }: { step: number }) {
   const activeStep = stepMeta[step - 1];
@@ -1007,7 +1054,9 @@ function StepIndicator({ step }: { step: number }) {
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:hidden">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Paso actual</p>
+            <p className="text-[11px] font-bold tracking-[0.2em] text-slate-600 uppercase">
+              Paso actual
+            </p>
             <div className="mt-2 flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-blue-600 text-white">
                 <activeStep.icon className="h-4 w-4" />
@@ -1034,7 +1083,7 @@ function StepIndicator({ step }: { step: number }) {
                       ? "border-blue-600 bg-blue-600 text-white"
                       : active
                         ? "border-blue-300 bg-blue-50 text-blue-700"
-                        : "border-slate-200 bg-white text-slate-400"
+                        : "border-slate-200 bg-white text-slate-600"
                   }`}
                 >
                   {current}
@@ -1045,25 +1094,32 @@ function StepIndicator({ step }: { step: number }) {
         </div>
       </div>
 
-      <div className="hidden items-center justify-between gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 sm:flex">
+      <div className="hidden items-center justify-between gap-2 text-[11px] font-bold tracking-widest text-slate-600 uppercase sm:flex">
         {stepMeta.map((item, index) => {
           const current = index + 1;
           const active = current === step;
           const completed = current < step;
           return (
-            <div key={item.label} className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center">
+            <div
+              key={item.label}
+              className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center"
+            >
               <span
                 className={`flex h-8 w-8 items-center justify-center rounded-full border text-[12px] ${
                   completed
                     ? "border-blue-600 bg-blue-600 text-white"
                     : active
                       ? "border-blue-300 bg-blue-50 text-blue-700"
-                      : "border-slate-200 bg-white text-slate-400"
+                      : "border-slate-200 bg-white text-slate-600"
                 }`}
               >
                 {current}
               </span>
-              <span className={active ? "text-blue-700" : completed ? "text-slate-600" : "text-slate-400"}>
+              <span
+                className={
+                  active ? "text-blue-700" : completed ? "text-slate-600" : "text-slate-600"
+                }
+              >
                 {item.shortLabel}
               </span>
             </div>
@@ -1097,9 +1153,18 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
   const [step, setStep] = useState(hasPreset ? 2 : 1);
   const [submitting, setSubmitting] = useState(false);
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
-  const [submissionId, setSubmissionId] = useState(createSubmissionId);
+  const sending = useRef(false);
   const [form, setForm] = useState<FormState>(() => buildInitialFormState(initialProjectType));
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!started) return;
+    trackAnalyticsEvent("quote_step_view", {
+      step,
+      service_line: serviceLineFor(form.projectType),
+    });
+    document.getElementById("quote-step-heading")?.focus({ preventScroll: true });
+  }, [step, started, form.projectType]);
 
   const detailFields = useMemo(
     () => (form.projectType ? detailConfigs[form.projectType] || [] : []),
@@ -1167,7 +1232,13 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
     }
 
     return answers;
-  }, [estimate.hasEstimate, estimate.monthlyTotal, estimate.oneTimeTotal, previousEstimate, requiresDiscovery]);
+  }, [
+    estimate.hasEstimate,
+    estimate.monthlyTotal,
+    estimate.oneTimeTotal,
+    previousEstimate,
+    requiresDiscovery,
+  ]);
 
   const summaryAnswers = useMemo(
     () => packProjectAnswers([...detailAnswers, ...estimateAnswers, ...scopeAnswers]),
@@ -1222,8 +1293,12 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
   }
 
   function toggleDetailValue(key: string, value: string) {
-    const current = Array.isArray(form.detailValues[key]) ? (form.detailValues[key] as string[]) : [];
-    const next = current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
+    const current = Array.isArray(form.detailValues[key])
+      ? (form.detailValues[key] as string[])
+      : [];
+    const next = current.includes(value)
+      ? current.filter((item) => item !== value)
+      : [...current, value];
     updateDetailValue(key, next);
   }
 
@@ -1249,7 +1324,7 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
     setErrors({});
     setStep(initialProjectType ? 2 : 1);
     setStarted(Boolean(initialProjectType));
-    setSubmissionId(createSubmissionId());
+    finishSubmission("quote");
     setSubmitState({ status: "idle" });
   }
 
@@ -1312,7 +1387,19 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
   }
 
   function goNext() {
-    if (!validateCurrentStep()) return;
+    if (!validateCurrentStep()) {
+      trackAnalyticsEvent("form_error", {
+        form_type: "quote",
+        step,
+        service_line: serviceLineFor(form.projectType),
+        error_type: "validation",
+      });
+      return;
+    }
+    trackAnalyticsEvent("quote_step_complete", {
+      step,
+      service_line: serviceLineFor(form.projectType),
+    });
     setStep((prev) => Math.min(TOTAL_STEPS, prev + 1));
   }
 
@@ -1322,13 +1409,13 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
    */
 
   async function handleSubmit() {
-    if (submitting) return;
+    if (sending.current) return;
+    sending.current = true;
 
     setSubmitting(true);
     setSubmitState({ status: "idle" });
 
     const payload = {
-      clientSubmissionId: submissionId,
       projectType: form.projectType,
       businessName: form.businessName.trim(),
       businessRubro: form.businessRubro.trim(),
@@ -1359,20 +1446,39 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
       const response = await fetch("/api/cotizaciones", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...payload,
+          clientSubmissionId: await submissionIdFor("quote", payload),
+        }),
       });
 
       const result = (await response.json().catch(() => ({}))) as {
         ok?: boolean;
         reference?: string;
+        quoteId?: string;
+        leadId?: string;
         error?: string;
         whatsappUrl?: string;
       };
 
-      if (!response.ok || !result.ok || !result.reference) {
+      if (response.status === 409) finishSubmission("quote");
+      if (
+        !response.ok ||
+        !result.ok ||
+        !result.reference ||
+        !result.quoteId ||
+        result.quoteId === "filtered"
+      ) {
+        trackAnalyticsEvent("form_error", {
+          form_type: "quote_request",
+          service_line: serviceLineFor(form.projectType),
+          error_type: response.status === 429 ? "rate_limit" : "delivery",
+        });
         setSubmitState({
           status: "error",
-          message: result.error || "No pudimos registrar tu solicitud. Intenta nuevamente o escríbenos por WhatsApp.",
+          message:
+            result.error ||
+            "No pudimos registrar tu solicitud. Intenta nuevamente o escríbenos por WhatsApp.",
           whatsappUrl: result.whatsappUrl || DIRECT_WHATSAPP_URL,
         });
         setSubmitting(false);
@@ -1381,7 +1487,9 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
 
       const eventParams = {
         page_path: window.location.pathname,
-        project_type: form.projectType ? projectTypeLabels[form.projectType] : "Cotización comercial",
+        project_type: form.projectType,
+        service_line: serviceLineFor(form.projectType),
+        lead_id: result.leadId,
       };
       trackQuoteRequestSubmit(eventParams);
       trackQuoteRequestConversion(eventParams);
@@ -1390,17 +1498,22 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
         reference: result.reference,
       });
       setSubmitting(false);
-      setSubmissionId(createSubmissionId());
-    } catch (error) {
+      finishSubmission("quote");
+    } catch {
+      trackAnalyticsEvent("form_error", {
+        form_type: "quote",
+        service_line: serviceLineFor(form.projectType),
+        error_type: "delivery",
+      });
       setSubmitState({
         status: "error",
         message:
-          error instanceof Error
-            ? error.message
-            : "No pudimos registrar tu solicitud. Intenta nuevamente o escríbenos por WhatsApp.",
+          "No pudimos confirmar la recepción. Tus respuestas siguen aquí; revisa tu conexión y vuelve a intentar.",
         whatsappUrl: DIRECT_WHATSAPP_URL,
       });
       setSubmitting(false);
+    } finally {
+      sending.current = false;
     }
   }
 
@@ -1416,29 +1529,42 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                 Cotiza tu proyecto
               </div>
               <div className="space-y-3">
-                <h2 className="max-w-2xl text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
+                <h2 className="max-w-2xl text-4xl leading-tight font-extrabold text-slate-900 sm:text-5xl">
                   Cotiza tu proyecto
                 </h2>
                 <p className="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                  Responde unas preguntas rápidas y te ayudaremos a elegir la mejor solución para tu negocio.
+                  Responde unas preguntas rápidas y te ayudaremos a elegir la mejor solución para tu
+                  negocio.
                 </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 {[
                   { icon: CircleHelp, text: "No necesitas saber detalles técnicos." },
                   { icon: Sparkles, text: "El equipo revisa tu caso y te orienta." },
-                  { icon: ShieldCheck, text: "Tus datos se usarán solo para responder tu solicitud." },
+                  {
+                    icon: ShieldCheck,
+                    text: "Tus datos se usarán solo para responder tu solicitud.",
+                  },
                 ].map((item) => (
-                  <div key={item.text} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div
+                    key={item.text}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
                     <item.icon className="h-5 w-5 text-blue-600" />
-                    <p className="mt-3 text-sm font-medium leading-6 text-slate-700">{item.text}</p>
+                    <p className="mt-3 text-sm leading-6 font-medium text-slate-700">{item.text}</p>
                   </div>
                 ))}
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setStarted(true)}
+                  onClick={() => {
+                    setStarted(true);
+                    trackAnalyticsEvent("form_start", {
+                      form_type: "quote",
+                      service_line: serviceLineFor(form.projectType),
+                    });
+                  }}
                   className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700 sm:w-auto"
                 >
                   Comenzar cotización
@@ -1452,6 +1578,12 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                 >
                   Hablar por WhatsApp
                 </a>
+                <Link
+                  href="/contacto?origen=cotizador"
+                  className="text-sm font-semibold text-blue-700 underline"
+                >
+                  Prefiero enviar una solicitud breve
+                </Link>
               </div>
               <p className="text-sm text-slate-500">
                 Sin compromiso. Atención online para empresas, pymes y emprendedores en Chile.
@@ -1459,24 +1591,27 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
             </div>
           </div>
 
-          <div className="border-t border-slate-200 bg-slate-50 px-6 py-8 sm:px-10 lg:border-l lg:border-t-0">
+          <div className="border-t border-slate-200 bg-slate-50 px-6 py-8 sm:px-10 lg:border-t-0 lg:border-l">
             <div className="space-y-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Qué te vamos a pedir</p>
+              <p className="text-[11px] font-bold tracking-[0.2em] text-slate-600 uppercase">
+                {TOTAL_STEPS} pasos para preparar tu solicitud
+              </p>
               <div className="space-y-3">
-                {[
-                  "Qué necesitas crear",
-                  "Datos de tu negocio",
-                  "Detalles del proyecto según tu caso",
-                  "Necesidades: módulos, usuarios, integraciones e IA",
-                  "Presupuesto, plazo y contacto",
-                ].map((item, index) => (
-                  <div key={item} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+                {stepMeta.map((item, index) => (
+                  <div
+                    key={item.label}
+                    className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4"
+                  >
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
                       {index + 1}
                     </span>
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">{item}</p>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">Te tomará solo unos minutos y no necesitas lenguaje técnico.</p>
+                      <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">
+                        {index === 3
+                          ? "Opcional: puedes definirlo después."
+                          : "Responde con la información que tengas."}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -1495,10 +1630,15 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
             <CheckCircle2 className="h-8 w-8" />
           </div>
-          <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-600">Solicitud recibida</p>
-          <h2 className="mt-2 text-3xl font-extrabold text-slate-900 sm:text-4xl">Solicitud recibida</h2>
+          <p className="mt-6 text-[11px] font-bold tracking-[0.2em] text-emerald-600 uppercase">
+            Solicitud recibida
+          </p>
+          <h2 className="mt-2 text-3xl font-extrabold text-slate-900 sm:text-4xl">
+            Solicitud recibida
+          </h2>
           <p className="mt-4 text-base leading-7 text-slate-600">
-            Gracias, recibimos tu solicitud. Revisaremos la información y te contactaremos por WhatsApp o correo para orientarte con la mejor opción.
+            Gracias, recibimos tu solicitud. Revisaremos la información y te contactaremos por
+            WhatsApp o correo para orientarte con la mejor opción.
           </p>
 
           <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5">
@@ -1541,16 +1681,21 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
         <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="space-y-5">
             <div className="space-y-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Cotiza tu proyecto</p>
+              <p className="text-[11px] font-bold tracking-[0.2em] text-slate-600 uppercase">
+                Cotiza tu proyecto
+              </p>
               {initialPlanLabel ? (
-                <div className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-blue-700">
+                <div className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-bold tracking-[0.15em] text-blue-700 uppercase">
                   <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
                   Plan preseleccionado: {initialPlanLabel}
                 </div>
               ) : null}
-                <h2 className="text-2xl font-extrabold leading-tight text-slate-900 sm:text-4xl">Cuéntanos qué necesitas y prepararemos una propuesta clara para tu negocio.</h2>
+              <h2 className="text-2xl leading-tight font-extrabold text-slate-900 sm:text-4xl">
+                Cuéntanos qué necesitas y prepararemos una propuesta clara para tu negocio.
+              </h2>
               <p className="max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-                Responde unas preguntas rápidas. No necesitas saber detalles técnicos, el equipo te orienta.
+                Responde unas preguntas rápidas. No necesitas saber detalles técnicos, el equipo te
+                orienta.
               </p>
             </div>
             <StepIndicator step={step} />
@@ -1573,6 +1718,7 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                   return (
                     <button
                       key={card.value}
+                      aria-pressed={active}
                       type="button"
                       onClick={() => {
                         updateField("projectType", card.value);
@@ -1580,12 +1726,16 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                       }}
                       className={`group relative overflow-hidden rounded-[1.75rem] border p-5 text-left transition-all ${
                         active
-                          ? "border-blue-400 bg-gradient-to-br from-blue-600 via-blue-600 to-sky-500 text-white shadow-2xl shadow-blue-700/20 ring-4 ring-blue-100"
+                          ? "border-blue-400 bg-blue-700 text-white shadow-2xl ring-4 shadow-blue-700/20 ring-blue-100"
                           : "border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50 hover:shadow-lg"
                       }`}
                     >
-                      <div className={`pointer-events-none absolute inset-0 opacity-0 transition-opacity ${active ? "opacity-100" : "group-hover:opacity-100"}`}>
-                        <div className={`absolute right-0 top-0 h-24 w-24 rounded-full blur-3xl ${active ? "bg-white/20" : "bg-blue-100"}`} />
+                      <div
+                        className={`pointer-events-none absolute inset-0 opacity-0 transition-opacity ${active ? "opacity-100" : "group-hover:opacity-100"}`}
+                      >
+                        <div
+                          className={`absolute top-0 right-0 h-24 w-24 rounded-full blur-3xl ${active ? "bg-white/20" : "bg-blue-100"}`}
+                        />
                       </div>
 
                       <div className="relative space-y-4">
@@ -1600,8 +1750,16 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                             >
                               <Icon className="h-5 w-5" />
                             </div>
-                            <h3 className={`text-lg font-extrabold ${active ? "text-white" : "text-slate-900"}`}>{card.label}</h3>
-                            <p className={`mt-2 text-sm leading-6 ${active ? "text-blue-100" : "text-slate-600"}`}>{card.description}</p>
+                            <h3
+                              className={`text-lg font-extrabold ${active ? "text-white" : "text-slate-900"}`}
+                            >
+                              {card.label}
+                            </h3>
+                            <p
+                              className={`mt-2 text-sm leading-6 ${active ? "text-blue-100" : "text-slate-600"}`}
+                            >
+                              {card.description}
+                            </p>
                           </div>
                           <span
                             className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold ${
@@ -1614,9 +1772,15 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                           {card.priceHint ? (
-                            <p className={`rounded-full px-3 py-1 text-sm font-bold ${active ? "bg-white/10 text-white" : "bg-slate-100 text-blue-700"}`}>{card.priceHint}</p>
+                            <p
+                              className={`rounded-full px-3 py-1 text-sm font-bold ${active ? "bg-white/10 text-white" : "bg-slate-100 text-blue-700"}`}
+                            >
+                              {card.priceHint}
+                            </p>
                           ) : null}
-                          <p className={`text-xs font-medium ${active ? "text-blue-100" : "text-slate-500"}`}>
+                          <p
+                            className={`text-xs font-medium ${active ? "text-blue-100" : "text-slate-500"}`}
+                          >
                             Selección rápida para orientarte sin lenguaje técnico.
                           </p>
                         </div>
@@ -1626,7 +1790,15 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                 })}
               </div>
 
-              {errors.projectType ? <p className="text-sm font-medium text-rose-600">{errors.projectType}</p> : null}
+              {errors.projectType ? (
+                <p
+                  id="quote-projectType-error"
+                  role="alert"
+                  className="text-sm font-medium text-rose-700"
+                >
+                  {errors.projectType}
+                </p>
+              ) : null}
             </div>
           ) : null}
 
@@ -1640,53 +1812,128 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
 
               <div className="grid gap-5 md:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-800">Nombre o empresa</label>
+                  <label
+                    htmlFor="quote-businessName"
+                    className="text-sm font-semibold text-slate-800"
+                  >
+                    Nombre o empresa
+                  </label>
                   <input
+                    id="quote-businessName"
+                    aria-invalid={Boolean(errors.businessName)}
+                    aria-describedby={errors.businessName ? "quote-businessName-error" : undefined}
                     value={form.businessName}
                     onChange={(event) => updateField("businessName", event.target.value)}
                     placeholder="Ej: Comercial Andina"
-                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 transition outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   />
-                  {errors.businessName ? <p className="text-sm font-medium text-rose-600">{errors.businessName}</p> : null}
+                  {errors.businessName ? (
+                    <p
+                      id="quote-businessName-error"
+                      role="alert"
+                      className="text-sm font-medium text-rose-700"
+                    >
+                      {errors.businessName}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-800">Rubro</label>
+                  <label
+                    htmlFor="quote-businessRubro"
+                    className="text-sm font-semibold text-slate-800"
+                  >
+                    Rubro
+                  </label>
                   <input
+                    id="quote-businessRubro"
+                    aria-invalid={Boolean(errors.businessRubro)}
+                    aria-describedby={
+                      errors.businessRubro ? "quote-businessRubro-error" : undefined
+                    }
                     value={form.businessRubro}
                     onChange={(event) => updateField("businessRubro", event.target.value)}
                     placeholder="Ej: servicios, retail, educación o salud"
-                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 transition outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   />
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-semibold text-slate-800">Ciudad o región</label>
+                  <label
+                    htmlFor="quote-businessCity"
+                    className="text-sm font-semibold text-slate-800"
+                  >
+                    Ciudad o región
+                  </label>
                   <input
+                    id="quote-businessCity"
+                    aria-invalid={Boolean(errors.businessCity)}
+                    aria-describedby={errors.businessCity ? "quote-businessCity-error" : undefined}
                     value={form.businessCity}
                     onChange={(event) => updateField("businessCity", event.target.value)}
                     placeholder="Ej: Santiago, Valparaíso o Región Metropolitana"
-                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 transition outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   />
                 </div>
               </div>
 
               <div className="space-y-5">
                 <div>
-                  <p className="mb-3 text-sm font-semibold text-slate-800">¿Ya tienes página web?</p>
-                  <ChoiceGroup name="hasWebsite" value={form.hasWebsite} options={websiteOptions} onChange={(value) => updateField("hasWebsite", value as BinaryChoice)} error={errors.hasWebsite} />
+                  <p
+                    id="quote-label-hasWebsite"
+                    className="mb-3 text-sm font-semibold text-slate-800"
+                  >
+                    ¿Ya tienes página web?
+                  </p>
+                  <ChoiceGroup
+                    name="hasWebsite"
+                    value={form.hasWebsite}
+                    options={websiteOptions}
+                    onChange={(value) => updateField("hasWebsite", value as BinaryChoice)}
+                    error={errors.hasWebsite}
+                  />
                 </div>
                 <div>
-                  <p className="mb-3 text-sm font-semibold text-slate-800">¿Tienes logo?</p>
-                  <ChoiceGroup name="hasLogo" value={form.hasLogo} options={logoOptions} onChange={(value) => updateField("hasLogo", value as BinaryChoice)} error={errors.hasLogo} />
+                  <p id="quote-label-hasLogo" className="mb-3 text-sm font-semibold text-slate-800">
+                    ¿Tienes logo?
+                  </p>
+                  <ChoiceGroup
+                    name="hasLogo"
+                    value={form.hasLogo}
+                    options={logoOptions}
+                    onChange={(value) => updateField("hasLogo", value as BinaryChoice)}
+                    error={errors.hasLogo}
+                  />
                 </div>
                 <div>
-                  <p className="mb-3 text-sm font-semibold text-slate-800">¿Tienes dominio?</p>
-                  <ChoiceGroup name="hasDomain" value={form.hasDomain} options={domainOptions} onChange={(value) => updateField("hasDomain", value as BinaryChoice)} error={errors.hasDomain} />
+                  <p
+                    id="quote-label-hasDomain"
+                    className="mb-3 text-sm font-semibold text-slate-800"
+                  >
+                    ¿Tienes dominio?
+                  </p>
+                  <ChoiceGroup
+                    name="hasDomain"
+                    value={form.hasDomain}
+                    options={domainOptions}
+                    onChange={(value) => updateField("hasDomain", value as BinaryChoice)}
+                    error={errors.hasDomain}
+                  />
                 </div>
                 <div>
-                  <p className="mb-3 text-sm font-semibold text-slate-800">¿Tienes textos e imágenes?</p>
-                  <ChoiceGroup name="hasContent" value={form.hasContent} options={contentOptions} onChange={(value) => updateField("hasContent", value as BinaryChoice)} error={errors.hasContent} />
+                  <p
+                    id="quote-label-hasContent"
+                    className="mb-3 text-sm font-semibold text-slate-800"
+                  >
+                    ¿Tienes textos e imágenes?
+                  </p>
+                  <ChoiceGroup
+                    name="hasContent"
+                    value={form.hasContent}
+                    options={contentOptions}
+                    onChange={(value) => updateField("hasContent", value as BinaryChoice)}
+                    error={errors.hasContent}
+                  />
                 </div>
               </div>
             </div>
@@ -1703,24 +1950,50 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
               <div className="space-y-6">
                 {detailFields.map((field) => (
                   <div key={field.key} className="space-y-3">
-                    <p className="text-sm font-semibold text-slate-800">{field.label}</p>
+                    <p
+                      id={`quote-label-${field.key}`}
+                      className="text-sm font-semibold text-slate-800"
+                    >
+                      {field.label}
+                    </p>
                     {field.type === "text" ? (
                       <div>
                         <textarea
-                          value={typeof form.detailValues[field.key] === "string" ? (form.detailValues[field.key] as string) : ""}
+                          aria-labelledby={`quote-label-${field.key}`}
+                          aria-invalid={Boolean(errors[field.key])}
+                          aria-describedby={
+                            errors[field.key] ? `quote-${field.key}-error` : undefined
+                          }
+                          value={
+                            typeof form.detailValues[field.key] === "string"
+                              ? (form.detailValues[field.key] as string)
+                              : ""
+                          }
                           onChange={(event) => updateDetailValue(field.key, event.target.value)}
                           placeholder={field.placeholder}
                           rows={4}
-                          className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                          className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-800 transition outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                         />
-                        {errors[field.key] ? <p className="mt-2 text-sm font-medium text-rose-600">{errors[field.key]}</p> : null}
+                        {errors[field.key] ? (
+                          <p
+                            id={`quote-${field.key}-error`}
+                            role="alert"
+                            className="mt-2 text-sm font-medium text-rose-700"
+                          >
+                            {errors[field.key]}
+                          </p>
+                        ) : null}
                       </div>
                     ) : null}
 
                     {field.type === "single" ? (
                       <ChoiceGroup
                         name={field.key}
-                        value={typeof form.detailValues[field.key] === "string" ? (form.detailValues[field.key] as string) : ""}
+                        value={
+                          typeof form.detailValues[field.key] === "string"
+                            ? (form.detailValues[field.key] as string)
+                            : ""
+                        }
                         options={field.options}
                         onChange={(value) => updateDetailValue(field.key, value)}
                         error={errors[field.key]}
@@ -1730,7 +2003,11 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                     {field.type === "multi" ? (
                       <MultiChoiceGroup
                         name={field.key}
-                        values={Array.isArray(form.detailValues[field.key]) ? (form.detailValues[field.key] as string[]) : []}
+                        values={
+                          Array.isArray(form.detailValues[field.key])
+                            ? (form.detailValues[field.key] as string[])
+                            : []
+                        }
                         options={field.options}
                         onToggle={(value) => toggleDetailValue(field.key, value)}
                         error={errors[field.key]}
@@ -1740,13 +2017,23 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                 ))}
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-800">Comentario breve</label>
+                  <label
+                    htmlFor="quote-projectComment"
+                    className="text-sm font-semibold text-slate-800"
+                  >
+                    Comentario breve
+                  </label>
                   <textarea
+                    id="quote-projectComment"
+                    aria-invalid={Boolean(errors.projectComment)}
+                    aria-describedby={
+                      errors.projectComment ? "quote-projectComment-error" : undefined
+                    }
                     value={form.projectComment}
                     onChange={(event) => updateField("projectComment", event.target.value)}
                     placeholder="Si quieres, agrega contexto adicional sobre lo que necesitas."
                     rows={4}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-800 transition outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   />
                 </div>
               </div>
@@ -1850,16 +2137,46 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
 
               <div className="space-y-5">
                 <div>
-                  <p className="mb-3 text-sm font-semibold text-slate-800">Presupuesto aproximado</p>
-                  <ChoiceGroup name="budgetRange" value={form.budgetRange} options={budgetOptions} onChange={(value) => updateField("budgetRange", value as BudgetRangeValue)} error={errors.budgetRange} />
+                  <p
+                    id="quote-label-budgetRange"
+                    className="mb-3 text-sm font-semibold text-slate-800"
+                  >
+                    Presupuesto aproximado
+                  </p>
+                  <ChoiceGroup
+                    name="budgetRange"
+                    value={form.budgetRange}
+                    options={budgetOptions}
+                    onChange={(value) => updateField("budgetRange", value as BudgetRangeValue)}
+                    error={errors.budgetRange}
+                  />
                 </div>
                 <div>
-                  <p className="mb-3 text-sm font-semibold text-slate-800">Plazo ideal</p>
-                  <ChoiceGroup name="deadline" value={form.deadline} options={deadlineOptions} onChange={(value) => updateField("deadline", value as DeadlineValue)} error={errors.deadline} />
+                  <p
+                    id="quote-label-deadline"
+                    className="mb-3 text-sm font-semibold text-slate-800"
+                  >
+                    Plazo ideal
+                  </p>
+                  <ChoiceGroup
+                    name="deadline"
+                    value={form.deadline}
+                    options={deadlineOptions}
+                    onChange={(value) => updateField("deadline", value as DeadlineValue)}
+                    error={errors.deadline}
+                  />
                 </div>
                 <div>
-                  <p className="mb-3 text-sm font-semibold text-slate-800">Nivel de urgencia</p>
-                  <ChoiceGroup name="urgency" value={form.urgency} options={urgencyOptions} onChange={(value) => updateField("urgency", value as UrgencyValue)} error={errors.urgency} />
+                  <p id="quote-label-urgency" className="mb-3 text-sm font-semibold text-slate-800">
+                    Nivel de urgencia
+                  </p>
+                  <ChoiceGroup
+                    name="urgency"
+                    value={form.urgency}
+                    options={urgencyOptions}
+                    onChange={(value) => updateField("urgency", value as UrgencyValue)}
+                    error={errors.urgency}
+                  />
                 </div>
               </div>
             </div>
@@ -1875,66 +2192,146 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
 
               <div className="grid gap-5 md:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-800">Nombre</label>
+                  <label
+                    htmlFor="quote-contactName"
+                    className="text-sm font-semibold text-slate-800"
+                  >
+                    Nombre
+                  </label>
                   <input
+                    id="quote-contactName"
+                    aria-invalid={Boolean(errors.contactName)}
+                    aria-describedby={errors.contactName ? "quote-contactName-error" : undefined}
                     value={form.contactName}
                     onChange={(event) => updateField("contactName", event.target.value)}
                     placeholder="Tu nombre"
-                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 transition outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   />
-                  {errors.contactName ? <p className="text-sm font-medium text-rose-600">{errors.contactName}</p> : null}
+                  {errors.contactName ? (
+                    <p
+                      id="quote-contactName-error"
+                      role="alert"
+                      className="text-sm font-medium text-rose-700"
+                    >
+                      {errors.contactName}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-800">WhatsApp</label>
+                  <label
+                    htmlFor="quote-contactWhatsapp"
+                    className="text-sm font-semibold text-slate-800"
+                  >
+                    WhatsApp
+                  </label>
                   <input
+                    id="quote-contactWhatsapp"
+                    aria-invalid={Boolean(errors.contactWhatsapp)}
+                    aria-describedby={
+                      errors.contactWhatsapp ? "quote-contactWhatsapp-error" : undefined
+                    }
                     value={form.contactWhatsapp}
                     onChange={(event) => updateField("contactWhatsapp", event.target.value)}
                     placeholder="+56939526626"
-                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 transition outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   />
-                  {errors.contactWhatsapp ? <p className="text-sm font-medium text-rose-600">{errors.contactWhatsapp}</p> : null}
+                  {errors.contactWhatsapp ? (
+                    <p
+                      id="quote-contactWhatsapp-error"
+                      role="alert"
+                      className="text-sm font-medium text-rose-700"
+                    >
+                      {errors.contactWhatsapp}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-800">Email</label>
+                  <label
+                    htmlFor="quote-contactEmail"
+                    className="text-sm font-semibold text-slate-800"
+                  >
+                    Email
+                  </label>
                   <input
+                    id="quote-contactEmail"
+                    aria-invalid={Boolean(errors.contactEmail)}
+                    aria-describedby={errors.contactEmail ? "quote-contactEmail-error" : undefined}
                     value={form.contactEmail}
                     onChange={(event) => updateField("contactEmail", event.target.value)}
                     placeholder="nombre@empresa.cl"
-                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 transition outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   />
-                  {errors.contactEmail ? <p className="text-sm font-medium text-rose-600">{errors.contactEmail}</p> : null}
+                  {errors.contactEmail ? (
+                    <p
+                      id="quote-contactEmail-error"
+                      role="alert"
+                      className="text-sm font-medium text-rose-700"
+                    >
+                      {errors.contactEmail}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-800">Empresa</label>
+                  <label
+                    htmlFor="quote-contactCompany"
+                    className="text-sm font-semibold text-slate-800"
+                  >
+                    Empresa
+                  </label>
                   <input
+                    id="quote-contactCompany"
+                    aria-invalid={Boolean(errors.contactCompany)}
+                    aria-describedby={
+                      errors.contactCompany ? "quote-contactCompany-error" : undefined
+                    }
                     value={form.contactCompany}
                     onChange={(event) => updateField("contactCompany", event.target.value)}
                     placeholder="Opcional"
-                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 transition outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   />
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-semibold text-slate-800">Sitio web actual</label>
+                  <label
+                    htmlFor="quote-currentWebsite"
+                    className="text-sm font-semibold text-slate-800"
+                  >
+                    Sitio web actual
+                  </label>
                   <input
+                    id="quote-currentWebsite"
+                    aria-invalid={Boolean(errors.currentWebsite)}
+                    aria-describedby={
+                      errors.currentWebsite ? "quote-currentWebsite-error" : undefined
+                    }
                     value={form.currentWebsite}
                     onChange={(event) => updateField("currentWebsite", event.target.value)}
                     placeholder="Opcional"
-                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-800 transition outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   />
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-semibold text-slate-800">Comentario adicional</label>
+                  <label
+                    htmlFor="quote-additionalMessage"
+                    className="text-sm font-semibold text-slate-800"
+                  >
+                    Comentario adicional
+                  </label>
                   <textarea
+                    id="quote-additionalMessage"
+                    aria-invalid={Boolean(errors.additionalMessage)}
+                    aria-describedby={
+                      errors.additionalMessage ? "quote-additionalMessage-error" : undefined
+                    }
                     value={form.additionalMessage}
                     onChange={(event) => updateField("additionalMessage", event.target.value)}
                     placeholder="Opcional"
                     rows={4}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-800 transition outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   />
                 </div>
               </div>
@@ -1968,10 +2365,10 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                   requiresDiscovery ? "border-blue-200 bg-blue-50" : "border-slate-200 bg-white"
                 }`}
               >
-                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
+                <p className="text-[11px] font-bold tracking-widest text-slate-500 uppercase">
                   {requiresDiscovery ? "Proyecto corporativo" : "Estimación referencial"}
                 </p>
-                <p className="mt-2 text-2xl font-extrabold leading-snug text-slate-900">
+                <p className="mt-2 text-2xl leading-snug font-extrabold text-slate-900">
                   {estimateLabel}
                 </p>
                 {estimate.monthlyTotal > 0 ? (
@@ -1988,7 +2385,9 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                 <div className="grid gap-4 md:grid-cols-2">
                   {summaryItems.map((item) => (
                     <div key={`${item.label}-${item.value}`}>
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{item.label}</p>
+                      <p className="text-[11px] font-bold tracking-widest text-slate-600 uppercase">
+                        {item.label}
+                      </p>
                       <p className="mt-1 text-sm font-semibold text-slate-900">{item.value}</p>
                     </div>
                   ))}
@@ -1997,10 +2396,15 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
 
               <div className="space-y-4 rounded-[1.5rem] border border-slate-200 bg-white p-5">
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Alcance principal</p>
+                  <p className="text-[11px] font-bold tracking-widest text-slate-600 uppercase">
+                    Alcance principal
+                  </p>
                   <div className="mt-3 space-y-3">
                     {summaryAnswers.map((answer) => (
-                      <div key={answer.key} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                      <div
+                        key={answer.key}
+                        className="rounded-2xl border border-slate-100 bg-slate-50 p-4"
+                      >
                         <p className="text-sm font-semibold text-slate-900">{answer.label}</p>
                         <p className="mt-1 text-sm leading-6 text-slate-600">{answer.value}</p>
                       </div>
@@ -2008,7 +2412,9 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                     {form.projectComment.trim() ? (
                       <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
                         <p className="text-sm font-semibold text-slate-900">Comentario breve</p>
-                        <p className="mt-1 text-sm leading-6 text-slate-600">{form.projectComment.trim()}</p>
+                        <p className="mt-1 text-sm leading-6 text-slate-600">
+                          {form.projectComment.trim()}
+                        </p>
                       </div>
                     ) : null}
                   </div>
@@ -2018,7 +2424,10 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
           ) : null}
 
           {submitState.status === "error" ? (
-            <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+            <div
+              role="alert"
+              className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"
+            >
               <p className="font-semibold">{submitState.message}</p>
               {submitState.whatsappUrl ? (
                 <a
@@ -2086,10 +2495,10 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
             requiresDiscovery ? "border-blue-200 bg-blue-50" : "border-slate-200 bg-white"
           }`}
         >
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+          <p className="text-[11px] font-bold tracking-[0.2em] text-slate-600 uppercase">
             {requiresDiscovery ? "Proyecto corporativo" : "Estimación referencial"}
           </p>
-          <p className="mt-2 text-lg font-extrabold leading-snug text-slate-900">{estimateLabel}</p>
+          <p className="mt-2 text-lg leading-snug font-extrabold text-slate-900">{estimateLabel}</p>
           {estimate.monthlyTotal > 0 ? (
             <p className="mt-2 text-sm font-semibold text-slate-700">
               Más {monthlyPrice(estimate.monthlyTotal)} en servicios recurrentes.
@@ -2101,11 +2510,15 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
         </div>
 
         <details className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm lg:hidden">
-          <summary className="cursor-pointer list-none text-sm font-bold text-slate-900">Ver resumen de la solicitud</summary>
+          <summary className="cursor-pointer list-none text-sm font-bold text-slate-900">
+            Ver resumen de la solicitud
+          </summary>
           <div className="mt-4 space-y-4">
             {summaryItems.map((item) => (
               <div key={`${item.label}-${item.value}`}>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{item.label}</p>
+                <p className="text-[11px] font-bold tracking-widest text-slate-600 uppercase">
+                  {item.label}
+                </p>
                 <p className="mt-1 text-sm font-semibold text-slate-900">{item.value}</p>
               </div>
             ))}
@@ -2120,10 +2533,12 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
               requiresDiscovery ? "border-blue-200 bg-blue-50" : "border-slate-200 bg-white"
             }`}
           >
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+            <p className="text-[11px] font-bold tracking-[0.2em] text-slate-600 uppercase">
               {requiresDiscovery ? "Proyecto corporativo" : "Estimación referencial"}
             </p>
-            <p className="mt-2 text-xl font-extrabold leading-snug text-slate-900">{estimateLabel}</p>
+            <p className="mt-2 text-xl leading-snug font-extrabold text-slate-900">
+              {estimateLabel}
+            </p>
             {estimate.monthlyTotal > 0 ? (
               <p className="mt-2 text-sm font-semibold text-slate-700">
                 Más {monthlyPrice(estimate.monthlyTotal)} en servicios recurrentes.
@@ -2146,20 +2561,28 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
                 <BriefcaseBusiness className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Resumen parcial</p>
+                <p className="text-[11px] font-bold tracking-[0.2em] text-slate-600 uppercase">
+                  Resumen parcial
+                </p>
                 <h3 className="mt-1 text-lg font-extrabold text-slate-900">
                   {form.projectType ? projectTypeLabels[form.projectType] : "Tu solicitud"}
                 </h3>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  {readSummary(form, initialPlanLabel) || "A medida que avances, aquí verás un resumen claro de tu solicitud."}
+                  {readSummary(form, initialPlanLabel) ||
+                    "A medida que avances, aquí verás un resumen claro de tu solicitud."}
                 </p>
               </div>
             </div>
 
             <div className="mt-6 space-y-4">
               {summaryItems.map((item) => (
-                <div key={`${item.label}-${item.value}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{item.label}</p>
+                <div
+                  key={`${item.label}-${item.value}`}
+                  className="rounded-2xl border border-slate-100 bg-slate-50 p-4"
+                >
+                  <p className="text-[11px] font-bold tracking-widest text-slate-600 uppercase">
+                    {item.label}
+                  </p>
                   <p className="mt-1 text-sm font-semibold text-slate-900">{item.value}</p>
                 </div>
               ))}
@@ -2167,12 +2590,26 @@ function CommercialQuoteBuilderFlow({ search }: { search: string }) {
           </div>
 
           <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-6 shadow-sm">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Confianza</p>
+            <p className="text-[11px] font-bold tracking-[0.2em] text-slate-600 uppercase">
+              Confianza
+            </p>
             <div className="mt-4 space-y-4">
               {[
-                { icon: ShieldCheck, title: "Solicitud segura", text: "Tus datos se usan solo para responderte y no se envían desde el navegador a servicios externos." },
-                { icon: Clock3, title: "Proceso claro", text: "Guardamos tu solicitud aunque falle el correo o WhatsApp, para no perder tu caso." },
-                { icon: MessageCircle, title: "Atención humana", text: "Si prefieres, también puedes hablar con Zyteron por WhatsApp en cualquier momento." },
+                {
+                  icon: ShieldCheck,
+                  title: "Solicitud segura",
+                  text: "Tus datos se usan solo para responderte y no se envían desde el navegador a servicios externos.",
+                },
+                {
+                  icon: Clock3,
+                  title: "Proceso claro",
+                  text: "Guardamos tu solicitud aunque falle el correo o WhatsApp, para no perder tu caso.",
+                },
+                {
+                  icon: MessageCircle,
+                  title: "Atención humana",
+                  text: "Si prefieres, también puedes hablar con Zyteron por WhatsApp en cualquier momento.",
+                },
               ].map((item) => (
                 <div key={item.title} className="rounded-2xl border border-slate-200 bg-white p-4">
                   <item.icon className="h-5 w-5 text-blue-600" />

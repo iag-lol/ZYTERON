@@ -2,364 +2,118 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Menu, X, ArrowRight, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
-import { siteConfig } from "@/config/site";
-import { cn } from "@/lib/utils";
+import { usePathname } from "next/navigation";
+import { Menu, X, ArrowUpRight } from "lucide-react";
 import { Container } from "./container";
 import { PortalAccessLink } from "./portal-access-link";
 
-const WHATSAPP_URL =
-  `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20cotizar%20una%20p%C3%A1gina%20web%20para%20mi%20empresa.`;
-
-const primaryNavItems = [
-  { href: "/", label: "Inicio" },
-  { href: "/servicios", label: "Servicios" },
-  { href: "/casos-exito", label: "Casos de éxito" },
-  { href: "/planes", label: "Planes" },
-  { href: "/quienes-somos", label: "Nosotros" },
-  { href: "/contacto", label: "Contacto" },
-];
-
-const secondaryNavItems = [
-  { href: "/demos", label: "Demos" },
-  { href: "/blog", label: "Blog" },
-  { href: "/faq", label: "FAQ" },
-];
-
-// El desplegable encabeza el servicio principal: páginas web.
-const servicesHubItem = { href: "/desarrollo-web", label: "Todo sobre páginas web" };
-
-const servicesNavItems = [
-  { href: "/paginas-web-santiago", label: "Páginas Web Santiago" },
-  { href: "/desarrollo-web-santiago", label: "Desarrollo Web Santiago" },
-  { href: "/paginas-web-para-empresas", label: "Páginas Web para Empresas" },
-  { href: "/paginas-web-para-pymes", label: "Páginas Web para Pymes" },
-  { href: "/tiendas-online", label: "Tiendas Online" },
-  { href: "/sistemas-web", label: "Sistemas Web" },
-  { href: "/servicios/seo-para-empresas-chile", label: "SEO para Empresas" },
-  { href: "/calculadora-precio-pagina-web", label: "Calculadora de precio" },
+const navigation = [
+  { href: "/desarrollo-web", label: "Web y ecommerce" },
+  { href: "/sistemas-web", label: "Sistemas y automatización" },
+  { href: "/casos-exito", label: "Proyectos" },
+  { href: "/planes", label: "Precios" },
+  { href: "/quienes-somos", label: "Empresa" },
 ];
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
-  const [servicesOpen, setServicesOpen] = useState(false);
-  const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
-  const firstMobileLinkRef = useRef<HTMLAnchorElement | null>(null);
-
+  const pathname = usePathname();
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!open) return;
-    firstMobileLinkRef.current?.focus();
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    function handleKeyDown(event: KeyboardEvent) {
+    menuRef.current?.querySelector<HTMLAnchorElement>("a")?.focus();
+    const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setOpen(false);
+        toggleRef.current?.focus();
       }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) {
-      document.body.style.overflow = "";
-      return;
-    }
-
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
     };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, [open]);
-
   return (
-    <>
-      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-lg">
-        <Container className="py-3.5">
-          <div className="flex items-center justify-between gap-4">
-            <Link href="/" className="group flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-700 to-blue-900 text-lg font-extrabold text-white shadow-md shadow-blue-900/20 transition-shadow group-hover:shadow-blue-900/35">
-                Z
-              </div>
-              <div className="leading-tight">
-                <p className="text-sm font-bold tracking-wide text-slate-900">ZYTERON</p>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-blue-600">
-                  Web · Sistemas · Soporte TI
-                </p>
-              </div>
+    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-md">
+      <Container className="py-4">
+        <div className="flex items-center justify-between gap-4">
+          <Link
+            href="/"
+            aria-label="Zyteron, inicio"
+            className="flex shrink-0 items-center gap-2.5"
+            onClick={() => setOpen(false)}
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-700 text-xl font-black text-white">
+              Z
+            </span>
+            <span className="text-sm font-extrabold tracking-[0.12em] text-slate-950">ZYTERON</span>
+          </Link>
+          <nav aria-label="Navegación principal" className="hidden items-center gap-1 xl:flex">
+            {navigation.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={pathname === item.href ? "page" : undefined}
+                className="rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-700 aria-[current=page]:text-blue-700"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:block">
+              <PortalAccessLink size="sm" label="Portal clientes" />
+            </div>
+            <Link
+              href="/contacto"
+              className="hidden min-h-11 items-center gap-1.5 rounded-xl bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800 sm:flex"
+            >
+              Contacto <ArrowUpRight className="h-4 w-4" />
             </Link>
-
-            <div className="hidden items-center gap-2 lg:flex xl:hidden">
-              <PortalAccessLink size="sm" label="Portal" />
-              <Link
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-lg border border-[#25d366]/30 bg-[#25d366]/10 px-3 py-1.5 text-xs font-semibold text-[#18a34d] transition-all hover:bg-[#25d366]/20"
-              >
-                <WhatsAppIcon className="h-3.5 w-3.5" />
-                WhatsApp
-              </Link>
-              <Button asChild size="sm" className="bg-blue-700 px-3 font-bold text-white hover:bg-blue-800">
-                <Link href="/cotizador">Cotizar web</Link>
-              </Button>
-            </div>
-
-            <div className="hidden items-center gap-2.5 xl:flex">
-              <PortalAccessLink />
-              <Link
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-lg border border-[#25d366]/25 bg-[#25d366]/10 px-3.5 py-2 text-sm font-semibold text-[#18a34d] transition-all hover:bg-[#25d366]/20"
-              >
-                <WhatsAppIcon className="h-4 w-4" />
-                WhatsApp
-              </Link>
-              <Button
-                asChild
-                size="sm"
-                className="btn-primary-glow gap-2 bg-blue-700 font-bold text-white shadow-md shadow-blue-700/25 hover:bg-blue-800"
-              >
-                <Link href="/cotizador">
-                  Cotizar página web <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              </Button>
-            </div>
-
             <button
-              className="flex h-10 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-slate-700 transition-colors hover:bg-slate-100 lg:hidden"
-              onClick={() => setOpen((value) => !value)}
+              ref={toggleRef}
+              type="button"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 xl:hidden"
+              onClick={() => setOpen(!open)}
               aria-label={open ? "Cerrar menú" : "Abrir menú"}
               aria-expanded={open}
               aria-controls="mobile-navigation"
             >
               {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              <span className="text-xs font-semibold">{open ? "Cerrar" : "Menú"}</span>
             </button>
           </div>
-
-          <div className="mt-3 hidden items-center justify-between gap-4 lg:flex">
-            <nav className="flex flex-wrap items-center gap-1 rounded-xl border border-slate-200 bg-slate-50/90 p-1">
-              <Link
-                href="/"
-                className="rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap text-slate-700 transition-colors hover:bg-white hover:text-blue-700"
-              >
-                Inicio
-              </Link>
-              <div
-                className="relative"
-                onMouseEnter={() => setServicesOpen(true)}
-                onMouseLeave={() => setServicesOpen(false)}
-              >
-                <Link
-                  href="/desarrollo-web"
-                  className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap text-slate-700 transition-colors hover:bg-white hover:text-blue-700"
-                  onFocus={() => setServicesOpen(true)}
-                  aria-expanded={servicesOpen}
-                  aria-controls="desktop-services-menu"
-                >
-                  Páginas Web <ChevronDown className="h-3.5 w-3.5" />
-                </Link>
-                {servicesOpen ? (
-                  <div id="desktop-services-menu" className="absolute left-0 top-full z-40 w-64 pt-2">
-                    <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
-                      <Link
-                        href={servicesHubItem.href}
-                        className="block rounded-lg px-3 py-2 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
-                        onClick={() => setServicesOpen(false)}
-                      >
-                        {servicesHubItem.label}
-                      </Link>
-                      <div className="my-1 h-px bg-slate-100" />
-                      {servicesNavItems.map((item) => (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          className="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
-                          onClick={() => setServicesOpen(false)}
-                        >
-                          {item.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-              {primaryNavItems.slice(1).map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-white hover:text-blue-700 whitespace-nowrap"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-
-            <nav className="flex flex-wrap items-center gap-1">
-              {secondaryNavItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="rounded-lg px-2.5 py-2 text-sm font-medium whitespace-nowrap text-slate-600 transition-colors hover:bg-slate-100 hover:text-blue-700"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </Container>
-      </header>
-
-      {/* Mobile Backdrop */}
-      <div
-        className={cn(
-          "fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm transition-all duration-300 lg:hidden",
-          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        )}
-        onClick={() => setOpen(false)}
-        aria-hidden="true"
-      />
-
-      {/* Mobile Drawer */}
-      <div
-        id="mobile-navigation"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Navegación principal"
-        aria-hidden={!open}
-        inert={!open}
-        className={cn(
-          "fixed inset-y-0 right-0 z-50 w-full max-w-sm border-l border-slate-200 bg-white shadow-2xl transition-transform duration-300 ease-in-out lg:hidden",
-          open ? "translate-x-0" : "translate-x-full"
-        )}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex h-16 items-center justify-between border-b border-slate-100 px-4 sm:px-6">
-          <span className="text-sm font-bold tracking-wide text-slate-900">MENÚ</span>
-          <button
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
-            onClick={() => setOpen(false)}
-            aria-label="Cerrar menú"
+        </div>
+        {open && (
+          <nav
+            ref={menuRef}
+            id="mobile-navigation"
+            aria-label="Navegación móvil"
+            className="mt-4 grid max-h-[75dvh] gap-1 overflow-y-auto border-t border-slate-200 pt-3 xl:hidden"
           >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        
-        <div className="flex h-[calc(100vh-4rem)] flex-col">
-          <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
-            <div className="flex flex-col space-y-1">
+            {[
+              ...navigation,
+              { href: "/contacto", label: "Contacto" },
+              { href: "/tiendas-online", label: "Tiendas online" },
+              { href: "/automatizacion", label: "Automatización" },
+              { href: "/demos", label: "Demos" },
+              { href: "/blog", label: "Recursos y blog" },
+              { href: "/faq", label: "Preguntas frecuentes" },
+              { href: "/servicios", label: "Todos los servicios" },
+            ].map((item) => (
               <Link
-                ref={firstMobileLinkRef}
-                href="/"
-                className="flex items-center rounded-xl px-3 py-3 text-base font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
                 onClick={() => setOpen(false)}
+                key={item.href}
+                href={item.href}
+                className="rounded-lg px-3 py-3 text-sm font-semibold text-slate-800 hover:bg-blue-50"
               >
-                Inicio
+                {item.label}
               </Link>
-              
-              <div className="mt-1 mb-1">
-                <button
-                  onClick={() => setMobileServicesOpen(!mobileServicesOpen)}
-                  className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-base font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
-                  aria-expanded={mobileServicesOpen}
-                >
-                  Páginas Web
-                  <ChevronDown
-                    className={cn(
-                      "h-4 w-4 text-slate-400 transition-transform duration-200",
-                      mobileServicesOpen && "rotate-180"
-                    )}
-                  />
-                </button>
-                <div
-                  className={cn(
-                    "overflow-hidden transition-all duration-300 ease-in-out",
-                    mobileServicesOpen ? "max-h-[32rem] opacity-100" : "max-h-0 opacity-0"
-                  )}
-                >
-                  <div className="mt-1 rounded-2xl border border-slate-100 bg-slate-50/50 p-2 mx-1">
-                    <Link
-                      href={servicesHubItem.href}
-                      className="flex items-center rounded-xl px-3 py-2.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-100/50"
-                      onClick={() => setOpen(false)}
-                    >
-                      {servicesHubItem.label}
-                    </Link>
-                    <div className="my-1.5 h-px bg-slate-200/60 mx-3" />
-                    {servicesNavItems.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className="flex items-center rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-white hover:text-blue-700 hover:shadow-sm"
-                        onClick={() => setOpen(false)}
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {primaryNavItems.slice(1).map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center rounded-xl px-3 py-3 text-base font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
-                  onClick={() => setOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              ))}
-
-              <div className="my-4 h-px bg-slate-100" />
-              
-              {secondaryNavItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900"
-                  onClick={() => setOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              ))}
+            ))}
+            <div className="p-3">
+              <PortalAccessLink size="sm" label="Portal clientes" />
             </div>
-          </div>
-
-          <div className="border-t border-slate-100 bg-slate-50/80 p-4 sm:px-6 backdrop-blur-md">
-            <div className="flex flex-col gap-3">
-              <PortalAccessLink
-                className="w-full justify-center py-3"
-                label="Portal de clientes"
-                onClick={() => setOpen(false)}
-              />
-              <Link
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366]/10 px-4 py-3 text-sm font-bold text-[#18a34d] transition-colors hover:bg-[#25d366]/20"
-                onClick={() => setOpen(false)}
-              >
-                <WhatsAppIcon className="h-5 w-5" />
-                Hablar por WhatsApp
-              </Link>
-              <Button asChild className="w-full rounded-xl bg-blue-700 py-6 text-base font-bold text-white shadow-md shadow-blue-700/20 hover:bg-blue-800 hover:shadow-lg hover:shadow-blue-700/30">
-                <Link href="/cotizador" onClick={() => setOpen(false)}>
-                  Cotizar mi página web <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+          </nav>
+        )}
+      </Container>
+    </header>
   );
 }

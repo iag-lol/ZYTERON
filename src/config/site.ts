@@ -46,9 +46,8 @@ export const siteConfig = {
     areaServed: "Chile",
     primaryArea: "Santiago y Región Metropolitana",
     experienceYears: 7,
-    // Integrantes visibles del equipo en /quienes-somos; alimenta
-    // numberOfEmployees en el schema de la Organization.
-    teamSize: 3,
+    // Dotación confirmada el 08-11-2026.
+    teamSize: 25,
     serviceTypes: [
       "Desarrollo web",
       "Sistemas web",

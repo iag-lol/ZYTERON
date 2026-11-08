@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
+import { serviceLineFor, publicPath } from "@/lib/commercial/request-context";
 import { serializeContactLeadDetails } from "@/lib/admin/contact-lead";
 import { sendLeadAlertEmail } from "@/lib/notifications/lead-alert";
 import { registerWebLeadSafe } from "@/lib/sales-ai/web-leads";
@@ -67,8 +68,14 @@ export async function POST(req: Request) {
     const details = serializeContactLeadDetails({
       company: data.company,
       service,
-      brief: data.message,
-      submittedFrom: req.headers.get("referer") || undefined,
+      brief: [
+        data.message,
+        `Línea de servicio: ${serviceLineFor(service)}`,
+        data.marketingSource && `Origen comercial: ${data.marketingSource}`,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+      submittedFrom: publicPath(req.headers.get("referer") || "/contacto") || undefined,
       projectType: data.projectType,
       budget: data.budget,
     });
@@ -89,7 +96,7 @@ export async function POST(req: Request) {
             type: "CONTACT",
           },
         });
-        return { ok: true, reference: leadId.slice(0, 8).toUpperCase() };
+        return { ok: true, leadId, reference: leadId.slice(0, 8).toUpperCase() };
       },
     );
     if (stored.created) {
@@ -106,7 +113,7 @@ export async function POST(req: Request) {
           message: data.message,
         });
       } catch {
-        /* Registro confirmado; fallo de aviso no vuelve a crear el lead. */
+        console.error("public_intake_notification_enrichment_failed", { source: "CONTACTO_WEB", leadId });
       }
       registerWebLeadSafe({
         formOrigin: "Formulario de contacto",

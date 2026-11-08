@@ -1,6 +1,11 @@
 "use client";
 
+import { isExcludedWebVisitPath } from "@/lib/analytics/visit-privacy";
+import { analyticsConfig } from "@/config/analytics";
+
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { serviceLineFor } from "@/lib/commercial/request-context";
 import { trackAnalyticsEvent } from "@/lib/analytics/google-ads";
 
 function classifyTrackedHref(href: string) {
@@ -21,6 +26,22 @@ function classifyTrackedHref(href: string) {
 }
 
 export function ConversionEventTracker() {
+  const pathname = usePathname();
+  useEffect(() => {
+    if (isExcludedWebVisitPath(pathname)) return;
+    const serviceLine = serviceLineFor(pathname);
+    if (analyticsConfig.googleAnalyticsId)
+      trackAnalyticsEvent("page_view", { page_path: pathname, service_line: serviceLine });
+    if (
+      serviceLine !== "sin_definir" &&
+      /^\/(desarrollo-web|paginas-web|tiendas-online|sistemas-web|automatizacion|soporte-ti|servicios)([/-]|$)/.test(
+        pathname,
+      )
+    )
+      trackAnalyticsEvent("service_view", { page_path: pathname, service_line: serviceLine });
+    if (pathname.startsWith("/demos/"))
+      trackAnalyticsEvent("demo_open", { page_path: pathname, service_line: serviceLine });
+  }, [pathname]);
   useEffect(() => {
     function handleDocumentClick(event: MouseEvent) {
       const target = event.target instanceof Element ? event.target.closest("a[href]") : null;
@@ -31,8 +52,18 @@ export function ConversionEventTracker() {
 
       trackAnalyticsEvent(eventName, {
         page_path: window.location.pathname,
-        destination_path: `${target.pathname}${target.search}`,
-        link_text: target.textContent?.trim().slice(0, 80) || undefined,
+        destination_path: target.origin === window.location.origin ? target.pathname : undefined,
+        service_line: serviceLineFor(
+          window.location.pathname +
+            " " +
+            (target.dataset.serviceLine || "") +
+            " " +
+            (target.origin === window.location.origin
+              ? new URL(target.href).searchParams.get("tipo") ||
+                new URL(target.href).searchParams.get("servicio") ||
+                ""
+              : ""),
+        ),
       });
     }
 

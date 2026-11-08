@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Fragment } from "react";
 import {
   ArrowRight,
   Building2,
@@ -46,12 +45,7 @@ import {
   type Plan,
   type PlanBlock,
 } from "@/config/pricing";
-import {
-  buildAbsoluteUrl,
-  buildFaqJsonLd,
-  buildWebPageJsonLd,
-  createPageMetadata,
-} from "@/lib/seo";
+import { buildAbsoluteUrl, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Precios de páginas web y sistemas en Chile",
@@ -64,14 +58,7 @@ export const metadata: Metadata = createPageMetadata({
 // Enlaces y utilidades
 // ---------------------------------------------------------------------------
 
-type ProjectTypeValue =
-  | "web-basica"
-  | "web-profesional"
-  | "tienda-online"
-  | "sistema-web";
-
-const WHATSAPP_URL =
-  `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20orientaci%C3%B3n%20sobre%20sus%20planes`;
+const WHATSAPP_URL = `${siteConfig.social.whatsapp}?text=Hola%20Zyteron%2C%20quiero%20orientaci%C3%B3n%20sobre%20sus%20planes`;
 
 /** Ancla de la sección donde vive cada bloque de la escalera. */
 const BLOCK_ANCHOR: Record<PlanBlock, string> = {
@@ -88,23 +75,12 @@ const BLOCK_LABEL: Record<PlanBlock, string> = {
   corporativo: "Soluciones corporativas",
 };
 
-/** Tipo de proyecto con el que el cotizador arranca precargado. */
-function quoteType(plan: Plan): ProjectTypeValue {
-  if (plan.block === "ecommerce") return "tienda-online";
-  if (plan.block === "sistemas" || plan.block === "corporativo") return "sistema-web";
-  return plan.id === "web-basica" ? "web-basica" : "web-profesional";
-}
-
-/**
- * Destino del botón de cada plan. Los proyectos corporativos parten con una
- * conversación de levantamiento, no con un formulario de precio; el resto entra
- * al cotizador con el tipo y el plan ya seleccionados y el origen conservado.
- */
+/** Solicitud breve con plan y origen conservados. */
 function planCtaHref(plan: Plan) {
-  if (plan.block === "corporativo") {
+  if (plan.requiresDiscovery) {
     return `/contacto?servicio=sistemas-web&plan=${plan.id}&origen=planes`;
   }
-  return `/cotizador?tipo=${quoteType(plan)}&plan=${plan.id}&origen=planes`;
+  return `/contacto?tipo=${plan.id}&plan=${plan.id}&origen=planes`;
 }
 
 /** El único adicional de precio cerrado se muestra sin la palabra Desde. */
@@ -238,7 +214,8 @@ const systemProcess = [
 const corporateScopeStages = [
   {
     title: "Levantamiento funcional",
-    detail: "Entrevistas con las áreas involucradas y registro de la operación real, no la teórica.",
+    detail:
+      "Entrevistas con las áreas involucradas y registro de la operación real, no la teórica.",
   },
   {
     title: "Análisis de procesos",
@@ -515,7 +492,9 @@ function AddonRows({ items }: { items: Addon[] }) {
           </span>
           <span className="text-sm font-bold text-blue-700">
             {addonPrice(item)}
-            {item.monthly ? <span className="block text-xs font-semibold text-slate-500">{item.monthly}</span> : null}
+            {item.monthly ? (
+              <span className="block text-xs font-semibold text-slate-500">{item.monthly}</span>
+            ) : null}
             {item.note === "precio cerrado" ? (
               <span className="block text-xs font-semibold text-slate-500">precio cerrado</span>
             ) : null}
@@ -542,19 +521,10 @@ export default function PlanesPage() {
           ],
         })}
       />
-      <JsonLd
-        id="planes-faq-schema"
-        data={buildFaqJsonLd(
-          priceFaqs.map((item) => ({
-            question: item.q,
-            answer: item.a,
-          })),
-        )}
-      />
       <JsonLd id="planes-price-specification-schema" data={planOfferCatalogJsonLd} />
 
       {/* 1. Hero ------------------------------------------------------------ */}
-      <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-16 sm:py-20">
+      <section className="bg-hero-pattern relative overflow-hidden border-b border-slate-200 py-16 sm:py-20">
         <Container className="space-y-6 text-center">
           <div className="badge-blue mx-auto w-fit">
             <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
@@ -564,9 +534,10 @@ export default function PlanesPage() {
             Precios de páginas web y sistemas en Chile
           </h1>
           <p className="mx-auto max-w-4xl text-base text-slate-600 sm:text-lg">
-            Una escalera completa de desarrollo web en Chile: desde una página profesional para existir en Google,
-            {" "}{lowerDesde(entryPlan.price)}, hasta plataformas corporativas a medida para automatizar procesos,
-            controlar operaciones e integrar varias áreas de la organización.
+            Una escalera completa de desarrollo web en Chile: desde una página profesional para
+            existir en Google, {lowerDesde(entryPlan.price)}, hasta plataformas corporativas a
+            medida para automatizar procesos, controlar operaciones e integrar varias áreas de la
+            organización.
           </p>
 
           <ol className="mx-auto grid max-w-5xl gap-3 text-left sm:grid-cols-2 lg:grid-cols-4">
@@ -576,11 +547,13 @@ export default function PlanesPage() {
                   href={step.href}
                   className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white/90 p-4 transition-colors hover:border-blue-300 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
                 >
-                  <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">
+                  <span className="text-[11px] font-bold tracking-[0.14em] text-blue-600 uppercase">
                     Nivel {index + 1}
                   </span>
                   <span className="mt-1 text-sm font-extrabold text-slate-900">{step.label}</span>
-                  <span className="mt-1 text-base font-extrabold text-blue-700">Desde {step.price} + IVA</span>
+                  <span className="mt-1 text-base font-extrabold text-blue-700">
+                    Desde {step.price} + IVA
+                  </span>
                   <span className="mt-1 text-xs leading-5 text-slate-500">{step.detail}</span>
                 </a>
               </li>
@@ -588,15 +561,20 @@ export default function PlanesPage() {
           </ol>
 
           <p className="mx-auto max-w-4xl rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-slate-700">
-            Todos los valores se expresan desde el monto indicado y no incluyen IVA. El precio final se confirma en la
-            cotización formal, según alcance, módulos, integraciones y volumen de operación.
+            Todos los valores se expresan desde el monto indicado y no incluyen IVA. El precio final
+            se confirma en la cotización formal, según alcance, módulos, integraciones y volumen de
+            operación.
           </p>
 
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
               <Link href="/cotizador?origen=planes">Cotizar mi proyecto</Link>
             </Button>
-            <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+            <Button
+              asChild
+              variant="outline"
+              className="border-slate-300 text-slate-800 hover:bg-slate-50"
+            >
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                 Hablar por WhatsApp
               </a>
@@ -609,12 +587,16 @@ export default function PlanesPage() {
       <section className="section-alt py-14" aria-labelledby="selector-necesidad">
         <Container className="space-y-6">
           <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Guía rápida</p>
-            <h2 id="selector-necesidad" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">Guía rápida</p>
+            <h2
+              id="selector-necesidad"
+              className="text-2xl font-extrabold text-slate-900 sm:text-3xl"
+            >
               ¿Qué necesita tu empresa?
             </h2>
             <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Elige el objetivo más parecido al tuyo y te llevamos directo al nivel de solución que lo resuelve.
+              Elige el objetivo más parecido al tuyo y te llevamos directo al nivel de solución que
+              lo resuelve.
             </p>
           </div>
 
@@ -637,16 +619,22 @@ export default function PlanesPage() {
       </section>
 
       {/* 3. Bloque A: páginas web ------------------------------------------- */}
-      <section id={BLOCK_ANCHOR.web} className="scroll-mt-24 bg-white py-16" aria-labelledby="bloque-web">
+      <section
+        id={BLOCK_ANCHOR.web}
+        className="scroll-mt-24 bg-white py-16"
+        aria-labelledby="bloque-web"
+      >
         <Container className="space-y-6">
           <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Bloque 1 · Presencia y captación</p>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+              Bloque 1 · Presencia y captación
+            </p>
             <h2 id="bloque-web" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
               Páginas web para empresas y pymes
             </h2>
             <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Cuatro niveles para pasar de no existir en Google a tener un sitio corporativo que genera consultas.
-              Todos incluyen diseño responsive, SEO técnico base y analítica.
+              Cuatro niveles para pasar de no existir en Google a tener un sitio corporativo que
+              genera consultas. Todos incluyen diseño responsive, SEO técnico base y analítica.
             </p>
           </div>
 
@@ -655,18 +643,34 @@ export default function PlanesPage() {
             rest={webPlans.filter((plan) => !FEATURED_WEB_IDS.includes(plan.id)).map(toShowcase)}
           />
 
-          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div
+            tabIndex={0}
+            role="region"
+            aria-label="Tabla comparativa; desplaza para ver todas las columnas"
+            className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm"
+          >
             <table className="w-full min-w-[720px] text-left text-sm">
               <caption className="sr-only">
-                Planes de páginas web: para quién es cada uno, precio desde, plazo referencial y cómo cotizarlo
+                Planes de páginas web: para quién es cada uno, precio desde, plazo referencial y
+                cómo cotizarlo
               </caption>
               <thead>
                 <tr className="bg-slate-100">
-                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Plan</th>
-                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Para quién es</th>
-                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Precio</th>
-                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Plazo referencial</th>
-                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Cotizar</th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">
+                    Plan
+                  </th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">
+                    Para quién es
+                  </th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">
+                    Precio
+                  </th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">
+                    Plazo referencial
+                  </th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">
+                    Cotizar
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -676,8 +680,10 @@ export default function PlanesPage() {
                       {plan.name}
                     </th>
                     <td className="px-5 py-4 leading-relaxed text-slate-600">{plan.audience}</td>
-                    <td className="whitespace-nowrap px-5 py-4 font-bold text-blue-700">{plan.price}</td>
-                    <td className="whitespace-nowrap px-5 py-4 text-slate-700">{plan.deadline}</td>
+                    <td className="px-5 py-4 font-bold whitespace-nowrap text-blue-700">
+                      {plan.price}
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap text-slate-700">{plan.deadline}</td>
                     <td className="px-5 py-4">
                       <Link
                         href={planCtaHref(plan)}
@@ -695,28 +701,42 @@ export default function PlanesPage() {
       </section>
 
       {/* 4. Bloque B: ecommerce --------------------------------------------- */}
-      <section id={BLOCK_ANCHOR.ecommerce} className="scroll-mt-24 section-alt py-16" aria-labelledby="bloque-ecommerce">
+      <section
+        id={BLOCK_ANCHOR.ecommerce}
+        className="section-alt scroll-mt-24 py-16"
+        aria-labelledby="bloque-ecommerce"
+      >
         <Container className="space-y-6">
           <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Bloque 2 · Venta en línea</p>
-            <h2 id="bloque-ecommerce" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+              Bloque 2 · Venta en línea
+            </p>
+            <h2
+              id="bloque-ecommerce"
+              className="text-2xl font-extrabold text-slate-900 sm:text-3xl"
+            >
               Ecommerce con catálogo, pagos y panel de pedidos
             </h2>
             <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Para vender en línea con medios de pago chilenos y administrar productos, stock y pedidos desde un panel
-              propio.
+              Para vender en línea con medios de pago chilenos y administrar productos, stock y
+              pedidos desde un panel propio.
             </p>
           </div>
 
           <div className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
             {ecommercePlans.map((plan) => (
-              <article key={plan.id} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+              <article
+                key={plan.id}
+                className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+              >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">
+                    <p className="inline-flex items-center gap-2 text-[11px] font-bold tracking-[0.14em] text-blue-600 uppercase">
                       <ShoppingCart className="h-3.5 w-3.5" aria-hidden="true" /> Tienda online
                     </p>
-                    <h3 className="mt-2 text-xl font-extrabold text-slate-900 sm:text-2xl">{plan.name}</h3>
+                    <h3 className="mt-2 text-xl font-extrabold text-slate-900 sm:text-2xl">
+                      {plan.name}
+                    </h3>
                     <p className="mt-1 text-sm leading-6 text-slate-600">{plan.summary}</p>
                   </div>
                   <div className="text-right">
@@ -725,7 +745,9 @@ export default function PlanesPage() {
                   </div>
                 </div>
 
-                <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">{plan.audience}</p>
+                <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                  {plan.audience}
+                </p>
 
                 <div className="mt-5">
                   <PlanFeatures features={plan.features} columns />
@@ -738,26 +760,37 @@ export default function PlanesPage() {
             ))}
 
             <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-base font-extrabold text-slate-900">Qué conviene tener listo antes de vender</h3>
+              <h3 className="text-base font-extrabold text-slate-900">
+                Qué conviene tener listo antes de vender
+              </h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Mientras más ordenada llegue la información del catálogo, más rápido queda operativa la tienda.
+                Mientras más ordenada llegue la información del catálogo, más rápido queda operativa
+                la tienda.
               </p>
               <div className="mt-4 space-y-2">
                 {ecommerceChecklist.map((item) => (
-                  <div key={item} className="flex items-start gap-2 text-sm leading-6 text-slate-600">
-                    <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden="true" />
+                  <div
+                    key={item}
+                    className="flex items-start gap-2 text-sm leading-6 text-slate-600"
+                  >
+                    <Check
+                      className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-600"
+                      aria-hidden="true"
+                    />
                     <span>{item}</span>
                   </div>
                 ))}
               </div>
               <p className="mt-4 text-xs leading-5 text-slate-500">
-                Las comisiones por venta las cobra la pasarela de pago y la cuenta de comercio la contrata tu empresa.
+                Las comisiones por venta las cobra la pasarela de pago y la cuenta de comercio la
+                contrata tu empresa.
               </p>
               <Link
                 href="/tiendas-online"
                 className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700 hover:text-blue-800"
               >
-                Ver cómo trabajamos las tiendas online <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                Ver cómo trabajamos las tiendas online{" "}
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
               </Link>
             </aside>
           </div>
@@ -765,17 +798,24 @@ export default function PlanesPage() {
       </section>
 
       {/* 5. Bloque C: sistemas ---------------------------------------------- */}
-      <section id={BLOCK_ANCHOR.sistemas} className="scroll-mt-24 bg-white py-16" aria-labelledby="bloque-sistemas">
+      <section
+        id={BLOCK_ANCHOR.sistemas}
+        className="scroll-mt-24 bg-white py-16"
+        aria-labelledby="bloque-sistemas"
+      >
         <Container className="space-y-6">
           <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Bloque 3 · Operación y procesos</p>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+              Bloque 3 · Operación y procesos
+            </p>
             <h2 id="bloque-sistemas" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
               Sistemas, automatización y plataformas empresariales
             </h2>
             <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Software a medida para operar: usuarios con permisos, base de datos propia, registros, automatizaciones,
-              reportería y trazabilidad. Cada proyecto parte con un levantamiento técnico y se cierra con una cotización
-              formal, porque el valor depende de los módulos y del volumen real de operación.
+              Software a medida para operar: usuarios con permisos, base de datos propia, registros,
+              automatizaciones, reportería y trazabilidad. Cada proyecto parte con un levantamiento
+              técnico y se cierra con una cotización formal, porque el valor depende de los módulos
+              y del volumen real de operación.
             </p>
           </div>
 
@@ -785,7 +825,7 @@ export default function PlanesPage() {
                 key={plan.id}
                 className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7"
               >
-                <p className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">
+                <p className="inline-flex items-center gap-2 text-[11px] font-bold tracking-[0.14em] text-blue-600 uppercase">
                   <LayoutDashboard className="h-3.5 w-3.5" aria-hidden="true" /> Sistema web
                 </p>
                 <h3 className="mt-2 text-xl font-extrabold text-slate-900">{plan.name}</h3>
@@ -796,7 +836,9 @@ export default function PlanesPage() {
                   <p className="mt-0.5 text-xs text-slate-500">{plan.deadline}</p>
                 </div>
 
-                <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">{plan.audience}</p>
+                <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                  {plan.audience}
+                </p>
 
                 <div className="mt-4">
                   <PlanFeatures features={plan.features} columns />
@@ -819,7 +861,9 @@ export default function PlanesPage() {
           <div className="grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:grid-cols-2 lg:grid-cols-4">
             {systemProcess.map((step, index) => (
               <article key={step.title}>
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">Etapa {index + 1}</p>
+                <p className="text-[11px] font-bold tracking-[0.14em] text-blue-600 uppercase">
+                  Etapa {index + 1}
+                </p>
                 <h3 className="mt-1 text-sm font-extrabold text-slate-900">{step.title}</h3>
                 <p className="mt-1 text-xs leading-5 text-slate-600">{step.detail}</p>
               </article>
@@ -831,21 +875,25 @@ export default function PlanesPage() {
       {/* 6. Bloque D: soluciones corporativas -------------------------------- */}
       <section
         id={BLOCK_ANCHOR.corporativo}
-        className="scroll-mt-24 border-y-4 border-blue-800 bg-slate-50 bg-grid-light py-16"
+        className="bg-grid-light scroll-mt-24 border-y-4 border-blue-800 bg-slate-50 py-16"
         aria-labelledby="bloque-corporativo"
       >
         <Container className="space-y-8">
           <div className="space-y-3">
-            <p className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-800">
-              <Building2 className="h-3.5 w-3.5" aria-hidden="true" /> Bloque 4 · Desarrollo corporativo
+            <p className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1 text-[11px] font-bold tracking-[0.14em] text-blue-800 uppercase">
+              <Building2 className="h-3.5 w-3.5" aria-hidden="true" /> Bloque 4 · Desarrollo
+              corporativo
             </p>
-            <h2 id="bloque-corporativo" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+            <h2
+              id="bloque-corporativo"
+              className="text-2xl font-extrabold text-slate-900 sm:text-3xl"
+            >
               Soluciones Corporativas y Control Interno
             </h2>
             <p className="max-w-5xl text-sm leading-relaxed text-slate-700 sm:text-base">
-              Plataformas desarrolladas a medida para centralizar información, automatizar procesos, controlar
-              operaciones y entregar trazabilidad a organizaciones que requieren herramientas más avanzadas que un
-              software estándar.
+              Plataformas desarrolladas a medida para centralizar información, automatizar procesos,
+              controlar operaciones y entregar trazabilidad a organizaciones que requieren
+              herramientas más avanzadas que un software estándar.
             </p>
           </div>
 
@@ -853,12 +901,12 @@ export default function PlanesPage() {
             {corporatePlans.map((plan) => (
               <article
                 key={plan.id}
-                className="flex h-full flex-col rounded-3xl border border-blue-200 border-t-4 border-t-blue-800 bg-white p-6 shadow-md shadow-blue-100/60 sm:p-7"
+                className="flex h-full flex-col rounded-3xl border border-t-4 border-blue-200 border-t-blue-800 bg-white p-6 shadow-md shadow-blue-100/60 sm:p-7"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-xl font-extrabold text-slate-900">{plan.name}</h3>
                   {plan.tag ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-800 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-800 px-2.5 py-1 text-[10px] font-bold tracking-wider text-white uppercase">
                       <Sparkles className="h-3 w-3" aria-hidden="true" /> {plan.tag}
                     </span>
                   ) : null}
@@ -870,7 +918,9 @@ export default function PlanesPage() {
                   <p className="mt-0.5 text-xs text-slate-500">{plan.deadline}</p>
                 </div>
 
-                <p className="mt-4 rounded-xl bg-blue-50 px-4 py-3 text-sm text-slate-700">{plan.audience}</p>
+                <p className="mt-4 rounded-xl bg-blue-50 px-4 py-3 text-sm text-slate-700">
+                  {plan.audience}
+                </p>
 
                 <div className="mt-4">
                   <PlanFeatures features={plan.features} columns />
@@ -878,7 +928,10 @@ export default function PlanesPage() {
 
                 {plan.requiresDiscovery ? (
                   <p className="mt-4 flex items-start gap-2 rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-3 text-xs leading-5 text-slate-700">
-                    <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-blue-800" aria-hidden="true" />
+                    <ShieldCheck
+                      className="mt-0.5 h-4 w-4 shrink-0 text-blue-800"
+                      aria-hidden="true"
+                    />
                     <span>{CORPORATE_SCOPE_NOTE}</span>
                   </p>
                 ) : null}
@@ -896,13 +949,17 @@ export default function PlanesPage() {
               Qué implica un proyecto corporativo y por qué tiene ese valor
             </h3>
             <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-600">
-              Una plataforma corporativa no es una web con más pantallas: es un desarrollo construido sobre la operación
-              real de la organización. Estas son las etapas que se ejecutan y que sostienen la inversión.
+              Una plataforma corporativa no es una web con más pantallas: es un desarrollo
+              construido sobre la operación real de la organización. Estas son las etapas que se
+              ejecutan y que sostienen la inversión.
             </p>
             <ol className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {corporateScopeStages.map((stage, index) => (
-                <li key={stage.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700">
+                <li
+                  key={stage.title}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                >
+                  <p className="text-[11px] font-bold tracking-[0.14em] text-blue-700 uppercase">
                     {String(index + 1).padStart(2, "0")}
                   </p>
                   <h4 className="mt-1 text-sm font-extrabold text-slate-900">{stage.title}</h4>
@@ -911,8 +968,9 @@ export default function PlanesPage() {
               ))}
             </ol>
             <p className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600">
-              Los proyectos corporativos se desarrollan por etapas utilizables, de modo que la organización empieza a
-              operar con el primer módulo mientras avanza el resto de la plataforma.
+              Los proyectos corporativos se desarrollan por etapas utilizables, de modo que la
+              organización empieza a operar con el primer módulo mientras avanza el resto de la
+              plataforma.
             </p>
           </article>
         </Container>
@@ -925,15 +983,15 @@ export default function PlanesPage() {
       <section id="flotas" className="scroll-mt-24 bg-white py-16" aria-labelledby="bloque-flotas">
         <Container className="space-y-8">
           <div className="space-y-3">
-            <p className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-800">
+            <p className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1 text-[11px] font-bold tracking-[0.14em] text-blue-800 uppercase">
               <Truck className="h-3.5 w-3.5" aria-hidden="true" /> Desarrollo a medida · Flotas
             </p>
             <h2 id="bloque-flotas" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
               Plataformas Personalizadas de Gestión de Flotas
             </h2>
             <p className="max-w-5xl text-sm leading-relaxed text-slate-700 sm:text-base">
-              Software desarrollado a medida para empresas que necesitan controlar vehículos, conductores, clientes,
-              servicios y operaciones desde una sola plataforma.
+              Software desarrollado a medida para empresas que necesitan controlar vehículos,
+              conductores, clientes, servicios y operaciones desde una sola plataforma.
             </p>
             <p className="flex max-w-4xl items-start gap-2 rounded-2xl border border-blue-200 bg-blue-50/70 px-4 py-3 text-xs leading-5 text-slate-700">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-blue-800" aria-hidden="true" />
@@ -946,16 +1004,20 @@ export default function PlanesPage() {
           <div className="grid gap-5 lg:grid-cols-2">
             <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
               <h3 className="text-lg font-extrabold text-slate-900">
-                Mantención de plataforma personalizada · {clp(FLEET_PLATFORM_MAINTENANCE)} + IVA / mes
+                Mantención de plataforma personalizada · {clp(FLEET_PLATFORM_MAINTENANCE)} + IVA /
+                mes
               </h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Valor fijo por cliente, independiente de la cantidad de vehículos. Mantiene operativo el software y las
-                funciones contratadas:
+                Valor fijo por cliente, independiente de la cantidad de vehículos. Mantiene
+                operativo el software y las funciones contratadas:
               </p>
               <ul className="mt-4 grid gap-2 sm:grid-cols-2">
                 {FLEET_MAINTENANCE_INCLUDES.map((item) => (
                   <li key={item} className="flex gap-2 text-sm leading-6 text-slate-600">
-                    <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden="true" />
+                    <Check
+                      className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-600"
+                      aria-hidden="true"
+                    />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -970,7 +1032,10 @@ export default function PlanesPage() {
               <ul className="mt-4 grid gap-2 sm:grid-cols-2">
                 {FLEET_MAINTENANCE_EXCLUSIONS.map((item) => (
                   <li key={item} className="flex gap-2 text-sm leading-6 text-slate-600">
-                    <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-slate-400" aria-hidden="true" />
+                    <span
+                      className="mt-2 h-1 w-1 shrink-0 rounded-full bg-slate-400"
+                      aria-hidden="true"
+                    />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -982,15 +1047,21 @@ export default function PlanesPage() {
           </div>
 
           <article className="rounded-3xl border border-blue-200 bg-white p-6 shadow-sm sm:p-8">
-            <h3 className="text-lg font-extrabold text-slate-900 sm:text-xl">Cada plataforma es diferente</h3>
+            <h3 className="text-lg font-extrabold text-slate-900 sm:text-xl">
+              Cada plataforma es diferente
+            </h3>
             <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-600">
-              Los valores corresponden a precios iniciales referenciales. Cada plataforma se desarrolla según los
-              procesos y necesidades de la empresa, así que el valor final puede variar dependiendo de:
+              Los valores corresponden a precios iniciales referenciales. Cada plataforma se
+              desarrolla según los procesos y necesidades de la empresa, así que el valor final
+              puede variar dependiendo de:
             </p>
             <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {FLEET_SCOPE_FACTORS.map((factor) => (
                 <li key={factor} className="flex gap-2 text-sm leading-6 text-slate-600">
-                  <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden="true" />
+                  <Check
+                    className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-600"
+                    aria-hidden="true"
+                  />
                   <span>{factor}</span>
                 </li>
               ))}
@@ -999,32 +1070,56 @@ export default function PlanesPage() {
 
           <article className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <h3 className="text-lg font-extrabold text-slate-900">Resumen de los tres proyectos</h3>
-            <div className="mt-4 overflow-x-auto">
+            <div
+              tabIndex={0}
+              role="region"
+              aria-label="Tabla comparativa; desplaza para ver todas las columnas"
+              className="mt-4 overflow-x-auto"
+            >
               <table className="w-full min-w-[720px] border-collapse text-left text-sm">
                 <caption className="sr-only">
-                  Resumen de precios de desarrollo, equipamiento y operación mensual por tamaño de flota
+                  Resumen de precios de desarrollo, equipamiento y operación mensual por tamaño de
+                  flota
                 </caption>
                 <thead>
                   <tr className="border-b border-slate-200">
-                    <th scope="col" className="p-3 font-bold text-slate-900">Proyecto</th>
-                    <th scope="col" className="p-3 font-bold text-slate-900">Vehículos</th>
-                    <th scope="col" className="p-3 font-bold text-slate-900">Desarrollo desde</th>
-                    <th scope="col" className="p-3 font-bold text-slate-900">GPS</th>
-                    <th scope="col" className="p-3 font-bold text-slate-900">Instalación</th>
-                    <th scope="col" className="p-3 font-bold text-slate-900">Mensual por vehículo</th>
-                    <th scope="col" className="p-3 font-bold text-slate-900">Mantención</th>
+                    <th scope="col" className="p-3 font-bold text-slate-900">
+                      Proyecto
+                    </th>
+                    <th scope="col" className="p-3 font-bold text-slate-900">
+                      Vehículos
+                    </th>
+                    <th scope="col" className="p-3 font-bold text-slate-900">
+                      Desarrollo desde
+                    </th>
+                    <th scope="col" className="p-3 font-bold text-slate-900">
+                      GPS
+                    </th>
+                    <th scope="col" className="p-3 font-bold text-slate-900">
+                      Instalación
+                    </th>
+                    <th scope="col" className="p-3 font-bold text-slate-900">
+                      Mensual por vehículo
+                    </th>
+                    <th scope="col" className="p-3 font-bold text-slate-900">
+                      Mantención
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {FLEET_TIERS.map((tier) => (
                     <tr key={tier.id} className="border-b border-slate-100 last:border-b-0">
-                      <th scope="row" className="p-3 text-left font-semibold text-slate-800">{tier.label}</th>
+                      <th scope="row" className="p-3 text-left font-semibold text-slate-800">
+                        {tier.label}
+                      </th>
                       <td className="p-3 text-slate-600">
                         {tier.max === null ? `${tier.min}+` : `${tier.min}–${tier.max}`}
                       </td>
                       <td className="p-3 text-slate-600">{clp(FLEET_PRICE_AMOUNTS[tier.id])}</td>
                       <td className="p-3 text-slate-600">{clp(FLEET_HARDWARE_AMOUNTS.gps)}</td>
-                      <td className="p-3 text-slate-600">{clp(FLEET_HARDWARE_AMOUNTS.installation)}</td>
+                      <td className="p-3 text-slate-600">
+                        {clp(FLEET_HARDWARE_AMOUNTS.installation)}
+                      </td>
                       <td className="p-3 text-slate-600">{clp(tier.perVehicle)}</td>
                       <td className="p-3 text-slate-600">{clp(FLEET_PLATFORM_MAINTENANCE)}</td>
                     </tr>
@@ -1041,7 +1136,9 @@ export default function PlanesPage() {
             <h3 className="text-lg font-extrabold text-slate-900 sm:text-xl">Equipamiento GPS</h3>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                <h4 className="text-sm font-extrabold text-slate-900">GPS configurado e integrado</h4>
+                <h4 className="text-sm font-extrabold text-slate-900">
+                  GPS configurado e integrado
+                </h4>
                 <p className="mt-1 text-xl font-extrabold text-slate-900">
                   {clp(FLEET_HARDWARE_AMOUNTS.gps)} + IVA
                   <span className="ml-1 text-xs font-semibold text-slate-500">por unidad</span>
@@ -1056,7 +1153,10 @@ export default function PlanesPage() {
                     "Integración con la plataforma del cliente",
                   ].map((item) => (
                     <li key={item} className="flex gap-2 text-xs leading-5 text-slate-600">
-                      <Check className="mt-0.5 h-3 w-3 shrink-0 text-emerald-600" aria-hidden="true" />
+                      <Check
+                        className="mt-0.5 h-3 w-3 shrink-0 text-emerald-600"
+                        aria-hidden="true"
+                      />
                       <span>{item}</span>
                     </li>
                   ))}
@@ -1082,21 +1182,33 @@ export default function PlanesPage() {
       </section>
 
       {/* 7. Bloque E: funcionalidades adicionales ---------------------------- */}
-      <section id="adicionales" className="scroll-mt-24 bg-white py-16" aria-labelledby="bloque-adicionales">
+      <section
+        id="adicionales"
+        className="scroll-mt-24 bg-white py-16"
+        aria-labelledby="bloque-adicionales"
+      >
         <Container className="space-y-8">
           <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Bloque 5 · Adicionales</p>
-            <h2 id="bloque-adicionales" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+              Bloque 5 · Adicionales
+            </p>
+            <h2
+              id="bloque-adicionales"
+              className="text-2xl font-extrabold text-slate-900 sm:text-3xl"
+            >
               Funcionalidades adicionales
             </h2>
             <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Cualquier plan se puede ampliar con inteligencia artificial, integraciones, paneles o automatizaciones.
-              Estos valores se suman al proyecto base según lo que realmente necesites.
+              Cualquier plan se puede ampliar con inteligencia artificial, integraciones, paneles o
+              automatizaciones. Estos valores se suman al proyecto base según lo que realmente
+              necesites.
             </p>
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-lg font-extrabold text-slate-900">Inteligencia artificial aplicada al negocio</h3>
+            <h3 className="text-lg font-extrabold text-slate-900">
+              Inteligencia artificial aplicada al negocio
+            </h3>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {AI_SERVICES.map((service) => (
                 <article
@@ -1106,7 +1218,7 @@ export default function PlanesPage() {
                   <div className="flex items-start justify-between gap-2">
                     <h4 className="text-sm font-extrabold text-slate-900">{service.name}</h4>
                     {service.tag ? (
-                      <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700">
+                      <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold tracking-wider text-blue-700 uppercase">
                         {service.tag}
                       </span>
                     ) : null}
@@ -1116,7 +1228,9 @@ export default function PlanesPage() {
                   <div className="mt-4 border-t border-slate-100 pt-3">
                     <p className="text-base font-extrabold text-blue-700">{service.setup}</p>
                     {service.monthly ? (
-                      <p className="text-xs font-semibold text-slate-500">Operación {lowerDesde(service.monthly)}</p>
+                      <p className="text-xs font-semibold text-slate-500">
+                        Operación {lowerDesde(service.monthly)}
+                      </p>
                     ) : null}
                   </div>
                 </article>
@@ -1130,53 +1244,8 @@ export default function PlanesPage() {
           <div className="space-y-4">
             <h3 className="text-lg font-extrabold text-slate-900">Adicionales por categoría</h3>
 
-            {/* Escritorio: tabla completa */}
-            <div className="hidden overflow-x-auto rounded-2xl border border-slate-200 bg-white md:block">
-              <table className="w-full min-w-[640px] text-left text-sm">
-                <caption className="sr-only">
-                  Funcionalidades adicionales por categoría, con su valor referencial y su costo mensual cuando aplica
-                </caption>
-                <thead className="sr-only">
-                  <tr>
-                    <th scope="col">Adicional</th>
-                    <th scope="col">Valor</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ADDON_CATEGORIES.map((category) => (
-                    <Fragment key={category}>
-                      <tr className="border-t border-slate-200 bg-slate-100 first:border-t-0">
-                        <th colSpan={2} scope="colgroup" className="px-5 py-3 text-sm font-extrabold text-slate-900">
-                          {category}
-                        </th>
-                      </tr>
-                      {addonsByCategory(category).map((item) => (
-                        <tr key={item.id} className="border-t border-slate-100">
-                          <td className="px-5 py-3 text-slate-700">
-                            {item.name}
-                            {item.note && item.note !== "precio cerrado" ? (
-                              <span className="block text-xs text-slate-500">{item.note}</span>
-                            ) : null}
-                          </td>
-                          <td className="px-5 py-3 text-right font-bold text-blue-700">
-                            {addonPrice(item)}
-                            {item.monthly ? (
-                              <span className="block text-xs font-semibold text-slate-500">{item.monthly}</span>
-                            ) : null}
-                            {item.note === "precio cerrado" ? (
-                              <span className="block text-xs font-semibold text-slate-500">precio cerrado</span>
-                            ) : null}
-                          </td>
-                        </tr>
-                      ))}
-                    </Fragment>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Móvil: acordeones nativos */}
-            <div className="grid gap-3 md:hidden">
+            {/* Un mismo catálogo accesible en móvil y escritorio. */}
+            <div className="grid gap-3">
               {ADDON_CATEGORIES.map((category) => (
                 <details
                   key={category}
@@ -1184,7 +1253,10 @@ export default function PlanesPage() {
                 >
                   <summary className="flex cursor-pointer items-center justify-between gap-3 rounded-lg text-sm font-extrabold text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
                     {category}
-                    <ChevronDown className="faq-chevron h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                    <ChevronDown
+                      className="faq-chevron h-4 w-4 shrink-0 text-slate-400"
+                      aria-hidden="true"
+                    />
                   </summary>
                   <div className="mt-3">
                     <AddonRows items={addonsByCategory(category)} />
@@ -1201,30 +1273,43 @@ export default function PlanesPage() {
       </section>
 
       {/* 8. Bloque F: mantención -------------------------------------------- */}
-      <section id="mantencion" className="scroll-mt-24 section-alt py-16" aria-labelledby="bloque-mantencion">
+      <section
+        id="mantencion"
+        className="section-alt scroll-mt-24 py-16"
+        aria-labelledby="bloque-mantencion"
+      >
         <Container className="space-y-6">
           <div className="space-y-2">
-            <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-600">
+            <p className="inline-flex items-center gap-2 text-xs font-bold tracking-widest text-blue-600 uppercase">
               <CircleDollarSign className="h-4 w-4" aria-hidden="true" /> Bloque 6 · Continuidad
             </p>
-            <h2 id="bloque-mantencion" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+            <h2
+              id="bloque-mantencion"
+              className="text-2xl font-extrabold text-slate-900 sm:text-3xl"
+            >
               Mantención y continuidad operativa
             </h2>
             <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Después de la entrega, la mantención mensual mantiene el proyecto seguro, respaldado y funcionando. El
-              plan se elige según el tipo de solución y su criticidad.
+              Después de la entrega, la mantención mensual mantiene el proyecto seguro, respaldado y
+              funcionando. El plan se elige según el tipo de solución y su criticidad.
             </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {MAINTENANCE_CATALOG.map((plan) => (
-              <article key={plan.name} className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <article
+                key={plan.name}
+                className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              >
                 <h3 className="text-base font-extrabold text-slate-900">{plan.name}</h3>
                 <p className="mt-1 text-lg font-extrabold text-blue-700">{plan.price}</p>
                 <ul className="mt-3 space-y-2">
                   {plan.includes.map((item) => (
                     <li key={item} className="flex gap-2 text-sm leading-6 text-slate-600">
-                      <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden="true" />
+                      <Check
+                        className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-600"
+                        aria-hidden="true"
+                      />
                       <span>{item}</span>
                     </li>
                   ))}
@@ -1234,15 +1319,23 @@ export default function PlanesPage() {
           </div>
 
           <article className="rounded-3xl border border-amber-200 bg-amber-50 p-6">
-            <h3 className="text-lg font-extrabold text-slate-900">Qué es soporte y qué es desarrollo nuevo</h3>
+            <h3 className="text-lg font-extrabold text-slate-900">
+              Qué es soporte y qué es desarrollo nuevo
+            </h3>
             <p className="mt-2 max-w-4xl text-sm leading-6 text-amber-900">
-              La mantención cubre la continuidad de lo que ya está entregado. Todo lo que amplía el alcance se cotiza
-              como proyecto, con su propio levantamiento y plazo:
+              La mantención cubre la continuidad de lo que ya está entregado. Todo lo que amplía el
+              alcance se cotiza como proyecto, con su propio levantamiento y plazo:
             </p>
             <ul className="mt-4 grid gap-2 sm:grid-cols-2">
               {MAINTENANCE_EXCLUSIONS.map((item) => (
-                <li key={item} className="flex gap-2 rounded-xl bg-white/70 px-4 py-2.5 text-sm text-slate-700">
-                  <ArrowRight className="mt-1 h-3.5 w-3.5 shrink-0 text-amber-700" aria-hidden="true" />
+                <li
+                  key={item}
+                  className="flex gap-2 rounded-xl bg-white/70 px-4 py-2.5 text-sm text-slate-700"
+                >
+                  <ArrowRight
+                    className="mt-1 h-3.5 w-3.5 shrink-0 text-amber-700"
+                    aria-hidden="true"
+                  />
                   <span>{item}</span>
                 </li>
               ))}
@@ -1251,7 +1344,11 @@ export default function PlanesPage() {
               <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
                 <Link href="/cotizador?tipo=soporte-ti&origen=planes">Cotizar mantención</Link>
               </Button>
-              <Button asChild variant="outline" className="border-slate-300 bg-white text-slate-800 hover:bg-slate-50">
+              <Button
+                asChild
+                variant="outline"
+                className="border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
+              >
                 <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                   Consultar por WhatsApp
                 </a>
@@ -1265,28 +1362,44 @@ export default function PlanesPage() {
       <section className="bg-white py-16" aria-labelledby="comparativa">
         <Container className="space-y-6">
           <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Comparativa</p>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">Comparativa</p>
             <h2 id="comparativa" className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
               Qué tipo de solución corresponde a cada necesidad
             </h2>
             <p className="max-w-4xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              Compara las cinco familias de proyecto con su valor de entrada y su plazo referencial, y entra al detalle
-              de la que calza con tu objetivo.
+              Compara las cinco familias de proyecto con su valor de entrada y su plazo referencial,
+              y entra al detalle de la que calza con tu objetivo.
             </p>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div
+            tabIndex={0}
+            role="region"
+            aria-label="Tabla comparativa; desplaza para ver todas las columnas"
+            className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm"
+          >
             <table className="w-full min-w-[820px] text-left text-sm">
               <caption className="sr-only">
-                Comparación de tipos de solución: para quién es cada una, precio desde y plazo referencial de entrega
+                Comparación de tipos de solución: para quién es cada una, precio desde y plazo
+                referencial de entrega
               </caption>
               <thead>
                 <tr className="bg-slate-100">
-                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Tipo de solución</th>
-                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Para quién es</th>
-                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Precio desde</th>
-                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Plazo referencial</th>
-                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">Más información</th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">
+                    Tipo de solución
+                  </th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">
+                    Para quién es
+                  </th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">
+                    Precio desde
+                  </th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">
+                    Plazo referencial
+                  </th>
+                  <th scope="col" className="px-5 py-3 text-sm font-extrabold text-slate-900">
+                    Más información
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -1296,10 +1409,15 @@ export default function PlanesPage() {
                       {solution.type}
                     </th>
                     <td className="px-5 py-4 leading-relaxed text-slate-600">{solution.who}</td>
-                    <td className="whitespace-nowrap px-5 py-4 font-bold text-blue-700">{solution.price}</td>
+                    <td className="px-5 py-4 font-bold whitespace-nowrap text-blue-700">
+                      {solution.price}
+                    </td>
                     <td className="px-5 py-4 text-slate-700">{solution.deadline}</td>
                     <td className="px-5 py-4">
-                      <Link href={solution.href} className="font-bold text-blue-700 hover:text-blue-800">
+                      <Link
+                        href={solution.href}
+                        className="font-bold text-blue-700 hover:text-blue-800"
+                      >
                         {solution.linkLabel}
                       </Link>
                     </td>
@@ -1319,10 +1437,16 @@ export default function PlanesPage() {
           </h2>
           <div className="grid gap-3 lg:grid-cols-2">
             {priceFaqs.map((item) => (
-              <details key={item.q} className="faq-item rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <details
+                key={item.q}
+                className="faq-item rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              >
                 <summary className="flex cursor-pointer items-center justify-between gap-3 rounded-lg text-sm font-extrabold text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
                   <h3 className="text-sm font-extrabold text-slate-900">{item.q}</h3>
-                  <ChevronDown className="faq-chevron h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                  <ChevronDown
+                    className="faq-chevron h-4 w-4 shrink-0 text-slate-400"
+                    aria-hidden="true"
+                  />
                 </summary>
                 <p className="mt-3 text-sm leading-6 text-slate-600">{item.a}</p>
               </details>
@@ -1336,8 +1460,8 @@ export default function PlanesPage() {
         <Container className="space-y-4 text-center">
           <h2 className="text-2xl font-extrabold sm:text-3xl">Solicita una propuesta formal</h2>
           <p className="mx-auto max-w-3xl text-sm text-blue-100 sm:text-base">
-            Ya sea una página web, una tienda online o una plataforma corporativa a medida, preparamos una propuesta
-            con alcance, etapas y plazos alineados con tu operación real.
+            Ya sea una página web, una tienda online o una plataforma corporativa a medida,
+            preparamos una propuesta con alcance, etapas y plazos alineados con tu operación real.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild className="bg-white font-bold text-blue-800 hover:bg-blue-50">
@@ -1345,8 +1469,13 @@ export default function PlanesPage() {
                 Ir al cotizador <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </Button>
-            <Button asChild className="bg-blue-900/40 font-bold text-white ring-1 ring-white/40 hover:bg-blue-900/60">
-              <Link href="/contacto?servicio=sistemas-web&origen=planes">Solicitar levantamiento corporativo</Link>
+            <Button
+              asChild
+              className="bg-blue-900/40 font-bold text-white ring-1 ring-white/40 hover:bg-blue-900/60"
+            >
+              <Link href="/contacto?servicio=sistemas-web&origen=planes">
+                Solicitar levantamiento corporativo
+              </Link>
             </Button>
             <Button
               asChild

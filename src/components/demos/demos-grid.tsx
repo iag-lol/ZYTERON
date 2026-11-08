@@ -1,11 +1,18 @@
 "use client";
 
+import { trackAnalyticsEvent } from "@/lib/analytics/google-ads";
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ExternalLink, Eye, LayoutTemplate } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { softBlueBlurDataUrl } from "@/lib/image-placeholders";
 
 export type DemoCard = {
@@ -43,6 +50,11 @@ export function DemosGrid({ demos }: DemosGridProps) {
   }, [activeDemo]);
 
   function openDemoModal(demo: DemoCard) {
+    trackAnalyticsEvent("demo_open", {
+      service_line: "web_ecommerce",
+      demo_id: "gallery",
+      page_path: "/demos",
+    });
     setActiveDemo(demo);
     setActiveImageIndex(0);
   }
@@ -51,101 +63,135 @@ export function DemosGrid({ demos }: DemosGridProps) {
     <>
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {demos.map((demo) => {
-          const isInteractive = Boolean((demo.gallery?.length && !demo.galleryPending) || demo.demoHref);
+          const isInteractive = Boolean(
+            (demo.gallery?.length && !demo.galleryPending) || demo.demoHref,
+          );
 
           return (
-          <article
-            key={demo.title}
-            className={`card-premium overflow-hidden ${isInteractive ? "cursor-pointer" : "cursor-default"}`}
-          >
-            <div className="bg-grid-light border-b border-slate-200 p-5">
-              {demo.gallery?.length && !demo.galleryPending ? (
-                <button
-                  type="button"
-                  onClick={() => openDemoModal(demo)}
-                  className="group relative grid aspect-[16/9] w-full grid-cols-2 gap-1 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 text-left"
-                  aria-label={`Abrir galería de ${demo.title}`}
-                >
-                  {demo.gallery.slice(0, 4).map((src, index) => (
-                    <div key={src} className="relative">
-                      <Image
-                        src={src}
-                        alt={`Captura ${index + 1} de ${demo.title} para pymes y empresas en Chile`}
-                        fill
-                        sizes="(max-width: 768px) 45vw, (max-width: 1280px) 260px, 300px"
-                        quality={80}
-                        loading="lazy"
-                        placeholder="blur"
-                        blurDataURL={softBlueBlurDataUrl}
-                        className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                      />
-                    </div>
-                  ))}
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-900/70 to-transparent px-3 py-2">
-                    <p className="text-xs font-semibold text-white">Click para ampliar galería</p>
-                  </div>
-                </button>
-              ) : (
-                <div className="flex aspect-[16/9] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white/80 p-4 text-center">
-                  <div className="text-center">
-                    <LayoutTemplate className="mx-auto h-6 w-6 text-blue-700" />
-                    <p className="mt-2 text-xs font-bold uppercase tracking-widest text-blue-700">Demo funcional</p>
-                    {demo.galleryPending ? (
-                      <p className="mt-2 text-xs text-slate-500">Espacio listo para 4 capturas PNG</p>
-                    ) : null}
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="space-y-3 p-5">
-              <h2 className="text-base font-bold text-slate-900">{demo.title}</h2>
-              <p className="text-sm text-slate-600">{demo.description}</p>
-              <p className="text-xs text-slate-500">{demo.tech}</p>
-              <div className="flex flex-wrap gap-2 pt-1">
-                {demo.gallery?.length ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-slate-300 text-slate-800 hover:bg-slate-50"
+            <article
+              key={demo.title}
+              className={`card-premium overflow-hidden ${isInteractive ? "cursor-pointer" : "cursor-default"}`}
+            >
+              <div className="bg-grid-light border-b border-slate-200 p-5">
+                {demo.gallery?.length && !demo.galleryPending ? (
+                  <button
+                    type="button"
                     onClick={() => openDemoModal(demo)}
+                    className="group relative grid aspect-[16/9] w-full grid-cols-2 gap-1 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 text-left"
+                    aria-label={`Abrir galería de ${demo.title}`}
                   >
-                    <Eye className="h-4 w-4" /> Ver demo
-                  </Button>
-                ) : demo.demoHref ? (
-                  <Button asChild size="sm" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-                    <a href={demo.demoHref} target="_blank" rel="noopener noreferrer">
-                      <Eye className="h-4 w-4" /> Ver demo
-                    </a>
-                  </Button>
+                    {demo.gallery.slice(0, 4).map((src, index) => (
+                      <div key={src} className="relative">
+                        <Image
+                          src={src}
+                          alt={`Captura ${index + 1} de ${demo.title} para pymes y empresas en Chile`}
+                          fill
+                          sizes="(max-width: 768px) 45vw, (max-width: 1280px) 260px, 300px"
+                          quality={80}
+                          loading="lazy"
+                          placeholder="blur"
+                          blurDataURL={softBlueBlurDataUrl}
+                          className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                        />
+                      </div>
+                    ))}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-900/70 to-transparent px-3 py-2">
+                      <p className="text-xs font-semibold text-white">Click para ampliar galería</p>
+                    </div>
+                  </button>
                 ) : (
-                  <Button asChild size="sm" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-                    <Link href="/contacto?origen=demo">
+                  <div className="flex aspect-[16/9] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white/80 p-4 text-center">
+                    <div className="text-center">
+                      <LayoutTemplate className="mx-auto h-6 w-6 text-blue-700" />
+                      <p className="mt-2 text-xs font-bold tracking-widest text-blue-700 uppercase">
+                        Demo funcional
+                      </p>
+                      {demo.galleryPending ? (
+                        <p className="mt-2 text-xs text-slate-500">
+                          Abre la demostración para recorrer sus pantallas.
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-3 p-5">
+                <h2 className="text-base font-bold text-slate-900">{demo.title}</h2>
+                <p className="text-sm text-slate-600">{demo.description}</p>
+                <p className="text-xs text-slate-500">{demo.tech}</p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {demo.gallery?.length ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-slate-300 text-slate-800 hover:bg-slate-50"
+                      onClick={() => openDemoModal(demo)}
+                    >
                       <Eye className="h-4 w-4" /> Ver demo
+                    </Button>
+                  ) : demo.demoHref ? (
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="outline"
+                      className="border-slate-300 text-slate-800 hover:bg-slate-50"
+                    >
+                      <a
+                        onClick={() =>
+                          trackAnalyticsEvent("demo_open", {
+                            service_line: "web_ecommerce",
+                            demo_id: "external_demo",
+                            page_path: "/demos",
+                          })
+                        }
+                        href={demo.demoHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Eye className="h-4 w-4" /> Ver demo
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="outline"
+                      className="border-slate-300 text-slate-800 hover:bg-slate-50"
+                    >
+                      <Link href="/contacto?origen=demo">
+                        <Eye className="h-4 w-4" /> Ver demo
+                      </Link>
+                    </Button>
+                  )}
+
+                  <Button asChild size="sm" className="bg-blue-700 text-white hover:bg-blue-800">
+                    <Link href={`/contacto?origen=demo&item=${encodeURIComponent(demo.title)}`}>
+                      Cotizar algo similar
                     </Link>
                   </Button>
-                )}
-
-                <Button asChild size="sm" className="bg-blue-700 text-white hover:bg-blue-800">
-                  <Link href={`/contacto?origen=demo&item=${encodeURIComponent(demo.title)}`}>
-                    Cotizar algo similar
-                  </Link>
-                </Button>
+                </div>
               </div>
-            </div>
-          </article>
+            </article>
           );
         })}
       </div>
 
-      <Dialog open={Boolean(activeDemo)} onOpenChange={(open) => (!open ? setActiveDemo(null) : undefined)}>
+      <Dialog
+        open={Boolean(activeDemo)}
+        onOpenChange={(open) => (!open ? setActiveDemo(null) : undefined)}
+      >
         <DialogContent className="max-h-[94vh] w-[min(1160px,96vw)] overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl sm:max-w-[1160px]">
           <DialogHeader className="border-b border-slate-200 bg-slate-50 px-5 py-4">
-            <DialogTitle className="text-xl font-extrabold text-slate-900">{activeDemo?.title}</DialogTitle>
-            <DialogDescription className="text-sm text-slate-600">{activeDemo?.description}</DialogDescription>
+            <DialogTitle className="text-xl font-extrabold text-slate-900">
+              {activeDemo?.title}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-600">
+              {activeDemo?.description}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid max-h-[calc(94vh-92px)] overflow-hidden lg:grid-cols-[1.45fr_0.85fr]">
-            <div className="border-b border-slate-200 p-4 lg:border-b-0 lg:border-r">
+            <div className="border-b border-slate-200 p-4 lg:border-r lg:border-b-0">
               {activeImageSrc ? (
                 <>
                   <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
@@ -170,7 +216,9 @@ export function DemosGrid({ demos }: DemosGridProps) {
                           type="button"
                           onClick={() => setActiveImageIndex(index)}
                           className={`relative aspect-[4/3] overflow-hidden rounded-lg border ${
-                            activeImageIndex === index ? "border-blue-600 ring-2 ring-blue-200" : "border-slate-200"
+                            activeImageIndex === index
+                              ? "border-blue-600 ring-2 ring-blue-200"
+                              : "border-slate-200"
                           }`}
                           aria-label={`Ver imagen ${index + 1}`}
                         >
@@ -198,9 +246,13 @@ export function DemosGrid({ demos }: DemosGridProps) {
             </div>
 
             <aside className="overflow-y-auto p-5">
-              {activeDemo?.priceFrom ? <p className="text-lg font-extrabold text-blue-700">{activeDemo.priceFrom}</p> : null}
+              {activeDemo?.priceFrom ? (
+                <p className="text-lg font-extrabold text-blue-700">{activeDemo.priceFrom}</p>
+              ) : null}
 
-              <h3 className="mt-3 text-xs font-bold uppercase tracking-widest text-slate-500">Qué contiene esta web</h3>
+              <h3 className="mt-3 text-xs font-bold tracking-widest text-slate-500 uppercase">
+                Qué contiene esta web
+              </h3>
               <div className="mt-2 space-y-2">
                 {activeIncludes.map((item) => (
                   <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
@@ -223,8 +275,14 @@ export function DemosGrid({ demos }: DemosGridProps) {
                     </a>
                   </Button>
                 ) : null}
-                <Button asChild variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
-                  <Link href={`/contacto?origen=demo&item=${encodeURIComponent(activeDemo?.title ?? "Demo")}`}>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="border-slate-300 text-slate-800 hover:bg-slate-50"
+                >
+                  <Link
+                    href={`/contacto?origen=demo&item=${encodeURIComponent(activeDemo?.title ?? "Demo")}`}
+                  >
                     Cotizar esta solución
                   </Link>
                 </Button>

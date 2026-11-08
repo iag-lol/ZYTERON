@@ -14,8 +14,7 @@ export const metadata: Metadata = createPageMetadata({
   path: "/contacto",
 });
 
-const WHATSAPP_URL =
-  `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20solicitar%20una%20cotizaci%C3%B3n%20formal.`;
+const WHATSAPP_URL = `${siteConfig.social.whatsapp}?text=Hola%20ZYTERON%2C%20quiero%20solicitar%20una%20cotizaci%C3%B3n%20formal.`;
 
 const contactInfo = [
   {
@@ -87,18 +86,19 @@ export default function ContactoPage() {
           ],
         })}
       />
-      <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-20">
+      <section className="bg-hero-pattern relative overflow-hidden border-b border-slate-200 py-20">
         <Container className="space-y-5 text-center">
           <div className="badge-blue mx-auto w-fit">
             <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
             Contacto comercial
           </div>
-          <h1 className="text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
+          <h1 className="text-4xl leading-tight font-extrabold text-slate-900 sm:text-5xl">
             Cotiza tu página web, sistema digital o solución tecnológica
           </h1>
           <p className="mx-auto max-w-3xl text-base text-slate-600 sm:text-lg">
-            Cuéntanos qué necesita tu empresa. Revisaremos alcance, prioridades y requerimientos para entregarte
-            una orientación clara y una propuesta profesional según el tipo de proyecto.
+            Cuéntanos qué necesita tu empresa. Revisaremos alcance, prioridades y requerimientos
+            para entregarte una orientación clara y una propuesta profesional según el tipo de
+            proyecto.
           </p>
         </Container>
       </section>
@@ -112,11 +112,12 @@ export default function ContactoPage() {
                 Elige el canal que prefieras. Si tu solicitud es urgente, recomendamos WhatsApp.
               </p>
               <p className="text-sm leading-relaxed text-slate-600">
-                Atendemos empresas, pymes y emprendedores de Santiago y la Región Metropolitana desde
-                nuestra oficina en Providencia, y al resto de Chile mediante atención remota.
+                Atendemos empresas, pymes y emprendedores de Santiago y la Región Metropolitana
+                desde nuestra oficina en Providencia, y al resto de Chile mediante atención remota.
               </p>
               <p className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm leading-relaxed text-slate-700">
-                Responderemos con una orientación clara según el tipo de proyecto y necesidad de tu negocio.
+                Responderemos con una orientación clara según el tipo de proyecto y necesidad de tu
+                negocio.
               </p>
             </div>
 
@@ -132,18 +133,18 @@ export default function ContactoPage() {
                     >
                       <div className={`shrink-0 rounded-lg p-2 ${c.iconClasses}`}>{c.icon}</div>
                       <div>
-                        <p className="mb-0.5 text-xs text-slate-500">{c.label}</p>
+                        <p className="mb-0.5 text-xs text-slate-600">{c.label}</p>
                         <p className="text-sm font-bold text-slate-900">{c.value}</p>
-                        <p className="text-xs text-slate-400">{c.sub}</p>
+                        <p className="text-xs text-slate-600">{c.sub}</p>
                       </div>
                     </a>
                   ) : (
                     <div className={`flex items-center gap-4 rounded-xl border p-4 ${c.classes}`}>
                       <div className={`shrink-0 rounded-lg p-2 ${c.iconClasses}`}>{c.icon}</div>
                       <div>
-                        <p className="mb-0.5 text-xs text-slate-500">{c.label}</p>
+                        <p className="mb-0.5 text-xs text-slate-600">{c.label}</p>
                         <p className="text-sm font-bold text-slate-900">{c.value}</p>
-                        <p className="text-xs text-slate-400">{c.sub}</p>
+                        <p className="text-xs text-slate-600">{c.sub}</p>
                       </div>
                     </div>
                   )}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useRef, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowRight, Loader2, MessageSquare } from "lucide-react";
@@ -9,7 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { trackContactFormSubmit, trackQuoteRequestConversion } from "@/lib/analytics/google-ads";
+import {
+  trackAnalyticsEvent,
+  trackContactFormSubmit,
+  trackQuoteRequestConversion,
+} from "@/lib/analytics/google-ads";
+import {
+  PROJECT_TYPES,
+  resolveRequestContext,
+  serviceLineFor,
+} from "@/lib/commercial/request-context";
+import { finishSubmission, submissionIdFor } from "@/lib/commercial/submission-id";
 
 const contactLeadSchema = z.object({
   name: z.string().trim().min(2, "Ingresa tu nombre completo").max(120, "Nombre demasiado largo"),
@@ -32,6 +42,8 @@ const contactLeadSchema = z.object({
     .min(10, "Describe brevemente tu requerimiento")
     .max(4000, "Mensaje demasiado largo"),
   website: z.string().max(0).optional(),
+  users: z.string().max(80).optional(),
+  priority: z.string().max(180).optional(),
 });
 
 type ContactLeadFormData = z.infer<typeof contactLeadSchema>;
@@ -40,23 +52,6 @@ type SubmitState =
   | { status: "idle" }
   | { status: "success"; reference: string }
   | { status: "error"; message: string };
-
-const PROJECT_TYPE_BY_SOURCE: Record<string, string> = {
-  "desarrollo-web": "Página web corporativa",
-  "desarrollo-web-santiago": "Página web corporativa",
-  "paginas-web-para-pymes": "Página web corporativa",
-  "paginas-web-para-empresas": "Página web corporativa",
-  "tiendas-online": "Tienda online",
-  "sistemas-web": "Sistema interno",
-  automatizacion: "Automatización de procesos",
-  "automatizacion-whatsapp-empresas": "Automatización de procesos",
-  "soporte-ti": "Soporte TI",
-  "soporte-ti-pymes-santiago": "Soporte TI",
-  "seo-para-empresas-chile": "SEO y posicionamiento",
-  "landing-pages-para-empresas": "Landing page comercial",
-  "mantencion-web-chile": "Soporte TI",
-  "cotizador-web-pdf": "Sistema interno",
-};
 
 function readMarketingSource() {
   const params = new URLSearchParams(window.location.search);
@@ -81,6 +76,8 @@ function readMarketingSource() {
 }
 
 export function ContactLeadForm() {
+  const sending = useRef(false);
+  const started = useRef(false);
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
 
   const {
@@ -88,6 +85,7 @@ export function ContactLeadForm() {
     handleSubmit,
     reset,
     setValue,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<ContactLeadFormData>({
     resolver: zodResolver(contactLeadSchema),
@@ -100,74 +98,131 @@ export function ContactLeadForm() {
       budget: "",
       message: "",
       website: "",
+      users: "",
+      priority: "",
     },
     mode: "onTouched",
   });
 
+  const projectType = useWatch({ control, name: "projectType" });
+  const serviceLine = serviceLineFor(projectType);
+  const isSystems = serviceLine === "sistemas_automatizacion";
+
   useEffect(() => {
-    const source = new URLSearchParams(window.location.search).get("servicio")?.trim();
-    const projectType = source ? PROJECT_TYPE_BY_SOURCE[source] : undefined;
-    if (projectType) {
-      setValue("projectType", projectType, { shouldValidate: true });
-    }
+    const context = resolveRequestContext(new URLSearchParams(window.location.search));
+    if (context.projectType) setValue("projectType", context.projectType);
+    if (context.estimate)
+      setValue(
+        "budget",
+        `$${context.estimate.toLocaleString("es-CL")} + IVA (estimación de calculadora)`,
+      );
   }, [setValue]);
 
-  const submission = useRef<{ body: string; id: string } | null>(null);
-  async function send(values: ContactLeadFormData) {
-    setSubmitState({ status: "idle" });
-
-    const body = JSON.stringify({
-      ...values,
-      service: values.projectType,
-      marketingSource: readMarketingSource(),
-    });
-    if (submission.current?.body !== body) submission.current = { body, id: crypto.randomUUID() };
-    try {
-      const response = await fetch("/api/contacto", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...JSON.parse(body), clientSubmissionId: submission.current.id }),
-      });
-
-      const payload = (await response.json().catch(() => ({}))) as {
-        ok?: boolean;
-        error?: string;
-        reference?: string;
-      };
-
-      if (!response.ok || !payload.ok) {
-        setSubmitState({
-          status: "error",
-          message: payload.error || "No se pudo enviar tu solicitud. Intenta nuevamente.",
+  const onSubmit = (event: React.FormEvent<HTMLFormElement>) =>
+    handleSubmit(
+      async (values) => {
+        if (sending.current) return;
+        sending.current = true;
+        setSubmitState({ status: "idle" });
+        try {
+          const requestData = {
+            ...values,
+            service: values.projectType,
+            marketingSource: readMarketingSource(),
+            message: [
+              values.message,
+              values.users && `Usuarios aproximados: ${values.users}`,
+              values.priority && `Prioridad: ${values.priority}`,
+            ]
+              .filter(Boolean)
+              .join("\n"),
+          };
+          const response = await fetch("/api/contacto", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...requestData,
+              clientSubmissionId: await submissionIdFor("contact", requestData),
+            }),
+          });
+          const payload = (await response.json().catch(() => ({}))) as {
+            ok?: boolean;
+            error?: string;
+            reference?: string;
+            leadId?: string;
+          };
+          if (response.status === 409) finishSubmission("contact");
+          if (!response.ok || !payload.ok || !payload.leadId || !payload.reference) {
+            throw new Error(
+              response.status === 429
+                ? "Has enviado varias solicitudes. Espera un minuto y vuelve a intentar; tus datos siguen aquí."
+                : "No pudimos confirmar la recepción. Tus datos siguen aquí para reintentar.",
+            );
+          }
+          const eventParams = {
+            page_path: window.location.pathname,
+            service_line: serviceLineFor(values.projectType),
+            lead_id: payload.leadId,
+          };
+          trackContactFormSubmit(eventParams);
+          trackQuoteRequestConversion(eventParams);
+          finishSubmission("contact");
+          setSubmitState({ status: "success", reference: payload.reference });
+        } catch {
+          trackAnalyticsEvent("form_error", {
+            form_type: "contact",
+            service_line: serviceLine,
+            error_type: "delivery",
+          });
+          setSubmitState({
+            status: "error",
+            message:
+              "No pudimos confirmar la recepción. Tus datos siguen aquí; revisa tu conexión y vuelve a intentar. También puedes contactarnos por WhatsApp.",
+          });
+        } finally {
+          sending.current = false;
+        }
+      },
+      () => {
+        trackAnalyticsEvent("form_error", {
+          form_type: "contact",
+          service_line: serviceLine,
+          error_type: "validation",
         });
-        return;
-      }
+      },
+    )(event);
 
-      const eventParams = {
-        page_path: window.location.pathname,
-        project_type: values.projectType,
-      };
-      trackContactFormSubmit(eventParams);
-      trackQuoteRequestConversion(eventParams);
-      reset();
-      setSubmitState({ status: "success", reference: payload.reference || "RECIBIDO" });
-      submission.current = null;
-    } catch {
-      setSubmitState({
-        status: "error",
-        message: "No pudimos confirmar el envío. Intenta nuevamente.",
-      });
-    }
-  }
+  if (submitState.status === "success")
+    return (
+      <div role="status" className="rounded-2xl border border-emerald-200 bg-emerald-50 p-7">
+        <h2 className="text-xl font-bold text-emerald-950">Solicitud recibida</h2>
+        <p className="mt-3 text-sm text-emerald-900">
+          Tu referencia es <strong>{submitState.reference}</strong>. Revisaremos el contexto y te
+          contactaremos por correo o WhatsApp durante nuestro horario de atención: lunes a viernes,
+          de 09:00 a 18:00.
+        </p>
+        <Button
+          variant="outline"
+          className="mt-5"
+          onClick={() => {
+            reset();
+            started.current = false;
+            setSubmitState({ status: "idle" });
+          }}
+        >
+          Enviar otra solicitud
+        </Button>
+      </div>
+    );
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-lg shadow-slate-100/80">
       <div className="mb-6 space-y-1">
         <div className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5 text-blue-700" />
-          <h2 className="text-lg font-bold text-slate-900">Solicita una orientación inicial</h2>
+          <h2 className="text-lg font-bold text-slate-900">
+            {isSystems ? "Solicitar diagnóstico" : "Cuéntanos qué web o tienda necesitas"}
+          </h2>
         </div>
         <p className="text-xs text-slate-500">
           Cuéntanos lo esencial. Revisaremos tu necesidad y te contactaremos para definir el
@@ -175,7 +230,16 @@ export function ContactLeadForm() {
         </p>
       </div>
 
-      <form onSubmit={(event) => void handleSubmit(send)(event)} className="space-y-4" noValidate>
+      <form
+        onSubmit={onSubmit}
+        className="space-y-4"
+        noValidate
+        onFocusCapture={() => {
+          if (started.current) return;
+          started.current = true;
+          trackAnalyticsEvent("form_start", { form_type: "contact", service_line: serviceLine });
+        }}
+      >
         <input
           type="text"
           autoComplete="off"
@@ -198,9 +262,15 @@ export function ContactLeadForm() {
               autoComplete="name"
               placeholder="Tu nombre completo"
               className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
+              aria-invalid={Boolean(errors.name)}
+              aria-describedby={errors.name ? "name-error" : undefined}
               {...register("name")}
             />
-            {errors.name ? <p className="text-xs text-rose-600">{errors.name.message}</p> : null}
+            {errors.name ? (
+              <p id="name-error" role="alert" className="text-xs text-rose-600">
+                {errors.name.message}
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-1.5">
@@ -215,10 +285,14 @@ export function ContactLeadForm() {
               autoComplete="organization"
               placeholder="Nombre de tu empresa"
               className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
+              aria-invalid={Boolean(errors.company)}
+              aria-describedby={errors.company ? "company-error" : undefined}
               {...register("company")}
             />
             {errors.company ? (
-              <p className="text-xs text-rose-600">{errors.company.message}</p>
+              <p id="company-error" role="alert" className="text-xs text-rose-600">
+                {errors.company.message}
+              </p>
             ) : null}
           </div>
 
@@ -235,9 +309,15 @@ export function ContactLeadForm() {
               autoComplete="email"
               placeholder="correo@empresa.cl"
               className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? "email-error" : undefined}
               {...register("email")}
             />
-            {errors.email ? <p className="text-xs text-rose-600">{errors.email.message}</p> : null}
+            {errors.email ? (
+              <p id="email-error" role="alert" className="text-xs text-rose-600">
+                {errors.email.message}
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-1.5">
@@ -254,9 +334,15 @@ export function ContactLeadForm() {
               autoComplete="tel"
               placeholder="+56939526626"
               className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
+              aria-invalid={Boolean(errors.phone)}
+              aria-describedby={errors.phone ? "phone-error" : undefined}
               {...register("phone")}
             />
-            {errors.phone ? <p className="text-xs text-rose-600">{errors.phone.message}</p> : null}
+            {errors.phone ? (
+              <p id="phone-error" role="alert" className="text-xs text-rose-600">
+                {errors.phone.message}
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-1.5">
@@ -269,21 +355,21 @@ export function ContactLeadForm() {
             <select
               id="projectType"
               className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-blue-400 focus:bg-white focus:outline-none"
+              aria-invalid={Boolean(errors.projectType)}
+              aria-describedby={errors.projectType ? "projectType-error" : undefined}
               {...register("projectType")}
             >
               <option value="">Selecciona una opción</option>
-              <option value="Página web corporativa">Página web corporativa</option>
-              <option value="Landing page comercial">Landing page comercial</option>
-              <option value="Tienda online">Tienda online</option>
-              <option value="Sistema interno">Sistema interno</option>
-              <option value="Panel administrativo">Panel administrativo</option>
-              <option value="Automatización de procesos">Automatización de procesos</option>
-              <option value="SEO y posicionamiento">SEO y posicionamiento</option>
-              <option value="Soporte TI">Soporte TI</option>
-              <option value="Otro">Otro</option>
+              {PROJECT_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
             </select>
             {errors.projectType ? (
-              <p className="text-xs text-rose-600">{errors.projectType.message}</p>
+              <p id="projectType-error" role="alert" className="text-xs text-rose-600">
+                {errors.projectType.message}
+              </p>
             ) : null}
           </div>
 
@@ -298,10 +384,14 @@ export function ContactLeadForm() {
               id="budget"
               placeholder="Ej: $180.000 - $350.000"
               className="border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
+              aria-invalid={Boolean(errors.budget)}
+              aria-describedby={errors.budget ? "budget-error" : undefined}
               {...register("budget")}
             />
             {errors.budget ? (
-              <p className="text-xs text-rose-600">{errors.budget.message}</p>
+              <p id="budget-error" role="alert" className="text-xs text-rose-600">
+                {errors.budget.message}
+              </p>
             ) : null}
           </div>
         </div>
@@ -311,19 +401,58 @@ export function ContactLeadForm() {
             htmlFor="message"
             className="text-xs font-bold tracking-wide text-slate-500 uppercase"
           >
-            Descripción del requerimiento
+            {isSystems ? "Proceso o tarea que necesitas mejorar" : "Descripción del requerimiento"}
           </Label>
           <Textarea
             id="message"
-            rows={5}
+            rows={4}
             placeholder="Ej: necesito una web para mostrar mis servicios y recibir consultas por WhatsApp."
             className="resize-none border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white"
+            aria-invalid={Boolean(errors.message)}
+            aria-describedby={errors.message ? "message-error" : undefined}
             {...register("message")}
           />
           {errors.message ? (
-            <p className="text-xs text-rose-600">{errors.message.message}</p>
+            <p id="message-error" role="alert" className="text-xs text-rose-600">
+              {errors.message.message}
+            </p>
           ) : null}
         </div>
+
+        {isSystems && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="users">Usuarios aproximados (opcional)</Label>
+              <Input
+                id="users"
+                placeholder="Ej: 5 a 10 personas"
+                aria-invalid={Boolean(errors.users)}
+                aria-describedby={errors.users ? "users-error" : undefined}
+                {...register("users")}
+              />
+              {errors.users && (
+                <p id="users-error" role="alert" className="text-xs text-rose-700">
+                  {errors.users.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="priority">Necesidad prioritaria (opcional)</Label>
+              <Input
+                id="priority"
+                placeholder="Ej: aprobar documentos"
+                aria-invalid={Boolean(errors.priority)}
+                aria-describedby={errors.priority ? "priority-error" : undefined}
+                {...register("priority")}
+              />
+              {errors.priority && (
+                <p id="priority-error" role="alert" className="text-xs text-rose-700">
+                  {errors.priority.message}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         <Button
           type="submit"
@@ -337,20 +466,17 @@ export function ContactLeadForm() {
             </>
           ) : (
             <>
-              Quiero orientación para mi proyecto <ArrowRight className="h-4 w-4" />
+              {isSystems ? "Solicitar diagnóstico" : "Enviar solicitud breve"}{" "}
+              <ArrowRight className="h-4 w-4" />
             </>
           )}
         </Button>
 
-        {submitState.status === "success" ? (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Gracias. Recibimos tu solicitud. Revisaremos los antecedentes y te contactaremos para
-            preparar una cotización formal. Código: <strong>{submitState.reference}</strong>.
-          </div>
-        ) : null}
-
         {submitState.status === "error" ? (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <div
+            role="alert"
+            className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+          >
             {submitState.message}
           </div>
         ) : null}
@@ -360,7 +486,7 @@ export function ContactLeadForm() {
           incluye tu proyecto antes de comenzar.
         </div>
 
-        <p className="text-center text-xs text-slate-400">
+        <p className="text-center text-xs text-slate-600">
           Al enviar, aceptas que procesemos tus datos para contacto comercial y preparación de
           cotización.
         </p>

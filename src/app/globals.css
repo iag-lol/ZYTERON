@@ -8,19 +8,13 @@
       height: 0;
     }
     to {
-      height: var(
-        --radix-accordion-content-height,
-        var(--accordion-panel-height, auto)
-      );
+      height: var(--radix-accordion-content-height, var(--accordion-panel-height, auto));
     }
   }
 
   @keyframes accordion-up {
     from {
-      height: var(
-        --radix-accordion-content-height,
-        var(--accordion-panel-height, auto)
-      );
+      height: var(--radix-accordion-content-height, var(--accordion-panel-height, auto));
     }
     to {
       height: 0;
@@ -205,24 +199,45 @@
 
 /* ── Animations ── */
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 @keyframes shimmer-slide {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
 }
 
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-float {
@@ -310,8 +325,12 @@
 }
 
 @keyframes marquee-scroll {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 /* ── FAQ acordeón (details/summary nativo) ── */
@@ -390,7 +409,10 @@
     radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.15) 0%, transparent 70%),
     linear-gradient(rgba(59, 130, 246, 0.04) 1px, transparent 1px),
     linear-gradient(90deg, rgba(59, 130, 246, 0.04) 1px, transparent 1px);
-  background-size: 100% 100%, 40px 40px, 40px 40px;
+  background-size:
+    100% 100%,
+    40px 40px,
+    40px 40px;
 }
 
 .bg-dot-light {
@@ -410,13 +432,20 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 1rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(30, 64, 175, 0.06);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 4px 16px rgba(30, 64, 175, 0.06);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .card-premium:hover {
   transform: translateY(-3px);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 12px 32px rgba(30, 64, 175, 0.1);
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.07),
+    0 12px 32px rgba(30, 64, 175, 0.1);
   border-color: #bfdbfe;
 }
 
@@ -457,16 +486,24 @@
   flex-direction: column;
   gap: 0.4rem;
 }
-.blog-content ul { list-style: disc; }
-.blog-content ol { list-style: decimal; }
+.blog-content ul {
+  list-style: disc;
+}
+.blog-content ol {
+  list-style: decimal;
+}
 .blog-content a {
   color: #1d4ed8;
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.blog-content a:hover { color: #1e3a8a; }
-.blog-content strong { color: #0f172a; }
+.blog-content a:hover {
+  color: #1e3a8a;
+}
+.blog-content strong {
+  color: #0f172a;
+}
 .blog-content blockquote {
   margin: 1rem 0;
   border-left: 3px solid #bfdbfe;
@@ -490,7 +527,9 @@
 /* ── Buttons ── */
 .btn-primary-glow {
   box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.2s ease;
 }
 
 .btn-primary-glow:hover {
@@ -551,7 +590,7 @@
   border-radius: 0.75rem;
   padding: 1.25rem;
   text-align: center;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* ── Service icon ── */
@@ -595,7 +634,9 @@
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.04),
     0 8px 32px rgba(30, 58, 138, 0.05);
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .portal-card-premium:hover {
@@ -622,33 +663,65 @@
 
 /* ── Portal Animations ── */
 @keyframes pulse-badge {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
 }
 
 @keyframes glow-ring {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-  50% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
+  }
 }
 
 @keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(16px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes slide-in-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes progress-fill {
-  from { stroke-dashoffset: var(--progress-circumference, 251); }
-  to { stroke-dashoffset: var(--progress-offset, 0); }
+  from {
+    stroke-dashoffset: var(--progress-circumference, 251);
+  }
+  to {
+    stroke-dashoffset: var(--progress-offset, 0);
+  }
 }
 
 @keyframes notification-enter {
-  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .animate-pulse-badge {
@@ -714,4 +787,18 @@
   background: #ffffff;
   position: relative;
   z-index: 1;
+}
+
+/* El teclado y los campos de captura tienen prioridad sobre el lanzador. */
+body:has(input:focus, textarea:focus, select:focus) .zyteron-chat-launcher {
+  visibility: hidden;
+}
+:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
 }

@@ -10,6 +10,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { JsonLd } from "@/components/seo/json-ld";
 import { IconSprite } from "@/components/ui/icon-sprite";
+import { PublicAnalytics } from "@/components/analytics/public-analytics";
 import { PwaRegister } from "@/components/pwa-register";
 import { buildOrganizationGraph, buildPrimaryOgImageUrl } from "@/lib/seo";
 
@@ -126,6 +127,7 @@ export default function RootLayout({
           <IconSprite />
           <JsonLd id="zyteron-organization-schema" data={buildOrganizationGraph()} />
           <PwaRegister />
+          <PublicAnalytics />
           <AppShell header={<SiteHeader />} footer={<SiteFooter />}>
             {children}
           </AppShell>

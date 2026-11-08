@@ -12,10 +12,19 @@ const SESSION_KEY = "zyteron_web_session_id";
 
 function getOrCreateSessionId() {
   if (typeof window === "undefined") return "";
-  const existing = window.localStorage.getItem(SESSION_KEY);
+  let existing: string | null = null;
+  try {
+    existing = window.localStorage.getItem(SESSION_KEY);
+  } catch {
+    /* Almacenamiento opcional. */
+  }
   if (existing) return existing;
   const next = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
-  window.localStorage.setItem(SESSION_KEY, next);
+  try {
+    window.localStorage.setItem(SESSION_KEY, next);
+  } catch {
+    /* La visita no bloquea la navegación. */
+  }
   return next;
 }
 
@@ -33,8 +42,7 @@ export function WebVisitTracker() {
     const body = JSON.stringify({
       path: trackedPath,
       pageTitle: typeof document !== "undefined" ? document.title : "",
-      referrer:
-        typeof document !== "undefined" ? sanitizeWebVisitReferrer(document.referrer) : "",
+      referrer: typeof document !== "undefined" ? sanitizeWebVisitReferrer(document.referrer) : "",
       sessionId,
     });
 

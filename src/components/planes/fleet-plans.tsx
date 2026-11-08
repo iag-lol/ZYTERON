@@ -48,11 +48,11 @@ function FleetCard({ plan }: { plan: FleetPlan }) {
   const panelId = `flota-funciones-${plan.id}`;
 
   return (
-    <article className="flex h-full flex-col rounded-3xl border border-blue-200 border-t-4 border-t-blue-800 bg-white p-6 shadow-md shadow-blue-100/60 sm:p-7">
+    <article className="flex h-full flex-col rounded-3xl border border-t-4 border-blue-200 border-t-blue-800 bg-white p-6 shadow-md shadow-blue-100/60 sm:p-7">
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="text-xl font-extrabold text-slate-900">{plan.name}</h3>
         {plan.tag ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-800 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-800 px-2.5 py-1 text-[10px] font-bold tracking-wider text-white uppercase">
             <Sparkles className="h-3 w-3" aria-hidden="true" /> {plan.tag}
           </span>
         ) : null}
@@ -68,11 +68,14 @@ function FleetCard({ plan }: { plan: FleetPlan }) {
           lista de funciones para que no haya que desplegar nada para verlo. */}
       <div className="mt-4 space-y-3">
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
+          <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-[0.14em] text-slate-500 uppercase">
             <Wrench className="h-3.5 w-3.5" aria-hidden="true" /> Equipamiento por vehículo
           </p>
           <div className="mt-2.5 space-y-1.5">
-            <PriceRow label="GPS configurado e integrado" value={`${clp(FLEET_HARDWARE_AMOUNTS.gps)} + IVA`} />
+            <PriceRow
+              label="GPS configurado e integrado"
+              value={`${clp(FLEET_HARDWARE_AMOUNTS.gps)} + IVA`}
+            />
             <PriceRow
               label="Instalación profesional"
               value={`${clp(FLEET_HARDWARE_AMOUNTS.installation)} + IVA`}
@@ -84,8 +87,9 @@ function FleetCard({ plan }: { plan: FleetPlan }) {
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
-            <MapPin className="h-3.5 w-3.5" aria-hidden="true" /> Infraestructura + GPS + conectividad
+          <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-[0.14em] text-slate-500 uppercase">
+            <MapPin className="h-3.5 w-3.5" aria-hidden="true" /> Infraestructura + GPS +
+            conectividad
           </p>
           <div className="mt-2.5 space-y-1.5">
             <PriceRow label="Por vehículo / mes" value={`${clp(plan.monthlyPerVehicle)} + IVA`} />
@@ -95,7 +99,8 @@ function FleetCard({ plan }: { plan: FleetPlan }) {
             />
           </div>
           <p className="mt-2 text-[11px] leading-4 text-slate-500">
-            La mantención es un valor fijo por cliente; la infraestructura se calcula por vehículo activo.
+            La mantención es un valor fijo por cliente; la infraestructura se calcula por vehículo
+            activo.
           </p>
 
           {/* Qué sostiene ese valor. Va plegado para no competir con el precio,
@@ -133,7 +138,10 @@ function FleetCard({ plan }: { plan: FleetPlan }) {
             <span className="ml-1.5 font-semibold text-slate-500">({plan.features.length})</span>
           </span>
           <ChevronDown
-            className={cn("h-4 w-4 shrink-0 text-slate-500 transition-transform", open && "rotate-180")}
+            className={cn(
+              "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+              open && "rotate-180",
+            )}
             aria-hidden="true"
           />
         </button>
@@ -149,13 +157,19 @@ function FleetCard({ plan }: { plan: FleetPlan }) {
           </ul>
 
           {plan.portals?.map((portal) => (
-            <div key={portal.title} className="mt-4 rounded-2xl border border-blue-200 bg-blue-50/70 p-4">
+            <div
+              key={portal.title}
+              className="mt-4 rounded-2xl border border-blue-200 bg-blue-50/70 p-4"
+            >
               <h4 className="text-sm font-extrabold text-slate-900">{portal.title}</h4>
               <p className="mt-1 text-xs leading-5 text-slate-600">{portal.intro}</p>
               <ul className="mt-2 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-1">
                 {portal.items.map((item) => (
                   <li key={item} className="flex gap-2 text-xs leading-5 text-slate-600">
-                    <Check className="mt-0.5 h-3 w-3 shrink-0 text-emerald-600" aria-hidden="true" />
+                    <Check
+                      className="mt-0.5 h-3 w-3 shrink-0 text-emerald-600"
+                      aria-hidden="true"
+                    />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -190,9 +204,12 @@ function FleetCalculator() {
 
   return (
     <div className="rounded-3xl border border-blue-200 bg-white p-6 shadow-md shadow-blue-100/60 sm:p-8">
-      <h3 className="text-lg font-extrabold text-slate-900 sm:text-xl">Calcula tu operación mensual</h3>
+      <h3 className="text-lg font-extrabold text-slate-900 sm:text-xl">
+        Calcula tu operación mensual
+      </h3>
       <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-        La infraestructura se cobra por vehículo activo y la mantención de la plataforma es un valor fijo por cliente.
+        La infraestructura se cobra por vehículo activo y la mantención de la plataforma es un valor
+        fijo por cliente.
       </p>
 
       <div className="mt-5 flex flex-wrap items-end gap-4">
@@ -208,7 +225,7 @@ function FleetCalculator() {
             inputMode="numeric"
             value={vehicles}
             onChange={(event) => setVehicles(Number(event.target.value))}
-            className="mt-2 w-40 rounded-xl border border-slate-300 px-4 py-2.5 text-lg font-bold text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            className="mt-2 w-40 rounded-xl border border-slate-300 px-4 py-2.5 text-lg font-bold text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 focus:outline-none"
           />
         </div>
         <p className="rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-900">
@@ -218,7 +235,9 @@ function FleetCalculator() {
 
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Operación mensual</p>
+          <p className="text-[11px] font-bold tracking-[0.14em] text-slate-500 uppercase">
+            Operación mensual
+          </p>
           <dl className="mt-3 space-y-2">
             <div className="flex items-baseline justify-between gap-3">
               <dt className="text-sm text-slate-600">
@@ -232,13 +251,17 @@ function FleetCalculator() {
             </div>
             <div className="mt-2 flex items-baseline justify-between gap-3 border-t border-slate-200 pt-3">
               <dt className="text-sm font-bold text-slate-800">Total mensual estimado</dt>
-              <dd className="text-xl font-extrabold text-slate-900">{clp(quote.monthlyTotal)} + IVA</dd>
+              <dd className="text-xl font-extrabold text-slate-900">
+                {clp(quote.monthlyTotal)} + IVA
+              </dd>
             </div>
           </dl>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Equipamiento inicial</p>
+          <p className="text-[11px] font-bold tracking-[0.14em] text-slate-500 uppercase">
+            Equipamiento inicial
+          </p>
           <dl className="mt-3 space-y-2">
             <div className="flex items-baseline justify-between gap-3">
               <dt className="text-sm text-slate-600">
@@ -254,12 +277,15 @@ function FleetCalculator() {
             </div>
             <div className="mt-2 flex items-baseline justify-between gap-3 border-t border-slate-200 pt-3">
               <dt className="text-sm font-bold text-slate-800">Total equipamiento</dt>
-              <dd className="text-xl font-extrabold text-slate-900">{clp(quote.hardwareTotal)} + IVA</dd>
+              <dd className="text-xl font-extrabold text-slate-900">
+                {clp(quote.hardwareTotal)} + IVA
+              </dd>
             </div>
           </dl>
           <p className="mt-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs leading-5 text-slate-600">
-            Más el desarrollo de la plataforma, {`desde ${clp(quote.development)} + IVA`} para este tramo. El valor
-            final se define tras el levantamiento, por eso no se suma automáticamente.
+            Más el desarrollo de la plataforma, {`desde ${clp(quote.development)} + IVA`} para este
+            tramo. El valor final se define tras el levantamiento, por eso no se suma
+            automáticamente.
           </p>
         </div>
       </div>
@@ -282,7 +308,9 @@ function FleetExamples() {
       <div className="mt-5 grid gap-4 sm:grid-cols-3">
         {FLEET_EXAMPLES.map((example) => (
           <div key={example.count} className="rounded-2xl border border-slate-200 bg-white p-5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700">{example.tier.label}</p>
+            <p className="text-[11px] font-bold tracking-[0.14em] text-blue-700 uppercase">
+              {example.tier.label}
+            </p>
             <p className="mt-1 text-sm font-bold text-slate-900">{example.count} vehículos</p>
             <dl className="mt-3 space-y-1.5 text-xs text-slate-600">
               <div className="flex justify-between gap-2">
@@ -324,10 +352,16 @@ export function FleetPlans() {
           que la página nunca desborde en horizontal. */}
       <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h3 className="text-lg font-extrabold text-slate-900">Comparación de los tres niveles</h3>
-        <div className="mt-4 overflow-x-auto">
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="Comparación de planes de flota"
+          className="mt-4 overflow-x-auto"
+        >
           <table className="w-full min-w-[640px] border-collapse text-left text-sm">
             <caption className="sr-only">
-              Comparación de funcionalidades y precios entre Flota Pequeña, Flota Mediana y Flota Grande
+              Comparación de funcionalidades y precios entre Flota Pequeña, Flota Mediana y Flota
+              Grande
             </caption>
             <thead>
               <tr className="border-b border-slate-200">
@@ -348,7 +382,10 @@ export function FleetPlans() {
                     {row.feature}
                   </th>
                   {row.values.map((value, index) => (
-                    <td key={`${row.feature}-${FLEET_PLANS[index].id}`} className="p-3 text-slate-600">
+                    <td
+                      key={`${row.feature}-${FLEET_PLANS[index].id}`}
+                      className="p-3 text-slate-600"
+                    >
                       {value}
                     </td>
                   ))}

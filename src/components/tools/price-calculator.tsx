@@ -157,7 +157,10 @@ const FEATURE_GROUPS: Array<{ category: AddonCategory; features: Feature[] }> = 
       { id: "whatsappForm", description: "El formulario llega directo al WhatsApp del equipo." },
       { id: "whatsappNotifications", description: "Avisos automáticos de pedidos o solicitudes." },
       { id: "whatsappChatbot", description: "Responde consultas frecuentes las 24 horas." },
-      { id: "followupAutomation", description: "Recordatorios y seguimiento comercial automático." },
+      {
+        id: "followupAutomation",
+        description: "Recordatorios y seguimiento comercial automático.",
+      },
     ],
   },
   {
@@ -174,7 +177,11 @@ const FEATURE_GROUPS: Array<{ category: AddonCategory; features: Feature[] }> = 
         includedIn: ["ecommerce"],
       },
       { id: "products50", description: "Cargamos nosotros el catálogo inicial." },
-      { id: "stock", description: "Control de inventario por producto.", includedIn: ["ecommerce"] },
+      {
+        id: "stock",
+        description: "Control de inventario por producto.",
+        includedIn: ["ecommerce"],
+      },
       { id: "coupons", description: "Códigos de descuento y campañas." },
       { id: "logistics", description: "Cálculo de despacho y seguimiento." },
       { id: "cartRecovery", description: "Recupera compras que quedaron a medias." },
@@ -205,15 +212,27 @@ const FEATURE_GROUPS: Array<{ category: AddonCategory; features: Feature[] }> = 
         includedIn: ["sistema", "avanzado"],
       },
       { id: "auditLog", description: "Quién hizo qué y cuándo.", includedIn: ["avanzado"] },
-      { id: "approvals", description: "Solicitudes con visto bueno por etapa.", includedIn: ["avanzado"] },
-      { id: "docManagement", description: "Documentos, versiones y permisos.", includedIn: ["avanzado"] },
+      {
+        id: "approvals",
+        description: "Solicitudes con visto bueno por etapa.",
+        includedIn: ["avanzado"],
+      },
+      {
+        id: "docManagement",
+        description: "Documentos, versiones y permisos.",
+        includedIn: ["avanzado"],
+      },
       { id: "multiBranch", description: "Operación separada por sucursal o empresa." },
     ],
   },
   {
     category: "Integraciones",
     features: [
-      { id: "customApi", description: "Conexión a medida con otro sistema.", includedIn: ["avanzado"] },
+      {
+        id: "customApi",
+        description: "Conexión a medida con otro sistema.",
+        includedIn: ["avanzado"],
+      },
       { id: "crm", description: "Los contactos llegan directo a tu CRM." },
       { id: "erp", description: "Sincroniza productos, stock o facturación." },
       { id: "workspace", description: "Microsoft 365 o Google Workspace." },
@@ -278,7 +297,8 @@ export function PriceCalculator() {
     const featuresMonthly = active.reduce((sum, feature) => sum + addonMonthly(feature.id), 0);
     const pagesTotal = extraPages * ADDON_PRICE_AMOUNTS.extraPage;
     const sectionsTotal = extraSections * ADDON_PRICE_AMOUNTS.extraSection;
-    const maintenanceMonthly = MAINTENANCE_OPTIONS.find((item) => item.id === maintenance)?.amount ?? 0;
+    const maintenanceMonthly =
+      MAINTENANCE_OPTIONS.find((item) => item.id === maintenance)?.amount ?? 0;
 
     return {
       oneTimeTotal: project.base + featuresTotal + pagesTotal + sectionsTotal,
@@ -359,7 +379,8 @@ export function PriceCalculator() {
           </legend>
           <p className="mt-2 text-xs leading-relaxed text-slate-600">
             {project.label} incluye aproximadamente {project.pages}{" "}
-            {project.pages === 1 ? "página" : "páginas"}. Suma aquí lo que necesites por sobre esa base.
+            {project.pages === 1 ? "página" : "páginas"}. Suma aquí lo que necesites por sobre esa
+            base.
           </p>
 
           <div className="mt-4 space-y-4">
@@ -424,7 +445,7 @@ export function PriceCalculator() {
           <div className="mt-4 space-y-6">
             {FEATURE_GROUPS.map((group) => (
               <div key={group.category}>
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <p className="text-xs font-bold tracking-widest text-slate-500 uppercase">
                   {group.category}
                 </p>
                 <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
@@ -465,7 +486,9 @@ export function PriceCalculator() {
                             {addonName(feature.id)}
                           </span>
                           <span className="mt-0.5 block text-xs leading-relaxed text-slate-600">
-                            {included ? "Ya incluido en este tipo de proyecto." : feature.description}
+                            {included
+                              ? "Ya incluido en este tipo de proyecto."
+                              : feature.description}
                           </span>
                           {!included ? (
                             <span className="mt-1 block text-xs font-semibold text-slate-500">
@@ -524,23 +547,23 @@ export function PriceCalculator() {
           <div className="bg-gradient-to-br from-blue-900 to-blue-700 p-6 text-white">
             {needsDiscovery ? (
               <>
-                <p className="text-xs font-bold uppercase tracking-widest text-blue-200">
+                <p className="text-xs font-bold tracking-widest text-blue-200 uppercase">
                   Proyecto corporativo
                 </p>
-                <p className="mt-2 text-xl font-extrabold leading-snug">
+                <p className="mt-2 text-xl leading-snug font-extrabold">
                   {CORPORATE_ESTIMATE_MESSAGE}
                 </p>
                 <p className="mt-3 text-xs leading-relaxed text-blue-100">
-                  Con este alcance el valor se define después de analizar procesos, módulos, perfiles de
-                  usuario, integraciones y volumen de operación.
+                  Con este alcance el valor se define después de analizar procesos, módulos,
+                  perfiles de usuario, integraciones y volumen de operación.
                 </p>
               </>
             ) : (
               <>
-                <p className="text-xs font-bold uppercase tracking-widest text-blue-200">
+                <p className="text-xs font-bold tracking-widest text-blue-200 uppercase">
                   Estimación referencial
                 </p>
-                <p className="mt-2 text-3xl font-extrabold leading-tight">{clp(oneTimeTotal)}</p>
+                <p className="mt-2 text-3xl leading-tight font-extrabold">{clp(oneTimeTotal)}</p>
                 <p className="text-sm text-blue-100">a {clp(rangeHigh)} + IVA</p>
                 <p className="mt-3 text-xs leading-relaxed text-blue-100">
                   Pago único por el desarrollo de {project.label.toLowerCase()}.
@@ -555,7 +578,7 @@ export function PriceCalculator() {
           </div>
 
           <div className="space-y-3 p-5">
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
+            <p className="text-xs font-bold tracking-widest text-slate-500 uppercase">
               Incluye en tu estimación
             </p>
             <ul className="space-y-1.5 text-xs text-slate-600">
@@ -572,7 +595,8 @@ export function PriceCalculator() {
               {extraSections > 0 ? (
                 <li className="flex items-start gap-2">
                   <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
-                  {extraSections} {extraSections === 1 ? "sección adicional" : "secciones adicionales"}
+                  {extraSections}{" "}
+                  {extraSections === 1 ? "sección adicional" : "secciones adicionales"}
                 </li>
               ) : null}
               {activeFeatures.map((feature) => (
@@ -597,7 +621,10 @@ export function PriceCalculator() {
                 <Link
                   href={quoteHref}
                   onClick={() =>
-                    trackAnalyticsEvent("calculator_to_quote", {
+                    trackAnalyticsEvent("calculator_complete", {
+                      service_line: ["sistema", "avanzado"].includes(projectType)
+                        ? "sistemas_automatizacion"
+                        : "web_ecommerce",
                       page_path: "/calculadora-precio-pagina-web",
                       project_type: projectType,
                     })

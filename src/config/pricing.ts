@@ -203,6 +203,25 @@ export const PLAN_CATALOG: Plan[] = [
     deadline: "4 a 6 semanas",
   },
   {
+    id: "catalogo",
+    name: "Catálogo WhatsApp",
+    block: "ecommerce",
+    amount: PLAN_PRICE_AMOUNTS.catalogo,
+    price: fromPrice(PLAN_PRICE_AMOUNTS.catalogo),
+    audience: "Negocios que coordinan pago y entrega por WhatsApp.",
+    summary:
+      "Catálogo administrable para consultar productos y preparar pedidos con atención comercial.",
+    features: [
+      "Catálogo con categorías y fichas de producto",
+      "Pedido o consulta por WhatsApp",
+      "Vista adaptable a celulares",
+      "Administración de productos según alcance",
+      "Pago y despacho coordinados con el negocio",
+    ],
+    cta: "Cotizar mi catálogo",
+    deadline: "Se define según catálogo y carga inicial",
+  },
+  {
     id: "ecommerce",
     name: "Ecommerce Profesional",
     block: "ecommerce",
@@ -547,10 +566,15 @@ export const ADDON_CATALOG: Addon[] = [
     note: "precio cerrado",
   }),
   addon("whatsappForm", "Formulario conectado a WhatsApp", "WhatsApp y comunicación"),
-  addon("whatsappNotifications", "Notificaciones por WhatsApp Business API", "WhatsApp y comunicación", {
-    monthlyAmount: 59990,
-    note: "el consumo de mensajes lo cobra Meta por separado",
-  }),
+  addon(
+    "whatsappNotifications",
+    "Notificaciones por WhatsApp Business API",
+    "WhatsApp y comunicación",
+    {
+      monthlyAmount: 59990,
+      note: "el consumo de mensajes lo cobra Meta por separado",
+    },
+  ),
   addon("whatsappChatbot", "Chatbot de WhatsApp", "WhatsApp y comunicación", {
     monthlyAmount: 79990,
     note: "el consumo de mensajes lo cobra Meta por separado",
@@ -1128,8 +1152,10 @@ export const FLEET_TIERS: Array<{
 /** Tramo que corresponde a una cantidad de vehículos. */
 export function fleetTierFor(vehicles: number) {
   const count = Math.max(1, Math.floor(vehicles || 0));
-  return FLEET_TIERS.find((tier) => count >= tier.min && (tier.max === null || count <= tier.max))
-    ?? FLEET_TIERS[FLEET_TIERS.length - 1];
+  return (
+    FLEET_TIERS.find((tier) => count >= tier.min && (tier.max === null || count <= tier.max)) ??
+    FLEET_TIERS[FLEET_TIERS.length - 1]
+  );
 }
 
 /** Cálculo completo para una flota: equipamiento inicial y operación mensual. */

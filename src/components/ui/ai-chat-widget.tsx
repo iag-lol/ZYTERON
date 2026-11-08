@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bot, Loader2, MessageCircle, Send, Sparkles, X } from "lucide-react";
+import { Bot, Loader2, MessageCircle, Send, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WhatsAppIcon } from "@/components/ui/whatsapp-icon";
 import { siteConfig } from "@/config/site";
@@ -19,8 +19,6 @@ const WHATSAPP_DIGITS = siteConfig.contact.phone.replace(/\D/g, "");
 type ChatRole = "user" | "assistant";
 type ChatMessage = { id: string; role: ChatRole; content: string; actor?: string };
 
-const TEASER_DISMISSED_KEY = "zyteron_chat_teaser_dismissed_v1";
-
 function makeId() {
   return crypto.randomUUID();
 }
@@ -31,7 +29,6 @@ function welcomeMessage(): ChatMessage {
 
 export function AiChatWidget() {
   const [open, setOpen] = useState(false);
-  const [showTeaser, setShowTeaser] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([welcomeMessage()]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -60,36 +57,18 @@ export function AiChatWidget() {
   }, []);
   useEffect(() => {
     if (!open || isStreaming) return;
-    void synchronizeHistory();
+    const initial = setTimeout(() => void synchronizeHistory(), 0);
     const interval = setInterval(() => void synchronizeHistory(), 15000);
     const refresh = () => {
       if (document.visibilityState === "visible") void synchronizeHistory();
     };
     document.addEventListener("visibilitychange", refresh);
     return () => {
+      clearTimeout(initial);
       clearInterval(interval);
       document.removeEventListener("visibilitychange", refresh);
     };
   }, [open, isStreaming, synchronizeHistory]);
-
-  // Burbuja proactiva SIEMPRE visible (aparece de inmediato) mientras el chat
-  // esté cerrado, salvo que el visitante la cierre manualmente en la sesión.
-  useEffect(() => {
-    if (open) {
-      setShowTeaser(false);
-      return;
-    }
-    let dismissed = false;
-    try {
-      dismissed = sessionStorage.getItem(TEASER_DISMISSED_KEY) === "1";
-    } catch {
-      /* noop */
-    }
-    if (dismissed) return;
-    // Pequeño retraso mínimo solo para el montaje del cliente.
-    const timer = setTimeout(() => setShowTeaser(true), 300);
-    return () => clearTimeout(timer);
-  }, [open]);
 
   // Auto-scroll al final.
   useEffect(() => {
@@ -105,21 +84,11 @@ export function AiChatWidget() {
     el.style.height = `${Math.min(el.scrollHeight, 128)}px`;
   }, [input, open]);
 
-  const dismissTeaser = useCallback(() => {
-    setShowTeaser(false);
-    try {
-      sessionStorage.setItem(TEASER_DISMISSED_KEY, "1");
-    } catch {
-      /* noop */
-    }
-  }, []);
-
   const openPanel = useCallback(() => {
     setOpen(true);
-    dismissTeaser();
     trackChatOpen({ page_path: window.location.pathname });
     setTimeout(() => inputRef.current?.focus(), 120);
-  }, [dismissTeaser]);
+  }, []);
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -254,8 +223,11 @@ export function AiChatWidget() {
       {open && (
         <div
           role="dialog"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setOpen(false);
+          }}
           aria-label="Asistente virtual de Zyteron"
-          className="fixed inset-x-3 bottom-3 z-50 flex h-[70vh] max-h-[620px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:h-[600px] sm:w-[400px]"
+          className="fixed inset-x-3 bottom-3 z-50 flex h-[70dvh] max-h-[620px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:h-[600px] sm:w-[400px]"
         >
           {/* Encabezado */}
           <header className="flex items-center justify-between gap-3 bg-gradient-to-r from-blue-700 to-blue-600 px-4 py-3 text-white">
@@ -267,7 +239,7 @@ export function AiChatWidget() {
                 <p className="text-sm font-semibold">Zara · Asistente Zyteron</p>
                 <span className="flex items-center gap-1.5 text-[11px] text-blue-100">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  En línea ahora
+                  Asistente virtual
                 </span>
               </div>
             </div>
@@ -328,6 +300,7 @@ export function AiChatWidget() {
                 onKeyDown={handleKeyDown}
                 rows={1}
                 maxLength={2000}
+                aria-label="Mensaje para el asistente"
                 placeholder="Escribe tu mensaje…"
                 className="max-h-32 flex-1 resize-none overflow-y-auto bg-transparent text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 focus:outline-none"
               />
@@ -349,70 +322,20 @@ export function AiChatWidget() {
                 type="button"
                 onClick={() => void goToWhatsApp()}
                 disabled={handoffLoading}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] px-3 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[#1ebe5b] disabled:opacity-70"
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] px-3 py-2.5 text-[13px] font-semibold text-slate-950 transition-colors hover:bg-[#1ebe5b] disabled:opacity-70"
               >
                 {handoffLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <WhatsAppIcon className="h-4 w-4 text-white" />
+                  <WhatsAppIcon className="h-4 w-4 text-slate-950" />
                 )}
                 {handoffLoading ? "Preparando tu mensaje…" : "Continuar por WhatsApp"}
               </button>
             )}
-            <p className="mt-2 text-center text-[10px] text-slate-400">
+            <p className="mt-2 text-center text-[10px] text-slate-600">
               Asistente con IA · Respuestas orientativas de Zyteron SpA
             </p>
           </form>
-        </div>
-      )}
-
-      {/* Burbuja proactiva (siempre visible mientras el chat esté cerrado) */}
-      {!open && showTeaser && (
-        <div className="fixed right-4 bottom-[92px] z-40 w-[300px] max-w-[calc(100vw-2rem)] sm:right-6 sm:bottom-28 sm:w-[330px]">
-          <button
-            type="button"
-            onClick={openPanel}
-            className="group relative block w-full rounded-2xl rounded-br-md border border-slate-200 bg-white p-4 text-left shadow-2xl shadow-slate-900/15 transition-transform hover:scale-[1.01]"
-          >
-            <span
-              role="button"
-              tabIndex={0}
-              aria-label="Cerrar mensaje"
-              onClick={(e) => {
-                e.stopPropagation();
-                dismissTeaser();
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  dismissTeaser();
-                }
-              }}
-              className="absolute -top-2.5 -right-2.5 flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:text-slate-700"
-            >
-              <X className="h-3.5 w-3.5" />
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
-                <Bot className="h-5 w-5" />
-              </span>
-              <span className="flex items-center gap-1.5 text-[13px] font-bold text-blue-700">
-                <Sparkles className="h-4 w-4" />
-                Zara · Asistente Zyteron
-              </span>
-            </span>
-            <span className="mt-2.5 block text-[15px] leading-snug font-semibold text-slate-800">
-              Hola, ¿en qué te puedo ayudar hoy?
-            </span>
-            <span className="mt-1 block text-[13px] leading-snug text-slate-500">
-              Cuéntame tu proyecto y te oriento con planes y precios al instante.
-            </span>
-            <span className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[12px] font-semibold text-white">
-              <MessageCircle className="h-3.5 w-3.5" />
-              Conversar ahora
-            </span>
-          </button>
         </div>
       )}
 
@@ -423,14 +346,14 @@ export function AiChatWidget() {
           onClick={openPanel}
           aria-label="Abrir asistente virtual"
           className={cn(
-            "fixed right-4 bottom-5 z-40 flex h-14 w-14 items-center justify-center rounded-full",
+            "zyteron-chat-launcher fixed right-4 bottom-5 z-40 flex h-14 w-14 items-center justify-center rounded-full",
             "bg-blue-600 text-white shadow-lg shadow-blue-600/30 transition-all duration-200",
             "hover:scale-105 hover:bg-blue-700 sm:right-6 sm:bottom-6",
           )}
         >
           <MessageCircle className="h-6 w-6" />
           <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 motion-safe:animate-ping" />
             <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-emerald-500 ring-2 ring-white" />
           </span>
         </button>

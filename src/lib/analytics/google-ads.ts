@@ -1,13 +1,26 @@
+import { isExcludedWebVisitPath } from "@/lib/analytics/visit-privacy";
+import { safeEventParams } from "@/lib/analytics/event-privacy";
+
 import { analyticsConfig } from "@/config/analytics";
 
 type GoogleAdsEventParams = Record<string, string | number | boolean | null | undefined>;
 
 export function trackAnalyticsEvent(eventName: string, eventParams?: GoogleAdsEventParams) {
-  if (typeof window === "undefined") return;
-  if (typeof window.gtag !== "function") return;
+  if (typeof window === "undefined" || isExcludedWebVisitPath(window.location.pathname)) return;
+  if (typeof window.gtag !== "function") {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = (...args: unknown[]) => {
+      window.dataLayer.push(args);
+    };
+  }
 
   try {
-    window.gtag("event", eventName, eventParams ?? {});
+    window.gtag("set", { page_location: window.location.origin + window.location.pathname });
+    const destination =
+      /^G-[A-Z0-9]+$/.test(analyticsConfig.googleAnalyticsId) && eventName !== "conversion"
+        ? { send_to: analyticsConfig.googleAnalyticsId }
+        : {};
+    window.gtag("event", eventName, { ...safeEventParams(eventParams), ...destination });
   } catch {
     // La medicion nunca debe interrumpir el flujo principal del formulario.
   }
@@ -17,8 +30,34 @@ export function trackGoogleAdsEvent(eventName: string, eventParams?: GoogleAdsEv
   trackAnalyticsEvent(eventName, eventParams);
 }
 
+const emittedReceipts = new Set<string>();
+function oncePerReceipt(event: string, params?: GoogleAdsEventParams) {
+  const id = params?.lead_id;
+  if (
+    typeof id !== "string" ||
+    !/^[a-f0-9-]{36}$/.test(id) ||
+    typeof window === "undefined" ||
+    typeof window.gtag !== "function"
+  )
+    return false;
+  const key = `zyteron:receipt:${event}:${id}`;
+  if (emittedReceipts.has(key)) return false;
+  try {
+    if (sessionStorage.getItem(key)) return false;
+  } catch {
+    /* Acceso opcional. */
+  }
+  emittedReceipts.add(key);
+  try {
+    sessionStorage.setItem(key, "1");
+  } catch {
+    /* Deduplicación en memoria disponible. */
+  }
+  return true;
+}
+
 export function trackGenerateLead(params?: GoogleAdsEventParams) {
-  trackAnalyticsEvent("generate_lead", params);
+  if (oncePerReceipt("generate_lead", params)) trackAnalyticsEvent("generate_lead", params);
 }
 
 export function trackContactFormSubmit(params?: GoogleAdsEventParams) {
@@ -42,8 +81,10 @@ export function trackBeginCheckout(params?: GoogleAdsEventParams) {
 }
 
 export function trackQuoteRequestConversion(params?: GoogleAdsEventParams) {
+  if (!oncePerReceipt("conversion", params)) return;
   trackAnalyticsEvent("conversion", {
     send_to: analyticsConfig.googleAdsQuoteRequestSendTo,
+    transaction_id: params?.lead_id,
     ...params,
   });
 }
@@ -76,7 +117,6 @@ export function trackChatOpen(params?: GoogleAdsEventParams) {
 
 export function trackChatQualified(params?: GoogleAdsEventParams) {
   trackAnalyticsEvent("chat_qualified", params);
-  trackGenerateLead({ form_type: "chat_ia", ...params });
 }
 
 export function trackChatHandoff(params?: GoogleAdsEventParams) {

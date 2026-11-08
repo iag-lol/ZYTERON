@@ -70,9 +70,9 @@ export function SiteFooter() {
             href={WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex shrink-0 items-center gap-2 rounded-xl bg-[#25d366] px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-[#20b858] hover:shadow-lg hover:shadow-[#25d366]/30"
+            className="flex shrink-0 items-center gap-2 rounded-xl bg-[#25d366] px-5 py-2.5 text-sm font-bold text-slate-950 transition-all hover:bg-[#20b858] hover:shadow-lg hover:shadow-[#25d366]/30"
           >
-            <WhatsAppIcon className="h-5 w-5 text-white" />
+            <WhatsAppIcon className="h-5 w-5 text-slate-950" />
             Hablar por WhatsApp
           </Link>
         </Container>
@@ -247,7 +247,7 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t border-white/[0.07]">
-        <Container className="flex flex-wrap items-center justify-between gap-3 py-4 text-xs text-slate-500">
+        <Container className="flex flex-wrap items-center justify-between gap-3 py-4 text-xs text-slate-400">
           <p>© {COPYRIGHT_YEAR} ZYTERON.CL. Todos los derechos reservados.</p>
           <div className="flex gap-5">
             <Link href={siteConfig.url} className="transition-colors hover:text-slate-300">

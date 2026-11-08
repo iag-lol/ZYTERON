@@ -1,3 +1,4 @@
+import { planDeadline } from "@/config/commercial-offer";
 import {
   PLAN_PRICE_AMOUNTS,
   MAINTENANCE_PRICE_AMOUNTS,
@@ -92,14 +93,15 @@ const commonRelatedLinks: SeoServiceRelatedLink[] = [
     description: "Conoce el enfoque, trayectoria y metodología de Zyteron.",
   },
   {
-    label: "Casos anónimos",
+    label: "Proyectos documentados",
     href: "/casos-exito",
     description: "Revisa problemas reales resueltos con sistemas, automatización, ecommerce y SEO.",
   },
   {
     label: "Guías y recursos",
     href: "/recursos",
-    description: "Cómo elegir proveedor, qué exigir en una cotización y qué revisar antes de contratar.",
+    description:
+      "Cómo elegir proveedor, qué exigir en una cotización y qué revisar antes de contratar.",
   },
   {
     label: "Contacto",
@@ -126,7 +128,7 @@ export const seoServicePages: SeoServicePage[] = [
     heroTitle: "Desarrollo web personalizado para proyectos que necesitan más que una plantilla",
     heroDescription:
       "Hacemos diseño de páginas web y desarrollo web para empresas, pymes y emprendedores de Santiago y todo Chile: sitios profesionales, modernos y rápidos para mostrar tus servicios con confianza, captar consultas y crecer con una base técnica escalable.",
-    directAnswer: `Crear una página web profesional en Chile cuesta desde ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} CLP + IVA y está lista en 1 a 3 semanas; un sitio corporativo completo parte desde ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA y toma 3 a 6 semanas. Zyteron, empresa chilena con oficina en Providencia, Santiago, diseña, desarrolla y publica tu sitio con SEO técnico incluido, y atiende proyectos en todo Chile.`,
+    directAnswer: `Crear una página web profesional en Chile cuesta desde ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} CLP + IVA con plazo referencial de ${planDeadline("web-basica")}; un sitio corporativo completo parte desde ${clp(PLAN_PRICE_AMOUNTS.empresa)} + IVA y toma ${planDeadline("empresa")}. Zyteron, empresa chilena con oficina en Providencia, Santiago, diseña, desarrolla y publica tu sitio con SEO técnico incluido, y atiende proyectos en todo Chile.`,
     problemTitle: "Una web profesional debe vender confianza, no solo verse bien",
     problemDescription:
       "Muchas empresas tienen sitios lentos, desordenados o genéricos que no explican bien sus servicios. Si necesitas hacer una página web para tu negocio, en Zyteron trabajamos estructura, copy, diseño web profesional y responsive, SEO base y rutas de conversión para que la web ayude al negocio desde el primer contacto.",
@@ -185,11 +187,32 @@ export const seoServicePages: SeoServicePage[] = [
       },
     ],
     relatedLinks: [
-      { label: "Páginas web para pymes", href: "/paginas-web-para-pymes", description: "Soluciones web para pymes chilenas con foco en contacto y presencia profesional." },
-      { label: "Páginas web para empresas", href: "/paginas-web-para-empresas", description: "Sitios corporativos con UX, confianza y enfoque comercial." },
-      { label: "SEO para empresas", href: "/servicios/seo-para-empresas-chile", description: "Mejoras técnicas y contenido para crecer en tráfico orgánico." },
-      { label: "Mantención web en Chile", href: "/servicios/mantencion-web-chile", description: "Actualizaciones, monitoreo y mejoras continuas después del lanzamiento." },
-      { label: "Calculadora de precio", href: "/calculadora-precio-pagina-web", description: "Estima cuánto costaría tu página web antes de cotizar." },
+      {
+        label: "Páginas web para pymes",
+        href: "/paginas-web-para-pymes",
+        description:
+          "Soluciones web para pymes chilenas con foco en contacto y presencia profesional.",
+      },
+      {
+        label: "Páginas web para empresas",
+        href: "/paginas-web-para-empresas",
+        description: "Sitios corporativos con UX, confianza y enfoque comercial.",
+      },
+      {
+        label: "SEO para empresas",
+        href: "/servicios/seo-para-empresas-chile",
+        description: "Mejoras técnicas y contenido para crecer en tráfico orgánico.",
+      },
+      {
+        label: "Mantención web en Chile",
+        href: "/servicios/mantencion-web-chile",
+        description: "Actualizaciones, monitoreo y mejoras continuas después del lanzamiento.",
+      },
+      {
+        label: "Calculadora de precio",
+        href: "/calculadora-precio-pagina-web",
+        description: "Estima cuánto costaría tu página web antes de cotizar.",
+      },
       ...commonRelatedLinks,
     ],
     serviceType: "Desarrollo web",
@@ -215,7 +238,7 @@ export const seoServicePages: SeoServicePage[] = [
     heroTitle: "Páginas web profesionales para pymes chilenas",
     heroDescription:
       "Creamos sitios profesionales para pequeñas y medianas empresas que necesitan explicar sus servicios, construir visibilidad en búsquedas relevantes y transformar visitas en consultas por WhatsApp, formulario o correo.",
-    directAnswer: `Una página web para pyme en Chile cuesta entre ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} y ${clp(PLAN_PRICE_AMOUNTS.pyme)} CLP + IVA según secciones y funcionalidades, y está lista en 1 a 3 semanas. Zyteron la diseña, desarrolla y deja posicionable en Google, con contacto por WhatsApp y formulario integrado, atendiendo desde Santiago a pymes de todo Chile.`,
+    directAnswer: `Una página web para pyme en Chile cuesta entre ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} y ${clp(PLAN_PRICE_AMOUNTS.pyme)} CLP + IVA según secciones y funcionalidades. El Plan Pyme tiene un plazo referencial de ${planDeadline("pyme")}, sujeto a alcance y contenidos. Zyteron la diseña, desarrolla y deja posicionable en Google, con contacto por WhatsApp y formulario integrado, atendiendo desde Santiago a pymes de todo Chile.`,
     problemTitle: "Una pyme necesita una web que explique rápido y genere contacto",
     problemDescription:
       "Una web para pyme no debe ser compleja por obligación. Debe mostrar qué haces, por qué confiar, cómo contactarte y qué pasos seguir. Diseñamos estructuras simples de entender, pero sólidas para crecer.",
@@ -258,8 +281,7 @@ export const seoServicePages: SeoServicePage[] = [
       },
       {
         question: "¿Cuánto demora desarrollar una web para pyme?",
-        answer:
-          "Una web simple puede tomar 1 a 3 semanas. Un sitio más completo puede requerir 3 a 6 semanas según contenido y revisiones.",
+        answer: `Web Básica: ${planDeadline("web-basica")}; Plan Pyme: ${planDeadline("pyme")}; Plan Empresa: ${planDeadline("empresa")}. El calendario se confirma según contenido y revisiones.`,
       },
       {
         question: "¿La web de mi pyme puede recibir consultas por WhatsApp?",
@@ -273,10 +295,27 @@ export const seoServicePages: SeoServicePage[] = [
       },
     ],
     relatedLinks: [
-      { label: "Páginas web para empresas", href: "/paginas-web-para-empresas", description: "Sitios corporativos para organizaciones con una oferta y proceso comercial más amplios." },
-      { label: "Desarrollo web en Chile", href: "/desarrollo-web", description: "Implementación técnica de sitios profesionales, rápidos y escalables." },
-      { label: "Tiendas online para pymes", href: "/tiendas-online", description: "Ecommerce y catálogos digitales para vender productos online." },
-      { label: "Blog para pymes", href: "/blog/que-debe-tener-pagina-web-profesional-pyme", description: "Checklist de una web profesional para una pyme." },
+      {
+        label: "Páginas web para empresas",
+        href: "/paginas-web-para-empresas",
+        description:
+          "Sitios corporativos para organizaciones con una oferta y proceso comercial más amplios.",
+      },
+      {
+        label: "Desarrollo web en Chile",
+        href: "/desarrollo-web",
+        description: "Implementación técnica de sitios profesionales, rápidos y escalables.",
+      },
+      {
+        label: "Tiendas online para pymes",
+        href: "/tiendas-online",
+        description: "Ecommerce y catálogos digitales para vender productos online.",
+      },
+      {
+        label: "Blog para pymes",
+        href: "/blog/que-debe-tener-pagina-web-profesional-pyme",
+        description: "Checklist de una web profesional para una pyme.",
+      },
       ...commonRelatedLinks,
     ],
     serviceType: "Páginas web para pymes",
@@ -302,7 +341,7 @@ export const seoServicePages: SeoServicePage[] = [
     heroTitle: "Páginas web empresariales diseñadas para generar negocios",
     heroDescription:
       "Diseñamos y desarrollamos sitios corporativos para que clientes, proveedores y equipos de compra entiendan tu oferta, encuentren respaldo real y avancen hacia una consulta o cotización.",
-    directAnswer: `Una página web corporativa para empresa en Chile cuesta desde ${clp(PLAN_PRICE_AMOUNTS.empresa)} CLP + IVA y se entrega en 3 a 6 semanas según cantidad de páginas e integraciones. Zyteron la construye con arquitectura comercial, SEO técnico y medición de conversiones, desde su oficina en Providencia, Santiago, para empresas de todo Chile.`,
+    directAnswer: `Una página web corporativa para empresa en Chile cuesta desde ${clp(PLAN_PRICE_AMOUNTS.empresa)} CLP + IVA y se entrega en ${planDeadline("empresa")} según cantidad de páginas e integraciones. Zyteron la construye con arquitectura comercial, SEO técnico y medición de conversiones, desde su oficina en Providencia, Santiago, para empresas de todo Chile.`,
     problemTitle: "Una página web empresarial debe apoyar la decisión comercial",
     problemDescription:
       "Una empresa puede ofrecer buenos servicios y aun así perder oportunidades si su sitio se ve antiguo, no explica diferencias o esconde el contacto. Trabajamos arquitectura, contenido, navegación, llamados a la acción y evidencia para convertir la web en un canal comercial serio.",
@@ -361,14 +400,47 @@ export const seoServicePages: SeoServicePage[] = [
       },
     ],
     relatedLinks: [
-      { label: "Páginas web para pymes", href: "/paginas-web-para-pymes", description: "Una solución de menor alcance para pequeñas y medianas empresas." },
-      { label: "Desarrollo web en Chile", href: "/desarrollo-web", description: "Implementación técnica de sitios rápidos, indexables y escalables." },
-      { label: "Sistemas web para empresas", href: "/sistemas-web", description: "Plataformas internas para procesos administrativos y operación." },
-      { label: "Landing pages para campañas", href: "/servicios/landing-pages-para-empresas", description: "Páginas de campaña orientadas a conversión para Google Ads o lanzamientos." },
-      { label: "Páginas web para constructoras", href: "/paginas-web/constructoras", description: "Sitio corporativo enfocado en mostrar obra ejecutada y capacidad técnica." },
-      { label: "Páginas web para empresas industriales", href: "/paginas-web/industria-b2b", description: "Catálogo técnico, fichas de producto y captación de clientes B2B." },
-      { label: "Páginas web para servicios profesionales", href: "/paginas-web/servicios-profesionales", description: "Sitios para estudios y consultoras que necesitan agendar y calificar consultas." },
-      { label: "Páginas web para transporte y logística", href: "/paginas-web/transporte-logistica", description: "Presencia comercial para operadores de carga, flotas y distribución." },
+      {
+        label: "Páginas web para pymes",
+        href: "/paginas-web-para-pymes",
+        description: "Una solución de menor alcance para pequeñas y medianas empresas.",
+      },
+      {
+        label: "Desarrollo web en Chile",
+        href: "/desarrollo-web",
+        description: "Implementación técnica de sitios rápidos, indexables y escalables.",
+      },
+      {
+        label: "Sistemas web para empresas",
+        href: "/sistemas-web",
+        description: "Plataformas internas para procesos administrativos y operación.",
+      },
+      {
+        label: "Landing pages para campañas",
+        href: "/servicios/landing-pages-para-empresas",
+        description: "Páginas de campaña orientadas a conversión para Google Ads o lanzamientos.",
+      },
+      {
+        label: "Páginas web para constructoras",
+        href: "/paginas-web/constructoras",
+        description: "Sitio corporativo enfocado en mostrar obra ejecutada y capacidad técnica.",
+      },
+      {
+        label: "Páginas web para empresas industriales",
+        href: "/paginas-web/industria-b2b",
+        description: "Catálogo técnico, fichas de producto y captación de clientes B2B.",
+      },
+      {
+        label: "Páginas web para servicios profesionales",
+        href: "/paginas-web/servicios-profesionales",
+        description:
+          "Sitios para estudios y consultoras que necesitan agendar y calificar consultas.",
+      },
+      {
+        label: "Páginas web para transporte y logística",
+        href: "/paginas-web/transporte-logistica",
+        description: "Presencia comercial para operadores de carga, flotas y distribución.",
+      },
       ...commonRelatedLinks,
     ],
     serviceType: "Páginas web corporativas para empresas",
@@ -401,7 +473,7 @@ export const seoServicePages: SeoServicePage[] = [
     heroTitle: "Tiendas online preparadas para vender en Chile",
     heroDescription:
       "Hacemos diseño y desarrollo de tiendas online para crear tu tienda virtual en Chile: catálogo online administrable, fichas de producto y flujos de compra o cotización para mostrar productos, recibir pedidos y vender con una experiencia profesional.",
-    directAnswer: `Una tienda online en Chile cuesta desde ${clp(PLAN_PRICE_AMOUNTS.catalogo)} CLP + IVA como catálogo con venta por WhatsApp, y desde ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} + IVA con carrito y pagos por Webpay, Flow o Mercado Pago; la entrega típica toma 3 a 6 semanas. Zyteron la desarrolla con catálogo administrable, base SEO y capacitación para operar, desde Santiago para todo Chile.`,
+    directAnswer: `Una tienda online en Chile cuesta desde ${clp(PLAN_PRICE_AMOUNTS.catalogo)} CLP + IVA como catálogo con venta por WhatsApp, y desde ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} + IVA con carrito y pagos por Webpay, Flow o Mercado Pago; el ecommerce tiene un plazo referencial de ${planDeadline("ecommerce")}, y el catálogo se programa según carga inicial y alcance. Zyteron la desarrolla con catálogo administrable, base SEO y capacitación para operar, desde Santiago para todo Chile.`,
     problemTitle: "Vender online requiere más que subir productos",
     problemDescription:
       "Una tienda efectiva necesita categorías claras, fichas útiles, confianza, contacto, rendimiento móvil y un flujo de compra coherente con la operación real del negocio.",
@@ -441,8 +513,7 @@ export const seoServicePages: SeoServicePage[] = [
       },
       {
         question: "¿Puedo vender por WhatsApp además de la tienda?",
-        answer:
-          "Sí. Podemos integrar botones y flujos para venta asistida por WhatsApp.",
+        answer: "Sí. Podemos integrar botones y flujos para venta asistida por WhatsApp.",
       },
       {
         question: "¿Pueden integrar pagos online con Webpay, Flow o Mercado Pago?",
@@ -451,7 +522,7 @@ export const seoServicePages: SeoServicePage[] = [
       },
       {
         question: "¿Cuánto cuesta crear una tienda online en Chile?",
-        answer: `Crear una tienda online en Chile cuesta entre ${clp(PLAN_PRICE_AMOUNTS.catalogo)} y ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} + IVA: un catálogo por WhatsApp parte en ${clp(PLAN_PRICE_AMOUNTS.catalogo)} y un ecommerce con carrito y pagos online (Webpay, Flow o Mercado Pago) en ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} + IVA. El valor final depende de la cantidad de productos, las pasarelas y la administración requerida; entregamos cotización formal antes de iniciar.`,
+        answer: `Las alternativas de tienda online tienen precios de partida distintos: un catálogo por WhatsApp parte en ${clp(PLAN_PRICE_AMOUNTS.catalogo)} y un ecommerce con carrito y pagos online (Webpay, Flow o Mercado Pago) en ${clp(PLAN_PRICE_AMOUNTS.ecommerce)} + IVA. El valor final depende de la cantidad de productos, las pasarelas y la administración requerida; entregamos cotización formal antes de iniciar.`,
       },
       {
         question: "¿Pueden agregar una tienda online a mi página web actual?",
@@ -465,8 +536,16 @@ export const seoServicePages: SeoServicePage[] = [
       },
     ],
     relatedLinks: [
-      { label: "Páginas web para pymes", href: "/paginas-web-para-pymes", description: "Presencia digital profesional antes de escalar a ecommerce." },
-      { label: "Sistemas web", href: "/sistemas-web", description: "Paneles y módulos internos para stock, pedidos o reportes." },
+      {
+        label: "Páginas web para pymes",
+        href: "/paginas-web-para-pymes",
+        description: "Presencia digital profesional antes de escalar a ecommerce.",
+      },
+      {
+        label: "Sistemas web",
+        href: "/sistemas-web",
+        description: "Paneles y módulos internos para stock, pedidos o reportes.",
+      },
       ...commonRelatedLinks,
     ],
     serviceType: "Tiendas online y ecommerce",
@@ -538,8 +617,7 @@ export const seoServicePages: SeoServicePage[] = [
       },
       {
         question: "¿Puedo partir con un módulo pequeño?",
-        answer:
-          "Sí. Recomendamos iniciar por el módulo más crítico y luego escalar por etapas.",
+        answer: "Sí. Recomendamos iniciar por el módulo más crítico y luego escalar por etapas.",
       },
       {
         question: "¿Desarrollan intranets y plataformas corporativas?",
@@ -562,11 +640,32 @@ export const seoServicePages: SeoServicePage[] = [
       },
     ],
     relatedLinks: [
-      { label: "Automatización", href: "/automatizacion", description: "Automatiza tareas repetitivas y notificaciones del negocio." },
-      { label: "Cotizador web con PDF", href: "/cotizador-web-pdf", description: "Automatiza solicitudes comerciales y generación de propuestas." },
-      { label: "Intranet corporativa", href: "/sistemas-web/intranet-corporativa", description: "Comunicación interna, documentos y solicitudes del personal con permisos por rol." },
-      { label: "Gestión documental", href: "/sistemas-web/gestion-documental", description: "Versionado, vencimientos y trazabilidad para documentación crítica." },
-      { label: "Control de flota", href: "/sistemas-web/control-flota", description: "Mantenciones, documentación y costo real por vehículo." },
+      {
+        label: "Automatización",
+        href: "/automatizacion",
+        description: "Automatiza tareas repetitivas y notificaciones del negocio.",
+      },
+      {
+        label: "Cotizador web con PDF",
+        href: "/cotizador-web-pdf",
+        description: "Automatiza solicitudes comerciales y generación de propuestas.",
+      },
+      {
+        label: "Intranet corporativa",
+        href: "/sistemas-web/intranet-corporativa",
+        description:
+          "Comunicación interna, documentos y solicitudes del personal con permisos por rol.",
+      },
+      {
+        label: "Gestión documental",
+        href: "/sistemas-web/gestion-documental",
+        description: "Versionado, vencimientos y trazabilidad para documentación crítica.",
+      },
+      {
+        label: "Control de flota",
+        href: "/sistemas-web/control-flota",
+        description: "Mantenciones, documentación y costo real por vehículo.",
+      },
       ...commonRelatedLinks,
     ],
     serviceType: "Sistemas web a medida",
@@ -665,10 +764,26 @@ export const seoServicePages: SeoServicePage[] = [
       },
     ],
     relatedLinks: [
-      { label: "Sistemas web", href: "/sistemas-web", description: "Crea paneles y módulos para operar procesos internos." },
-      { label: "Automatización WhatsApp", href: "/automatizacion-whatsapp-empresas", description: "Flujos de atención y pre-calificación para WhatsApp." },
-      { label: "Landing pages para campañas", href: "/servicios/landing-pages-para-empresas", description: "Páginas de campaña que alimentan tus flujos automatizados con leads." },
-      { label: "Soporte TI", href: "/soporte-ti", description: "Acompañamiento técnico para continuidad operativa." },
+      {
+        label: "Sistemas web",
+        href: "/sistemas-web",
+        description: "Crea paneles y módulos para operar procesos internos.",
+      },
+      {
+        label: "Automatización WhatsApp",
+        href: "/automatizacion-whatsapp-empresas",
+        description: "Flujos de atención y pre-calificación para WhatsApp.",
+      },
+      {
+        label: "Landing pages para campañas",
+        href: "/servicios/landing-pages-para-empresas",
+        description: "Páginas de campaña que alimentan tus flujos automatizados con leads.",
+      },
+      {
+        label: "Soporte TI",
+        href: "/soporte-ti",
+        description: "Acompañamiento técnico para continuidad operativa.",
+      },
       ...commonRelatedLinks,
     ],
     serviceType: "Automatización de procesos",
@@ -757,10 +872,26 @@ export const seoServicePages: SeoServicePage[] = [
       },
     ],
     relatedLinks: [
-      { label: "Soporte TI Santiago", href: "/soporte-ti-pymes-santiago", description: "Landing local para soporte técnico de pymes en Santiago." },
-      { label: "Mantención web en Chile", href: "/servicios/mantencion-web-chile", description: "Planes mensuales de actualizaciones, monitoreo y mejoras para tu sitio." },
-      { label: "Desarrollo web", href: "/desarrollo-web", description: "Mejora tu presencia digital y base técnica web." },
-      { label: "Automatización", href: "/automatizacion", description: "Reduce tareas manuales con flujos digitales." },
+      {
+        label: "Soporte TI Santiago",
+        href: "/soporte-ti-pymes-santiago",
+        description: "Landing local para soporte técnico de pymes en Santiago.",
+      },
+      {
+        label: "Mantención web en Chile",
+        href: "/servicios/mantencion-web-chile",
+        description: "Planes mensuales de actualizaciones, monitoreo y mejoras para tu sitio.",
+      },
+      {
+        label: "Desarrollo web",
+        href: "/desarrollo-web",
+        description: "Mejora tu presencia digital y base técnica web.",
+      },
+      {
+        label: "Automatización",
+        href: "/automatizacion",
+        description: "Reduce tareas manuales con flujos digitales.",
+      },
       ...commonRelatedLinks,
     ],
     serviceType: "Soporte TI",

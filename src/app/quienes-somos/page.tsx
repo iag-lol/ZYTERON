@@ -79,14 +79,32 @@ const services = [
 ];
 
 const workSteps = [
-  { title: "Escuchamos", desc: "Entendemos la necesidad real de tu negocio y lo que buscas lograr." },
-  { title: "Ordenamos", desc: "Estructuramos el requerimiento para encontrar la solución más eficiente." },
-  { title: "Proponemos", desc: "Presentamos un plan de trabajo claro y sin tecnicismos innecesarios." },
+  {
+    title: "Escuchamos",
+    desc: "Entendemos la necesidad real de tu negocio y lo que buscas lograr.",
+  },
+  {
+    title: "Ordenamos",
+    desc: "Estructuramos el requerimiento para encontrar la solución más eficiente.",
+  },
+  {
+    title: "Proponemos",
+    desc: "Presentamos un plan de trabajo claro y sin tecnicismos innecesarios.",
+  },
   { title: "Cotizamos", desc: "Entregamos valores con un alcance definido para evitar sorpresas." },
-  { title: "Desarrollamos", desc: "Construimos tu proyecto con herramientas modernas y enfoque profesional." },
+  {
+    title: "Desarrollamos",
+    desc: "Construimos tu proyecto con herramientas modernas y enfoque profesional.",
+  },
   { title: "Revisamos", desc: "Ajustamos detalles en conjunto antes del lanzamiento final." },
-  { title: "Entregamos", desc: "Publicamos el proyecto y te entregamos los accesos y credenciales." },
-  { title: "Acompañamos", desc: "Ofrecemos soporte técnico y mejoras según el servicio contratado." },
+  {
+    title: "Entregamos",
+    desc: "Publicamos el proyecto y te entregamos los accesos y credenciales.",
+  },
+  {
+    title: "Acompañamos",
+    desc: "Ofrecemos soporte técnico y mejoras según el servicio contratado.",
+  },
 ];
 
 const reasons = [
@@ -121,23 +139,33 @@ export default function QuienesSomosPage() {
         <Container className="relative space-y-6 text-center">
           <div className="mx-auto flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700">
             <Sparkles className="h-4 w-4" />
-            Empresa chilena de tecnología · Más de {siteConfig.business.experienceYears} años en el rubro
+            Empresa chilena de tecnología · Más de {siteConfig.business.experienceYears} años en el
+            rubro
           </div>
 
-          <h1 className="mx-auto max-w-4xl text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
+          <h1 className="mx-auto max-w-4xl text-4xl leading-tight font-extrabold text-slate-900 sm:text-5xl">
             Zyteron SpA — Empresa de desarrollo web y sistemas digitales en Santiago, Chile
           </h1>
 
           <p className="mx-auto max-w-3xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            Creamos páginas web, herramientas, tiendas y sistemas pensados para que tu negocio tenga una
-            presencia formal, capte clientes y automatice sus procesos de venta.
+            Creamos páginas web, herramientas, tiendas y sistemas pensados para que tu negocio tenga
+            una presencia formal, capte clientes y automatice sus procesos de venta.
           </p>
 
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Button asChild size="lg" className="bg-blue-700 font-bold text-white hover:bg-blue-800">
+            <Button
+              asChild
+              size="lg"
+              className="bg-blue-700 font-bold text-white hover:bg-blue-800"
+            >
               <Link href="/contacto">Solicitar cotización</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-slate-300 text-slate-800 hover:bg-slate-50">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-slate-300 text-slate-800 hover:bg-slate-50"
+            >
               <Link href={WHATSAPP_ADVISORY_URL} target="_blank" rel="noopener">
                 <MessageCircle className="mr-2 h-4 w-4" />
                 Hablar por WhatsApp
@@ -162,34 +190,40 @@ export default function QuienesSomosPage() {
       </section>
 
       {/* Quiénes Somos */}
-      <section className="pb-16 pt-4">
+      <section className="pt-4 pb-16">
         <Container className="grid gap-12 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
           <div className="space-y-6">
             <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Quiénes somos</h2>
             <div className="space-y-4 text-base leading-relaxed text-slate-600">
               <p>
-                Somos <strong>Zyteron SpA</strong>, una empresa tecnológica chilena dedicada al desarrollo web,
-                creación de sistemas digitales, automatización operativa y soporte tecnológico, con un equipo que
-                suma <strong>más de {siteConfig.business.experienceYears} años de experiencia en el rubro</strong>.
+                Somos <strong>Zyteron SpA</strong>, una empresa tecnológica chilena dedicada al
+                desarrollo web, creación de sistemas digitales, automatización operativa y soporte
+                tecnológico, con un equipo que suma{" "}
+                <strong>
+                  más de {siteConfig.business.experienceYears} años de experiencia en el rubro
+                </strong>
+                .
               </p>
               <p>
-                Nacimos para ayudar a emprendedores, profesionales independientes y pymes a profesionalizar su presencia
-                en internet y ordenar sus procesos operativos. Entendemos que una página web o un sistema interno no es
-                un gasto, sino una herramienta comercial que debe generar confianza, facilitar ventas y simplificar el
+                Nacimos para ayudar a emprendedores, profesionales independientes y pymes a
+                profesionalizar su presencia en internet y ordenar sus procesos operativos.
+                Entendemos que una página web o un sistema interno no es un gasto, sino una
+                herramienta comercial que debe generar confianza, facilitar ventas y simplificar el
                 trabajo diario.
               </p>
               <p>
-                Por eso, nuestro enfoque es 100% real y práctico: hablamos claro, cotizamos con alcance definido y
-                acompañamos técnica y formalmente cada proyecto desde la idea inicial hasta su puesta en marcha.
+                Por eso, nuestro enfoque es 100% real y práctico: hablamos claro, cotizamos con
+                alcance definido y acompañamos técnica y formalmente cada proyecto desde la idea
+                inicial hasta su puesta en marcha.
               </p>
             </div>
           </div>
           <div className="rounded-3xl border border-slate-200 bg-slate-50 p-8 shadow-sm">
             <h3 className="mb-4 text-xl font-extrabold text-slate-900">Nuestro compromiso</h3>
             <p className="text-sm leading-relaxed text-slate-600">
-              Hablamos claro y cumplimos lo que prometemos: soluciones útiles, responsables y funcionales. Cuidamos los
-              detalles y respetamos los tiempos acordados porque sabemos que detrás de cada proyecto hay un negocio que
-              busca crecer, verse mejor y vender más.
+              Hablamos claro y cumplimos lo que prometemos: soluciones útiles, responsables y
+              funcionales. Cuidamos los detalles y respetamos los tiempos acordados porque sabemos
+              que detrás de cada proyecto hay un negocio que busca crecer, verse mejor y vender más.
             </p>
           </div>
         </Container>
@@ -199,10 +233,15 @@ export default function QuienesSomosPage() {
       <section className="bg-slate-50 py-20 text-slate-900">
         <Container className="space-y-16">
           <div className="space-y-4 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Nuestro Equipo</p>
-            <h2 className="text-3xl font-extrabold sm:text-4xl text-slate-900">Personas detrás del código</h2>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+              Nuestro Equipo
+            </p>
+            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              Personas detrás del código
+            </h2>
             <p className="mx-auto max-w-2xl text-slate-600">
-              Unimos diseño, tecnología y estrategia operativa para hacer crecer tu empresa.
+              Un equipo de {siteConfig.business.teamSize} personas que une diseño, tecnología y
+              estrategia operativa para acompañar a tu empresa.
             </p>
           </div>
 
@@ -212,7 +251,9 @@ export default function QuienesSomosPage() {
                 key={member.role}
                 className="flex flex-col rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md"
               >
-                <p className="text-[11px] font-bold uppercase tracking-widest text-blue-600">{member.role}</p>
+                <p className="text-[11px] font-bold tracking-widest text-blue-600 uppercase">
+                  {member.role}
+                </p>
                 <p className="mt-4 leading-relaxed text-slate-600">{member.desc}</p>
               </article>
             ))}
@@ -224,8 +265,12 @@ export default function QuienesSomosPage() {
       <section className="py-20">
         <Container className="space-y-12">
           <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Qué hacemos en Zyteron</h2>
-            <p className="mt-4 text-lg text-slate-600">Desarrollo web y soluciones para negocios reales.</p>
+            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              Qué hacemos en Zyteron
+            </h2>
+            <p className="mt-4 text-lg text-slate-600">
+              Desarrollo web y soluciones para negocios reales.
+            </p>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {services.map((service) => (
@@ -249,7 +294,9 @@ export default function QuienesSomosPage() {
         <Container className="space-y-12">
           <div className="text-center">
             <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Cómo trabajamos</h2>
-            <p className="mt-4 text-lg text-slate-600">Procesos claros desde la cotización hasta la entrega.</p>
+            <p className="mt-4 text-lg text-slate-600">
+              Procesos claros desde la cotización hasta la entrega.
+            </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {workSteps.map((step, idx) => (
@@ -267,7 +314,9 @@ export default function QuienesSomosPage() {
       <section className="py-20">
         <Container className="grid gap-12 lg:grid-cols-2 lg:items-center">
           <div className="space-y-6">
-            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Por qué elegir Zyteron</h2>
+            <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              Por qué elegir Zyteron
+            </h2>
             <p className="text-base text-slate-600">
               Un aliado tecnológico que conoce tu negocio y responde cuando lo necesitas.
             </p>
@@ -283,12 +332,30 @@ export default function QuienesSomosPage() {
           <div className="rounded-3xl border border-slate-200 bg-slate-900 p-8 text-white sm:p-12">
             <h3 className="text-2xl font-extrabold text-white">Respaldo y Formalidad</h3>
             <ul className="mt-8 space-y-4 text-slate-300">
-              <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-blue-400" /> Equipo con más de {siteConfig.business.experienceYears} años de experiencia en el rubro tecnológico.</li>
-              <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-blue-400" /> Empresa formalmente constituida (Zyteron SpA).</li>
-              <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-blue-400" /> Facturación electrónica en todos nuestros servicios.</li>
-              <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-blue-400" /> Atención oficial por correo corporativo.</li>
-              <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-blue-400" /> Canal de comunicación directa vía WhatsApp Business.</li>
-              <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-blue-400" /> Propuestas y cotizaciones formales por escrito.</li>
+              <li className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-blue-400" /> Equipo con más de{" "}
+                {siteConfig.business.experienceYears} años de experiencia en el rubro tecnológico.
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-blue-400" /> Empresa formalmente constituida
+                (Zyteron SpA).
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-blue-400" /> Facturación electrónica en todos
+                nuestros servicios.
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-blue-400" /> Atención oficial por correo
+                corporativo.
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-blue-400" /> Canal de comunicación directa vía
+                WhatsApp Business.
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-blue-400" /> Propuestas y cotizaciones
+                formales por escrito.
+              </li>
             </ul>
           </div>
         </Container>
@@ -296,16 +363,28 @@ export default function QuienesSomosPage() {
 
       {/* CTA Final */}
       <section className="bg-white pb-20">
-        <Container className="rounded-3xl bg-blue-50 border border-blue-100 p-10 text-center sm:p-16">
-          <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">Hablemos de tu proyecto</h2>
+        <Container className="rounded-3xl border border-blue-100 bg-blue-50 p-10 text-center sm:p-16">
+          <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+            Hablemos de tu proyecto
+          </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-600">
-            Cuéntanos qué necesitas y te ayudaremos a encontrar una solución clara, profesional y acorde a la realidad de tu negocio.
+            Cuéntanos qué necesitas y te ayudaremos a encontrar una solución clara, profesional y
+            acorde a la realidad de tu negocio.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Button asChild size="lg" className="bg-blue-700 font-bold text-white hover:bg-blue-800 shadow-xl shadow-blue-700/20">
+            <Button
+              asChild
+              size="lg"
+              className="bg-blue-700 font-bold text-white shadow-xl shadow-blue-700/20 hover:bg-blue-800"
+            >
               <Link href="/contacto">Solicitar cotización</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-slate-300 bg-white text-slate-800 hover:bg-slate-50">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
+            >
               <Link href={WHATSAPP_ADVISORY_URL} target="_blank" rel="noopener">
                 <MessageCircle className="mr-2 h-4 w-4" /> Hablar por WhatsApp
               </Link>

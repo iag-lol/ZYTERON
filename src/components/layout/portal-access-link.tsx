@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +17,7 @@ export function PortalAccessLink({
   onClick,
 }: PortalAccessLinkProps) {
   return (
-    <Link
+    <a
       href={PORTAL_CLIENTES_URL}
       onClick={onClick}
       className={cn(
@@ -37,6 +36,6 @@ export function PortalAccessLink({
         className={cn("relative shrink-0 text-blue-200", size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4")}
       />
       <span className="relative whitespace-nowrap">{label}</span>
-    </Link>
+    </a>
   );
 }

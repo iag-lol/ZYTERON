@@ -1,3 +1,4 @@
+import { campaignApplicationsOpen } from "@/lib/becas/campaign-status";
 import { NextResponse } from "next/server";
 import { getBecasSupabaseClient } from "@/lib/becas/supabase-client";
 import { z } from "zod";
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
     // Verify campaign is active
     const { data: campaign, error: campaignError } = await supabase
       .from("scholarship_campaigns")
-      .select("status")
+      .select("status, starts_at, ends_at")
       .eq("id", campaignId)
       .single();
 
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Campaña no encontrada" }, { status: 404 });
     }
 
-    if (campaign.status !== "active") {
+    if (!campaignApplicationsOpen(campaign)) {
       return NextResponse.json({ error: "La campaña no está activa" }, { status: 403 });
     }
 
