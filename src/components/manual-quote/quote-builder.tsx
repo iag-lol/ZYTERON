@@ -147,6 +147,13 @@ export function ManualQuoteBuilder({ initialPlan = "pyme" }: { initialPlan?: str
   const [cooldown, setCooldown] = useState(0);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const downloadUrlRef = useRef<string | null>(null);
+  useEffect(
+    () => () => {
+      if (downloadUrlRef.current) URL.revokeObjectURL(downloadUrlRef.current);
+    },
+    [],
+  );
   useEffect(() => {
     if (error) errorRef.current?.focus();
   }, [error]);
@@ -284,13 +291,15 @@ export function ManualQuoteBuilder({ initialPlan = "pyme" }: { initialPlan?: str
           "No pudimos descargar el documento. Tu selección sigue guardada; vuelve a intentarlo.",
         );
       const url = URL.createObjectURL(await response.blob());
+      if (downloadUrlRef.current) URL.revokeObjectURL(downloadUrlRef.current);
+      downloadUrlRef.current = url;
       const link = document.createElement("a");
       link.href = url;
       link.download = `Zyteron-cotizacion-${id.slice(0, 8).toUpperCase()}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      // El selector nativo puede permanecer abierto; la siguiente descarga o el desmontaje libera el archivo.
       setNotice("Documento descargado con el alcance y los valores de tu selección.");
     });
   }
