@@ -220,8 +220,8 @@ export const CLOSED_ADDONS: ClosedAddon[] = [
   extra(
     "whatsappForm",
     2,
-    "Un formulario de hasta 5 campos que prepara el mensaje para abrir WhatsApp en un número.",
-    "El visitante confirma el envío. No incluye API, chatbot ni envío automático.",
+    "Un formulario de hasta 5 campos que prepara el mensaje para abrir WhatsApp en un número. El visitante confirma el envío desde su dispositivo.",
+    "No incluye API, chatbot ni envío automático.",
   ),
   extra(
     "products20",

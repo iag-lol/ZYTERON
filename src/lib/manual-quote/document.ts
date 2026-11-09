@@ -176,12 +176,12 @@ export async function generateManualQuoteDocument(input: ManualDocumentInput) {
     if (intro) paragraph(intro, { color: muted, after: 15 });
   }
   newPage();
-  paragraph("Tu proyecto, con un alcance claro.", { size: 25, strong: true, after: 13 });
+  paragraph("Tu proyecto, con un alcance claro.", { size: 25, strong: true, after: 4 });
   paragraph(
     input.acceptedAt
       ? "Alcance aceptado para preparar el pago. Este documento no acredita una transacción pagada."
       : "Cotización de desarrollo. Revisa los entregables y condiciones antes de contratar.",
-    { color: muted, after: 20 },
+    { color: muted, after: 10 },
   );
 
   const nameLines = wrap(input.name, 12, 283, true),
@@ -205,7 +205,7 @@ export async function generateManualQuoteDocument(input: ManualDocumentInput) {
   draw(date(input.createdAt), M + 335, top - 17, 10, true);
   draw("Catálogo de referencia", M + 335, top - 38, 8, false, muted);
   draw(q.version, M + 335, top - 55, 9, true);
-  y -= clientHeight + 13;
+  y -= clientHeight + 9;
 
   const planLines = wrap(q.base.name, 17, 265, true);
   const overviewHeight = Math.max(95, planLines.length * 22 + 62);
@@ -229,10 +229,10 @@ export async function generateManualQuoteDocument(input: ManualDocumentInput) {
   right("INVERSIÓN TOTAL", W - M - 17, y - 22, 8, true, rgb(0.64, 0.76, 0.94));
   right(clp(q.total), W - M - 17, y - 51, 23, true, white);
   right("CLP · IVA incluido · pago único", W - M - 17, y - 72, 8, false, white);
-  y -= overviewHeight + 16;
+  y -= overviewHeight + 12;
   paragraph(
     "*El plazo comienza con el pago confirmado y la entrega completa de contenidos y accesos. Incluye los adicionales seleccionados.",
-    { size: 8, color: muted, after: 20 },
+    { size: 8, color: muted, after: 12 },
   );
 
   section("01", "Resumen económico");
@@ -302,7 +302,7 @@ export async function generateManualQuoteDocument(input: ManualDocumentInput) {
     const lines = wrap(value, 9.5, CW - 15);
     room(lines.length * 14.1 + 9);
     page.drawRectangle({ x: M + 1, y: y + 2, width: 4, height: 4, color: teal });
-    paragraph(value, { indent: 15 });
+    paragraph(value, { indent: 15, after: 6 });
   }
   paragraph(
     `Fuera del plan base: ${exclusionText(q.base.excludes.join(" "))} Las funciones adicionales se rigen por los módulos seleccionados a continuación.`,
@@ -313,7 +313,14 @@ export async function generateManualQuoteDocument(input: ManualDocumentInput) {
     const title = wrap(a.name, 12, CW - 145, true);
     const body = [
       { value: a.scope, size: 9.5, color: ink },
-      { value: `No incluye: ${exclusionText(a.excludes)}`, size: 8.5, color: muted },
+      {
+        value:
+          a.excludes.includes("No incluye") && !a.excludes.startsWith("No incluye")
+            ? a.excludes
+            : `No incluye: ${exclusionText(a.excludes)}`,
+        size: 8.5,
+        color: muted,
+      },
       {
         value: `Plazo adicional: ${a.days * a.quantity} días hábiles · Cantidad: ${a.quantity} · Unitario neto: ${clp(a.amount)}`,
         size: 8.5,
@@ -323,7 +330,7 @@ export async function generateManualQuoteDocument(input: ManualDocumentInput) {
     const height =
       48 +
       title.length * 16 +
-      body.reduce((sum, p) => sum + wrap(p.value, p.size, CW - 30).length * p.size * 1.48 + 9, 0);
+      body.reduce((sum, p) => sum + wrap(p.value, p.size, CW - 30).length * p.size * 1.48 + 7, 0);
     room(height + 13);
     // Los alcances del catálogo son acotados; textos externos largos continúan con paginación normal.
     if (height <= H - 220) {
@@ -351,7 +358,7 @@ export async function generateManualQuoteDocument(input: ManualDocumentInput) {
           draw(text, M + 15, y, p.size, false, p.color);
           y -= p.size * 1.48;
         }
-        y -= 9;
+        y -= 7;
       }
       y = initialY - height - 3;
     } else {
@@ -360,7 +367,8 @@ export async function generateManualQuoteDocument(input: ManualDocumentInput) {
     }
   }
 
-  newPage();
+  if (y < 400) newPage();
+  else y -= 20;
   section("03", "Condiciones de contratación");
   const terms: [string, string][] = [
     ["Entrega y plazo", `${q.days.join(" a ")} días hábiles en total. ${q.terms.delivery}`],
@@ -373,10 +381,18 @@ export async function generateManualQuoteDocument(input: ManualDocumentInput) {
       `Cotización válida durante 7 días desde ${date(input.createdAt)}, sujeta a catálogo vigente antes de aceptar el pago. Los pedidos aceptados conservan el alcance y los valores guardados. ${input.acceptedAt ? `Alcance aceptado el ${date(input.acceptedAt)}.` : "Esta cotización no constituye una compra ni acredita un pago."} No reemplaza el documento tributario.`,
     ],
   ];
-  for (const [label, value] of terms) {
-    room(78);
-    paragraph(label, { size: 11, strong: true, after: 5 });
-    paragraph(value, { size: 9, color: muted, after: 17 });
+  const termHeight = (value: string) => 11 * 1.48 + 4 + wrap(value, 9).length * 9 * 1.48 + 12;
+  for (const [index, [label, value]] of terms.entries()) {
+    const needed =
+      index === terms.length - 2
+        ? terms.slice(index).reduce((sum, [, text]) => sum + termHeight(text), 72)
+        : termHeight(value);
+    if (y - needed < BOTTOM) {
+      newPage();
+      section("03", "Condiciones / continuación");
+    }
+    paragraph(label, { size: 11, strong: true, after: 4 });
+    paragraph(value, { size: 9, color: muted, after: 12 });
   }
   room(72);
   page.drawRectangle({ x: M, y: y - 54, width: CW, height: 70, color: paper });
