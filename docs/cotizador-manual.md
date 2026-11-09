@@ -33,7 +33,7 @@ El catálogo cerrado tiene 81 adicionales en 12 categorías. Las tarifas de los 
 
 La búsqueda admite términos sin tildes; las categorías se exploran por grupos y la vista «Seleccionados» permite revisar el alcance. El resumen muestra valores netos, IVA y precio total. Las licencias, dominios, hosting y consumos de terceros no se incluyen en las tarifas de implementación.
 
-La descarga guarda primero la selección visible y genera el PDF con el alcance persistido. El documento usa el logo de Zyteron, resumen económico, entregables por módulo y condiciones, con paginación y datos del emisor. Los pedidos aceptados de catálogos anteriores mantienen su snapshot y precio para consulta y reintento de pago; no se recalculan con las tarifas actuales. Los borradores anteriores se muestran con el catálogo actualizado para revisión antes de guardar o comprar.
+La descarga guarda primero la selección visible y genera el PDF con el alcance persistido. El archivo temporal permanece disponible durante el selector nativo de guardado; se libera al generar otra descarga o salir del cotizador. El documento usa el logo de Zyteron, resumen económico, entregables por módulo y condiciones, con paginación y datos del emisor. Los pedidos aceptados de catálogos anteriores mantienen su snapshot y precio para consulta y reintento de pago; no se recalculan con las tarifas actuales. Los borradores anteriores se muestran con el catálogo actualizado para revisión antes de guardar o comprar.
 
 El flujo de cotización reutiliza las tablas Quote, Lead, User, los códigos del portal y las tablas existentes de idempotencia, avisos y pagos; no necesita tablas nuevas.
 

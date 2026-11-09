@@ -14,7 +14,7 @@ await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const results = [];
 try {
-  for (const width of [1440, 360, 390, 430]) {
+  for (const width of (process.env.QA_WIDTHS || "1440,360,390,430").split(",").map(Number)) {
     const context = await browser.newContext({
       viewport: { width, height: 950 },
       reducedMotion: "reduce",
@@ -127,6 +127,23 @@ try {
         body: "<h1>Pasarela simulada para prueba local</h1>",
       }),
     );
+    await context.addInitScript(() => {
+      const original = URL.createObjectURL.bind(URL);
+      const revoke = URL.revokeObjectURL.bind(URL);
+      window.__activeManualPdfUrls = new Set();
+      URL.createObjectURL = (blob) => {
+        const url = original(blob);
+        if (blob.type === "application/pdf") {
+          window.__manualPdfUrl = url;
+          window.__activeManualPdfUrls.add(url);
+        }
+        return url;
+      };
+      URL.revokeObjectURL = (url) => {
+        window.__activeManualPdfUrls.delete(url);
+        revoke(url);
+      };
+    });
     const page = await context.newPage(),
       errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
@@ -206,6 +223,15 @@ try {
       page.getByRole("button", { name: "Descargar cotización PDF", exact: true }).click(),
     ]);
     await download.saveAs(`${output}/${width}-cotizacion-actual.pdf`);
+    await page.waitForTimeout(1600);
+    assert.equal(
+      await page.evaluate(
+        () =>
+          Boolean(window.__manualPdfUrl) && window.__activeManualPdfUrls.has(window.__manualPdfUrl),
+      ),
+      true,
+      "El PDF debe seguir disponible mientras permanece abierto el selector de archivos.",
+    );
     assert.equal(downloadCount, 1);
     assert.equal(draft.selection.addons.length, 4);
     assert.equal(calculateManualQuote(draft.selection).total, beforeDownload.total);
