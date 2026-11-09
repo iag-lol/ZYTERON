@@ -12,6 +12,43 @@ import {
 import { generateManualQuoteDocument } from "./document";
 import { clp } from "@/config/pricing";
 
+test("PDF: el subtotal, IVA y total de una cotización con tres adicionales permanecen en la primera hoja", async (t) => {
+  const snapshot = calculateManualQuote({
+    version: CATALOG_VERSION,
+    planId: "pyme",
+    addons: [
+      { id: "multiStepForm", quantity: 1 },
+      { id: "whatsappForm", quantity: 1 },
+      { id: "technicalSeo", quantity: 1 },
+    ],
+  });
+  const byPage = new Map<PDFPage, string[]>(),
+    original = PDFPage.prototype.drawText;
+  t.mock.method(
+    PDFPage.prototype,
+    "drawText",
+    function (this: PDFPage, text: string, options: PDFPageDrawTextOptions = {}) {
+      const values = byPage.get(this) || [];
+      values.push(text);
+      byPage.set(this, values);
+      return original.call(this, text, options);
+    },
+  );
+  const bytes = await generateManualQuoteDocument({
+    id: "a1000000-0000-4000-a000-000000000001",
+    name: "Cliente de demostración",
+    email: "proyectos@example.com",
+    createdAt: "2026-11-09T12:00:00Z",
+    snapshot,
+  });
+  const first = [...byPage.values()][0];
+  assert.ok(
+    first.includes("Subtotal neto") && first.includes("IVA (19%)") && first.includes("TOTAL CLP"),
+  );
+  assert.ok(first.includes("$1.130.452"));
+  assert.ok((await PDFDocument.load(bytes)).getPageCount() <= 4);
+});
+
 test("PDF: alcance extenso, límites de página, importes y datos largos", async (t) => {
   let selection: ManualSelection = { version: CATALOG_VERSION, planId: "ecommerce", addons: [] };
   for (const a of CLOSED_ADDONS)
