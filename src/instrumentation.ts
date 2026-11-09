@@ -1,6 +1,6 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs" && process.env.RENDER_SERVICE_ID) {
-    const { assertFlowCheckoutReady } = await import("./lib/payments/flow");
+    const { assertFlowCheckoutReady, checkFlowConnection } = await import("./lib/payments/flow");
     let checkoutReady = false;
     try {
       assertFlowCheckoutReady();
@@ -19,6 +19,24 @@ export async function register() {
         ),
       }),
     );
+    // Una caída del proveedor no debe impedir el arranque de la web.
+    void checkFlowConnection()
+      .then((result) => console.info("FLOW_CONNECTION_CHECK", JSON.stringify(result)))
+      .catch((error: unknown) =>
+        console.warn(
+          "FLOW_CONNECTION_CHECK",
+          JSON.stringify({
+            authenticated: false,
+            httpStatus:
+              error &&
+              typeof error === "object" &&
+              "httpStatus" in error &&
+              typeof error.httpStatus === "number"
+                ? error.httpStatus
+                : null,
+          }),
+        ),
+      );
   }
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { runPortalLoginNotifications } = await import("./lib/notifications/portal-login-outbox");
