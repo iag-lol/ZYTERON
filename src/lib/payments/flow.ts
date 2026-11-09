@@ -251,6 +251,21 @@ async function flowGet(path: string, query: Record<string, unknown>) {
   return body;
 }
 
+/** Comprueba las credenciales con una consulta de lectura; no crea órdenes ni devuelve pagos. */
+export async function checkFlowConnection() {
+  const { base } = getFlowConfig();
+  const body = await flowGet("/payment/getPayments", {
+    date: new Date().toISOString().slice(0, 10),
+    limit: 1,
+  });
+  if (typeof body.total !== "number" || !Number.isInteger(body.total) || body.total < 0)
+    throw new Error("FLOW_CONNECTION_RESPONSE_INVALID");
+  return {
+    environment: base === "https://www.flow.cl/api" ? "production" : "sandbox",
+    authenticated: true,
+  };
+}
+
 export function mapFlowStatusLabel(status: number) {
   if (status === 2) return "PAGADA";
   if (status === 1) return "PENDIENTE";

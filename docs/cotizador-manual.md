@@ -29,9 +29,13 @@ Correo requiere Resend y remitente autorizado. WhatsApp requiere Meta Cloud API,
 
 ## Configuración y operación
 
-Se reutilizan las tablas Quote, Lead, User, los códigos del portal y las tablas existentes de idempotencia, avisos y pagos. No requiere una nueva migración.
+El flujo de cotización reutiliza las tablas Quote, Lead, User, los códigos del portal y las tablas existentes de idempotencia, avisos y pagos; no necesita tablas nuevas.
 
 Flow necesita credenciales vigentes, `PAYMENT_TOKEN_KEY` y la activación validada de producción. Las colas de pagos requieren `PAYMENT_WORKER_ENABLED=true`; los avisos usan `BILLING_WORKER_ENABLED=true`. `MANUAL_QUOTE_READINESS` registra indicadores de configuración sin valores secretos. La habilitación global de registro público del portal no es necesaria para esta compra.
+
+En Render, `FLOW_CONNECTION_CHECK` comprueba la autenticación al iniciar cada instancia mediante `GET /payment/getPayments`, con un registro como máximo. Sólo registra el ambiente y el resultado de autenticación; no publica datos de pagos ni credenciales. La consulta no crea cobros y un fallo del proveedor no impide iniciar la web. Una conexión autenticada no acredita un pago completado.
+
+El almacenamiento del contador interno de visitas se instala con la migración `20261109073000_web_visit_storage.sql` en el arranque existente. Conserva las filas presentes, restringe la lectura/escritura al backend y recarga el esquema REST. La comprobación operativa requiere una visita controlada con respuesta HTTP 201; no permite recuperar visitas anteriores que no se almacenaron.
 
 Un resultado incierto de creación de pago exige conciliación del intento; no se genera otro cobro automáticamente. Los pedidos pagados no permiten modificar el alcance. Una cotización nueva no cancela ni elimina pedidos anteriores.
 
