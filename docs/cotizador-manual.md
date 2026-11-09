@@ -29,6 +29,12 @@ Correo requiere Resend y remitente autorizado. WhatsApp requiere Meta Cloud API,
 
 ## Configuración y operación
 
+El catálogo cerrado tiene 81 adicionales en 12 categorías. Las tarifas de los módulos nuevos se centralizan en `src/config/extended-addon-pricing.ts` y se incorporan a la fuente general de precios. Cada adicional define alcance, exclusiones, cantidad máxima, días de implementación y compatibilidad. Las alternativas de base de datos y correo se reemplazan; los módulos incluidos no se cobran dos veces. La importación, los respaldos y otros complementos de datos requieren una fuente compatible seleccionada. Al quitarla se retiran los complementos dependientes.
+
+La búsqueda admite términos sin tildes; las categorías se exploran por grupos y la vista «Seleccionados» permite revisar el alcance. El resumen muestra valores netos, IVA y precio total. Las licencias, dominios, hosting y consumos de terceros no se incluyen en las tarifas de implementación.
+
+La descarga guarda primero la selección visible y genera el PDF con el alcance persistido. El documento usa el logo de Zyteron, resumen económico, entregables por módulo y condiciones, con paginación y datos del emisor. Los pedidos aceptados de catálogos anteriores mantienen su snapshot y precio para consulta y reintento de pago; no se recalculan con las tarifas actuales. Los borradores anteriores se muestran con el catálogo actualizado para revisión antes de guardar o comprar.
+
 El flujo de cotización reutiliza las tablas Quote, Lead, User, los códigos del portal y las tablas existentes de idempotencia, avisos y pagos; no necesita tablas nuevas.
 
 Flow necesita credenciales vigentes, `PAYMENT_TOKEN_KEY` y la activación validada de producción. Las colas de pagos requieren `PAYMENT_WORKER_ENABLED=true`; los avisos usan `BILLING_WORKER_ENABLED=true`. `MANUAL_QUOTE_READINESS` registra indicadores de configuración sin valores secretos. La habilitación global de registro público del portal no es necesaria para esta compra.

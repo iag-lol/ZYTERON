@@ -6,8 +6,9 @@ import {
   type AddonId,
   type PlanId,
 } from "@/config/pricing";
+import { EXTRA_DEFINITIONS } from "./catalog-extras";
 
-export const CATALOG_VERSION = "08-11-2026.1";
+export const CATALOG_VERSION = "09-11-2026.2";
 export const QUOTE_TERMS = {
   delivery:
     "Días hábiles de desarrollo. El plazo comienza cuando se confirma el pago y recibimos todos los textos, imágenes, accesos y decisiones de diseño. Las esperas por información o aprobación del cliente suspenden el plazo. No incluye los tiempos de aprobación de proveedores externos.",
@@ -134,7 +135,7 @@ export const CLOSED_PLANS: ClosedPlan[] = [
   ),
 ];
 
-type ClosedAddon = {
+export type ClosedAddon = {
   id: AddonId;
   name: string;
   category: string;
@@ -145,13 +146,21 @@ type ClosedAddon = {
   max: number;
   plans?: PlanId[];
   conflicts?: AddonId[];
+  covers?: AddonId[];
+  requiresAny?: AddonId[];
+  requiresLabel?: string;
 };
 const extra = (
   id: AddonId,
   days: number,
   scope: string,
   excludes: string,
-  options: Partial<Pick<ClosedAddon, "max" | "plans" | "conflicts">> = {},
+  options: Partial<
+    Pick<
+      ClosedAddon,
+      "max" | "plans" | "conflicts" | "covers" | "category" | "requiresAny" | "requiresLabel"
+    >
+  > = {},
 ): ClosedAddon => {
   const source = ADDON_CATALOG.find((a) => a.id === id)!;
   return {
@@ -295,7 +304,108 @@ export const CLOSED_ADDONS: ClosedAddon[] = [
     "No incluye importación, fórmulas de negocio ni integración con planillas externas.",
     { plans: shops },
   ),
+  ...EXTRA_DEFINITIONS.map(({ id, days, scope, excludes, ...options }) =>
+    extra(id, days, scope, excludes, options),
+  ),
 ];
+
+export const MANUAL_CATEGORIES = [
+  {
+    name: "Contenido y diseño",
+    description: "Páginas, contenido editable, idiomas y presentación de tu empresa.",
+  },
+  {
+    name: "Dominios y correo",
+    description: "Dominio, hosting, buzones corporativos y migraciones.",
+  },
+  {
+    name: "Contacto y comunicación",
+    description: "Formularios, correo automático, WhatsApp y atención guiada.",
+  },
+  {
+    name: "Calendarios y reservas",
+    description: "Agendas, disponibilidad, eventos e inscripciones.",
+  },
+  {
+    name: "Tienda y productos",
+    description: "Catálogo, carga de productos, stock y experiencia de compra.",
+  },
+  { name: "Ventas y pagos", description: "Pasarelas, despacho y recuperación de carritos." },
+  {
+    name: "Bases de datos y archivos",
+    description: "Tres niveles de base de datos, importación, documentos y respaldos.",
+  },
+  {
+    name: "Integraciones",
+    description: "Conexiones acotadas con CRM, ERP, APIs y herramientas de trabajo.",
+  },
+  {
+    name: "Gestión y automatización",
+    description: "Paneles, áreas privadas, cotizadores y flujos de trabajo.",
+  },
+  {
+    name: "Seguridad y acceso",
+    description: "Identidad, permisos, auditoría y protección de la información.",
+  },
+  { name: "SEO y medición", description: "Optimización técnica y medición de las conversiones." },
+  {
+    name: "Reportes y documentos",
+    description: "Indicadores, informes, exportaciones y generación de PDF.",
+  },
+] as const;
+
+const categoryAliases: Record<string, string> = {
+  "Funcionalidades web": "Contenido y diseño",
+  "WhatsApp y comunicación": "Contacto y comunicación",
+  Ecommerce: "Tienda y productos",
+  "SEO, analítica y reportería": "SEO y medición",
+};
+for (const item of CLOSED_ADDONS) {
+  item.category = categoryAliases[item.category] || item.category;
+  if (["advancedForm", "multiStepForm"].includes(item.id))
+    item.category = "Contacto y comunicación";
+  if (item.id === "payments") item.category = "Ventas y pagos";
+  if (["pdfGenerator", "excelExport"].includes(item.id)) item.category = "Reportes y documentos";
+  if (item.id === "advancedSearch") item.category = "Tienda y productos";
+  if (
+    [
+      "dataImport",
+      "csvImport",
+      "backupSetup",
+      "fileUploads",
+      "customApi",
+      "dashboardReports",
+      "auditLog",
+    ].includes(item.id)
+  ) {
+    item.requiresAny = [
+      "databaseBasic",
+      "databaseMedium",
+      "databaseAdvanced",
+      "miniAdminPanel",
+      "fullAdminPanel",
+      "manageableCatalog",
+      "booking",
+      "serviceRequests",
+      "ticketDesk",
+      "eventRegistration",
+      "docManagement",
+      "jobBoard",
+      "surveyBuilder",
+      "quoteCalculator",
+    ];
+    item.requiresLabel = "Requiere una base de datos o un módulo administrable seleccionado.";
+  }
+  if (item.id === "twoFactor") {
+    item.requiresAny = ["userLogin", "blog", "booking", "contentEditor"];
+    item.requiresLabel = "Requiere un módulo con acceso de usuarios o administración.";
+  }
+}
+CLOSED_ADDONS.sort(
+  (a, b) =>
+    MANUAL_CATEGORIES.findIndex((c) => c.name === a.category) -
+    MANUAL_CATEGORIES.findIndex((c) => c.name === b.category),
+);
 
 export const selectionSchema = z
   .object({
@@ -305,35 +415,107 @@ export const selectionSchema = z
     planId: z.string(),
     addons: z
       .array(z.object({ id: z.string(), quantity: z.number().int().min(1).max(10) }).strict())
-      .max(25),
+      .max(CLOSED_ADDONS.length),
   })
   .strict();
 export type ManualSelection = z.infer<typeof selectionSchema>;
-export function addonAvailability(planId: string, item: ClosedAddon) {
+export function addonAvailability(
+  planId: string,
+  item: ClosedAddon,
+  addons: ManualSelection["addons"] = [],
+) {
   const selected = CLOSED_PLANS.find((p) => p.id === planId);
+  const available = new Set<string>([
+    ...(selected?.includedAddons || []),
+    ...addons.map((a) => a.id),
+  ]);
+  for (const a of CLOSED_ADDONS)
+    if (available.has(a.id)) for (const id of a.covers || []) available.add(id);
   if (selected?.includedAddons.includes(item.id)) return "Incluido en tu plan";
-  if (item.plans && !item.plans.includes(planId as PlanId))
-    return "Disponible con catálogo o ecommerce compatible";
+  if (
+    item.plans &&
+    !item.plans.includes(planId as PlanId) &&
+    !(item.plans.includes("catalogo") && available.has("manageableCatalog"))
+  )
+    return `Requiere ${item.plans.map((id) => CLOSED_PLANS.find((p) => p.id === id)?.name).join(" o ")}${item.plans.includes("catalogo") ? " o el módulo Catálogo administrable" : ""}`;
+  const covering = CLOSED_ADDONS.find(
+    (a) => addons.some((row) => row.id === a.id) && a.covers?.includes(item.id),
+  );
+  if (covering) return `Incluido en ${covering.name}`;
+  if (item.requiresAny && !item.requiresAny.some((id) => available.has(id)))
+    return item.requiresLabel || "Requiere un módulo compatible seleccionado.";
   return null;
+}
+
+/** Reemplaza alternativas y elimina cobros que ya cubre el módulo elegido. */
+export function selectManualAddon(
+  selection: ManualSelection,
+  id: string,
+  quantity: number,
+): ManualSelection {
+  const item = CLOSED_ADDONS.find((a) => a.id === id);
+  if (!item) throw new Error("Adicional no disponible.");
+  const next = {
+    ...selection,
+    addons: [
+      ...selection.addons.filter((row) => {
+        const current = CLOSED_ADDONS.find((a) => a.id === row.id);
+        return (
+          row.id !== id &&
+          (!quantity ||
+            (!item.conflicts?.includes(row.id as AddonId) &&
+              !current?.conflicts?.includes(item.id) &&
+              !item.covers?.includes(row.id as AddonId)))
+        );
+      }),
+      ...(quantity ? [{ id, quantity }] : []),
+    ],
+  };
+  let previousLength;
+  do {
+    previousLength = next.addons.length;
+    next.addons = next.addons.filter(
+      (row) =>
+        !addonAvailability(next.planId, CLOSED_ADDONS.find((a) => a.id === row.id)!, next.addons),
+    );
+  } while (previousLength !== next.addons.length);
+  return next;
+}
+
+export function changeManualPlan(selection: ManualSelection, planId: string): ManualSelection {
+  return {
+    ...selection,
+    planId,
+    addons: selection.addons.filter((row) => {
+      const item = CLOSED_ADDONS.find((a) => a.id === row.id);
+      return item && !addonAvailability(planId, item, selection.addons);
+    }),
+  };
 }
 export function calculateManualQuote(input: unknown) {
   const selection = selectionSchema.parse(input);
   const base = CLOSED_PLANS.find((p) => p.id === selection.planId);
   if (!base) throw new Error("Selecciona un plan disponible.");
   const seen = new Set<string>();
-  const addons = selection.addons.map((row) => {
-    const item = CLOSED_ADDONS.find((a) => a.id === row.id);
-    if (!item || seen.has(row.id) || row.quantity > item.max)
-      throw new Error("Revisa los adicionales y sus cantidades.");
-    seen.add(row.id);
-    if (addonAvailability(base.id, item))
-      throw new Error(
-        `${item.name}: no corresponde cobrar este adicional en el plan seleccionado.`,
-      );
-    if (item.conflicts?.some((id) => selection.addons.some((a) => a.id === id)))
-      throw new Error("Selecciona solo una alternativa de carga, formulario o SEO.");
-    return { ...item, quantity: row.quantity, lineTotal: item.amount * row.quantity };
-  });
+  const addons = selection.addons
+    .map((row) => {
+      const item = CLOSED_ADDONS.find((a) => a.id === row.id);
+      if (!item || seen.has(row.id) || row.quantity > item.max)
+        throw new Error("Revisa los adicionales y sus cantidades.");
+      seen.add(row.id);
+      if (addonAvailability(base.id, item, selection.addons))
+        throw new Error(
+          `${item.name}: no corresponde cobrar este adicional en el plan seleccionado.`,
+        );
+      if (item.conflicts?.some((id) => selection.addons.some((a) => a.id === id)))
+        throw new Error(`Selecciona una sola alternativa compatible con ${item.name}.`);
+      return { ...item, quantity: row.quantity, lineTotal: item.amount * row.quantity };
+    })
+    .sort(
+      (a, b) =>
+        CLOSED_ADDONS.findIndex((item) => item.id === a.id) -
+        CLOSED_ADDONS.findIndex((item) => item.id === b.id),
+    );
   const net = base.amount + addons.reduce((s, a) => s + a.lineTotal, 0);
   const tax = Math.round(net * 0.19);
   const extraDays = addons.reduce((s, a) => s + a.days * a.quantity, 0);
