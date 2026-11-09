@@ -134,6 +134,7 @@ export async function GET() {
       email: order.email,
       phone: order.phone,
       selection: draft.snapshot.selection,
+      ...(meta.type === "PRODUCT_CHECKOUT" ? { snapshot: draft.snapshot } : {}),
       ready,
       locked: meta.type === "PRODUCT_CHECKOUT",
       paid: meta.flow?.status === 2,

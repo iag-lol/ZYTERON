@@ -1,3 +1,5 @@
+import { EXTENDED_ADDON_PRICING, EXTENDED_ADDON_AMOUNTS } from "./extended-addon-pricing";
+
 /**
  * FUENTE ÚNICA DE PRECIOS DE ZYTERON
  * ----------------------------------
@@ -458,6 +460,7 @@ export const plansByBlock = (block: PlanBlock) =>
  * romper a los consumidores existentes.
  */
 export const ADDON_PRICE_AMOUNTS = {
+  ...EXTENDED_ADDON_AMOUNTS,
   // Funcionalidades web
   extraSection: 49990,
   extraPage: 79990,
@@ -514,6 +517,7 @@ export const ADDON_PRICE_AMOUNTS = {
 export type AddonId = keyof typeof ADDON_PRICE_AMOUNTS;
 
 export type AddonCategory =
+  | (typeof EXTENDED_ADDON_PRICING)[keyof typeof EXTENDED_ADDON_PRICING]["category"]
   | "IA"
   | "WhatsApp y comunicación"
   | "Funcionalidades web"
@@ -551,6 +555,9 @@ const addon = (
 });
 
 export const ADDON_CATALOG: Addon[] = [
+  ...Object.entries(EXTENDED_ADDON_PRICING).map(([id, item]) =>
+    addon(id as AddonId, item.name, item.category),
+  ),
   // Funcionalidades web
   addon("extraSection", "Sección adicional", "Funcionalidades web"),
   addon("extraPage", "Página adicional", "Funcionalidades web"),
@@ -632,12 +639,15 @@ export const addonsByCategory = (category: AddonCategory) =>
   ADDON_CATALOG.filter((item) => item.category === category);
 
 export const ADDON_CATEGORIES: AddonCategory[] = [
-  "Funcionalidades web",
-  "WhatsApp y comunicación",
-  "Ecommerce",
-  "Paneles y sistemas",
-  "Integraciones",
-  "SEO, analítica y reportería",
+  ...new Set<AddonCategory>([
+    ...new Set(Object.values(EXTENDED_ADDON_PRICING).map((item) => item.category)),
+    "Funcionalidades web",
+    "WhatsApp y comunicación",
+    "Ecommerce",
+    "Paneles y sistemas",
+    "Integraciones",
+    "SEO, analítica y reportería",
+  ]),
 ];
 
 // ---------------------------------------------------------------------------

@@ -11,6 +11,7 @@ import {
   FileText,
   LockKeyhole,
   ShieldCheck,
+  Search,
 } from "lucide-react";
 import { clp } from "@/config/pricing";
 import {
@@ -18,9 +19,11 @@ import {
   exclusionText,
   CLOSED_PLANS,
   CLOSED_ADDONS,
-  QUOTE_TERMS,
+  MANUAL_CATEGORIES,
   addonAvailability,
   calculateManualQuote,
+  selectManualAddon,
+  changeManualPlan,
   type ManualSelection,
   type ManualSnapshot,
 } from "@/lib/manual-quote/catalog";
@@ -61,7 +64,7 @@ export function ScopeSummary({ quote }: { quote: ManualSnapshot }) {
           ))}
         </ul>
         <p>
-          <strong>No incluye:</strong> {exclusionText(quote.base.excludes.join(" "))}
+          <strong>Fuera del plan base:</strong> {exclusionText(quote.base.excludes.join(" "))}
         </p>
       </details>
       {quote.addons.map((a) => (
@@ -80,12 +83,12 @@ export function ScopeSummary({ quote }: { quote: ManualSnapshot }) {
         <summary>Entrega, revisiones y condiciones</summary>
         <p>
           <strong>Plazo del proyecto: {quote.days.join(" a ")} días hábiles.</strong>{" "}
-          {QUOTE_TERMS.delivery}
+          {quote.terms.delivery}
         </p>
-        <p>{QUOTE_TERMS.changes}</p>
-        <p>{QUOTE_TERMS.handover}</p>
-        <p>{QUOTE_TERMS.exclusions}</p>
-        <p>{QUOTE_TERMS.payment}</p>
+        <p>{quote.terms.changes}</p>
+        <p>{quote.terms.handover}</p>
+        <p>{quote.terms.exclusions}</p>
+        <p>{quote.terms.payment}</p>
         <p>
           Catálogo {quote.version}. La cotización se conserva 7 días; antes del pago se valida que
           el catálogo siga vigente.
@@ -121,6 +124,8 @@ export function ManualQuoteBuilder({ initialPlan = "pyme" }: { initialPlan?: str
   const [accepted, setAccepted] = useState(false),
     [privacy, setPrivacy] = useState(false);
   const [category, setCategory] = useState("Todos");
+  const [search, setSearch] = useState("");
+  const [reservedQuote, setReservedQuote] = useState<ManualSnapshot | null>(null);
   const [account, setAccount] = useState({
     firstName: "",
     lastName: "",
@@ -138,7 +143,7 @@ export function ManualQuoteBuilder({ initialPlan = "pyme" }: { initialPlan?: str
     businessLine: "",
   });
   const requestKey = useRef("");
-  const quote = calculateManualQuote(selection);
+  const quote = reservedQuote || calculateManualQuote(selection);
   const [cooldown, setCooldown] = useState(0);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -158,8 +163,10 @@ export function ManualQuoteBuilder({ initialPlan = "pyme" }: { initialPlan?: str
     api("/api/manual-quote", undefined, "GET")
       .then((data) => {
         if (cancelled) return;
+        const currentSelection = { ...data.selection, version: CATALOG_VERSION };
         try {
-          calculateManualQuote(data.selection);
+          if (data.locked && data.snapshot) setReservedQuote(data.snapshot);
+          else calculateManualQuote(currentSelection);
         } catch {
           setNotice(
             "El catálogo se actualizó. Inicia una nueva cotización para revisar el alcance y los valores vigentes.",
@@ -168,7 +175,11 @@ export function ManualQuoteBuilder({ initialPlan = "pyme" }: { initialPlan?: str
         }
         setId(data.id);
         setContact({ name: data.name, email: data.email, phone: data.phone || "" });
-        setSelection(data.selection);
+        setSelection(data.locked ? data.selection : currentSelection);
+        if (!data.locked && data.selection.version !== CATALOG_VERSION)
+          setNotice(
+            "El catálogo se actualizó. Revisa el alcance y los precios antes de guardar o comprar; tu documento anterior se conserva hasta que guardes los cambios.",
+          );
         setReady(data.ready);
         setLocked(data.locked);
         if (data.billing) setBilling(data.billing);
@@ -197,27 +208,25 @@ export function ManualQuoteBuilder({ initialPlan = "pyme" }: { initialPlan?: str
     }
   }
   function updatePlan(planId: string) {
-    setSelection({
-      ...selection,
-      planId,
-      addons: selection.addons.filter((row) => {
-        const a = CLOSED_ADDONS.find((x) => x.id === row.id)!;
-        return !addonAvailability(planId, a);
-      }),
-    });
+    const next = changeManualPlan(selection, planId);
+    setSelection(next);
+    if (next.addons.length < selection.addons.length)
+      setNotice(
+        "Se quitaron los adicionales que ya incluye este plan o que requieren otro tipo de proyecto. El resumen muestra la selección vigente.",
+      );
     setAccepted(false);
   }
   function updateAddon(id: string, quantity: number) {
-    const item = CLOSED_ADDONS.find((a) => a.id === id)!;
-    setSelection({
-      ...selection,
-      addons: [
-        ...selection.addons.filter(
-          (a) => a.id !== id && !item.conflicts?.includes(a.id as typeof item.id),
-        ),
-        ...(quantity ? [{ id, quantity }] : []),
-      ],
-    });
+    const next = selectManualAddon(selection, id, quantity);
+    const removed = selection.addons.filter(
+      (a) => a.id !== id && !next.addons.some((row) => row.id === a.id),
+    );
+    setSelection(next);
+    setNotice(
+      removed.length
+        ? "Se actualizaron alternativas, módulos cubiertos y requisitos de tu selección. El resumen muestra los cargos vigentes."
+        : "",
+    );
     setAccepted(false);
   }
   async function start(event: FormEvent<HTMLFormElement>) {
@@ -252,6 +261,8 @@ export function ManualQuoteBuilder({ initialPlan = "pyme" }: { initialPlan?: str
       setReady(false);
       setLocked(false);
       setAccepted(false);
+      setReservedQuote(null);
+      setSelection(initialSelection(initialPlan));
       setAccount({ firstName: "", lastName: "", company: "", password: "", confirmPassword: "" });
       requestKey.current = "";
     });
@@ -260,6 +271,27 @@ export function ManualQuoteBuilder({ initialPlan = "pyme" }: { initialPlan?: str
     await perform(async () => {
       await api("/api/manual-quote", { quoteId: id, selection }, "PATCH");
       setNotice("Cotización guardada. Puedes retomarla en este navegador durante 7 días.");
+    });
+  }
+  async function download() {
+    await perform(async () => {
+      if (!locked) await api("/api/manual-quote", { quoteId: id, selection }, "PATCH");
+      const response = await fetch(`/api/manual-quote/document?draft=${id}`, {
+        credentials: "same-origin",
+      });
+      if (!response.ok)
+        throw new Error(
+          "No pudimos descargar el documento. Tu selección sigue guardada; vuelve a intentarlo.",
+        );
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Zyteron-cotizacion-${id.slice(0, 8).toUpperCase()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setNotice("Documento descargado con el alcance y los valores de tu selección.");
     });
   }
   async function authenticate(event: FormEvent) {
@@ -334,7 +366,23 @@ export function ManualQuoteBuilder({ initialPlan = "pyme" }: { initialPlan?: str
     });
   }
   const selectedAddons = selection.addons.length;
-  const categories = ["Todos", ...new Set(CLOSED_ADDONS.map((a) => a.category))];
+  const normalizeSearch = (value: string) =>
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+  const filteredAddons = CLOSED_ADDONS.filter(
+    (a) =>
+      (category === "Todos" ||
+        (category === "Seleccionados"
+          ? selection.addons.some((row) => row.id === a.id)
+          : a.category === category)) &&
+      (!search.trim() ||
+        normalizeSearch(`${a.name} ${a.category} ${a.scope}`).includes(
+          normalizeSearch(search.trim()),
+        )),
+  );
+  const categories = ["Todos", "Seleccionados", ...MANUAL_CATEGORIES.map((c) => c.name)];
   const input = (label: string, key: keyof Contact, type = "text") => (
     <label>
       {label}
@@ -494,6 +542,26 @@ export function ManualQuoteBuilder({ initialPlan = "pyme" }: { initialPlan?: str
                     Mostramos qué contempla cada precio. Las funciones que ya trae tu plan no se
                     vuelven a cobrar.
                   </p>
+                  <div className="manual-catalog-intro">
+                    <div>
+                      <strong>{CLOSED_ADDONS.length} módulos</strong>
+                      <span>{MANUAL_CATEGORIES.length} categorías para construir tu proyecto</span>
+                    </div>
+                    <p>
+                      Implementación con precio fijo. Licencias, renovaciones y consumos de terceros
+                      por separado.
+                    </p>
+                  </div>
+                  <label className="manual-search">
+                    <Search size={18} aria-hidden="true" />
+                    <span className="sr-only">Buscar módulos</span>
+                    <input
+                      type="search"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Busca correo, calendario, CRM, base de datos…"
+                    />
+                  </label>
                   <div
                     className="manual-filters"
                     role="group"
@@ -507,63 +575,117 @@ export function ManualQuoteBuilder({ initialPlan = "pyme" }: { initialPlan?: str
                         onClick={() => setCategory(c)}
                       >
                         {c}
+                        {c === "Seleccionados" ? ` (${selectedAddons})` : ""}
                       </button>
                     ))}
                   </div>
-                  <div className="manual-addons">
-                    {CLOSED_ADDONS.filter(
-                      (a) => category === "Todos" || a.category === category,
-                    ).map((a) => {
-                      const unavailable = addonAvailability(selection.planId, a),
-                        qty = selection.addons.find((row) => row.id === a.id)?.quantity || 0;
-                      return (
-                        <article key={a.id} className={qty ? "chosen" : ""}>
-                          <div className="manual-addon-top">
-                            <label className="manual-check">
-                              <input
-                                type="checkbox"
-                                disabled={Boolean(unavailable)}
-                                checked={qty > 0}
-                                onChange={(e) => updateAddon(a.id, e.target.checked ? 1 : 0)}
-                              />
-                              <span>
-                                <strong>{a.name}</strong>
-                                <small>{unavailable || `+${a.days} días hábiles por unidad`}</small>
-                              </span>
-                            </label>
-                            <b>
-                              {clp(a.amount)}
-                              <small>+ IVA</small>
-                            </b>
-                          </div>
-                          <p>{a.scope}</p>
-                          <details>
-                            <summary>Ver límites y exclusiones</summary>
-                            <p>{a.excludes}</p>
-                            {a.conflicts && (
-                              <p>
-                                Se elige una sola alternativa de este tipo; al seleccionarla se
-                                reemplaza la anterior.
-                              </p>
-                            )}
-                          </details>
-                          {a.max > 1 && qty > 0 && (
-                            <label className="manual-quantity">
-                              Cantidad
-                              <select
-                                value={qty}
-                                onChange={(e) => updateAddon(a.id, Number(e.target.value))}
-                              >
-                                {Array.from({ length: a.max }, (_, i) => (
-                                  <option key={i + 1}>{i + 1}</option>
-                                ))}
-                              </select>
-                            </label>
-                          )}
-                        </article>
-                      );
-                    })}
-                  </div>
+                  <p className="manual-result-count" role="status">
+                    {filteredAddons.length} módulos
+                    {search.trim() ? ` para “${search.trim()}”` : " en esta vista"}
+                  </p>
+                  {filteredAddons.length === 0 && (
+                    <div className="manual-empty">
+                      <h3>No hay módulos en esta vista.</h3>
+                      <p>Prueba otra búsqueda o explora todas las categorías.</p>
+                      <button
+                        type="button"
+                        className="manual-secondary"
+                        onClick={() => {
+                          setSearch("");
+                          setCategory("Todos");
+                        }}
+                      >
+                        Ver todos los módulos
+                      </button>
+                    </div>
+                  )}
+                  {MANUAL_CATEGORIES.filter((c) =>
+                    filteredAddons.some((a) => a.category === c.name),
+                  ).map((group, groupIndex) => (
+                    <details
+                      className="manual-addon-group"
+                      key={`${category}-${search.trim() ? "search" : "browse"}-${group.name}`}
+                      open={category !== "Todos" || Boolean(search.trim()) || groupIndex === 0}
+                    >
+                      <summary>
+                        <span>
+                          <strong>{group.name}</strong>
+                          <small>{group.description}</small>
+                        </span>
+                        <b>
+                          {filteredAddons.filter((a) => a.category === group.name).length}
+                          <span className="sr-only"> módulos</span>
+                        </b>
+                      </summary>
+                      <div className="manual-addons">
+                        {filteredAddons
+                          .filter((a) => a.category === group.name)
+                          .map((a) => {
+                            const unavailable = addonAvailability(
+                                selection.planId,
+                                a,
+                                selection.addons,
+                              ),
+                              qty = selection.addons.find((row) => row.id === a.id)?.quantity || 0;
+                            return (
+                              <article key={a.id} className={qty ? "chosen" : ""}>
+                                <div className="manual-addon-top">
+                                  <label className="manual-check">
+                                    <input
+                                      type="checkbox"
+                                      disabled={Boolean(unavailable)}
+                                      checked={qty > 0}
+                                      onChange={(e) => updateAddon(a.id, e.target.checked ? 1 : 0)}
+                                    />
+                                    <span>
+                                      <strong>{a.name}</strong>
+                                      <small>
+                                        {unavailable || `+${a.days} días hábiles por unidad`}
+                                      </small>
+                                    </span>
+                                  </label>
+                                  <b>
+                                    {unavailable?.startsWith("Incluido")
+                                      ? "Incluido"
+                                      : clp(a.amount)}
+                                    <small>
+                                      {unavailable?.startsWith("Incluido")
+                                        ? "Sin cargo adicional"
+                                        : "+ IVA · pago único"}
+                                    </small>
+                                  </b>
+                                </div>
+                                <p>{a.scope}</p>
+                                <details>
+                                  <summary>Ver límites y exclusiones</summary>
+                                  <p>{a.excludes}</p>
+                                  {(a.conflicts || a.covers) && (
+                                    <p>
+                                      Se reemplazan las alternativas incompatibles y los módulos
+                                      cubiertos por esta opción. El resumen refleja los cargos
+                                      vigentes.
+                                    </p>
+                                  )}
+                                </details>
+                                {a.max > 1 && qty > 0 && (
+                                  <label className="manual-quantity">
+                                    Cantidad
+                                    <select
+                                      value={qty}
+                                      onChange={(e) => updateAddon(a.id, Number(e.target.value))}
+                                    >
+                                      {Array.from({ length: a.max }, (_, i) => (
+                                        <option key={i + 1}>{i + 1}</option>
+                                      ))}
+                                    </select>
+                                  </label>
+                                )}
+                              </article>
+                            );
+                          })}
+                      </div>
+                    </details>
+                  ))}
                 </section>
                 <div className="manual-custom">
                   <h3>¿Necesitas un sistema o una integración específica?</h3>
@@ -916,14 +1038,9 @@ export function ManualQuoteBuilder({ initialPlan = "pyme" }: { initialPlan?: str
               </button>
             )}
             {id && (
-              <a
-                className="manual-secondary"
-                href={`/api/manual-quote/document?draft=${id}`}
-                target="_blank"
-                rel="noopener"
-              >
-                Descargar alcance guardado <FileText size={16} />
-              </a>
+              <button type="button" className="manual-secondary" disabled={busy} onClick={download}>
+                {busy ? "Preparando…" : "Descargar cotización PDF"} <FileText size={16} />
+              </button>
             )}
             {id && (
               <button type="button" className="manual-secondary" onClick={restart} disabled={busy}>

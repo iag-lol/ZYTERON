@@ -23,7 +23,7 @@ const payload = z
   .object({
     quoteId: z.uuid(),
     expectedTotal: z.number().int().positive(),
-    selection: selectionSchema,
+    selection: selectionSchema.extend({ version: z.string().min(1).max(40) }),
     accepted: z.literal(true),
     billing: z
       .object({
@@ -69,12 +69,6 @@ export async function POST(req: Request) {
         503,
       );
     }
-    const current = calculateManualQuote(selection);
-    if (parsed.data.expectedTotal !== current.total)
-      throw new ManualError(
-        "El precio cambió. Recarga para revisar el total actualizado antes de pagar.",
-        409,
-      );
     const meta = await prisma.$transaction(async (db) => {
       await db.$queryRaw`SELECT id FROM "Quote" WHERE id=${order.id} FOR UPDATE`;
       const fresh = await db.quote.findUnique({ where: { id: order.id } });
@@ -96,8 +90,21 @@ export async function POST(req: Request) {
             "El pedido tiene un alcance reservado diferente. Recarga para revisar su resumen.",
             409,
           );
+        if (parsed.data.expectedTotal !== existing.total)
+          throw new ManualError("Revisa el total del alcance reservado antes de pagar.", 409);
         return existing;
       }
+      let current;
+      try {
+        current = calculateManualQuote(selection);
+      } catch {
+        throw new ManualError(
+          "El catálogo cambió. Revisa y guarda tu selección antes de pagar.",
+          409,
+        );
+      }
+      if (parsed.data.expectedTotal !== current.total)
+        throw new ManualError("El precio cambió. Revisa el total actualizado antes de pagar.", 409);
       const draft = stored as ManualDraft;
       if (
         draft.type !== "MANUAL_QUOTE" ||
