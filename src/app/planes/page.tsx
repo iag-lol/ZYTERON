@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   ShieldCheck,
   ShoppingCart,
-  Sparkles,
   Truck,
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
@@ -898,7 +897,7 @@ export default function PlanesPage() {
                   <h3 className="text-xl font-extrabold text-slate-900">{plan.name}</h3>
                   {plan.tag ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-blue-800 px-2.5 py-1 text-[10px] font-bold tracking-wider text-white uppercase">
-                      <Sparkles className="h-3 w-3" aria-hidden="true" /> {plan.tag}
+                      {plan.tag}
                     </span>
                   ) : null}
                 </div>

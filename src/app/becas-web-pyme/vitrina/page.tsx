@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, AtSign, Building2, MapPin, Sparkles, Store } from "lucide-react";
+import { ArrowLeft, ArrowRight, AtSign, Building2, MapPin, Store } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { getPublishedScholarshipProfiles } from "@/lib/becas/public-profiles";
 import { createPageMetadata } from "@/lib/seo";
@@ -92,11 +92,9 @@ export default async function VitrinaPage() {
           </Link>
 
           <div className="mb-4 flex items-center justify-center gap-2">
-            <Sparkles className="h-5 w-5 text-blue-700" />
             <span className="text-sm font-bold uppercase tracking-widest text-blue-700">
               Vitrina oficial
             </span>
-            <Sparkles className="h-5 w-5 text-blue-700" />
           </div>
 
           <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
