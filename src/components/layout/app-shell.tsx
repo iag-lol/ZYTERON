@@ -1,7 +1,9 @@
 "use client";
 
+import { ViewTransition } from "react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
+import { MotionObserver } from "./motion-observer";
 
 // El asistente es un botón flotante: no hace falta para el primer pintado,
 // así que su código se descarga aparte y no pesa en la carga inicial.
@@ -29,8 +31,13 @@ export function AppShell({ children, header, footer }: AppShellProps) {
   return (
     <div className="public-site flex min-h-screen flex-col">
       {header}
-      <div className="flex-1">{children}</div>
+      {/* La clave por ruta hace que cada navegación salga y entre con una
+          transición de vista; el encabezado queda anclado (site-header). */}
+      <ViewTransition key={pathname} enter="page-in" exit="page-out" default="none">
+        <div className="flex-1">{children}</div>
+      </ViewTransition>
       {footer}
+      <MotionObserver />
       {!["/contacto", "/cotizador", "/becas-web-pyme"].some(
         (route) => pathname === route || pathname.startsWith(route + "/"),
       ) && <AiChatWidget />}

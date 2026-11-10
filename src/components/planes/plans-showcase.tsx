@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Check, ChevronDown, MessageCircle, Sparkles } from "lucide-react";
+import { Check, ChevronDown, MessageCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -56,7 +56,7 @@ export function PlansShowcase({
             >
               {highlighted && (
                 <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-blue-600 px-3.5 py-1.5 text-[11px] font-bold tracking-wider whitespace-nowrap text-white uppercase shadow-lg shadow-blue-600/25">
-                  <Sparkles className="h-3 w-3" /> Plan destacado
+                  Plan destacado
                 </span>
               )}
 

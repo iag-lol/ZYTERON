@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { analyticsConfig } from "@/config/analytics";
@@ -28,6 +28,23 @@ const geistMono = Geist_Mono({
   weight: "variable",
   display: "swap",
   preload: true,
+});
+
+// Tipografía del sitio público (scope .public-site). Admin y portal siguen con Geist.
+const plexSans = IBM_Plex_Sans({
+  variable: "--font-plex",
+  subsets: ["latin"],
+  weight: "variable",
+  display: "swap",
+  preload: true,
+});
+
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -120,7 +137,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es-CL" className={cn(geistSans.variable, geistMono.variable, "h-full antialiased")}>
+    <html lang="es-CL" className={cn(
+        geistSans.variable,
+        geistMono.variable,
+        plexSans.variable,
+        plexMono.variable,
+        "h-full antialiased",
+      )}>
       <head></head>
       <body className="min-h-full bg-white text-slate-900">
         <TooltipProvider>

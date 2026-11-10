@@ -21,6 +21,13 @@ export function SiteHeader() {
   const pathname = usePathname();
   const toggleRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLElement>(null);
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   useEffect(() => {
     if (!open) return;
     menuRef.current?.querySelector<HTMLAnchorElement>("a")?.focus();
@@ -34,7 +41,11 @@ export function SiteHeader() {
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
   return (
-    <header className="site-header sticky top-0 z-30">
+    <header
+      className="site-header sticky top-0 z-30"
+      data-scrolled={scrolled}
+      style={{ viewTransitionName: "site-header" }}
+    >
       <Container className="py-4">
         <div className="flex items-center justify-between gap-4">
           <Link
@@ -46,7 +57,7 @@ export function SiteHeader() {
             <span className="brand-symbol">Z</span>
             <span className="brand-name">zyteron</span>
           </Link>
-          <nav aria-label="Navegación principal" className="hidden items-center gap-1 xl:flex">
+          <nav aria-label="Navegación principal" className="main-nav hidden items-center gap-1 xl:flex">
             <details
               className="solutions-menu"
               onKeyDown={(event) => {
@@ -88,7 +99,7 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 aria-current={pathname === item.href ? "page" : undefined}
-                className="rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-700 aria-[current=page]:text-blue-700"
+                className="nav-link"
               >
                 {item.label}
               </Link>
@@ -104,7 +115,7 @@ export function SiteHeader() {
             <button
               ref={toggleRef}
               type="button"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 xl:hidden"
+              className="menu-toggle press flex min-h-11 min-w-11 items-center justify-center xl:hidden"
               onClick={() => setOpen(!open)}
               aria-label={open ? "Cerrar menú" : "Abrir menú"}
               aria-expanded={open}
@@ -119,12 +130,12 @@ export function SiteHeader() {
             ref={menuRef}
             id="mobile-navigation"
             aria-label="Navegación móvil"
-            className="mt-4 grid max-h-[75dvh] gap-1 overflow-y-auto border-t border-slate-200 pt-3 xl:hidden"
+            className="mobile-nav mt-4 grid max-h-[75dvh] gap-1 overflow-y-auto border-t border-slate-200 pt-3 xl:hidden"
           >
             <Link
               onClick={() => setOpen(false)}
               href="/servicios"
-              className="px-3 py-3 font-semibold"
+              className="rounded-lg px-3 py-3 font-semibold"
             >
               Soluciones
             </Link>
@@ -150,7 +161,7 @@ export function SiteHeader() {
                 onClick={() => setOpen(false)}
                 key={item.href}
                 href={item.href}
-                className="rounded-lg px-3 py-3 text-sm font-semibold text-slate-800 hover:bg-blue-50"
+                className="rounded-lg px-3 py-3 text-sm"
               >
                 {item.label}
               </Link>

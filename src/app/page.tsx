@@ -1,7 +1,16 @@
 import { HomeQuotePreview } from "@/components/manual-quote/home-preview";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Monitor,
+  ShieldCheck,
+  ShoppingBag,
+  Users,
+  Workflow,
+} from "lucide-react";
+import { HeroVisual } from "@/components/home/hero-visual";
 import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ContactLeadForm } from "@/components/forms/contact-lead-form";
@@ -129,6 +138,38 @@ const steps = [
   ],
 ];
 
+const needs = [
+  {
+    title: "Presentar mejor lo que haces",
+    text: "Una empresa, una profesión, un servicio o un proyecto: información clara y una presencia que dé confianza.",
+    href: "/desarrollo-web",
+    label: "Explorar sitios web",
+    icon: Monitor,
+  },
+  {
+    title: "Ordenar productos y pedidos",
+    text: "Un catálogo para mostrar o cotizar, una tienda para cobrar online o una conexión con tu inventario.",
+    href: "/servicios#comercio-digital",
+    label: "Explorar comercio digital",
+    icon: ShoppingBag,
+  },
+  {
+    title: "Coordinar equipos y operaciones",
+    text: "Reunir datos, documentos y tareas para que cada persona conozca sus pendientes y pueda seguir su avance.",
+    href: "/servicios#personas-operaciones",
+    label: "Explorar gestión",
+    icon: Users,
+  },
+  {
+    title: "Conectar herramientas y ahorrar pasos",
+    text: "Evitar volver a digitar una solicitud, preparar documentos y avisar al equipo cuando cambia un estado.",
+    href: "/automatizacion",
+    label: "Explorar automatizaciones",
+    icon: Workflow,
+  },
+];
+const heroDelay = (ms: number) => ({ "--hero-delay": `${ms}ms` }) as React.CSSProperties;
+
 export default async function Home() {
   const reviews = await getApprovedReviewsSnapshot();
   return (
@@ -155,35 +196,38 @@ export default async function Home() {
         })}
       />
       <section className="home-hero">
-        <Container>
-          <div className="hero-overline">
-            <p className="eyebrow">Software y desarrollo digital para empresas y profesionales</p>
-            <span>Santiago, Chile · Desde 2019</span>
-          </div>
-          <h1>
-            Desarrollo de software <span>y soluciones digitales a medida</span>
-          </h1>
-          <div className="hero-bottom">
-            <p className="hero-note">
-              Desde presentar tu empresa hasta conectar y gestionar su operación.
-            </p>
-            <div className="hero-intro">
-              <p>
-                Creamos sistemas empresariales, plataformas de gestión, ecommerce y sitios web para
-                empresas y profesionales. Desarrollamos herramientas para gestionar personas,
-                recursos humanos, flotas, productos y operaciones, con integraciones y
-                automatizaciones adaptadas a cada proyecto.
+        <Container className="hero-grid">
+          <div className="hero-copy">
+            <div className="hero-overline hero-in">
+              <p className="eyebrow">Software y desarrollo digital para empresas y profesionales</p>
+              <span>Santiago, Chile · Desde 2019</span>
+            </div>
+            <h1 className="hero-in" style={heroDelay(70)}>
+              Desarrollo de software <span>y soluciones digitales a medida</span>
+            </h1>
+            <div className="hero-bottom">
+              <p className="hero-note hero-in" style={heroDelay(150)}>
+                Desde presentar tu empresa hasta conectar y gestionar su operación.
               </p>
-              <div className="hero-actions">
-                <Link href="/contacto?origen=inicio" className="design-button">
-                  Conversemos sobre tu proyecto <ArrowUpRight size={18} />
-                </Link>
-                <Link href="#cotizar" className="text-link">
-                  Cotizar con precio definido <ArrowRight size={16} />
-                </Link>
+              <div className="hero-intro hero-in" style={heroDelay(220)}>
+                <p>
+                  Creamos sistemas empresariales, plataformas de gestión, ecommerce y sitios web
+                  para empresas y profesionales. Desarrollamos herramientas para gestionar personas,
+                  recursos humanos, flotas, productos y operaciones, con integraciones y
+                  automatizaciones adaptadas a cada proyecto.
+                </p>
+                <div className="hero-actions">
+                  <Link href="/contacto?origen=inicio" className="design-button">
+                    Conversemos sobre tu proyecto <ArrowUpRight size={18} />
+                  </Link>
+                  <Link href="#cotizar" className="text-link">
+                    Cotizar con precio definido <ArrowRight size={16} />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
+          <HeroVisual />
         </Container>
       </section>
       <HomeQuotePreview />
@@ -202,48 +246,30 @@ export default async function Home() {
         </Container>
       </section>
 
-      <section id="soluciones" className="border-y border-slate-200 py-16 sm:py-24">
-        <Container>
-          <span id="servicios" />
-          <p className="eyebrow">02 / Familias de soluciones</p>
-          <h2 className="mt-3 max-w-3xl text-3xl sm:text-4xl">
-            Tecnología para lo que tu negocio necesita hacer.
-          </h2>
+      <section id="soluciones" className="home-section is-tinted">
+        <Container className="split">
+          <div className="split-head">
+            <span id="servicios" />
+            <p className="eyebrow">02 / Familias de soluciones</p>
+            <h2>Tecnología para lo que tu negocio necesita hacer.</h2>
+          </div>
           <SolutionFamilies />
         </Container>
       </section>
-      <section className="py-16 sm:py-24" id="necesidades">
+      <section className="home-section" id="necesidades">
         <Container>
-          <p className="eyebrow">03 / Un punto de partida</p>
-          <h2 className="mt-3 text-3xl sm:text-4xl">¿Qué necesitas resolver?</h2>
+          <div className="home-section-head">
+            <div>
+              <p className="eyebrow">03 / Un punto de partida</p>
+              <h2>¿Qué necesitas resolver?</h2>
+            </div>
+          </div>
           <div className="needs-grid">
-            {[
-              [
-                "Presentar mejor lo que haces",
-                "Una empresa, una profesión, un servicio o un proyecto: información clara y una presencia que dé confianza.",
-                "/desarrollo-web",
-                "Explorar sitios web",
-              ],
-              [
-                "Ordenar productos y pedidos",
-                "Un catálogo para mostrar o cotizar, una tienda para cobrar online o una conexión con tu inventario.",
-                "/servicios#comercio-digital",
-                "Explorar comercio digital",
-              ],
-              [
-                "Coordinar equipos y operaciones",
-                "Reunir datos, documentos y tareas para que cada persona conozca sus pendientes y pueda seguir su avance.",
-                "/servicios#personas-operaciones",
-                "Explorar gestión",
-              ],
-              [
-                "Conectar herramientas y ahorrar pasos",
-                "Evitar volver a digitar una solicitud, preparar documentos y avisar al equipo cuando cambia un estado.",
-                "/automatizacion",
-                "Explorar automatizaciones",
-              ],
-            ].map(([title, text, href, label]) => (
+            {needs.map(({ title, text, href, label, icon: Icon }) => (
               <article key={title}>
+                <span className="need-icon" aria-hidden="true">
+                  <Icon size={20} strokeWidth={1.75} />
+                </span>
                 <h3>{title}</h3>
                 <p>{text}</p>
                 <Link className="text-link" href={href}>
@@ -255,97 +281,92 @@ export default async function Home() {
           </div>
         </Container>
       </section>
-      <section className="border-y border-slate-200 bg-white py-16 sm:py-24" id="rubros">
+      <section className="home-section is-tinted" id="rubros">
         <Container>
           <p className="eyebrow">04 / Soluciones por rubro</p>
-          <h2 className="mt-3 text-3xl sm:text-4xl">
+          <h2 className="mt-4 max-w-3xl text-[clamp(32px,3.3vw,48px)]">
             Distintas actividades. Necesidades concretas.
           </h2>
           <IndustrySolutions />
         </Container>
       </section>
 
-      <section id="proceso" className="py-16 sm:py-24">
+      <section id="proceso" className="home-section">
         <Container>
-          <p className="text-xs font-bold tracking-widest text-blue-700 uppercase">
-            05 / Cómo trabajamos
-          </p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-            Sabes qué se construye y qué recibes.
-          </h2>
-          <div className="mt-10 grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
-            {steps.map(([number, title, copy]) => (
-              <div key={number} className="border-t-2 border-blue-700 pt-5">
-                <span className="text-sm font-bold text-blue-700">{number}</span>
-                <h3 className="mt-4 text-lg font-bold text-slate-950">{title}</h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">{copy}</p>
-              </div>
-            ))}
+          <div className="home-section-head">
+            <div>
+              <p className="eyebrow">05 / Cómo trabajamos</p>
+              <h2>Sabes qué se construye y qué recibes.</h2>
+            </div>
           </div>
-          <p className="mt-9 flex items-start gap-3 rounded-xl bg-slate-50 p-5 text-sm leading-7 text-slate-600">
-            <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-blue-700" />
+          <ol className="process-steps">
+            {steps.map(([number, title, copy]) => (
+              <li key={number}>
+                <span className="process-num">{number}</span>
+                <h3>{title}</h3>
+                <p>{copy}</p>
+              </li>
+            ))}
+          </ol>
+          <p className="process-note">
+            <ShieldCheck className="h-5 w-5" />
             <span>
               {OFFER_CONDITIONS.ownership}{" "}
-              <Link className="font-bold text-blue-700 underline" href="/terminos">
-                Revisar condiciones
-              </Link>
-              .
+              <Link href="/terminos">Revisar condiciones</Link>.
             </span>
           </p>
         </Container>
       </section>
-      <section id="implementacion" className="border-y border-slate-200 bg-white py-16">
-        <Container className="grid gap-10 lg:grid-cols-2">
-          <div>
-            <p className="eyebrow">06 / Implementación y continuidad</p>
-            <h2 className="mt-3 text-3xl">El alcance y los costos, por escrito.</h2>
-            <p className="mt-5 leading-7 text-slate-600">
-              La propuesta distingue desarrollo e implementación de infraestructura, equipamiento,
-              mantenimiento, licencias, renovaciones y consumos externos. Define responsables,
-              plazos y entregables por etapa.
-            </p>
-            <Link id="planes" href="/planes" className="text-link mt-4">
-              Revisar precios y alcances <ArrowUpRight size={17} />
-            </Link>
-          </div>
-          <div className="space-y-5 text-sm leading-7 text-slate-600">
-            <p>
-              <strong className="text-slate-900">Sistemas empresariales. </strong>
-              {fromPrice(PLAN_PRICE_AMOUNTS.sistema)} como referencia del Sistema Web Profesional:
-              usuarios, registros, roles, panel y reportes. Módulos, datos, migración e
-              integraciones modifican el presupuesto.
-            </p>
-            <p>{OFFER_CONDITIONS.recurring}</p>
-            <p>{OFFER_CONDITIONS.delivery}</p>
-            <Link className="text-link" href="/sistemas-web/control-flota">
-              Ver alcance específico de Control de Flota <ArrowUpRight size={16} />
-            </Link>
+      <section id="implementacion" className="home-section is-tinted">
+        <Container>
+          <div className="impl-panel">
+            <div>
+              <p className="eyebrow">06 / Implementación y continuidad</p>
+              <h2>El alcance y los costos, por escrito.</h2>
+              <p>
+                La propuesta distingue desarrollo e implementación de infraestructura,
+                equipamiento, mantenimiento, licencias, renovaciones y consumos externos. Define
+                responsables, plazos y entregables por etapa.
+              </p>
+              <Link id="planes" href="/planes" className="text-link mt-4">
+                Revisar precios y alcances <ArrowUpRight size={17} />
+              </Link>
+            </div>
+            <div className="impl-details">
+              <p>
+                <strong>Sistemas empresariales. </strong>
+                {fromPrice(PLAN_PRICE_AMOUNTS.sistema)} como referencia del Sistema Web
+                Profesional: usuarios, registros, roles, panel y reportes. Módulos, datos, migración
+                e integraciones modifican el presupuesto.
+              </p>
+              <p>{OFFER_CONDITIONS.recurring}</p>
+              <p>{OFFER_CONDITIONS.delivery}</p>
+              <Link className="text-link" href="/sistemas-web/control-flota">
+                Ver alcance específico de Control de Flota <ArrowUpRight size={16} />
+              </Link>
+            </div>
           </div>
         </Container>
       </section>
       {reviews.length > 0 && <ClientReviewsSection reviews={reviews} />}
-      <section id="preguntas-frecuentes" className="bg-slate-50 py-16">
-        <Container className="max-w-4xl">
-          <h2 className="mb-8 text-3xl font-bold tracking-tight text-slate-950">
-            Antes de cotizar
-          </h2>
+      <section id="preguntas-frecuentes" className="home-section">
+        <Container>
+          <div className="faq-head">
+            <h2>Antes de cotizar</h2>
+          </div>
           <HomeFaqAccordion faqs={faqs} />
         </Container>
       </section>
-      <section id="contacto" className="py-16 sm:py-24">
-        <Container className="grid items-start gap-10 lg:grid-cols-[0.85fr_1.15fr]">
+      <section id="contacto" className="home-contact">
+        <Container className="home-contact-grid">
           <div>
-            <p className="text-xs font-bold tracking-widest text-blue-700 uppercase">
-              08 / Conversemos
-            </p>
-            <h2 className="mt-4 text-4xl font-bold tracking-tight text-slate-950">
-              Cuéntanos qué necesita tu empresa.
-            </h2>
-            <p className="mt-5 leading-8 text-slate-600">
+            <p className="eyebrow">08 / Conversemos</p>
+            <h2>Cuéntanos qué necesita tu empresa.</h2>
+            <p className="contact-lead">
               Con el objetivo y tus datos de contacto podemos comenzar. La especificación técnica se
               define después de revisar tu necesidad.
             </p>
-            <p className="mt-5 text-sm leading-7 text-slate-600">
+            <p className="contact-meta">
               Atención de lunes a viernes, de 09:00 a 18:00. Revisamos la solicitud y coordinamos el
               siguiente paso por correo o WhatsApp.
             </p>
@@ -353,13 +374,13 @@ export default async function Home() {
               href={siteConfig.social.whatsapp}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-6 inline-flex text-sm font-bold text-blue-700 underline"
+              className="contact-whatsapp"
             >
               También puedes escribir por WhatsApp
             </a>
-            <div id="cobertura" className="mt-9 border-t border-slate-200 pt-6">
-              <h3 className="font-bold text-slate-900">Santiago y todo Chile</h3>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
+            <div id="cobertura" className="contact-coverage">
+              <h3>Santiago y todo Chile</h3>
+              <p>
                 {siteConfig.address.display}. Reuniones coordinadas y atención remota para empresas
                 de todo Chile.
               </p>
@@ -368,21 +389,12 @@ export default async function Home() {
           <ContactLeadForm />
         </Container>
       </section>
-      <section className="border-t border-slate-200 bg-slate-50 py-12">
+      <section className="service-index">
         <Container>
-          <h2 className="text-xl font-bold text-slate-950">
-            Encuentra la solución para tu empresa
-          </h2>
-          <nav
-            aria-label="Servicios y recursos"
-            className="mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4"
-          >
+          <h2>Encuentra la solución para tu empresa</h2>
+          <nav aria-label="Servicios y recursos">
             {services.map((service) => (
-              <Link
-                key={service.path}
-                href={service.path}
-                className="text-sm font-semibold text-slate-700 hover:text-blue-700"
-              >
+              <Link key={service.path} href={service.path}>
                 {service.name}
               </Link>
             ))}
@@ -396,11 +408,7 @@ export default async function Home() {
               { path: "/servicios", name: "Todos los servicios" },
               { path: "/quienes-somos", name: "Conoce Zyteron" },
             ].map((link) => (
-              <Link
-                key={link.path}
-                href={link.path}
-                className="text-sm font-semibold text-slate-700 hover:text-blue-700"
-              >
+              <Link key={link.path} href={link.path}>
                 {link.name}
               </Link>
             ))}

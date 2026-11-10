@@ -4,7 +4,10 @@ import { solutionFamilies, industrySolutions } from "@/content/solutions";
 
 export function SolutionFamilies({ detailed = false }: { detailed?: boolean }) {
   return (
-    <div className={`solution-families ${detailed ? "solution-families-detailed" : ""}`}>
+    <div
+      className={`solution-families ${detailed ? "solution-families-detailed" : ""}`}
+      data-reveal-items
+    >
       {solutionFamilies.map((family, index) => (
         <article id={detailed ? family.id : undefined} key={family.id} className="solution-family">
           <span className="solution-number" aria-hidden="true">

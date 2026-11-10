@@ -8,7 +8,6 @@ import {
   Zap,
   LifeBuoy,
   TrendingUp,
-  Sparkles,
   MessageCircle,
 } from "lucide-react";
 import { Container } from "@/components/layout/container";
@@ -134,11 +133,9 @@ export default function QuienesSomosPage() {
       />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden border-b border-slate-200 bg-slate-50 py-20">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-50/50 via-slate-50 to-white" />
+      <section className="bg-hero-pattern relative overflow-hidden py-20">
         <Container className="relative space-y-6 text-center">
-          <div className="mx-auto flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700">
-            <Sparkles className="h-4 w-4" />
+          <div className="badge-blue mx-auto w-fit">
             Empresa chilena de tecnología · Más de {siteConfig.business.experienceYears} años en el
             rubro
           </div>
