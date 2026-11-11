@@ -46,7 +46,7 @@ try {
       0,
       "Las tarjetas del catálogo pertenecen a su página independiente.",
     );
-    assert.equal(await page.locator("#integraciones [data-integration-preview]").count(), 4);
+    assert.equal(await page.locator("#integraciones [data-integration-preview]").count(), 105);
     await page.locator("#integraciones img").evaluateAll(async (images) => {
       for (const image of images) image.loading = "eager";
       await Promise.all(images.map((image) => image.decode()));

@@ -1,0 +1,142 @@
+.carousel {
+  margin-top: 36px;
+  min-width: 0;
+}
+.track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+  list-style: none;
+  margin: 0;
+  padding: 3px 2px 14px;
+}
+.slide {
+  flex: 0 0 calc((100% - 64px) / 5);
+  min-width: 0;
+  scroll-snap-align: start;
+}
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  height: 100%;
+  min-height: 154px;
+  padding: 20px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+.brand img {
+  width: 100%;
+  max-width: 160px;
+  height: 56px;
+  object-fit: contain;
+}
+.brand span {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.brand:hover {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 12px;
+}
+.controls p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text);
+}
+.controls strong {
+  font-family: var(--font-data);
+  color: var(--accent);
+  font-weight: 500;
+}
+.buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.buttons button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 42px;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--accent);
+  cursor: pointer;
+}
+.buttons .playback {
+  padding: 8px 12px;
+  font-size: 12px;
+}
+.buttons button:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.brand:focus-visible,
+.buttons button:focus-visible,
+.track:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (max-width: 1100px) {
+  .slide {
+    flex-basis: calc((100% - 32px) / 3);
+  }
+}
+@media (max-width: 600px) {
+  .track {
+    gap: 12px;
+  }
+  .slide {
+    flex-basis: calc((100% - 12px) / 2);
+  }
+  .brand {
+    padding: 18px 12px;
+    min-height: 162px;
+    gap: 14px;
+  }
+  .brand span {
+    font-size: 12px;
+  }
+  .controls {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .buttons {
+    width: 100%;
+  }
+  .buttons .playback {
+    margin-right: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand {
+    transition: none;
+  }
+}

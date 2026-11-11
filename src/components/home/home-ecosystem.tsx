@@ -17,6 +17,7 @@ import {
   integrationPlatformCount,
 } from "@/content/home-ecosystem";
 import { IndustryFlipCard } from "./industry-flip-card";
+import { IntegrationLogoCarousel } from "./integration-logo-carousel";
 import styles from "./home-ecosystem.module.css";
 
 export function HomeIndustriesSection() {
@@ -70,9 +71,10 @@ export function HomeIndustriesSection() {
 
 export function HomeIntegrationsSection() {
   const previewIds = ["sii", "mercadolibre", "meta", "firmavirtual"];
-  const preview = previewIds.map(
-    (id) => integrationPlatforms.find((platform) => platform.id === id)!,
-  );
+  const platforms = [
+    ...previewIds.map((id) => integrationPlatforms.find((platform) => platform.id === id)!),
+    ...integrationPlatforms.filter((platform) => !previewIds.includes(platform.id)),
+  ].map(({ id, name, logo }) => ({ id, name, logo }));
   return (
     <section
       id="integraciones"
@@ -100,28 +102,7 @@ export function HomeIntegrationsSection() {
             </Link>
           </div>
         </div>
-        <div className={styles.previewGrid}>
-          {preview.map((platform) => (
-            <Link
-              key={platform.id}
-              href={`/integraciones#plataforma-${platform.id}`}
-              className={styles.previewBrand}
-              data-integration-preview={platform.id}
-            >
-              <Image
-                src={`/home/integraciones/${platform.logo}`}
-                alt={`Logo de ${platform.name}`}
-                width={150}
-                height={50}
-                unoptimized
-              />
-              <span>
-                {platform.name}
-                <ArrowUpRight size={14} aria-hidden="true" />
-              </span>
-            </Link>
-          ))}
-        </div>
+        <IntegrationLogoCarousel platforms={platforms} />
         <div className={styles.previewFooter}>
           <p>Conexiones por proyecto, sujetas a evaluación técnica y acceso autorizado.</p>
           <Link href="/integraciones" className="design-button">
