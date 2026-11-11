@@ -1,0 +1,457 @@
+.catalog {
+  margin-top: 28px;
+}
+.controls {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+}
+.controls label {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+}
+.searchField > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-inline: 15px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--muted);
+}
+.searchField > div:focus-within {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent-soft);
+}
+.searchField input {
+  min-width: 0;
+  width: 100%;
+  height: 48px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
+}
+.searchField input:focus-visible {
+  outline: none;
+}
+.categoryField select {
+  width: 100%;
+  height: 50px;
+  padding: 0 35px 0 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+}
+.quickFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+.quickFilters button {
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 11px;
+  cursor: pointer;
+}
+.quickFilters button[aria-pressed="true"] {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+.results {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin: 24px 0 16px;
+}
+.results p {
+  font-family: var(--font-data);
+  color: var(--text);
+  font-size: 11px;
+}
+.results button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  font-size: 12px;
+  cursor: pointer;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+.card {
+  min-width: 0;
+  perspective: 1400px;
+}
+.inner {
+  position: relative;
+  display: grid;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.22, 0.68, 0, 1);
+}
+.card[data-flipped="true"] .inner {
+  transform: rotateY(180deg);
+}
+.front,
+.back {
+  position: relative;
+  grid-area: 1 / 1;
+  min-width: 0;
+  min-height: 385px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.front {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px;
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+}
+.front:hover {
+  border-color: var(--accent-line);
+  box-shadow: var(--shadow-md);
+}
+.category {
+  min-height: 32px;
+  max-width: 220px;
+  color: var(--text);
+  font-family: var(--font-data);
+  font-size: 10px;
+  line-height: 1.6;
+}
+.logoFrame {
+  width: 100%;
+  min-height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 15px 0 18px;
+}
+.logo {
+  width: auto;
+  max-width: min(100%, 170px);
+  height: 68px;
+  object-fit: contain;
+}
+.front[data-brand="starken"] .logoFrame {
+  background: #009b3e;
+  min-height: 80px;
+  margin-block: 25px 28px;
+  border-radius: 6px;
+  padding: 12px;
+}
+.front[data-brand="starken"] .logo {
+  height: 50px;
+}
+.front[data-brand="claveunica"] .logoFrame {
+  background: #0f69c4;
+  border-radius: 6px;
+  padding: 12px;
+}
+.front[data-brand="correos"] .logoFrame {
+  background: #d9252a;
+  border-radius: 6px;
+  padding: 12px;
+}
+.front[data-brand="geovictoria"] .logoFrame {
+  background: #1258a5;
+  border-radius: 6px;
+  padding: 12px;
+}
+.front:is(
+    [data-brand="bcentral"],
+    [data-brand="firmagob"],
+    [data-brand="docusign"],
+    [data-brand="rindegastos"],
+    [data-brand="enviame"],
+    [data-brand="softland"]
+  )
+  .logoFrame {
+  background: #211833;
+  border-radius: 6px;
+  padding: 12px;
+}
+.front[data-brand="jumpseller"] .logoFrame {
+  overflow: hidden;
+}
+.front[data-brand="jumpseller"] .logo {
+  transform: scale(1.8);
+}
+.name {
+  color: var(--ink);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+.preview {
+  margin-top: 12px;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.turn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 24px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 500;
+}
+.turn svg {
+  flex-shrink: 0;
+}
+.back {
+  display: flex;
+  flex-direction: column;
+  padding: 22px;
+  transform: rotateY(180deg);
+  border-color: var(--accent-line);
+  background: var(--surface);
+}
+.backTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.backTop > span {
+  font-family: var(--font-data);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+.backTop button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  color: var(--accent);
+  cursor: pointer;
+}
+.back h3 {
+  color: var(--ink);
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.use {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.7;
+  margin-top: 12px;
+}
+.access {
+  margin: 16px 0 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.access > span {
+  display: block;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.access p {
+  color: var(--text);
+  font-size: 11px;
+  line-height: 1.75;
+}
+.cardActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+}
+.cardActions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--accent);
+  font-size: 12px;
+  min-height: 34px;
+}
+.cardActions a:last-child {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  font-weight: 600;
+}
+.empty {
+  padding: 32px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.8;
+}
+.empty button {
+  color: var(--accent);
+  padding-block: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.more {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-top: 26px;
+}
+.more button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 46px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--accent);
+}
+.more button:first-child {
+  background: var(--accent);
+  border-radius: var(--r-sm);
+  color: white;
+  padding: 13px 20px;
+}
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .controls {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .front,
+  .back {
+    min-height: 380px;
+  }
+  .front {
+    padding: 24px;
+  }
+  .logoFrame {
+    min-height: 92px;
+  }
+  .preview {
+    font-size: 14px;
+  }
+  .name {
+    font-size: 23px;
+  }
+  .category {
+    font-size: 11px;
+  }
+  .back {
+    padding: 24px;
+  }
+  .backTop button {
+    width: 44px;
+    height: 44px;
+  }
+  .backTop > span {
+    font-size: 10px;
+  }
+  .use {
+    font-size: 14px;
+  }
+  .access p {
+    font-size: 12px;
+  }
+  .cardActions a {
+    min-height: 44px;
+    font-size: 13px;
+  }
+  .quickFilters button {
+    min-height: 40px;
+  }
+  .results {
+    align-items: flex-start;
+  }
+  .results p {
+    font-size: 10px;
+  }
+  .more {
+    flex-direction: column;
+  }
+  .more button:first-child {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .inner {
+    transition: none;
+  }
+}
+@media print {
+  .controls,
+  .quickFilters,
+  .more,
+  .backTop button {
+    display: none;
+  }
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .card {
+    perspective: none;
+    break-inside: avoid;
+  }
+  .inner,
+  .card[data-flipped="true"] .inner {
+    transform: none;
+  }
+  .front {
+    display: none;
+  }
+  .back {
+    transform: none;
+  }
+}

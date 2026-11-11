@@ -21,7 +21,11 @@ import { ProjectGallery } from "@/components/projects/project-gallery";
 import { fromPrice, PLAN_PRICE_AMOUNTS } from "@/config/pricing";
 import { OFFER_CONDITIONS, planDeadline } from "@/config/commercial-offer";
 import { siteConfig } from "@/config/site";
-import { SolutionFamilies, IndustrySolutions } from "@/components/commercial/solution-families";
+import { SolutionFamilies } from "@/components/commercial/solution-families";
+import {
+  HomeIndustriesSection,
+  HomeIntegrationsSection,
+} from "@/components/home/home-ecosystem";
 import { solutionFamilies } from "@/content/solutions";
 import { buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
@@ -281,21 +285,14 @@ export default async function Home() {
           </div>
         </Container>
       </section>
-      <section className="home-section is-tinted" id="rubros">
-        <Container>
-          <p className="eyebrow">04 / Soluciones por rubro</p>
-          <h2 className="mt-4 max-w-3xl text-[clamp(32px,3.3vw,48px)]">
-            Distintas actividades. Necesidades concretas.
-          </h2>
-          <IndustrySolutions />
-        </Container>
-      </section>
+      <HomeIndustriesSection />
+      <HomeIntegrationsSection />
 
       <section id="proceso" className="home-section">
         <Container>
           <div className="home-section-head">
             <div>
-              <p className="eyebrow">05 / Cómo trabajamos</p>
+              <p className="eyebrow">06 / Cómo trabajamos</p>
               <h2>Sabes qué se construye y qué recibes.</h2>
             </div>
           </div>
@@ -311,8 +308,7 @@ export default async function Home() {
           <p className="process-note">
             <ShieldCheck className="h-5 w-5" />
             <span>
-              {OFFER_CONDITIONS.ownership}{" "}
-              <Link href="/terminos">Revisar condiciones</Link>.
+              {OFFER_CONDITIONS.ownership} <Link href="/terminos">Revisar condiciones</Link>.
             </span>
           </p>
         </Container>
@@ -321,12 +317,12 @@ export default async function Home() {
         <Container>
           <div className="impl-panel">
             <div>
-              <p className="eyebrow">06 / Implementación y continuidad</p>
+              <p className="eyebrow">07 / Implementación y continuidad</p>
               <h2>El alcance y los costos, por escrito.</h2>
               <p>
-                La propuesta distingue desarrollo e implementación de infraestructura,
-                equipamiento, mantenimiento, licencias, renovaciones y consumos externos. Define
-                responsables, plazos y entregables por etapa.
+                La propuesta distingue desarrollo e implementación de infraestructura, equipamiento,
+                mantenimiento, licencias, renovaciones y consumos externos. Define responsables,
+                plazos y entregables por etapa.
               </p>
               <Link id="planes" href="/planes" className="text-link mt-4">
                 Revisar precios y alcances <ArrowUpRight size={17} />
@@ -335,9 +331,9 @@ export default async function Home() {
             <div className="impl-details">
               <p>
                 <strong>Sistemas empresariales. </strong>
-                {fromPrice(PLAN_PRICE_AMOUNTS.sistema)} como referencia del Sistema Web
-                Profesional: usuarios, registros, roles, panel y reportes. Módulos, datos, migración
-                e integraciones modifican el presupuesto.
+                {fromPrice(PLAN_PRICE_AMOUNTS.sistema)} como referencia del Sistema Web Profesional:
+                usuarios, registros, roles, panel y reportes. Módulos, datos, migración e
+                integraciones modifican el presupuesto.
               </p>
               <p>{OFFER_CONDITIONS.recurring}</p>
               <p>{OFFER_CONDITIONS.delivery}</p>
@@ -360,7 +356,7 @@ export default async function Home() {
       <section id="contacto" className="home-contact">
         <Container className="home-contact-grid">
           <div>
-            <p className="eyebrow">08 / Conversemos</p>
+            <p className="eyebrow">09 / Conversemos</p>
             <h2>Cuéntanos qué necesita tu empresa.</h2>
             <p className="contact-lead">
               Con el objetivo y tus datos de contacto podemos comenzar. La especificación técnica se
@@ -400,6 +396,7 @@ export default async function Home() {
             ))}
             {[
               { path: "/desarrollo-web-santiago", name: "Integraciones y migración en Santiago" },
+              { path: "/integraciones", name: "Integraciones de sistemas y API en Chile" },
               { path: "/paginas-web/industria-b2b", name: "Soluciones para industria B2B" },
               { path: "/soporte-ti", name: "Soporte TI" },
               { path: "/calculadora-precio-pagina-web", name: "Calcular inversión" },

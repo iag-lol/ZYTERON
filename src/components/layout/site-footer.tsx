@@ -34,6 +34,7 @@ const footerColumns = [
       { label: "SEO para empresas", href: "/servicios/seo-para-empresas-chile" },
       { label: "Mantención de sitios web", href: "/servicios/mantencion-web-chile" },
       { label: "Automatización", href: "/automatizacion" },
+      { label: "Integraciones y API", href: "/integraciones" },
       { label: "Soporte TI", href: "/soporte-ti" },
       { label: "Planes y precios", href: "/planes" },
       { label: "Todos los servicios", href: "/servicios" },

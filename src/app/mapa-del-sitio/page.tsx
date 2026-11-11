@@ -50,6 +50,7 @@ const siteSections = [
       ["Sistemas web a medida", "/sistemas-web"],
       ...systemPages.map(({ navLabel, path }) => [navLabel, path] as const),
       ["Automatización de procesos", "/automatizacion"],
+      ["Integraciones de sistemas y API", "/integraciones"],
       ["Automatización de WhatsApp", "/automatizacion-whatsapp-empresas"],
       ["Soporte TI", "/soporte-ti"],
       ["Soporte TI para pymes en Santiago", "/soporte-ti-pymes-santiago"],

@@ -1,0 +1,684 @@
+{
+  "reviewed": "11-11-2026",
+  "photographyLicense": "https://unsplash.com/license",
+  "brandUse": "Identificación de plataformas; no implica alianza, certificación ni respaldo.",
+  "assets": [
+    {
+      "file": "integraciones/flow.svg",
+      "source": "https://web.flow.cl/es-cl/",
+      "type": "brand",
+      "displayNote": "Color de marca oscuro para fondo blanco; SVG original con variable CSS resuelta.",
+      "bytes": 7617
+    },
+    {
+      "file": "integraciones/bsale.svg",
+      "source": "https://www.bsale.cl/",
+      "type": "brand",
+      "bytes": 3611
+    },
+    {
+      "file": "rubros/comercio.webp",
+      "source": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=960&h=1100&q=82&fm=webp",
+      "type": "photograph",
+      "bytes": 165870
+    },
+    {
+      "file": "rubros/industria.webp",
+      "source": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=960&h=1100&q=82&fm=webp",
+      "type": "photograph",
+      "bytes": 294294
+    },
+    {
+      "file": "rubros/transporte.webp",
+      "source": "https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&w=960&h=1100&q=82&fm=webp",
+      "type": "photograph",
+      "bytes": 142868
+    },
+    {
+      "file": "rubros/salud.webp",
+      "source": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=960&h=1100&q=82&fm=webp",
+      "type": "photograph",
+      "bytes": 111836
+    },
+    {
+      "file": "rubros/educacion.webp",
+      "source": "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=960&h=1100&q=82&fm=webp",
+      "bytes": 193286
+    },
+    {
+      "file": "rubros/instituciones.webp",
+      "source": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=960&h=1100&q=82&fm=webp",
+      "type": "photograph",
+      "bytes": 232052
+    },
+    {
+      "file": "rubros/deporte.webp",
+      "source": "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&w=960&h=1100&q=82&fm=webp",
+      "type": "photograph",
+      "bytes": 187618
+    },
+    {
+      "file": "rubros/turismo.webp",
+      "source": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=960&h=1100&q=82&fm=webp",
+      "type": "photograph",
+      "bytes": 278304
+    },
+    {
+      "file": "rubros/servicios.webp",
+      "source": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=960&h=1100&q=82&fm=webp",
+      "type": "photograph",
+      "bytes": 128660
+    },
+    {
+      "file": "integraciones/transbank.svg",
+      "source": "https://publico.transbank.cl/documents/20129/38535804/logo_tbk.svg",
+      "type": "brand",
+      "bytes": 12506
+    },
+    {
+      "file": "integraciones/mercadopago.svg",
+      "source": "https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/7.8.4/mercadopago/favicon.svg",
+      "type": "brand",
+      "bytes": 4566
+    },
+    {
+      "file": "integraciones/khipu.svg",
+      "source": "https://docs.khipu.com/assets/khipu-light.0d28d19a7b3fbb98d3ad4dc4761866fa42ebe71510e66f24309166fadbfb96b1.9c1bb791.svg",
+      "type": "brand",
+      "bytes": 12786,
+      "displayNote": "Recorte del viewBox al logotipo Khipu; excluye el prefijo de documentación."
+    },
+    {
+      "file": "integraciones/defontana.svg",
+      "source": "https://www.defontana.com/hubfs/logo_defontana_.svg",
+      "type": "brand",
+      "bytes": 11836
+    },
+    {
+      "file": "integraciones/nubox.svg",
+      "source": "https://www.nubox.com/hubfs/Logotipo%20Nubox.svg",
+      "type": "brand",
+      "bytes": 6414
+    },
+    {
+      "file": "integraciones/chilexpress.svg",
+      "source": "https://www.chilexpress.cl/Resources/bootstrap-4.5.3-kit-chilexpress/img/logo_chilexpress_negro.svg",
+      "type": "brand",
+      "bytes": 3087
+    },
+    {
+      "file": "integraciones/starken.webp",
+      "source": "https://starken.cl/static/media/logo-q100.bac31f50de7b41338e6c.webp",
+      "type": "brand",
+      "bytes": 6634
+    },
+    {
+      "file": "integraciones/shipit.png",
+      "source": "https://www.shipit.cl/hubfs/logo.png",
+      "type": "brand",
+      "bytes": 1968
+    },
+    {
+      "file": "integraciones/google.svg",
+      "source": "https://www.gstatic.com/images/branding/googlelogo/svg/googlelogo_clr_74x24px.svg",
+      "type": "brand",
+      "bytes": 1661
+    },
+    {
+      "file": "integraciones/microsoft.svg",
+      "source": "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
+      "type": "brand",
+      "bytes": 273
+    },
+    {
+      "file": "integraciones/buk.svg",
+      "source": "https://www.buk.cl/hubfs/buk-accent.svg",
+      "bytes": 2289
+    },
+    {
+      "file": "integraciones/sap.svg",
+      "source": "https://cdn.simpleicons.org/sap/0FAAFF",
+      "type": "brand",
+      "bytes": 1081,
+      "displayNote": "viewBox ajustado al contorno original para eliminar el espacio vacío."
+    },
+    {
+      "file": "integraciones/shopify.svg",
+      "source": "https://cdn.simpleicons.org/shopify/7AB55C",
+      "type": "brand",
+      "bytes": 1250
+    },
+    {
+      "file": "integraciones/woocommerce.svg",
+      "source": "https://cdn.simpleicons.org/woocommerce/96588A",
+      "type": "brand",
+      "bytes": 3666,
+      "displayNote": "viewBox ajustado al contorno original para eliminar el espacio vacío."
+    },
+    {
+      "file": "integraciones/hubspot.svg",
+      "source": "https://cdn.simpleicons.org/hubspot/FF7A59",
+      "type": "brand",
+      "bytes": 679
+    },
+    {
+      "file": "integraciones/whatsapp.svg",
+      "source": "https://cdn.simpleicons.org/whatsapp/128C7E",
+      "type": "brand",
+      "bytes": 1232
+    },
+    {
+      "file": "integraciones/facebook.svg",
+      "source": "https://cdn.simpleicons.org/facebook",
+      "type": "brand",
+      "bytes": 558
+    },
+    {
+      "file": "integraciones/odoo.svg",
+      "source": "https://cdn.simpleicons.org/odoo",
+      "type": "brand",
+      "bytes": 1397
+    },
+    {
+      "file": "integraciones/instagram.svg",
+      "source": "https://cdn.simpleicons.org/instagram",
+      "type": "brand",
+      "bytes": 2117
+    },
+    {
+      "file": "integraciones/messenger.svg",
+      "source": "https://cdn.simpleicons.org/messenger",
+      "type": "brand",
+      "bytes": 591
+    },
+    {
+      "file": "integraciones/meta.svg",
+      "source": "https://cdn.simpleicons.org/meta",
+      "type": "brand",
+      "bytes": 1340
+    },
+    {
+      "file": "integraciones/tiktok.svg",
+      "source": "https://cdn.simpleicons.org/tiktok",
+      "type": "brand",
+      "bytes": 723
+    },
+    {
+      "file": "integraciones/paypal.svg",
+      "source": "https://cdn.simpleicons.org/paypal",
+      "type": "brand",
+      "bytes": 468
+    },
+    {
+      "file": "integraciones/linkedin.svg",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/linkedin.svg",
+      "type": "brand",
+      "bytes": 611
+    },
+    {
+      "file": "integraciones/adobesign.svg",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/adobeacrobatreader.svg",
+      "type": "brand",
+      "bytes": 1353
+    },
+    {
+      "file": "integraciones/prestashop.svg",
+      "source": "https://cdn.simpleicons.org/prestashop",
+      "type": "brand",
+      "bytes": 3539
+    },
+    {
+      "file": "integraciones/wordpress.svg",
+      "source": "https://cdn.simpleicons.org/wordpress",
+      "type": "brand",
+      "bytes": 1075
+    },
+    {
+      "file": "integraciones/bigcommerce.svg",
+      "source": "https://cdn.simpleicons.org/bigcommerce",
+      "type": "brand",
+      "bytes": 716
+    },
+    {
+      "file": "integraciones/zoho.svg",
+      "source": "https://cdn.simpleicons.org/zoho",
+      "type": "brand",
+      "bytes": 2652
+    },
+    {
+      "file": "integraciones/vtex.svg",
+      "source": "https://cdn.simpleicons.org/vtex",
+      "type": "brand",
+      "bytes": 807
+    },
+    {
+      "file": "integraciones/salesforce.svg",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/salesforce.svg",
+      "type": "brand",
+      "bytes": 545
+    },
+    {
+      "file": "integraciones/brevo.svg",
+      "source": "https://cdn.simpleicons.org/brevo",
+      "type": "brand",
+      "bytes": 621
+    },
+    {
+      "file": "integraciones/adobecommerce.svg",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/magento.svg",
+      "type": "brand",
+      "bytes": 286
+    },
+    {
+      "file": "integraciones/mailchimp.svg",
+      "source": "https://cdn.simpleicons.org/mailchimp",
+      "type": "brand",
+      "bytes": 4194
+    },
+    {
+      "file": "integraciones/twilio.svg",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/twilio.svg",
+      "type": "brand",
+      "bytes": 924
+    },
+    {
+      "file": "integraciones/notion.svg",
+      "source": "https://cdn.simpleicons.org/notion",
+      "type": "brand",
+      "bytes": 994
+    },
+    {
+      "file": "integraciones/trello.svg",
+      "source": "https://cdn.simpleicons.org/trello",
+      "type": "brand",
+      "bytes": 485
+    },
+    {
+      "file": "integraciones/clickup.svg",
+      "source": "https://cdn.simpleicons.org/clickup",
+      "type": "brand",
+      "bytes": 356
+    },
+    {
+      "file": "integraciones/airtable.svg",
+      "source": "https://cdn.simpleicons.org/airtable",
+      "type": "brand",
+      "bytes": 668
+    },
+    {
+      "file": "integraciones/slack.svg",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/slack.svg",
+      "type": "brand",
+      "bytes": 1124
+    },
+    {
+      "file": "integraciones/asana.svg",
+      "source": "https://cdn.simpleicons.org/asana",
+      "type": "brand",
+      "bytes": 457
+    },
+    {
+      "file": "integraciones/googleads.svg",
+      "source": "https://cdn.simpleicons.org/googleads",
+      "type": "brand",
+      "bytes": 623
+    },
+    {
+      "file": "integraciones/ga4.svg",
+      "source": "https://cdn.simpleicons.org/googleanalytics",
+      "type": "brand",
+      "bytes": 754
+    },
+    {
+      "file": "integraciones/tagmanager.svg",
+      "source": "https://cdn.simpleicons.org/googletagmanager",
+      "type": "brand",
+      "bytes": 766
+    },
+    {
+      "file": "integraciones/searchconsole.svg",
+      "source": "https://cdn.simpleicons.org/googlesearchconsole",
+      "type": "brand",
+      "bytes": 1084
+    },
+    {
+      "file": "integraciones/n8n.svg",
+      "source": "https://cdn.simpleicons.org/n8n",
+      "type": "brand",
+      "bytes": 1589
+    },
+    {
+      "file": "integraciones/googlecloud.svg",
+      "source": "https://cdn.simpleicons.org/googlecloud",
+      "type": "brand",
+      "bytes": 699
+    },
+    {
+      "file": "integraciones/zapier.svg",
+      "source": "https://cdn.simpleicons.org/zapier",
+      "type": "brand",
+      "bytes": 2848
+    },
+    {
+      "file": "integraciones/make.svg",
+      "source": "https://cdn.simpleicons.org/make",
+      "type": "brand",
+      "bytes": 614
+    },
+    {
+      "file": "integraciones/firebase.svg",
+      "source": "https://cdn.simpleicons.org/firebase",
+      "type": "brand",
+      "bytes": 1943
+    },
+    {
+      "file": "integraciones/aws.svg",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/amazonwebservices.svg",
+      "type": "brand",
+      "bytes": 3166
+    },
+    {
+      "file": "integraciones/supabase.svg",
+      "source": "https://cdn.simpleicons.org/supabase",
+      "type": "brand",
+      "bytes": 319
+    },
+    {
+      "file": "integraciones/postgresql.svg",
+      "source": "https://cdn.simpleicons.org/postgresql",
+      "type": "brand",
+      "bytes": 5221
+    },
+    {
+      "file": "integraciones/mysql.svg",
+      "source": "https://cdn.simpleicons.org/mysql",
+      "type": "brand",
+      "bytes": 3641
+    },
+    {
+      "file": "integraciones/openai.svg",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/openai.svg",
+      "type": "brand",
+      "bytes": 1571
+    },
+    {
+      "file": "integraciones/anthropic.svg",
+      "source": "https://cdn.simpleicons.org/anthropic",
+      "type": "brand",
+      "bytes": 297
+    },
+    {
+      "file": "integraciones/gemini.svg",
+      "source": "https://cdn.simpleicons.org/googlegemini",
+      "type": "brand",
+      "bytes": 417
+    },
+    {
+      "file": "integraciones/auth0.svg",
+      "source": "https://cdn.simpleicons.org/auth0",
+      "type": "brand",
+      "bytes": 365
+    },
+    {
+      "file": "integraciones/mistral.svg",
+      "source": "https://cdn.simpleicons.org/mistralai",
+      "type": "brand",
+      "bytes": 306
+    },
+    {
+      "file": "integraciones/okta.svg",
+      "source": "https://cdn.simpleicons.org/okta",
+      "type": "brand",
+      "bytes": 255
+    },
+    {
+      "file": "integraciones/zendesk.svg",
+      "source": "https://cdn.simpleicons.org/zendesk",
+      "type": "brand",
+      "bytes": 340
+    },
+    {
+      "file": "integraciones/intercom.svg",
+      "source": "https://cdn.simpleicons.org/intercom",
+      "type": "brand",
+      "bytes": 999
+    },
+    {
+      "file": "integraciones/zohodesk.svg",
+      "source": "https://cdn.simpleicons.org/zoho",
+      "type": "brand",
+      "bytes": 2652
+    },
+    {
+      "file": "integraciones/cloudflare.svg",
+      "source": "https://cdn.simpleicons.org/cloudflare",
+      "type": "brand",
+      "bytes": 1194
+    },
+    {
+      "file": "integraciones/googlemaps.svg",
+      "source": "https://cdn.simpleicons.org/googlemaps",
+      "type": "brand",
+      "bytes": 1040
+    },
+    {
+      "file": "integraciones/mapbox.svg",
+      "source": "https://cdn.simpleicons.org/mapbox",
+      "type": "brand",
+      "bytes": 438
+    },
+    {
+      "file": "integraciones/openstreetmap.svg",
+      "source": "https://cdn.simpleicons.org/openstreetmap",
+      "type": "brand",
+      "bytes": 2787
+    },
+    {
+      "file": "integraciones/openfactura.svg",
+      "source": "https://www.openfactura.cl/assets/images/logo/OpenFactura-gray.svg",
+      "type": "brand",
+      "bytes": 2086
+    },
+    {
+      "file": "integraciones/ecert.png",
+      "source": "https://www.ecertla.com/content/uploads/2023/09/logo-ecert.png",
+      "type": "brand",
+      "bytes": 28712
+    },
+    {
+      "file": "integraciones/talana.png",
+      "source": "https://web.talana.com/hubfs/Logo%20Talana.png",
+      "type": "brand",
+      "bytes": 2544
+    },
+    {
+      "file": "integraciones/firmavirtual.png",
+      "source": "https://firmavirtual.legal/wp-content/uploads/2021/10/logo_FIRMA_VIRTUAL_1210.png",
+      "type": "brand",
+      "bytes": 1723
+    },
+    {
+      "file": "integraciones/correos.png",
+      "source": "https://developers.correos.cl/Content/img/logo_blanco.png",
+      "type": "brand",
+      "bytes": 6645
+    },
+    {
+      "file": "integraciones/rindegastos.svg",
+      "source": "https://rindegastos.com/hubfs/logo%204%201.svg",
+      "type": "brand",
+      "bytes": 105599
+    },
+    {
+      "file": "integraciones/blueexpress.svg",
+      "source": "https://www.blue.cl/logo.svg",
+      "type": "brand",
+      "bytes": 7574
+    },
+    {
+      "file": "integraciones/facto.png",
+      "source": "https://static.facto.cl/sitioweb_1.0/image/logos/logo-facto-2024.png",
+      "type": "brand",
+      "bytes": 80511
+    },
+    {
+      "file": "integraciones/softland.svg",
+      "source": "https://softland.com/cl/wp-content/uploads/2024/11/logotipo_softland.svg",
+      "type": "brand",
+      "bytes": 3043
+    },
+    {
+      "file": "integraciones/signaturit.png",
+      "source": "https://www.signaturit.com/wp-content/uploads/2026/03/Signaturit-group-namirial-horizontal-scaled.png",
+      "type": "brand",
+      "bytes": 68196
+    },
+    {
+      "file": "integraciones/lioren.png",
+      "source": "https://www.lioren.cl/img/logo-mini-200.png",
+      "type": "brand",
+      "bytes": 12801
+    },
+    {
+      "file": "integraciones/mercadopublico.png",
+      "source": "https://www.chilecompra.cl/wp-content/themes/chcptemp/images/logo-chilecompra-52.png",
+      "type": "brand",
+      "bytes": 125633
+    },
+    {
+      "file": "integraciones/azure.svg",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@11.15.0/icons/microsoftazure.svg",
+      "type": "brand",
+      "bytes": 594
+    },
+    {
+      "file": "integraciones/googlebusiness.svg",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@11.15.0/icons/googlemybusiness.svg",
+      "type": "brand",
+      "bytes": 915
+    },
+    {
+      "file": "integraciones/reveniu.svg",
+      "source": "https://static.tildacdn.net/tild3766-3533-4539-b838-343334383939/reveniu-logo-main.svg",
+      "type": "brand",
+      "bytes": 8048
+    },
+    {
+      "file": "integraciones/entra.png",
+      "source": "https://learn.microsoft.com/en-us/entra/fundamentals/media/new-name/microsoft-entra-id-icon.png",
+      "type": "brand",
+      "bytes": 1891
+    },
+    {
+      "file": "integraciones/firmagob.png",
+      "source": "https://cms-firma-prod.s3-us-west-2.amazonaws.com/uploads/filer_public_thumbnails/filer_public/19/16/1916f2ed-74b5-4c37-be85-742946da6c3a/firma.png__263x72_q85_height-72_subsampling-2_width-263.png",
+      "type": "brand",
+      "bytes": 3956
+    },
+    {
+      "file": "integraciones/pipedrive.svg",
+      "source": "https://cdn.worldvectorlogo.com/logos/pipedrive.svg",
+      "type": "brand",
+      "bytes": 5683
+    },
+    {
+      "file": "integraciones/powerbi.svg",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@11.15.0/icons/powerbi.svg",
+      "type": "brand",
+      "bytes": 331
+    },
+    {
+      "file": "integraciones/enviame.svg",
+      "source": "https://enviame.io/wp-content/uploads/2025/05/logo-enviame-light-v3-mobile.svg",
+      "type": "brand",
+      "bytes": 8428
+    },
+    {
+      "file": "integraciones/rexmas.webp",
+      "source": "https://rexmas.com/wp-content/uploads/2021/11/Logo-azul-rex.webp",
+      "type": "brand",
+      "bytes": 18768
+    },
+    {
+      "file": "integraciones/fintoc.svg",
+      "source": "https://www.fintoc.com/",
+      "type": "brand",
+      "bytes": 3227
+    },
+    {
+      "file": "integraciones/sii.jpg",
+      "source": "https://homer.sii.cl/responsive/images/logo.jpg",
+      "type": "brand",
+      "bytes": 4405
+    },
+    {
+      "file": "integraciones/toku.png",
+      "source": "https://files.readme.io/47fc8c90db203a88843c7ecc4575ab2c9774b16d30cebc7930240692bb82de0d-Icon_Toku_Violet.png",
+      "type": "brand",
+      "bytes": 13041
+    },
+    {
+      "file": "integraciones/geovictoria.svg",
+      "source": "https://www.geovictoria.com/logo-blanco.svg",
+      "type": "brand",
+      "bytes": 6187
+    },
+    {
+      "file": "integraciones/bcentral.png",
+      "source": "https://si3.bcentral.cl/estadisticas/Principal1/Web_Services/img/layout_set_logo.png",
+      "type": "brand",
+      "bytes": 10365
+    },
+    {
+      "file": "integraciones/mercadolibre.webp",
+      "source": "https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/7.52.1/mercadolibre/logo_large_plus@2x.webp",
+      "type": "brand",
+      "bytes": 3886
+    },
+    {
+      "file": "integraciones/autentia.svg",
+      "source": "https://web.autentia.cl/hubfs/Autentia/Autentia%20Logo.svg",
+      "type": "brand",
+      "bytes": 13848
+    },
+    {
+      "file": "integraciones/freshdesk.svg",
+      "source": "https://www.freshworks.com/beta/icons/template-2026/freshdesk-logo-icon.svg",
+      "type": "brand",
+      "bytes": 1948,
+      "displayNote": "viewBox ajustado al contorno original para eliminar espacio vacío."
+    },
+    {
+      "file": "integraciones/docusign.svg",
+      "source": "https://developers.docusign.com/_fern-files/docusign.docs.buildwithfern.com/02b3a1ee031e8c7d7ec332ae5ea69a4878c9e0e0adb58f3791d180de642ad1af/assets/logo.svg",
+      "type": "brand",
+      "bytes": 9631,
+      "displayNote": "viewBox recortado al logotipo de Docusign, sin la etiqueta del portal de desarrolladores."
+    },
+    {
+      "file": "integraciones/payku.svg",
+      "source": "https://docs.payku.cl/_astro/payku.DXUEboZI.svg",
+      "type": "brand",
+      "bytes": 4815
+    },
+    {
+      "file": "integraciones/claveunica.svg",
+      "source": "https://claveunica.gob.cl/_nuxt/BrGdVqXb.js",
+      "type": "brand",
+      "bytes": 5231,
+      "displayNote": "Vector original del componente oficial; trazados y relleno conservados."
+    },
+    {
+      "file": "integraciones/getnet.webp",
+      "source": "https://assets-global.website-files.com/6490934fc7dd3564231e1a87/650dcf40a3b2146e2aebabd5_getnet-logo.webp",
+      "type": "brand",
+      "bytes": 10228
+    },
+    {
+      "file": "integraciones/jumpseller.jpg",
+      "source": "https://jumpseller.com/images/share/js-logo-%28white-bg%29.jpg",
+      "type": "brand",
+      "bytes": 74596
+    }
+  ]
+}

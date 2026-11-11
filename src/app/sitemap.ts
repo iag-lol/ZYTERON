@@ -28,6 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/soluciones/denurvia", priority: 0.7, changeFrequency: "monthly" as const },
     { path: "", priority: 1, changeFrequency: "weekly" as const },
     { path: "/servicios", priority: 0.9, changeFrequency: "monthly" as const },
+    { path: "/integraciones", priority: 0.8, changeFrequency: "monthly" as const },
     { path: "/planes", priority: 0.8, changeFrequency: "monthly" as const },
     { path: "/contacto", priority: 0.8, changeFrequency: "monthly" as const },
     { path: "/cotizador/manual", priority: 0.9, changeFrequency: "monthly" as const },

@@ -10,6 +10,7 @@ import { PortalAccessLink } from "./portal-access-link";
 
 const navigation = [
   { href: "/casos-exito", label: "Proyectos" },
+  { href: "/integraciones", label: "Integraciones" },
   { href: "/planes", label: "Precios" },
   { href: "/cotizador/manual", label: "Cotizar online" },
   { href: "/quienes-somos", label: "Empresa" },
@@ -57,7 +58,10 @@ export function SiteHeader() {
             <span className="brand-symbol">Z</span>
             <span className="brand-name">zyteron</span>
           </Link>
-          <nav aria-label="Navegación principal" className="main-nav hidden items-center gap-1 xl:flex">
+          <nav
+            aria-label="Navegación principal"
+            className="main-nav hidden items-center gap-1 xl:flex"
+          >
             <details
               className="solutions-menu"
               onKeyDown={(event) => {
