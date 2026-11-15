@@ -144,6 +144,10 @@ export const solutionFamilies = [
         title: "Información conectada",
         text: "Sincronización entre plataformas comerciales y operacionales, con validaciones, registro de errores y reintentos definidos según cada integración.",
       },
+      {
+        title: "Asistentes comerciales para tu web",
+        text: "Asistentes con inteligencia artificial que responden sobre tus servicios con contenido aprobado, recogen solicitudes y derivan consultas a tu equipo. La integración, las pruebas y la medición se definen para cada sitio.",
+      },
     ],
     scope:
       "La factibilidad depende de las API, permisos, calidad de los datos y condiciones de cada proveedor. Licencias y consumos externos se informan por separado.",
@@ -151,6 +155,38 @@ export const solutionFamilies = [
       { label: "Automatización de procesos", href: "/automatizacion" },
       { label: "Flujos con WhatsApp", href: "/automatizacion-whatsapp-empresas" },
       { label: "Cotizaciones y PDF", href: "/cotizador-web-pdf" },
+      { label: "Asistentes IA para webs", href: "/servicios/asistentes-ia-para-webs" },
+    ],
+  },
+  {
+    id: "apoyo-empresarial",
+    name: "Puesta en marcha y apoyo empresarial",
+    shortName: "Apoyo empresarial",
+    path: "/servicios/apoyo-empresarial",
+    description:
+      "Acompañamiento para iniciar y organizar un negocio, preparar sus materiales comerciales y coordinar necesidades corporativas.",
+    examples:
+      "Creación de empresa, organización administrativa, documentos y regalos corporativos.",
+    groups: [
+      {
+        title: "Inicio y organización",
+        text: "Apoyo administrativo para preparar la creación de una empresa mediante el Registro de Empresas y Sociedades. Organización de antecedentes, documentos, carpetas y tareas para comenzar con un alcance claro.",
+      },
+      {
+        title: "Presentación y gestión comercial",
+        text: "Documentos, propuestas, presentaciones y materiales corporativos sobre la identidad de tu negocio. Puesta en marcha de correo y presencia digital mediante servicios acordados por separado.",
+      },
+      {
+        title: "Regalos corporativos",
+        text: "Búsqueda y comparación de proveedores, coordinación de personalización y seguimiento de pedidos. Cantidades, muestras, compra, fabricación y despacho se confirman antes de contratar.",
+      },
+    ],
+    scope:
+      "Honorarios y entregables por cotizar. Firmas, trámites, licencias, compras y servicios de terceros tienen condiciones y costos propios. Las decisiones societarias y la firma corresponden a sus titulares; las necesidades jurídicas, contables o tributarias requieren la revisión profesional que corresponda.",
+    links: [
+      { label: "Apoyo para crear una empresa", href: "/servicios/creacion-empresas-chile" },
+      { label: "Gestión de regalos corporativos", href: "/servicios/regalos-corporativos-chile" },
+      { label: "Organización y apoyo empresarial", href: "/servicios/apoyo-empresarial" },
     ],
   },
 ] as const;

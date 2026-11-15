@@ -94,6 +94,8 @@ export interface CreateCommercialRecord {
   owner: string;
 }
 
+export const commercialServiceLines = ["web_ecommerce", "sistemas_automatizacion", "soporte", "apoyo_empresarial"] as const;
+export type CommercialServiceLine = (typeof commercialServiceLines)[number];
 export const leadStatuses = ["NEW", "ASSIGNED", "CONTACT_PENDING", "CONTACTED", "QUALIFYING", "QUALIFIED", "DISQUALIFIED", "CONVERTED"] as const;
 export type LeadStatus = (typeof leadStatuses)[number];
 export const opportunityStatuses = ["OPEN", "WON", "LOST", "ARCHIVED"] as const;

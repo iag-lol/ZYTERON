@@ -25,8 +25,11 @@ export async function getCaseListItems(): Promise<CaseListItem[]> {
     heading: c.companyName,
     badgePrimary: c.industry?.trim() || "Caso de éxito",
     badgeSecondary: c.projectDuration?.trim() || "",
-    summary: c.results?.trim() || c.problem,
-    highlights: c.results?.trim() ? [c.results.trim()] : [],
+    summary: c.problem?.trim() || c.results?.trim() || "",
+    highlights:
+      c.results?.trim() && c.results.trim() !== (c.problem?.trim() || c.results.trim())
+        ? [c.results.trim()]
+        : [],
     featured: Boolean(c.featured),
   }));
 }

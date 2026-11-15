@@ -22,6 +22,7 @@ const labels: Record<string, string> = {
   web_ecommerce: "Web y comercio electrónico",
   sistemas_automatizacion: "Sistemas y automatización",
   soporte: "Soporte",
+  apoyo_empresarial: "Apoyo empresarial",
   sin_definir: "Servicio sin clasificar",
 };
 export function MeasurementPanel({ role }: { role: Role }) {

@@ -29,7 +29,7 @@ export const companyIdentity = {
   site: siteConfig.url,
   representative: siteConfig.representative,
   pitch:
-    "Zyteron desarrolla sitios web, sistemas administrativos, tiendas online, automatizaciones e inteligencia artificial aplicada para empresas en Chile. Trabajamos con alcance escrito, plazos definidos y una entrega que el cliente puede administrar.",
+    "Zyteron desarrolla sitios web, software, tiendas online y automatizaciones, e integra asistentes de atención a pedido. También ofrece apoyo para poner en marcha empresas, preparar documentación comercial y coordinar regalos corporativos. Cada servicio se acuerda con entregables, calendario y condiciones por escrito.",
   differentiators: [
     "Alcance escrito antes de empezar: el cliente sabe exactamente qué recibe y qué no.",
     "Desarrollo propio, sin plantillas genéricas ni revendedores intermedios.",
@@ -42,6 +42,16 @@ export const companyIdentity = {
 // -- 2 · Qué hacemos y qué no -----------------------------------------------
 
 export const whatWeDo: PlaybookSection[] = [
+  {
+    title: "Puesta en marcha y apoyo empresarial",
+    points: [
+      "Apoyo administrativo para crear empresas en el RES: antecedentes, preparación y coordinación de firmas de sus titulares, sin sustituir asesoría legal o tributaria.",
+      "Puesta en marcha digital con dominio, correo, sitio y herramientas según alcance.",
+      "Propuestas, presentaciones, fichas, plantillas y organización de registros y carpetas digitales.",
+      "Gestión de regalos corporativos: comparación de proveedores, coordinación de marca, aprobaciones y seguimiento del pedido.",
+      "Honorarios por cotización. Costos de firmas, productos, fabricación, despacho y otros terceros separados y aprobados antes de contratar.",
+    ],
+  },
   {
     title: "Sitios y páginas web",
     points: [
@@ -340,11 +350,35 @@ export const executiveFaq: Array<{ question: string; answer: string }> = [
 ];
 
 export const quickLinks: Array<{ label: string; href: string; description: string }> = [
-  { label: "Planes y precios", href: "/planes", description: "Página pública con el detalle de cada plan." },
+  {
+    label: "Planes y precios",
+    href: "/planes",
+    description: "Página pública con el detalle de cada plan.",
+  },
   { label: "Servicios", href: "/servicios", description: "Descripción de cada línea de servicio." },
-  { label: "Casos de éxito", href: "/casos-exito", description: "Proyectos reales para respaldar la conversación." },
-  { label: "Cotizador", href: "/cotizador", description: "Formulario que genera la solicitud formal." },
-  { label: "Preguntas frecuentes", href: "/faq", description: "Respuestas publicadas al cliente final." },
-  { label: "Términos del servicio", href: "/terminos", description: "Condiciones vigentes del servicio." },
-  { label: "Quiénes somos", href: "/quienes-somos", description: "Historia, equipo y forma de trabajo." },
+  {
+    label: "Casos de éxito",
+    href: "/casos-exito",
+    description: "Proyectos reales para respaldar la conversación.",
+  },
+  {
+    label: "Cotizador",
+    href: "/cotizador",
+    description: "Formulario que genera la solicitud formal.",
+  },
+  {
+    label: "Preguntas frecuentes",
+    href: "/faq",
+    description: "Respuestas publicadas al cliente final.",
+  },
+  {
+    label: "Términos del servicio",
+    href: "/terminos",
+    description: "Condiciones vigentes del servicio.",
+  },
+  {
+    label: "Quiénes somos",
+    href: "/quienes-somos",
+    description: "Historia, equipo y forma de trabajo.",
+  },
 ];

@@ -1,4 +1,10 @@
-import { PLAN_PRICE_AMOUNTS, MAINTENANCE_PRICE_AMOUNTS, ADDON_PRICE_AMOUNTS } from "@/config/pricing";
+import {
+  PLAN_PRICE_AMOUNTS,
+  MAINTENANCE_PRICE_AMOUNTS,
+  ADDON_PRICE_AMOUNTS,
+} from "@/config/pricing";
+import { businessServicePages } from "./business-service-pages";
+import { customerAiService } from "./customer-ai-service";
 
 /** Formatea un monto CLP con separador de miles chileno: 79990 → "$79.990". */
 const clp = (amount: number) => `$${amount.toLocaleString("es-CL")}`;
@@ -18,6 +24,10 @@ export type ServicePageData = {
   heroTitle: string;
   heroDescription: string;
   summary: string;
+  problem?: string;
+  solution?: string;
+  scopeNotes?: string[];
+  officialResources?: { label: string; href: string }[];
   idealFor: string[];
   deliverables: string[];
   process: string[];
@@ -28,6 +38,8 @@ export type ServicePageData = {
 };
 
 export const servicePages: ServicePageData[] = [
+  ...businessServicePages,
+  customerAiService,
   {
     slug: "paginas-web-para-empresas",
     navLabel: "Páginas web para empresas",
@@ -74,7 +86,11 @@ export const servicePages: ServicePageData[] = [
           "Sí. Configuramos eventos de formularios, clics en WhatsApp y conversiones para evaluar desempeño comercial.",
       },
     ],
-    relatedSlugs: ["paginas-web-para-pymes", "desarrollo-web-chile", "creacion-de-sitios-web-para-empresas"],
+    relatedSlugs: [
+      "paginas-web-para-pymes",
+      "desarrollo-web-chile",
+      "creacion-de-sitios-web-para-empresas",
+    ],
   },
   {
     slug: "diseno-web-chile",
@@ -118,7 +134,11 @@ export const servicePages: ServicePageData[] = [
           "Sí. Definimos headings, bloques semánticos y jerarquía de contenidos para facilitar posicionamiento.",
       },
     ],
-    relatedSlugs: ["agencia-diseno-web-chile", "diseno-web-santiago", "landing-pages-para-empresas"],
+    relatedSlugs: [
+      "agencia-diseno-web-chile",
+      "diseno-web-santiago",
+      "landing-pages-para-empresas",
+    ],
   },
   {
     slug: "desarrollo-web-chile",
@@ -127,7 +147,11 @@ export const servicePages: ServicePageData[] = [
     metaDescription:
       "Desarrollo web en Chile para empresas: sitios corporativos, landing pages y plataformas con alta velocidad, estabilidad y escalabilidad.",
     primaryKeyword: "desarrollo web chile",
-    secondaryKeywords: ["programación web chile", "desarrollo de paginas web", "sitios web escalables"],
+    secondaryKeywords: [
+      "programación web chile",
+      "desarrollo de paginas web",
+      "sitios web escalables",
+    ],
     heroTitle: "Desarrollo web en Chile con base técnica para crecer",
     heroDescription:
       "Implementamos sitios y plataformas con arquitectura limpia, tiempos de carga bajos y evolución por etapas sin rehacer todo el proyecto.",
@@ -162,7 +186,11 @@ export const servicePages: ServicePageData[] = [
           "Sí. Entregamos soporte inicial y opciones de mantención mensual para continuidad técnica.",
       },
     ],
-    relatedSlugs: ["mantencion-web-chile", "creacion-de-sitios-web-para-empresas", "seo-para-empresas-chile"],
+    relatedSlugs: [
+      "mantencion-web-chile",
+      "creacion-de-sitios-web-para-empresas",
+      "seo-para-empresas-chile",
+    ],
   },
   {
     slug: "agencia-diseno-web-chile",
@@ -245,8 +273,7 @@ export const servicePages: ServicePageData[] = [
     faqs: [
       {
         question: "¿Pueden atender reuniones presenciales en Santiago?",
-        answer:
-          "Sí. Coordinamos reuniones presenciales o híbridas según el alcance del proyecto.",
+        answer: "Sí. Coordinamos reuniones presenciales o híbridas según el alcance del proyecto.",
       },
       {
         question: "¿Incluye estrategia para Providencia, Las Condes u otras comunas?",
@@ -263,7 +290,11 @@ export const servicePages: ServicePageData[] = [
     metaDescription:
       "Servicio de creación de sitios web para empresas en Chile: estrategia, diseño, desarrollo y lanzamiento con base SEO y conversión.",
     primaryKeyword: "creacion de sitios web para empresas",
-    secondaryKeywords: ["crear sitio web empresa", "sitio web corporativo", "sitios empresariales chile"],
+    secondaryKeywords: [
+      "crear sitio web empresa",
+      "sitio web corporativo",
+      "sitios empresariales chile",
+    ],
     heroTitle: "Creación de sitios web para empresas de forma integral",
     heroDescription:
       "Construimos tu sitio desde cero con una metodología comercial y técnica para salir a mercado con estructura escalable y medible.",
@@ -294,8 +325,7 @@ export const servicePages: ServicePageData[] = [
       },
       {
         question: "¿La web queda preparada para agregar blog o nuevas páginas?",
-        answer:
-          "Sí. Dejamos arquitectura escalable para crecer sin rehacer el sitio completo.",
+        answer: "Sí. Dejamos arquitectura escalable para crecer sin rehacer el sitio completo.",
       },
     ],
     relatedSlugs: ["paginas-web-para-empresas", "desarrollo-web-chile", "paginas-web-para-pymes"],
@@ -338,11 +368,14 @@ export const servicePages: ServicePageData[] = [
       },
       {
         question: "¿Incluyen soporte luego de la entrega?",
-        answer:
-          "Sí. Incluimos soporte inicial y alternativas de mantención mensual.",
+        answer: "Sí. Incluimos soporte inicial y alternativas de mantención mensual.",
       },
     ],
-    relatedSlugs: ["paginas-web-para-empresas", "landing-pages-para-empresas", "mantencion-web-chile"],
+    relatedSlugs: [
+      "paginas-web-para-empresas",
+      "landing-pages-para-empresas",
+      "mantencion-web-chile",
+    ],
   },
   {
     slug: "landing-pages-para-empresas",
@@ -399,7 +432,11 @@ export const servicePages: ServicePageData[] = [
     metaDescription:
       "Servicio de mantención web en Chile: soporte técnico, mejoras continuas, seguridad, actualizaciones y performance para sitios empresariales.",
     primaryKeyword: "mantencion web chile",
-    secondaryKeywords: ["soporte web chile", "mantenimiento sitio web", "soporte técnico web empresas"],
+    secondaryKeywords: [
+      "soporte web chile",
+      "mantenimiento sitio web",
+      "soporte técnico web empresas",
+    ],
     heroTitle: "Mantención web en Chile para no perder posicionamiento ni leads",
     heroDescription:
       "Nos encargamos de la continuidad técnica de tu sitio: actualizaciones, monitoreo, seguridad y mejoras periódicas de rendimiento.",
@@ -506,8 +543,7 @@ export const servicePages: ServicePageData[] = [
       },
       {
         question: "¿Incluyen contenido y optimización técnica?",
-        answer:
-          "Sí. Trabajamos ambas capas en paralelo porque una sin la otra limita resultados.",
+        answer: "Sí. Trabajamos ambas capas en paralelo porque una sin la otra limita resultados.",
       },
     ],
     relatedSlugs: ["agencia-diseno-web-chile", "desarrollo-web-chile", "mantencion-web-chile"],

@@ -1,4 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
+import { commercialServiceLines } from "@zyteron/contracts";
 
 type Row = Record<string, any>;
 export function reportingWindow(days: 7 | 28, now = Temporal.Now.instant()) {
@@ -15,8 +16,18 @@ export function reportingWindow(days: 7 | 28, now = Temporal.Now.instant()) {
   };
 }
 function serviceLine(text: string) {
+  const normalized = text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
   if (
-    /sistema|automatiza|intranet|documental|flota|panel|recursos humanos|gesti[oó]n de personas|operaciones/i.test(
+    /apoyo[- ]empresarial|creacion-empresas-chile|creacion de empresas|regalos[- ]corporativos/.test(
+      normalized,
+    )
+  )
+    return "apoyo_empresarial";
+  if (
+    /sistema|automatiza|intranet|documental|flota|panel|recursos humanos|gesti[oó]n de personas|operaciones|asistentes-ia-para-webs/i.test(
       text,
     )
   )
@@ -65,9 +76,7 @@ export function summarizeMeasurement(
   >();
   const bucket = (leadId?: string, explicitLine?: string) => {
     const lead = leads.get(leadId || "");
-    const line = ["web_ecommerce", "sistemas_automatizacion", "soporte"].includes(
-      explicitLine || "",
-    )
+    const line = commercialServiceLines.some((line) => line === explicitLine)
       ? explicitLine!
       : leadService(lead);
     const source = [lead?.lead_sources]

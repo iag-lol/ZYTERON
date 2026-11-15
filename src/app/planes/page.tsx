@@ -39,8 +39,7 @@ import { buildAbsoluteUrl, buildWebPageJsonLd, createPageMetadata } from "@/lib/
 
 export const metadata: Metadata = createPageMetadata({
   title: "Precios de páginas web y sistemas en Chile",
-  description:
-    "Cuánto cuesta una página web en Chile: precios de desarrollo web, ecommerce, software a medida, intranet y sistemas de gestión para empresas, por nivel.",
+  description: `Compara páginas web desde ${clp(getPlan("web-basica").amount)} + IVA, con alcance y plazos publicados. Revisa ecommerce, software e intranets y solicita una cotización.`,
   path: "/planes",
 });
 
@@ -502,7 +501,7 @@ export default function PlanesPage() {
         id="planes-webpage-schema"
         data={buildWebPageJsonLd({
           path: "/planes",
-          title: "Precios de páginas web y sistemas en Chile",
+          title: "Precios de páginas web, ecommerce y software en Chile",
           description:
             "Valores referenciales de páginas web, ecommerce, sistemas a medida y plataformas corporativas, con alcance por nivel y cotización formal según proyecto.",
           breadcrumbs: [
@@ -521,13 +520,12 @@ export default function PlanesPage() {
             Planes y cotización profesional
           </div>
           <h1 className="text-3xl font-extrabold text-slate-900 sm:text-5xl">
-            Precios de páginas web y sistemas en Chile
+            Precios de páginas web, ecommerce y software en Chile
           </h1>
           <p className="mx-auto max-w-4xl text-base text-slate-600 sm:text-lg">
-            Una escalera completa de desarrollo web en Chile: desde una página profesional para
-            existir en Google, {lowerDesde(entryPlan.price)}, hasta plataformas corporativas a
-            medida para automatizar procesos, controlar operaciones e integrar varias áreas de la
-            organización.
+            Una página web de presentación parte {lowerDesde(entryPlan.price)}: una página con hasta
+            cuatro secciones, formulario de contacto y WhatsApp. Compara el alcance y el plazo de
+            cada plan, o explora ecommerce, sistemas e intranets a medida para tu operación.
           </p>
 
           <ol className="mx-auto grid max-w-5xl gap-3 text-left sm:grid-cols-2 lg:grid-cols-4">
@@ -553,12 +551,13 @@ export default function PlanesPage() {
           <p className="mx-auto max-w-4xl rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-slate-700">
             Todos los valores se expresan desde el monto indicado y no incluyen IVA. El precio final
             se confirma en la cotización formal, según alcance, módulos, integraciones y volumen de
-            operación.
+            operación. Dominio, hosting, mantenimiento y servicios de terceros se cotizan por
+            separado.
           </p>
 
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild className="bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/cotizador?origen=planes">Cotizar mi proyecto</Link>
+              <Link href="/cotizador/manual?origen=planes">Cotizar mi página web</Link>
             </Button>
             <Button
               asChild
@@ -569,6 +568,14 @@ export default function PlanesPage() {
                 Hablar por WhatsApp
               </a>
             </Button>
+          </div>
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm">
+            <Link href="/calculadora-precio-pagina-web" className="text-link">
+              Estimar precio sin registro
+            </Link>
+            <Link href="/casos-exito/fenice-spa" className="text-link">
+              Ver el sitio web desarrollado para Fenice
+            </Link>
           </div>
         </Container>
       </section>

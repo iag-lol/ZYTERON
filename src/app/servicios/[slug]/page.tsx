@@ -7,6 +7,7 @@ import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { siteConfig } from "@/config/site";
+import { serviceContactHref, solutionFamilyFor } from "@/lib/commercial/request-context";
 import {
   buildFaqJsonLd,
   buildServiceJsonLd,
@@ -191,6 +192,38 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
 
   const servicePath = `/servicios/${service.slug}`;
   const serviceExamples = serviceExamplesBySlug[service.slug];
+  const contactHref = serviceContactHref(service.slug);
+  const directContact =
+    solutionFamilyFor(servicePath) === "apoyo_empresarial" ||
+    service.slug === "asistentes-ia-para-webs";
+  const problem = service.problem ?? serviceExamples?.problem;
+  const solution = service.solution ?? serviceExamples?.solution;
+  const complementaryLinks = service.relatedLinks?.length
+    ? service.relatedLinks.map((link) => ({
+        title: link.label,
+        description: "",
+        href: link.href,
+      }))
+    : directContact
+      ? []
+      : [
+          {
+            title: "Páginas web en Santiago",
+            description:
+              "Nuestro servicio principal para empresas y pymes de Santiago y la Región Metropolitana.",
+            href: "/paginas-web-santiago",
+          },
+          {
+            title: "Blog comercial",
+            description: "Guías para ejecutar esta estrategia con menos riesgo.",
+            href: "/blog",
+          },
+          {
+            title: "FAQ de servicio",
+            description: "Respuestas clave antes de definir alcance y presupuesto.",
+            href: "/faq",
+          },
+        ];
   const relatedServices = service.relatedSlugs
     .map((slug) => getServicePageBySlug(slug))
     .filter((item): item is NonNullable<typeof item> => Boolean(item));
@@ -224,7 +257,7 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
       />
       <JsonLd id={`faq-schema-${service.slug}`} data={buildFaqJsonLd(service.faqs)} />
 
-      <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-20">
+      <section className="bg-hero-pattern relative overflow-hidden border-b border-slate-200 py-20">
         <Container className="relative z-10 space-y-6">
           <nav aria-label="Breadcrumb" className="text-xs font-semibold text-slate-500">
             <Link href="/" className="hover:text-blue-700">
@@ -237,30 +270,52 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
             <span className="mx-2 text-slate-300">/</span>
             <span className="text-slate-700">{service.navLabel}</span>
           </nav>
-          <h1 className="max-w-3xl text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
+          <h1 className="max-w-3xl text-4xl leading-tight font-extrabold text-slate-900 sm:text-5xl">
             {service.heroTitle}
           </h1>
           <p className="max-w-3xl text-lg leading-relaxed text-slate-600">
             {service.heroDescription}
           </p>
           <div className="flex flex-wrap gap-3 pt-2">
-            <Button asChild size="lg" className="gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/cotizador">
+            <Button
+              asChild
+              size="lg"
+              className="gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800"
+            >
+              <Link href={directContact ? contactHref : "/cotizador"}>
                 Cotizar este servicio <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-slate-300 font-semibold text-slate-800 hover:bg-slate-50">
-              <Link href={`/contacto?servicio=${service.slug}`}>
-                Solicitar propuesta <ArrowRight className="h-4 w-4" />
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-slate-300 font-semibold text-slate-800 hover:bg-slate-50"
+            >
+              <Link href={directContact ? "#alcance" : contactHref}>
+                {directContact ? "Ver alcance y condiciones" : "Solicitar propuesta"}{" "}
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-slate-300 font-semibold text-slate-800 hover:bg-slate-50">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-slate-300 font-semibold text-slate-800 hover:bg-slate-50"
+            >
               <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-4 w-4" /> Hablar por WhatsApp
               </a>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-slate-300 font-semibold text-slate-800 hover:bg-slate-50">
-              <a href={`tel:${siteConfig.contact.phone}`}>Llamar al {siteConfig.contact.phoneDisplay}</a>
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-slate-300 font-semibold text-slate-800 hover:bg-slate-50"
+            >
+              <a href={`tel:${siteConfig.contact.phone}`}>
+                Llamar al {siteConfig.contact.phoneDisplay}
+              </a>
             </Button>
           </div>
         </Container>
@@ -269,28 +324,28 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
       <section className="cv-auto border-b border-slate-200 py-16">
         <Container className="grid gap-8 lg:grid-cols-2">
           <div className="space-y-5">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
               Resumen del servicio
             </p>
             <p className="text-sm leading-relaxed text-slate-600">{service.summary}</p>
             <div className="grid gap-4 md:grid-cols-2">
-              <article className="card-premium p-5">
-                <h2 className="text-base font-extrabold text-slate-900">Problema habitual</h2>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                  {serviceExamples?.problem ?? service.summary}
-                </p>
-              </article>
+              {problem && problem !== service.summary ? (
+                <article className="card-premium p-5">
+                  <h2 className="text-base font-extrabold text-slate-900">Problema habitual</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{problem}</p>
+                </article>
+              ) : null}
               <article className="card-premium p-5">
                 <h2 className="text-base font-extrabold text-slate-900">Cómo ayuda Zyteron</h2>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                  {serviceExamples?.solution ??
+                  {solution ??
                     "Definimos una solución técnica y comercial clara para que el servicio responda al problema real del negocio."}
                 </p>
               </article>
             </div>
           </div>
           <div className="card-premium p-6">
-            <p className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-500">
+            <p className="mb-4 text-xs font-bold tracking-widest text-slate-500 uppercase">
               Ideal para
             </p>
             <ul className="space-y-3">
@@ -308,7 +363,9 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
       <section className="cv-auto section-alt py-16">
         <Container className="grid gap-8 lg:grid-cols-2">
           <div className="card-premium p-6">
-            <h2 className="mb-4 text-xl font-extrabold text-slate-900">Qué incluye este servicio</h2>
+            <h2 className="mb-4 text-xl font-extrabold text-slate-900">
+              Qué incluye este servicio
+            </h2>
             <ul className="space-y-2">
               {service.deliverables.map((item) => (
                 <li key={item} className="flex items-start gap-2 text-sm text-slate-700">
@@ -334,15 +391,71 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
         </Container>
       </section>
 
+      {service.scopeNotes?.length ? (
+        <section id="alcance" className="scroll-mt-28 border-t border-slate-200 bg-white py-16">
+          <Container className="space-y-6">
+            <div className="max-w-3xl space-y-3">
+              <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+                Alcance y contratación
+              </p>
+              <h2 className="text-2xl font-extrabold text-slate-900">
+                Cotización según tu necesidad
+              </h2>
+              <p className="text-sm leading-relaxed text-slate-600">
+                La propuesta confirma entregables, honorarios, calendario y costos de terceros antes
+                de comenzar.
+              </p>
+            </div>
+            <ul className="grid gap-4 md:grid-cols-2">
+              {service.scopeNotes.map((note) => (
+                <li
+                  key={note}
+                  className="rounded-xl border border-slate-200 p-5 text-sm leading-relaxed text-slate-700"
+                >
+                  {note}
+                </li>
+              ))}
+            </ul>
+          </Container>
+        </section>
+      ) : null}
+
+      {service.officialResources?.length ? (
+        <section className="border-t border-slate-200 bg-slate-50 py-12">
+          <Container className="space-y-4">
+            <h2 className="text-xl font-extrabold text-slate-900">Información oficial útil</h2>
+            <ul className="space-y-3">
+              {service.officialResources.map((resource) => (
+                <li key={resource.href}>
+                  <a
+                    href={resource.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-semibold text-blue-700 underline"
+                  >
+                    {resource.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Container>
+        </section>
+      ) : null}
+
       {serviceExamples?.useCases?.length ? (
         <section className="cv-auto border-t border-slate-200 bg-white py-16">
           <Container className="grid gap-8 lg:grid-cols-[1fr_0.9fr]">
             <article className="space-y-4">
               <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Ejemplos referenciales</p>
-                <h2 className="text-2xl font-extrabold text-slate-900">Ejemplos de uso por rubro</h2>
+                <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+                  Ejemplos referenciales
+                </p>
+                <h2 className="text-2xl font-extrabold text-slate-900">
+                  Ejemplos de uso por rubro
+                </h2>
                 <p className="text-sm leading-relaxed text-slate-600">
-                  Estos escenarios son referenciales y sirven para visualizar cómo se puede aplicar el servicio según el tipo de empresa.
+                  Estos escenarios son referenciales y sirven para visualizar cómo se puede aplicar
+                  el servicio según el tipo de empresa.
                 </p>
               </div>
               <div className="grid gap-3">
@@ -356,19 +469,40 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
             </article>
 
             <aside className="card-premium p-6">
-              <h2 className="mb-4 text-xl font-extrabold text-slate-900">Enlaces internos útiles</h2>
+              <h2 className="mb-4 text-xl font-extrabold text-slate-900">
+                Enlaces internos útiles
+              </h2>
               <div className="space-y-3">
-                <Link href="/planes" className="block rounded-xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:border-blue-200 hover:bg-white">
-                  <span className="text-sm font-bold text-slate-900">Revisar planes y valores referenciales</span>
-                  <span className="mt-1 block text-xs leading-relaxed text-slate-500">Compara rangos base antes de cotizar este servicio.</span>
+                <Link
+                  href="/planes"
+                  className="block rounded-xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:border-blue-200 hover:bg-white"
+                >
+                  <span className="text-sm font-bold text-slate-900">
+                    Revisar planes y valores referenciales
+                  </span>
+                  <span className="mt-1 block text-xs leading-relaxed text-slate-500">
+                    Compara rangos base antes de cotizar este servicio.
+                  </span>
                 </Link>
-                <Link href="/cotizador" className="block rounded-xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:border-blue-200 hover:bg-white">
+                <Link
+                  href="/cotizador"
+                  className="block rounded-xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:border-blue-200 hover:bg-white"
+                >
                   <span className="text-sm font-bold text-slate-900">Ir al cotizador</span>
-                  <span className="mt-1 block text-xs leading-relaxed text-slate-500">Completa el formulario y envía tu requerimiento con más contexto.</span>
+                  <span className="mt-1 block text-xs leading-relaxed text-slate-500">
+                    Completa el formulario y envía tu requerimiento con más contexto.
+                  </span>
                 </Link>
-                <Link href={`/contacto?servicio=${service.slug}`} className="block rounded-xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:border-blue-200 hover:bg-white">
-                  <span className="text-sm font-bold text-slate-900">Hablar con un especialista</span>
-                  <span className="mt-1 block text-xs leading-relaxed text-slate-500">Solicita orientación comercial para definir alcance y prioridades.</span>
+                <Link
+                  href={contactHref}
+                  className="block rounded-xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:border-blue-200 hover:bg-white"
+                >
+                  <span className="text-sm font-bold text-slate-900">
+                    Hablar con un especialista
+                  </span>
+                  <span className="mt-1 block text-xs leading-relaxed text-slate-500">
+                    Solicita orientación comercial para definir alcance y prioridades.
+                  </span>
                 </Link>
               </div>
             </aside>
@@ -379,7 +513,7 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
       <section className="cv-auto border-t border-slate-200 py-16">
         <Container className="space-y-8">
           <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">FAQ</p>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">FAQ</p>
             <h2 className="text-2xl font-extrabold text-slate-900">
               Preguntas frecuentes sobre {service.navLabel.toLowerCase()}
             </h2>
@@ -411,43 +545,44 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
             ))}
           </div>
           <div className="grid gap-4 md:grid-cols-3">
-            {[
-              {
-                title: "Páginas web en Santiago",
-                description: "Nuestro servicio principal para empresas y pymes de Santiago y la Región Metropolitana.",
-                href: "/paginas-web-santiago",
-              },
-              {
-                title: "Blog comercial",
-                description: "Guías para ejecutar esta estrategia con menos riesgo.",
-                href: "/blog",
-              },
-              {
-                title: "FAQ de servicio",
-                description: "Respuestas clave antes de definir alcance y presupuesto.",
-                href: "/faq",
-              },
-            ].map((item) => (
+            {complementaryLinks.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className="card-premium p-5 transition-colors hover:border-blue-200"
               >
                 <h3 className="mb-2 text-base font-bold text-slate-900">{item.title}</h3>
-                <p className="text-sm text-slate-600">{item.description}</p>
+                {item.description ? (
+                  <p className="text-sm text-slate-600">{item.description}</p>
+                ) : null}
               </Link>
             ))}
           </div>
           <div className="flex flex-wrap gap-3 pt-2">
             <Button asChild className="gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800">
-              <Link href="/cotizador">
-                Ir al cotizador <ArrowRight className="h-4 w-4" />
+              <Link href={directContact ? contactHref : "/cotizador"}>
+                {directContact ? "Solicitar cotización" : "Ir al cotizador"}{" "}
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" className="border-slate-300 font-semibold text-slate-800 hover:bg-slate-50">
-              <Link href={`/contacto?servicio=${service.slug}`}>Hablar con un especialista</Link>
+            <Button
+              asChild
+              variant="outline"
+              className="border-slate-300 font-semibold text-slate-800 hover:bg-slate-50"
+            >
+              {directContact ? (
+                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                  Conversar por WhatsApp
+                </a>
+              ) : (
+                <Link href={contactHref}>Hablar con un especialista</Link>
+              )}
             </Button>
-            <Button asChild variant="outline" className="border-slate-300 font-semibold text-slate-800 hover:bg-slate-50">
+            <Button
+              asChild
+              variant="outline"
+              className="border-slate-300 font-semibold text-slate-800 hover:bg-slate-50"
+            >
               <Link href="/servicios">Ver todos los servicios</Link>
             </Button>
           </div>

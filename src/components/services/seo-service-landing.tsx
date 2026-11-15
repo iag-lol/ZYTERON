@@ -445,6 +445,13 @@ function formatClp(value: number) {
 
 export async function SeoServiceLanding({ page }: Props) {
   const deepContent = deepContentBySlug[page.slug];
+  const hasWebEstimate = [
+    "desarrollo-web",
+    "paginas-web-para-pymes",
+    "paginas-web-para-empresas",
+    "tiendas-online",
+    "catalogos-digitales",
+  ].includes(page.slug);
   const serviceLabel = deepContent?.serviceLabel ?? page.navLabel.toLowerCase();
   // Evidencia comercial: casos publicados en Supabase (admin /casos). Si la
   // consulta falla o aún no hay casos, la sección muestra un fallback a /demos.
@@ -543,7 +550,9 @@ export async function SeoServiceLanding({ page }: Props) {
                   variant="outline"
                   className="border-slate-300 text-slate-800 hover:bg-slate-50"
                 >
-                  <Link href="/planes">Ver planes</Link>
+                  <Link href={hasWebEstimate ? "/calculadora-precio-pagina-web" : "/planes"}>
+                    {hasWebEstimate ? "Calcular precio sin registro" : "Ver planes"}
+                  </Link>
                 </Button>
                 <Button
                   asChild

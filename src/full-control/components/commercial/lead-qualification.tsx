@@ -1,5 +1,13 @@
 "use client";
 import { useState } from "react";
+import { commercialServiceLines, type CommercialServiceLine } from "@zyteron/contracts";
+
+const serviceLabels: Record<CommercialServiceLine, string> = {
+  web_ecommerce: "Web y comercio electrónico",
+  sistemas_automatizacion: "Sistemas y automatización",
+  soporte: "Soporte",
+  apoyo_empresarial: "Apoyo empresarial",
+};
 type Criteria = {
   serviceFit: boolean;
   needConfirmed: boolean;
@@ -58,9 +66,11 @@ export function LeadQualification({
           onChange={(event) => setCriteria({ ...criteria, serviceLine: event.target.value })}
         >
           <option value="">Seleccionar</option>
-          <option value="web_ecommerce">Web y comercio electrónico</option>
-          <option value="sistemas_automatizacion">Sistemas y automatización</option>
-          <option value="soporte">Soporte</option>
+          {commercialServiceLines.map((line) => (
+            <option key={line} value={line}>
+              {serviceLabels[line]}
+            </option>
+          ))}
         </select>
       </label>
       <label className="block">

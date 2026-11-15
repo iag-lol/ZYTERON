@@ -34,6 +34,7 @@ const footerColumns = [
       { label: "SEO para empresas", href: "/servicios/seo-para-empresas-chile" },
       { label: "Mantención de sitios web", href: "/servicios/mantencion-web-chile" },
       { label: "Automatización", href: "/automatizacion" },
+      { label: "Asistentes IA para webs", href: "/servicios/asistentes-ia-para-webs" },
       { label: "Integraciones y API", href: "/integraciones" },
       { label: "Soporte TI", href: "/soporte-ti" },
       { label: "Planes y precios", href: "/planes" },
@@ -43,6 +44,9 @@ const footerColumns = [
   {
     title: "Empresa",
     items: [
+      { label: "Apoyo empresarial", href: "/servicios/apoyo-empresarial" },
+      { label: "Creación de empresas", href: "/servicios/creacion-empresas-chile" },
+      { label: "Regalos corporativos", href: "/servicios/regalos-corporativos-chile" },
       { label: "Denurvia: investigaciones internas", href: "/soluciones/denurvia" },
       { label: "Nosotros", href: "/quienes-somos" },
       { label: "Casos de éxito", href: "/casos-exito" },

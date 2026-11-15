@@ -1,7 +1,8 @@
 import { isExcludedWebVisitPath } from "@/lib/analytics/visit-privacy";
 import { PLAN_CATALOG, type PlanId } from "@/config/pricing";
+import type { CommercialServiceLine } from "@zyteron/contracts";
 
-export type ServiceLine = "web_ecommerce" | "sistemas_automatizacion" | "soporte" | "sin_definir";
+export type ServiceLine = CommercialServiceLine | "sin_definir";
 
 export const PROJECT_TYPES = [
   "Sitio de presentación empresarial o profesional",
@@ -14,6 +15,9 @@ export const PROJECT_TYPES = [
   "Orientación para definir la solución",
   "SEO y posicionamiento",
   "Soporte TI",
+  "Apoyo empresarial y administrativo",
+  "Creación de empresas",
+  "Regalos corporativos",
 ] as const;
 
 export type SolutionFamily =
@@ -22,6 +26,7 @@ export type SolutionFamily =
   | "comercio_digital"
   | "sitios_web"
   | "automatizacion"
+  | "apoyo_empresarial"
   | "soporte"
   | "sin_definir";
 export function solutionFamilyFor(value: string): SolutionFamily {
@@ -30,10 +35,16 @@ export function solutionFamilyFor(value: string): SolutionFamily {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
   if (
+    /apoyo[- ]empresarial|creacion-empresas-chile|creacion de empresas|regalos[- ]corporativos/.test(
+      text,
+    )
+  )
+    return "apoyo_empresarial";
+  if (
     /gestion-personas|gestion de personas|recursos humanos|rrhh|flota|operaci|personal/.test(text)
   )
     return "personas_operaciones";
-  if (/automatiza|integracion/.test(text)) return "automatizacion";
+  if (/automatiza|integracion|asistentes-ia-para-webs/.test(text)) return "automatizacion";
   if (
     /sistema|software|intranet|documental|panel|desarrollo-web-santiago|cotizador-web-pdf|denurvia|centro-de-caja|eliana/.test(
       text,
@@ -81,12 +92,17 @@ const aliases: Record<string, (typeof PROJECT_TYPES)[number]> = {
   "soporte-ti-pymes-santiago": "Soporte TI",
   "mantencion-web-chile": "Soporte TI",
   "seo-para-empresas-chile": "SEO y posicionamiento",
+  "creacion-empresas-chile": "Creación de empresas",
+  "regalos-corporativos-chile": "Regalos corporativos",
+  "apoyo-empresarial": "Apoyo empresarial y administrativo",
+  "asistentes-ia-para-webs": "Automatización o integración",
 };
 
 export function serviceLineFor(value: string): ServiceLine {
   const text = value.toLowerCase();
+  if (solutionFamilyFor(value) === "apoyo_empresarial") return "apoyo_empresarial";
   if (
-    /sistema|automatiza|intranet|documental|flota|panel|integraci[oó]n|recursos humanos|personas|operaciones|gestion-personas|desarrollo-web-santiago|cotizador-web-pdf/.test(
+    /sistema|automatiza|intranet|documental|flota|panel|integraci[oó]n|recursos humanos|personas|operaciones|gestion-personas|desarrollo-web-santiago|cotizador-web-pdf|asistentes-ia-para-webs/.test(
       text,
     )
   )
@@ -127,10 +143,12 @@ export function resolveRequestContext(params: URLSearchParams) {
           : "Sitio de presentación empresarial o profesional"
       : "");
   const amount = Number(params.get("estimado"));
+  const sourceFamily = solutionFamilyFor(source);
   return {
     projectType,
     serviceLine: serviceLineFor(projectType),
-    solutionFamily: solutionFamilyFor(projectType),
+    solutionFamily:
+      sourceFamily === "apoyo_empresarial" ? sourceFamily : solutionFamilyFor(projectType),
     planId: plan?.id,
     estimate:
       Number.isFinite(amount) && amount > 0 && amount <= 100_000_000
@@ -138,6 +156,13 @@ export function resolveRequestContext(params: URLSearchParams) {
         : undefined,
     source: /^[a-z0-9/_-]{1,120}$/.test(source) ? source : undefined,
   };
+}
+
+export function serviceContactHref(slug: string) {
+  const params = new URLSearchParams({ servicio: slug, origen: "servicios" });
+  if (solutionFamilyFor(slug) === "apoyo_empresarial") params.set("tipo", "orientacion");
+  else if (slug === "asistentes-ia-para-webs") params.set("tipo", "automatizacion");
+  return `/contacto?${params}`;
 }
 
 export function planContactHref(id: PlanId, source: string) {

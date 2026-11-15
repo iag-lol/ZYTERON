@@ -4,6 +4,7 @@ import { Container } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { systemPages } from "@/content/system-pages";
 import { verticalPages } from "@/content/vertical-pages";
+import { businessServicePages } from "@/content/business-service-pages";
 import { buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
@@ -52,11 +53,18 @@ const siteSections = [
       ["Automatización de procesos", "/automatizacion"],
       ["Integraciones de sistemas y API", "/integraciones"],
       ["Automatización de WhatsApp", "/automatizacion-whatsapp-empresas"],
+      ["Asistentes IA para sitios web", "/servicios/asistentes-ia-para-webs"],
       ["Soporte TI", "/soporte-ti"],
       ["Soporte TI para pymes en Santiago", "/soporte-ti-pymes-santiago"],
       ["Mantención web", "/servicios/mantencion-web-chile"],
       ["Todos los servicios", "/servicios"],
     ],
+  },
+  {
+    title: "Puesta en marcha y apoyo empresarial",
+    links: businessServicePages.map(
+      ({ navLabel, slug }) => [navLabel, `/servicios/${slug}`] as const,
+    ),
   },
   {
     title: "SEO, guías y recursos",

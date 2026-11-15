@@ -60,6 +60,10 @@ export const siteConfig = {
       "Automatización",
       "Soporte TI",
       "SEO técnico",
+      "Asistentes de atención en sitios web",
+      "Apoyo administrativo para creación de empresas",
+      "Documentación y apoyo empresarial",
+      "Gestión de regalos corporativos",
     ],
     // Términos exactos de las páginas de servicio publicadas; amplían
     // knowsAbout de la Organization con contenido visible del sitio.

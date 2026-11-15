@@ -18,11 +18,11 @@ import {
 import { buildFaqJsonLd, buildWebPageJsonLd, createPageMetadata } from "@/lib/seo";
 
 const PATH = "/calculadora-precio-pagina-web";
+const BASIC_WEB_PRICE = clp(PLAN_PRICE_AMOUNTS["web-basica"]);
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Calculadora de Precio de Página Web en Chile",
-  description:
-    "Calcula cuánto cuesta una página web en Chile según tipo de proyecto, páginas y funcionalidades. Estimación inmediata con precios referenciales reales y sin registro.",
+  title: "Calculadora de precio de página web en Chile",
+  description: `¿Cuánto cuesta una página web en Chile? Web de una página desde ${BASIC_WEB_PRICE} + IVA. Calcula una estimación según funciones, sin registro ni datos de contacto.`,
   path: PATH,
 });
 
@@ -159,7 +159,7 @@ export default function CalculadoraPrecioPaginaWebPage() {
       />
       <JsonLd id="calculadora-faq-schema" data={buildFaqJsonLd(faqs)} />
 
-      <section className="relative overflow-hidden border-b border-slate-200 bg-hero-pattern py-16 sm:py-20">
+      <section className="bg-hero-pattern relative overflow-hidden border-b border-slate-200 py-16 sm:py-20">
         <Container className="space-y-5">
           <nav aria-label="Breadcrumb" className="text-xs font-semibold text-slate-500">
             <Link href="/" className="hover:text-blue-700">
@@ -174,19 +174,29 @@ export default function CalculadoraPrecioPaginaWebPage() {
             Herramienta gratuita · Sin registro
           </div>
 
-          <h1 className="max-w-4xl text-balance text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
-            Calculadora de precio de página web en Chile
+          <h1 className="max-w-4xl text-3xl leading-tight font-extrabold tracking-tight text-balance text-slate-900 sm:text-4xl lg:text-5xl">
+            Calculadora: ¿cuánto cuesta una página web en Chile?
           </h1>
 
           <p className="max-w-3xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            Arma tu proyecto y obtén una estimación inmediata con nuestros precios reales
-            publicados. Sin formularios previos y sin dejar tus datos: primero el número, después
-            conversamos.
+            Una web de presentación de una página parte desde {BASIC_WEB_PRICE} + IVA. Selecciona el
+            tipo de proyecto y sus funciones para obtener una estimación con los precios de Zyteron,
+            sin registro ni datos de contacto. El valor final depende del alcance.
           </p>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild className="gap-2 bg-blue-700 font-bold text-white hover:bg-blue-800">
+              <Link href="#calculadora">
+                Calcular mi presupuesto <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="font-semibold">
+              <Link href="/cotizador#solicitud">Solicitar propuesta personalizada</Link>
+            </Button>
+          </div>
         </Container>
       </section>
 
-      <section className="section-alt py-12 sm:py-16">
+      <section id="calculadora" className="section-alt scroll-mt-24 py-12 sm:py-16">
         <Container>
           <PriceCalculator />
         </Container>
@@ -195,16 +205,16 @@ export default function CalculadoraPrecioPaginaWebPage() {
       <section className="cv-auto border-t border-slate-200 bg-white py-16">
         <Container className="space-y-8">
           <div className="max-w-3xl space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">
-              Referencia de mercado
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
+              Precios de Zyteron
             </p>
             <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
               Cuánto cuesta cada tipo de proyecto en Chile
             </h2>
             <p className="text-sm leading-relaxed text-slate-600">
-              Esta es la escalera completa con la que trabajamos, desde una presencia web inicial hasta
-              una plataforma corporativa a medida. Los valores están en pesos chilenos, se expresan
-              desde el precio indicado y no incluyen IVA.
+              Esta es la escalera completa con la que trabajamos, desde una presencia web inicial
+              hasta una plataforma corporativa a medida. Los valores están en pesos chilenos, se
+              expresan desde el precio indicado y no incluyen IVA.
             </p>
           </div>
 
@@ -241,8 +251,8 @@ export default function CalculadoraPrecioPaginaWebPage() {
           <div className="space-y-2">
             <p className="text-xs leading-relaxed text-slate-500">{PRICING_NOTE}</p>
             <p className="text-xs leading-relaxed text-slate-500">
-              Sobre {CORPORATE_THRESHOLD_LABEL} + IVA el estimador deja de entregar una cifra automática:{" "}
-              {CORPORATE_SCOPE_NOTE}
+              Sobre {CORPORATE_THRESHOLD_LABEL} + IVA el estimador deja de entregar una cifra
+              automática: {CORPORATE_SCOPE_NOTE}
             </p>
           </div>
         </Container>
@@ -251,7 +261,7 @@ export default function CalculadoraPrecioPaginaWebPage() {
       <section className="cv-auto section-alt py-16">
         <Container className="space-y-8">
           <div className="max-w-3xl space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
               Qué mueve el precio
             </p>
             <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
@@ -272,7 +282,7 @@ export default function CalculadoraPrecioPaginaWebPage() {
       <section className="cv-auto border-t border-slate-200 bg-white py-16">
         <Container className="grid gap-8 lg:grid-cols-[1fr_0.9fr]">
           <div className="space-y-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">
               Transparencia
             </p>
             <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
@@ -321,7 +331,7 @@ export default function CalculadoraPrecioPaginaWebPage() {
       <section className="cv-auto section-alt py-16">
         <Container className="space-y-8">
           <div className="max-w-3xl space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600">FAQ</p>
+            <p className="text-xs font-bold tracking-widest text-blue-600 uppercase">FAQ</p>
             <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
               Preguntas frecuentes sobre el precio de una página web
             </h2>

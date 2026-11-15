@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { leadStatuses, type SalesLead } from "@zyteron/contracts";
+import { commercialServiceLines, leadStatuses, type SalesLead } from "@zyteron/contracts";
 import { CommercialRepository } from "./commercial.repository.js";
 import { optionalUuid, required } from "./commercial.validation.js";
 
@@ -88,9 +88,7 @@ export class LeadsService {
         criteria.viable !== true ||
         nextStep.length < 5 ||
         nextStep.length > 500 ||
-        !["web_ecommerce", "sistemas_automatizacion", "soporte"].includes(
-          criteria.serviceLine || "",
-        )
+        !commercialServiceLines.some((line) => line === criteria.serviceLine)
       )
         throw new BadRequestException(
           "Confirma ajuste al servicio, necesidad, viabilidad, línea de servicio y siguiente paso acordado.",

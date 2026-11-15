@@ -69,3 +69,26 @@ test('calificación exige los cuatro criterios y un reintento no duplica el even
   assert.equal(JSON.stringify(events[0][4]).includes('Reunión'), false);
   await assert.rejects(service.update(ids[0], { status: 'QUALIFIED' }, ids[3]));
 });
+
+test('creación, regalos y apoyo empresarial se califican en su línea sin forzar una venta web', async () => {
+  for (const serviceLabel of ['Creación de empresas', 'Regalos corporativos', 'Apoyo empresarial y administrativo']) {
+    let row = { id: ids[0], status: 'NEW', notes: 'contact_v1:' + JSON.stringify({ service: serviceLabel }) };
+    let writes = 0;
+    const events = [];
+    const service = new LeadsService({
+      async getLead() { return row; },
+      async updateLead(id, patch) { writes++; row = { ...row, ...patch }; return row; },
+      async publish(...args) { events.push(args); },
+    });
+    const criteria = { serviceFit: true, needConfirmed: true, viable: true, nextStep: 'Revisar alcance con el cliente', serviceLine: 'apoyo_empresarial' };
+    await assert.rejects(service.qualify(ids[0], ids[3], { ...criteria, serviceLine: 'sin_definir' }));
+    assert.equal(writes, 0);
+    const results = await Promise.all([service.qualify(ids[0], ids[3], criteria), service.qualify(ids[0], ids[3], criteria)]);
+    assert.ok(results.every(result => result.status === 'QUALIFIED'));
+    assert.equal(writes, 1);
+    assert.equal(events.length, 1);
+    assert.match(row.notes, new RegExp(serviceLabel));
+    assert.equal(events[0][4].service_line, 'apoyo_empresarial');
+    assert.equal(JSON.stringify(events).includes('web_ecommerce'), false);
+  }
+});

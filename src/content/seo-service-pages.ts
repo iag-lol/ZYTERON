@@ -233,8 +233,7 @@ export const seoServicePages: SeoServicePage[] = [
     path: "/desarrollo-web",
     navLabel: "Desarrollo web",
     metaTitle: "Desarrollo Web a Medida en Chile | Zyteron",
-    metaDescription:
-      "Empresa de desarrollo web en Santiago para empresas de todo Chile: webs profesionales con SEO base, diseño responsive y rutas de contacto claras. Cotiza sin compromiso.",
+    metaDescription: `Páginas web desde ${clp(PLAN_PRICE_AMOUNTS["web-basica"])} + IVA: diseño responsive, WhatsApp y SEO base. Compara alcances, calcula tu precio y cotiza con Zyteron en Chile.`,
     primaryKeyword: "desarrollo web en Chile",
     secondaryKeywords: [
       "páginas web profesionales",
@@ -925,8 +924,7 @@ export const seoServicePages: SeoServicePage[] = [
     path: "/soporte-ti",
     navLabel: "Soporte TI",
     metaTitle: "Soporte TI para Empresas y Pymes en Chile | Zyteron",
-    metaDescription:
-      "Soporte TI para pymes y empresas en Chile: correos, equipos, mantención, seguridad básica y continuidad operativa. Atención remota y en Santiago. Cotiza atención técnica clara.",
+    metaDescription: `Soporte TI desde ${clp(SERVICE_PRICE_AMOUNTS.supportTi)} + IVA por requerimiento: correo corporativo, equipos y problemas informáticos. Atención remota en Chile y presencial coordinada en Santiago.`,
     primaryKeyword: "soporte TI para pymes",
     secondaryKeywords: [
       "soporte TI en Chile",

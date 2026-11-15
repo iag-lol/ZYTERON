@@ -9,7 +9,7 @@ import { buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from 
 
 const title = "Soluciones de Software y Desarrollo Digital para Empresas";
 const description =
-  "Software empresarial, gestión de personas y flotas, ecommerce, catálogos, sitios web e integraciones a medida para empresas y profesionales en Chile.";
+  "Software, sitios web, ecommerce, automatización y asistentes de atención para empresas en Chile. Apoyo para crear tu empresa, organizar documentos y gestionar regalos corporativos.";
 export const metadata: Metadata = createPageMetadata({ title, description, path: "/servicios" });
 export default function ServiciosPage() {
   return (
@@ -63,7 +63,7 @@ export default function ServiciosPage() {
       </section>
       <section className="py-16">
         <Container>
-          <h2 className="text-3xl sm:text-4xl">Cinco familias, un alcance definido para ti.</h2>
+          <h2 className="text-3xl sm:text-4xl">Soluciones conectadas con tu negocio.</h2>
           <p className="mt-4 max-w-3xl leading-7 text-slate-600">
             Las capacidades se desarrollan y combinan según cada proyecto. La propuesta confirma qué
             incluye la primera entrega, qué se deja para una siguiente etapa y qué depende de
