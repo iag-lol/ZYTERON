@@ -27,7 +27,7 @@ function serviceLine(text: string) {
   )
     return "apoyo_empresarial";
   if (
-    /sistema|automatiza|intranet|documental|flota|panel|recursos humanos|gesti[oó]n de personas|operaciones|asistentes-ia-para-webs/i.test(
+    /sistema|automatiza|intranet|documental|flota|panel|recursos humanos|gesti[oó]n de personas|operaciones|asistentes-ia-para-webs|aplicaci[oó]n m[oó]vil|aplicaciones m[oó]viles|desarrollo-apps-moviles/i.test(
       text,
     )
   )

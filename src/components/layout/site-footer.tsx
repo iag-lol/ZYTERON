@@ -27,6 +27,7 @@ const footerColumns = [
     title: "Soluciones",
     items: [
       { label: "Sistemas web a medida", href: "/sistemas-web" },
+      { label: "Apps Android e iOS", href: "/servicios/desarrollo-apps-moviles" },
       { label: "Personas y RRHH", href: "/sistemas-web/gestion-personas" },
       { label: "Control de flota", href: "/sistemas-web/control-flota" },
       { label: "Intranets y portales", href: "/sistemas-web/intranet-corporativa" },
@@ -44,9 +45,6 @@ const footerColumns = [
   {
     title: "Empresa",
     items: [
-      { label: "Apoyo empresarial", href: "/servicios/apoyo-empresarial" },
-      { label: "Creación de empresas", href: "/servicios/creacion-empresas-chile" },
-      { label: "Regalos corporativos", href: "/servicios/regalos-corporativos-chile" },
       { label: "Denurvia: investigaciones internas", href: "/soluciones/denurvia" },
       { label: "Nosotros", href: "/quienes-somos" },
       { label: "Casos de éxito", href: "/casos-exito" },
@@ -58,6 +56,9 @@ const footerColumns = [
       { label: "Mapa del sitio", href: "/mapa-del-sitio" },
       { label: "Preguntas frecuentes", href: "/faq" },
       { label: "Contacto", href: "/contacto" },
+      { label: "Apoyo empresarial", href: "/servicios/apoyo-empresarial" },
+      { label: "Creación de empresas", href: "/servicios/creacion-empresas-chile" },
+      { label: "Regalos corporativos", href: "/servicios/regalos-corporativos-chile" },
     ],
   },
 ];

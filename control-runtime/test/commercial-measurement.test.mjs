@@ -54,3 +54,21 @@ test('apoyo empresarial conserva solicitudes, calificaciones y ventas fuera de l
   assert.equal(unattributed.qualified, 1);
   assert.equal(result.some(row => row.serviceLine === 'web_ecommerce'), false);
 });
+
+test('apps Android o iOS por etiqueta y slug recorren la medición como software', () => {
+  const stamp = '2026-11-05T12:00:00Z';
+  const leads = ['Aplicación móvil Android o iOS', '/servicios/desarrollo-apps-moviles'].map((service, index) => ({ id: `mobile-${index}`, created_at: stamp, notes: 'contact_v1:' + JSON.stringify({ service }), lead_sources: { code: 'CONTACTO_WEB' } }));
+  const result = summarizeMeasurement({
+    leads,
+    qualifications: leads.map(lead => ({ aggregate_id: lead.id, occurred_at: stamp, payload: { service_line: 'sistemas_automatizacion' } })),
+    quotes: [{ id: 'mobile-quote', lead_id: leads[0].id, sent_at: stamp }],
+    opportunities: [],
+    sales: [{ id: 'mobile-sale', quote_id: 'mobile-quote', status: 'WON', closed_at: stamp, amount: 100, currency: 'CLP' }],
+  }, '2026-11-01T03:00:00Z', '2026-11-08T03:00:00Z');
+  assert.equal(result.length, 1);
+  assert.equal(result[0].serviceLine, 'sistemas_automatizacion');
+  assert.equal(result[0].received, 2);
+  assert.equal(result[0].qualified, 2);
+  assert.equal(result[0].proposals, 1);
+  assert.equal(result[0].sales, 1);
+});

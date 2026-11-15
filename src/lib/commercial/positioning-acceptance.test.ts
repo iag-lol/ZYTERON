@@ -57,6 +57,24 @@ test("apoyo empresarial e IA conservan su servicio sin entrar al cotizador de p�
   assert.equal(serviceLineFor("/servicios/asistentes-ia-para-webs"), "sistemas_automatizacion");
 });
 
+test("apps móviles conservan su necesidad y recorrido de software sin confundir WhatsApp", () => {
+  const url = new URL(serviceContactHref("desarrollo-apps-moviles"), "https://www.zyteron.cl");
+  assert.equal(url.pathname, "/contacto");
+  assert.equal(url.searchParams.get("servicio"), "desarrollo-apps-moviles");
+  assert.equal(url.searchParams.get("tipo"), "sistema");
+  const context = resolveRequestContext(url.searchParams);
+  assert.equal(context.projectType, "Aplicación móvil Android o iOS");
+  assert.ok((PROJECT_TYPES as readonly string[]).includes(context.projectType));
+  for (const value of [context.projectType, "/servicios/desarrollo-apps-moviles"]) {
+    assert.equal(solutionFamilyFor(value), "software");
+    assert.equal(serviceLineFor(value), "sistemas_automatizacion");
+  }
+  assert.equal(context.solutionFamily, "software");
+  assert.equal(context.serviceLine, "sistemas_automatizacion");
+  assert.equal(solutionFamilyFor("/automatizacion-whatsapp-empresas"), "automatizacion");
+  assert.notEqual(solutionFamilyFor("WhatsApp"), "software");
+});
+
 test("el backend recibe las nuevas necesidades sin perder el tipo ni aceptar valores arbitrarios", () => {
   const base = {
     clientSubmissionId: "positioning-test-20261108",

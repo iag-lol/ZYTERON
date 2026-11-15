@@ -15,6 +15,7 @@ export const PROJECT_TYPES = [
   "Orientación para definir la solución",
   "SEO y posicionamiento",
   "Soporte TI",
+  "Aplicación móvil Android o iOS",
   "Apoyo empresarial y administrativo",
   "Creación de empresas",
   "Regalos corporativos",
@@ -46,7 +47,7 @@ export function solutionFamilyFor(value: string): SolutionFamily {
     return "personas_operaciones";
   if (/automatiza|integracion|asistentes-ia-para-webs/.test(text)) return "automatizacion";
   if (
-    /sistema|software|intranet|documental|panel|desarrollo-web-santiago|cotizador-web-pdf|denurvia|centro-de-caja|eliana/.test(
+    /sistema|software|intranet|documental|panel|desarrollo-web-santiago|cotizador-web-pdf|denurvia|centro-de-caja|eliana|aplicacion movil|aplicaciones moviles|desarrollo-apps-moviles/.test(
       text,
     )
   )
@@ -96,13 +97,14 @@ const aliases: Record<string, (typeof PROJECT_TYPES)[number]> = {
   "regalos-corporativos-chile": "Regalos corporativos",
   "apoyo-empresarial": "Apoyo empresarial y administrativo",
   "asistentes-ia-para-webs": "Automatización o integración",
+  "desarrollo-apps-moviles": "Aplicación móvil Android o iOS",
 };
 
 export function serviceLineFor(value: string): ServiceLine {
   const text = value.toLowerCase();
   if (solutionFamilyFor(value) === "apoyo_empresarial") return "apoyo_empresarial";
   if (
-    /sistema|automatiza|intranet|documental|flota|panel|integraci[oó]n|recursos humanos|personas|operaciones|gestion-personas|desarrollo-web-santiago|cotizador-web-pdf|asistentes-ia-para-webs/.test(
+    /sistema|automatiza|intranet|documental|flota|panel|integraci[oó]n|recursos humanos|personas|operaciones|gestion-personas|desarrollo-web-santiago|cotizador-web-pdf|asistentes-ia-para-webs|aplicaci[oó]n m[oó]vil|aplicaciones m[oó]viles|desarrollo-apps-moviles/.test(
       text,
     )
   )
@@ -162,6 +164,7 @@ export function serviceContactHref(slug: string) {
   const params = new URLSearchParams({ servicio: slug, origen: "servicios" });
   if (solutionFamilyFor(slug) === "apoyo_empresarial") params.set("tipo", "orientacion");
   else if (slug === "asistentes-ia-para-webs") params.set("tipo", "automatizacion");
+  else if (slug === "desarrollo-apps-moviles") params.set("tipo", "sistema");
   return `/contacto?${params}`;
 }
 

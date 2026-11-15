@@ -93,7 +93,7 @@ export default function ContactoPage() {
             Contacto comercial
           </div>
           <h1 className="text-4xl leading-tight font-extrabold text-slate-900 sm:text-5xl">
-            Cuéntanos qué necesitas desarrollar
+            Cuéntanos qué necesita tu empresa
           </h1>
           <p className="mx-auto max-w-3xl text-base text-slate-600 sm:text-lg">
             Cuéntanos qué necesita tu empresa. Revisaremos alcance, prioridades y requerimientos

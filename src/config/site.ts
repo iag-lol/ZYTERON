@@ -50,6 +50,7 @@ export const siteConfig = {
     teamSize: 25,
     serviceTypes: [
       "Desarrollo de software a medida",
+      "Desarrollo de aplicaciones Android e iOS",
       "Gestión de personas y operaciones",
       "Control de flota",
       "Catálogos digitales",

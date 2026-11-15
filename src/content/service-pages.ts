@@ -5,6 +5,7 @@ import {
 } from "@/config/pricing";
 import { businessServicePages } from "./business-service-pages";
 import { customerAiService } from "./customer-ai-service";
+import { mobileAppService } from "./mobile-app-service";
 
 /** Formatea un monto CLP con separador de miles chileno: 79990 → "$79.990". */
 const clp = (amount: number) => `$${amount.toLocaleString("es-CL")}`;
@@ -40,6 +41,7 @@ export type ServicePageData = {
 export const servicePages: ServicePageData[] = [
   ...businessServicePages,
   customerAiService,
+  mobileAppService,
   {
     slug: "paginas-web-para-empresas",
     navLabel: "Páginas web para empresas",

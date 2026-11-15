@@ -195,7 +195,8 @@ export default async function ServicioDetallePage({ params }: ServicePageProps) 
   const contactHref = serviceContactHref(service.slug);
   const directContact =
     solutionFamilyFor(servicePath) === "apoyo_empresarial" ||
-    service.slug === "asistentes-ia-para-webs";
+    service.slug === "asistentes-ia-para-webs" ||
+    service.slug === "desarrollo-apps-moviles";
   const problem = service.problem ?? serviceExamples?.problem;
   const solution = service.solution ?? serviceExamples?.solution;
   const complementaryLinks = service.relatedLinks?.length

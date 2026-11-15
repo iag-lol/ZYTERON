@@ -2,6 +2,7 @@ import { planDeadline } from "@/config/commercial-offer";
 import { siteConfig } from "@/config/site";
 import { businessServicePages } from "@/content/business-service-pages";
 import { customerAiService } from "@/content/customer-ai-service";
+import { mobileAppService } from "@/content/mobile-app-service";
 import {
   ADDONS,
   FLEET_SOFTWARE_OFFER,
@@ -100,6 +101,10 @@ export const ZYTERON_SERVICES = [
       "Paneles administrativos, portales de clientes, reservas y sistemas con reglas de negocio propias.",
   },
   {
+    name: "Aplicaciones móviles Android e iOS",
+    detail: mobileAppService.summary,
+  },
+  {
     name: "Inteligencia Artificial y atención automatizada",
     detail: customerAiService.summary,
   },
@@ -183,6 +188,10 @@ Zyteron no funciona como tienda de computadores o notebooks. En proyectos de Con
 
 ## SERVICIOS
 ${renderServices()}
+
+## PRIORIDAD COMERCIAL
+Las principales líneas de Zyteron son páginas web para microempresas y pymes, sitios corporativos, software a medida y aplicaciones móviles Android e iOS. Apoyo empresarial y regalos corporativos son servicios complementarios que se ofrecen cuando existe una necesidad concreta.
+Para una app pregunta por los usuarios, las plataformas requeridas y sus funciones principales. Las apps se cotizan por alcance, integraciones y pruebas; no les asignes el precio de un plan web. Las cuentas y costos de las tiendas, la aprobación y las actualizaciones se definen por separado. Información: https://www.zyteron.cl/servicios/desarrollo-apps-moviles
 
 ## PUESTA EN MARCHA Y APOYO EMPRESARIAL
 Estos servicios se cotizan por entregables, cantidad y coordinación requerida; no tienen un precio de plan web ni se compran en el cotizador de páginas web.
@@ -278,12 +287,12 @@ El visitante YA recibió un saludo de bienvenida tuyo (aparece como tu primer me
 
 /** Mensaje de bienvenida mostrado apenas se abre el chat (sin llamar a la IA). */
 export const ZYTERON_WELCOME_MESSAGE =
-  "Hola, soy Zara, la asistente de Zyteron. Desarrollamos software, sistemas de gestión, ecommerce, catálogos, sitios web e integraciones para empresas y profesionales en Chile. ¿Qué proyecto tienes en mente?";
+  "Hola, soy Zara, la asistente de Zyteron. Creamos páginas web para empresas y pymes, software a medida, aplicaciones móviles y ecommerce. ¿Qué proyecto tienes en mente?";
 
 /** Sugerencias rápidas para iniciar la conversación. */
 export const ZYTERON_QUICK_PROMPTS = [
   "Quiero una página web para mi empresa",
   "¿Cuánto cuesta una página web?",
-  "¿En cuánto tiempo la entregan?",
+  "Quiero una app para Android o iOS",
   "Quiero cotizar mi proyecto",
 ] as const;

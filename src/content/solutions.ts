@@ -1,16 +1,20 @@
-export const solutionFamilies = [
+const solutionFamilyCatalog = [
   {
     id: "software",
-    name: "Software y sistemas empresariales",
-    shortName: "Software empresarial",
+    name: "Software, aplicaciones móviles y sistemas empresariales",
+    shortName: "Software y apps móviles",
     path: "/sistemas-web",
     description:
-      "Plataformas y herramientas que reúnen información, usuarios y procesos en un sistema diseñado para tu empresa.",
-    examples: "Gestión de clientes, inventario, documentos y portales.",
+      "Software a medida y aplicaciones para Android e iOS que conectan información, usuarios y procesos de tu empresa.",
+    examples: "Apps móviles, gestión de clientes, inventario, documentos y portales.",
     groups: [
       {
         title: "Información y gestión",
         text: "Sistemas web, plataformas completas y paneles administrativos u operacionales. Gestión de clientes, proveedores, solicitudes, productos, inventario y movimientos.",
+      },
+      {
+        title: "Aplicaciones Android e iOS",
+        text: "Apps para clientes o equipos internos, con diseño, desarrollo e integración con los sistemas acordados. Acceso, pedidos, reservas, notificaciones o trabajo en terreno se evalúan según el proyecto, con pruebas y publicación sujetas a las condiciones de cada tienda.",
       },
       {
         title: "Acceso y colaboración",
@@ -25,6 +29,7 @@ export const solutionFamilies = [
       "El alcance se define por procesos, módulos, datos, perfiles de usuario e integraciones. Podemos desarrollar una plataforma completa o comenzar por una primera etapa.",
     links: [
       { label: "Sistemas a medida", href: "/sistemas-web" },
+      { label: "Apps para Android e iOS", href: "/servicios/desarrollo-apps-moviles" },
       { label: "Intranets y portales", href: "/sistemas-web/intranet-corporativa" },
       { label: "Gestión documental", href: "/sistemas-web/gestion-documental" },
     ],
@@ -95,11 +100,11 @@ export const solutionFamilies = [
   },
   {
     id: "sitios-web",
-    name: "Sitios corporativos, institucionales y profesionales",
-    shortName: "Sitios web profesionales",
+    name: "Páginas web para empresas, pymes y profesionales",
+    shortName: "Webs para empresas y pymes",
     path: "/desarrollo-web",
     description:
-      "Sitios para presentar tu empresa o profesión, informar, transmitir confianza, mostrar proyectos y facilitar el contacto.",
+      "Páginas web para microempresas, pymes y empresas que necesitan presentar sus servicios, transmitir confianza y recibir consultas. Desde una primera web hasta un sitio corporativo.",
     examples: "Empresas, instituciones, profesionales, portafolios y campañas.",
     groups: [
       {
@@ -190,6 +195,19 @@ export const solutionFamilies = [
     ],
   },
 ] as const;
+
+const solutionPriority = {
+  "sitios-web": 0,
+  software: 1,
+  "comercio-digital": 2,
+  "personas-operaciones": 3,
+  automatizacion: 4,
+  "apoyo-empresarial": 5,
+} as const;
+
+export const solutionFamilies = [...solutionFamilyCatalog].sort(
+  (first, second) => solutionPriority[first.id] - solutionPriority[second.id],
+);
 
 export const industrySolutions = [
   {

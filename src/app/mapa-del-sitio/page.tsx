@@ -49,6 +49,7 @@ const siteSections = [
     title: "Sistemas y soporte",
     links: [
       ["Sistemas web a medida", "/sistemas-web"],
+      ["Apps Android e iOS", "/servicios/desarrollo-apps-moviles"],
       ...systemPages.map(({ navLabel, path }) => [navLabel, path] as const),
       ["Automatización de procesos", "/automatizacion"],
       ["Integraciones de sistemas y API", "/integraciones"],

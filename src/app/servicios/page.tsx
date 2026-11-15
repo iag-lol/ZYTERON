@@ -9,7 +9,7 @@ import { buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from 
 
 const title = "Soluciones de Software y Desarrollo Digital para Empresas";
 const description =
-  "Software, sitios web, ecommerce, automatización y asistentes de atención para empresas en Chile. Apoyo para crear tu empresa, organizar documentos y gestionar regalos corporativos.";
+  "Páginas web para microempresas y pymes, software a medida, apps Android e iOS, ecommerce e integraciones en Chile. Soluciones según alcance y etapa de tu negocio.";
 export const metadata: Metadata = createPageMetadata({ title, description, path: "/servicios" });
 export default function ServiciosPage() {
   return (
@@ -45,9 +45,9 @@ export default function ServiciosPage() {
             Presentar, comercializar y gestionar tu negocio.
           </h1>
           <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
-            Desarrollamos proyectos completos y herramientas específicas para empresas y
-            profesionales. Partimos por tus objetivos, procesos y usuarios; conectamos las piezas
-            que tu operación necesita y definimos cómo pueden evolucionar.
+            Creamos páginas web para microempresas y pymes, sitios corporativos, software a medida y
+            aplicaciones para Android e iOS. Definimos cada proyecto según sus objetivos, procesos y
+            usuarios, desde una primera presencia digital hasta herramientas para operar y crecer.
           </p>
           <Link className="design-button mt-7" href="/contacto?origen=soluciones">
             Conversemos sobre tu proyecto <ArrowUpRight size={18} />

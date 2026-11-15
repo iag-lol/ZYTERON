@@ -29,7 +29,7 @@ export const companyIdentity = {
   site: siteConfig.url,
   representative: siteConfig.representative,
   pitch:
-    "Zyteron desarrolla sitios web, software, tiendas online y automatizaciones, e integra asistentes de atención a pedido. También ofrece apoyo para poner en marcha empresas, preparar documentación comercial y coordinar regalos corporativos. Cada servicio se acuerda con entregables, calendario y condiciones por escrito.",
+    "Zyteron desarrolla páginas web para empresas y pymes, software a medida, aplicaciones Android e iOS y tiendas online. Integra automatizaciones y asistentes de atención a pedido. El apoyo empresarial y los regalos corporativos son servicios complementarios. Cada encargo se acuerda con entregables, calendario y condiciones por escrito.",
   differentiators: [
     "Alcance escrito antes de empezar: el cliente sabe exactamente qué recibe y qué no.",
     "Desarrollo propio, sin plantillas genéricas ni revendedores intermedios.",
@@ -59,6 +59,14 @@ export const whatWeDo: PlaybookSection[] = [
       "Diseño responsivo (celular, tablet y computador) y optimización de carga.",
       "SEO técnico inicial: títulos, descripciones, estructura y datos estructurados.",
       "Formularios de contacto, cotización y derivación a WhatsApp.",
+    ],
+  },
+  {
+    title: "Aplicaciones móviles Android e iOS",
+    points: [
+      "Diseño y desarrollo de apps para clientes o equipos internos, según plataformas y funciones acordadas.",
+      "Integraciones, notificaciones, sesiones, pedidos o reservas según alcance y acceso a los servicios del cliente.",
+      "Pruebas, documentación y acompañamiento para publicación. Cuentas de tiendas, tarifas de terceros, revisiones y mantenimiento se definen por separado.",
     ],
   },
   {
