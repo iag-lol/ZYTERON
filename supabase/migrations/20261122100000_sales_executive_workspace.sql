@@ -1,0 +1,217 @@
+-- Cartera del ejecutivo: datos comerciales propios; autorización y costos reservados a gerencia.
+create table public.sales_work_records (
+ id uuid primary key default gen_random_uuid(),owner_id uuid not null references auth.users(id),request_id uuid not null,
+ lead_id uuid unique references public.leads(id),client_id uuid references public.clients(id),client_created boolean not null default false,
+ company_name text not null check(length(btrim(company_name)) between 1 and 180),contact_name text not null check(length(btrim(contact_name)) between 1 and 120),
+ rut text,email text,phone text,website text,business_activity text,address text,commune text,city text,
+ interest text not null default '',notes text not null default '',
+ stage text not null default 'CONTACTED' check(stage in('CONTACTED','RESPONDED','INTERESTED','PROPOSAL','ACCEPTED','COMPLETED','LOST')),
+ review_status text not null default 'PENDING' check(review_status in('PENDING','APPROVED','REJECTED')),
+ review_note text,reviewed_by uuid,reviewed_at timestamptz,next_action_at timestamptz,
+ created_at timestamptz not null default now(),updated_at timestamptz not null default now(),unique(owner_id,request_id)
+);
+create index sales_work_records_owner on public.sales_work_records(owner_id,created_at desc);
+create table public.sales_work_events (
+ id uuid primary key default gen_random_uuid(),record_id uuid not null references public.sales_work_records(id),actor_id uuid not null,
+ request_id uuid not null,kind text not null,body text not null,stage text,next_action_at timestamptz,quote_id uuid references public.quotes(id),
+ review_status text not null default 'PENDING' check(review_status in('PENDING','APPROVED','REJECTED')),
+ review_note text,reviewed_by uuid,reviewed_at timestamptz,created_at timestamptz not null default now(),unique(actor_id,request_id)
+);
+create index sales_work_events_record on public.sales_work_events(record_id,created_at desc);
+create table public.sales_work_proposals (
+ quote_id uuid primary key references public.quotes(id),record_id uuid not null references public.sales_work_records(id),owner_id uuid not null references auth.users(id),
+ request_id uuid not null,commission_rate numeric not null default 0.15 check(commission_rate=0.15),review_note text,
+ reviewed_by uuid,reviewed_at timestamptz,created_at timestamptz not null default now(),unique(owner_id,request_id)
+);
+create index sales_work_proposals_owner on public.sales_work_proposals(owner_id);
+create table public.sales_work_reports (
+ id uuid primary key default gen_random_uuid(),owner_id uuid not null references auth.users(id),record_id uuid references public.sales_work_records(id),request_id uuid not null,
+ title text not null,body text not null,period_from date not null,period_to date not null check(period_to>=period_from),
+ review_status text not null default 'PENDING' check(review_status in('PENDING','APPROVED','REJECTED')),
+ review_note text,reviewed_by uuid,reviewed_at timestamptz,created_at timestamptz not null default now(),unique(owner_id,request_id)
+);
+create table public.sales_work_profit_settlements (
+ id uuid primary key default gen_random_uuid(),quote_id uuid not null references public.quotes(id),owner_id uuid not null references auth.users(id),
+ source_kind text not null check(source_kind in('INSTALLMENT','INVOICE')),source_id uuid not null,receipt_key text not null unique,
+ net_revenue numeric not null check(net_revenue>0),validated_cost numeric not null check(validated_cost>=0),
+ profit numeric generated always as(greatest(net_revenue-validated_cost,0)) stored,
+ commission_rate numeric not null default 0.15 check(commission_rate=0.15),
+ commission_amount numeric generated always as(round(greatest(net_revenue-validated_cost,0)*0.15,0)) stored,
+ cost_note text not null,approved_by uuid not null,approved_at timestamptz not null default now(),unique(source_kind,source_id)
+);
+do $$declare t text;begin
+ foreach t in array array['sales_work_records','sales_work_events','sales_work_proposals','sales_work_reports','sales_work_profit_settlements'] loop
+  execute format('alter table public.%I enable row level security',t);
+  execute format('revoke all on public.%I from public,anon,authenticated',t);
+  execute format('grant select,insert,update on public.%I to service_role',t);
+ end loop;
+end $$;
+revoke update on public.sales_work_profit_settlements from service_role;
+
+-- Sólo cobros completos respaldados por el calendario o aplicaciones confirmadas de Finanzas.
+create view public.sales_work_verified_receipts with(security_invoker=true) as
+select 'INSTALLMENT'::text source_kind,p.id source_id,p.quote_id,p.paid_at collected_at,p.currency,
+ round(p.amount*q.net_amount/nullif(q.total_amount,0),0) net_revenue,
+ p.sequence::text period_label,p.sii_folio::text document_number,q.id::text||':'||p.sii_document_type::text||':'||p.sii_folio::text receipt_key
+from public.quote_payment_installments p join public.quotes q on q.id=p.quote_id join public.sales_work_proposals w on w.quote_id=q.id
+where p.status='PAID' and p.sii_folio>0 and p.sii_document_type in(33,34,39,41) and p.paid_amount>=p.amount and p.amount>0 and p.invoice_storage_path is not null and p.marked_paid_by is not null
+ and q.currency='CLP' and p.currency='CLP' and q.status in('ACCEPTED','CONVERTED') and q.owner_id=w.owner_id
+ and not exists(select 1 from public.invoices credited join public.sales cs on cs.id=credited.sale_id join public.tax_documents cd on cd.id=credited.tax_document_id where cs.quote_id=q.id and cd.folio=p.sii_folio and credited.document_type_code=p.sii_document_type and (credited.amount_credited>0 or credited.status in('CANCELLED','VOID','CREDITED')))
+union all
+select 'INVOICE',i.id,s.quote_id,max(a.allocated_at),i.currency,(i.net_amount+i.exempt_amount),i.invoice_number,d.folio::text,q.id::text||':'||i.document_type_code::text||':'||d.folio::text
+from public.invoices i join public.sales s on s.id=i.sale_id join public.sales_work_proposals w on w.quote_id=s.quote_id
+join public.quotes q on q.id=w.quote_id join public.payment_allocations a on a.invoice_id=i.id and a.reversed_at is null
+join public.payments p on p.id=a.payment_id and p.status='CONFIRMED'
+left join public.tax_documents d on d.id=i.tax_document_id
+where d.folio>0 and i.status in('ISSUED','PARTIALLY_PAID','PAID') and i.document_type_code in(33,34,39,41) and i.amount_credited=0 and i.currency='CLP' and p.currency='CLP'
+ and q.status in('ACCEPTED','CONVERTED') and q.owner_id=w.owner_id and s.owner_id=w.owner_id
+ and not exists(select 1 from public.quote_payment_installments x where x.quote_id=q.id and x.status='PAID' and x.paid_amount>=x.amount and x.invoice_storage_path is not null and x.marked_paid_by is not null and x.sii_folio=d.folio and x.sii_document_type=i.document_type_code)
+group by i.id,s.quote_id,q.id,d.folio having sum(a.amount)>=i.total_amount and i.total_amount>0;
+revoke all on public.sales_work_verified_receipts from public,anon,authenticated;
+grant select on public.sales_work_verified_receipts to service_role;
+
+create or replace function public.sales_workspace_write(p_actor uuid,p_role text,p_action text,p_target uuid,p_payload jsonb)
+returns uuid language plpgsql security definer set search_path=public as $$
+declare r public.sales_work_records%rowtype; e public.sales_work_events%rowtype; q public.quotes%rowtype;
+ result_id uuid; v_client uuid; v_lead uuid; v_owner uuid; v_status text; receipt record; previous public.sales_work_profit_settlements%rowtype;
+ v_request uuid; v_created boolean:=false; v_reason text; v_stage text; v_items jsonb; item jsonb; v_total numeric;
+begin
+ if p_actor is null or p_role is null or p_role not in('GERENTE_GENERAL','EJECUTIVA_VENTAS') then raise exception 'SALES_FORBIDDEN';end if;
+ if p_role='EJECUTIVA_VENTAS' and not exists(select 1 from auth.users where id=p_actor and raw_app_meta_data->>'role'='EJECUTIVA_VENTAS' and (banned_until is null or banned_until<now())) then raise exception 'SALES_FORBIDDEN';end if;
+ if p_action in('record_review','event_review','report_review','proposal_review','acceptance_validate','profit_validate','complete') and p_role<>'GERENTE_GENERAL' then raise exception 'SALES_FORBIDDEN';end if;
+ if p_action in('record_create','proposal_create','event_add','report_create') then
+  v_request=(p_payload->>'requestId')::uuid;if v_request is null then raise exception 'SALES_REQUEST_REQUIRED';end if;
+  perform pg_advisory_xact_lock(hashtext(p_actor::text||v_request::text));
+ end if;
+ if p_action='record_create' then
+  select id into result_id from public.sales_work_records where owner_id=p_actor and request_id=v_request;if found then return result_id;end if;
+  if p_role<>'EJECUTIVA_VENTAS' then raise exception 'SALES_FORBIDDEN';end if;
+  if nullif(p_payload->>'client_id','') is not null then
+   select id into v_client from public.clients where id=(p_payload->>'client_id')::uuid and account_executive_id=p_actor;
+   if not found then raise exception 'SALES_NOT_FOUND';end if;
+   p_payload=p_payload||(select jsonb_build_object('company_name',legal_name,'rut',rut) from public.clients where id=v_client);
+  end if;
+  insert into public.leads(company_name,contact_name,email,phone,rut,website,interest,notes,assigned_to,status,assigned_by,assigned_at,created_by)
+   values(p_payload->>'company_name',p_payload->>'contact_name',nullif(p_payload->>'email',''),nullif(p_payload->>'phone',''),nullif(p_payload->>'rut',''),nullif(p_payload->>'website',''),p_payload->>'interest',p_payload->>'notes',p_actor,'ASSIGNED',p_actor,now(),p_actor) returning id into v_lead;
+  insert into public.sales_work_records(owner_id,request_id,lead_id,client_id,company_name,contact_name,rut,email,phone,website,business_activity,address,commune,city,interest,notes,next_action_at)
+   values(p_actor,v_request,v_lead,v_client,p_payload->>'company_name',p_payload->>'contact_name',nullif(p_payload->>'rut',''),nullif(p_payload->>'email',''),nullif(p_payload->>'phone',''),nullif(p_payload->>'website',''),p_payload->>'business_activity',p_payload->>'address',p_payload->>'commune',p_payload->>'city',p_payload->>'interest',p_payload->>'notes',(p_payload->>'next_action_at')::timestamptz) returning id into result_id;
+  insert into public.sales_work_events(record_id,actor_id,request_id,kind,body,stage) values(result_id,p_actor,v_request,'CONTACT_CREATED','Contacto incorporado a la cartera; pendiente de validación.','CONTACTED');
+  return result_id;
+ end if;
+ if p_action='report_create' then
+  select id into result_id from public.sales_work_reports where owner_id=p_actor and request_id=v_request;if found then return result_id;end if;
+  if p_role<>'EJECUTIVA_VENTAS' then raise exception 'SALES_FORBIDDEN';end if;
+  if nullif(p_payload->>'record_id','') is not null and not exists(select 1 from public.sales_work_records where id=(p_payload->>'record_id')::uuid and owner_id=p_actor) then raise exception 'SALES_NOT_FOUND';end if;
+  insert into public.sales_work_reports(owner_id,request_id,record_id,title,body,period_from,period_to) values(p_actor,v_request,nullif(p_payload->>'record_id','')::uuid,p_payload->>'title',p_payload->>'body',(p_payload->>'period_from')::date,(p_payload->>'period_to')::date) returning id into result_id;return result_id;
+ end if;
+ if p_action='report_review' then
+  update public.sales_work_reports set review_status=p_payload->>'decision',review_note=p_payload->>'reason',reviewed_by=p_actor,reviewed_at=now() where id=p_target and review_status='PENDING' returning id into result_id;
+  if result_id is null then raise exception 'SALES_STALE';end if;return result_id;
+ end if;
+ if p_action='event_review' then
+  select * into e from public.sales_work_events where id=p_target for update;if not found then raise exception 'SALES_NOT_FOUND';end if;
+  update public.sales_work_events set review_status=p_payload->>'decision',review_note=p_payload->>'reason',reviewed_by=p_actor,reviewed_at=now() where id=p_target and review_status='PENDING' returning id into result_id;
+  if result_id is null then raise exception 'SALES_STALE';end if;return result_id;
+ end if;
+ if p_action in('proposal_review','proposal_share','acceptance_validate') then
+  select * into q from public.quotes where id=p_target for update;
+  select record_id,owner_id into result_id,v_owner from public.sales_work_proposals where quote_id=p_target;
+  if not found or(p_role='EJECUTIVA_VENTAS' and v_owner<>p_actor) or q.owner_id is distinct from v_owner then raise exception 'SALES_NOT_FOUND';end if;
+  select * into r from public.sales_work_records where id=result_id for update;
+ else
+  select * into r from public.sales_work_records where id=p_target for update;
+  if not found or(p_role='EJECUTIVA_VENTAS' and r.owner_id<>p_actor) then raise exception 'SALES_NOT_FOUND';end if;
+ end if;
+ if p_action='record_review' then
+  if r.review_status<>'PENDING' then raise exception 'SALES_STALE';end if;
+  if p_payload->>'decision'='APPROVED' and coalesce(p_payload->>'create_client','false')='true' then
+   if r.rut is null then raise exception 'SALES_RUT_REQUIRED';end if;
+   select id into v_client from public.clients where regexp_replace(upper(rut),'[^0-9K]','','g')=regexp_replace(upper(r.rut),'[^0-9K]','','g');
+   if v_client is not null and not exists(select 1 from public.clients where id=v_client and account_executive_id=r.owner_id) then raise exception 'SALES_CLIENT_ALREADY_EXISTS';end if;
+   if v_client is null then
+    insert into public.clients(legal_name,rut,business_activity,general_email,phone,country,commune,address,account_executive_id,status,currency,credit_days,health,health_factors)
+     values(r.company_name,r.rut,r.business_activity,r.email,r.phone,'Chile',r.commune,r.address,r.owner_id,'ONBOARDING','CLP',0,'INSUFFICIENT_DATA','[]'::jsonb) returning id into v_client;
+    v_created=true;
+    if r.email is not null then
+     insert into public.client_contacts(client_id,name,email,phone,is_primary,billing_contact,technical_contact,commercial_contact,portal_access,status,portal_status)
+      values(v_client,r.contact_name,r.email,r.phone,true,false,false,true,false,'ACTIVE','DISABLED');
+    end if;
+    insert into public.client_events(client_id,event_type,title,description,visibility,metadata)
+     values(v_client,'CLIENT_CREATED','Cliente incorporado desde gestión comercial','Alta comercial validada por administración.','INTERNAL_ONLY',jsonb_build_object('record_id',r.id,'owner_id',r.owner_id,'reviewed_by',p_actor));
+   end if;
+   update public.leads set client_id=v_client where id=r.lead_id;
+  end if;
+  update public.sales_work_records set review_status=p_payload->>'decision',review_note=p_payload->>'reason',reviewed_by=p_actor,reviewed_at=now(),client_id=coalesce(v_client,client_id),client_created=(client_created or v_created),updated_at=now() where id=r.id;
+  if v_client is not null then update public.quotes set client_id=v_client where id in(select quote_id from public.sales_work_proposals where record_id=r.id) and client_id is null;end if;
+  update public.sales_work_events set review_status=p_payload->>'decision',review_note=p_payload->>'reason',reviewed_by=p_actor,reviewed_at=now() where record_id=r.id and kind in('CONTACT_CREATED','record_update') and review_status='PENDING';
+ elsif p_action='record_update' then
+  if r.stage in('COMPLETED','LOST') then raise exception 'SALES_CLOSED';end if;
+  update public.sales_work_records set company_name=p_payload->>'company_name',contact_name=p_payload->>'contact_name',rut=nullif(p_payload->>'rut',''),email=nullif(p_payload->>'email',''),phone=nullif(p_payload->>'phone',''),website=p_payload->>'website',business_activity=p_payload->>'business_activity',address=p_payload->>'address',commune=p_payload->>'commune',city=p_payload->>'city',interest=p_payload->>'interest',notes=p_payload->>'notes',next_action_at=(p_payload->>'next_action_at')::timestamptz,review_status='PENDING',review_note=null,reviewed_by=null,reviewed_at=null,updated_at=now() where id=r.id;
+  if r.client_id is null then update public.leads set company_name=p_payload->>'company_name',contact_name=p_payload->>'contact_name',email=nullif(p_payload->>'email',''),phone=nullif(p_payload->>'phone',''),rut=nullif(p_payload->>'rut',''),interest=p_payload->>'interest',notes=p_payload->>'notes' where id=r.lead_id;end if;
+ elsif p_action='event_add' then
+  select id into result_id from public.sales_work_events where actor_id=p_actor and request_id=v_request;if found then return result_id;end if;
+  if r.stage='COMPLETED' then raise exception 'SALES_CLOSED';end if;
+  v_stage=p_payload->>'stage';
+  if v_stage is null or v_stage not in('CONTACTED','RESPONDED','INTERESTED','PROPOSAL','ACCEPTED','LOST') then raise exception 'SALES_STAGE_INVALID';end if;
+  if v_stage='ACCEPTED' and not exists(select 1 from public.sales_work_proposals w join public.quotes x on x.id=w.quote_id where w.record_id=r.id and x.status in('SENT','NEGOTIATING','ACCEPTED','CONVERTED')) then raise exception 'SALES_APPROVED_PROPOSAL_REQUIRED';end if;
+  insert into public.sales_work_events(record_id,actor_id,request_id,kind,body,stage,next_action_at) values(r.id,p_actor,v_request,p_payload->>'kind',p_payload->>'body',v_stage,(p_payload->>'next_action_at')::timestamptz) returning id into result_id;
+  update public.sales_work_records set stage=v_stage,next_action_at=(p_payload->>'next_action_at')::timestamptz,updated_at=now() where id=r.id;
+  return result_id;
+ elsif p_action='proposal_create' then
+  select quote_id into result_id from public.sales_work_proposals where owner_id=p_actor and request_id=v_request;if found then return result_id;end if;
+  if p_role<>'EJECUTIVA_VENTAS' or r.review_status='REJECTED' or r.stage in('COMPLETED','LOST') then raise exception 'SALES_PROPOSAL_BLOCKED';end if;
+  v_items=p_payload->'items';if jsonb_typeof(v_items)<>'array' or jsonb_array_length(v_items)=0 then raise exception 'SALES_ITEMS_REQUIRED';end if;
+  result_id=public.create_sales_quote((p_payload->'quote')||jsonb_build_object('id',gen_random_uuid(),'owner_id',r.owner_id,'company_name',r.company_name,'contact_name',r.contact_name,'contact_email',r.email,'client_id',r.client_id,'lead_id',r.lead_id,'status','PENDING_APPROVAL'),v_items);
+  insert into public.sales_work_proposals(quote_id,record_id,owner_id,request_id) values(result_id,r.id,r.owner_id,v_request);
+  update public.sales_work_records set stage='PROPOSAL',updated_at=now() where id=r.id;
+  insert into public.sales_work_events(record_id,actor_id,request_id,kind,body,stage,quote_id) values(r.id,p_actor,v_request,'PROPOSAL_SUBMITTED','Propuesta enviada a revisión de administración.','PROPOSAL',result_id);return result_id;
+ elsif p_action='proposal_review' then
+  if q.status<>'PENDING_APPROVAL' then raise exception 'SALES_STALE';end if;
+  if p_payload->>'decision'='APPROVED' and r.review_status<>'APPROVED' then raise exception 'SALES_CONTACT_REVIEW_REQUIRED';end if;
+  update public.quotes set status=case when p_payload->>'decision'='APPROVED' then 'APPROVED' else 'REJECTED' end,updated_at=now() where id=q.id;
+  update public.sales_work_proposals set review_note=p_payload->>'reason',reviewed_by=p_actor,reviewed_at=now() where quote_id=q.id;
+  update public.sales_work_events set review_status=p_payload->>'decision',review_note=p_payload->>'reason',reviewed_by=p_actor,reviewed_at=now() where quote_id=q.id and kind='PROPOSAL_SUBMITTED' and review_status='PENDING';
+ elsif p_action='proposal_share' then
+  if q.status not in('APPROVED','READY_TO_SEND') then raise exception 'SALES_APPROVED_PROPOSAL_REQUIRED';end if;
+  update public.quotes set status='SENT',sent_at=now(),updated_at=now() where id=q.id;
+ elsif p_action='acceptance_validate' then
+  if q.client_id is null then raise exception 'SALES_CLIENT_REQUIRED';end if;
+  if q.status not in('SENT','NEGOTIATING') then raise exception 'SALES_STALE';end if;
+  perform public.zyteron_accept_commercial_proposal(q.id,p_actor);
+  update public.sales_work_records set stage='ACCEPTED',updated_at=now() where id=r.id;
+ elsif p_action='profit_validate' then
+  select * into receipt from public.sales_work_verified_receipts x where x.source_id=(p_payload->>'source_id')::uuid and x.source_kind=p_payload->>'source_kind' and x.quote_id in(select quote_id from public.sales_work_proposals where record_id=r.id);
+  if not found or receipt.currency<>'CLP' or receipt.net_revenue<=0 then raise exception 'SALES_VERIFIED_PAYMENT_REQUIRED';end if;
+  select * into previous from public.sales_work_profit_settlements where receipt_key=receipt.receipt_key;
+  if found then
+   if previous.net_revenue is distinct from receipt.net_revenue or previous.validated_cost is distinct from (p_payload->>'validated_cost')::numeric then raise exception 'SALES_SETTLEMENT_LOCKED';end if;return previous.id;
+  end if;
+  if p_payload->>'validated_cost' is null or (p_payload->>'validated_cost')::numeric<0 or (p_payload->>'validated_cost')::numeric>1000000000000 then raise exception 'SALES_COST_INVALID';end if;
+  insert into public.sales_work_profit_settlements(quote_id,owner_id,source_kind,source_id,receipt_key,net_revenue,validated_cost,cost_note,approved_by)
+   values(receipt.quote_id,r.owner_id,receipt.source_kind,receipt.source_id,receipt.receipt_key,receipt.net_revenue,(p_payload->>'validated_cost')::numeric,p_payload->>'cost_note',p_actor) returning id into result_id;return result_id;
+ elsif p_action='complete' then
+  if r.review_status<>'APPROVED' or not exists(select 1 from public.sales_work_profit_settlements s join public.sales_work_verified_receipts v on v.receipt_key=s.receipt_key and v.net_revenue=s.net_revenue where s.quote_id in(select quote_id from public.sales_work_proposals where record_id=r.id)) then raise exception 'SALES_VERIFIED_PAYMENT_REQUIRED';end if;
+  update public.sales_work_records set stage='COMPLETED',updated_at=now() where id=r.id;
+ else raise exception 'SALES_ACTION_INVALID';end if;
+ insert into public.sales_work_events(record_id,actor_id,request_id,kind,body,stage,review_status)
+  values(r.id,p_actor,gen_random_uuid(),p_action,coalesce(nullif(p_payload->>'reason',''),'Gestión registrada.'),(select stage from public.sales_work_records where id=r.id),case when p_role='GERENTE_GENERAL' then 'APPROVED' else 'PENDING' end);
+ return r.id;
+end $$;
+revoke all on function public.sales_workspace_write(uuid,text,text,uuid,jsonb) from public,anon,authenticated;
+grant execute on function public.sales_workspace_write(uuid,text,text,uuid,jsonb) to service_role;
+
+-- Un JWT de ejecutivo no habilita lecturas directas de las tablas internas por PostgREST.
+do $$declare t record;begin
+ for t in select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and c.relrowsecurity loop
+  execute format('create policy sales_executive_internal_boundary on public.%I as restrictive for all to authenticated using (coalesce(auth.jwt()->''app_metadata''->>''role'','''')<>''EJECUTIVA_VENTAS'') with check (coalesce(auth.jwt()->''app_metadata''->>''role'','''')<>''EJECUTIVA_VENTAS'')',t.relname);
+ end loop;
+end $$;
+notify pgrst,'reload schema';
+create view public.sales_work_proposal_view with(security_invoker=true) as
+select w.quote_id,w.record_id,w.owner_id,w.commission_rate,w.review_note,w.reviewed_at,w.created_at,
+ q.quote_number,q.status,q.company_name,q.contact_name,q.contact_email,q.currency,q.net_amount,q.tax_amount,q.total_amount,q.tax_rate,q.billing_type,q.valid_until,q.payment_terms,q.commercial_terms,q.notes,q.client_id,
+ coalesce((select jsonb_agg(jsonb_build_object('description',i.description,'quantity',i.quantity,'unitPrice',i.unit_price,'discountPercent',i.discount_percent,'taxable',i.taxable) order by i.position) from public.quote_items i where i.quote_id=q.id),'[]'::jsonb) items
+from public.sales_work_proposals w join public.quotes q on q.id=w.quote_id where q.owner_id=w.owner_id;
+revoke all on public.sales_work_proposal_view from public,anon,authenticated;
+grant select on public.sales_work_proposal_view to service_role;
+notify pgrst,'reload schema';

@@ -47,6 +47,7 @@ export const enterpriseNavigation: NavigationGroup[] = [
     label: "Comercial",
     icon: ChartNoAxesCombined,
     items: [
+      { label: "Gestión de ejecutivos", href: "/commercial/workspace" },
       { label: "Sales Command Center", href: "/commercial" },
       { label: "CRM", href: "/commercial/crm" },
       { label: "Leads", href: "/commercial/leads" },

@@ -20,6 +20,8 @@ const white = rgb(1, 1, 1);
 
 export interface QuoteDocumentContext {
   preview?: boolean;
+  hideBankDetails?: boolean;
+  numericDates?: boolean;
   recipient?: {
     rut?: string | null;
     businessActivity?: string | null;
@@ -102,7 +104,8 @@ export class QuoteDocumentService {
     const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
     const boldItalic = await pdf.embedFont(StandardFonts.HelveticaBoldOblique);
     const pages: PDFPage[] = [];
-    const issuedAt = dateLong(quote.createdAt || new Date().toISOString());
+    const formatDate = (value?:string|null) => context.numericDates && value ? new Intl.DateTimeFormat("es-CL",{timeZone:"America/Santiago",day:"2-digit",month:"2-digit",year:"numeric"}).format(new Date(value.length===10?`${value}T12:00:00Z`:value)).replaceAll("/","-") : dateLong(value);
+    const issuedAt = formatDate(quote.createdAt || new Date().toISOString());
     const issuer = {
       name: clean(process.env.QUOTE_ISSUER_NAME) || "Zyteron SpA",
       rut: clean(process.env.QUOTE_ISSUER_RUT) || "78.398.774-0",
@@ -197,7 +200,7 @@ export class QuoteDocumentService {
     const blockTop = y - 17;
     page.drawText("CONDICIONES DE PAGO", { x: LEFT, y: blockTop, font: bold, size: 7.5, color: blue });
     wrap(clean(quote.paymentTerms) || "Condiciones de pago por acordar.", regular, 8.2, 270).slice(0, 3).forEach((value, index) => page.drawText(value, { x: LEFT, y: blockTop - 17 - index * 11, font: regular, size: 8.2, color: navy }));
-    const bankConfigured = Boolean(clean(process.env.QUOTE_BANK_ACCOUNT_NUMBER));
+    const bankConfigured = !context.hideBankDetails && Boolean(clean(process.env.QUOTE_BANK_ACCOUNT_NUMBER));
     page.drawRectangle({ x: LEFT, y: blockTop - 107, width: 278, height: 48, color: rgb(0.94, 0.965, 1), borderColor: blue, borderWidth: 0.75 });
     page.drawText("DATOS PARA TRANSFERENCIA", { x: LEFT + 9, y: blockTop - 74, font: bold, size: 7.2, color: blue });
     const bankLine = bankConfigured
@@ -225,7 +228,7 @@ export class QuoteDocumentService {
       clean(quote.commercialTerms),
       "Alcance: se incluye únicamente lo descrito en este documento; cualquier requerimiento adicional se cotizará por separado.",
       `Impuestos: el IVA se presenta desglosado a una tasa de ${quote.taxRate}% sobre los ítems afectos.`,
-      `Vigencia: esta cotización es válida hasta el ${dateLong(quote.validUntil)}.`,
+      `Vigencia: esta cotización es válida hasta el ${formatDate(quote.validUntil)}.`,
     ].filter(Boolean).join(" ");
     wrap(terms, regular, 6.8, 295).slice(0, 10).forEach((value, index) => page.drawText(value, { x: LEFT, y: termsY - 15 - index * 8.2, font: regular, size: 6.8, color: slate }));
     page.drawText("ACEPTACIÓN DEL CLIENTE", { x: 351, y: termsY, font: bold, size: 7.5, color: slate });

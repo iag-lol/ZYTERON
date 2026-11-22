@@ -9,7 +9,7 @@ import { buildServicesListJsonLd, buildWebPageJsonLd, createPageMetadata } from 
 
 const title = "Soluciones de Software y Desarrollo Digital para Empresas";
 const description =
-  "Páginas web para microempresas y pymes, software a medida, apps Android e iOS, ecommerce e integraciones en Chile. Soluciones según alcance y etapa de tu negocio.";
+  "Soluciones digitales para empresas y organizaciones: sitios corporativos, ecommerce, software a medida, apps Android e iOS, automatización e integraciones en Chile.";
 export const metadata: Metadata = createPageMetadata({ title, description, path: "/servicios" });
 export default function ServiciosPage() {
   return (
@@ -45,7 +45,7 @@ export default function ServiciosPage() {
             Presentar, comercializar y gestionar tu negocio.
           </h1>
           <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
-            Creamos páginas web para microempresas y pymes, sitios corporativos, software a medida y
+            Creamos sitios corporativos, plataformas de comercio electrónico, software a medida y
             aplicaciones para Android e iOS. Definimos cada proyecto según sus objetivos, procesos y
             usuarios, desde una primera presencia digital hasta herramientas para operar y crecer.
           </p>

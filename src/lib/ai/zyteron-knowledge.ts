@@ -190,7 +190,7 @@ Zyteron no funciona como tienda de computadores o notebooks. En proyectos de Con
 ${renderServices()}
 
 ## PRIORIDAD COMERCIAL
-Las principales líneas de Zyteron son páginas web para microempresas y pymes, sitios corporativos, software a medida y aplicaciones móviles Android e iOS. Apoyo empresarial y regalos corporativos son servicios complementarios que se ofrecen cuando existe una necesidad concreta.
+Las principales líneas de Zyteron son sitios web comerciales y corporativos, comercio electrónico, software y plataformas de gestión a medida, automatizaciones, integraciones y aplicaciones móviles Android e iOS para empresas y organizaciones de distintos tamaños. Apoyo empresarial y regalos corporativos son servicios complementarios que se ofrecen cuando existe una necesidad concreta.
 Para una app pregunta por los usuarios, las plataformas requeridas y sus funciones principales. Las apps se cotizan por alcance, integraciones y pruebas; no les asignes el precio de un plan web. Las cuentas y costos de las tiendas, la aprobación y las actualizaciones se definen por separado. Información: https://www.zyteron.cl/servicios/desarrollo-apps-moviles
 
 ## PUESTA EN MARCHA Y APOYO EMPRESARIAL

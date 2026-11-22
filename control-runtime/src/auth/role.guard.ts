@@ -93,6 +93,7 @@ export class RoleGuard implements CanActivate {
     ]);
 
     if(!required?.includes(role as Role))throw new ForbiddenException("El rol no autoriza esta operación.");
+    if(role==="EJECUTIVA_VENTAS"&&context.getClass().name!=="SalesWorkspaceController")throw new ForbiddenException("Tu cuenta tiene acceso sólo a su espacio comercial y cartera propia.");
     const requiredPermissions=this.reflector.getAllAndOverride<string[]>(REQUIRED_PERMISSIONS,[context.getHandler(),context.getClass()])??[];
     if(!(await this.authorization.hasPermissions(role,requiredPermissions)))throw new ForbiddenException("Falta un permiso explícito para esta operación.");
     const requiredAal=this.reflector.getAllAndOverride<string>(REQUIRED_AAL,[context.getHandler(),context.getClass()]);

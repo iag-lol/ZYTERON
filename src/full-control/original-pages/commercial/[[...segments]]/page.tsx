@@ -1,3 +1,4 @@
+import { SalesExecutiveWorkspace } from "@control/components/commercial/sales-executive-workspace";
 import { CommercialWorkspace } from "@control/components/commercial/commercial-workspace";
 import WhatsappPage from "@/app/administracion/(protected)/whatsapp/page";
 const sections = new Set([
@@ -25,6 +26,7 @@ export default async function CommercialPage({
 }) {
   const [{ segments = [] }, query] = await Promise.all([params, searchParams]);
   const segment = segments[0] ?? "command";
+  if (segment === "workspace") return <SalesExecutiveWorkspace key={segments[1]??"home"} section={segments[1]??"home"}/>;
   if (segment === "whatsapp") return <WhatsappPage searchParams={Promise.resolve(query)} />;
   const section = (segment === "crm" || !sections.has(segment) ? "command" : segment) as Parameters<
     typeof CommercialWorkspace

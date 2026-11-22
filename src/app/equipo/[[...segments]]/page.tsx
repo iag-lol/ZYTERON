@@ -1,3 +1,4 @@
+import { SalesExecutiveWorkspace } from "@control/components/commercial/sales-executive-workspace";
 import { EnterpriseShell } from "@control/components/enterprise-shell";
 import { CommercialWorkspace } from "@control/components/commercial/commercial-workspace";
 import ClientsPage from "@control/original-pages/clients/[[...segments]]/page";
@@ -38,6 +39,7 @@ export default async function Page({
   const [module, ...parts] = segments;
   let content: React.ReactNode = <ModulePage pathname={"/" + segments.join("/")} />;
   if (!module || module === "dashboard") content = <TeamHome />;
+  else if (module === "commercial" && parts[0] === "workspace") content=<SalesExecutiveWorkspace key={parts[1]??"home"} section={parts[1]??"home"}/>;
   else if (module === "commercial" || module === "crm") {
     const sections = [
       "leads",

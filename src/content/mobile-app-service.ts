@@ -23,7 +23,7 @@ export const mobileAppService: ServicePageData = {
   solution:
     "Definimos quién usará la app, qué tarea debe resolver y con qué sistemas se comunicará. A partir de ese alcance diseñamos las pantallas, elegimos una solución nativa o multiplataforma y construimos por etapas. Las funciones móviles, el uso sin conexión y la distribución se evalúan antes de comprometer su implementación.",
   idealFor: [
-    "Microempresas y pymes que necesitan evaluar una aplicación para un servicio o proceso concreto.",
+    "Empresas y organizaciones que necesitan una aplicación para sus servicios, operaciones o procesos, desde soluciones específicas hasta plataformas corporativas.",
     "Empresas que quieren ofrecer a sus clientes un acceso móvil a solicitudes, reservas, pedidos o información autorizada.",
     "Equipos en terreno que requieren registrar formularios, fotografías o avances desde el teléfono.",
     "Organizaciones con un sistema web que necesitan una aplicación conectada a sus usuarios y datos.",
@@ -103,7 +103,7 @@ export const mobileAppService: ServicePageData = {
   relatedSlugs: ["paginas-web-para-pymes", "desarrollo-web-chile"],
   relatedLinks: [
     { label: "Software y sistemas empresariales a medida", href: "/sistemas-web" },
-    { label: "Sitios web para microempresas y pymes", href: "/paginas-web-para-pymes" },
+    { label: "Sitios web comerciales y corporativos", href: "/paginas-web-para-pymes" },
     { label: "Automatización de procesos e integraciones", href: "/automatizacion" },
   ],
 };

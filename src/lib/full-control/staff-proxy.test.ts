@@ -68,7 +68,7 @@ test("una cuenta sin RUT vinculado no alcanza los módulos internos", async () =
 });
 test("el equipo conserva su identidad aunque el navegador incluya una cookie administrativa", async () => {
   const { dependencies, calls } = setup();
-  const request = new Request("https://www.zyteron.cl/api/control-core/api/leads?page=2", {
+  const request = new Request("https://www.zyteron.cl/api/control-core/api/sales-workspace?page=2", {
     headers: {
       authorization: "Bearer staff-token",
       cookie: "zyteron_admin_token=administrative-cookie",
@@ -78,7 +78,7 @@ test("el equipo conserva su identidad aunque el navegador incluya una cookie adm
   });
   const result = await handleStaffControlRequest(
     request,
-    ["api", "leads"],
+    ["api", "sales-workspace"],
     Buffer.alloc(0),
     dependencies,
   );
@@ -134,4 +134,12 @@ test("rutas manipuladas y autorización ausente se rechazan antes de reenviar", 
   );
   assert.equal(result.status, 400);
   assert.equal(calls.length, 0);
+});
+
+test("el ejecutivo no alcanza directorios, finanzas, documentos ni resúmenes empresariales", async()=>{
+ for(const module of ["clients","commercial","sales","commissions","documents","finance","operations","reports","security","users"]){
+  const{dependencies,calls}=setup();
+  const result=await handleStaffControlRequest(new Request(`https://zyteron.cl/api/control-core/api/${module}`,{headers:{authorization:"Bearer staff-token"}}),["api",module],Buffer.alloc(0),dependencies);
+  assert.equal(result.status,403);assert.equal(calls.length,0);
+ }
 });

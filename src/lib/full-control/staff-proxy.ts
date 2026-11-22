@@ -43,6 +43,7 @@ export async function handleStaffControlRequest(
     (user.banned_until && new Date(user.banned_until) > new Date())
   )
     return NextResponse.json({ message: "La cuenta no tiene acceso al equipo." }, { status: 403 });
+  if(role==="EJECUTIVA_VENTAS"&&segments[1]!=="sales-workspace")return NextResponse.json({message:"Tu cuenta tiene acceso sólo a su espacio comercial y cartera propia."},{status:403});
   const claims = await client.auth.getClaims(token);
   if (claims.error || claims.data?.claims.app_metadata?.role !== role)
     return NextResponse.json(

@@ -1,8 +1,9 @@
 "use client";
 
+import { SalesExecutiveWorkspace } from "./commercial/sales-executive-workspace";
 import {signOut} from "next-auth/react";
 import Link from "@control/components/routed-link";
-import { usePathname } from "@control/lib/client-navigation";
+import { usePathname,useRouter } from "@control/lib/client-navigation";
 import type { ReactNode } from "react";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import type { AuditFinding, AuditRun, Client, Role, SupportTicket } from "@zyteron/contracts";
@@ -32,6 +33,7 @@ import { browserSupabase,developmentAuth } from "@control/lib/auth-client";
 
 export function EnterpriseShell({ children, verifiedIdentity }: { children: ReactNode; verifiedIdentity?: { name: string; role: Role } }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState(() => new Set(["control", "commercial"]));
@@ -57,12 +59,16 @@ export function EnterpriseShell({ children, verifiedIdentity }: { children: Reac
     void client.auth.getSession().then(({data})=>apply(data.session));const{data:listener}=client.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY")setPasswordRecovery(true);apply(session);});return()=>listener.subscription.unsubscribe();
   },[isDevelopment,verifiedIdentity]);
 
+  useEffect(()=>{
+    if(authReady&&authenticated&&currentRole==="EJECUTIVA_VENTAS"&&!pathname.startsWith("/commercial/workspace"))router.replace("/commercial/workspace");
+  },[authReady,authenticated,currentRole,pathname,router]);
+
   const visibleNavigation = useMemo(
-    () => enterpriseNavigation
+    () => currentRole === "EJECUTIVA_VENTAS" ? [{...enterpriseNavigation.find(g=>g.id==="commercial")!,label:"Mi gestión comercial",items:[{label:"Mi jornada",href:"/commercial/workspace"},{label:"Mi cartera",href:"/commercial/workspace/clients"},{label:"Mis propuestas",href:"/commercial/workspace/proposals"},{label:"Planes y material",href:"/commercial/workspace/plans"},{label:"Mis informes",href:"/commercial/workspace/reports"},{label:"Mis comisiones",href:"/commercial/workspace/commissions"}]}] : enterpriseNavigation
       .filter((group) => canAccessGroup(currentRole, group.id))
       .map((group) => group.id === "security" && !["GERENTE_GENERAL","SECURITY_ADMIN"].includes(currentRole)
         ? { ...group, items: group.items.filter((item) => item.href === "/security/vault") }
-        : group.id === "finance" ? { ...group, items: group.items.filter((item) => canSeeFinancePath(currentRole, item.href)) } : group),
+        : group.id === "finance" ? { ...group, items: group.items.filter((item) => canSeeFinancePath(currentRole, item.href)) } : group.id === "commercial" && currentRole!=="GERENTE_GENERAL" ? {...group,items:group.items.filter(item=>item.href!=="/commercial/workspace")} : group),
     [currentRole],
   );
   const roleProfile = roleProfiles.find((item) => item.role === currentRole) ?? roleProfiles[0]!;
@@ -76,7 +82,7 @@ export function EnterpriseShell({ children, verifiedIdentity }: { children: Reac
   );
 
   useEffect(() => {
-    if (globalQuery.trim().length < 2 || (!canAccessGroup(currentRole, "clients") && !canAccessGroup(currentRole, "commercial") && !canAccessGroup(currentRole,"audits") && !canAccessGroup(currentRole,"support"))) {
+    if (currentRole==="EJECUTIVA_VENTAS" || globalQuery.trim().length < 2 || (!canAccessGroup(currentRole, "clients") && !canAccessGroup(currentRole, "commercial") && !canAccessGroup(currentRole,"audits") && !canAccessGroup(currentRole,"support"))) {
       setClientResults([]); setCommercialResults({leads:[],opportunities:[],quotes:[],sales:[]});
       setAuditResults({audits:[],findings:[]});
       setSupportResults([]);
@@ -103,7 +109,7 @@ export function EnterpriseShell({ children, verifiedIdentity }: { children: Reac
   }
 
   // Portal de pago público (link con token): sin navegación interna ni datos de la sesión.
-  if (pathname.startsWith("/payments/")) return <>{children}</>;
+  if (pathname.startsWith("/payments/")) return <>{currentRole==="EJECUTIVA_VENTAS"?<SalesExecutiveWorkspace key={pathname} section={pathname.split("/")[3]??"home"}/>:children}</>;
   if(!authReady)return <main className="authBoot"><ShieldCheck/><span>Verificando sesión…</span></main>;
   if(passwordRecovery)return <PasswordRecoveryScreen onComplete={()=>setPasswordRecovery(false)}/>;
   if(!authenticated)return <AuthScreen configurationError={authError}/>;
@@ -168,11 +174,11 @@ export function EnterpriseShell({ children, verifiedIdentity }: { children: Reac
             <div><p>Zyteron Control</p><strong>{activeItem?.label ?? "Resumen ejecutivo"}</strong></div>
           </div>
           <div className="topbarActions">
-            <div className="globalSearchWrap">
+            {currentRole!=="EJECUTIVA_VENTAS"?<div className="globalSearchWrap">
               <label className="globalSearch"><Search size={16} /><input aria-label="Buscar en Zyteron Control" placeholder="Buscar clientes, SUP, AUD o FND" value={globalQuery} onChange={(event) => setGlobalQuery(event.target.value)} /></label>
               {clientResults.length+commercialResults.leads.length+commercialResults.opportunities.length+commercialResults.quotes.length+commercialResults.sales.length+auditResults.audits.length+auditResults.findings.length+supportResults.length ? <div className="globalSearchResults"><small>Resultados</small>{clientResults.map((client) => <Link href={`/clients/${client.id}`} key={client.id} onClick={() => setGlobalQuery("")}><span>CL</span><div><strong>{client.tradeName || client.legalName}</strong><small>{client.rut}</small></div></Link>)}{supportResults.map(item=><Link href={`/support/inbox/${item.id}`} key={item.id} onClick={()=>setGlobalQuery("")}><span>SP</span><div><strong>{item.ticketNumber}</strong><small>{item.subject}</small></div></Link>)}{auditResults.audits.map(item=><Link href={`/audits/${item.id}`} key={item.id} onClick={()=>setGlobalQuery("")}><span>AU</span><div><strong>{item.auditNumber}</strong><small>{item.clientName||item.auditType}</small></div></Link>)}{auditResults.findings.map(item=><Link href={`/audits/${item.auditId}`} key={item.id} onClick={()=>setGlobalQuery("")}><span>FN</span><div><strong>{item.findingNumber}</strong><small>{item.title}</small></div></Link>)}{commercialResults.leads.map((item)=><Link href="/commercial/leads" key={item.id} onClick={()=>setGlobalQuery("")}><span>LD</span><div><strong>{item.companyName}</strong><small>{item.contactName}</small></div></Link>)}{commercialResults.opportunities.map((item)=><Link href="/commercial/opportunities" key={item.id} onClick={()=>setGlobalQuery("")}><span>OP</span><div><strong>{item.company}</strong><small>{item.name}</small></div></Link>)}{commercialResults.quotes.map((item)=><Link href="/commercial/quotes" key={item.id} onClick={()=>setGlobalQuery("")}><span>CT</span><div><strong>{item.quoteNumber}</strong><small>{item.companyName}</small></div></Link>)}{commercialResults.sales.map((item)=><Link href="/commercial/sales" key={item.id} onClick={()=>setGlobalQuery("")}><span>VT</span><div><strong>{item.amount.toLocaleString("es-CL")} {item.currency}</strong><small>Venta {item.id.slice(0,8)}</small></div></Link>)}</div> : null}
-            </div>
-            <ContactNotificationBell/>
+            </div>:null}
+            {currentRole!=="EJECUTIVA_VENTAS"?<ContactNotificationBell/>:null}
             {isDevelopment?<label className="roleSwitcher">
               <span className="avatar small">{profile.initials}</span>
               <span className="roleSwitcherText"><strong>{profile.userName}</strong><small>{profile.label}</small></span>
@@ -183,7 +189,7 @@ export function EnterpriseShell({ children, verifiedIdentity }: { children: Reac
             </label>:<div className="roleSwitcher authenticatedRole"><span className="avatar small">{profile.initials}</span><span className="roleSwitcherText"><strong>{profile.userName}</strong><small>{profile.label}</small></span><button type="button" aria-label="Cerrar sesión" onClick={()=>{if(verifiedIdentity){void signOut({redirect:false}).then(()=>fetch("/administracion/logout",{method:"POST"})).then(()=>{window.location.assign("/administracion/login");});}else void browserSupabase()?.auth.signOut();}}><LogOut size={15}/></button></div>}
           </div>
         </header>
-        <div className="enterpriseContent">{children}</div>
+        <div className="enterpriseContent">{currentRole==="EJECUTIVA_VENTAS"?<SalesExecutiveWorkspace key={pathname} section={pathname.split("/")[3]??"home"}/>:children}</div>
       </div>
     </div>
     </AccessContext.Provider>

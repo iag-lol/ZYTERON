@@ -1,3 +1,4 @@
+import { SalesWorkspaceModule } from "./sales-workspace/sales-workspace.module.js";
 import { Module } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
 import { RoleGuard } from "./auth/role.guard.js";
@@ -37,6 +38,7 @@ import { ExecutiveModule } from "./executive/executive.module.js";
     ClientServicesModule,
     RenewalsModule,
     CommercialModule,
+    SalesWorkspaceModule,
     ExecutiveModule,
     OperationsModule,
     DevelopmentModule,

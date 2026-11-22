@@ -104,7 +104,7 @@ const solutionFamilyCatalog = [
     shortName: "Webs para empresas y pymes",
     path: "/desarrollo-web",
     description:
-      "Páginas web para microempresas, pymes y empresas que necesitan presentar sus servicios, transmitir confianza y recibir consultas. Desde una primera web hasta un sitio corporativo.",
+      "Sitios web para empresas y organizaciones que necesitan presentar sus servicios, transmitir confianza y generar oportunidades comerciales. Desde una solución específica hasta un sitio corporativo con integraciones.",
     examples: "Empresas, instituciones, profesionales, portafolios y campañas.",
     groups: [
       {
