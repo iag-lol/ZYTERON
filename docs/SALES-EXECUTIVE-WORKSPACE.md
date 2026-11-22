@@ -59,3 +59,14 @@ Backend: `control-runtime/src/sales-workspace/`. Interfaz: `src/full-control/com
 `node --import tsx scripts/sync-sales-plans.ts` actualiza el catálogo derivado de `src/config/pricing.ts`; el comando prebuild mantiene la misma fuente de precios que el sitio público.
 
 Las verificaciones locales usan datos sintéticos y no crean clientes, cotizaciones, cobros ni comisiones productivas. La verificación del despliegue se registra por separado, con commit, estado activo y comprobación en la interfaz.
+
+
+## Herramientas de gestión comercial
+
+El panel incluye agenda por vencimiento, búsqueda de contactos, filtros, vistas de cartera, prioridades y accesos para registrar gestiones y preparar propuestas. Las preferencias de vista y orden se guardan en el navegador; no se almacena la cartera en localStorage. Los enlaces de llamada, correo y WhatsApp abren la aplicación correspondiente; no envían mensajes automáticamente. La agenda admite descarga ICS y preparación de eventos de Google Calendar.
+
+Los gráficos de avance se calculan desde la etapa actual y no reconstruyen transiciones históricas ni cohortes. Una gestión cerrada cuyo cobro fue revertido queda fuera de las ventas confirmadas y de la tasa de cierre. El pronóstico pondera propuestas abiertas mediante probabilidades indicativas por estado; no representa ingresos cobrados ni ventas garantizadas.
+
+El generador de informes prepara un borrador a partir de la cartera autorizada y el período seleccionado. El usuario revisa y completa el texto antes de enviarlo a administración. Las ventas del período usan la fecha de conversión, cuando está disponible.
+
+El simulador requiere ingreso neto y costo neto explícitos, permite costo cero e informa el 15% sobre la utilidad positiva. Los valores son hipotéticos y no consultan costos empresariales ni registran comisiones. Los importes de comisión validada no acreditan una liquidación o transferencia al ejecutivo.
