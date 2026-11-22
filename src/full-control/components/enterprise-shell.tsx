@@ -60,7 +60,7 @@ export function EnterpriseShell({ children, verifiedIdentity }: { children: Reac
   },[isDevelopment,verifiedIdentity]);
 
   useEffect(()=>{
-    if(authReady&&authenticated&&currentRole==="EJECUTIVA_VENTAS"&&!pathname.startsWith("/commercial/workspace"))router.replace("/commercial/workspace");
+    if(authReady&&authenticated&&currentRole==="EJECUTIVA_VENTAS"&&!pathname.startsWith("/payments/")&&!pathname.startsWith("/commercial/workspace"))router.replace("/commercial/workspace");
   },[authReady,authenticated,currentRole,pathname,router]);
 
   const visibleNavigation = useMemo(
@@ -109,7 +109,7 @@ export function EnterpriseShell({ children, verifiedIdentity }: { children: Reac
   }
 
   // Portal de pago público (link con token): sin navegación interna ni datos de la sesión.
-  if (pathname.startsWith("/payments/")) return <>{currentRole==="EJECUTIVA_VENTAS"?<SalesExecutiveWorkspace key={pathname} section={pathname.split("/")[3]??"home"}/>:children}</>;
+  if (pathname.startsWith("/payments/")) return <>{children}</>;
   if(!authReady)return <main className="authBoot"><ShieldCheck/><span>Verificando sesión…</span></main>;
   if(passwordRecovery)return <PasswordRecoveryScreen onComplete={()=>setPasswordRecovery(false)}/>;
   if(!authenticated)return <AuthScreen configurationError={authError}/>;
