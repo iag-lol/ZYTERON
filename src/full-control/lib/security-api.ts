@@ -2,6 +2,7 @@ import type { Role,SecurityWorkspace } from "@zyteron/contracts";
 import { apiHeaders } from "./api-auth";
 
 const base=()=>"/api/control-core/api";
+export type UserOptions={roles:Role[];positions:Array<{id:string;name:string;active:boolean}>};
 async function request<T>(role:Role,path:string,init:RequestInit={}){const response=await fetch(`${base()}${path}`,{...init,headers:await apiHeaders(role,init.headers),cache:"no-store"});if(!response.ok){let message=`Error ${response.status}`;try{const data=await response.json()as{message?:string|string[]};message=Array.isArray(data.message)?data.message.join(" "):data.message||message;}catch{/* respuesta segura no JSON */}throw new Error(message);}return response.json()as Promise<T>;}
 const post=(value:unknown):RequestInit=>({method:"POST",body:JSON.stringify(value)});
 const workspaceCache=new Map<Role,{data:SecurityWorkspace;expiresAt:number}>();
@@ -21,6 +22,9 @@ async function workspace(role:Role,force=false){
 }
 
 export const securityApi={
+  userOptions:(role:Role)=>request<UserOptions>(role,"/security/user-options"),
+  createUser:(role:Role,value:unknown)=>request(role,"/security/users",post(value)),
+  updateUserProfile:(role:Role,id:string,value:unknown)=>request(role,`/security/users/${encodeURIComponent(id)}/profile`,{method:"PATCH",body:JSON.stringify(value)}),
   workspace,
   invalidateWorkspace:(role?:Role)=>role?workspaceCache.delete(role):workspaceCache.clear(),
   revokeSession:(role:Role,id:string,reason:string)=>request(role,`/security/sessions/${id}/revoke`,post({reason})),

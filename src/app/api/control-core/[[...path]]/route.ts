@@ -2,6 +2,7 @@ import {
   nativePortalSettings,
   ensureNativePortalAccount,
 } from "@/lib/full-control/portal-enrollment";
+import {handleStaffControlRequest} from "@/lib/full-control/staff-proxy";
 import {
   handleLegacyDetail,
   legacyReadPath,
@@ -50,6 +51,10 @@ async function boundedBody(request: Request) {
   }
 }
 async function handle(request: Request, { params }: { params: Promise<{ path?: string[] }> }) {
+  if(request.headers.has("authorization")){
+    try{return await handleStaffControlRequest(request,(await params).path??[],["GET","HEAD"].includes(request.method)?Buffer.alloc(0):await boundedBody(request));}
+    catch{return NextResponse.json({message:"Solicitud inválida o demasiado grande."},{status:400});}
+  }
   const auth = await requirePortalAdminApiSession();
   if (auth.error) return auth.error;
   const url = new URL(request.url);

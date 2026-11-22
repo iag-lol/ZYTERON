@@ -15,6 +15,8 @@ describe("web visit privacy", () => {
     for (const path of [
       "/administracion",
       "/administracion/ventas",
+      "/equipo",
+      "/equipo/commercial/leads",
       "/api/health",
       "/clientes/panel",
       "/portal-comercial",

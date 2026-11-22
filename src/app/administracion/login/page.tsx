@@ -109,6 +109,7 @@ function AdminLoginForm({ queryHasError }: { queryHasError: boolean }) {
           <h1 className="text-[20px] font-extrabold tracking-tight text-slate-900">
             Tu equipo, conectado.
           </h1>
+          <a href="/equipo" className="mt-3 block text-sm font-semibold text-[#284f3b]">Acceso del equipo con correo y contraseña →</a>
 
           <form className="mt-6 space-y-4" onSubmit={submit}>
             <label className="block">

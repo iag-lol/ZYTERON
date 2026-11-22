@@ -40,6 +40,7 @@ export function EnterpriseShell({ children, verifiedIdentity }: { children: Reac
   const [authenticated,setAuthenticated]=useState(Boolean(verifiedIdentity));
   const [passwordRecovery,setPasswordRecovery]=useState(false);
   const [authError,setAuthError]=useState("");
+  const [accountName,setAccountName]=useState("");
   const [globalQuery, setGlobalQuery] = useState("");
   const [clientResults, setClientResults] = useState<Client[]>([]);
   const [commercialResults, setCommercialResults] = useState<{leads:SalesLead[];opportunities:SalesOpportunity[];quotes:SalesQuote[];sales:Sale[]}>({leads:[],opportunities:[],quotes:[],sales:[]});
@@ -50,8 +51,9 @@ export function EnterpriseShell({ children, verifiedIdentity }: { children: Reac
   useEffect(()=>{
     if(verifiedIdentity) return;
     if(isDevelopment){const configured=process.env.NEXT_PUBLIC_DEV_ROLE;setCurrentRole(roles.includes(configured as Role)?configured as Role:"GERENTE_GENERAL");setAuthenticated(true);setAuthReady(true);return;}
+    const incomingType=new URLSearchParams(window.location.hash.slice(1)).get("type");if(incomingType==="invite"||incomingType==="recovery")setPasswordRecovery(true);
     const client=browserSupabase();if(!client){setAuthError("El acceso empresarial no está disponible en este momento.");setAuthReady(true);return;}
-    const apply=(session:Session|null)=>{const value=session?.user?.app_metadata?.role;if(session&&roles.includes(value as Role)){setCurrentRole(value as Role);setAuthenticated(true);setAuthError("");}else{setAuthenticated(false);if(session)setAuthError("Tu cuenta no tiene acceso habilitado. Contacta al administrador.");}setAuthReady(true);};
+    const apply=(session:Session|null)=>{const value=session?.user?.app_metadata?.role;if(session&&value!=="PORTAL_CLIENT"&&roles.includes(value as Role)){setAccountName(String(session.user.user_metadata.full_name??session.user.email??"Equipo Zyteron"));setCurrentRole(value as Role);setAuthenticated(true);setAuthError("");}else{setAuthenticated(false);if(session)setAuthError("Tu cuenta no tiene acceso habilitado. Contacta al administrador.");}setAuthReady(true);};
     void client.auth.getSession().then(({data})=>apply(data.session));const{data:listener}=client.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY")setPasswordRecovery(true);apply(session);});return()=>listener.subscription.unsubscribe();
   },[isDevelopment,verifiedIdentity]);
 
@@ -64,7 +66,7 @@ export function EnterpriseShell({ children, verifiedIdentity }: { children: Reac
     [currentRole],
   );
   const roleProfile = roleProfiles.find((item) => item.role === currentRole) ?? roleProfiles[0]!;
-  const profile = verifiedIdentity ? { ...roleProfile, userName: verifiedIdentity.name, initials: verifiedIdentity.name.trim().slice(0,2).toUpperCase() } : roleProfile;
+  const profile = verifiedIdentity ? { ...roleProfile, userName: verifiedIdentity.name, initials: verifiedIdentity.name.trim().slice(0,2).toUpperCase() } : accountName?{...roleProfile,userName:accountName,initials:accountName.trim().slice(0,2).toUpperCase()}:roleProfile;
 
   const activeItem = useMemo(
     () => visibleNavigation.flatMap((group) => group.items)

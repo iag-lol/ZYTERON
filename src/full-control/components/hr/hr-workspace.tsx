@@ -1,4 +1,5 @@
 "use client";
+import {OrganizationForm} from "./organization-form";
 import Link from "@control/components/routed-link";
 import { HrSiiWorkspace } from "./hr-sii-workspace";
 import { useEffect, useMemo, useState } from "react";
@@ -308,6 +309,7 @@ function HrWorkspaceContent({
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
     [create, setCreate] = useState(false),
+    [createCatalog,setCreateCatalog]=useState(false),
     [revision, setRevision] = useState(0);
   function load() {
     setError("");
@@ -397,6 +399,7 @@ function HrWorkspaceContent({
             <RefreshCw />
             Actualizar
           </button>
+          {["RRHH","GERENTE_GENERAL"].includes(role)&&source==="available"&&["positions","departments","teams"].includes(view)?<button className="hrPrimary" onClick={()=>{setError("");setCreateCatalog(true);}}><Plus/>{view==="positions"?"Nuevo cargo":view==="departments"?"Nuevo departamento":"Nuevo equipo"}</button>:null}
           {role === "RRHH" &&
           source === "available" &&
           ["command", "employees"].includes(view) &&
@@ -487,6 +490,7 @@ function HrWorkspaceContent({
           )}
         </>
       )}
+      {createCatalog&&["positions","departments","teams"].includes(view)?<OrganizationForm kind={view as "positions"|"departments"|"teams"} data={data} busy={busy} error={error} close={()=>{if(!busy)setCreateCatalog(false);}} save={value=>act(async()=>{if(view==="positions")await hrApi.createPosition(role,value);else if(view==="departments")await hrApi.createDepartment(role,value);else await hrApi.createTeam(role,value);setCreateCatalog(false);},"Registro de organización creado.")}/>:null}
       {create ? (
         <CreateEmployee
           close={() => setCreate(false)}
@@ -734,7 +738,7 @@ export function ViewContent({
             <Empty
               icon={Building2}
               title="Sin estructura configurada"
-              text="No hay registros visibles en este catálogo. La gestión de estructura aún no tiene formulario en esta vista."
+              text="No hay registros visibles en este catálogo. Gerencia y RR.HH. pueden agregar registros desde el botón de creación."
             />
           ) : null}
         </div>

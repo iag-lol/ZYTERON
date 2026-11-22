@@ -90,6 +90,8 @@ export async function proxy(req: NextRequest) {
     pathname.startsWith("/clientes/panel") || pathname.startsWith("/clientes/admin");
 
   if (isAdminApi || isPortalAdminApi) {
+    // The route validates the bearer identity; it cannot use the administrative cookie adapters.
+    if(pathname.startsWith("/api/control-core/")&&req.headers.has("authorization"))return NextResponse.next();
     return protectAdminApiRequest(req);
   }
 

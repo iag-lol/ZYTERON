@@ -20,7 +20,7 @@ type AppShellProps = {
 
 export function AppShell({ children, header, footer }: AppShellProps) {
   const pathname = usePathname();
-  const isAdminRoute = pathname.startsWith("/administracion");
+  const isAdminRoute = pathname.startsWith("/administracion") || pathname === "/equipo" || pathname.startsWith("/equipo/");
   const isPortalRoute =
     pathname.startsWith("/clientes") || pathname.startsWith("/portal-comercial");
 

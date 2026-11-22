@@ -90,7 +90,7 @@ export function AuthScreen({ configurationError }: { configurationError?: string
       setBusy(true);
       setError("");
       const { error: resetError } = await client.auth.resetPasswordForEmail(email, {
-        redirectTo: new URL("/dashboard", window.location.origin).toString(),
+        redirectTo: new URL(window.location.pathname.startsWith("/equipo")?"/equipo":"/dashboard", window.location.origin).toString(),
       });
       if (resetError) throw resetError;
       setNotice("Si la cuenta está registrada, recibirás instrucciones en tu correo.");
@@ -193,7 +193,8 @@ export function PasswordRecoveryScreen({ onComplete }: { onComplete: () => void 
       setError("");
       const { error: updateError } = await client.auth.updateUser({ password });
       if (updateError) throw updateError;
-      window.history.replaceState({}, "", new URL("/dashboard", window.location.origin));
+      await client.auth.refreshSession();
+      window.history.replaceState({}, "", new URL(window.location.pathname.startsWith("/equipo")?"/equipo":"/dashboard", window.location.origin));
       setNotice("Tu contraseña fue actualizada correctamente.");
       setComplete(true);
     } catch {

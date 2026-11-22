@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import {publicSupabaseKey,publicSupabaseUrl} from "./src/lib/supabase/public-config";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
@@ -66,6 +67,7 @@ const privateHtmlRoutes = [
   "/admin/:path*",
   "/portal-clientes/:path*",
   "/administracion/:path*",
+  "/equipo/:path*",
   "/clientes/:path*",
   "/portal-comercial/:path*",
   "/checkout/:path*",
@@ -74,6 +76,10 @@ const privateHtmlRoutes = [
 ];
 
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_SUPABASE_URL: publicSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: publicSupabaseKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY),
+  },
   poweredByHeader: false,
   agentRules: false,
   // Next.js y la API comparten los 512 MB del servicio en Render.

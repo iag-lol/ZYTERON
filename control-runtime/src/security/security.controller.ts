@@ -16,6 +16,9 @@ export class SecurityController{
   @Get("posture")@RequirePermissions("security.dashboard.view")async posture(@Headers()headers:HeaderMap){return(await this.security.workspace(actor(headers))).posture;}
   @Get("summary")@RequirePermissions("security.dashboard.view")async summary(@Headers()headers:HeaderMap){return(await this.security.workspace(actor(headers))).summary;}
   @Get("users")@RequirePermissions("identity.view")users(){return this.security.identities();}
+  @Get("user-options")@RequirePermissions("identity.role.manage")userOptions(@Headers()headers:HeaderMap){return this.security.userOptions(actor(headers));}
+  @Post("users")@RequirePermissions("identity.role.manage")createUser(@Body()body:any,@Headers()headers:HeaderMap){return this.security.createUser(body,actor(headers));}
+  @Patch("users/:id/profile")@RequirePermissions("identity.role.manage")profile(@Param("id")id:string,@Body()body:any,@Headers()headers:HeaderMap){return this.security.updateUserProfile(id,body,actor(headers));}
   @Get("identities")@RequirePermissions("identity.view")identities(){return this.security.identities();}
   @Get("mfa")@RequirePermissions("mfa.view")async mfa(){const identities=await this.security.identities();return{identities,coverage:null,note:"La cobertura se calcula únicamente cuando Supabase entrega evidencia de factores verificados."};}
   @Patch("users/:id/role")@RequirePermissions("identity.role.manage")@RequireAal2()role(@Param("id")id:string,@Body()body:any,@Headers()headers:HeaderMap){return this.security.changeUserRole(id,body,actor(headers));}
