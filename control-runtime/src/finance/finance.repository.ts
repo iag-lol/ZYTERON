@@ -164,6 +164,10 @@ export class FinanceRepository {
     return this.rpc<T>(name,args);
   }
   private async rpc<T>(name:string,args:Row):Promise<T>{const{data,error}=await(this.supabase as any).rpc(name,args);if(error)throw toHttp(error);return data as T;}
+  async reopenInvoiceDraft(invoiceId:string):Promise<void>{
+    if(!this.supabase)throw new ServiceUnavailableException("La corrección de una factura aprobada requiere persistencia real.");
+    await this.rpc("finance_reopen_invoice_draft",{p_invoice:invoiceId});
+  }
   async dteEmissionRpc<T>(name:"finance_dte_journal_ready"|"finance_claim_dte_issue"|"finance_update_dte_preparation"|"finance_start_dte_transmission"|"finance_fail_dte_issue"|"finance_complete_dte_submission"|"finance_abandon_dte_issue",args:Row):Promise<T>{
     if(!this.supabase)throw new ServiceUnavailableException("La emisión requiere el registro transaccional persistente; no se emite en memoria.");
     try{return await this.rpc<T>(name,args);}catch(error){

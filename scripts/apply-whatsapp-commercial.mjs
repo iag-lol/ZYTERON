@@ -85,6 +85,7 @@ export async function applyWhatsappCommercialMigration() {
   await applyMigration("20261024153000_client_contract_review_publication.sql");
   await applyMigration("20261109073000_web_visit_storage.sql");
   await applyMigration("20261122063000_control_user_login_ruts.sql");
+  await applyMigration("20261122090000_invoice_draft_reopening.sql");
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) await applyWhatsappCommercialMigration();

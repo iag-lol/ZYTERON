@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, UnprocessableEntityException } from "@nestjs/common";
 import type { BillingSchedule, Invoice, InvoiceLine, PaymentAllocation, TaxDocument } from "@zyteron/contracts";
-import { fiscalText, invoiceDate, invoiceOptions, invoiceTerms, receiverSnapshot } from "./finance.invoice-input.js";
+import { fiscalText, invoiceDate, invoiceOptions, invoiceTerms, missingReceiverData, receiverSnapshot } from "./finance.invoice-input.js";
 import { FinanceContext } from "./finance.core.js";
 import { AccountingRuleEngine } from "./finance.ledger.js";
 import type { PageQuery } from "./finance.repository.js";
@@ -83,14 +83,24 @@ export class InvoiceService {
     if(replacement){await guarded(()=>this.repo.removeWhere("invoice_lines",{invoiceId:id}));for(const line of replacement)await guarded(()=>this.repo.create("invoice_lines",{...line,invoiceId:id}));}
     await guarded(()=>this.repo.update("invoices",id,patch));await this.repo.audit(actor,"INVOICE_DRAFT_UPDATED","INVOICE",id,`${documentLabel(invoice)} actualizada`,{before:{totalAmount:invoice.totalAmount},patch:Object.keys(patch)});return this.get(id,actor);
   }
+  async reopenDraft(id:string,actor:FinanceActor){
+    this.ctx.requireAny(actor,"invoice.edit","invoice.create");
+    const invoice=await this.ctx.must<Invoice>("invoices",id,"Factura");
+    await this.ctx.assertClientAccess(actor,invoice.clientId);
+    if(invoice.status!=="READY_TO_ISSUE"||![33,34,39,41].includes(invoice.documentTypeCode))throw new ConflictException("Sólo se vuelve a borrador una factura o boleta aprobada sin emisión iniciada.");
+    await this.repo.reopenInvoiceDraft(id);
+    await this.repo.audit(actor,"INVOICE_REOPENED","INVOICE",id,`${documentLabel(invoice)} devuelta a borrador para completar o corregir sus datos`,{previousStatus:invoice.status,previousApprovedBy:invoice.approvedBy,previousApprovedAt:invoice.approvedAt});
+    return this.get(id,actor);
+  }
   async submit(id:string,actor:FinanceActor){
     this.ctx.requireAny(actor,"invoice.edit","invoice.create");const invoice=await this.ctx.must<Invoice>("invoices",id,"Factura");await this.ctx.assertClientAccess(actor,invoice.clientId);if(invoice.status!=="DRAFT")throw new ConflictException("Sólo se envía un borrador.");
+    const missing=missingReceiverData(invoice.clientSnapshot,invoice.documentTypeCode);if(missing.length)throw new UnprocessableEntityException(`Completa los datos tributarios antes de solicitar aprobación: ${missing.join(", ")}.`);
     const settings=await this.repo.settings();const threshold=settings.invoiceApprovalThreshold===null||settings.invoiceApprovalThreshold===undefined?null:Number(settings.invoiceApprovalThreshold);const required=Boolean(settings.invoiceRequiresApproval)&&(threshold===null||invoice.totalAmount>=threshold);
     await this.repo.update("invoices",id,{status:required?"PENDING_APPROVAL":"READY_TO_ISSUE",approvalRequired:required});
     if(required)await this.repo.notify({eventKey:`invoice-approval:${id}:${nowIso().slice(0,16)}`,type:"INVOICE_APPROVAL_REQUIRED",title:`Aprobar ${documentLabel(invoice)}`,body:`${invoice.clientSnapshot.legalName??""} · ${money(invoice.totalAmount,invoice.currency)}`,entityType:"INVOICE",entityId:id,href:`/finance/invoices?invoice=${id}`,severity:"WARNING",audienceRole:"FINANZAS"});
     await this.repo.audit(actor,"INVOICE_SUBMITTED","INVOICE",id,required?"Enviada a aprobación":"Lista para emitir (política sin aprobación)");return this.get(id,actor);
   }
-  async approve(id:string,actor:FinanceActor){this.ctx.require(actor,"invoice.approve");const invoice=await this.ctx.must<Invoice>("invoices",id,"Factura");if(invoice.status!=="PENDING_APPROVAL")throw new ConflictException("La factura no está pendiente de aprobación.");if(invoice.createdBy&&invoice.createdBy===actor.userId&&actor.role!=="GERENTE_GENERAL")throw new ConflictException("Segregación de funciones: quien crea el documento no lo aprueba.");await this.repo.update("invoices",id,{status:"READY_TO_ISSUE",approvedBy:actor.userId,approvedAt:nowIso()});await this.repo.audit(actor,"INVOICE_APPROVED","INVOICE",id,`${documentLabel(invoice)} aprobada`);return this.get(id,actor);}
+  async approve(id:string,actor:FinanceActor){this.ctx.require(actor,"invoice.approve");const invoice=await this.ctx.must<Invoice>("invoices",id,"Factura");if(invoice.status!=="PENDING_APPROVAL")throw new ConflictException("La factura no está pendiente de aprobación.");if(invoice.createdBy&&invoice.createdBy===actor.userId&&actor.role!=="GERENTE_GENERAL")throw new ConflictException("Segregación de funciones: quien crea el documento no lo aprueba.");const missing=missingReceiverData(invoice.clientSnapshot,invoice.documentTypeCode);if(missing.length)throw new UnprocessableEntityException(`Completa los datos tributarios del borrador antes de aprobar: ${missing.join(", ")}.`);await this.repo.update("invoices",id,{status:"READY_TO_ISSUE",approvedBy:actor.userId,approvedAt:nowIso()});await this.repo.audit(actor,"INVOICE_APPROVED","INVOICE",id,`${documentLabel(invoice)} aprobada`);return this.get(id,actor);}
   async reject(id:string,body:Row,actor:FinanceActor){this.ctx.require(actor,"invoice.approve");const reason=requiredText(body.reason,"Motivo",500);const invoice=await this.ctx.must<Invoice>("invoices",id,"Factura");if(invoice.status!=="PENDING_APPROVAL")throw new ConflictException("La factura no está pendiente de aprobación.");await this.repo.update("invoices",id,{status:"DRAFT",notes:[invoice.notes,`Rechazada: ${reason}`].filter(Boolean).join("\n")});await this.repo.audit(actor,"INVOICE_REJECTED","INVOICE",id,`Aprobación rechazada: ${reason}`);return this.get(id,actor);}
   async cancel(id:string,body:Row,actor:FinanceActor){this.ctx.requireAny(actor,"invoice.edit","invoice.approve");const reason=requiredText(body.reason,"Motivo",500);const invoice=await this.ctx.must<Invoice>("invoices",id,"Factura");if(!preIssue.includes(invoice.status))throw new ConflictException("Un documento emitido no se anula ni se borra: emite una nota de crédito.");await this.repo.update("invoices",id,{status:"CANCELLED",cancelledAt:nowIso(),cancelReason:reason});const run=await this.repo.findOne<Row>("billing_schedule_runs",{invoiceId:id});await this.repo.audit(actor,"INVOICE_CANCELLED","INVOICE",id,`Borrador anulado: ${reason}`,{billingRun:run?.id??null});return this.get(id,actor);}
 

@@ -94,6 +94,7 @@ export class FinanceController {
   @Get("billable-changes") billableChanges(@Headers() h:H){return this.invoices.billableChangeRequests(actor(h));}
   @Get("invoices/:id") invoice(@Param("id") id:string,@Headers() h:H){return this.invoices.get(id,actor(h));}
   @Patch("invoices/:id") updateInvoice(@Param("id") id:string,@Body() b:any,@Headers() h:H){return this.invoices.updateDraft(id,b,actor(h));}
+  @Post("invoices/:id/reopen-draft") reopenInvoice(@Param("id") id:string,@Headers() h:H){return this.invoices.reopenDraft(id,actor(h));}
   @Post("invoices/:id/submit") submitInvoice(@Param("id") id:string,@Headers() h:H){return this.invoices.submit(id,actor(h));}
   @Post("invoices/:id/approve") approveInvoice(@Param("id") id:string,@Headers() h:H){return this.invoices.approve(id,actor(h));}
   @Post("invoices/:id/reject") rejectInvoice(@Param("id") id:string,@Body() b:any,@Headers() h:H){return this.invoices.reject(id,b,actor(h));}

@@ -4,6 +4,7 @@ import { documentLabel, InvoiceService } from "./finance.billing.js";
 import { FinanceContext } from "./finance.core.js";
 import { type CafData, DteCertificateProvider, type DteDocumentInput, type DteStatus, ExternalCertifiedDteProvider, parseCaf, parseReceivedXml, SiiDirectDteProvider, structuralErrors, type TaxDocumentProvider } from "./finance.dte-providers.js";
 import { renderPrintedDte, type PrintedDteRecord } from "./finance.dte-print.js";
+import { missingReceiverData } from "./finance.invoice-input.js";
 import { productionBoletaVerificationUrl } from "./finance.boleta-lookup.js";
 import { DteSubmissionJournal } from "./finance.dte-journal.js";
 import { dteCatalog, documentTypeCatalog, directDteImplemented } from "./finance.dte-catalog.js";
@@ -75,7 +76,7 @@ export class DteService {
     if(invoice){const type=await this.repo.get<Row>("tax_document_types",invoice.documentTypeCode);add("document_type",`Tipo ${invoice.documentTypeCode} habilitado para emisión`,Boolean(type?.enabledForIssue&&(!production||type?.certified)),type?.enabledForIssue?(production&&!type.certified?"El tipo no está certificado para producción.":"Habilitado."):"Habilítalo en Configuración contable una vez certificado.");
       if(settings.dteProvider==="SII_DIRECT"){const available=await this.repo.count("tax_folios",{documentTypeCode:invoice.documentTypeCode,environment:settings.dteEnvironment,status:"AVAILABLE"});add("folios",`Folios CAF disponibles (tipo ${invoice.documentTypeCode})`,available>0,available>0?`${available} folios disponibles.`:"Carga un CAF vigente descargado desde el SII.");}
       add("status","Factura aprobada y lista para emitir",invoice.status==="READY_TO_ISSUE",invoice.status==="READY_TO_ISSUE"?"Lista.":invoice.status==="PENDING_APPROVAL"?"Pendiente de aprobación.":`Estado actual: ${invoice.status}.`);
-      const client=invoice.clientSnapshot;const receiver=[!validRut(client?.rut)&&"RUT válido",!(client?.legalName)&&"razón social",[33,56,61].includes(invoice.documentTypeCode)&&!(client?.businessActivity)&&"giro",[33,56,61].includes(invoice.documentTypeCode)&&!(client?.address)&&"dirección",[33,56,61].includes(invoice.documentTypeCode)&&!client?.commune&&"comuna"].filter(Boolean) as string[];
+      const client=invoice.clientSnapshot;const receiver=missingReceiverData(client,invoice.documentTypeCode);
       if([39,41].includes(invoice.documentTypeCode)){add("boleta_payment","Medio de pago declarado",[1,2,3,4,5].includes(Number(invoice.boletaPaymentMethod)),"Selecciona el medio en el borrador. No registra ni confirma dinero recibido.");add("boleta_identity","Cliente identificado para boleta",normalizeRut(client?.rut)!=="66666666-6","Las boletas del portal requieren el RUT real del cliente; no se utiliza consumidor genérico.");}
       add("receiver","Datos tributarios del receptor",!receiver.length,receiver.length?`Completa los datos tributarios del borrador: ${receiver.join(", ")}.`:"Completos.");
       if(invoice.referenceInvoiceId){const reference=await this.repo.get<Invoice>("invoices",invoice.referenceInvoiceId);const refDoc=reference?.taxDocumentId?await this.repo.get<TaxDocument>("tax_documents",reference.taxDocumentId):undefined;add("reference","Documento referenciado con folio",Boolean(refDoc?.folio),refDoc?.folio?`Referencia folio ${refDoc.folio}.`:"El documento original no tiene folio emitido.");}

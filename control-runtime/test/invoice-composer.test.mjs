@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { InvoiceService } from "../dist/finance/finance.billing.js";
-import { invoiceOptions, receiverSnapshot } from "../dist/finance/finance.invoice-input.js";
+import { invoiceOptions, missingReceiverData, receiverSnapshot } from "../dist/finance/finance.invoice-input.js";
 import { PGlite } from "@electric-sql/pglite";
 import { readFile } from "node:fs/promises";
 
@@ -14,6 +14,7 @@ function fixture({allowed=true}={}){
     list:async(table)=>rows[table]??[],
     update:async(table,id,patch)=>{writes.push(table);const row=rows[table].find(r=>r.id===id);Object.assign(row,patch);return row;},
     removeWhere:async(table)=>{writes.push(table);rows[table]=[];},
+    reopenInvoiceDraft:async id=>{const row=rows.invoices.find(r=>r.id===id);if(row.status!=="READY_TO_ISSUE"||row.taxDocumentId||(rows.tax_documents??[]).length)throw Error("DTE_ATTEMPT");Object.assign(row,{status:"DRAFT",approvalRequired:false,approvedBy:null,approvedAt:null});writes.push("reopen");},
     audit:async()=>{},notify:async()=>{},
   };
   const ctx={repo,require(){},requireAny(){},assertClientAccess:async(a,id)=>{assert.equal(id,clientId);if(!allowed)throw Error("CLIENT_DENIED");},sources:{client:async()=>({rut:"22222222-2",legalName:"Cliente sintético",currency:"CLP",creditDays:0,businessActivity:"Software",address:"Dirección 1",commune:"Santiago",region:"RM"})},taxRate:async(code,date)=>{dates.push(date);return{rate:date==="2026-01-01"?0.18:0.19,versionId:null};},must:async(table,id)=>rows[table].find(r=>r.id===id),withClientNames:async(r)=>r};
@@ -62,4 +63,35 @@ test("SQL impide cambiar metadatos tributarios de documentos emitidos",async()=>
     await assert.rejects(()=>db.exec('update invoices set dte_options=\'{"paymentForm":1}\''),/DTE_OPTIONS_IMMUTABLE/);
     assert.equal((await db.query('select dte_options from invoices')).rows[0].dte_options.paymentForm,2);
   }finally{await db.close();}
+});
+
+test("se vuelve a borrador sin cambiar líneas ni receptor y se exige completar el giro antes de aprobar",async()=>{
+  const f=fixture(),draft=await f.service.createDraft(body(),actor),row=f.rows.invoices[0];
+  Object.assign(row,{status:"READY_TO_ISSUE",approvalRequired:true,approvedBy:"approver",approvedAt:"2026-01-01T10:00:00Z",clientSnapshot:{...row.clientSnapshot,businessActivity:null}});
+  f.writes.length=0;
+  const reopened=await f.service.reopenDraft(draft.id,actor);
+  assert.equal(reopened.status,"DRAFT");assert.equal(reopened.approvedBy,null);assert.equal(reopened.approvedAt,null);assert.equal(reopened.totalAmount,draft.totalAmount);assert.deepEqual(reopened.lines,draft.lines);assert.equal(reopened.clientSnapshot.businessActivity,null);
+  await assert.rejects(()=>f.service.submit(draft.id,actor),/giro/);
+  assert.deepEqual(f.writes,["reopen"]);
+  await f.service.updateDraft(draft.id,{clientSnapshot:{businessActivity:"Servicios TI"}},actor);
+  const ready=await f.service.submit(draft.id,actor);assert.equal(ready.status,"READY_TO_ISSUE");
+  assert.deepEqual(missingReceiverData(ready.clientSnapshot,33),[]);
+});
+test("no se vuelve a borrador un DTE en emisión, emitido, anulado o con intento registrado",async()=>{
+  for(const status of ["ISSUING","ISSUED","PAID","CANCELLED","PENDING_APPROVAL"]){
+    const f=fixture(),draft=await f.service.createDraft(body(),actor);f.rows.invoices[0].status=status;f.writes.length=0;
+    await assert.rejects(()=>f.service.reopenDraft(draft.id,actor));assert.deepEqual(f.writes,[]);
+  }
+  const f=fixture(),draft=await f.service.createDraft(body(),actor);f.rows.invoices[0].status="READY_TO_ISSUE";f.rows.tax_documents=[{id:"synthetic"}];f.writes.length=0;
+  await assert.rejects(()=>f.service.reopenDraft(draft.id,actor),/DTE_ATTEMPT/);assert.deepEqual(f.writes,[]);
+});
+test("la vuelta a borrador conserva permiso y alcance del cliente",async()=>{
+  const f=fixture(),draft=await f.service.createDraft(body(),actor);f.rows.invoices[0].status="READY_TO_ISSUE";
+  const denied=fixture({allowed:false});denied.rows.invoices.push({...f.rows.invoices[0]});
+  await assert.rejects(()=>denied.service.reopenDraft(draft.id,actor),/CLIENT_DENIED/);assert.deepEqual(denied.writes,[]);
+});
+test("no se aprueba un borrador tributario incompleto y los espacios no cuentan como giro",async()=>{
+  const f=fixture(),draft=await f.service.createDraft(body(),actor),row=f.rows.invoices[0];row.status="PENDING_APPROVAL";row.clientSnapshot.businessActivity="   ";f.writes.length=0;
+  await assert.rejects(()=>f.service.approve(draft.id,{role:"GERENTE_GENERAL",userId:"approver"}),/giro/);assert.deepEqual(f.writes,[]);
+  assert.deepEqual(missingReceiverData({...row.clientSnapshot,businessActivity:"Servicios"},33),[]);
 });

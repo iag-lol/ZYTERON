@@ -1,6 +1,6 @@
 import { BadRequestException } from "@nestjs/common";
 import type { ClientBillingSnapshot, InvoiceDteOptions } from "@zyteron/contracts";
-import { isoDate, normalizeRut, optionalText, todayCl, type Row } from "./finance.util.js";
+import { isoDate, normalizeRut, optionalText, todayCl, validRut, type Row } from "./finance.util.js";
 
 export function fiscalText(value:unknown,label:string,max:number){
   if(value!==undefined&&value!==null&&(typeof value!=="string"||value.trim().length>max))throw new BadRequestException(`${label}: máximo ${max} caracteres.`);
@@ -45,4 +45,8 @@ export function invoiceOptions(value:unknown):InvoiceDteOptions{
     });
   }
   return result;
+}
+
+export function missingReceiverData(receiver:Partial<ClientBillingSnapshot>|null|undefined,documentTypeCode:number){
+  return [!validRut(receiver?.rut)&&"RUT válido",!receiver?.legalName?.trim()&&"razón social",...([33,56,61].includes(documentTypeCode)?[!receiver?.businessActivity?.trim()&&"giro",!receiver?.address?.trim()&&"dirección",!receiver?.commune?.trim()&&"comuna"]:[])].filter(Boolean) as string[];
 }

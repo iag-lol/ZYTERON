@@ -35,7 +35,7 @@ export function InvoiceDraftForm({draft,onChange,clients,search,onSearch,clients
         {clientsError?<p role="alert" className="invoice-error">{clientsError}</p>:null}
         {draft.clientId?<><div className="invoice-receiver-name"><strong>{receiver.legalName||"Completa la razón social"}</strong><span>RUT {receiver.rut}</span></div><div className="invoice-grid two">
           <Field label="Razón social"><textarea rows={2} maxLength={100} value={receiver.legalName??""} onChange={e=>setReceiver("legalName",e.target.value.replace(/\n/g," "))}/></Field>
-          <Field label="Giro"><input maxLength={40} value={receiver.businessActivity??""} placeholder="Actividad comercial del receptor" onChange={e=>setReceiver("businessActivity",e.target.value)}/></Field>
+          <Field label="Giro" hint="Actividad tributaria del receptor registrada en el SII."><input required={!boleta} maxLength={40} value={receiver.businessActivity??""} placeholder="Actividad comercial del receptor" onChange={e=>setReceiver("businessActivity",e.target.value)}/></Field>
           <Field label="Dirección tributaria"><input maxLength={70} value={receiver.address??""} onChange={e=>setReceiver("address",e.target.value)}/></Field>
           <Field label="Comuna"><input maxLength={20} value={receiver.commune??""} onChange={e=>setReceiver("commune",e.target.value)}/></Field>
           <Field label="Ciudad"><input maxLength={20} value={receiver.city??""} onChange={e=>setReceiver("city",e.target.value)}/></Field>
