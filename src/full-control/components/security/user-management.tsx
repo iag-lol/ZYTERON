@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Plus, UsersRound } from "lucide-react";
 import type { Role, SecurityIdentity } from "@zyteron/contracts";
 import Link from "@control/components/routed-link";
+import { normalizeUserRut } from "@control/lib/user-rut";
 import { securityApi, type UserOptions } from "@control/lib/security-api";
 
 const label = (value: string) =>
@@ -46,6 +47,7 @@ export function UserManagement({
   }, [role]);
   async function save(value: {
     name: string;
+    rut: string;
     email: string;
     role: Role;
     jobPositionId: string | null;
@@ -53,6 +55,12 @@ export function UserManagement({
     password?: string;
   }) {
     if (!editing) return;
+    const rut = normalizeUserRut(value.rut);
+    if (!rut) {
+      setError("Ingresa un RUT válido, incluido su dígito verificador.");
+      return;
+    }
+    value = { ...value, rut };
     setBusy(true);
     setError("");
     setNotice("");
@@ -61,12 +69,13 @@ export function UserManagement({
       else
         await securityApi.updateUserProfile(role, editing.id, {
           name: value.name,
+          rut: value.rut,
           jobPositionId: value.jobPositionId,
         });
       setNotice(
         editing === "new"
           ? value.mode === "password"
-            ? "Usuario creado. Puede ingresar con su correo y contraseña en zyteron.cl/equipo."
+            ? "Usuario creado. Puede ingresar con su RUT y contraseña en zyteron.cl/equipo."
             : "Invitación enviada. La persona podrá definir su contraseña e ingresar en zyteron.cl/equipo."
           : "Nombre y cargo actualizados.",
       );
@@ -84,7 +93,7 @@ export function UserManagement({
         <div>
           <small>ACCESO DEL EQUIPO</small>
           <h2>Usuarios y cargos</h2>
-          <p>Crea una cuenta con correo propio y selecciona su rol de acceso.</p>
+          <p>Registra el RUT de la persona y selecciona su rol de acceso.</p>
         </div>
         <button
           className="securityPrimary"
@@ -120,13 +129,13 @@ export function UserManagement({
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Nombre, correo, rol o cargo"
+          placeholder="Nombre, RUT, correo, rol o cargo"
         />
       </label>
       <div className="identityGrid">
         {identities
           .filter((item) =>
-            [item.name, item.email, item.role, item.jobPositionName].some((value) =>
+            [item.name, item.rut, item.email, item.role, item.jobPositionName].some((value) =>
               String(value ?? "")
                 .toLowerCase()
                 .includes(query.toLowerCase()),
@@ -137,7 +146,9 @@ export function UserManagement({
               <div className="identityAvatar">{item.name.slice(0, 2).toUpperCase()}</div>
               <div>
                 <strong>{item.name}</strong>
-                <span>{item.email}</span>
+                <span>
+                  {item.rut || "RUT pendiente"} · {item.email}
+                </span>
                 <small>
                   {item.role ? label(item.role) : "Sin rol"} ·{" "}
                   {item.jobPositionName || "Cargo no asignado"}
@@ -157,7 +168,7 @@ export function UserManagement({
                       setEditing(item);
                     }}
                   >
-                    Editar nombre y cargo
+                    Editar usuario
                   </button>
                 ) : null}
               </div>
@@ -201,6 +212,7 @@ function UserDialog({
   close: () => void;
   save: (value: {
     name: string;
+    rut: string;
     email: string;
     role: Role;
     jobPositionId: string | null;
@@ -210,6 +222,7 @@ function UserDialog({
   error: string;
 }) {
   const [name, setName] = useState(identity?.name ?? ""),
+    [rut, setRut] = useState(identity?.rut ?? ""),
     [email, setEmail] = useState(identity?.email ?? ""),
     [role, setRole] = useState<Role>(
       identity?.role ??
@@ -233,6 +246,7 @@ function UserDialog({
           event.preventDefault();
           void save({
             name,
+            rut,
             email,
             role,
             jobPositionId: position || null,
@@ -259,7 +273,23 @@ function UserDialog({
             />
           </label>
           <label>
-            Correo de acceso
+            RUT
+            <input
+              required
+              autoComplete="off"
+              maxLength={20}
+              placeholder="12.345.678-5"
+              value={rut}
+              disabled={busy || Boolean(identity?.rut)}
+              onChange={(event) => setRut(event.target.value)}
+              onBlur={() => {
+                const normalized = normalizeUserRut(rut);
+                if (normalized) setRut(normalized);
+              }}
+            />
+          </label>
+          <label>
+            Correo de contacto
             <input
               type="email"
               required

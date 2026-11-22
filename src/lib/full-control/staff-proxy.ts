@@ -7,7 +7,7 @@ export async function handleStaffControlRequest(
   segments: string[],
   body: Buffer,
   dependencies: {
-    authClient?: Pick<ReturnType<typeof createClient>, "auth">;
+    authClient?: Pick<ReturnType<typeof createClient>, "auth" | "from">;
     forward?: typeof fetch;
   } = {},
 ) {
@@ -48,6 +48,21 @@ export async function handleStaffControlRequest(
     return NextResponse.json(
       { message: "Los permisos de la cuenta cambiaron. Cierra sesión e ingresa nuevamente." },
       { status: 401 },
+    );
+  const identity = await client
+    .from("control_user_login_ruts")
+    .select("rut")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (identity.error)
+    return NextResponse.json(
+      { message: "No fue posible validar la identidad del equipo." },
+      { status: 503 },
+    );
+  if (!(identity.data as { rut?: string } | null)?.rut)
+    return NextResponse.json(
+      { message: "La cuenta requiere registrar su RUT en Seguridad > Usuarios." },
+      { status: 403 },
     );
   const target = "/" + segments.map(encodeURIComponent).join("/") + new URL(request.url).search;
   const headers = new Headers({

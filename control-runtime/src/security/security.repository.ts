@@ -37,7 +37,11 @@ export class SecurityRepository{
     if(!payload.id)delete payload.id;
     if(!payload.createdAt)delete payload.createdAt;
     if(!payload.updatedAt)delete payload.updatedAt;
-    const{data,error}=await(this.supabase.from(table)as any).insert(toRow(payload)).select("*").single();if(error?.code==="23505")throw new ConflictException("El registro de seguridad ya existe.");if(error)throw error;return fromRow<T>(data as Row);
+    const{data,error}=await(this.supabase.from(table)as any).insert(toRow(payload)).select("*").single();if(error?.code==="23505")throw new ConflictException(table==="control_user_login_ruts"?"El RUT ya está registrado en otra cuenta.":"El registro de seguridad ya existe.");if(error)throw error;return fromRow<T>(data as Row);
+  }
+  async releaseUserRut(id:string){
+    if(!this.supabase){const row=this.store("control_user_login_ruts").get(id);if(row?.userId===null)this.store("control_user_login_ruts").delete(id);return;}
+    const{error}=await this.supabase.from("control_user_login_ruts").delete().eq("id",id).is("user_id",null);if(error)throw error;
   }
   async update<T extends Row>(table:string,id:string,patch:Partial<T>):Promise<T>{
     if(!this.supabase){const current=this.store(table).get(id);if(!current)throw new NotFoundException("Registro de seguridad no encontrado.");const next={...current,...patch,updatedAt:now()}as unknown as T;this.store(table).set(id,next);return next;}

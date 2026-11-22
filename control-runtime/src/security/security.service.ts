@@ -1,6 +1,7 @@
 import { BadRequestException,ConflictException,ForbiddenException,Inject,Injectable,ServiceUnavailableException } from "@nestjs/common";
 import type { DataAsset,DataSubjectRequest,PrivacyImpactAssessment,ProcessingActivity,RecoveryTest,Role,SecurityAccessGrant,SecurityAccessRequest,SecurityControl,SecurityDevice,SecurityEvent,SecurityGate,SecurityIdentity,SecurityIncident,SecurityIncidentEvent,SecurityPosture,SecurityScan,SecuritySession,SecuritySummary,SecurityVaultAccess,SecurityVaultItem,SecurityVulnerability,SecurityWorkspace,VendorSecurityRecord } from "@zyteron/contracts";
 import { roles } from "@zyteron/contracts";
+import {isValidChileanRut,normalizeRut} from "../clients/rut.js";
 import { SecurityProviderStatus,VaultSecretProvider } from "./security.providers.js";
 import { SecurityRepository } from "./security.repository.js";
 
@@ -29,8 +30,8 @@ export class SecurityService{
   async identities():Promise<SecurityIdentity[]>{
     const supabase=this.repository.supabase;if(!supabase)return[];
     const{data,error}=await supabase.auth.admin.listUsers({page:1,perPage:1000});if(error)throw error;
-    const positions=await this.repository.list<{id:string;name:string}>("job_positions",{},"name",true);
-    return data.users.map((user):SecurityIdentity=>{const rawRole=user.app_metadata.role,role=roles.includes(rawRole as Role)?rawRole as Role:null,factors=(user as any).factors as Array<{status?:string}>|undefined;return{id:user.id,email:user.email??"",name:String(user.user_metadata.full_name??user.user_metadata.name??user.email??"Usuario"),invitationPending:Boolean(user.invited_at&&!user.email_confirmed_at),jobPositionId:user.app_metadata.job_position_id??null,jobPositionName:positions.find(item=>item.id===user.app_metadata.job_position_id)?.name??null,identityType:role==="PORTAL_CLIENT"?"CLIENT_USER":"INTERNAL_USER",role,active:!user.banned_until||new Date(user.banned_until)<=new Date(),mfaStatus:factors?.some(item=>item.status==="verified")?"ENROLLED":factors?"NOT_ENROLLED":"UNKNOWN",lastSignInAt:user.last_sign_in_at??null,createdAt:user.created_at};}).sort((a,b)=>a.name.localeCompare(b.name,"es-CL"));
+    const [positions,rutMappings]=await Promise.all([this.repository.list<{id:string;name:string}>("job_positions",{},"name",true),this.repository.list<{userId:string;rut:string}>("control_user_login_ruts")]);
+    return data.users.map((user):SecurityIdentity=>{const rawRole=user.app_metadata.role,role=roles.includes(rawRole as Role)?rawRole as Role:null,factors=(user as any).factors as Array<{status?:string}>|undefined;return{id:user.id,rut:rutMappings.find(item=>item.userId===user.id)?.rut??null,email:user.email??"",name:String(user.user_metadata.full_name??user.user_metadata.name??user.email??"Usuario"),invitationPending:Boolean(user.invited_at&&!user.email_confirmed_at),jobPositionId:user.app_metadata.job_position_id??null,jobPositionName:positions.find(item=>item.id===user.app_metadata.job_position_id)?.name??null,identityType:role==="PORTAL_CLIENT"?"CLIENT_USER":"INTERNAL_USER",role,active:!user.banned_until||new Date(user.banned_until)<=new Date(),mfaStatus:factors?.some(item=>item.status==="verified")?"ENROLLED":factors?"NOT_ENROLLED":"UNKNOWN",lastSignInAt:user.last_sign_in_at??null,createdAt:user.created_at};}).sort((a,b)=>a.name.localeCompare(b.name,"es-CL"));
   }
 
   async userOptions(actor:SecurityActor){
@@ -49,62 +50,80 @@ export class SecurityService{
     }
     return{name,jobPositionId};
   }
+  private userRut(value:unknown){
+    if(typeof value!=="string"||value.length>20||!/^[0-9kK.\s-]+$/.test(value))throw new BadRequestException("RUT chileno inválido.");
+    const [body="",dv=""]=normalizeRut(value).split("-"),rut=`${body.replace(/^0+/,"")}-${dv}`;
+    if(!isValidChileanRut(rut))throw new BadRequestException("RUT chileno inválido.");
+    return rut;
+  }
   async createUser(input:Row,actor:SecurityActor){
     this.assertAdmin(actor);
     const supabase=this.repository.supabase;
     if(!supabase)throw new ServiceUnavailableException("La gestión de cuentas no está configurada.");
     const options=await this.userOptions(actor),role=required(input.role,"Rol") as Role;
     if(!options.roles.includes(role))throw new ForbiddenException("Selecciona un rol interno sin privilegios administrativos. Los accesos privilegiados requieren el procedimiento de aprobación existente.");
-    const email=required(input.email,"Correo").toLowerCase();
+    const rut=this.userRut(input.rut),email=required(input.email,"Correo").toLowerCase();
     if(email.length>254||!/^\S+@[^\s@]+\.[^\s@]+$/.test(email))throw new BadRequestException("Correo inválido.");
-    const profile=await this.userProfile(input);
-    const mode=input.mode??"invitation";
+    const profile=await this.userProfile(input),mode=input.mode??"password";
     if(!["invitation","password"].includes(mode))throw new BadRequestException("Modalidad de acceso inválida.");
     const password=mode==="password"&&typeof input.password==="string"?input.password:"";
     if(mode==="password"&&(password.length<12||password.length>128||!/[A-Z]/.test(password)||!/[a-z]/.test(password)||!/[0-9]/.test(password)))throw new BadRequestException("La contraseña inicial debe tener entre 12 y 128 caracteres e incluir mayúsculas, minúsculas y números.");
-    // Supabase can reissue invitations for unconfirmed identities; never use that to overwrite an existing role.
     for(let page=1;;page++){
       const{data,error}=await supabase.auth.admin.listUsers({page,perPage:1000});
       if(error)throw new ServiceUnavailableException("No fue posible comprobar si el correo ya está registrado.");
-      if(data.users.some(user=>user.email?.toLowerCase()===email))throw new ConflictException("Ya existe una cuenta con ese correo. Puedes editar su cargo desde el listado.");
+      if(data.users.some(user=>user.email?.toLowerCase()===email))throw new ConflictException("Ya existe una cuenta con ese correo. Puedes editar su RUT y cargo desde el listado.");
       if(data.users.length<1000)break;
     }
-    if(mode==="password"){
-      const{data,error}=await supabase.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name:profile.name},app_metadata:{role,job_position_id:profile.jobPositionId,provisioned_by_administration:true}});
-      if(error||!data.user){
-        if(error?.code==="email_exists"||error?.code==="user_already_exists")throw new ConflictException("Ya existe una cuenta con ese correo.");
-        throw new ServiceUnavailableException("No fue posible crear la cuenta. Revisa que la contraseña cumpla las reglas de acceso.");
+    // The unique database reservation prevents simultaneous accounts for the same normalized RUT.
+    const identity=await this.repository.create<Row>("control_user_login_ruts",{rut,userId:null});
+    let createdId:string|null=null,linked=false;
+    try{
+      if(mode==="password"){
+        const{data,error}=await supabase.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name:profile.name},app_metadata:{role,job_position_id:profile.jobPositionId,provisioned_by_administration:true}});
+        if(error||!data.user){
+          if(error?.code==="email_exists"||error?.code==="user_already_exists")throw new ConflictException("Ya existe una cuenta con ese correo.");
+          throw new ServiceUnavailableException("No fue posible crear la cuenta. Revisa que la contraseña cumpla las reglas de acceso.");
+        }
+        createdId=data.user.id;
+        await this.repository.update("control_user_login_ruts",String(identity.id),{userId:createdId});linked=true;
+        await this.audit(actor,"USER_CREATED","USER",createdId,"SUCCESS",null,{rut,email,role,jobPositionId:profile.jobPositionId},"Alta de usuario interno habilitada por administración");
+        return{id:createdId,rut,email,role,jobPositionId:profile.jobPositionId,invitationStatus:"NOT_REQUESTED"};
       }
-      await this.audit(actor,"USER_CREATED","USER",data.user.id,"SUCCESS",null,{email,role,jobPositionId:profile.jobPositionId},"Alta de usuario interno habilitada por administración");
-      return{id:data.user.id,email,role,jobPositionId:profile.jobPositionId,invitationStatus:"NOT_REQUESTED"};
+      const redirectTo=new URL("/equipo",process.env.WEB_ORIGIN||"https://www.zyteron.cl").toString();
+      const{data,error}=await supabase.auth.admin.inviteUserByEmail(email,{data:{full_name:profile.name},redirectTo});
+      if(error||!data.user)throw new ServiceUnavailableException("No fue posible enviar la invitación. Revisa la configuración de correo de acceso e inténtalo nuevamente.");
+      if(data.user.app_metadata.role)throw new ConflictException("La cuenta ya tiene un rol. No se modificó su acceso.");
+      await this.repository.update("control_user_login_ruts",String(identity.id),{userId:data.user.id});linked=true;
+      const result=await supabase.auth.admin.updateUserById(data.user.id,{app_metadata:{...data.user.app_metadata,role,job_position_id:profile.jobPositionId}});
+      if(result.error){
+        await this.audit(actor,"USER_INVITATION_ROLE_FAILED","USER",data.user.id,"FAILED",null,{rut,email},"Alta de usuario interno");
+        throw new ServiceUnavailableException("La invitación se emitió, pero el rol no pudo asignarse. La cuenta permanece sin acceso; requiere revisión en Seguridad.");
+      }
+      await this.audit(actor,"USER_INVITED","USER",data.user.id,"SUCCESS",null,{rut,email,role,jobPositionId:profile.jobPositionId},"Alta de usuario interno");
+      return{id:data.user.id,rut,email,role,jobPositionId:profile.jobPositionId,invitationStatus:"SENT"};
+    }catch(error){
+      if(!linked){
+        if(createdId)await supabase.auth.admin.deleteUser(createdId).catch(()=>{});
+        await this.repository.releaseUserRut(String(identity.id));
+      }
+      throw error;
     }
-    const redirectTo=new URL("/equipo",process.env.WEB_ORIGIN||"https://www.zyteron.cl").toString();
-    const{data,error}=await supabase.auth.admin.inviteUserByEmail(email,{data:{full_name:profile.name},redirectTo});
-    if(error||!data.user){
-      if(error?.code==="email_exists"||error?.code==="user_already_exists")throw new ConflictException("Ya existe una cuenta con ese correo.");
-      throw new ServiceUnavailableException("No fue posible enviar la invitación. Revisa la configuración de correo de acceso e inténtalo nuevamente.");
-    }
-    if(data.user.app_metadata.role)throw new ConflictException("La cuenta ya tiene un rol. No se modificó su acceso.");
-    const result=await supabase.auth.admin.updateUserById(data.user.id,{app_metadata:{...data.user.app_metadata,role,job_position_id:profile.jobPositionId}});
-    if(result.error){
-      await this.audit(actor,"USER_INVITATION_ROLE_FAILED","USER",data.user.id,"FAILED",null,{email},"Alta de usuario interno");
-      throw new ServiceUnavailableException("La invitación se emitió, pero el rol no pudo asignarse. La cuenta permanece sin acceso; requiere revisión en Seguridad.");
-    }
-    await this.audit(actor,"USER_INVITED","USER",data.user.id,"SUCCESS",null,{email,role,jobPositionId:profile.jobPositionId},"Alta de usuario interno");
-    return{id:data.user.id,email,role,jobPositionId:profile.jobPositionId,invitationStatus:"SENT"};
   }
   async updateUserProfile(id:string,input:Row,actor:SecurityActor){
     this.assertAdmin(actor);
     if(input.role!==undefined)throw new BadRequestException("El cambio de rol requiere verificación MFA mediante la operación de roles.");
-    const profile=await this.userProfile(input),supabase=this.repository.supabase;
+    const rut=this.userRut(input.rut),profile=await this.userProfile(input),supabase=this.repository.supabase;
     if(!supabase)throw new ServiceUnavailableException("La gestión de cuentas no está configurada.");
     const{data:current,error}=await supabase.auth.admin.getUserById(id);
     if(error||!current.user)throw new BadRequestException("Usuario no encontrado.");
     if(current.user.app_metadata.role==="PORTAL_CLIENT")throw new ForbiddenException("Las cuentas de clientes se administran desde su portal.");
+    const existing=(await this.repository.list<{rut:string}>("control_user_login_ruts",{userId:id}))[0];
+    if(existing&&existing.rut!==rut)throw new BadRequestException("El RUT registrado no puede cambiarse desde la edición de nombre y cargo.");
+    if(!existing)await this.repository.create("control_user_login_ruts",{rut,userId:id});
     const{error:updateError}=await supabase.auth.admin.updateUserById(id,{user_metadata:{...current.user.user_metadata,full_name:profile.name},app_metadata:{...current.user.app_metadata,job_position_id:profile.jobPositionId}});
-    if(updateError)throw new ServiceUnavailableException("No fue posible actualizar el usuario.");
-    await this.audit(actor,"USER_PROFILE_UPDATED","USER",id,"SUCCESS",{jobPositionId:current.user.app_metadata.job_position_id??null},profile,"Actualización de cargo y nombre");
-    return{id,...profile};
+    if(updateError)throw new ServiceUnavailableException("El RUT está registrado, pero no fue posible actualizar el nombre y cargo. Reintenta la edición.");
+    await this.audit(actor,"USER_PROFILE_UPDATED","USER",id,"SUCCESS",{rut:existing?.rut??null,jobPositionId:current.user.app_metadata.job_position_id??null},{rut,...profile},"Actualización de identidad, cargo y nombre");
+    return{id,rut,...profile};
   }
 
   async workspace(actor:SecurityActor):Promise<SecurityWorkspace>{

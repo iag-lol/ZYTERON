@@ -12,9 +12,27 @@ test.after(() => {
   if (originalKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
   else process.env.SUPABASE_SERVICE_ROLE_KEY = originalKey;
 });
-function setup(role = "EJECUTIVA_VENTAS", claimsRole = role, bannedUntil: string | null = null) {
+function setup(
+  role = "EJECUTIVA_VENTAS",
+  claimsRole = role,
+  bannedUntil: string | null = null,
+  linked = true,
+) {
   const calls: Array<{ url: string; headers: Headers }> = [];
   const authClient = {
+    from() {
+      return {
+        select() {
+          return this;
+        },
+        eq() {
+          return this;
+        },
+        async maybeSingle() {
+          return { data: linked ? { rut: "12345678-5" } : null, error: null };
+        },
+      };
+    },
     auth: {
       async getUser() {
         return {
@@ -35,6 +53,19 @@ function setup(role = "EJECUTIVA_VENTAS", claimsRole = role, bannedUntil: string
   };
   return { dependencies: { authClient, forward }, calls };
 }
+test("una cuenta sin RUT vinculado no alcanza los módulos internos", async () => {
+  const { dependencies, calls } = setup("EJECUTIVA_VENTAS", "EJECUTIVA_VENTAS", null, false);
+  const result = await handleStaffControlRequest(
+    new Request("https://zyteron.cl/api/control-core/api/leads", {
+      headers: { authorization: "Bearer staff-token" },
+    }),
+    ["api", "leads"],
+    Buffer.alloc(0),
+    dependencies,
+  );
+  assert.equal(result.status, 403);
+  assert.equal(calls.length, 0);
+});
 test("el equipo conserva su identidad aunque el navegador incluya una cookie administrativa", async () => {
   const { dependencies, calls } = setup();
   const request = new Request("https://www.zyteron.cl/api/control-core/api/leads?page=2", {

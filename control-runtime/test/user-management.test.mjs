@@ -8,19 +8,20 @@ import {Reflector} from '@nestjs/core';
 
 const actor={userId:'10000000-0000-4000-8000-000000000001',role:'GERENTE_GENERAL',aal:'aal1',sessionId:'native:test',requestId:'test'};
 const position='20000000-0000-4000-8000-000000000001';
-const input={name:'Ejecutiva de prueba',email:'ventas@example.test',role:'EJECUTIVA_VENTAS',jobPositionId:position};
+const input={rut:'12.345.678-5',mode:'invitation',name:'Ejecutiva de prueba',email:'ventas@example.test',role:'EJECUTIVA_VENTAS',jobPositionId:position};
 function setup({existing=[],inviteError=null,updateError=null,configured=[]}={}){
-  const calls=[],audits=[];
+  const calls=[],audits=[],mappings=[];
   const admin={
+    async deleteUser(id){calls.push(['delete',id]);return{error:null};},
     async createUser(value){calls.push(['create',value]);return{data:{user:{id:'new-user'}},error:null};},
     async listUsers({page}){calls.push(['list',page]);return{data:{users:page===1?existing:[]},error:null};},
     async inviteUserByEmail(email,options){calls.push(['invite',email,options]);return{data:{user:{id:'new-user',app_metadata:{provider:'email'}}},error:inviteError};},
     async updateUserById(id,value){calls.push(['update',id,value]);return{data:{user:{id,...value}},error:updateError};},
     async getUserById(id){return{data:{user:{id,app_metadata:{role:'EJECUTIVA_VENTAS',provider:'email'},user_metadata:{other:'preserved'}}},error:null};},
   };
-  const repository={supabase:{auth:{admin}},async setting(){return configured;},async list(){return[{id:position,name:'Ejecutiva de ventas',active:true}];},async get(){return{active:true};},async create(table,value){audits.push([table,value]);return value;}};
+  const repository={supabase:{auth:{admin}},async setting(){return configured;},async list(table,filters={}){return table==='job_positions'?[{id:position,name:'Ejecutiva de ventas',active:true}]:table==='control_user_login_ruts'?mappings.filter(row=>!filters.userId||row.userId===filters.userId):[];},async get(){return{active:true};},async create(table,value){if(table==='control_user_login_ruts'){if(mappings.some(row=>row.rut===value.rut||value.userId&&row.userId===value.userId))throw Error('El RUT ya está registrado en otra cuenta.');const row={id:'reservation-'+mappings.length,...value};mappings.push(row);return row;}audits.push([table,value]);return value;},async update(table,id,patch){const row=mappings.find(item=>item.id===id);Object.assign(row,patch);return row;},async releaseUserRut(id){const index=mappings.findIndex(row=>row.id===id&&row.userId===null);if(index>=0)mappings.splice(index,1);}};
   const service=new SecurityService(repository,{},{});
-  return{service,calls,audits,repository};
+  return{service,calls,audits,repository,mappings};
 }
 test('el alta invita sin contraseñas y asigna únicamente el rol solicitado con cargo canónico',async()=>{
   const{service,calls,audits}=setup();
@@ -66,7 +67,7 @@ test('fallo del correo no asigna acceso y fallo del rol informa estado parcial',
   const failedRole=setup({updateError:new Error('Auth unavailable')});await assert.rejects(failedRole.service.createUser(input,actor),/permanece sin acceso/);assert.equal(failedRole.audits[0][1].result,'FAILED');
 });
 test('editar nombre y cargo conserva metadatos y no permite cambiar el rol por esa vía',async()=>{
-  const{service,calls}=setup();await service.updateUserProfile('user',{name:'Nombre actualizado',jobPositionId:position},actor);
+  const{service,calls}=setup();await service.updateUserProfile('user',{rut:'12345678-5',name:'Nombre actualizado',jobPositionId:position},actor);
   const update=calls.find(([type])=>type==='update')[2];assert.equal(update.app_metadata.role,'EJECUTIVA_VENTAS');assert.equal(update.user_metadata.other,'preserved');assert.equal(update.user_metadata.full_name,'Nombre actualizado');
   await assert.rejects(service.updateUserProfile('user',{...input,role:'GERENTE_GENERAL'},actor),/MFA/);
 });
@@ -81,4 +82,19 @@ test('el guard real rechaza altas de usuarios desde ventas y admite el catálogo
     assert.equal(await guard.canActivate(context(OrganizationController,'position','GERENTE_GENERAL')),true);
     assert.equal(await guard.canActivate(context(OrganizationController,'position','RRHH')),true);
   }finally{if(beforeMode===undefined)delete process.env.AUTH_MODE;else process.env.AUTH_MODE=beforeMode;if(beforeNode===undefined)delete process.env.NODE_ENV;else process.env.NODE_ENV=beforeNode;}
+});
+test('RUT obligatorio y DV correcto se validan antes de crear o invitar',async()=>{
+  for(const rut of [undefined,'','12.345.678-9','12345678-5<script>']){const{service,calls}=setup();await assert.rejects(service.createUser({...input,rut},actor),/RUT chileno inválido/);assert.equal(calls.length,0);}
+});
+test('el mismo RUT con y sin puntos no puede crear dos cuentas simultáneas',async()=>{
+  const{service,calls,mappings}=setup();const results=await Promise.allSettled([service.createUser({...input,mode:'password',password:'TestPassword123'},actor),service.createUser({...input,rut:'12345678-5',email:'other@example.test',mode:'password',password:'TestPassword123'},actor)]);
+  assert.equal(results.filter(item=>item.status==='fulfilled').length,1);assert.equal(calls.filter(([type])=>type==='create').length,1);assert.equal(mappings[0].rut,'12345678-5');
+});
+test('fallar el alta libera la reserva del RUT para reintentar',async()=>{
+  const{service,mappings}=setup({inviteError:{code:'email_rate_limit_exceeded'}});await assert.rejects(service.createUser(input,actor));assert.equal(mappings.length,0);
+});
+test('si falla la vinculación se elimina solo la cuenta recién creada y se libera su reserva',async()=>{
+  const{service,repository,calls,mappings}=setup();repository.update=async()=>{throw Error('DATABASE_UNAVAILABLE');};
+  await assert.rejects(service.createUser({...input,mode:'password',password:'TestPassword123'},actor),/DATABASE_UNAVAILABLE/);
+  assert.deepEqual(calls.find(([type])=>type==='delete'),['delete','new-user']);assert.equal(mappings.length,0);
 });

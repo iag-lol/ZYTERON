@@ -9,10 +9,11 @@ import {
   KeyRound,
   LoaderCircle,
   LockKeyhole,
-  Mail,
+  IdCard,
   ShieldCheck,
 } from "lucide-react";
-import { browserSupabase } from "@control/lib/auth-client";
+import { browserSupabase,signInWithRut } from "@control/lib/auth-client";
+import {normalizeUserRut} from "@control/lib/user-rut";
 import { validateNewPassword } from "@control/lib/password-policy";
 
 function AuthIdentity({ recovery = false }: { recovery?: boolean }) {
@@ -48,7 +49,7 @@ function AuthIdentity({ recovery = false }: { recovery?: boolean }) {
 }
 
 export function AuthScreen({ configurationError }: { configurationError?: string }) {
-  const [email, setEmail] = useState("");
+  const [rut, setRut] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(configurationError ?? "");
   const [notice, setNotice] = useState("");
@@ -66,10 +67,10 @@ export function AuthScreen({ configurationError }: { configurationError?: string
       setBusy(true);
       setError("");
       setNotice("");
-      const { error: loginError } = await client.auth.signInWithPassword({ email, password });
-      if (loginError) throw loginError;
-    } catch {
-      setError("No pudimos validar tus credenciales. Revisa los datos e inténtalo nuevamente.");
+      if(!normalizeUserRut(rut))throw new Error("Ingresa un RUT válido, incluido su dígito verificador.");
+      await signInWithRut(rut,password);
+    } catch(reason) {
+      setError(reason instanceof Error?reason.message:"RUT o contraseña incorrectos.");
     } finally {
       setBusy(false);
     }
@@ -77,8 +78,8 @@ export function AuthScreen({ configurationError }: { configurationError?: string
 
   async function reset() {
     const client = browserSupabase();
-    if (!email) {
-      setError("Ingresa tu correo corporativo para continuar.");
+    if (!normalizeUserRut(rut)) {
+      setError("Ingresa tu RUT para continuar.");
       return;
     }
     if (!client) {
@@ -89,11 +90,9 @@ export function AuthScreen({ configurationError }: { configurationError?: string
     try {
       setBusy(true);
       setError("");
-      const { error: resetError } = await client.auth.resetPasswordForEmail(email, {
-        redirectTo: new URL(window.location.pathname.startsWith("/equipo")?"/equipo":"/dashboard", window.location.origin).toString(),
-      });
-      if (resetError) throw resetError;
-      setNotice("Si la cuenta está registrada, recibirás instrucciones en tu correo.");
+      const response=await fetch("/api/equipo/auth",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({rut,action:"recover"}),cache:"no-store"});
+      if(!response.ok)throw new Error("RECOVERY_UNAVAILABLE");
+      setNotice("Si el RUT está registrado, recibirás instrucciones en el correo de esa cuenta.");
     } catch {
       setError("No fue posible procesar la solicitud. Inténtalo nuevamente en unos minutos.");
     } finally {
@@ -114,16 +113,17 @@ export function AuthScreen({ configurationError }: { configurationError?: string
           </div>
 
           <label>
-            Correo corporativo
+            RUT
             <span className="authInput">
-              <Mail aria-hidden="true" />
+              <IdCard aria-hidden="true" />
               <input
-                type="email"
+                type="text"
                 autoComplete="username"
-                placeholder="nombre@empresa.cl"
+                placeholder="12.345.678-5"
                 required
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                value={rut}
+                maxLength={20}
+                onChange={(event) => setRut(event.target.value)}
               />
             </span>
           </label>

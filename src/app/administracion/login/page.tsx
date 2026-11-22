@@ -5,6 +5,8 @@ import { Suspense, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff, IdCard, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { siteConfig } from "@/config/site";
+import {signInWithRut} from "@control/lib/auth-client";
+import {normalizeUserRut} from "@control/lib/user-rut";
 
 function AdminLoginInner() {
   const searchParams = useSearchParams();
@@ -26,26 +28,14 @@ function AdminLoginForm({ queryHasError }: { queryHasError: boolean }) {
     setError("");
     setHideQueryError(true);
     startTransition(async () => {
-      // Con RUT → acceso de partner/ejecutivo/gestor. Sin RUT → admin (solo contraseña).
+      // Las cuentas del equipo se autentican por RUT. La clave administrativa conserva su sesión propia.
       if (rut.trim()) {
         try {
-          const res = await fetch("/api/comercial/login", {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ rut: rut.trim(), password: pwd }),
-          });
-          const data = (await res.json().catch(() => null)) as {
-            redirect?: string;
-            error?: string;
-          } | null;
-          if (res.ok && data?.redirect) {
-            window.location.assign(data.redirect);
-          } else {
-            setError(data?.error || "RUT o contraseña incorrectos");
-          }
-        } catch {
-          setError("No se pudo conectar. Intenta nuevamente.");
+          if(!normalizeUserRut(rut))throw new Error("Ingresa un RUT válido, incluido su dígito verificador.");
+          await signInWithRut(rut.trim(),pwd);
+          window.location.assign("/equipo");
+        } catch(reason) {
+          setError(reason instanceof Error?reason.message:"RUT o contraseña incorrectos");
         }
         return;
       }
@@ -109,13 +99,13 @@ function AdminLoginForm({ queryHasError }: { queryHasError: boolean }) {
           <h1 className="text-[20px] font-extrabold tracking-tight text-slate-900">
             Tu equipo, conectado.
           </h1>
-          <a href="/equipo" className="mt-3 block text-sm font-semibold text-[#284f3b]">Acceso del equipo con correo y contraseña →</a>
+          <a href="/equipo" className="mt-3 block text-sm font-semibold text-[#284f3b]">Acceso del equipo con RUT y contraseña →</a>
 
           <form className="mt-6 space-y-4" onSubmit={submit}>
             <label className="block">
               <span className="mb-1.5 flex items-baseline justify-between">
                 <span className="text-[12.5px] font-bold text-slate-700">RUT</span>
-                <span className="text-[11px] text-slate-400">Opcional</span>
+                <span className="text-[11px] text-slate-400">Obligatorio para el equipo</span>
               </span>
               <span className="relative block">
                 <IdCard className="pointer-events-none absolute top-1/2 left-3.5 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" />
@@ -125,7 +115,7 @@ function AdminLoginForm({ queryHasError }: { queryHasError: boolean }) {
                   type="text"
                   value={rut}
                   onChange={(e) => setRut(e.target.value)}
-                  placeholder="12.345.678-9"
+                  placeholder="12.345.678-5"
                   autoComplete="username"
                   className={field}
                 />
