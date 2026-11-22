@@ -35,7 +35,7 @@
   max-width: 650px;
   font-size: 14px;
   line-height: 1.6;
-  color: #e2e8f0;
+  color: var(--sw-muted);
   margin: 0;
 }
 :where(.zy-full-control) .sw-eyebrow {
@@ -54,7 +54,7 @@
   flex-wrap: wrap;
   margin-top: 12px;
   font-size: 11px;
-  color: #e2e8f0;
+  color: var(--sw-muted);
 }
 :where(.zy-full-control) .sw-hero-tags span {
   display: flex;
