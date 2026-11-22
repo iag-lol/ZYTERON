@@ -1599,3 +1599,12 @@
 .swx-stack .swx-empty { gap: 4px; padding: 14px 12px 8px; }
 .swx-stack .swx-empty > span { width: 36px; height: 36px; border-radius: 11px; }
 .swx-stack .swx-empty h3 { margin-top: 4px; font-size: 14px; }
+/* Ambas columnas terminan a la misma altura: el último panel de la más corta se estira. */
+.swx-view > .swx-home-grid:not(.even) { align-items: stretch; }
+.swx-home-grid > .swx-stack { display: flex; flex-direction: column; }
+.swx-home-grid > .swx-stack > :last-child { flex: 1 1 auto; }
+/* El gráfico ocupa todo el alto disponible cuando su panel se estira. */
+.swx-columns-plot { height: var(--plot-h, 132px); }
+.swx-home-grid > .swx-stack > section:last-child { display: flex; flex-direction: column; }
+.swx-home-grid > .swx-stack > section:last-child > .swx-columns { display: flex; flex: 1; flex-direction: column; }
+.swx-home-grid > .swx-stack > section:last-child .swx-columns-plot { flex: 1; height: auto; min-height: var(--plot-h, 132px); }

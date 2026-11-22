@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   CalendarPlus,
   CornerDownLeft,
@@ -106,7 +106,7 @@ export function Columns({
   const total = points.reduce((t, p) => t + p.value, 0);
   return (
     <figure className="swx-columns" aria-label={label}>
-      <div className="swx-columns-plot" style={{ height }} onPointerLeave={() => setActive(null)}>
+      <div className="swx-columns-plot" style={{ "--plot-h": `${height}px` } as CSSProperties} onPointerLeave={() => setActive(null)}>
         <span className="swx-grid" style={{ bottom: "50%" }} aria-hidden="true" />
         {points.map((p, i) => (
           <button
