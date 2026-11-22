@@ -12,6 +12,9 @@ export type Stage =
 export interface WorkRecord {
   id: string;
   owner_id: string;
+  owner_type?: "ADMIN" | "EXECUTIVE";
+  converted_at?: string | null;
+  purchase_confirmed?: boolean;
   lead_id: string;
   client_id: string | null;
   client_created: boolean;

@@ -46,7 +46,8 @@ export class SalesWorkspaceRepository {
   }
   async record(id: string, actor: WorkActor) {
     let query = this.db().from("sales_work_records").select("*").eq("id", id);
-    if (actor.role === "EJECUTIVA_VENTAS") query = query.eq("owner_id", actor.userId);
+    if (actor.role === "EJECUTIVA_VENTAS")
+      query = query.eq("owner_id", actor.userId).eq("owner_type", "EXECUTIVE");
     const { data, error } = await query.maybeSingle();
     if (error) throw new ServiceUnavailableException("No fue posible consultar el registro.");
     if (!data) throw new NotFoundException("Registro no encontrado.");
@@ -58,6 +59,7 @@ export class SalesWorkspaceRepository {
     const { data, error } = await query.maybeSingle();
     if (error) throw new ServiceUnavailableException("No fue posible consultar la propuesta.");
     if (!data) throw new NotFoundException("Propuesta no encontrada.");
+    if (actor.role === "EJECUTIVA_VENTAS") await this.record(String(data.record_id), actor);
     return data as Row;
   }
   async write(actor: WorkActor, action: string, target: string | null, payload: Row) {
@@ -73,15 +75,17 @@ export class SalesWorkspaceRepository {
         SALES_FORBIDDEN: "Esta operación requiere autorización de administración.",
         SALES_NOT_FOUND: "Registro no encontrado.",
         SALES_STALE: "El registro cambió o ya fue revisado. Actualiza la pantalla.",
-        SALES_RUT_REQUIRED: "Completa el RUT válido del cliente antes de aprobar su alta.",
+        SALES_RUT_REQUIRED: "Completa el RUT válido del contacto antes de preparar su facturación.",
         SALES_CLIENT_ALREADY_EXISTS:
           "El RUT ya pertenece a una ficha de cliente. Revisa su asignación desde Clientes.",
         SALES_CONTACT_REVIEW_REQUIRED:
           "Aprueba los datos del cliente antes de autorizar su propuesta.",
         SALES_APPROVED_PROPOSAL_REQUIRED:
           "Se requiere una propuesta aprobada y compartida antes de registrar aceptación.",
+        SALES_NO_EXECUTIVE_COMMISSION:
+          "Los contactos de administración no generan comisión de ejecutivo.",
         SALES_CLIENT_REQUIRED:
-          "Aprueba y vincula el alta del cliente antes de validar la aceptación.",
+          "Completa y valida los datos del contacto antes de confirmar su compra.",
         SALES_VERIFIED_PAYMENT_REQUIRED:
           "No existe un cobro completo confirmado que permita generar la comisión.",
         SALES_SETTLEMENT_LOCKED:

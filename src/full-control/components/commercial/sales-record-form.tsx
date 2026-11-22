@@ -57,8 +57,8 @@ export function SalesRecordForm({
   return (
     <Drawer
       open
-      title={initial ? "Editar contacto y cliente" : "Nuevo contacto o cliente"}
-      subtitle="Registra la conversación y la necesidad. Administración revisará el alta."
+      title={initial ? "Editar contacto y cliente" : "Nuevo contacto comercial"}
+      subtitle="Registra la conversación y la necesidad. Se convierte en cliente con una compra confirmada."
       onClose={onClose}
       wide
       className="sw-drawer"
@@ -138,7 +138,7 @@ export function SalesRecordForm({
             <div className="sw-form-grid">
               <Field
                 label="RUT de la empresa"
-                hint="Obligatorio para que administración apruebe el alta como cliente."
+                hint="Necesario al validar la aceptación y preparar la facturación."
               >
                 <input
                   maxLength={20}
@@ -206,8 +206,8 @@ export function SalesRecordForm({
               />
             </Field>
             <div className="sw-note">
-              El registro quedará visible para administración. El alta como cliente y las propuestas
-              requieren su validación.
+              El registro quedará visible para administración. La conversión requiere una compra
+              confirmada; las propuestas requieren su validación.
             </div>
           </>
         )}
@@ -235,7 +235,9 @@ export function SalesRecordForm({
               ? "Guardando…"
               : step === 1
                 ? "Continuar"
-                : "Guardar y solicitar validación"}
+                : role === "GERENTE_GENERAL"
+                  ? "Registrar contacto"
+                  : "Guardar y solicitar validación"}
           </button>
         </div>
       </form>

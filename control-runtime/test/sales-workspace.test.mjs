@@ -89,7 +89,7 @@ function fixture(stamp) {
       return quote.quote_id;
     },
   };
-  return { service: new SalesWorkspaceService(repo, {}, {}), calls, writes };
+  return { service: new SalesWorkspaceService(repo, {}, {}), calls, writes, repo };
 }
 test("el tablero fuerza la cartera del JWT, ignora propietario ajeno y oculta costos, utilidad y recibos", async () => {
   const f = fixture();
@@ -244,4 +244,53 @@ test("el período del informe usa la fecha de Chile en el borde de medianoche", 
   const board = await f.service.board(a, { from: "2026-11-22", to: "2026-11-22" });
   assert.equal(board.summary.contacts, 1);
   assert.equal(board.records.length, 1);
+});
+test("el tablero distingue ficha para facturación de cliente con compra, e invalida la conversión sin cobro", async () => {
+  const f = fixture(),
+    original = f.repo.rows;
+  let hasReceipt = true,
+    converted = false;
+  f.repo.rows = async (table, ...args) =>
+    table === "sales_work_records"
+      ? [
+          {
+            ...record,
+            owner_type: "EXECUTIVE",
+            converted_at: converted ? record.created_at : null,
+            conversion_receipt_key: converted ? "quote:33:11" : null,
+          },
+        ]
+      : table === "sales_work_verified_receipts" && !hasReceipt
+        ? []
+        : original(table, ...args);
+  assert.equal((await f.service.board(manager)).summary.generatedClients, 0);
+  converted = true;
+  assert.equal((await f.service.board(manager)).summary.generatedClients, 1);
+  hasReceipt = false;
+  const board = await f.service.board(manager);
+  assert.equal(board.summary.generatedClients, 0);
+  assert.equal(board.records[0].purchase_confirmed, false);
+});
+test("administración registra contactos y propuestas; el filtro corporativo no usa columnas inexistentes ni revela cartera ajena", async () => {
+  const f = fixture(),
+    original = f.repo.rows;
+  f.repo.rows = async (table, ...args) =>
+    table === "sales_work_records"
+      ? [record, { ...record, id: other, owner_id: manager.userId, owner_type: "ADMIN" }]
+      : original(table, ...args);
+  await f.service.create(manager, {
+    requestId: crypto.randomUUID(),
+    company_name: "Empresa corporativa",
+    contact_name: "Contacto",
+    email: "contacto@example.invalid",
+    interest: "Plataforma de operación",
+    owner_id: other,
+  });
+  assert.equal(f.writes[0][0].role, "GERENTE_GENERAL");
+  assert.equal(f.writes[0][3].owner_id, undefined);
+  const board = await f.service.board(manager, { owner: "administration" });
+  assert.equal(board.records.length, 1);
+  assert.equal(board.records[0].owner_type, "ADMIN");
+  assert.equal(board.proposals.length, 0);
+  for (const call of f.calls) assert.equal(call.filter?.owner_type, undefined);
 });

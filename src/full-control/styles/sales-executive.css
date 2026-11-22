@@ -1,49 +1,33 @@
 :where(.zy-full-control) .sw {
-  --sw-ink: #14382e;
-  --sw-green: #12664e;
-  --sw-lime: #d7f58b;
-  --sw-line: #dce7df;
-  --sw-muted: #64786f;
+  --sw-ink: #172b4d;
+  --sw-green: #244f99;
+  --sw-lime: #64748b;
+  --sw-line: #e2e8f0;
+  --sw-muted: #475569;
   max-width: 1540px;
   margin: 0 auto;
   padding: 30px 34px 64px;
   color: var(--sw-ink);
-  background: radial-gradient(ellipse at top right, #eff8e8 0, transparent 42%);
+  background: #f6f8fc;
   min-height: calc(100vh - 72px);
 }
 :where(.zy-full-control) .sw-hero {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 24px;
-  padding: 32px 34px;
-  margin-bottom: 22px;
-  border-radius: 24px;
-  color: #f8fff8;
-  background: linear-gradient(118deg, #103d30, #17694f);
-  box-shadow: 0 12px 32px #14382e12;
-  position: relative;
-  overflow: hidden;
-}
-:where(.zy-full-control) .sw-hero:after {
-  content: "";
-  position: absolute;
-  right: 5%;
-  top: -100px;
-  width: 300px;
-  height: 300px;
-  border: 1px solid #e5ffc31a;
-  border-radius: 50%;
-  pointer-events: none;
-  box-shadow:
-    0 0 0 55px #e5ffc307,
-    0 0 0 110px #e5ffc305;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 0 0 22px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--sw-line);
+  color: var(--sw-ink);
+  background: transparent;
 }
 :where(.zy-full-control) .sw h1 {
-  font-size: clamp(26px, 2.6vw, 38px);
-  letter-spacing: -1px;
+  font-size: clamp(23px, 2.2vw, 30px);
+  letter-spacing: -0.65px;
   line-height: 1.14;
-  margin: 10px 0 12px;
+  margin: 7px 0 8px;
   font-weight: 750;
   color: inherit;
 }
@@ -51,26 +35,26 @@
   max-width: 650px;
   font-size: 14px;
   line-height: 1.6;
-  color: #d7eadd;
+  color: #e2e8f0;
   margin: 0;
 }
 :where(.zy-full-control) .sw-eyebrow {
   display: block;
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 1.8px;
-  color: #718b7c;
+  letter-spacing: 1.2px;
+  color: #475569;
 }
 :where(.zy-full-control) .sw-hero .sw-eyebrow {
-  color: var(--sw-lime);
+  color: var(--sw-muted);
 }
 :where(.zy-full-control) .sw-hero-tags {
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
-  margin-top: 20px;
+  margin-top: 12px;
   font-size: 11px;
-  color: #dbeedc;
+  color: #e2e8f0;
 }
 :where(.zy-full-control) .sw-hero-tags span {
   display: flex;
@@ -90,24 +74,24 @@
   align-items: center;
   gap: 8px;
   border: 0;
-  background: var(--sw-lime);
-  color: #14382e;
-  padding: 14px 18px;
+  background: #244f99;
+  color: #fff;
+  padding: 12px 16px;
   font-weight: 750;
   font-size: 12px;
   border-radius: 12px;
   cursor: pointer;
-  box-shadow: 0 4px 16px #051b171a;
+  box-shadow: 0 1px 2px #172b4d12;
 }
 :where(.zy-full-control) .sw-refresh {
   display: grid;
   place-items: center;
   width: 43px;
   height: 43px;
-  border: 1px solid #ffffff38;
+  border: 1px solid var(--sw-line);
   border-radius: 12px;
-  color: #fff;
-  background: #ffffff0c;
+  color: #475569;
+  background: #fff;
   cursor: pointer;
 }
 :where(.zy-full-control) .sw-tabs {
@@ -129,18 +113,18 @@
   background: transparent;
   border: 0;
   border-radius: 10px;
-  color: #6a7b70;
+  color: #475569;
   font-size: 12px;
   font-weight: 650;
   cursor: pointer;
 }
 :where(.zy-full-control) .sw-tabs button.active {
-  background: #e5efdf;
-  color: #194b39;
+  background: #f1f5f9;
+  color: #1e293b;
 }
 :where(.zy-full-control) .sw-tabs button > span {
   border-radius: 5px;
-  background: #cce4b7;
+  background: #e2e8f0;
   padding: 1px 5px;
   font-size: 10px;
 }
@@ -154,19 +138,19 @@
   position: relative;
   background: #fff;
   border: 1px solid var(--sw-line);
-  border-radius: 17px;
-  padding: 20px 22px;
-  box-shadow: 0 3px 8px #14382e03;
+  border-radius: 10px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 2px #172b4d05;
 }
 :where(.zy-full-control) .sw-metric-icon {
   display: grid;
   place-items: center;
   width: 35px;
   height: 35px;
-  background: #f0f5e9;
-  color: #38744b;
+  background: #f1f5f9;
+  color: #1e293b;
   border-radius: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 :where(.zy-full-control) .sw-kpis small {
   font-size: 11px;
@@ -182,7 +166,7 @@
 }
 :where(.zy-full-control) .sw-kpis p {
   font-size: 10px;
-  color: #809087;
+  color: #475569;
   margin: 0;
   line-height: 1.5;
 }
@@ -191,7 +175,7 @@
   margin-bottom: 20px;
   background: #fff;
   border: 1px solid var(--sw-line);
-  border-radius: 18px;
+  border-radius: 10px;
   min-width: 0;
 }
 :where(.zy-full-control) .sw-panel h2 {
@@ -237,7 +221,7 @@
   padding: 15px 0;
   background: transparent;
   border: 0;
-  border-bottom: 1px solid #edf1eb;
+  border-bottom: 1px solid #f1f5f9;
   text-align: left;
   cursor: pointer;
   color: var(--sw-ink);
@@ -258,51 +242,12 @@
   color: var(--sw-muted);
 }
 :where(.zy-full-control) .sw-agenda-icon {
-  background: #eef5e8;
-  color: #548447;
+  background: #f1f5f9;
+  color: #1e293b;
   padding: 11px;
   border-radius: 12px;
   display: grid;
   place-items: center;
-}
-:where(.zy-full-control) .sw-flow-panel {
-  background: linear-gradient(130deg, #f7faef, #fbfcf9);
-}
-:where(.zy-full-control) .sw-flow {
-  padding: 0;
-  margin: 20px 0;
-  list-style: none;
-  display: grid;
-  gap: 16px;
-}
-:where(.zy-full-control) .sw-flow li {
-  display: flex;
-  gap: 13px;
-  align-items: flex-start;
-}
-:where(.zy-full-control) .sw-flow li > span {
-  display: grid;
-  place-items: center;
-  background: #e4eed7;
-  border: 1px solid #d6e4c3;
-  color: #3d6649;
-  font-size: 11px;
-  font-weight: 700;
-  min-width: 29px;
-  height: 29px;
-  border-radius: 50%;
-}
-:where(.zy-full-control) .sw-flow div {
-  display: grid;
-  gap: 5px;
-}
-:where(.zy-full-control) .sw-flow b {
-  font-size: 12px;
-}
-:where(.zy-full-control) .sw-flow small {
-  font-size: 11px;
-  color: var(--sw-muted);
-  line-height: 1.5;
 }
 :where(.zy-full-control) .sw-pipeline-summary {
   display: grid;
@@ -313,12 +258,12 @@
 :where(.zy-full-control) .sw-pipeline-summary button {
   display: grid;
   gap: 9px;
-  background: #f5f8f1;
-  border: 1px solid #e6ebdf;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   cursor: pointer;
   padding: 17px 9px;
-  color: #375644;
+  color: #1e293b;
 }
 :where(.zy-full-control) .sw-pipeline-summary strong {
   font-size: 25px;
@@ -333,8 +278,8 @@
   font-size: 10px;
   padding: 6px 10px;
   border-radius: 7px;
-  background: #eff4e8;
-  color: #557147;
+  background: #f1f5f9;
+  color: #1e293b;
   white-space: nowrap;
 }
 :where(.zy-full-control) .sw-overdue {
@@ -351,12 +296,12 @@
   display: flex;
   gap: 9px;
   border: 1px solid var(--sw-line);
-  background: #fbfcfa;
+  background: #f8fafc;
   border-radius: 10px;
   align-items: center;
   padding: 0 12px;
   flex: 1;
-  color: #88958a;
+  color: #475569;
 }
 :where(.zy-full-control) .sw-search input {
   width: 100%;
@@ -371,11 +316,11 @@
 :where(.zy-full-control) .sw select,
 :where(.zy-full-control) .sw-drawer select {
   font-size: 12px;
-  border: 1px solid #dce5db;
+  border: 1px solid #e2e8f0;
   border-radius: 9px;
   padding: 10px;
-  background: #fcfdfb;
-  color: #274a39;
+  background: #f8fafc;
+  color: #1e293b;
   max-width: 100%;
 }
 :where(.zy-full-control) .sw-inline-actions {
@@ -385,20 +330,20 @@
   flex-wrap: wrap;
 }
 :where(.zy-full-control) .sw-icon-button {
-  border: 1px solid #dfe7dc;
+  border: 1px solid #e2e8f0;
   background: #fff;
   border-radius: 8px;
   min-width: 34px;
   height: 34px;
   display: grid;
   place-items: center;
-  color: #6a7e6f;
+  color: #475569;
   cursor: pointer;
 }
 :where(.zy-full-control) .sw-icon-button.selected {
-  background: #e8f0df;
-  color: #235c3f;
-  border-color: #cbdcc2;
+  background: #f1f5f9;
+  color: #1e293b;
+  border-color: #e2e8f0;
 }
 :where(.zy-full-control) .sw-client-grid,
 :where(.zy-full-control) .sw-proposal-grid,
@@ -410,9 +355,9 @@
 }
 :where(.zy-full-control) .sw-client-card {
   min-width: 0;
-  border: 1px solid #dfe7dd;
+  border: 1px solid #e2e8f0;
   background: #fff;
-  border-radius: 14px;
+  border-radius: 10px;
   transition:
     box-shadow 0.15s,
     transform 0.15s;
@@ -445,10 +390,10 @@
   place-items: center;
   width: 37px;
   height: 37px;
-  border: 1px solid #dbe7d2;
+  border: 1px solid #e2e8f0;
   border-radius: 11px;
-  background: #f0f5e8;
-  color: #527345;
+  background: #f1f5f9;
+  color: #1e293b;
   font-weight: 750;
   font-size: 11px;
   flex-shrink: 0;
@@ -457,7 +402,7 @@
   font-size: 14px;
   line-height: 1.4;
   margin: 0 0 5px;
-  color: #214a35;
+  color: #1e293b;
   overflow-wrap: anywhere;
 }
 :where(.zy-full-control) .sw-client-card p {
@@ -474,7 +419,7 @@
   display: flex;
   gap: 5px;
   font-size: 10px;
-  color: #839183;
+  color: #475569;
   margin-top: 10px;
   line-height: 1.4;
 }
@@ -484,15 +429,15 @@
   justify-content: space-between;
   gap: 7px;
   padding-top: 13px;
-  border-top: 1px solid #edf2e7;
+  border-top: 1px solid #f1f5f9;
 }
 :where(.zy-full-control) .sw-status {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   border-radius: 6px;
-  background: #edf2e6;
-  color: #668051;
+  background: #f1f5f9;
+  color: #1e293b;
   font-size: 9px;
   padding: 5px 7px;
   white-space: normal;
@@ -504,8 +449,8 @@
   color: #9f731e;
 }
 :where(.zy-full-control) .sw-status.approved {
-  background: #e7f3e5;
-  color: #397245;
+  background: #f1f5f9;
+  color: #1e293b;
 }
 :where(.zy-full-control) .sw-status.rejected {
   background: #fff0eb;
@@ -514,8 +459,8 @@
 :where(.zy-full-control) .sw-chip {
   display: inline-block;
   border-radius: 6px;
-  background: #f0f5eb;
-  color: #5c7450;
+  background: #f1f5f9;
+  color: #1e293b;
   font-size: 9px;
   padding: 5px 7px;
   line-height: 1.5;
@@ -531,8 +476,8 @@
   padding-bottom: 14px;
 }
 :where(.zy-full-control) .sw-kanban > section {
-  background: #f4f7f0;
-  border: 1px solid #e6ecdf;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
   border-radius: 13px;
   padding: 11px;
   min-height: 210px;
@@ -550,7 +495,7 @@
 :where(.zy-full-control) .sw-kanban > section > header > span {
   font-size: 10px;
   border-radius: 4px;
-  background: #e2ebd7;
+  background: #e2e8f0;
   padding: 2px 5px;
 }
 :where(.zy-full-control) .sw-kanban .sw-client-card {
@@ -559,7 +504,7 @@
 :where(.zy-full-control) .sw-empty {
   text-align: center;
   padding: 35px 20px;
-  color: #88967f;
+  color: #475569;
   display: flex;
   align-items: center;
   flex-direction: column;
@@ -568,20 +513,20 @@
   font-size: 14px;
   margin: 15px 0 8px;
   font-weight: 650;
-  color: #486440;
+  color: #1e293b;
 }
 :where(.zy-full-control) .sw-empty p {
   font-size: 12px;
   line-height: 1.7;
-  color: #7b8a72;
+  color: #475569;
   max-width: 460px;
   margin: 0;
 }
 :where(.zy-full-control) .sw-proposal-card,
 :where(.zy-full-control) .sw-plan,
 :where(.zy-full-control) .sw-review-card {
-  border: 1px solid #dfe7db;
-  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
   padding: 21px;
   display: flex;
   flex-direction: column;
@@ -602,7 +547,7 @@
 :where(.zy-full-control) .sw-review-card h3 {
   font-size: 15px;
   margin: 0;
-  color: #254b35;
+  color: #1e293b;
   line-height: 1.5;
 }
 :where(.zy-full-control) .sw-proposal-card p,
@@ -610,25 +555,25 @@
 :where(.zy-full-control) .sw-review-card p {
   font-size: 12px;
   line-height: 1.7;
-  color: #6c7d69;
+  color: #475569;
   margin: 0;
   overflow-wrap: anywhere;
 }
 :where(.zy-full-control) .sw-proposal-card small,
 :where(.zy-full-control) .sw-review-card small {
   font-size: 10px;
-  color: #8a9682;
+  color: #475569;
   line-height: 1.5;
 }
 :where(.zy-full-control) .sw-proposal-amount {
   font-size: 26px;
   letter-spacing: -0.8px;
-  color: #1b5237;
+  color: #1e293b;
 }
 :where(.zy-full-control) .sw-proposal-card details {
   font-size: 11px;
-  color: #6d7f63;
-  border-top: 1px solid #e9eee3;
+  color: #475569;
+  border-top: 1px solid #f1f5f9;
   padding-top: 12px;
   width: 100%;
 }
@@ -657,8 +602,8 @@
   display: flex;
   align-items: flex-end;
   gap: 20px;
-  background: #f3f7ed;
-  border: 1px solid #e2ebd8;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
   border-radius: 13px;
   padding: 20px;
   margin: 18px 0;
@@ -668,7 +613,7 @@
   line-height: 1.85;
   font-size: 13px;
   flex: 1;
-  color: #4b6746;
+  color: #1e293b;
 }
 :where(.zy-full-control) .sw-company-links {
   display: flex;
@@ -681,27 +626,27 @@
   align-items: center;
   gap: 7px;
   font-size: 12px;
-  color: #3a7550;
+  color: #1e293b;
   font-weight: 650;
 }
 :where(.zy-full-control) .sw-discovery {
   font-size: 12px;
   line-height: 1.9;
-  color: #68825d;
+  color: #475569;
 }
 :where(.zy-full-control) .sw-plan {
   gap: 15px;
 }
 :where(.zy-full-control) .sw-plan > strong {
   font-size: 22px;
-  color: #225a38;
+  color: #1e293b;
   letter-spacing: -0.5px;
 }
 :where(.zy-full-control) .sw-plan > strong small {
   display: block;
   font-weight: 450;
   font-size: 10px;
-  color: #8b9a81;
+  color: #475569;
   margin-top: 4px;
   letter-spacing: 0;
 }
@@ -710,7 +655,7 @@
   display: grid;
   gap: 9px;
   font-size: 11px;
-  color: #677f5d;
+  color: #475569;
   padding: 0;
   margin: 0 0 5px;
 }
@@ -723,7 +668,7 @@
 :where(.zy-full-control) .sw-plan li svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: #729a5e;
+  color: #475569;
 }
 :where(.zy-full-control) .sw-plan > button {
   margin-top: auto;
@@ -733,7 +678,7 @@
   gap: 12px;
   align-items: flex-end;
   background: #fff;
-  border: 1px solid #e0e8da;
+  border: 1px solid #e2e8f0;
   padding: 14px 18px;
   border-radius: 13px;
   margin-bottom: 20px;
@@ -747,7 +692,7 @@
 }
 :where(.zy-full-control) .sw-table-wrap {
   overflow: auto;
-  border: 1px solid #e5eadf;
+  border: 1px solid #e2e8f0;
   border-radius: 11px;
   margin: 20px 0;
 }
@@ -758,18 +703,18 @@
   white-space: nowrap;
 }
 :where(.zy-full-control) .sw th {
-  background: #f5f8f0;
+  background: #f1f5f9;
   font-size: 10px;
   letter-spacing: 0.3px;
   font-weight: 700;
-  color: #708364;
+  color: #475569;
   text-align: left;
   padding: 14px 16px;
 }
 :where(.zy-full-control) .sw td {
   padding: 16px;
-  border-top: 1px solid #e9eee2;
-  color: #506b44;
+  border-top: 1px solid #f1f5f9;
+  color: #1e293b;
 }
 :where(.zy-full-control) .sw-report-list {
   display: grid;
@@ -783,11 +728,11 @@
   align-items: center;
   padding: 17px 18px;
   background: #fff;
-  border: 1px solid #e2e9da;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   text-align: left;
   cursor: pointer;
-  color: #5b774e;
+  color: #1e293b;
 }
 :where(.zy-full-control) .sw-report-list div {
   display: grid;
@@ -799,18 +744,18 @@
 }
 :where(.zy-full-control) .sw-report-list small {
   font-size: 10px;
-  color: #8c9a81;
+  color: #475569;
 }
 :where(.zy-full-control) .sw-commission-rule {
   display: flex;
   gap: 14px;
   align-items: flex-start;
-  background: #f2f7e8;
+  background: #f1f5f9;
   border-radius: 12px;
-  border: 1px solid #e0eacc;
+  border: 1px solid #e2e8f0;
   padding: 19px;
   margin: 20px 0;
-  color: #63834f;
+  color: #1e293b;
 }
 :where(.zy-full-control) .sw-commission-rule svg {
   flex-shrink: 0;
@@ -818,12 +763,12 @@
 }
 :where(.zy-full-control) .sw-commission-rule b {
   font-size: 13px;
-  color: #456733;
+  color: #1e293b;
 }
 :where(.zy-full-control) .sw-commission-rule p {
   font-size: 12px;
   line-height: 1.8;
-  color: #799168;
+  color: #475569;
   margin: 7px 0 0;
 }
 :where(.zy-full-control) .sw-receipt-list,
@@ -839,8 +784,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 15px;
-  background: #f8faf4;
-  border: 1px solid #e5ecdc;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 10px;
 }
 :where(.zy-full-control) .sw-receipt-list b,
@@ -852,22 +797,22 @@
   display: block;
   font-size: 10px;
   margin-top: 7px;
-  color: #7c906a;
+  color: #475569;
 }
 :where(.zy-full-control) .sw-footnote {
   text-align: right;
-  color: #98a58b;
+  color: #475569;
   font-size: 10px;
   padding: 15px 0 0;
 }
 :where(.zy-full-control) .sw-help {
   font-size: 11px;
   line-height: 1.8;
-  color: #7d8c73;
+  color: #475569;
   margin: 13px 0;
 }
 :where(.zy-full-control) .sw-muted {
-  color: #809075;
+  color: #475569;
   font-size: 11px;
 }
 :where(.zy-full-control) .sw-preserve {
@@ -902,38 +847,38 @@
   gap: 8px;
   margin-bottom: 24px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #e0e8d8;
+  border-bottom: 1px solid #e2e8f0;
 }
 :where(.zy-full-control) .sw-form-progress button {
-  border: 1px solid #e1e9d9;
+  border: 1px solid #e2e8f0;
   border-radius: 9px;
   padding: 10px 15px;
   background: #fff;
-  color: #839574;
+  color: #475569;
   cursor: pointer;
   font-size: 11px;
 }
 :where(.zy-full-control) .sw-form-progress button.active {
-  background: #edf4e3;
-  border-color: #d1e1bd;
-  color: #4a6d33;
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #1e293b;
   font-weight: 700;
 }
 :where(.zy-full-control) .sw-form-footer {
   display: flex;
   justify-content: flex-end;
   gap: 9px;
-  border-top: 1px solid #e2e9da;
+  border-top: 1px solid #e2e8f0;
   padding-top: 18px;
   margin-top: 22px;
 }
 :where(.zy-full-control) .sw-note {
   padding: 16px 18px;
-  border: 1px solid #dee9d1;
-  background: #f6f9ef;
+  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
   border-radius: 10px;
   font-size: 12px;
-  color: #6b8356;
+  color: #1e293b;
   line-height: 1.7;
   margin: 16px 0;
 }
@@ -945,7 +890,7 @@
   gap: 9px;
   align-items: center;
   font-size: 12px;
-  color: #567445;
+  color: #1e293b;
   margin: 16px 0;
 }
 :where(.zy-full-control) .sw-proposal-layout {
@@ -955,13 +900,13 @@
   align-items: start;
 }
 :where(.zy-full-control) .sw-quote-summary {
-  background: #f5f8ee;
-  border: 1px solid #dfe9d2;
-  border-radius: 14px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
   padding: 20px;
   position: sticky;
   top: 0;
-  color: #5e7b49;
+  color: #1e293b;
 }
 :where(.zy-full-control) .sw-quote-summary > span {
   font-size: 8px;
@@ -983,7 +928,7 @@
   gap: 10px;
   font-size: 12px;
   padding: 14px 0;
-  border-bottom: 1px solid #dce5cf;
+  border-bottom: 1px solid #e2e8f0;
 }
 :where(.zy-full-control) .sw-quote-summary dd {
   margin: 0;
@@ -997,8 +942,8 @@
   gap: 10px;
   align-items: center;
   padding: 15px;
-  background: #f6f9f0;
-  border: 1px solid #e2ead7;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   margin: 10px 0 20px;
 }
@@ -1013,7 +958,7 @@
   margin-bottom: 16px;
 }
 :where(.zy-full-control) .sw-quote-item {
-  border: 1px solid #e0e8d6;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 17px;
 }
@@ -1022,7 +967,7 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
-  color: #6f855a;
+  color: #475569;
   font-size: 11px;
 }
 :where(.zy-full-control) .sw-detail-head {
@@ -1051,14 +996,14 @@
   line-height: 1.6;
 }
 :where(.zy-full-control) .sw-data dt {
-  color: #879879;
+  color: #475569;
   flex-shrink: 0;
 }
 :where(.zy-full-control) .sw-data dd {
   margin: 0;
   text-align: right;
   overflow-wrap: anywhere;
-  color: #587243;
+  color: #1e293b;
 }
 :where(.zy-full-control) .sw-next {
   display: flex;
@@ -1067,7 +1012,7 @@
   font-size: 11px;
   line-height: 1.6;
   margin-top: 20px;
-  color: #78905e;
+  color: #475569;
 }
 :where(.zy-full-control) .sw-contact-links {
   display: grid;
@@ -1078,7 +1023,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #5b7f46;
+  color: #1e293b;
   font-size: 12px;
   overflow-wrap: anywhere;
 }
@@ -1100,13 +1045,13 @@
   top: 11px;
   bottom: 0;
   width: 1px;
-  background: #e2e9d9;
+  background: #e2e8f0;
 }
 :where(.zy-full-control) .sw-timeline-dot {
   width: 11px;
   height: 11px;
-  border: 2px solid #c6d9ae;
-  background: #f1f6e9;
+  border: 2px solid #64748b;
+  background: #f1f5f9;
   border-radius: 50%;
   flex-shrink: 0;
   margin-top: 3px;
@@ -1121,22 +1066,22 @@
   justify-content: space-between;
   gap: 10px;
   font-size: 11px;
-  color: #698654;
+  color: #1e293b;
 }
 :where(.zy-full-control) .sw-timeline time {
   font-size: 10px;
-  color: #9aa98b;
+  color: #475569;
 }
 :where(.zy-full-control) .sw-timeline p {
   font-size: 12px;
   line-height: 1.8;
   margin: 8px 0;
-  color: #7b8f69;
+  color: #475569;
 }
 :where(.zy-full-control) .sw-timeline small {
   display: block;
   font-size: 10px;
-  color: #9baa8a;
+  color: #475569;
   margin: 7px 0;
 }
 :where(.zy-full-control) .sw-review-comment {
@@ -1155,7 +1100,7 @@
 }
 :where(.zy-full-control) .sw button:focus-visible,
 :where(.zy-full-control) .sw-drawer button:focus-visible {
-  outline: 2px solid #89b960;
+  outline: 2px solid #475569;
   outline-offset: 3px;
 }
 @media (min-width: 1500px) {
@@ -1168,7 +1113,7 @@
     padding: 24px 22px 50px;
   }
   :where(.zy-full-control) .sw-hero {
-    padding: 26px;
+    padding: 0 0 20px;
   }
   :where(.zy-full-control) .sw-client-grid,
   :where(.zy-full-control) .sw-proposal-grid,
@@ -1183,8 +1128,9 @@
     grid-template-columns: 1fr;
   }
   :where(.zy-full-control) .sw-hero-actions {
-    flex-direction: column;
-    align-items: flex-end;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
   }
   :where(.zy-full-control) .sw-pipeline-summary {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1196,8 +1142,8 @@
   }
   :where(.zy-full-control) .sw-hero {
     display: block;
-    padding: 24px 21px;
-    border-radius: 17px;
+    padding: 0 0 20px;
+    border-radius: 10px;
   }
   :where(.zy-full-control) .sw h1 {
     font-size: 27px;
@@ -1205,7 +1151,7 @@
   :where(.zy-full-control) .sw-hero-actions {
     flex-direction: row;
     justify-content: space-between;
-    margin-top: 24px;
+    margin-top: 18px;
   }
   :where(.zy-full-control) .sw-kpis {
     gap: 10px;
@@ -1218,7 +1164,7 @@
   }
   :where(.zy-full-control) .sw-panel {
     padding: 18px;
-    border-radius: 14px;
+    border-radius: 10px;
   }
   :where(.zy-full-control) .sw-client-grid,
   :where(.zy-full-control) .sw-proposal-grid,
@@ -1273,5 +1219,316 @@
   :where(.zy-full-control) .sw-timeline header {
     flex-direction: column;
     gap: 4px;
+  }
+}
+
+:where(.zy-full-control) .sw,
+:where(.zy-full-control) .sw-drawer {
+  box-sizing: border-box;
+  min-width: 0;
+}
+:where(.zy-full-control) .sw * {
+  box-sizing: border-box;
+}
+:where(.zy-full-control) .sw-hero > div:first-child {
+  flex: 1;
+  min-width: 240px;
+}
+:where(.zy-full-control) .sw-hero-actions {
+  flex-wrap: wrap;
+}
+:where(.zy-full-control) .sw-hero-actions button {
+  min-height: 44px;
+  border-radius: 8px;
+}
+:where(.zy-full-control) .sw-tabs {
+  gap: 4px;
+  background: #fff;
+  padding: 6px;
+  border: 1px solid var(--sw-line);
+  border-radius: 10px;
+}
+:where(.zy-full-control) .sw-tabs button {
+  min-height: 42px;
+  flex: 1;
+  border-radius: 7px;
+  color: #52627c;
+}
+:where(.zy-full-control) .sw-tabs button.active {
+  color: #214c91;
+  background: #edf3ff;
+  box-shadow: inset 0 0 0 1px #dbe7ff;
+}
+:where(.zy-full-control) .sw-metric-icon {
+  position: absolute;
+  right: 18px;
+  top: 16px;
+  width: 30px;
+  height: 30px;
+  color: #526b91;
+  background: #f2f5fa;
+  border-radius: 8px;
+}
+:where(.zy-full-control) .sw-kpis small {
+  padding-right: 32px;
+  min-height: 30px;
+  line-height: 1.5;
+  font-size: 11px;
+  color: #52627c;
+}
+:where(.zy-full-control) .sw-kpis strong {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.8px;
+  font-size: 29px;
+  overflow-wrap: anywhere;
+  margin: 10px 0 7px;
+}
+:where(.zy-full-control) .sw-kpis p {
+  color: #64748b;
+  font-size: 11px;
+}
+:where(.zy-full-control) .sw-status.approved {
+  color: #1e6a4c;
+  background: #edf8f1;
+}
+:where(.zy-full-control) .sw button:focus-visible,
+:where(.zy-full-control) .sw-drawer button:focus-visible {
+  outline-color: #386ccc;
+}
+:where(.zy-full-control) .sw-panel {
+  box-shadow: 0 1px 3px #172b4d04;
+}
+:where(.zy-full-control) .sw-empty {
+  background: #fafbfd;
+  border: 1px dashed #dce3ee;
+  border-radius: 8px;
+}
+:where(.zy-full-control) .sw-plan {
+  border-radius: 10px;
+  box-shadow: none;
+}
+:where(.zy-full-control) .sw-table-contact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: var(--sw-ink);
+  padding: 0;
+  min-height: 44px;
+  cursor: pointer;
+}
+:where(.zy-full-control) .sw-table-contact > span:nth-child(2) {
+  display: grid;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+:where(.zy-full-control) .sw-table-contact strong {
+  font-size: 12px;
+  font-weight: 650;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+:where(.zy-full-control) .sw-table-contact small {
+  font-size: 11px;
+  color: #64748b;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+:where(.zy-full-control) .sw-client-table td {
+  padding: 14px 16px;
+}
+:where(.zy-full-control) .sw-client-table tr:hover {
+  background: #f8faff;
+}
+:where(.zy-full-control) .sw-client-table td:first-child {
+  min-width: 240px;
+  max-width: 380px;
+}
+:where(.zy-full-control) .sw-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+:where(.zy-full-control) .sw-agenda button div {
+  min-width: 0;
+}
+:where(.zy-full-control) .sw-agenda strong,
+:where(.zy-full-control) .sw-agenda small {
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+:where(.zy-full-control) .sw-activity button {
+  min-height: 69px;
+}
+:where(.zy-full-control) .sw-admin-filters .fx-field {
+  min-width: 0;
+}
+:where(.zy-full-control) .sw-drawer .fx-drawer-body {
+  overscroll-behavior: contain;
+}
+@media (max-width: 950px) {
+  :where(.zy-full-control) .sw-hero-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  :where(.zy-full-control) .sw-admin-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  :where(.zy-full-control) .sw-admin-filters .fx-field {
+    max-width: none;
+  }
+}
+@media (max-width: 640px) {
+  :where(.zy-full-control) .sw {
+    padding: 20px 14px 36px;
+  }
+  :where(.zy-full-control) .sw h1 {
+    font-size: 25px;
+  }
+  :where(.zy-full-control) .sw-hero p {
+    font-size: 13px;
+  }
+  :where(.zy-full-control) .sw-hero-tags {
+    gap: 8px 14px;
+    font-size: 10px;
+  }
+  :where(.zy-full-control) .sw-hero-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 44px;
+    gap: 7px;
+  }
+  :where(.zy-full-control) .sw-hero-actions .sw-new {
+    justify-content: center;
+    font-size: 11px;
+    padding: 10px;
+  }
+  :where(.zy-full-control) .sw-hero-actions .fx-btn {
+    font-size: 10px;
+    padding: 8px;
+  }
+  :where(.zy-full-control) .sw-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+  }
+  :where(.zy-full-control) .sw-tabs button {
+    min-width: 0;
+    white-space: normal;
+    font-size: 10px;
+    padding: 8px 4px;
+    line-height: 1.4;
+  }
+  :where(.zy-full-control) .sw-tabs svg {
+    width: 14px;
+    flex-shrink: 0;
+  }
+  :where(.zy-full-control) .sw-admin-filters {
+    gap: 12px;
+    padding: 14px;
+  }
+  :where(.zy-full-control) .sw-admin-filters .fx-field:first-child {
+    grid-column: 1/-1;
+  }
+  :where(.zy-full-control) .sw-admin-filters > button {
+    grid-column: 1/-1;
+    justify-content: center;
+  }
+  :where(.zy-full-control) .sw-kpis article {
+    padding: 16px 13px;
+  }
+  :where(.zy-full-control) .sw-kpis strong {
+    font-size: 25px;
+  }
+  :where(.zy-full-control) .sw-kpis small {
+    padding-right: 0;
+    min-height: 34px;
+    max-width: calc(100% - 20px);
+    font-size: 10px;
+  }
+  :where(.zy-full-control) .sw-metric-icon {
+    width: 23px;
+    height: 23px;
+    right: 9px;
+    top: 12px;
+    background: none;
+  }
+  :where(.zy-full-control) .sw-metric-icon svg {
+    width: 16px;
+  }
+  :where(.zy-full-control) .sw-panel {
+    padding: 16px;
+  }
+  :where(.zy-full-control) .sw-client-table {
+    border: 0;
+    overflow: visible;
+  }
+  :where(.zy-full-control) .sw-client-table table,
+  :where(.zy-full-control) .sw-client-table tbody {
+    display: block;
+  }
+  :where(.zy-full-control) .sw-client-table thead {
+    display: none;
+  }
+  :where(.zy-full-control) .sw-client-table tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    border: 1px solid var(--sw-line);
+    border-radius: 9px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  :where(.zy-full-control) .sw-client-table td {
+    display: block;
+    border: 0;
+    padding: 0;
+    min-width: 0;
+    white-space: normal;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+  }
+  :where(.zy-full-control) .sw-client-table td:first-child {
+    grid-column: 1/-1;
+    min-width: 0;
+    max-width: none;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--sw-line);
+  }
+  :where(.zy-full-control) .sw-client-table td[data-label]:before {
+    content: attr(data-label);
+    display: block;
+    color: #64748b;
+    font-size: 9px;
+    margin-bottom: 5px;
+  }
+  :where(.zy-full-control) .sw-drawer .fx-drawer-body {
+    padding: 18px 16px;
+  }
+  :where(.zy-full-control) .sw-form-footer {
+    flex-wrap: wrap;
+  }
+  :where(.zy-full-control) .sw-form-footer button {
+    flex: 1;
+    min-height: 44px;
+  }
+  :where(.zy-full-control) .sw-drawer input,
+  :where(.zy-full-control) .sw-drawer select,
+  :where(.zy-full-control) .sw-drawer textarea {
+    font-size: 16px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(.zy-full-control) .sw * {
+    transition: none !important;
+    scroll-behavior: auto !important;
   }
 }

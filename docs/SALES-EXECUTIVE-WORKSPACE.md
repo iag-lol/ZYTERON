@@ -6,18 +6,23 @@
 - Administración: `/administracion/commercial/workspace`, menú Comercial → Gestión de ejecutivos.
 - Rol del ejecutivo: `EJECUTIVA_VENTAS`. Validaciones administrativas: `GERENTE_GENERAL`.
 
-El espacio reúne jornada, cartera, propuestas, planes y material, informes y comisiones. La bandeja visible se actualiza cada 45 segundos y después de cada acción. La presentación comercial contempla empresas y organizaciones de distintos tamaños y proyectos corporativos a medida. El catálogo usa los precios publicados, con valores referenciales sin IVA y aprobación de alcance y condiciones.
+El espacio reúne contactos propios de administración y del equipo, jornada, cartera, propuestas, planes y material, informes y comisiones. Administración dispone de Nuevo contacto comercial y del filtro Contactos de administración; puede editar contactos, registrar avances y preparar propuestas con el mismo historial y etapas. Las gestiones corporativas conservan la autoridad administrativa de origen y no se atribuyen a un empleado ni generan comisión. La bandeja visible se actualiza cada 45 segundos y después de cada acción. La presentación comercial contempla empresas y organizaciones de distintos tamaños y proyectos corporativos a medida. El catálogo usa los precios publicados, con valores referenciales sin IVA y aprobación de alcance y condiciones.
+
+## Interfaz
+
+Encabezado compacto, colores neutros y acentos azules, indicadores operativos, filtros de responsable y período, cartera en lista, tarjetas o tablero por etapas. La portada muestra agenda y últimas actualizaciones. En móvil, las secciones se distribuyen en dos filas, los filtros y formularios se reorganizan y las filas de cartera muestran campos apilados. Las tablas de informes y el tablero mantienen desplazamiento dentro de su contenedor. Los controles admiten teclado, foco visible y preferencias de movimiento reducido.
 
 ## Flujo comercial
 
-1. El ejecutivo registra empresa, persona, medio de contacto, necesidad y siguiente seguimiento. Puede completar RUT, giro y domicilio al preparar el alta. El contacto queda en revisión y se vincula a un lead comercial propio.
+1. Administración o el ejecutivo registra empresa, persona, medio de contacto, necesidad y siguiente seguimiento. Puede completar RUT, giro y domicilio al preparar la facturación. El contacto se vincula a un lead propio; los registros del ejecutivo requieren revisión y los de administración quedan validados por su autoridad de origen.
 2. Cada conversación registra medio, resultado, etapa y próximo contacto. Etapas: Contactado, Respondió, Interesado, En propuesta, Aceptación informada, Venta validada o No continúa.
-3. Administración revisa el contacto. Con RUT válido puede incorporar la empresa a Clientes y asignarla al ejecutivo. Los clientes ya asignados pueden incorporarse al seguimiento; no se atribuyen como clientes nuevos generados.
+3. Administración revisa el contacto. Aprobar sus datos no lo convierte en cliente. Los clientes ya existentes pueden incorporarse al seguimiento sin contarlos otra vez como generados.
 4. El ejecutivo prepara una propuesta desde planes publicados o un alcance a medida. Declara pago único o mensual, vigencia, condiciones y precios propuestos. El servidor recalcula neto, IVA y total en pesos. Toda propuesta se crea PENDING_APPROVAL; el navegador no fija propietario ni aprobación.
 5. Administración aprueba o solicita correcciones con observaciones. Un PDF pendiente conserva la indicación de borrador. El PDF aprobado se descarga después de revisar el alta del cliente.
 6. El ejecutivo registra la entrega al cliente. Este registro es una declaración de gestión; el sistema no envía correos ni WhatsApp automáticamente.
-7. Administración valida la aceptación y configura el cobro desde Finanzas. La aceptación comercial no demuestra recepción de dinero.
-8. Con cobro completo confirmado y costos revisados, administración valida la utilidad y la comisión. El cierre de la venta exige ese respaldo. Después del cierre puede registrarse una nueva oportunidad para el mismo cliente, conservando la venta anterior y evitando contar al cliente dos veces.
+7. Administración valida la aceptación y configura el cobro desde Finanzas. Si se necesita, se crea una ficha ONBOARDING con RUT para facturación; aún no cuenta como cliente generado. La aceptación comercial no demuestra recepción de dinero.
+8. Con un cobro completo confirmado y respaldado, administración usa Convertir a cliente por compra confirmada. Se conserva el contacto, lead, propuestas y todo el historial; la ficha nueva pasa a ACTIVE y la gestión a Venta validada. El registro de conversión guarda autoridad, fecha y folio de respaldo; los reintentos no duplican el cliente ni sus eventos. Los abonos, aceptaciones o cobros de otra gestión no permiten convertir. Si se revierte el respaldo, el indicador deja de confirmar la compra.
+9. La validación de costos y comisión del ejecutivo es independiente de la conversión. No se exige inventar un costo o una comisión para una venta corporativa. Después del cierre puede registrarse una nueva oportunidad para el mismo cliente sin contarlo dos veces.
 
 Los informes de gestión tienen período, detalle y cliente opcional, y quedan pendientes de revisión administrativa. Gerencia consulta resultados por ejecutivo y período y exporta CSV; el ejecutivo consulta y exporta su propia gestión.
 
@@ -49,7 +54,7 @@ Los costos y la utilidad detallada quedan reservados a administración. El PDF d
 
 ## Implementación y operación
 
-Backend: `control-runtime/src/sales-workspace/`. Interfaz: `src/full-control/components/commercial/sales-*`. Migración: `20261122100000_sales_executive_workspace.sql`, incluida en el arranque transaccional existente.
+Backend: `control-runtime/src/sales-workspace/`. Interfaz: `src/full-control/components/commercial/sales-*`. Migraciones: `20261122100000_sales_executive_workspace.sql` y `20261122110000_admin_sales_prospects.sql`, incluidas en el arranque transaccional existente.
 
 `node --import tsx scripts/sync-sales-plans.ts` actualiza el catálogo derivado de `src/config/pricing.ts`; el comando prebuild mantiene la misma fuente de precios que el sitio público.
 

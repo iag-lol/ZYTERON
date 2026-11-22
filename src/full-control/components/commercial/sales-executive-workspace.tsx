@@ -60,7 +60,6 @@ const tabs = [
 type ReviewTarget = {
   path: string;
   title: string;
-  createClient?: boolean;
   confirmAcceptance?: boolean;
   complete?: boolean;
   record?: WorkRecord;
@@ -75,7 +74,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
     [to, setTo] = useState(""),
     [search, setSearch] = useState(""),
     [stage, setStage] = useState(""),
-    [view, setView] = useState("cards"),
+    [view, setView] = useState("list"),
     [detail, setDetail] = useState<string | null>(null),
     [recordForm, setRecordForm] = useState<{
       initial?: WorkRecord;
@@ -138,7 +137,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
     setReviewTarget({
       path: `/records/${r.id}/review`,
       title: `Revisar alta · ${r.company_name}`,
-      createClient: Boolean(r.rut && !r.client_id),
+
       record: r,
     });
   const reviewEvent = (e: WorkEvent) =>
@@ -153,7 +152,13 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
       .filter((r) => r.next_action_at && !["COMPLETED", "LOST"].includes(r.stage))
       .sort((a, b) => String(a.next_action_at).localeCompare(String(b.next_action_at)))
       .slice(0, 6) ?? [];
-  const name = (ownerId: string) => data?.owners.find((o) => o.id === ownerId)?.name ?? "Ejecutivo";
+  const commissionReceipts =
+    data?.receipts?.filter((v) => {
+      const proposal = data.proposals.find((p) => p.quote_id === v.quote_id);
+      return data.records.find((r) => r.id === proposal?.record_id)?.owner_type !== "ADMIN";
+    }) ?? [];
+  const name = (ownerId: string) =>
+    data?.owners.find((o) => o.id === ownerId)?.name ?? "Administración";
   const downloadProposal = (p: WorkProposal) =>
     void action.run(() =>
       workApi.download(role, `/proposals/${p.quote_id}/pdf`, `${p.quote_number}.pdf`),
@@ -174,41 +179,34 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
     <main className="sw">
       <header className="sw-hero">
         <div>
-          <span className="sw-eyebrow">ZYTERON · GESTIÓN COMERCIAL</span>
-          <h1>{isAdmin ? "Control de ejecutivos" : "Haz avanzar tu próxima venta"}</h1>
+          <span className="sw-eyebrow">OPERACIONES COMERCIALES</span>
+          <h1>{isAdmin ? "Gestión comercial" : "Mi gestión comercial"}</h1>
           <p>
             {isAdmin
-              ? "Revisa cada alta, autoriza propuestas y valida la utilidad de las ventas cobradas."
-              : "Tus clientes, tus conversaciones y el siguiente paso, en un solo lugar."}
+              ? "Contactos, seguimiento, propuestas y compras confirmadas."
+              : "Cartera personal, seguimientos y propuestas pendientes."}
           </p>
           <div className="sw-hero-tags">
             <span>
-              <CheckCircle2 size={14} />{" "}
-              {isAdmin ? "Validación de administración" : "Cartera personal"}
+              <CheckCircle2 size={14} /> {isAdmin ? "Administración" : "Cartera personal"}
             </span>
             <span>
               <Wallet size={14} />
-              15% sobre utilidad cobrada
+              Comisión de ejecutivos: 15%
             </span>
           </div>
         </div>
         <div className="sw-hero-actions">
-          {!isAdmin ? (
-            <button className="sw-new" onClick={() => setRecordForm({})}>
-              <Plus size={18} />
-              Nuevo contacto o cliente
-            </button>
-          ) : (
-            <button
-              className="sw-new"
-              onClick={() => {
-                setTab("reports");
-              }}
-            >
+          <button className="sw-new" onClick={() => setRecordForm({})}>
+            <Plus size={18} />
+            Nuevo contacto comercial
+          </button>
+          {isAdmin ? (
+            <button className="fx-btn ghost" onClick={() => setTab("reports")}>
               <ClipboardCheck size={18} />
               Generar informe
             </button>
-          )}
+          ) : null}
           <button
             className="sw-refresh"
             aria-label="Actualizar gestión comercial"
@@ -222,9 +220,10 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
       <Feedback error={action.error || load.error || catalog.error} notice={action.notice} />
       {isAdmin ? (
         <div className="sw-admin-filters">
-          <Field label="Ejecutivo">
+          <Field label="Responsable de la gestión">
             <select value={owner} onChange={(e) => setOwner(e.target.value)}>
-              <option value="">Todos los ejecutivos</option>
+              <option value="">Toda la gestión comercial</option>
+              <option value="administration">Contactos de administración</option>
               {data?.owners.map((o) => (
                 <option key={o.id} value={o.id}>
                   {o.name}
@@ -260,7 +259,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
             onClick={() => setTab(t.id)}
           >
             <t.icon size={16} />
-            {isAdmin && t.id === "home" ? "Validaciones" : t.label}
+            {isAdmin && t.id === "home" ? "Resumen" : t.label}
             {t.id === "proposals" && data?.summary.pendingProposals ? (
               <span>{data.summary.pendingProposals}</span>
             ) : null}
@@ -280,7 +279,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                 hint={`${data.summary.interested} con interés o propuesta`}
               />
               <Metric
-                title="Clientes incorporados"
+                title="Clientes por compra confirmada"
                 value={String(data.summary.generatedClients)}
                 icon={<CheckCircle2 size={19} />}
                 hint={`${data.summary.completed} ventas validadas`}
@@ -406,7 +405,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                 <section className="sw-panel">
                   <div className="sw-section-title">
                     <div>
-                      <span className="sw-eyebrow">TU SIGUIENTE PASO</span>
+                      <span className="sw-eyebrow">AGENDA</span>
                       <h2>Próximos contactos</h2>
                     </div>
                     {data.summary.overdue ? (
@@ -432,47 +431,42 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                     </div>
                   ) : (
                     <Empty
-                      title="Programa tu próximo contacto"
-                      text="Cada conversación puede tener una fecha y una hora de seguimiento."
+                      title="Sin seguimientos programados"
+                      text="Los próximos contactos aparecerán aquí al programar una gestión."
                     />
                   )}
                 </section>
-                <section className="sw-panel sw-flow-panel">
-                  <span className="sw-eyebrow">ASÍ AVANZA UNA VENTA</span>
-                  <h2>Contacta. Registra. Haz seguimiento.</h2>
-                  <ol className="sw-flow">
-                    <li>
-                      <span>1</span>
-                      <div>
-                        <b>Conoce la necesidad</b>
-                        <small>Registra el contacto y su interés.</small>
-                      </div>
-                    </li>
-                    <li>
-                      <span>2</span>
-                      <div>
-                        <b>Prepara la propuesta</b>
-                        <small>Elige planes, alcance y condiciones.</small>
-                      </div>
-                    </li>
-                    <li>
-                      <span>3</span>
-                      <div>
-                        <b>Administración autoriza</b>
-                        <small>Comparte únicamente la propuesta aprobada.</small>
-                      </div>
-                    </li>
-                    <li>
-                      <span>4</span>
-                      <div>
-                        <b>Valida la venta y tu comisión</b>
-                        <small>15% de la utilidad, después del pago confirmado.</small>
-                      </div>
-                    </li>
-                  </ol>
-                  <button className="fx-btn ghost" onClick={() => setTab("plans")}>
-                    Ver planes y presentación <ArrowRight size={15} />
-                  </button>
+                <section className="sw-panel">
+                  <div className="sw-section-title">
+                    <div>
+                      <span className="sw-eyebrow">TRAZABILIDAD</span>
+                      <h2>Últimas actualizaciones</h2>
+                    </div>
+                    <span className="sw-count">{data.records.length} contactos</span>
+                  </div>
+                  {data.records.length ? (
+                    <div className="sw-agenda sw-activity">
+                      {[...data.records]
+                        .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+                        .slice(0, 5)
+                        .map((r) => (
+                          <button key={r.id} onClick={() => setDetail(r.id)}>
+                            <div>
+                              <strong>{r.company_name}</strong>
+                              <small>
+                                {stageLabels[r.stage]} · {moment(r.updated_at)}
+                              </small>
+                            </div>
+                            <ArrowRight size={16} />
+                          </button>
+                        ))}
+                    </div>
+                  ) : (
+                    <Empty
+                      title="Sin actividad registrada"
+                      text="El historial mostrará los avances y las revisiones de cada contacto."
+                    />
+                  )}
                 </section>
               </div>
               <section className="sw-panel">
@@ -504,11 +498,19 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
               <div className="sw-section-title">
                 <div>
                   <span className="sw-eyebrow">
-                    {isAdmin ? "CARTERA DEL EQUIPO" : "MIS CONTACTOS Y CLIENTES"}
+                    {isAdmin ? "CARTERA COMERCIAL" : "MIS CONTACTOS Y CLIENTES"}
                   </span>
                   <h2>{records.length} gestiones</h2>
                 </div>
                 <div className="sw-inline-actions">
+                  <button
+                    className={`sw-icon-button ${view === "list" ? "selected" : ""}`}
+                    aria-label="Vista de lista"
+                    aria-pressed={view === "list"}
+                    onClick={() => setView("list")}
+                  >
+                    <List size={17} />
+                  </button>
                   <button
                     className={`sw-icon-button ${view === "cards" ? "selected" : ""}`}
                     aria-label="Vista de tarjetas"
@@ -519,6 +521,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                   <button
                     className={`sw-icon-button ${view === "pipeline" ? "selected" : ""}`}
                     aria-label="Vista por etapas"
+                    title="Tablero por etapas"
                     onClick={() => setView("pipeline")}
                   >
                     <List size={17} />
@@ -554,7 +557,57 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                   ))}
                 </select>
               </div>
-              {view === "pipeline" ? (
+              {view === "list" && records.length ? (
+                <div className="sw-table-wrap sw-client-table">
+                  <table>
+                    <caption className="sw-sr-only">
+                      Contactos, avance y próximo seguimiento
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th>Empresa y contacto</th>
+                        <th>Etapa</th>
+                        <th>Revisión</th>
+                        {isAdmin ? <th>Responsable</th> : null}
+                        <th>Próximo seguimiento</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {records.map((r) => (
+                        <tr key={r.id}>
+                          <td>
+                            <button className="sw-table-contact" onClick={() => setDetail(r.id)}>
+                              <span className="sw-client-avatar">
+                                {r.company_name.slice(0, 2).toUpperCase()}
+                              </span>
+                              <span>
+                                <strong>{r.company_name}</strong>
+                                <small>
+                                  {r.contact_name}
+                                  {r.rut ? ` · ${r.rut}` : ""}
+                                </small>
+                              </span>
+                              <ArrowRight size={15} />
+                            </button>
+                          </td>
+                          <td data-label="Etapa">
+                            <span className="sw-chip">{stageLabels[r.stage]}</span>
+                          </td>
+                          <td data-label="Revisión">
+                            <span className={`sw-status ${r.review_status.toLowerCase()}`}>
+                              {reviewLabels[r.review_status]}
+                            </span>
+                          </td>
+                          {isAdmin ? <td data-label="Responsable">{name(r.owner_id)}</td> : null}
+                          <td data-label="Próximo seguimiento">
+                            {r.next_action_at ? moment(r.next_action_at) : "Sin programar"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : view === "pipeline" ? (
                 <div className="sw-kanban">
                   {Object.entries(stageLabels).map(([key, label]) => (
                     <section key={key}>
@@ -589,11 +642,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
               )}
               {!records.length ? (
                 <Empty
-                  title={
-                    search || stage
-                      ? "Sin coincidencias"
-                      : "Tu cartera comienza con una conversación"
-                  }
+                  title={search || stage ? "Sin coincidencias" : "No hay contactos registrados"}
                   text={
                     search || stage
                       ? "Ajusta la búsqueda o la etapa."
@@ -601,8 +650,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                   }
                 />
               ) : null}
-              {!isAdmin &&
-              data.assignedClients.some((c) => !data.records.some((r) => r.client_id === c.id)) ? (
+              {data.assignedClients.some((c) => !data.records.some((r) => r.client_id === c.id)) ? (
                 <section className="sw-assigned">
                   <h3>Clientes asignados para seguimiento</h3>
                   {data.assignedClients
@@ -634,7 +682,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                     {isAdmin ? "Autoriza lo que se comparte" : "De la necesidad a la propuesta"}
                   </h2>
                 </div>
-                {!isAdmin ? (
+                {
                   <button
                     className="fx-btn primary"
                     disabled={!data.records.length}
@@ -643,7 +691,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                     <FilePlus2 size={16} />
                     Preparar propuesta
                   </button>
-                ) : null}
+                }
               </div>
               <div className="sw-proposal-grid">
                 {data.proposals.map((p) => (
@@ -696,7 +744,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                           Revisar autorización
                         </button>
                       ) : null}
-                      {!isAdmin && ["APPROVED", "READY_TO_SEND"].includes(p.status) ? (
+                      {["APPROVED", "READY_TO_SEND"].includes(p.status) ? (
                         <button
                           className="fx-btn primary"
                           onClick={() =>
@@ -724,7 +772,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                           Validar aceptación
                         </button>
                       ) : null}
-                      {!isAdmin && p.status === "REJECTED" ? (
+                      {p.status === "REJECTED" ? (
                         <button
                           className="fx-btn ghost"
                           onClick={() => setProposalForm({ initial: p })}
@@ -733,21 +781,20 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                         </button>
                       ) : null}
                       {isAdmin &&
-                      data.earnings.some(
-                        (e) => e.quote_id === p.quote_id && e.status === "EARNED",
-                      ) &&
-                      data.records.find((r) => r.id === p.record_id)?.stage !== "COMPLETED" ? (
+                      data.receipts?.some((receipt) => receipt.quote_id === p.quote_id) &&
+                      data.records.find((r) => r.id === p.record_id)?.purchase_confirmed !==
+                        true ? (
                         <button
                           className="fx-btn primary"
                           onClick={() =>
                             setReviewTarget({
                               path: `/records/${p.record_id}/complete`,
-                              title: "Validar cierre de la venta",
+                              title: "Confirmar compra y convertir en cliente",
                               complete: true,
                             })
                           }
                         >
-                          Validar venta completada
+                          Convertir a cliente por compra confirmada
                         </button>
                       ) : null}
                       {isAdmin && ["ACCEPTED", "CONVERTED"].includes(p.status) ? (
@@ -765,7 +812,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
               {!data.proposals.length ? (
                 <Empty
                   title="Prepara tu primera propuesta"
-                  text="Registra al cliente y elige un plan del catálogo. Administración revisará la propuesta antes de que la compartas."
+                  text="Registra al contacto y elige un plan del catálogo. Administración revisará la propuesta antes de que la compartas."
                 />
               ) : null}
             </section>
@@ -818,7 +865,6 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                 <p className="sw-help">{catalog.data.pricingNote}</p>
                 <PlanLibrary
                   plans={catalog.data.plans}
-                  admin={isAdmin}
                   onChoose={(plan) => setProposalForm({ plan })}
                 />
               </section>
@@ -829,7 +875,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
               <div className="sw-section-title">
                 <div>
                   <span className="sw-eyebrow">SEGUIMIENTO E INFORMES</span>
-                  <h2>{isAdmin ? "Resultados por ejecutivo" : "Tu trabajo registrado"}</h2>
+                  <h2>{isAdmin ? "Resultados por responsable" : "Tu trabajo registrado"}</h2>
                 </div>
                 <div className="sw-inline-actions">
                   <button
@@ -861,7 +907,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                   <table>
                     <thead>
                       <tr>
-                        <th>Ejecutivo</th>
+                        <th>Responsable</th>
                         <th>Contactos</th>
                         <th>Clientes</th>
                         <th>Propuestas</th>
@@ -871,7 +917,15 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                     </thead>
                     <tbody>
                       {data.owners
-                        .filter((o) => !owner || o.id === owner)
+                        .filter(
+                          (o) =>
+                            !owner ||
+                            (owner === "administration"
+                              ? data.records.some(
+                                  (r) => r.owner_type === "ADMIN" && r.owner_id === o.id,
+                                )
+                              : o.id === owner),
+                        )
                         .map((o) => {
                           const own = data.records.filter((r) => r.owner_id === o.id);
                           return (
@@ -886,6 +940,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                                         (r) =>
                                           r.client_id &&
                                           r.client_created &&
+                                          r.purchase_confirmed &&
                                           r.review_status === "APPROVED",
                                       )
                                       .map((r) => r.client_id),
@@ -893,7 +948,12 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                                 }
                               </td>
                               <td>{data.proposals.filter((p) => p.owner_id === o.id).length}</td>
-                              <td>{own.filter((r) => r.stage === "COMPLETED").length}</td>
+                              <td>
+                                {
+                                  own.filter((r) => r.stage === "COMPLETED" && r.purchase_confirmed)
+                                    .length
+                                }
+                              </td>
                               <td>
                                 {money(
                                   data.earnings
@@ -960,13 +1020,13 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                 </div>
               </div>
               {isAdmin &&
-              data.receipts?.filter(
+              commissionReceipts.filter(
                 (v) => !data.earnings.some((e) => e.receipt_key === v.receipt_key),
               ).length ? (
                 <>
                   <h3>Cobros listos para validar utilidad</h3>
                   <div className="sw-receipt-list">
-                    {data.receipts
+                    {commissionReceipts
                       .filter((v) => !data.earnings.some((e) => e.receipt_key === v.receipt_key))
                       .map((v) => {
                         const p = data.proposals.find((p) => p.quote_id === v.quote_id),
@@ -1000,7 +1060,7 @@ export function SalesExecutiveWorkspace({ section = "home" }: { section?: string
                   <thead>
                     <tr>
                       <th>Propuesta</th>
-                      {isAdmin ? <th>Ejecutivo</th> : null}
+                      {isAdmin ? <th>Responsable</th> : null}
                       <th>Validación</th>
                       <th>Estado</th>
                       <th>Comisión</th>
@@ -1223,11 +1283,9 @@ function ContactCard({
 }
 function PlanLibrary({
   plans,
-  admin,
   onChoose,
 }: {
   plans: PublicPlan[];
-  admin: boolean;
   onChoose: (plan: PublicPlan) => void;
 }) {
   const [category, setCategory] = useState(""),
@@ -1292,12 +1350,12 @@ function PlanLibrary({
                   ))}
                 </ul>
               ) : null}
-              {!admin ? (
+              {
                 <button className="fx-btn primary" onClick={() => onChoose(p)}>
                   Usar en propuesta
                   <ArrowRight size={15} />
                 </button>
-              ) : null}
+              }
             </article>
           ))}
       </div>
@@ -1316,12 +1374,9 @@ function ReviewDialog({
   const { role } = useAccess(),
     action = useAction(),
     [decision, setDecision] = useState("APPROVED"),
-    [reason, setReason] = useState(""),
-    [create, setCreate] = useState(target.createClient === true);
+    [reason, setReason] = useState("");
   const save = async () => {
-    const saved = await action.run(() =>
-      workApi.post(role, target.path, { decision, reason, create_client: create }),
-    );
+    const saved = await action.run(() => workApi.post(role, target.path, { decision, reason }));
     if (saved) onSaved();
   };
   return (
@@ -1330,8 +1385,10 @@ function ReviewDialog({
       title={target.title}
       subtitle={
         target.confirmAcceptance
-          ? "Registra el respaldo de la conversación o entrega. Este paso no confirma dinero recibido."
-          : "Aprueba el registro o devuelve observaciones al ejecutivo."
+          ? "Registra el respaldo de la conversación o entrega. La aceptación prepara la ficha para facturación; no confirma dinero recibido ni convierte al contacto en cliente."
+          : target.complete
+            ? "Requiere una compra con cobro completo confirmado y respaldo. Se conserva todo el historial; este paso no calcula ni paga comisiones."
+            : "Aprueba el contacto o solicita correcciones. La aprobación no lo convierte en cliente."
       }
       onClose={onClose}
       className="sw-drawer"
@@ -1349,12 +1406,6 @@ function ReviewDialog({
               <option value="REJECTED">Solicitar corrección</option>
             </select>
           </Field>
-        ) : null}
-        {target.createClient && decision === "APPROVED" ? (
-          <label className="sw-checkbox">
-            <input type="checkbox" checked={create} onChange={(e) => setCreate(e.target.checked)} />
-            Incorporar como cliente y asignar al ejecutivo
-          </label>
         ) : null}
         {target.record ? (
           <div className="sw-note">

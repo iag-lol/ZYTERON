@@ -22,6 +22,15 @@ async function fixture() {
   await db.exec(base);
   await db.exec(quoteMigration);
   await db.exec(migration);
+  await db.exec(
+    await readFile(
+      new URL(
+        "../../supabase/migrations/20261122110000_admin_sales_prospects.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
   return db;
 }
 const scalar = async (db, sql, args = []) => Object.values((await db.query(sql, args)).rows[0])[0];
@@ -164,16 +173,22 @@ test("alta requiere validación; no permite apropiarse de un cliente existente d
       [b],
     );
     const r = await write(db, a, "record_create", null, payload());
-    await assert.rejects(
-      () => admin(db, "record_review", r, { decision: "APPROVED", create_client: true }),
-      /SALES_CLIENT_ALREADY_EXISTS/,
-    );
     const q = await write(db, a, "proposal_create", r, proposal());
     await assert.rejects(
       () => admin(db, "proposal_review", q, { decision: "APPROVED" }),
       /SALES_CONTACT_REVIEW_REQUIRED/,
     );
-    assert.equal(await scalar(db, "select review_status from sales_work_records"), "PENDING");
+    await admin(db, "record_review", r, { decision: "APPROVED", create_client: true });
+    assert.equal(
+      await scalar(db, "select client_id from sales_work_records where id=$1", [r]),
+      null,
+    );
+    await admin(db, "proposal_review", q, { decision: "APPROVED" });
+    await write(db, a, "proposal_share", q, { reason: "Entrega" });
+    await assert.rejects(
+      () => admin(db, "acceptance_validate", q, { reason: "Aceptación" }),
+      /SALES_CLIENT_ALREADY_EXISTS/,
+    );
     assert.equal(await scalar(db, "select account_executive_id from clients"), b);
   } finally {
     await db.close();
@@ -378,4 +393,144 @@ test("una nueva oportunidad de un cliente asignado no vuelve a contar al cliente
   } finally {
     await db.close();
   }
+});
+test("administración registra su cartera, conserva avances y convierte sólo después de una compra; sin comisión ficticia", async () => {
+  const db = await fixture();
+  try {
+    const input = payload();
+    const r = await admin(db, "record_create", null, {
+      ...input,
+      owner_id: a,
+      owner_type: "EXECUTIVE",
+      stage: "COMPLETED",
+    });
+    assert.equal(await admin(db, "record_create", null, input), r);
+    let row = (await db.query("select * from sales_work_records where id=$1", [r])).rows[0];
+    assert.equal(row.owner_id, manager);
+    assert.equal(row.owner_type, "ADMIN");
+    assert.equal(row.stage, "CONTACTED");
+    assert.equal(row.review_status, "APPROVED");
+    assert.equal(row.client_id, null);
+    await assert.rejects(
+      () =>
+        write(db, a, "event_add", r, {
+          requestId: crypto.randomUUID(),
+          kind: "CALL",
+          body: "Ajeno",
+          stage: "RESPONDED",
+        }),
+      /SALES_NOT_FOUND/,
+    );
+    await assert.rejects(() => write(db, a, "proposal_create", r, proposal()), /SALES_NOT_FOUND/);
+    await admin(db, "event_add", r, {
+      requestId: crypto.randomUUID(),
+      kind: "CALL",
+      body: "Respondió; interesa una plataforma corporativa",
+      stage: "INTERESTED",
+      next_action_at: "2026-12-02T12:00:00Z",
+    });
+    const q = await admin(db, "proposal_create", r, proposal());
+    assert.equal(await scalar(db, "select owner_id from quotes where id=$1", [q]), manager);
+    assert.equal(
+      Number(
+        await scalar(db, "select commission_rate from sales_work_proposals where quote_id=$1", [q]),
+      ),
+      0,
+    );
+    await admin(db, "proposal_review", q, { decision: "APPROVED" });
+    await admin(db, "proposal_share", q, { reason: "Propuesta entregada" });
+    await admin(db, "acceptance_validate", q, { reason: "Alcance aceptado" });
+    row = (await db.query("select * from sales_work_records where id=$1", [r])).rows[0];
+    assert.equal(row.converted_at, null);
+    assert.equal(
+      await scalar(db, "select status from clients where id=$1", [row.client_id]),
+      "ONBOARDING",
+    );
+    assert.equal(
+      await scalar(db, "select account_executive_id from clients where id=$1", [row.client_id]),
+      null,
+    );
+    await assert.rejects(
+      () => admin(db, "complete", r, { reason: "Aceptación sola no basta" }),
+      /SALES_VERIFIED_PAYMENT_REQUIRED/,
+    );
+    await paid(db, q);
+    await assert.rejects(
+      () => admin(db, "profit_validate", r, { validated_cost: 0 }),
+      /SALES_NO_EXECUTIVE_COMMISSION/,
+    );
+    await admin(db, "complete", r, { reason: "Compra y cobro confirmados" });
+    await admin(db, "complete", r, { reason: "Reintento" });
+    row = (await db.query("select * from sales_work_records where id=$1", [r])).rows[0];
+    assert.ok(row.converted_at);
+    assert.equal(row.stage, "COMPLETED");
+    assert.equal(row.next_action_at, null);
+    assert.equal(
+      await scalar(db, "select status from clients where id=$1", [row.client_id]),
+      "ACTIVE",
+    );
+    assert.equal(
+      await scalar(
+        db,
+        "select count(*)::int from client_events where event_type='COMMERCIAL_PURCHASE_CONFIRMED'",
+      ),
+      1,
+    );
+    assert.equal(
+      await scalar(
+        db,
+        "select count(*)::int from sales_work_events where record_id=$1 and kind='CALL'",
+        [r],
+      ),
+      1,
+    );
+    assert.equal(await scalar(db, "select count(*)::int from sales_work_profit_settlements"), 0);
+  } finally {
+    await db.close();
+  }
+});
+test("ni aceptación, abonos parciales o cobros ajenos convierten al contacto; una reversa invalida el respaldo", async () => {
+  const db = await fixture();
+  try {
+    const { r, q } = await accepted(db),
+      p = await paid(db, q);
+    await db.query("update quote_payment_installments set paid_amount=1000 where id=$1", [p]);
+    await assert.rejects(
+      () => admin(db, "complete", r, { reason: "Abono" }),
+      /SALES_VERIFIED_PAYMENT_REQUIRED/,
+    );
+    await db.query("update quote_payment_installments set paid_amount=119000 where id=$1", [p]);
+    await assert.rejects(
+      () =>
+        admin(db, "complete", r, {
+          source_id: crypto.randomUUID(),
+          source_kind: "INSTALLMENT",
+          reason: "Ajeno",
+        }),
+      /SALES_VERIFIED_PAYMENT_REQUIRED/,
+    );
+    await admin(db, "complete", r, { reason: "Cobro comprobado" });
+    assert.equal(await scalar(db, "select count(*)::int from sales_work_verified_receipts"), 1);
+    await db.query("update quote_payment_installments set status='CANCELLED' where id=$1", [p]);
+    assert.equal(await scalar(db, "select count(*)::int from sales_work_verified_receipts"), 0);
+    await assert.rejects(
+      () => admin(db, "complete", r, { reason: "Cobro cancelado" }),
+      /SALES_VERIFIED_PAYMENT_REQUIRED/,
+    );
+  } finally {
+    await db.close();
+  }
+});
+test('dos contactos con el mismo RUT mantienen un cliente y se atribuye el alta al contacto que confirma la primera compra',async()=>{
+ const db=await fixture();try{
+ const first=await accepted(db);
+ const r=await admin(db,'record_create',null,payload()),q=await admin(db,'proposal_create',r,proposal());
+ await admin(db,'proposal_review',q,{decision:'APPROVED'});await admin(db,'proposal_share',q,{reason:'Entrega'});await admin(db,'acceptance_validate',q,{reason:'Acepta'});
+ assert.equal(await scalar(db,'select count(*)::int from clients'),1);
+ await paid(db,q);await admin(db,'complete',r,{reason:'Compra confirmada'});
+ assert.equal(await scalar(db,'select client_created from sales_work_records where id=$1',[r]),true);
+ assert.equal(await scalar(db,'select client_created from sales_work_records where id=$1',[first.r]),false);
+ assert.equal(await scalar(db,'select count(*)::int from sales_work_records where client_created'),1);
+ assert.equal(await scalar(db,'select status from clients'),'ACTIVE');
+ }finally{await db.close()}
 });

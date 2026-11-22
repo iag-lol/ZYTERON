@@ -86,24 +86,28 @@ export function SalesRecordDetail({
               {reviewLabels[r.review_status]}
             </span>
             <span className="sw-chip">
-              {r.client_id ? "Cliente incorporado" : "Contacto comercial"}
+              {r.purchase_confirmed
+                ? "Cliente con compra confirmada"
+                : r.client_id
+                  ? r.client_created
+                    ? "Ficha de facturación · compra pendiente"
+                    : "Cliente existente · nueva oportunidad"
+                  : "Contacto comercial"}
             </span>
             <div className="sw-inline-actions">
-              {!admin && !["COMPLETED", "LOST"].includes(r.stage) ? (
+              {!["COMPLETED", "LOST"].includes(r.stage) ? (
                 <button className="fx-btn ghost" onClick={() => onEdit(r)}>
                   <Pencil size={14} />
                   Editar datos
                 </button>
               ) : null}
-              {!admin &&
-              r.review_status !== "REJECTED" &&
-              !["COMPLETED", "LOST"].includes(r.stage) ? (
+              {r.review_status !== "REJECTED" && !["COMPLETED", "LOST"].includes(r.stage) ? (
                 <button className="fx-btn primary" onClick={() => onQuote(r)}>
                   <Plus size={14} />
                   Preparar propuesta
                 </button>
               ) : null}
-              {!admin && r.stage === "COMPLETED" && r.client_id ? (
+              {r.stage === "COMPLETED" && r.client_id ? (
                 <button className="fx-btn primary" onClick={() => onNewOpportunity(r)}>
                   Nueva oportunidad con este cliente
                 </button>
@@ -171,7 +175,7 @@ export function SalesRecordDetail({
               </p>
             </section>
           </div>
-          {!admin && r.stage !== "COMPLETED" ? (
+          {r.stage !== "COMPLETED" ? (
             <section className="sw-panel">
               <h3>Registrar avance</h3>
               <form

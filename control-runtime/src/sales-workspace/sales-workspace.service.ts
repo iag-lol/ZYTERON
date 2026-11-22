@@ -75,11 +75,14 @@ export class SalesWorkspaceService {
     return { plans: publicPlans, pricingNote, company, commissionRate: 15 };
   }
   async board(a: WorkActor, query: Record<string, string | undefined> = {}) {
-    const filter = scopes(a, query.owner),
+    const filter = scopes(
+        a,
+        a.role === "GERENTE_GENERAL" && query.owner === "administration" ? undefined : query.owner,
+      ),
       from = query.from ? date(query.from) : undefined,
       to = query.to ? date(query.to) : undefined;
     if (from && to && to < from) throw new BadRequestException("Revisa el período del informe.");
-    const [allRecords, allProposals, reports, settlements, owners, assignedClients] =
+    let [allRecords, allProposals, reports, settlements, owners, assignedClients] =
       await Promise.all([
         this.r.rows("sales_work_records", "*", filter),
         this.r.rows("sales_work_proposal_view", "*", filter),
@@ -91,11 +94,23 @@ export class SalesWorkspaceService {
           "id,legal_name,rut,general_email,phone,business_activity,address,commune,account_executive_id,created_at",
           a.role === "EJECUTIVA_VENTAS"
             ? { account_executive_id: a.userId }
-            : query.owner
+            : query.owner && query.owner !== "administration"
               ? { account_executive_id: id(query.owner) }
               : {},
         ),
       ]);
+    if (a.role === "GERENTE_GENERAL" && query.owner === "administration") {
+      allRecords = allRecords.filter((r) => r.owner_type === "ADMIN");
+      const corporateOwners = new Set(allRecords.map((r) => r.owner_id));
+      allProposals = allProposals.filter((p) => corporateOwners.has(p.owner_id));
+      reports = reports.filter((r) => corporateOwners.has(r.owner_id));
+      settlements = settlements.filter((s) => corporateOwners.has(s.owner_id));
+      assignedClients = assignedClients.filter((c) => allRecords.some((r) => r.client_id === c.id));
+    }
+    if (a.role === "EJECUTIVA_VENTAS") {
+      allRecords = allRecords.filter((r) => r.owner_type !== "ADMIN");
+      allProposals = allProposals.filter((p) => allRecords.some((r) => r.id === p.record_id));
+    }
     const quoteIds = allProposals.map((p) => String(p.quote_id));
     const receipts = quoteIds.length
       ? await this.r.rows(
@@ -121,7 +136,15 @@ export class SalesWorkspaceService {
       };
       return a.role === "GERENTE_GENERAL" ? { ...s, ...safe } : safe;
     });
-    const records = allRecords.filter((r) => within(r.created_at, from, to)),
+    const presentedRecords = allRecords.map<Row>((r) => ({
+      ...r,
+      purchase_confirmed:
+        !!r.converted_at && receipts.some((v) => v.receipt_key === r.conversion_receipt_key),
+    }));
+    const adminOwners = [
+      ...new Set(allRecords.filter((r) => r.owner_type === "ADMIN").map((r) => String(r.owner_id))),
+    ].map((id) => ({ id, name: "Administración" }));
+    const records = presentedRecords.filter((r) => within(r.created_at, from, to)),
       proposals = allProposals.filter((p) => within(p.created_at, from, to));
     const currentEarnings = earned.filter((e) => within(e.approved_at, from, to));
     const submittedReports = reports.filter((r) => within(r.created_at, from, to));
@@ -139,13 +162,19 @@ export class SalesWorkspaceService {
       ).length,
       generatedClients: new Set(
         records
-          .filter((r) => r.review_status === "APPROVED" && r.client_id && r.client_created === true)
+          .filter(
+            (r) =>
+              r.review_status === "APPROVED" &&
+              r.client_id &&
+              r.client_created === true &&
+              r.purchase_confirmed === true,
+          )
           .map((r) => r.client_id),
       ).size,
       pendingContacts: records.filter((r) => r.review_status === "PENDING").length,
       pendingProposals: proposals.filter((p) => p.status === "PENDING_APPROVAL").length,
       accepted: records.filter((r) => r.stage === "ACCEPTED" || r.stage === "COMPLETED").length,
-      completed: records.filter((r) => r.stage === "COMPLETED").length,
+      completed: records.filter((r) => r.stage === "COMPLETED" && r.purchase_confirmed).length,
       overdue: allRecords.filter(
         (r) =>
           r.next_action_at &&
@@ -165,7 +194,7 @@ export class SalesWorkspaceService {
       proposals,
       reports: submittedReports,
       earnings: currentEarnings,
-      owners,
+      owners: [...owners, ...adminOwners],
       assignedClients,
       reviewEvents: reviewEvents.filter(
         (e) =>
@@ -182,13 +211,26 @@ export class SalesWorkspaceService {
       this.r.rows("sales_work_events", "*", { record_id: recordId }),
       this.r.rows("sales_work_proposal_view", "*", { record_id: recordId }),
     ]);
-    return { record, events, proposals };
+    const receipts = record.converted_at
+      ? await this.r.rows(
+          "sales_work_verified_receipts",
+          "receipt_key",
+          { quote_id: proposals.map((p) => String(p.quote_id)) },
+          "collected_at",
+        )
+      : [];
+    return {
+      record: {
+        ...record,
+        purchase_confirmed:
+          !!record.converted_at &&
+          receipts.some((v) => v.receipt_key === record.conversion_receipt_key),
+      },
+      events,
+      proposals,
+    };
   }
   async create(a: WorkActor, b: Row) {
-    if (a.role !== "EJECUTIVA_VENTAS")
-      throw new ForbiddenException(
-        "Las nuevas gestiones se registran desde la cuenta del ejecutivo.",
-      );
     const payload = {
       ...recordInput(b),
       requestId: id(b.requestId),
@@ -227,7 +269,7 @@ export class SalesWorkspaceService {
     if (b.create_client === true) recordInput(r);
     await this.r.write(a, "record_review", recordId, {
       ...review(b),
-      create_client: b.create_client === true,
+      create_client: false,
     });
     return this.detail(a, recordId);
   }
@@ -253,8 +295,6 @@ export class SalesWorkspaceService {
     return { saved: true };
   }
   async propose(a: WorkActor, recordId: string, b: Row) {
-    if (a.role !== "EJECUTIVA_VENTAS")
-      throw new ForbiddenException("Las propuestas se preparan desde la cuenta del ejecutivo.");
     await this.r.record(id(recordId), a);
     if (!Array.isArray(b.items) || !b.items.length || b.items.length > 30)
       throw new BadRequestException("Agrega entre 1 y 30 servicios.");
@@ -356,7 +396,8 @@ export class SalesWorkspaceService {
   async complete(a: WorkActor, recordId: string, b: Row) {
     admin(a);
     await this.r.write(a, "complete", id(recordId), {
-      reason: text(b.reason, "Validación de cierre", 2000, true),
+      reason: text(b.reason, "Respaldo de la compra", 2000, true),
+      ...(b.source_id ? { source_id: id(b.source_id), source_kind: b.source_kind } : {}),
     });
     return this.detail(a, recordId);
   }
@@ -402,7 +443,8 @@ export class SalesWorkspaceService {
         "Detalle",
         "Etapa",
         "Validación",
-        "Alta cliente",
+        "Compra confirmada",
+        "Conversión a cliente",
         "Registro",
         "Próximo seguimiento",
         "Propuestas",
@@ -420,7 +462,8 @@ export class SalesWorkspaceService {
         r.notes,
         r.stage,
         r.review_status,
-        r.client_id ? "Sí" : "No",
+        r.purchase_confirmed ? "Sí" : "No",
+        r.converted_at ? dayInChile(r.converted_at).split("-").reverse().join("-") : "",
         dayInChile(r.created_at).split("-").reverse().join("-"),
         r.next_action_at
           ? new Intl.DateTimeFormat("es-CL", {

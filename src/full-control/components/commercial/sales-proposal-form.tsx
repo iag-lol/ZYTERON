@@ -125,7 +125,7 @@ export function SalesProposalForm({
     <Drawer
       open
       title="Preparar propuesta"
-      subtitle="Elige el cliente, arma el alcance y envía a administración para autorización."
+      subtitle="Selecciona el contacto y prepara el alcance. La propuesta requiere autorización antes de compartirla."
       onClose={onClose}
       wide
       className="sw-drawer"
@@ -316,7 +316,9 @@ export function SalesProposalForm({
               propuesta.
             </p>
             <small>
-              Comisión: 15% de la utilidad validada, una vez confirmado el pago del cliente.
+              {records.find((r) => r.id === recordId)?.owner_type === "ADMIN"
+                ? "Contacto propio de administración: esta propuesta no genera comisión de ejecutivo."
+                : "Comisión del ejecutivo: 15% de la utilidad validada, una vez confirmado el pago del cliente."}
             </small>
           </aside>
         </div>
@@ -326,7 +328,11 @@ export function SalesProposalForm({
             Cancelar
           </button>
           <button className="fx-btn primary" type="submit" disabled={action.busy || !valid}>
-            {action.busy ? "Enviando…" : "Solicitar autorización"}
+            {action.busy
+              ? "Enviando…"
+              : role === "GERENTE_GENERAL"
+                ? "Guardar propuesta para revisión"
+                : "Solicitar autorización"}
           </button>
         </div>
       </form>
