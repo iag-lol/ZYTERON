@@ -84,6 +84,14 @@ La declaración del 29-10-2026 completó la autorización del software propio. E
 
 El set oficial, los libros, la simulación, el intercambio y las muestras aprobadas forman parte de la evidencia de certificación. El SII valida contra el último set obtenido: no se regenera automáticamente durante reintentos de descarga.
 
+## Descarga de documentos emitidos
+
+En **Finanzas → Facturación**, abrir la factura y seleccionar **Descargar PDF** o **Descargar XML**. La misma descarga está disponible en **Finanzas → Documentos tributarios → Emitidos**, al abrir el folio correspondiente.
+
+Para SII directo no se requiere un PDF precargado: el servidor genera la representación desde el XML firmado y el envío original archivados. La descarga requiere permiso `dte.view`, folio y originales verificables. Los documentos externos conservan la descarga de su PDF archivado. Los errores de descarga se muestran dentro del detalle abierto.
+
+La descarga es de lectura: no emite, no consume folios, no modifica montos ni confirma pagos. La aceptación del SII y el pago recibido se registran por separado.
+
 ## Representación impresa local
 
 Representación impresa publicada y muestras aprobadas por el SII. Para los tipos 33, 34, 56 y 61, el PDF se construye desde el XML firmado y el sobre de envío archivados. Se verifican la huella del archivo, la correspondencia de folio, emisor, receptor y totales, el rango CAF y la firma del timbre TED con su llave pública. La resolución se obtiene del sobre original; no se reemplaza con la configuración actual.
