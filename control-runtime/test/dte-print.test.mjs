@@ -16,6 +16,7 @@ import {
   renderPrintedDte,
   printedDteBarcode,
   pdf417ByteCodewords,
+  amountInWords,
 } from "../dist/finance/finance.dte-print.js";
 import { PDFDocument } from "pdf-lib";
 import { productionBoletaLookupToken, verifyProductionBoletaLookupToken, verifyBoletaLookupToken, productionBoletaVerificationUrl } from "../dist/finance/finance.boleta-lookup.js";
@@ -372,6 +373,68 @@ test("PDF se deriva del mismo DTE y conserva fecha, folio, montos y timbre firma
     writeFileSync(join(output, "ted-esperado.bin"), Buffer.from(data.ted, "latin1"));
     writeFileSync(join(output, "timbre-sintetico.png"), await printedDteBarcode(data.ted));
   }
+});
+test("monto en palabras usa apócope, millones y singular", () => {
+  assert.equal(amountInWords(119000), "ciento diecinueve mil pesos");
+  assert.equal(amountInWords(21021), "veintiún mil veintiún pesos");
+  assert.equal(amountInWords(1), "un peso");
+  assert.equal(amountInWords(100), "cien pesos");
+  assert.equal(amountInWords(1000000), "un millón de pesos");
+  assert.equal(amountInWords(2501101), "dos millones quinientos un mil ciento un pesos");
+  assert.equal(amountInWords(-5), "");
+});
+test("factura de Zyteron con varias líneas, descuento y contacto cabe en una hoja", async () => {
+  const lines = [
+    ["Plan Pyme - sitio web corporativo hasta 6 páginas, diseño adaptable, SEO técnico inicial, analítica y soporte inicial", 1, 299990, 0],
+    ["Sección administrativa con acceso protegido para gestionar textos, servicios y publicaciones del blog", 1, 119990, 0],
+    ["Configuración de correo corporativo", 4, 15000, 15000],
+    ["Hosting administrado anual", 1, 89990, 0],
+    ["Soporte técnico mensual", 3, 25000, 0],
+  ].map(([description, quantity, unitPrice, discountAmount], index) => ({
+    lineNumber: index + 1,
+    description,
+    quantity,
+    unitPrice,
+    discountAmount,
+    netAmount: quantity * unitPrice - discountAmount,
+    isExempt: false,
+  }));
+  const net = lines.reduce((sum, line) => sum + line.netAmount, 0),
+    tax = Math.round(net * 0.19);
+  const company = { ...fixture.input.company, rut: "78398774-0", legalName: "Zyteron SpA", businessActivity: "Servicios de informática y desarrollo de software", address: "Antonio Bellet 193", commune: "Providencia", city: "Santiago" };
+  const item = await createFixture({
+    company,
+    receiver: { ...fixture.input.receiver, email: "facturas@example.com", city: "Santiago" },
+    lines,
+    totals: { net, exempt: 0, taxRate: 0.19, tax, total: net + tax },
+    caf: {
+      ...fixture.input.caf,
+      companyRut: company.rut,
+      companyName: company.legalName,
+      cafXml: fixture.input.caf.cafXml.replace("<RE>11111111-1</RE><RS>Emisor Sintético QA SpA</RS>", "<RE>78398774-0</RE><RS>Zyteron SpA</RS>"),
+    },
+  });
+  const pdf = await renderPrintedDte(item.signed, item.envelope, item.record, "OFICINA SINTÉTICA QA");
+  assert.equal((await PDFDocument.load(pdf)).getPageCount(), 1);
+  if (process.env.ZYTERON_DTE_PRINT_QA_OUTPUT)
+    writeFileSync(join(process.env.ZYTERON_DTE_PRINT_QA_OUTPUT, "muestra-zyteron.pdf"), pdf);
+});
+test("trece líneas usan la variante compacta y se mantienen en una hoja", async () => {
+  const lines = Array.from({ length: 13 }, (_, index) => ({
+    lineNumber: index + 1,
+    description: `Servicio sintético ${index + 1}`,
+    quantity: 1,
+    unitPrice: 1000,
+    discountAmount: 0,
+    netAmount: 1000,
+    isExempt: false,
+  }));
+  const item = await createFixture({
+    lines,
+    totals: { net: 13000, exempt: 0, taxRate: 0.19, tax: 2470, total: 15470 },
+  });
+  const pdf = await renderPrintedDte(item.signed, item.envelope, item.record, "OFICINA SINTÉTICA QA");
+  assert.equal((await PDFDocument.load(pdf)).getPageCount(), 1);
 });
 test("rechaza IDs fiscales incoherentes, montos, cliente, emisor y fecha distintos", () => {
   for (const patch of [

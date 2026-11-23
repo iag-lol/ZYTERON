@@ -100,6 +100,19 @@ El timbre PDF417 se genera localmente con `bwip-js`, sin enviar documentos a ser
 
 Producción requiere `DTE_SII_OFFICE` con la oficina SII real del emisor, verificada previamente. La variable está configurada en el servidor y el requisito de oficina pasa en la comprobación productiva; no se deduce del domicilio. No se genera un timbre ficticio cuando falta evidencia. Documentos con extensiones no soportadas o contenido que excede la página se rechazan expresamente.
 
+### Diseño de la representación (23-11-2026)
+
+Hoja única de 21,5 cm de ancho, con contenido entre 36 y 559 puntos para conservar márgenes al imprimir en A4. Elementos:
+
+- Encabezado con franja de marca, identidad del emisor (logotipo vectorial cuando el RUT emisor es 78.398.774-0 y monograma en otro caso), giro, dirección y contacto, y una etiqueta con el estado tributario.
+- Recuadro rojo con RUT, tipo de documento y folio, centrado. La oficina SII aparece bajo el recuadro.
+- Fichas de **Receptor** (RUT, giro, dirección, contacto) y **Documento** (emisión, vencimiento, forma de pago, medio de pago y moneda cuando existen en el XML).
+- Tabla de detalle con encabezado, filas alternadas y columnas alineadas. Cuando `DscItem` difiere de `NmbItem`, el nombre aparece en negrita y el detalle debajo. Las descripciones largas no se cortan a mitad de palabra.
+- Referencias, cargos globales, monto en palabras (solo en pesos chilenos), ficha de totales y franja de **TOTAL**.
+- Timbre PDF417 con la misma posición, escala y zona libre que las muestras certificadas. Los textos del timbre, el acuse de recibo y la leyenda `CEDIBLE` no cambian.
+
+Todos los datos provienen del XML firmado. Los campos opcionales nuevos (contacto, correo, ciudad) omiten los caracteres no imprimibles; no bloquean la emisión. Cuando el detalle no cabe en la variante estándar, se aplica una variante compacta con filas más bajas y la descripción como texto continuo. La prueba automatizada comprueba que trece líneas caben en una hoja. Solo se rechaza el documento cuando tampoco cabe en la variante compacta, y no se genera una segunda hoja.
+
 La verificación del timbre no reemplaza la validación completa de la firma XML, de la autoridad emisora del CAF ni la aprobación de muestras ante el SII. El intercambio y los recibos siguen los procedimientos de [operación y recuperación](SII-OPERACION-Y-RECUPERACION.md). Boletas, exportación y los demás flujos operativos no implementados permanecen deshabilitados.
 
 ## Validación local
