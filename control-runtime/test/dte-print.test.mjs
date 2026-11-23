@@ -416,8 +416,12 @@ test("factura de Zyteron con varias líneas, descuento y contacto cabe en una ho
   });
   const pdf = await renderPrintedDte(item.signed, item.envelope, item.record, "OFICINA SINTÉTICA QA");
   assert.equal((await PDFDocument.load(pdf)).getPageCount(), 1);
-  if (process.env.ZYTERON_DTE_PRINT_QA_OUTPUT)
+  const accepted = await renderPrintedDte(item.signed, item.envelope, { ...item.record, environment: "PRODUCTION", status: "ACCEPTED" }, "OFICINA SINTÉTICA QA");
+  assert.equal((await PDFDocument.load(accepted)).getPageCount(), 1);
+  if (process.env.ZYTERON_DTE_PRINT_QA_OUTPUT) {
     writeFileSync(join(process.env.ZYTERON_DTE_PRINT_QA_OUTPUT, "muestra-zyteron.pdf"), pdf);
+    writeFileSync(join(process.env.ZYTERON_DTE_PRINT_QA_OUTPUT, "muestra-zyteron-aceptada.pdf"), accepted);
+  }
 });
 test("trece líneas usan la variante compacta y se mantienen en una hoja", async () => {
   const lines = Array.from({ length: 13 }, (_, index) => ({

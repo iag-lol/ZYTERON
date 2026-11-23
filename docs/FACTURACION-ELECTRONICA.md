@@ -104,7 +104,8 @@ Producción requiere `DTE_SII_OFFICE` con la oficina SII real del emisor, verifi
 
 Hoja única de 21,5 cm de ancho, con contenido entre 36 y 559 puntos para conservar márgenes al imprimir en A4. Elementos:
 
-- Encabezado con franja de marca, identidad del emisor (logotipo vectorial cuando el RUT emisor es 78.398.774-0 y monograma en otro caso), giro, dirección y contacto, y una etiqueta con el estado tributario.
+- Encabezado con franja de marca, logotipo oficial (`control-runtime/resources/brand/zyteron-logo.png`) cuando el RUT emisor es 78.398.774-0, o un monograma en otro caso, seguido de razón social, giro, dirección y contacto. Si el recurso del logotipo no está disponible se usa el monograma; la impresión no se bloquea.
+- Etiqueta de advertencia solo para documentos de certificación, rechazados o pendientes. Un documento aceptado no muestra etiqueta de estado y el pie no lleva texto.
 - Recuadro rojo con RUT, tipo de documento y folio, centrado. La oficina SII aparece bajo el recuadro.
 - Fichas de **Receptor** (RUT, giro, dirección, contacto) y **Documento** (emisión, vencimiento, forma de pago, medio de pago y moneda cuando existen en el XML).
 - Tabla de detalle con encabezado, filas alternadas y columnas alineadas. Cuando `DscItem` difiere de `NmbItem`, el nombre aparece en negrita y el detalle debajo. Las descripciones largas no se cortan a mitad de palabra.

@@ -12,6 +12,9 @@ import {
   type PDFFont,
   type PDFPage,
 } from "pdf-lib";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { children, local, parseXml, textOf, type XmlNode } from "./finance.formats.js";
 import { normalizeRut } from "./finance.util.js";
 import { verifySiiXmlSignatures } from "./finance.sii-signatures.js";
@@ -417,12 +420,17 @@ export function amountInWords(value: number) {
   return words + (millions && !rest ? " de pesos" : " pesos");
 }
 
-const drawZyteronMark = (page: PDFPage, x: number, y: number, boldItalic: PDFFont) => {
-  page.drawEllipse({ x: x + 25, y: y + 23, xScale: 25, yScale: 17, borderColor: palette.teal, borderWidth: 2.2 });
-  page.drawEllipse({ x: x + 28, y: y + 21, xScale: 26, yScale: 12, borderColor: palette.blue, borderWidth: 1.4 });
-  page.drawText("Z", { x: x + 12, y: y + 7, font: boldItalic, size: 30, color: palette.ink });
-  page.drawCircle({ x: x + 49, y: y + 29, size: 3.4, color: palette.blue });
-  page.drawCircle({ x: x + 7, y: y + 12, size: 3.4, color: palette.teal });
+let brandLogo: Buffer | null | undefined;
+/** Logotipo oficial de Zyteron. Si el recurso no está disponible se usa el monograma; nunca bloquea la impresión. */
+const zyteronLogo = () => {
+  if (brandLogo !== undefined) return brandLogo;
+  for (const candidate of [
+    fileURLToPath(new URL("../../resources/brand/zyteron-logo.png", import.meta.url)),
+    resolve(process.cwd(), "resources/brand/zyteron-logo.png"),
+    resolve(process.cwd(), "control-runtime/resources/brand/zyteron-logo.png"),
+  ])
+    if (existsSync(candidate)) return (brandLogo = readFileSync(candidate));
+  return (brandLogo = null);
 };
 const initials = (name: string) => {
   const words = name
@@ -523,8 +531,7 @@ export async function renderPrintedDte(
     pdf.setKeywords(["DTE", labels[data.type]!, `Folio ${data.folio}`]);
     pdf.setLanguage("es-CL");
     const regular = await pdf.embedFont(StandardFonts.Helvetica),
-      bold = await pdf.embedFont(StandardFonts.HelveticaBold),
-      boldItalic = await pdf.embedFont(StandardFonts.HelveticaBoldOblique);
+      bold = await pdf.embedFont(StandardFonts.HelveticaBold);
     const page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
     const { ink, blue, teal, slate, mist, line, hairline, soft, zebra, white, red } = palette;
 
@@ -615,10 +622,18 @@ export async function renderPrintedDte(
     brandBar(PAGE_HEIGHT - 6, 6);
 
     // ------------------------------------------------------------------ emisor
-    let column = LEFT;
-    if (normalizeRut(data.issuerRut) === ZYTERON_RUT) {
-      drawZyteronMark(page, LEFT, 768, boldItalic);
-      column = LEFT + 64;
+    let column = LEFT,
+      nameTop = 797,
+      nameSize = 15;
+    const logo = normalizeRut(data.issuerRut) === ZYTERON_RUT ? zyteronLogo() : null;
+    if (logo) {
+      // Logotipo horizontal (símbolo y nombre); la razón social legal va debajo.
+      const image = await pdf.embedPng(logo);
+      const height = 36,
+        width = (image.width / image.height) * height;
+      page.drawImage(image, { x: LEFT - 2, y: 812 - height, width, height });
+      nameTop = 812 - height - 16;
+      nameSize = 11.5;
     } else {
       box(LEFT, 770, 42, 42, { fill: ink, radius: 8 });
       page.drawRectangle({ x: LEFT + 8, y: 777, width: 26, height: 2, color: teal });
@@ -627,7 +642,7 @@ export async function renderPrintedDte(
       column = LEFT + 54;
     }
     const columnWidth = 343 - column;
-    let issuerY = paragraphs(issuerName, column, 797, columnWidth, 15, bold, ink, 17);
+    let issuerY = paragraphs(issuerName, column, nameTop, columnWidth, nameSize, bold, ink, nameSize + 2.5);
     issuerY = paragraphs(
       textOf(data.issuer, "GiroEmis") || textOf(data.issuer, "GiroEmisor"),
       column,
@@ -662,13 +677,16 @@ export async function renderPrintedDte(
     if (contact) issuerY = paragraphs(contact, column, issuerY, columnWidth, 7.5, regular, mist, 10);
     if (issuerY < 560) reject("Los datos del emisor exceden el espacio disponible de impresión.");
 
-    // Estado tributario del documento
+    // Advertencia de estado: solo para documentos sin validez tributaria o aún no aceptados.
+    const showStatus = tone !== tones.ok;
     const pillWidth = spacedWidth(banner, 6.5, bold, 0.6) + 24;
     const pillX = column + pillWidth <= 343 ? column : LEFT;
-    const pillY = issuerY - 15;
-    box(pillX, pillY, pillWidth, 15, { fill: tone.bg, radius: 7.5 });
-    page.drawCircle({ x: pillX + 9, y: pillY + 7.5, size: 2.4, color: tone.fg });
-    spaced(banner, pillX + 16, pillY + 5, 6.5, bold, tone.fg, 0.6);
+    const pillY = showStatus ? issuerY - 15 : issuerY;
+    if (showStatus) {
+      box(pillX, pillY, pillWidth, 15, { fill: tone.bg, radius: 7.5 });
+      page.drawCircle({ x: pillX + 9, y: pillY + 7.5, size: 2.4, color: tone.fg });
+      spaced(banner, pillX + 16, pillY + 5, 6.5, bold, tone.fg, 0.6);
+    }
 
     // ------------------------------------------------------------------ recuadro SII
     page.drawRectangle({ x: 355, y: 716, width: 204, height: 101, borderColor: red, borderWidth: 1.6 });
@@ -1122,16 +1140,6 @@ export async function renderPrintedDte(
       text(destination, 559 - bold.widthOfTextAtSize(destination, 8), 18, 8, bold, ink);
     }
 
-    // ------------------------------------------------------------------ pie
-    spaced(banner, 36, 32, 6.5, bold, tone.fg, 0.5);
-    text(
-      "Representación impresa de documento tributario electrónico, generada desde su XML firmado.",
-      36,
-      22,
-      6,
-      regular,
-      mist,
-    );
     brandBar(0, 4);
     return Buffer.from(await pdf.save());
   };
